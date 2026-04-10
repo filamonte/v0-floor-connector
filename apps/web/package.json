@@ -1,0 +1,21 @@
+{
+  "name": "@floorconnector/web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.5.2",
+    "@floorconnector/config": "workspace:*",
+    "@floorconnector/db": "workspace:*",
+    "@floorconnector/ui": "workspace:*",
+    "next": "^15.2.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

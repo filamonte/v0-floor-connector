@@ -1,0 +1,40 @@
+{
+  "name": "floorconnector",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@9.12.3",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev --filter=@floorconnector/web",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --check .",
+    "format:write": "prettier --write ."
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.4",
+    "zod": "^3.24.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.24.0",
+    "@next/eslint-plugin-next": "^15.2.4",
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.24.0",
+    "eslint-config-prettier": "^10.1.2",
+    "globals": "^16.0.0",
+    "postcss": "^8.5.3",
+    "prettier": "^3.5.3",
+    "tailwindcss": "^3.4.17",
+    "tsup": "^8.4.0",
+    "tsx": "^4.19.3",
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.29.1"
+  }
+}

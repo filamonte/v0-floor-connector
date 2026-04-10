@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --background: 200 33% 98%;
+  --foreground: 222 47% 11%;
+}
+
+html {
+  min-height: 100%;
+}
+
+body {
+  @apply min-h-screen bg-slate-50 text-slate-950 antialiased;
+  font-family:
+    "Segoe UI",
+    "Helvetica Neue",
+    Helvetica,
+    Arial,
+    sans-serif;
+  background-image:
+    radial-gradient(circle at top, rgba(33, 104, 105, 0.15), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(241, 245, 249, 0.92));
+}
