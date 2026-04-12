@@ -1,11 +1,27 @@
 import { createClient } from "@supabase/supabase-js";
+import { ZodError } from "zod";
 import {
   getSupabasePublicConfig,
-  getSupabaseServiceRoleKey,
-  isSupabasePublicConfigReady
+  getSupabaseServiceRoleKey
 } from "@floorconnector/config";
 
 export type DatabaseHealth = "unconfigured" | "connected" | "error";
+
+function formatEnvValidationError(error: ZodError) {
+  const invalidKeys = Array.from(
+    new Set(
+      error.issues.flatMap((issue) =>
+        issue.path.map((segment) => String(segment))
+      )
+    )
+  );
+
+  if (invalidKeys.length === 0) {
+    return "Invalid environment configuration.";
+  }
+
+  return `Invalid environment configuration for: ${invalidKeys.join(", ")}.`;
+}
 
 type SupabasePublicConfig = {
   url: string;
@@ -70,9 +86,23 @@ export async function getSupabaseHealth(): Promise<{
   status: DatabaseHealth;
   detail: string;
 }> {
-  const config = getSupabasePublicConfig();
+  let config: ReturnType<typeof getSupabasePublicConfig>;
 
-  if (!isSupabasePublicConfigReady() || !config.url || !config.anonKey) {
+  try {
+    config = getSupabasePublicConfig();
+  } catch (error) {
+    return {
+      status: "error",
+      detail:
+        error instanceof ZodError
+          ? formatEnvValidationError(error)
+          : error instanceof Error
+            ? `Invalid environment configuration: ${error.message}`
+          : "Invalid environment configuration."
+    };
+  }
+
+  if (!config.url || !config.anonKey) {
     return {
       status: "unconfigured",
       detail: "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY."
@@ -80,7 +110,7 @@ export async function getSupabaseHealth(): Promise<{
   }
 
   try {
-    const response = await fetch(`${config.url}/rest/v1/`, {
+    const response = await fetch(`${config.url}/auth/v1/settings`, {
       method: "GET",
       headers: {
         apikey: config.anonKey,
@@ -92,7 +122,7 @@ export async function getSupabaseHealth(): Promise<{
     if (response.ok) {
       return {
         status: "connected",
-        detail: "Supabase REST endpoint responded successfully."
+        detail: "Supabase auth settings endpoint responded successfully."
       };
     }
 

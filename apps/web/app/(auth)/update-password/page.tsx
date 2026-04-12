@@ -17,7 +17,7 @@ export default async function UpdatePasswordPage({
   return (
     <AuthShell
       title="Choose a new password"
-      description="Complete the password reset flow by setting a new password for your account."
+      description="Complete the fallback password reset flow for an email/password account."
       error={params.error}
       message={params.message}
     >

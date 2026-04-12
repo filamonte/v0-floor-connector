@@ -30,7 +30,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   return (
     <AuthShell
       title="Sign in"
-      description="Use your FloorConnector account to access contractor workflows, portal access, and platform administration."
+      description="Continue with Google for the primary FloorConnector sign-in flow. Email and password remain available as a fallback when Google is not an option."
       error={params.error}
       message={params.message}
       footer={
@@ -43,6 +43,21 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
       }
     >
       <div className="space-y-4">
+        <form action={signInWithGoogleAction}>
+          <input type="hidden" name="next" value={next} />
+          <AuthSubmitButton pendingLabel="Redirecting...">
+            Continue with Google
+          </AuthSubmitButton>
+        </form>
+
+        <div className="flex items-center gap-3 py-2">
+          <div className="h-px flex-1 bg-slate-200" />
+          <span className="text-xs font-medium uppercase tracking-[0.24em] text-slate-400">
+            Fallback
+          </span>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
+
         <form action={signInWithPasswordAction} className="space-y-4">
           <input type="hidden" name="next" value={next} />
           <label className="block">
@@ -68,28 +83,13 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             />
           </label>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <AuthSubmitButton pendingLabel="Signing in...">
+            <AuthSubmitButton pendingLabel="Signing in..." variant="secondary">
               Sign in with password
             </AuthSubmitButton>
             <Link href={forgotPasswordPath} className="text-sm font-medium text-brand-700">
               Forgot password?
             </Link>
           </div>
-        </form>
-
-        <div className="flex items-center gap-3 py-2">
-          <div className="h-px flex-1 bg-slate-200" />
-          <span className="text-xs font-medium uppercase tracking-[0.24em] text-slate-400">
-            Or
-          </span>
-          <div className="h-px flex-1 bg-slate-200" />
-        </div>
-
-        <form action={signInWithGoogleAction}>
-          <input type="hidden" name="next" value={next} />
-          <AuthSubmitButton pendingLabel="Redirecting..." variant="secondary">
-            Continue with Google
-          </AuthSubmitButton>
         </form>
       </div>
     </AuthShell>

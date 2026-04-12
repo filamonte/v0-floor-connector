@@ -52,6 +52,7 @@ The platform is expected to support multiple surfaces on one shared foundation:
 
 ## Production-First Rules
 - Build for real auth and real persistence from the start.
+- Use Google sign-in as the primary authentication method, with email/password retained only as a secondary fallback.
 - Preserve tenant isolation across every layer.
 - Keep business logic in shared packages, not scattered across pages.
 - Keep integrations behind adapter boundaries.
@@ -70,6 +71,7 @@ The platform is expected to support multiple surfaces on one shared foundation:
 - `packages/` contains shared UI, domain, auth, config, database, types, and utility code.
 - `supabase/` contains database migrations and related Supabase assets.
 - `docs/` contains product and engineering documentation.
+  Auth setup details live in `docs/auth-setup.md`.
 
 ## Local Setup
 
@@ -95,6 +97,20 @@ Create a local environment file from the template and fill in the required value
 cp .env.example .env.local
 ```
 
+The root `C:\FloorConnector\.env.local` file is the source of truth for local web app configuration. Do not keep a separate `apps/web/.env.local`, because it can override the root settings and cause confusing runtime mismatches.
+
+For local development, keep public URLs fully qualified and local, for example:
+
+```env
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_MARKETING_URL=http://localhost:3000
+NEXT_PUBLIC_SUPPORT_URL=http://localhost:3000/support
+NEXT_PUBLIC_PRIVACY_POLICY_URL=http://localhost:3000/privacy-policy
+NEXT_PUBLIC_TERMS_OF_SERVICE_URL=http://localhost:3000/terms-of-service
+```
+
+If Next.js starts on a different port such as `3001`, update both values to match the active local port.
+
 ### Workspace Commands
 ```bash
 pnpm dev
@@ -104,6 +120,20 @@ pnpm typecheck
 pnpm format
 pnpm format:write
 ```
+
+## Deployment Notes
+
+Before deploying to Vercel, replace the local URL values with your live domains in the Vercel environment settings:
+
+```env
+NEXT_PUBLIC_APP_URL=https://app.floorconnector.com
+NEXT_PUBLIC_MARKETING_URL=https://www.floorconnector.com
+NEXT_PUBLIC_SUPPORT_URL=https://support.floorconnector.com
+NEXT_PUBLIC_PRIVACY_POLICY_URL=https://www.floorconnector.com/privacy-policy
+NEXT_PUBLIC_TERMS_OF_SERVICE_URL=https://www.floorconnector.com/terms-of-service
+```
+
+Keep local `.env.local` values pointed at localhost, and keep deployed values in Vercel pointed at the real production domains. The code should not be changed when moving between local and live environments; only the environment variables should differ.
 
 ## What Not To Do
 - Do not add fake auth or mock tenant context.
@@ -117,3 +147,8 @@ pnpm format:write
 - Keep strict TypeScript enabled.
 - Keep linting and formatting consistent at the root.
 - Add new modules only when they fit the existing boundaries or improve them intentionally.
+
+## Auth Strategy
+- Google OAuth is the default and recommended sign-in path.
+- Email/password exists as a secondary fallback for users who cannot use Google.
+- Identity and session handling remain centralized so every surface shares the same auth foundation.

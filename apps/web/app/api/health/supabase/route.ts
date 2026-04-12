@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
+import { getSupabaseHealth } from "@floorconnector/db";
 
-export function GET() {
+export async function GET() {
+  const health = await getSupabaseHealth();
+
   return NextResponse.json({
-    ok: true,
+    ok: health.status === "connected",
     service: "web",
-    phase: "foundation"
+    phase: "foundation",
+    ...health
   });
 }

@@ -6,6 +6,7 @@ node_modules
 dist
 .next
 coverage
+*.tsbuildinfo
 
 # env
 .env
@@ -21,3 +22,6 @@ pnpm-debug.log*
 # system
 .DS_Store
 Thumbs.db
+
+# local leftovers
+Floorconnectorgit/

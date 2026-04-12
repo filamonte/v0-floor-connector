@@ -23,7 +23,7 @@ export default async function ForgotPasswordPage({
   return (
     <AuthShell
       title="Reset your password"
-      description="Request a password reset email for your FloorConnector account."
+      description="Reset the password for a fallback email/password account when Google sign-in is not being used."
       error={params.error}
       message={params.message}
       footer={
