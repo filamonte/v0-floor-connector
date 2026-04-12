@@ -2,6 +2,12 @@
 
 Product, engineering, and rollout documentation lives here.
 
+Canonical repository notes:
+- GitHub repo: `https://github.com/filamonte/v0-floor-connector.git`
+- primary branch: `main`
+- local workspace root: `C:\FloorConnector`
+- local web app env source of truth: `C:\FloorConnector\.env.local`
+
 Current foundation priorities to document as the repo grows:
 - Google-first authentication with email/password fallback
 - package ownership and shared boundaries

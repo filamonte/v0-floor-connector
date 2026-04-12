@@ -5,6 +5,12 @@ This file is the rulebook for Codex and future AI-assisted development in the Fl
 
 FloorConnector is a production-first, multi-tenant SaaS platform for epoxy flooring, concrete polishing, and specialty surface contractors. This repository is the source of truth for the product and must be treated like a long-lived production codebase, not a prototype.
 
+## Canonical Repo
+- canonical GitHub repo: `https://github.com/filamonte/v0-floor-connector.git`
+- canonical collaboration branch: `main`
+- canonical local workspace root: `C:\FloorConnector`
+- local web app env source of truth: `C:\FloorConnector\.env.local`
+
 ## Current Phase
 The project is in the foundation phase only.
 

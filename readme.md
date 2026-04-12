@@ -2,6 +2,11 @@
 
 FloorConnector is a production-first multi-tenant SaaS platform for epoxy flooring, concrete polishing, and specialty surface contractors. It is intended to support contractor CRM, estimating, scheduling, billing, document workflows, messaging, operations, and future ecosystem modules on one shared platform foundation.
 
+## Canonical Repo
+- Canonical GitHub repo: `https://github.com/filamonte/v0-floor-connector.git`
+- Canonical branch: `main`
+- Local workspace root: `C:\FloorConnector`
+
 ## Current Phase
 The repository is in the foundation phase only.
 

@@ -4,6 +4,11 @@ This repository currently uses Supabase Auth for both:
 - Google sign-in as the primary path
 - email/password as the fallback path
 
+Canonical repository context:
+- GitHub repo: `https://github.com/filamonte/v0-floor-connector.git`
+- primary branch: `main`
+- local workspace root: `C:\FloorConnector`
+
 ## Local Source Of Truth
 
 For local development, the web app reads:
