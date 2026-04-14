@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import {
@@ -11,7 +12,8 @@ import {
   signUpPath,
   updatePasswordPath
 } from "./paths";
-import { getAuthCallbackUrl } from "./urls";
+import { ensureAuthenticatedUserBootstrap } from "./bootstrap";
+import { getAuthCallbackUrl, getRequestOrigin } from "./urls";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 function getFieldValue(formData: FormData, key: string) {
@@ -66,17 +68,20 @@ export async function signInWithPasswordAction(formData: FormData) {
     );
   }
 
+  await ensureAuthenticatedUserBootstrap(supabase);
   revalidatePath("/", "layout");
   redirect(next);
 }
 
 export async function signInWithGoogleAction(formData: FormData) {
   const next = sanitizeRedirectPath(getFieldValue(formData, "next"));
+  const requestHeaders = await headers();
+  const origin = getRequestOrigin(requestHeaders);
   const supabase = await getSupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: getAuthCallbackUrl(next)
+      redirectTo: getAuthCallbackUrl(next, origin)
     }
   });
 
@@ -96,6 +101,8 @@ export async function signUpAction(formData: FormData) {
   const email = getFieldValue(formData, "email");
   const password = getFieldValue(formData, "password");
   const next = sanitizeRedirectPath(getFieldValue(formData, "next"));
+  const requestHeaders = await headers();
+  const origin = getRequestOrigin(requestHeaders);
 
   if (!email || !password) {
     redirect(
@@ -111,7 +118,7 @@ export async function signUpAction(formData: FormData) {
     email,
     password,
     options: {
-      emailRedirectTo: getAuthCallbackUrl(next)
+      emailRedirectTo: getAuthCallbackUrl(next, origin)
     }
   });
 
@@ -127,6 +134,7 @@ export async function signUpAction(formData: FormData) {
   revalidatePath("/", "layout");
 
   if (data.session) {
+    await ensureAuthenticatedUserBootstrap(supabase);
     redirect(next);
   }
 
@@ -140,6 +148,8 @@ export async function signUpAction(formData: FormData) {
 
 export async function requestPasswordResetAction(formData: FormData) {
   const email = getFieldValue(formData, "email");
+  const requestHeaders = await headers();
+  const origin = getRequestOrigin(requestHeaders);
 
   if (!email) {
     redirect(
@@ -151,7 +161,7 @@ export async function requestPasswordResetAction(formData: FormData) {
 
   const supabase = await getSupabaseServerClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: getAuthCallbackUrl(updatePasswordPath)
+    redirectTo: getAuthCallbackUrl(updatePasswordPath, origin)
   });
 
   if (error) {

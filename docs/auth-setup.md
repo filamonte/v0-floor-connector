@@ -1,84 +1,66 @@
-# Auth Setup
+# Auth Architecture Note
 
-This repository currently uses Supabase Auth for both:
-- Google sign-in as the primary path
-- email/password as the fallback path
+FloorConnector is planning one shared authentication system across all surfaces.
 
-Canonical repository context:
-- GitHub repo: `https://github.com/filamonte/v0-floor-connector.git`
-- primary branch: `main`
-- local workspace root: `C:\FloorConnector`
+## Model
+- Supabase Auth is the current runtime auth foundation in `apps/web`
+- Google OAuth is the primary sign-in method
+- email/password is a fully supported fallback from the beginning
+- both methods must land in the same shared user/account model
+- provider choice must not create separate user records, authorization rules, or tenant context models
 
-## Local Source Of Truth
+## Boundary Rules
+- authentication stays centralized and shared across marketing, contractor app, portal, and super admin surfaces
+- authorization remains organization-aware and role-based
+- shared auth/account logic belongs in workspace packages, not duplicated in route handlers or pages
+- future provider-linking rules must preserve one user identity per person across sign-in methods
 
+## Current Foundation
+Today the web app already includes:
+- Supabase SSR client wrappers for browser, server, middleware, route-handler, and admin usage
+- public auth routes for sign-in, sign-up, password reset, and callback handling
+- middleware and server checks protecting `/app`, `/portal`, and `/super-admin`
+- health endpoints that report required callback and redirect configuration
+
+This foundation is real, but the shared auth/account model and long-term package ownership are still being documented and hardened.
+
+## Local Environment Source Of Truth
 For local development, the web app reads:
 
 `C:\FloorConnector\.env.local`
 
 Do not keep a separate `apps/web/.env.local`.
 
-## Required Local Environment Variables
-
+## Required Runtime Values
 ```env
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_MARKETING_URL=http://localhost:3000
-NEXT_PUBLIC_SUPPORT_URL=http://localhost:3000/support
-NEXT_PUBLIC_PRIVACY_POLICY_URL=http://localhost:3000/privacy-policy
-NEXT_PUBLIC_TERMS_OF_SERVICE_URL=http://localhost:3000/terms-of-service
 NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<supabase-anon-key>
 SUPABASE_SERVICE_ROLE_KEY=<supabase-service-role-key>
 ```
 
-If your local dev server runs on `3001`, replace `3000` with `3001`.
+If your local app runs on another port, update `NEXT_PUBLIC_APP_URL` to match.
 
-## Supabase Dashboard Setup
-
-In Supabase, configure these settings for local development:
+## Supabase Provider Setup Notes
+Configure these settings in the Supabase dashboard for each environment:
 
 1. `Authentication -> URL Configuration`
-2. Set `Site URL` to your active local origin:
-   `http://localhost:3000`
-3. Add redirect URLs:
+2. Set `Site URL` to the active app origin, such as `http://localhost:3000`
+3. Add redirect URLs for:
    `http://localhost:3000/auth/callback`
    `http://localhost:3000/update-password`
+4. Enable both providers:
+   Google
+   Email
 
-If your app is running on port `3001`, use the same URLs with `3001`.
+Provider-specific notes:
+- Google provider setup uses the Google client ID and client secret configured in Supabase
+- email/password setup does not require extra app env vars, but confirmation and password-reset behavior must be tested alongside Google flows
+- both methods should be tested against the same shared user/account expectations
 
-## Google Sign-In
-
-Google sign-in is configured through Supabase Auth providers, not through app-side runtime code.
-
-In Supabase:
-
-1. Open `Authentication -> Providers -> Google`
-2. Enable the provider
-3. Supply the Google client ID and client secret
-4. In the Google Cloud Console, add Supabase's callback URL as an authorized redirect URI
-
-Use the callback URL shown in the Supabase Google provider settings. This is typically:
-
-`https://<project-ref>.supabase.co/auth/v1/callback`
-
-## Email And Password
-
-To make fallback auth work locally:
-
-1. Open `Authentication -> Providers -> Email`
-2. Enable email/password sign-in
-3. Decide whether `Confirm email` should stay enabled during local development
-
-Behavior:
-- If confirm email is enabled, sign-up sends a confirmation email and the user must confirm before signing in.
-- If confirm email is disabled, sign-up can create a session immediately.
-- Password reset emails redirect through `/auth/callback` and then forward to `/update-password`.
-
-## Local Verification Endpoints
-
-Use these routes while developing locally:
-
+## Verification Endpoints
 - `/api/health`
 - `/api/health/supabase`
 - `/api/health/auth`
 
-`/api/health/auth` reports the expected callback URLs and the required Supabase URL settings for the current local origin.
+`/api/health/auth` reports the callback URL, password reset callback URL, and the expected Supabase URL configuration for the current environment.

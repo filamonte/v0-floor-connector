@@ -20,4 +20,4 @@ Environment notes:
 - Moving from local to live should be an environment-variable change, not a code change.
 
 Available setup guides:
-- `docs/auth-setup.md` for Google sign-in, email/password fallback, redirect URLs, and local auth verification routes.
+- `docs/auth-setup.md` for the planned shared auth model, Google-first plus email/password support, redirect URL expectations, and local auth verification routes.

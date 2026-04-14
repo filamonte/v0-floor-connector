@@ -1,11 +1,11 @@
-import { SurfacePage } from "@/components/surface-page";
+import { AppModulePlaceholder } from "@/components/app-module-placeholder";
 
 export default function ContractorAppHomePage() {
   return (
-    <SurfacePage
-      eyebrow="Contractor App Surface"
+    <AppModulePlaceholder
+      eyebrow="Contractor Workspace"
       title="Contractor Workspace"
-      description="Internal application foundation for the contractor-facing product surface."
+      description="This protected route is the contractor-facing workspace placeholder inside the shared app shell. It gives the organization-aware layout a real destination while the first product modules are still being planned."
     />
   );
 }

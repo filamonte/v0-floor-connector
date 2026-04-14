@@ -1,11 +1,13 @@
-export const defaultAuthenticatedPath = "/app";
-export const signInPath = "/sign-in";
-export const signUpPath = "/sign-up";
+export const defaultAuthenticatedPath = "/dashboard";
+export const signInPath = "/login";
+export const signUpPath = "/signup";
+export const legacySignInPath = "/sign-in";
+export const legacySignUpPath = "/sign-up";
 export const forgotPasswordPath = "/forgot-password";
 export const updatePasswordPath = "/update-password";
 export const authCallbackPath = "/auth/callback";
 
-const protectedPrefixes = ["/app", "/portal", "/super-admin"] as const;
+const protectedPrefixes = ["/app", "/dashboard", "/portal", "/super-admin"] as const;
 
 export function isProtectedPath(pathname: string) {
   return protectedPrefixes.some(

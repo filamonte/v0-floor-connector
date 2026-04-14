@@ -1,122 +1,71 @@
 # FloorConnector
 
-FloorConnector is a production-first multi-tenant SaaS platform for epoxy flooring, concrete polishing, and specialty surface contractors. It is intended to support contractor CRM, estimating, scheduling, billing, document workflows, messaging, operations, and future ecosystem modules on one shared platform foundation.
+FloorConnector is a production-first, multi-tenant SaaS platform for epoxy flooring, concrete polishing, and specialty surface contractors. This repository is the shared foundation for future contractor app, customer portal, marketing site, and super admin surfaces.
 
 ## Canonical Repo
 - Canonical GitHub repo: `https://github.com/filamonte/v0-floor-connector.git`
 - Canonical branch: `main`
 - Local workspace root: `C:\FloorConnector`
+- Local web app env source of truth: `C:\FloorConnector\.env.local`
 
-## Current Phase
-The repository is in the foundation phase only.
+## Current Status
+The repository is still in the foundation phase.
 
-This means we are setting up:
-- repo standards
-- package boundaries
-- environment scaffolding
-- auth and database foundations when explicitly requested
-- shared conventions for future modules
+What is real today:
+- `apps/web` is the active Next.js App Router application
+- the homepage is a placeholder marketing surface
+- `/login` and `/signup` are the canonical auth entry routes
+- `/dashboard` is the default protected post-login landing route
+- protected `app`, `portal`, and `super-admin` routes already rely on Supabase-backed session checks
+- shared config and Supabase client helpers live in workspace packages
+- health endpoints exist to verify app and Supabase wiring
 
-This does not mean we should scaffold product features yet.
+What is not in scope yet:
+- product feature modules
+- business workflows
+- finalized shared auth/account domain modeling beyond the current foundation
 
 ## Architecture
-FloorConnector is being built as a modular monolith.
+FloorConnector is a modular monolith with one shared canonical data model, centralized auth and persistence foundations, and package boundaries intended to survive long-term production use.
 
-That means:
-- one codebase
-- one shared canonical data model
-- clear internal package boundaries
-- centralized auth and persistence foundations
-- modules that can evolve independently without becoming separate systems
+Non-negotiables:
+- no fake auth
+- no fake persistence
+- no local-only stand-ins for tenant state
+- no duplicate business entities across surfaces
+- explicit tenant isolation and RLS for tenant-owned data
 
-The architecture must stay production-first. No fake auth, no fake persistence, no demo shortcuts pretending to be final architecture.
+## Monorepo Structure
+Current workspace layout:
 
-## Platform Surfaces
-The platform is expected to support multiple surfaces on one shared foundation:
-- marketing site
-- contractor app
-- customer portal
-- super admin
+- `apps/web` is the active Next.js surface
+- `apps/worker` is reserved for background and integration work
+- `packages/auth` is reserved for shared auth abstractions as the auth model is formalized
+- `packages/config` centralizes environment parsing and platform constants
+- `packages/database` and `packages/db` hold shared database and Supabase access foundations
+- `packages/domain`, `packages/types`, `packages/utils`, and `packages/ui` hold shared cross-app code
+- `packages/integrations` is the boundary for third-party providers
+- `supabase/` contains Supabase project assets and migration-related work
+- `docs/` contains setup and architecture notes
+- `scripts/` contains repository utilities
 
-## Stack
-- Next.js
-- TypeScript
-- Tailwind CSS
-- shadcn/ui
-- Supabase Auth
-- Supabase Postgres
-- Supabase Storage
-- Stripe
-- Postmark
-- SignWell
-- n8n
-- QuickBooks
-- CompanyCam
-- pnpm
-- Turborepo
-
-## Production-First Rules
-- Build for real auth and real persistence from the start.
-- Use Google sign-in as the primary authentication method, with email/password retained only as a secondary fallback.
-- Preserve tenant isolation across every layer.
-- Keep business logic in shared packages, not scattered across pages.
-- Keep integrations behind adapter boundaries.
-- Prefer maintainable foundations over fast throwaway shortcuts.
-- Do not introduce future-phase features unless explicitly requested.
-
-## Architecture Principles
-- One shared data model: core business entities should be canonical and reused across modules.
-- One login per user: auth and identity should stay centralized rather than reimplemented by surface.
-- Tenant isolation: every tenant-owned record must preserve organization boundaries and support RLS.
-- Module boundaries: packages should own clear responsibilities and avoid cross-cutting duplication.
-- Event-ready architecture: design boundaries so domain events, workflows, and automation can be layered in cleanly later.
-
-## Workspace Structure
-- `apps/` contains deployable application surfaces.
-- `packages/` contains shared UI, domain, auth, config, database, types, and utility code.
-- `supabase/` contains database migrations and related Supabase assets.
-- `docs/` contains product and engineering documentation.
-  Auth setup details live in `docs/auth-setup.md`.
-
-## Local Setup
+## Local Development
 
 ### Prerequisites
 - Node.js 20 or newer
 - pnpm 9 or newer
 - Git
-- Supabase CLI
-- Vercel CLI
-- Access to a Supabase project
-- Access to a Stripe account
-- Access to Postmark
-- Google OAuth credentials
+- access to a Supabase project for local wiring verification
 
-### Initial Setup
+### Setup
 ```bash
 pnpm install
+Copy-Item .env.example .env.local
 ```
 
-Create a local environment file from the template and fill in the required values for your environment:
+The root `.env.local` is intentionally loaded by `apps/web/next.config.ts`. Do not create a separate `apps/web/.env.local`, because it can override root values and make local auth/debugging harder to reason about.
 
-```bash
-cp .env.example .env.local
-```
-
-The root `C:\FloorConnector\.env.local` file is the source of truth for local web app configuration. Do not keep a separate `apps/web/.env.local`, because it can override the root settings and cause confusing runtime mismatches.
-
-For local development, keep public URLs fully qualified and local, for example:
-
-```env
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_MARKETING_URL=http://localhost:3000
-NEXT_PUBLIC_SUPPORT_URL=http://localhost:3000/support
-NEXT_PUBLIC_PRIVACY_POLICY_URL=http://localhost:3000/privacy-policy
-NEXT_PUBLIC_TERMS_OF_SERVICE_URL=http://localhost:3000/terms-of-service
-```
-
-If Next.js starts on a different port such as `3001`, update both values to match the active local port.
-
-### Workspace Commands
+### Common Commands
 ```bash
 pnpm dev
 pnpm build
@@ -126,34 +75,58 @@ pnpm format
 pnpm format:write
 ```
 
-## Deployment Notes
+`pnpm dev` runs Turbo with `--filter=@floorconnector/web`, so local development currently centers on `apps/web`.
 
-Before deploying to Vercel, replace the local URL values with your live domains in the Vercel environment settings:
+## Current App Behavior
+- `/` is a placeholder public marketing page
+- `/login`, `/signup`, `/forgot-password`, `/update-password`, and `/auth/callback` are the active auth routes
+- `/sign-in` and `/sign-up` remain compatibility aliases to the canonical auth pages
+- `/dashboard`, `/app`, `/portal`, and `/super-admin` are protected by middleware and server-side session checks
+- `/api/health`, `/api/health/supabase`, and `/api/health/auth` are available for setup verification
+
+These routes exist to support the current foundation work. This task does not expand or redesign them.
+
+## Supabase In The Current Architecture
+Supabase is already wired as the platform foundation for:
+- browser, server, route-handler, middleware, and admin client creation
+- session exchange and cookie-backed auth flows in `apps/web`
+- health checks against Supabase configuration
+- future database, RLS, and shared auth/account work
+
+Today the web app reads:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` for server-only admin access
+
+The environment package also exposes environment-specific placeholders for development and production values so deployments can stay configuration-driven.
+
+## Planned Authentication Model
+Authentication must be designed and validated as one dual-auth system from the beginning:
+
+- Google OAuth is the primary sign-in method
+- email/password is a fully supported fallback, not a temporary shortcut
+- both methods must resolve into the same shared user/account model
+- authorization remains organization-aware and role-based
+- auth decisions stay centralized so surfaces do not create their own user systems
+
+Implementation note:
+- the current route and session foundation already uses Supabase Auth primitives
+- successful auth now defaults to the protected `/dashboard` shell unless a safe `next` path is provided
+- the next auth work should formalize the shared account model and provider-linking rules without changing the monorepo shape
+
+See `docs/auth-setup.md` for the short auth architecture note and setup guidance.
+
+## Environment Notes
+For local development, keep public URLs fully qualified and local:
 
 ```env
-NEXT_PUBLIC_APP_URL=https://app.floorconnector.com
-NEXT_PUBLIC_MARKETING_URL=https://www.floorconnector.com
-NEXT_PUBLIC_SUPPORT_URL=https://support.floorconnector.com
-NEXT_PUBLIC_PRIVACY_POLICY_URL=https://www.floorconnector.com/privacy-policy
-NEXT_PUBLIC_TERMS_OF_SERVICE_URL=https://www.floorconnector.com/terms-of-service
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_MARKETING_URL=http://localhost:3000
+NEXT_PUBLIC_SUPPORT_URL=http://localhost:3000/support
+NEXT_PUBLIC_PRIVACY_POLICY_URL=http://localhost:3000/privacy-policy
+NEXT_PUBLIC_TERMS_OF_SERVICE_URL=http://localhost:3000/terms-of-service
 ```
 
-Keep local `.env.local` values pointed at localhost, and keep deployed values in Vercel pointed at the real production domains. The code should not be changed when moving between local and live environments; only the environment variables should differ.
+If Next.js runs on another port such as `3001`, update the local URLs to match that active port.
 
-## What Not To Do
-- Do not add fake auth or mock tenant context.
-- Do not use localStorage as a substitute for backend persistence.
-- Do not create duplicate user, customer, client, or project models in separate modules.
-- Do not let integrations leak provider-specific logic throughout the app.
-- Do not skip the foundation phase to scaffold CRM, billing, projects, or portal features unless explicitly requested.
-
-## Monorepo Standards
-- Use shared packages for domain logic, config, auth, and database access.
-- Keep strict TypeScript enabled.
-- Keep linting and formatting consistent at the root.
-- Add new modules only when they fit the existing boundaries or improve them intentionally.
-
-## Auth Strategy
-- Google OAuth is the default and recommended sign-in path.
-- Email/password exists as a secondary fallback for users who cannot use Google.
-- Identity and session handling remain centralized so every surface shares the same auth foundation.
+In Vercel, replace localhost values with the live production domains. Moving between local and deployed environments should be an environment-variable change, not a code change.

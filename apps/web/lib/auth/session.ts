@@ -8,6 +8,7 @@ import {
   sanitizeRedirectPath,
   signInPath
 } from "./paths";
+import { ensureAuthenticatedUserBootstrap } from "./bootstrap";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export const getCurrentUser = cache(async () => {
@@ -30,6 +31,8 @@ export async function requireAuthenticatedUser(next = defaultAuthenticatedPath) 
     redirect(`${destination.pathname}${destination.search}`);
   }
 
+  await ensureAuthenticatedUserBootstrap();
+
   return user;
 }
 
@@ -37,6 +40,7 @@ export async function redirectIfAuthenticated(next = defaultAuthenticatedPath) {
   const user = await getCurrentUser();
 
   if (user) {
+    await ensureAuthenticatedUserBootstrap();
     redirect(sanitizeRedirectPath(next));
   }
 }
