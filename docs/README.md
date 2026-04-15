@@ -26,3 +26,9 @@ Document roles:
 - `docs/architecture.md`: target system design
 - `docs/roadmap.md`: phased implementation plan
 - `docs/current-state.md`: source of truth for implemented status
+- `docs/target-ia.md`: target contractor app navigation and workspace structure
+- `docs/workflow-spec.md`: primary contractor workflow definition
+- `docs/workflow-state-machine.md`: stages, blockers, and transition guidance
+- `docs/figma-redesign-brief.md`: workflow-first design brief for future Figma work
+- `docs/opportunity-model.md`: formal pre-project sales/intake model
+- `docs/opportunity-implementation-plan.md`: phased implementation plan for introducing opportunity

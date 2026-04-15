@@ -13,13 +13,13 @@ export const protectedAppNavItems: readonly ProtectedAppNavItem[] = [
     minRole: "member"
   },
   {
-    href: "/customers",
-    label: "Customers",
+    href: "/jobs",
+    label: "Jobs",
     minRole: "member"
   },
   {
-    href: "/projects",
-    label: "Projects",
+    href: "/leads",
+    label: "Leads",
     minRole: "member"
   },
   {
@@ -28,24 +28,24 @@ export const protectedAppNavItems: readonly ProtectedAppNavItem[] = [
     minRole: "member"
   },
   {
-    href: "/contracts",
-    label: "Contracts",
-    minRole: "member"
-  },
-  {
     href: "/invoices",
     label: "Invoices",
     minRole: "member"
   },
   {
-    href: "/jobs",
-    label: "Jobs",
+    href: "/customers",
+    label: "Customers",
+    minRole: "member"
+  },
+  {
+    href: "/materials",
+    label: "Materials",
     minRole: "member"
   },
   {
     href: "/settings",
     label: "Settings",
-    minRole: "admin"
+    minRole: "member"
   }
 ] as const;
 
@@ -56,6 +56,14 @@ export function getProtectedAppSectionLabel(pathname: string) {
 
   if (match) {
     return match.label;
+  }
+
+  if (pathname === "/projects" || pathname.startsWith("/projects/")) {
+    return "Projects";
+  }
+
+  if (pathname === "/contracts" || pathname.startsWith("/contracts/")) {
+    return "Contracts";
   }
 
   if (pathname === "/app" || pathname.startsWith("/app/")) {

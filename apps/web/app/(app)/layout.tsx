@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { ProtectedAppShell } from "@/components/protected-app-shell";
+import { DashboardAppShell } from "@/components/dashboard-app-shell";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 
@@ -17,8 +17,8 @@ export default async function ProtectedAppLayout({
   const organizationContext = await getActiveOrganizationContext(user.id);
 
   return (
-    <ProtectedAppShell user={user} organizationContext={organizationContext}>
+    <DashboardAppShell user={user} organizationContext={organizationContext}>
       {children}
-    </ProtectedAppShell>
+    </DashboardAppShell>
   );
 }
