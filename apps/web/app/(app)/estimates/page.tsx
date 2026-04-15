@@ -2,11 +2,14 @@ import Link from "next/link";
 
 import { EstimateBuilder } from "@/components/estimate-builder";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { createEstimateAction } from "@/lib/estimates/actions";
 import { listEstimates } from "@/lib/estimates/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { listProjects } from "@/lib/projects/data";
 
 type EstimatesPageProps = {
   searchParams?: Promise<{
+    projectId?: string;
     error?: string;
     message?: string;
   }>;
@@ -39,7 +42,13 @@ export default async function EstimatesPage({
     );
   }
 
-  const estimates = await listEstimates();
+  const [estimates, projects] = await Promise.all([listEstimates(), listProjects()]);
+  const projectOptions = projects.map((project) => ({
+    id: project.id,
+    name: project.name,
+    customerId: project.customerId,
+    customerName: project.customer?.name ?? null
+  }));
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(420px,1.05fr)]">
@@ -107,7 +116,22 @@ export default async function EstimatesPage({
         </div>
       </section>
 
-      <EstimateBuilder />
+      {projectOptions.length > 0 ? (
+        <EstimateBuilder
+          action={createEstimateAction}
+          projects={projectOptions}
+          initialProjectId={resolvedSearchParams.projectId}
+        />
+      ) : (
+        <aside className="rounded-3xl border border-slate-200 bg-white/85 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+            Estimate Builder
+          </p>
+          <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
+            Add at least one project before creating an estimate.
+          </div>
+        </aside>
+      )}
     </div>
   );
 }

@@ -1,10 +1,23 @@
 import "./globals.css";
 import type { Metadata } from "next";
+import { Manrope, Prata } from "next/font/google";
 import { ReactNode } from "react";
 
+const bodyFont = Manrope({
+  subsets: ["latin"],
+  variable: "--font-body"
+});
+
+const displayFont = Prata({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-display"
+});
+
 export const metadata: Metadata = {
-  title: "FloorConnector",
-  description: "Production-first software for specialty surface contractors."
+  title: "FloorConnector | The Operating System for Specialty Surface Contractors",
+  description:
+    "Investor-facing overview of FloorConnector, a vertical SaaS operating system and transaction platform for specialty surface contractors."
 };
 
 type RootLayoutProps = {
@@ -13,7 +26,7 @@ type RootLayoutProps = {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${bodyFont.variable} ${displayFont.variable}`}>
       <body>{children}</body>
     </html>
   );

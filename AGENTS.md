@@ -44,6 +44,8 @@ Agents must:
 Do not:
 - invent fake auth
 - invent fake persistence
+- use mock business data in protected app routes
+- use local-only persistence in canonical workflows
 - use localStorage as a stand-in for real application state
 - add demo seed logic unless explicitly requested
 - hardcode tenant context
@@ -52,6 +54,7 @@ Do not:
 
 Prefer:
 - real interfaces over fake workflows
+- Supabase-backed persistence when a canonical workflow requires persistence
 - server-validated inputs
 - centralized configuration and env access
 - shared domain logic in packages instead of inside pages

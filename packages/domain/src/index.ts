@@ -8,6 +8,7 @@ import type {
   MembershipStatus,
   PaymentStatus,
   ProjectStatus,
+  OpportunityStatus,
   TemplateType
 } from "@floorconnector/types";
 
@@ -46,6 +47,19 @@ export const estimateStatuses = [
   "approved",
   "rejected"
 ] as const satisfies readonly EstimateStatus[];
+
+export const opportunityStatuses = [
+  "new",
+  "contacted",
+  "qualified",
+  "site_assessment_scheduled",
+  "site_assessment_complete",
+  "estimating",
+  "proposal_sent",
+  "won",
+  "lost",
+  "converted"
+] as const satisfies readonly OpportunityStatus[];
 
 export const jobStatuses = [
   "unscheduled",
@@ -114,6 +128,19 @@ export const estimateStatusRank: Record<EstimateStatus, number> = {
   sent: 1,
   approved: 2,
   rejected: 3
+};
+
+export const opportunityStatusRank: Record<OpportunityStatus, number> = {
+  new: 0,
+  contacted: 1,
+  qualified: 2,
+  site_assessment_scheduled: 3,
+  site_assessment_complete: 4,
+  estimating: 5,
+  proposal_sent: 6,
+  won: 7,
+  lost: 8,
+  converted: 9
 };
 
 export const jobStatusRank: Record<JobStatus, number> = {
@@ -188,6 +215,13 @@ export function compareEstimateStatuses(
   right: EstimateStatus
 ) {
   return estimateStatusRank[left] - estimateStatusRank[right];
+}
+
+export function compareOpportunityStatuses(
+  left: OpportunityStatus,
+  right: OpportunityStatus
+) {
+  return opportunityStatusRank[left] - opportunityStatusRank[right];
 }
 
 export function compareJobStatuses(left: JobStatus, right: JobStatus) {

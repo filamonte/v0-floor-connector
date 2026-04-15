@@ -38,6 +38,9 @@ This README gives a high-level repository overview only. It should not be treate
 Non-negotiables:
 - no fake auth
 - no fake persistence
+- no mock business data in protected app routes
+- no local-only persistence in canonical workflows
+- if Supabase is required, use Supabase
 - no local-only stand-ins for tenant state
 - no duplicate business entities across surfaces
 - explicit tenant isolation and RLS for tenant-owned data

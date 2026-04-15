@@ -3,12 +3,16 @@ import { notFound } from "next/navigation";
 
 import { getEstimateById } from "@/lib/estimates/data";
 import { listInvoices } from "@/lib/invoices/data";
+import { updateJobAction } from "@/lib/jobs/actions";
 import { getJobById } from "@/lib/jobs/data";
-import { getMockJobById } from "@/lib/jobs/mock";
 
 type JobDetailPageProps = {
   params: Promise<{
     jobId: string;
+  }>;
+  searchParams?: Promise<{
+    error?: string;
+    message?: string;
   }>;
 };
 
@@ -29,8 +33,6 @@ function formatCurrency(value: number | string) {
 
 function getStatusClasses(status: string) {
   switch (status) {
-    case "lead":
-      return "border-amber-200 bg-amber-50 text-amber-900";
     case "scheduled":
       return "border-sky-200 bg-sky-50 text-sky-900";
     case "in_progress":
@@ -62,106 +64,66 @@ function DetailCard({ title, children }: DetailCardProps) {
   );
 }
 
-export default async function JobDetailPage({ params }: JobDetailPageProps) {
-  const { jobId } = await params;
-  const mockJob = getMockJobById(jobId);
+function getPrimaryProgressionAction(status: string) {
+  switch (status) {
+    case "unscheduled":
+      return {
+        label: "Schedule job",
+        nextStatus: "scheduled",
+        helper: "Move this work into the scheduled state when it is ready for the calendar."
+      };
+    case "scheduled":
+      return {
+        label: "Start work",
+        nextStatus: "in_progress",
+        helper: "Mark the job as in progress when the crew begins execution."
+      };
+    case "in_progress":
+      return {
+        label: "Mark complete",
+        nextStatus: "completed",
+        helper: "Mark the job complete when field work is finished and ready for billing."
+      };
+    default:
+      return null;
+  }
+}
 
-  if (mockJob) {
-    return (
-      <div className="space-y-6">
-        <section className="rounded-[2rem] border border-slate-200 bg-white/92 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-                Job Detail
-              </p>
-              <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-                {mockJob.title}
-              </h1>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-                Mock job workspace for the prototype flow. This page is designed
-                to feel like a clean read-first operational view rather than a raw record form.
-              </p>
-            </div>
-            <Link
-              href="/jobs"
-              className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-            >
-              Back to jobs
-            </Link>
-          </div>
-        </section>
+function getHeaderPrimaryAction(
+  status: string,
+  projectId: string,
+  jobId: string,
+  hasLinkedInvoice: boolean
+) {
+  const progressionAction = getPrimaryProgressionAction(status);
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <DetailCard title="Customer Info">
-            <dl className="space-y-3 text-sm leading-6 text-slate-600">
-              <div>
-                <dt className="font-medium text-slate-950">Customer</dt>
-                <dd>{mockJob.customer}</dd>
-              </div>
-              <div>
-                <dt className="font-medium text-slate-950">Location</dt>
-                <dd>{mockJob.location}</dd>
-              </div>
-            </dl>
-          </DetailCard>
-
-          <DetailCard title="Job Status">
-            <div className="space-y-4">
-              <span
-                className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusClasses(
-                  mockJob.status
-                )}`}
-              >
-                {formatStatusLabel(mockJob.status)}
-              </span>
-              <div className="text-sm leading-6 text-slate-600">
-                <p>
-                  <span className="font-medium text-slate-950">Scheduled date:</span>{" "}
-                  {formatScheduledDate(mockJob.date)}
-                </p>
-                <p className="mt-2">
-                  <span className="font-medium text-slate-950">Total:</span>{" "}
-                  {formatCurrency(mockJob.total)}
-                </p>
-              </div>
-            </div>
-          </DetailCard>
-
-          <DetailCard title="Notes">
-            <p className="text-sm leading-7 text-slate-600">{mockJob.description}</p>
-          </DetailCard>
-
-          <DetailCard title="Photos">
-            <div className="grid gap-3 sm:grid-cols-3">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="flex aspect-[4/3] items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-sm text-slate-500"
-                >
-                  Photo placeholder
-                </div>
-              ))}
-            </div>
-          </DetailCard>
-        </div>
-
-        <DetailCard title="Estimate / Invoice Summary">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4 text-sm leading-6 text-slate-600">
-              <p className="font-medium text-slate-950">Estimate</p>
-              <p className="mt-2">No linked estimate in this preview state.</p>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4 text-sm leading-6 text-slate-600">
-              <p className="font-medium text-slate-950">Invoice</p>
-              <p className="mt-2">No invoice created yet for this preview job.</p>
-            </div>
-          </div>
-        </DetailCard>
-      </div>
-    );
+  if (progressionAction) {
+    return {
+      type: "progression" as const,
+      label: progressionAction.label,
+      helper: progressionAction.helper,
+      nextStatus: progressionAction.nextStatus
+    };
   }
 
+  if (status === "completed" && !hasLinkedInvoice) {
+    return {
+      type: "link" as const,
+      label: "Create invoice",
+      helper: "Move completed work into billing using the connected invoice flow.",
+      href: `/invoices?projectId=${projectId}&jobId=${jobId}`
+    };
+  }
+
+  return null;
+}
+
+export default async function JobDetailPage({
+  params,
+  searchParams
+}: JobDetailPageProps) {
+  const { jobId } = await params;
+  const resolvedSearchParams = (await searchParams) ?? {};
   const job = await getJobById(jobId, `/jobs/${jobId}`);
 
   if (!job) {
@@ -174,6 +136,12 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
   ]);
 
   const linkedInvoice = invoices.find((invoice) => invoice.jobId === job.id) ?? null;
+  const primaryAction = getHeaderPrimaryAction(
+    job.status,
+    job.projectId,
+    job.id,
+    Boolean(linkedInvoice)
+  );
 
   return (
     <div className="space-y-6">
@@ -204,9 +172,45 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
             >
               View project
             </Link>
+            {primaryAction?.type === "link" ? (
+              <Link
+                href={primaryAction.href}
+                className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+              >
+                {primaryAction.label}
+              </Link>
+            ) : null}
+            {primaryAction?.type === "progression" ? (
+              <form action={updateJobAction}>
+                <input type="hidden" name="jobId" value={job.id} />
+                <input type="hidden" name="projectId" value={job.projectId} />
+                <input type="hidden" name="estimateId" value={job.estimateId ?? ""} />
+                <input type="hidden" name="status" value={primaryAction.nextStatus} />
+                <input type="hidden" name="scheduledDate" value={job.scheduledDate ?? ""} />
+                <input type="hidden" name="notes" value={job.notes ?? ""} />
+                <button
+                  type="submit"
+                  className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                >
+                  {primaryAction.label}
+                </button>
+              </form>
+            ) : null}
           </div>
         </div>
       </section>
+
+      {resolvedSearchParams.error ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+          {resolvedSearchParams.error}
+        </div>
+      ) : null}
+
+      {resolvedSearchParams.message ? (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+          {resolvedSearchParams.message}
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <DetailCard title="Customer Info">
@@ -294,6 +298,21 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
         </DetailCard>
       </div>
 
+      {primaryAction ? (
+        <DetailCard title="Next Action">
+          <div className="space-y-2">
+            <div>
+              <p className="text-base font-medium text-slate-950">
+                {primaryAction.label}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {primaryAction.helper}
+              </p>
+            </div>
+          </div>
+        </DetailCard>
+      ) : null}
+
       <DetailCard title="Estimate / Invoice Summary">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4 text-sm leading-6 text-slate-600">
@@ -334,12 +353,18 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
             ) : (
               <>
                 <p className="mt-2">No invoice has been created from this job yet.</p>
-                <Link
-                  href={`/invoices?projectId=${job.projectId}&jobId=${job.id}`}
-                  className="mt-3 inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-                >
-                  Create invoice
-                </Link>
+                {job.status === "completed" ? (
+                  <Link
+                    href={`/invoices?projectId=${job.projectId}&jobId=${job.id}`}
+                    className="mt-3 inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                  >
+                    Create invoice
+                  </Link>
+                ) : (
+                  <p className="mt-3 text-sm text-slate-500">
+                    Complete the job before creating an invoice from this workflow.
+                  </p>
+                )}
               </>
             )}
           </div>

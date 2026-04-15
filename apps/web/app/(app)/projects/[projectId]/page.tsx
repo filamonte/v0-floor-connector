@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 
 import { ProjectForm } from "@/components/project-form";
 import { listCustomers } from "@/lib/customers/data";
+import { listEstimates } from "@/lib/estimates/data";
+import { listInvoices } from "@/lib/invoices/data";
+import { listJobs } from "@/lib/jobs/data";
 import { updateProjectAction } from "@/lib/projects/actions";
 import { getProjectById } from "@/lib/projects/data";
 
@@ -26,14 +29,30 @@ export default async function ProjectDetailPage({
 }: ProjectDetailPageProps) {
   const { projectId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
-  const [project, customers] = await Promise.all([
+  const [project, customers, estimates, jobs, invoices] = await Promise.all([
     getProjectById(projectId, `/projects/${projectId}`),
-    listCustomers()
+    listCustomers(),
+    listEstimates(),
+    listJobs(),
+    listInvoices()
   ]);
 
   if (!project) {
     notFound();
   }
+
+  const projectEstimates = estimates.filter((estimate) => estimate.projectId === project.id);
+  const approvedEstimate = projectEstimates.find((estimate) => estimate.status === "approved");
+  const projectJobs = jobs.filter((job) => job.projectId === project.id);
+  const completedJob = projectJobs.find((job) => job.status === "completed");
+  const projectInvoices = invoices.filter((invoice) => invoice.projectId === project.id);
+  const hasInvoiceForCompletedJob = completedJob
+    ? projectInvoices.some((invoice) => invoice.jobId === completedJob.id)
+    : false;
+  const canCreateJob = Boolean(approvedEstimate);
+  const canCreateInvoice = Boolean(completedJob) && !hasInvoiceForCompletedJob;
+  const approvedEstimateId = approvedEstimate?.id ?? null;
+  const completedJobId = completedJob?.id ?? null;
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
@@ -64,20 +83,24 @@ export default async function ProjectDetailPage({
             href={`/estimates?projectId=${project.id}`}
             className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
           >
-            Create estimate for this project
+            Create estimate
           </Link>
-          <Link
-            href={`/invoices?projectId=${project.id}`}
-            className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-          >
-            Create invoice from this project
-          </Link>
-          <Link
-            href={`/jobs?projectId=${project.id}`}
-            className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-          >
-            Create job from this project
-          </Link>
+          {canCreateJob && approvedEstimateId ? (
+            <Link
+              href={`/jobs?projectId=${project.id}&estimateId=${approvedEstimateId}`}
+              className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+            >
+              Create job from approved estimate
+            </Link>
+          ) : null}
+          {canCreateInvoice && completedJobId ? (
+            <Link
+              href={`/invoices?projectId=${project.id}&jobId=${completedJobId}`}
+              className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+            >
+              Create invoice from completed job
+            </Link>
+          ) : null}
         </div>
 
         {resolvedSearchParams.error ? (
@@ -132,8 +155,32 @@ export default async function ProjectDetailPage({
             <dd className="capitalize">{formatStatusLabel(project.status)}</dd>
           </div>
           <div>
+            <dt className="font-medium text-slate-950">Estimates</dt>
+            <dd>{projectEstimates.length}</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-slate-950">Jobs</dt>
+            <dd>{projectJobs.length}</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-slate-950">Invoices</dt>
+            <dd>{projectInvoices.length}</dd>
+          </div>
+          <div>
             <dt className="font-medium text-slate-950">Scope notes</dt>
             <dd>{project.description ?? "Not provided"}</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-slate-950">Workflow readiness</dt>
+            <dd>
+              {hasInvoiceForCompletedJob
+                ? "Completed work has already moved into invoicing"
+                : completedJob
+                ? "Ready to invoice"
+                : approvedEstimate
+                  ? "Ready to create job"
+                  : "Create and approve an estimate first"}
+            </dd>
           </div>
           <div>
             <dt className="font-medium text-slate-950">Location</dt>

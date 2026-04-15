@@ -101,6 +101,7 @@ Current shell behavior:
 
 Current protected routes include:
 - `/dashboard`
+- `/leads`
 - `/customers`
 - `/projects`
 - `/estimates`
@@ -110,6 +111,36 @@ Current protected routes include:
 - `/settings`
 
 ## Business Objects Implemented
+
+### Leads / Opportunities
+
+Implemented:
+- organization-scoped opportunity schema
+- create/list/read/update flows
+- protected leads list page
+- lead detail page
+- canonical lead-to-estimate conversion flow that creates or links the downstream customer and project records as needed
+
+Opportunity statuses currently implemented:
+- `new`
+- `contacted`
+- `qualified`
+- `site_assessment_scheduled`
+- `site_assessment_complete`
+- `estimating`
+- `proposal_sent`
+- `won`
+- `lost`
+- `converted`
+
+Opportunities currently link to:
+- optional customer
+- optional project
+
+Current opportunity design notes:
+- opportunities are the canonical pre-project commercial record
+- the protected leads surface now starts the contractor revenue path before a full project exists
+- starting the estimate flow from an opportunity creates or links the canonical customer and project chain instead of introducing duplicate intake-specific entities
 
 ### Customers
 

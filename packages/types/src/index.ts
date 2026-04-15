@@ -1,6 +1,7 @@
 export type ProfileId = string;
 export type OrganizationId = string;
 export type MembershipId = string;
+export type OpportunityId = string;
 export type CustomerId = string;
 export type ProjectId = string;
 export type EstimateId = string;
@@ -22,6 +23,17 @@ export type ProjectStatus =
   | "in_progress"
   | "completed";
 export type EstimateStatus = "draft" | "sent" | "approved" | "rejected";
+export type OpportunityStatus =
+  | "new"
+  | "contacted"
+  | "qualified"
+  | "site_assessment_scheduled"
+  | "site_assessment_complete"
+  | "estimating"
+  | "proposal_sent"
+  | "won"
+  | "lost"
+  | "converted";
 export type JobStatus =
   | "unscheduled"
   | "scheduled"
@@ -103,6 +115,33 @@ export interface Customer {
   taxExemptionExpiresOn: string | null;
   retainagePercentageDefault: string;
   notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Opportunity {
+  id: OpportunityId;
+  organizationId: OrganizationId;
+  customerId: CustomerId | null;
+  projectId: ProjectId | null;
+  status: OpportunityStatus;
+  title: string;
+  source: string | null;
+  serviceType: string | null;
+  prospectName: string;
+  prospectCompanyName: string | null;
+  email: string | null;
+  phone: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  stateRegion: string | null;
+  postalCode: string | null;
+  countryCode: string | null;
+  notes: string | null;
+  qualifiedAt: string | null;
+  convertedAt: string | null;
+  lostAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
