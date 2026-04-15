@@ -1,9 +1,14 @@
 import type {
+  ContractStatus,
+  DocumentTemplateStatus,
   EstimateStatus,
+  InvoiceStatus,
   JobStatus,
   MembershipRole,
   MembershipStatus,
-  ProjectStatus
+  PaymentStatus,
+  ProjectStatus,
+  TemplateType
 } from "@floorconnector/types";
 
 export const trialPolicy = {
@@ -50,6 +55,44 @@ export const jobStatuses = [
   "canceled"
 ] as const satisfies readonly JobStatus[];
 
+export const invoiceStatuses = [
+  "draft",
+  "sent",
+  "partially_paid",
+  "paid",
+  "void"
+] as const satisfies readonly InvoiceStatus[];
+
+export const contractStatuses = [
+  "draft",
+  "sent",
+  "viewed",
+  "signed",
+  "void"
+] as const satisfies readonly ContractStatus[];
+
+export const paymentStatuses = [
+  "recorded",
+  "void"
+] as const satisfies readonly PaymentStatus[];
+
+export const taxBehaviors = [
+  "exclusive",
+  "inclusive",
+  "none"
+] as const;
+
+export const templateTypes = [
+  "estimate",
+  "invoice",
+  "contract"
+] as const satisfies readonly TemplateType[];
+
+export const documentTemplateStatuses = [
+  "active",
+  "archived"
+] as const satisfies readonly DocumentTemplateStatus[];
+
 export const membershipRoleRank: Record<MembershipRole, number> = {
   owner: 0,
   admin: 1,
@@ -81,6 +124,22 @@ export const jobStatusRank: Record<JobStatus, number> = {
   canceled: 4
 };
 
+export const invoiceStatusRank: Record<InvoiceStatus, number> = {
+  draft: 0,
+  sent: 1,
+  partially_paid: 2,
+  paid: 3,
+  void: 4
+};
+
+export const contractStatusRank: Record<ContractStatus, number> = {
+  draft: 0,
+  sent: 1,
+  viewed: 2,
+  signed: 3,
+  void: 4
+};
+
 export const estimateStatusTransitions: Record<
   EstimateStatus,
   readonly EstimateStatus[]
@@ -89,6 +148,17 @@ export const estimateStatusTransitions: Record<
   sent: ["approved", "rejected"],
   approved: [],
   rejected: []
+};
+
+export const contractStatusTransitions: Record<
+  ContractStatus,
+  readonly ContractStatus[]
+> = {
+  draft: ["sent", "void"],
+  sent: ["viewed", "void"],
+  viewed: ["signed", "void"],
+  signed: [],
+  void: []
 };
 
 export function isMembershipRole(value: string): value is MembershipRole {
@@ -124,9 +194,24 @@ export function compareJobStatuses(left: JobStatus, right: JobStatus) {
   return jobStatusRank[left] - jobStatusRank[right];
 }
 
+export function compareInvoiceStatuses(left: InvoiceStatus, right: InvoiceStatus) {
+  return invoiceStatusRank[left] - invoiceStatusRank[right];
+}
+
+export function compareContractStatuses(left: ContractStatus, right: ContractStatus) {
+  return contractStatusRank[left] - contractStatusRank[right];
+}
+
 export function canTransitionEstimateStatus(
   from: EstimateStatus,
   to: EstimateStatus
 ) {
   return estimateStatusTransitions[from].includes(to);
+}
+
+export function canTransitionContractStatus(
+  from: ContractStatus,
+  to: ContractStatus
+) {
+  return contractStatusTransitions[from].includes(to);
 }

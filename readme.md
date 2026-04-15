@@ -11,6 +11,11 @@ FloorConnector is a production-first, multi-tenant SaaS platform for epoxy floor
 ## Current Status
 The repository is still in the foundation phase.
 
+Documentation map:
+- [docs/architecture.md](C:/FloorConnector/docs/architecture.md) describes the target platform architecture
+- [docs/roadmap.md](C:/FloorConnector/docs/roadmap.md) describes the phased implementation plan
+- [docs/current-state.md](C:/FloorConnector/docs/current-state.md) is the source of truth for what is implemented today
+
 What is real today:
 - `apps/web` is the active Next.js App Router application
 - the homepage is a placeholder marketing surface
@@ -27,6 +32,8 @@ What is not in scope yet:
 
 ## Architecture
 FloorConnector is a modular monolith with one shared canonical data model, centralized auth and persistence foundations, and package boundaries intended to survive long-term production use.
+
+This README gives a high-level repository overview only. It should not be treated as the detailed source of truth for target architecture, phased delivery, or current implementation status when the dedicated docs above apply.
 
 Non-negotiables:
 - no fake auth

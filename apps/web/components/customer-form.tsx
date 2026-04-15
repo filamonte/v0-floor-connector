@@ -93,6 +93,64 @@ export function CustomerForm({
         />
       </div>
 
+      <section className="rounded-3xl border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
+        <div className="flex flex-col gap-2">
+          <p className="text-base font-semibold text-slate-950">Financial defaults</p>
+          <p className="text-sm leading-6 text-slate-600">
+            These defaults flow into future invoice, contract, and AIA-ready billing behavior.
+          </p>
+        </div>
+
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 md:col-span-2">
+            <input
+              type="checkbox"
+              name="isTaxExempt"
+              defaultChecked={customer?.isTaxExempt ?? false}
+              className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
+            />
+            <span>
+              <span className="block text-sm font-medium text-slate-900">
+                Customer is tax exempt
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-slate-500">
+                Tax exemption is stored canonically on the customer so downstream financial workflows can reuse it.
+              </span>
+            </span>
+          </label>
+
+          <AuthField
+            label="Tax exemption reason"
+            name="taxExemptionReason"
+            defaultValue={getValue(customer?.taxExemptionReason)}
+            placeholder="Resale, nonprofit, government, etc."
+          />
+          <AuthField
+            label="Exemption reference"
+            name="taxExemptionReference"
+            defaultValue={getValue(customer?.taxExemptionReference)}
+            placeholder="Certificate or permit number"
+          />
+          <AuthField
+            label="Exemption expires"
+            name="taxExemptionExpiresOn"
+            type="date"
+            defaultValue={getValue(customer?.taxExemptionExpiresOn)}
+          />
+          <AuthField
+            label="Default retainage %"
+            name="retainagePercentageDefault"
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            defaultValue={customer?.retainagePercentageDefault ?? "0.00"}
+            hint="Used as the first retainage default for invoices and future SOV workflows."
+            required
+          />
+        </div>
+      </section>
+
       <label className="block">
         <span className="mb-2 block text-sm font-medium text-slate-800">
           Notes

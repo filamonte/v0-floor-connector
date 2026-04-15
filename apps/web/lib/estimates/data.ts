@@ -14,6 +14,7 @@ import type {
 
 import type { EstimateInput, EstimateLineItemInput } from "./schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { ensureScheduleOfValuesForEstimate } from "@/lib/financial/sov";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getProjectById } from "@/lib/projects/data";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -23,6 +24,7 @@ type EstimateRow = {
   company_id: string;
   customer_id: string;
   project_id: string;
+  template_id: string | null;
   reference_number: string;
   status: EstimateStatus;
   subtotal_amount: string | number;
@@ -133,6 +135,7 @@ const estimateSelect = `
   company_id,
   customer_id,
   project_id,
+  template_id,
   reference_number,
   status,
   subtotal_amount,
@@ -181,6 +184,7 @@ function isEstimateRow(value: unknown): value is EstimateRow {
     typeof row.company_id === "string" &&
     typeof row.customer_id === "string" &&
     typeof row.project_id === "string" &&
+    (row.template_id === null || typeof row.template_id === "string") &&
     typeof row.reference_number === "string" &&
     typeof row.status === "string" &&
     (typeof row.subtotal_amount === "string" || typeof row.subtotal_amount === "number") &&
@@ -236,6 +240,7 @@ function mapEstimate(row: EstimateRow): EstimateRecord {
     organizationId: row.company_id,
     customerId: row.customer_id,
     projectId: row.project_id,
+    templateId: row.template_id,
     referenceNumber: row.reference_number,
     status: row.status,
     subtotalAmount: Number(row.subtotal_amount).toFixed(2),
@@ -650,6 +655,10 @@ export async function updateEstimateStatus(
 
   if (!updatedEstimate) {
     throw new Error("Estimate not found for this organization.");
+  }
+
+  if (nextStatus === "approved") {
+    await ensureScheduleOfValuesForEstimate(estimateId);
   }
 
   return mapEstimate(updatedEstimate);

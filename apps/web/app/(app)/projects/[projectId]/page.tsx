@@ -67,6 +67,12 @@ export default async function ProjectDetailPage({
             Create estimate for this project
           </Link>
           <Link
+            href={`/invoices?projectId=${project.id}`}
+            className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+          >
+            Create invoice from this project
+          </Link>
+          <Link
             href={`/jobs?projectId=${project.id}`}
             className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
           >

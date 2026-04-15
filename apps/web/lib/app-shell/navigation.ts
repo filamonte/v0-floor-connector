@@ -28,6 +28,16 @@ export const protectedAppNavItems: readonly ProtectedAppNavItem[] = [
     minRole: "member"
   },
   {
+    href: "/contracts",
+    label: "Contracts",
+    minRole: "member"
+  },
+  {
+    href: "/invoices",
+    label: "Invoices",
+    minRole: "member"
+  },
+  {
     href: "/jobs",
     label: "Jobs",
     minRole: "member"

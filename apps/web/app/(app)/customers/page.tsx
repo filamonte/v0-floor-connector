@@ -83,6 +83,14 @@ export default async function CustomersPage({
                     <p>{customer.phone ?? "No phone"}</p>
                   </div>
                 </div>
+                <div className="mt-3 flex flex-wrap gap-2 text-xs leading-5 text-slate-500">
+                  <span className="rounded-full border border-slate-200 bg-white px-3 py-1">
+                    {customer.isTaxExempt ? "Tax exempt" : "Taxable by default"}
+                  </span>
+                  <span className="rounded-full border border-slate-200 bg-white px-3 py-1">
+                    Retainage default {customer.retainagePercentageDefault}%
+                  </span>
+                </div>
                 {(customer.city || customer.stateRegion || customer.postalCode) ? (
                   <p className="mt-3 text-sm leading-6 text-slate-500">
                     {[customer.city, customer.stateRegion, customer.postalCode]

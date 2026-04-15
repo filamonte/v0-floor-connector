@@ -22,6 +22,7 @@ Environment notes:
 Available setup guides:
 - `docs/auth-setup.md` for the planned shared auth model, Google-first plus email/password support, redirect URL expectations, and local auth verification routes.
 
-Architecture: `docs/architecture.md`
-Current State: `docs/current-state.md`
-Roadmap: `docs/roadmap.md`
+Document roles:
+- `docs/architecture.md`: target system design
+- `docs/roadmap.md`: phased implementation plan
+- `docs/current-state.md`: source of truth for implemented status

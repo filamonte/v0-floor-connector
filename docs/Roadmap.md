@@ -1,49 +1,72 @@
-FloorConnector Roadmap
+# FloorConnector Roadmap
 
-Phase 1 (Complete)
+This document describes the **phased implementation plan** for FloorConnector.
 
-auth
-orgs
-customers
-projects
-estimates
-jobs
+It tracks delivery sequence and major platform milestones. It should be read alongside:
+- [docs/architecture.md](C:/FloorConnector/docs/architecture.md): target system design
+- [docs/current-state.md](C:/FloorConnector/docs/current-state.md): source of truth for implemented status
 
-Phase 2 (Next)
+## Phase 1
 
-invoice system
-contract system (basic)
-project workspace
-file attachments
+**Foundation-complete**
 
-Phase 3
+Phase 1 establishes the production-oriented core foundation. It means the shared architecture, tenant model, and first business objects exist and work end to end. It does **not** mean every feature in this phase is already polished or production-complete from a workflow or UX perspective.
 
-people system
-subcontractor system
-time tracking
+Included in Phase 1:
+- auth
+- orgs
+- customers
+- projects
+- estimates
+- jobs
 
-Phase 4
+## Phase 2
 
-field execution
-daily logs
-scheduling
+**Next**
 
-Phase 5
+Planned focus:
+- invoice system
+- invoice line items and total calculation
+- tax-aware and AIA-ready invoice foundation
+- reusable item/template/catalog management as shared workflow foundation
+- project workspace
+- file attachments
 
-payments
+## Phase 3
 
-AIA billing expansion
+Planned focus:
+- people system
+- subcontractor system
+- time tracking
 
-Phase 6
+## Phase 4
 
-customer portal
+Planned focus:
+- field execution
+- daily logs
+- scheduling
 
-communication system
+## Phase 5
 
-Phase 7
+Planned focus:
+- payments
+- contracts + e-sign v1 on top of approved-estimate contract generation
+- AIA billing expansion
+- shared template/document editing capability for estimates, invoices, and contracts
+- platform-seeded default catalogs/templates that provision into organization-owned copies
 
-growth system
+## Phase 6
 
-Phase 8
+Planned focus:
+- customer portal
+- communication system
 
-marketplace
+## Phase 7
+
+Planned focus:
+- growth system
+
+## Phase 8
+
+Planned focus:
+- marketplace

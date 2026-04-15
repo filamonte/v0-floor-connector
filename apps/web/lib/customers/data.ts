@@ -22,6 +22,11 @@ type CustomerRow = {
   state_region: string | null;
   postal_code: string | null;
   country_code: string | null;
+  is_tax_exempt: boolean;
+  tax_exemption_reason: string | null;
+  tax_exemption_reference: string | null;
+  tax_exemption_expires_on: string | null;
+  retainage_percentage_default: string | number;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -31,6 +36,29 @@ type CustomerScope = {
   userId: string;
   organizationId: string;
 };
+
+const customerSelect = `
+  id,
+  company_id,
+  name,
+  company_name,
+  phone,
+  email,
+  address_line_1,
+  address_line_2,
+  city,
+  state_region,
+  postal_code,
+  country_code,
+  is_tax_exempt,
+  tax_exemption_reason,
+  tax_exemption_reference,
+  tax_exemption_expires_on,
+  retainage_percentage_default,
+  notes,
+  created_at,
+  updated_at
+`;
 
 function isCustomerRow(value: unknown): value is CustomerRow {
   if (!value || typeof value !== "object") {
@@ -43,6 +71,9 @@ function isCustomerRow(value: unknown): value is CustomerRow {
     typeof row.id === "string" &&
     typeof row.company_id === "string" &&
     typeof row.name === "string" &&
+    typeof row.is_tax_exempt === "boolean" &&
+    (typeof row.retainage_percentage_default === "string" ||
+      typeof row.retainage_percentage_default === "number") &&
     typeof row.created_at === "string" &&
     typeof row.updated_at === "string"
   );
@@ -66,6 +97,11 @@ function mapCustomer(row: CustomerRow): CustomerRecord {
     stateRegion: row.state_region,
     postalCode: row.postal_code,
     countryCode: row.country_code,
+    isTaxExempt: row.is_tax_exempt,
+    taxExemptionReason: row.tax_exemption_reason,
+    taxExemptionReference: row.tax_exemption_reference,
+    taxExemptionExpiresOn: row.tax_exemption_expires_on,
+    retainagePercentageDefault: Number(row.retainage_percentage_default).toFixed(2),
     notes: row.notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at
@@ -108,25 +144,7 @@ export const listCustomers = cache(async () => {
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("customers")
-    .select(
-      `
-        id,
-        company_id,
-        name,
-        company_name,
-        phone,
-        email,
-        address_line_1,
-        address_line_2,
-        city,
-        state_region,
-        postal_code,
-        country_code,
-        notes,
-        created_at,
-        updated_at
-      `
-    )
+    .select(customerSelect)
     .eq("company_id", scope.organizationId)
     .order("name", { ascending: true });
   const data: unknown = response.data;
@@ -148,25 +166,7 @@ export async function getCustomerById(customerId: string, next = "/customers") {
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("customers")
-    .select(
-      `
-        id,
-        company_id,
-        name,
-        company_name,
-        phone,
-        email,
-        address_line_1,
-        address_line_2,
-        city,
-        state_region,
-        postal_code,
-        country_code,
-        notes,
-        created_at,
-        updated_at
-      `
-    )
+    .select(customerSelect)
     .eq("company_id", scope.organizationId)
     .eq("id", customerId)
     .maybeSingle();
@@ -201,29 +201,16 @@ export async function createCustomer(input: CustomerInput) {
       state_region: input.stateRegion,
       postal_code: input.postalCode,
       country_code: input.countryCode,
+      is_tax_exempt: input.isTaxExempt,
+      tax_exemption_reason: input.taxExemptionReason,
+      tax_exemption_reference: input.taxExemptionReference,
+      tax_exemption_expires_on: input.taxExemptionExpiresOn,
+      retainage_percentage_default: input.retainagePercentageDefault,
       notes: input.notes,
       created_by: scope.userId,
       updated_by: scope.userId
     })
-    .select(
-      `
-        id,
-        company_id,
-        name,
-        company_name,
-        phone,
-        email,
-        address_line_1,
-        address_line_2,
-        city,
-        state_region,
-        postal_code,
-        country_code,
-        notes,
-        created_at,
-        updated_at
-      `
-    )
+    .select(customerSelect)
     .single();
   const data: unknown = response.data;
   const error = response.error;
@@ -255,30 +242,17 @@ export async function updateCustomer(customerId: string, input: CustomerInput) {
       state_region: input.stateRegion,
       postal_code: input.postalCode,
       country_code: input.countryCode,
+      is_tax_exempt: input.isTaxExempt,
+      tax_exemption_reason: input.taxExemptionReason,
+      tax_exemption_reference: input.taxExemptionReference,
+      tax_exemption_expires_on: input.taxExemptionExpiresOn,
+      retainage_percentage_default: input.retainagePercentageDefault,
       notes: input.notes,
       updated_by: scope.userId
     })
     .eq("company_id", scope.organizationId)
     .eq("id", customerId)
-    .select(
-      `
-        id,
-        company_id,
-        name,
-        company_name,
-        phone,
-        email,
-        address_line_1,
-        address_line_2,
-        city,
-        state_region,
-        postal_code,
-        country_code,
-        notes,
-        created_at,
-        updated_at
-      `
-    )
+    .select(customerSelect)
     .maybeSingle();
   const data: unknown = response.data;
   const error = response.error;

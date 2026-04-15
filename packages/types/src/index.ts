@@ -5,6 +5,13 @@ export type CustomerId = string;
 export type ProjectId = string;
 export type EstimateId = string;
 export type JobId = string;
+export type InvoiceId = string;
+export type PaymentId = string;
+export type ScheduleOfValuesId = string;
+export type TemplateId = string;
+export type PlatformTemplateSeedId = string;
+export type ContractId = string;
+export type ContractRevisionId = string;
 
 export type MembershipRole = "owner" | "admin" | "manager" | "member";
 export type ProjectStatus =
@@ -21,6 +28,17 @@ export type JobStatus =
   | "in_progress"
   | "completed"
   | "canceled";
+export type InvoiceStatus =
+  | "draft"
+  | "sent"
+  | "partially_paid"
+  | "paid"
+  | "void";
+export type ContractStatus = "draft" | "sent" | "viewed" | "signed" | "void";
+export type PaymentStatus = "recorded" | "void";
+export type TaxBehavior = "exclusive" | "inclusive" | "none";
+export type TemplateType = "estimate" | "invoice" | "contract";
+export type DocumentTemplateStatus = "active" | "archived";
 
 export type MembershipStatus =
   | "invited"
@@ -79,7 +97,22 @@ export interface Customer {
   stateRegion: string | null;
   postalCode: string | null;
   countryCode: string | null;
+  isTaxExempt: boolean;
+  taxExemptionReason: string | null;
+  taxExemptionReference: string | null;
+  taxExemptionExpiresOn: string | null;
+  retainagePercentageDefault: string;
   notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OrganizationFinancialSettings {
+  organizationId: OrganizationId;
+  defaultTaxRate: string;
+  defaultTaxBehavior: TaxBehavior;
+  externalTaxProvider: string | null;
+  externalTaxProviderConfig: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -106,6 +139,7 @@ export interface Estimate {
   organizationId: OrganizationId;
   customerId: CustomerId;
   projectId: ProjectId;
+  templateId: TemplateId | null;
   referenceNumber: string;
   status: EstimateStatus;
   subtotalAmount: string;
@@ -141,6 +175,170 @@ export interface Job {
   status: JobStatus;
   scheduledDate: string | null;
   notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Invoice {
+  id: InvoiceId;
+  organizationId: OrganizationId;
+  customerId: CustomerId;
+  projectId: ProjectId;
+  estimateId: EstimateId | null;
+  jobId: JobId | null;
+  templateId: TemplateId | null;
+  referenceNumber: string;
+  billingModel: string;
+  status: InvoiceStatus;
+  issueDate: string;
+  dueDate: string | null;
+  taxRateApplied: string;
+  taxBehaviorApplied: TaxBehavior;
+  customerTaxExemptSnapshot: boolean;
+  subtotalAmount: string;
+  taxableSalesAmount: string;
+  exemptSalesAmount: string;
+  taxAmount: string;
+  taxCollectedAmount: string;
+  discountAmount: string;
+  retainagePercentage: string;
+  retainageHeldAmount: string;
+  totalAmount: string;
+  balanceDueAmount: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InvoiceLineItem {
+  id: string;
+  invoiceId: InvoiceId;
+  organizationId: OrganizationId;
+  name: string;
+  description: string | null;
+  quantity: string;
+  unit: string;
+  unitPrice: string;
+  lineTotal: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Contract {
+  id: ContractId;
+  organizationId: OrganizationId;
+  customerId: CustomerId;
+  projectId: ProjectId;
+  estimateId: EstimateId | null;
+  templateId: TemplateId | null;
+  status: ContractStatus;
+  title: string;
+  renderedSubject: string | null;
+  renderedContent: string;
+  generatedFromEstimateReference: string | null;
+  signatureProvider: string | null;
+  signatureProviderReference: string | null;
+  signatureStartedAt: string | null;
+  lockedAt: string | null;
+  editLockReason: string | null;
+  sentAt: string | null;
+  viewedAt: string | null;
+  signedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContractRevision {
+  id: ContractRevisionId;
+  organizationId: OrganizationId;
+  contractId: ContractId;
+  revisionNumber: number;
+  title: string;
+  renderedSubject: string | null;
+  renderedContent: string;
+  editSummary: string | null;
+  createdAt: string;
+}
+
+export interface Payment {
+  id: PaymentId;
+  organizationId: OrganizationId;
+  invoiceId: InvoiceId;
+  amount: string;
+  paymentDate: string;
+  paymentMethod: string;
+  reference: string | null;
+  notes: string | null;
+  status: PaymentStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ScheduleOfValues {
+  id: ScheduleOfValuesId;
+  organizationId: OrganizationId;
+  customerId: CustomerId;
+  projectId: ProjectId;
+  estimateId: EstimateId;
+  billingModel: string;
+  sourceEstimateStatus: EstimateStatus;
+  retainagePercentageDefault: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ScheduleOfValueItem {
+  id: string;
+  scheduleOfValuesId: ScheduleOfValuesId;
+  organizationId: OrganizationId;
+  estimateLineItemId: string;
+  name: string;
+  description: string | null;
+  scheduledValueAmount: string;
+  percentComplete: string;
+  priorBilledAmount: string;
+  currentBilledAmount: string;
+  retainagePercentage: string;
+  retainageHeldAmount: string;
+  retainageReleasedAmount: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlatformTemplateSeed {
+  id: PlatformTemplateSeedId;
+  templateType: TemplateType;
+  seedKey: string;
+  name: string;
+  description: string | null;
+  subjectTemplate: string | null;
+  bodyTemplate: string;
+  schemaVersion: number;
+  isDefault: boolean;
+  isActive: boolean;
+  mergeFieldManifest: string[];
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DocumentTemplate {
+  id: TemplateId;
+  organizationId: OrganizationId;
+  templateType: TemplateType;
+  sourceSeedId: PlatformTemplateSeedId | null;
+  sourceSeedKey: string | null;
+  name: string;
+  description: string | null;
+  subjectTemplate: string | null;
+  bodyTemplate: string;
+  schemaVersion: number;
+  status: DocumentTemplateStatus;
+  isDefault: boolean;
+  mergeFieldManifest: string[];
+  metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }

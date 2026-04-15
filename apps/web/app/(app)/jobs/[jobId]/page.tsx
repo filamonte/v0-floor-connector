@@ -83,6 +83,21 @@ export default async function JobDetailPage({
           </Link>
         </div>
 
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href={`/projects/${job.projectId}`}
+            className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+          >
+            View project
+          </Link>
+          <Link
+            href={`/invoices?projectId=${job.projectId}&jobId=${job.id}`}
+            className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+          >
+            Create invoice from this job
+          </Link>
+        </div>
+
         {resolvedSearchParams.error ? (
           <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
             {resolvedSearchParams.error}

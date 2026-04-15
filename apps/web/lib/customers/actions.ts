@@ -12,6 +12,10 @@ function getFieldValue(formData: FormData, key: string) {
   return typeof value === "string" ? value : "";
 }
 
+function getCheckboxValue(formData: FormData, key: string) {
+  return formData.get(key) === "on";
+}
+
 function buildRedirect(
   pathname: string,
   params: Record<string, string | undefined>
@@ -41,6 +45,11 @@ function parseCustomerInput(formData: FormData) {
     stateRegion: getFieldValue(formData, "stateRegion"),
     postalCode: getFieldValue(formData, "postalCode"),
     countryCode: getFieldValue(formData, "countryCode"),
+    isTaxExempt: getCheckboxValue(formData, "isTaxExempt"),
+    taxExemptionReason: getFieldValue(formData, "taxExemptionReason"),
+    taxExemptionReference: getFieldValue(formData, "taxExemptionReference"),
+    taxExemptionExpiresOn: getFieldValue(formData, "taxExemptionExpiresOn"),
+    retainagePercentageDefault: getFieldValue(formData, "retainagePercentageDefault"),
     notes: getFieldValue(formData, "notes")
   });
 }

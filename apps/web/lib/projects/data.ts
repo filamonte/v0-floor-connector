@@ -30,6 +30,8 @@ type ProjectRow = {
         id: string;
         name: string;
         company_name: string | null;
+        is_tax_exempt: boolean;
+        retainage_percentage_default: string | number;
       }
     | null;
 };
@@ -39,6 +41,8 @@ export type ProjectListItem = ProjectRecord & {
     id: string;
     name: string;
     companyName: string | null;
+    isTaxExempt: boolean;
+    retainagePercentageDefault: string;
   } | null;
 };
 
@@ -143,7 +147,9 @@ export const listProjects = cache(async (): Promise<ProjectListItem[]> => {
         customers (
           id,
           name,
-          company_name
+          company_name,
+          is_tax_exempt,
+          retainage_percentage_default
         )
       `
     )
@@ -167,7 +173,11 @@ export const listProjects = cache(async (): Promise<ProjectListItem[]> => {
         ? {
             id: row.customers.id,
             name: row.customers.name,
-            companyName: row.customers.company_name
+            companyName: row.customers.company_name,
+            isTaxExempt: row.customers.is_tax_exempt,
+            retainagePercentageDefault: Number(
+              row.customers.retainage_percentage_default
+            ).toFixed(2)
           }
         : null
     }))
@@ -206,7 +216,9 @@ export async function listProjectsByCustomer(customerId: string, next = "/custom
         customers (
           id,
           name,
-          company_name
+          company_name,
+          is_tax_exempt,
+          retainage_percentage_default
         )
       `
     )
@@ -231,7 +243,11 @@ export async function listProjectsByCustomer(customerId: string, next = "/custom
         ? {
             id: row.customers.id,
             name: row.customers.name,
-            companyName: row.customers.company_name
+            companyName: row.customers.company_name,
+            isTaxExempt: row.customers.is_tax_exempt,
+            retainagePercentageDefault: Number(
+              row.customers.retainage_percentage_default
+            ).toFixed(2)
           }
         : null
     }))
@@ -270,7 +286,9 @@ export async function getProjectById(projectId: string, next = "/projects") {
         customers (
           id,
           name,
-          company_name
+          company_name,
+          is_tax_exempt,
+          retainage_percentage_default
         )
       `
     )
@@ -290,11 +308,15 @@ export async function getProjectById(projectId: string, next = "/projects") {
 
   return {
     ...mapProject(data),
-    customer: data.customers
+      customer: data.customers
       ? {
           id: data.customers.id,
           name: data.customers.name,
-          companyName: data.customers.company_name
+          companyName: data.customers.company_name,
+          isTaxExempt: data.customers.is_tax_exempt,
+          retainagePercentageDefault: Number(
+            data.customers.retainage_percentage_default
+          ).toFixed(2)
         }
       : null
   };

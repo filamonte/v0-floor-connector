@@ -167,6 +167,26 @@ export default async function CustomerDetailPage({
             </dd>
           </div>
           <div>
+            <dt className="font-medium text-slate-950">Tax treatment</dt>
+            <dd>{customer.isTaxExempt ? "Tax exempt" : "Taxable by default"}</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-slate-950">Exemption reference</dt>
+            <dd>{customer.taxExemptionReference ?? "Not provided"}</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-slate-950">Exemption expires</dt>
+            <dd>
+              {customer.taxExemptionExpiresOn
+                ? new Date(`${customer.taxExemptionExpiresOn}T00:00:00`).toLocaleDateString()
+                : "Not provided"}
+            </dd>
+          </div>
+          <div>
+            <dt className="font-medium text-slate-950">Default retainage</dt>
+            <dd>{customer.retainagePercentageDefault}%</dd>
+          </div>
+          <div>
             <dt className="font-medium text-slate-950">Created</dt>
             <dd>{new Date(customer.createdAt).toLocaleString()}</dd>
           </div>

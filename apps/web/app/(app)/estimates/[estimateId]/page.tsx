@@ -108,12 +108,26 @@ export default async function EstimateDetailPage({
             Back to estimates
           </Link>
           {estimate.status === "approved" ? (
-            <Link
-              href={`/jobs?projectId=${estimate.projectId}&estimateId=${estimate.id}`}
-              className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-            >
-              Create job from approved estimate
-            </Link>
+            <>
+              <Link
+                href={`/contracts?estimateId=${estimate.id}`}
+                className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+              >
+                Generate contract from approved estimate
+              </Link>
+              <Link
+                href={`/jobs?projectId=${estimate.projectId}&estimateId=${estimate.id}`}
+                className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+              >
+                Create job from approved estimate
+              </Link>
+              <Link
+                href={`/invoices?projectId=${estimate.projectId}&estimateId=${estimate.id}`}
+                className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+              >
+                Create invoice from approved estimate
+              </Link>
+            </>
           ) : null}
           <Link
             href={`/estimates/${estimate.id}/edit`}
