@@ -1,6 +1,6 @@
 # FloorConnector
 
-FloorConnector is a production-first, multi-tenant SaaS platform for epoxy flooring, concrete polishing, and specialty surface contractors. This repository is the shared foundation for future contractor app, customer portal, marketing site, and super admin surfaces.
+FloorConnector is a production-first, multi-tenant vertical SaaS platform for epoxy flooring, concrete polishing, and specialty surface contractors. The repository already contains a real contractor app backed by Supabase, with canonical workflows that carry work from intake through billing on one shared data model.
 
 ## Canonical Repo
 - Canonical GitHub repo: `https://github.com/filamonte/v0-floor-connector.git`
@@ -9,26 +9,38 @@ FloorConnector is a production-first, multi-tenant SaaS platform for epoxy floor
 - Local web app env source of truth: `C:\FloorConnector\.env.local`
 
 ## Current Status
-The repository is still in the foundation phase.
+The repository is beyond pure setup work and already includes live business workflows. The current branch contains a functional contractor-facing system with organization-aware authentication, tenant-scoped persistence, and connected commercial and operational records.
 
 Documentation map:
-- [docs/architecture.md](C:/FloorConnector/docs/architecture.md) describes the target platform architecture
-- [docs/roadmap.md](C:/FloorConnector/docs/roadmap.md) describes the phased implementation plan
+- [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md) describes the target platform architecture
+- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md) describes the phased implementation plan
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md) is the source of truth for what is implemented today
+- [docs/workflows.md](C:/FloorConnector/docs/workflows.md) defines current and near-term business workflows
+- [docs/vision.md](C:/FloorConnector/docs/vision.md) describes the longer-term product direction
 
 What is real today:
 - `apps/web` is the active Next.js App Router application
-- the homepage is a placeholder marketing surface
-- `/login` and `/signup` are the canonical auth entry routes
-- `/dashboard` is the default protected post-login landing route
-- protected `app`, `portal`, and `super-admin` routes already rely on Supabase-backed session checks
-- shared config and Supabase client helpers live in workspace packages
-- health endpoints exist to verify app and Supabase wiring
+- Supabase Auth, organization bootstrap, and membership-aware protected flows are implemented
+- the contractor app includes live leads, customers, projects, estimates, contracts, jobs, invoices, and payment recording
+- shared templates, tax/retainage scaffolding, and AIA-ready schedule-of-values foundations are implemented
+- shared config, domain, types, and Supabase client helpers live in workspace packages
+- the homepage is still a lightweight marketing surface compared with the contractor app
 
-What is not in scope yet:
-- product feature modules
-- business workflows
-- finalized shared auth/account domain modeling beyond the current foundation
+Current implemented workflows:
+- lead or opportunity intake
+- customer management
+- project management
+- estimate creation, editing, sending, and approval progression
+- contract generation from approved estimates
+- contract review, pre-sign editing, and signature-lock scaffolding
+- job creation and progression
+- invoice creation from connected records
+- payment recording and invoice balance tracking
+
+Current capabilities are real, but some surfaces are still earlier-stage:
+- dashboard is functional but still foundational
+- settings, materials, portal, and super-admin surfaces are still limited or placeholder-level
+- scheduling, external payments, external e-sign, PDF generation, and richer project workspace features are still future work
 
 ## Architecture
 FloorConnector is a modular monolith with one shared canonical data model, centralized auth and persistence foundations, and package boundaries intended to survive long-term production use.
@@ -50,7 +62,7 @@ Current workspace layout:
 
 - `apps/web` is the active Next.js surface
 - `apps/worker` is reserved for background and integration work
-- `packages/auth` is reserved for shared auth abstractions as the auth model is formalized
+- `packages/auth` is reserved for future shared auth abstractions as the auth model is further extracted
 - `packages/config` centralizes environment parsing and platform constants
 - `packages/database` and `packages/db` hold shared database and Supabase access foundations
 - `packages/domain`, `packages/types`, `packages/utils`, and `packages/ui` hold shared cross-app code
@@ -64,6 +76,7 @@ Current workspace layout:
 ### Prerequisites
 - Node.js 20 or newer
 - pnpm 9 or newer
+- Turbo via the workspace scripts
 - Git
 - access to a Supabase project for local wiring verification
 
@@ -71,6 +84,7 @@ Current workspace layout:
 ```bash
 pnpm install
 Copy-Item .env.example .env.local
+pnpm dev
 ```
 
 The root `.env.local` is intentionally loaded by `apps/web/next.config.ts`. Do not create a separate `apps/web/.env.local`, because it can override root values and make local auth/debugging harder to reason about.
@@ -81,27 +95,30 @@ pnpm dev
 pnpm build
 pnpm lint
 pnpm typecheck
+supabase db push
 pnpm format
 pnpm format:write
 ```
 
-`pnpm dev` runs Turbo with `--filter=@floorconnector/web`, so local development currently centers on `apps/web`.
+The monorepo is managed by `pnpm` and `turbo`. `pnpm dev` runs the Turbo-driven web app workflow, and current day-to-day product work centers on `apps/web`.
 
 ## Current App Behavior
-- `/` is a placeholder public marketing page
+- `/` is the public marketing surface
 - `/login`, `/signup`, `/forgot-password`, `/update-password`, and `/auth/callback` are the active auth routes
 - `/sign-in` and `/sign-up` remain compatibility aliases to the canonical auth pages
-- `/dashboard`, `/app`, `/portal`, and `/super-admin` are protected by middleware and server-side session checks
+- `/dashboard` is the primary protected landing route
+- `/app` redirects into the protected contractor app
+- contractor-facing protected routes include `/leads`, `/customers`, `/projects`, `/estimates`, `/contracts`, `/jobs`, `/invoices`, `/materials`, and `/settings`
+- `/portal` and `/super-admin` exist as protected surfaces but remain limited compared with the contractor app
 - `/api/health`, `/api/health/supabase`, and `/api/health/auth` are available for setup verification
-
-These routes exist to support the current foundation work. This task does not expand or redesign them.
 
 ## Supabase In The Current Architecture
 Supabase is already wired as the platform foundation for:
 - browser, server, route-handler, middleware, and admin client creation
 - session exchange and cookie-backed auth flows in `apps/web`
 - health checks against Supabase configuration
-- future database, RLS, and shared auth/account work
+- canonical database persistence for the implemented contractor workflows
+- RLS-backed tenant isolation and org-scoped business records
 
 Today the web app reads:
 - `NEXT_PUBLIC_SUPABASE_URL`
@@ -125,6 +142,25 @@ Implementation note:
 - the next auth work should formalize the shared account model and provider-linking rules without changing the monorepo shape
 
 See `docs/auth-setup.md` for the short auth architecture note and setup guidance.
+
+## Current System Capabilities Vs Future Work
+
+Implemented today:
+- real Supabase-backed authentication and organization membership
+- canonical opportunities, customers, projects, estimates, contracts, jobs, invoices, and payments
+- estimate and invoice line items
+- shared template foundations for estimates, invoices, and contracts
+- tax, exemption, retainage, and schedule-of-values scaffolding
+
+Still future or partial:
+- project workspace consolidation
+- scheduling and calendar operations
+- materials and reusable catalog management UI
+- richer settings and administration UX
+- notifications, tasks, and role-based operational queues
+- customer portal workflows
+- super-admin and organization/module-control administration
+- external integrations such as e-sign, payment gateways, PDF generation, and tax providers
 
 ## Environment Notes
 For local development, keep public URLs fully qualified and local:

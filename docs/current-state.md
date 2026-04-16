@@ -25,6 +25,7 @@ Current shared canonical model includes:
 - users/profile extension
 - organizations
 - memberships
+- opportunities
 - organization financial settings
 - platform template seeds
 - document templates
@@ -108,7 +109,12 @@ Current protected routes include:
 - `/contracts`
 - `/invoices`
 - `/jobs`
+- `/materials`
 - `/settings`
+
+Additional protected surfaces currently present but still minimal:
+- `/portal`
+- `/super-admin`
 
 ## Business Objects Implemented
 
@@ -355,14 +361,21 @@ Current contract design notes:
 
 ## Current Workflow Coverage
 
+The implemented canonical flow currently spans:
+- opportunities or leads -> customers -> projects -> estimates -> contracts -> jobs -> invoices -> payments
+
 The current implemented workflow foundation supports:
 - user authentication into a protected contractor app
 - automatic first-user tenant bootstrap
+- lead and opportunity intake
+- canonical lead-to-estimate handoff through customer and project creation/linking
 - customer management
 - project management
 - estimate authoring with line items and totals
 - estimate proposal review and status progression
+- approved-estimate-to-contract generation and pre-sign contract editing
 - conversion of approved or project-based work into jobs/work orders
+- job progression through execution states
 - invoice creation and maintenance from connected project, estimate, and job records
 - invoice line-item-based totals
 - payment recording with invoice balance and paid-state recalculation
@@ -370,17 +383,19 @@ The current implemented workflow foundation supports:
 - retainage-aware invoice balance foundation
 - approved estimate item seeding for future AIA/progress billing
 - shared template selection and merge-data preparation for estimate, invoice, and contract document workflows
-- approved-estimate-to-contract generation with canonical rendered contract records
-- pre-sign contract editing with audit-friendly revision snapshots and signature-lock enforcement
+- canonical rendered contract records with revision snapshots and signature-lock scaffolding
 
 ## What Exists But Is Still Minimal
 
 These surfaces exist but are still foundational rather than production-complete:
 - dashboard
+- materials
 - settings
 - jobs/work-order execution UX
 - proposal review/share UX
 - project workspace structure
+- customer portal surface
+- super admin surface
 
 ## What Is Not Implemented Yet
 
@@ -396,16 +411,7 @@ Not implemented yet:
 - customer portal workflows
 - super admin workflows
 - organization-level module enable/disable system
-- payments in FloorConnector itself
 - full AIA/progress billing UX
 - external tax provider integration
 - rich template editing UI
 - e-sign integration workflows on top of the canonical contract record
-
-## Directional Notes
-
-The current implementation is moving toward:
-- `Project` as the operational root
-- broader company-management coverage than simple CRM
-- organization-level module control
-- one shared canonical platform model across contractor app, portal, and admin surfaces

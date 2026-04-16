@@ -3,7 +3,7 @@
 This document defines the **primary contractor workflow** FloorConnector should optimize for next.
 
 It does not replace the target platform architecture or the current implementation record. It should be read alongside:
-- [architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
+- [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
 - [target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
 - [sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): broader business workflow intent
 - [current-state.md](C:/FloorConnector/docs/current-state.md): source of truth for what is implemented today

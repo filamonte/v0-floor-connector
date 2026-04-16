@@ -3,8 +3,8 @@
 This document defines the **target information architecture** for the contractor app.
 
 It is intended to guide future navigation, workspace structure, and route decisions without forcing an immediate refactor of the current application. It should be read alongside:
-- [docs/architecture.md](C:/FloorConnector/docs/architecture.md): target platform architecture
-- [docs/roadmap.md](C:/FloorConnector/docs/roadmap.md): phased implementation plan
+- [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
+- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): source of truth for what is implemented today
 
 ## Purpose

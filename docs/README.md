@@ -23,12 +23,22 @@ Available setup guides:
 - `docs/auth-setup.md` for the planned shared auth model, Google-first plus email/password support, redirect URL expectations, and local auth verification routes.
 
 Document roles:
-- `docs/architecture.md`: target system design
-- `docs/roadmap.md`: phased implementation plan
+- `docs/Architecture.md`: target system design
+- `docs/Roadmap.md`: phased implementation plan
 - `docs/current-state.md`: source of truth for implemented status
+- `docs/workflows.md`: canonical business workflows and near-term workflow direction
+- `docs/vision.md`: long-term product direction and platform thesis
 - `docs/target-ia.md`: target contractor app navigation and workspace structure
 - `docs/workflow-spec.md`: primary contractor workflow definition
 - `docs/workflow-state-machine.md`: stages, blockers, and transition guidance
 - `docs/figma-redesign-brief.md`: workflow-first design brief for future Figma work
 - `docs/opportunity-model.md`: formal pre-project sales/intake model
 - `docs/opportunity-implementation-plan.md`: phased implementation plan for introducing opportunity
+
+## Documentation Layers
+
+- `docs/current-state.md` -> what is implemented today
+- `docs/workflows.md` -> how the implemented and near-term business workflows are intended to operate
+- `docs/Roadmap.md` -> what is being built next
+- `docs/Architecture.md` -> target system design
+- `docs/vision.md` -> where the product is intended to expand over time

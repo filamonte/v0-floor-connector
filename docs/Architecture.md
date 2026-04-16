@@ -5,9 +5,11 @@ This document describes the **target platform architecture** for FloorConnector.
 It defines the intended end-state system design, shared data model, and platform boundaries. It does **not** imply that every surface, workflow, or module listed here is already implemented today.
 
 Use these docs together:
-- [docs/architecture.md](C:/FloorConnector/docs/architecture.md): target system design
-- [docs/roadmap.md](C:/FloorConnector/docs/roadmap.md): phased implementation plan
+- [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target system design
+- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): source of truth for implemented status
+- [docs/workflows.md](C:/FloorConnector/docs/workflows.md): operational workflow definition
+- [docs/vision.md](C:/FloorConnector/docs/vision.md): long-term product direction
 
 ## Platform Overview
 
@@ -45,6 +47,7 @@ The target canonical model includes:
 - Organization
 - Membership
 - User/Profile
+- Opportunity
 - Customer
 - Project
 - Estimate
@@ -74,6 +77,8 @@ Platform-level concerns are intended to include:
 - billing
 - subscriptions
 - admin tools
+- super-admin oversight
+- platform-level module entitlements and controls
 
 ### Organization
 
@@ -82,6 +87,8 @@ Organization-level concerns are intended to include:
 - roles
 - modules
 - settings
+- organization administration
+- notification and workflow preferences
 - reusable catalogs
 - organization-owned template libraries
 
@@ -91,8 +98,13 @@ Operational concerns are intended to include:
 - customers
 - projects
 - estimates
+- contracts
 - jobs
+- scheduling and calendar workflows
+- crews
+- daily logs
 - invoices
+- notifications and tasks
 - time
 - field execution
 
@@ -114,7 +126,8 @@ Ecosystem capabilities are intended to include:
 
 The intended primary operational flow is:
 
-Customer  
+Opportunity  
+-> Customer  
 -> Project  
 -> Estimate  
 -> Contract  
@@ -167,6 +180,7 @@ The target time system is intended to include:
 
 The target communication system is intended to support:
 - internal communication
+- operational notifications and tasks
 - contractor to customer communication
 - platform to contractor communication
 
@@ -186,6 +200,7 @@ The target template system is intended to be shared across:
 - estimates
 - invoices
 - contracts
+- future PDF and document output workflows
 
 Template logic should remain centralized rather than duplicated across modules.
 

@@ -12,18 +12,18 @@ FloorConnector is a production-first, multi-tenant SaaS platform for epoxy floor
 - local web app env source of truth: `C:\FloorConnector\.env.local`
 
 ## Current Phase
-The project is in the foundation phase only.
+The project is in an implemented-foundation phase with system-alignment and next operational expansion work ahead.
 
 Allowed work in this phase:
-- repository setup
-- workspace standards
-- environment scaffolding
+- documentation alignment and repository hygiene
+- workflow tightening across existing canonical records
 - shared package boundaries
-- auth and database foundations when explicitly requested
-- documentation and operational guardrails
+- organization-aware auth, database, and server-boundary work when explicitly requested
+- project workspace, scheduling, materials, admin, and integration foundations when explicitly requested
+- production-first feature work on already-established canonical entities
 
 Disallowed unless explicitly requested:
-- feature module scaffolding beyond the requested phase
+- feature work outside the requested scope
 - fake dashboards or sample business flows
 - placeholder CRM, projects, billing, messaging, or portal implementations
 - fake or local-only persistence
