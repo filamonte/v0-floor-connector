@@ -3,17 +3,17 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
-  --background: oklch(0.97 0.012 95);
-  --foreground: oklch(0.24 0.025 210);
-  --surface: oklch(0.987 0.008 90);
-  --surface-strong: oklch(0.93 0.02 92);
-  --line: oklch(0.84 0.018 92);
-  --line-strong: oklch(0.68 0.03 190);
-  --accent: oklch(0.49 0.08 191);
-  --accent-deep: oklch(0.31 0.05 197);
-  --accent-soft: oklch(0.9 0.03 184);
-  --glow: oklch(0.8 0.05 80);
+  color-scheme: dark;
+  --background: oklch(0.13 0.01 250);
+  --foreground: oklch(0.95 0.01 250);
+  --surface: oklch(0.16 0.012 250);
+  --surface-strong: oklch(0.20 0.014 250);
+  --line: oklch(0.28 0.012 250);
+  --line-strong: oklch(0.38 0.015 250);
+  --accent: oklch(0.75 0.18 145);
+  --accent-deep: oklch(0.55 0.16 145);
+  --accent-soft: oklch(0.25 0.05 145);
+  --muted: oklch(0.55 0.01 250);
 }
 
 * {
@@ -29,18 +29,14 @@ body {
   min-height: 100vh;
   color: var(--foreground);
   background-color: var(--background);
-  font-family: var(--font-body), "Segoe UI", sans-serif;
+  font-family: var(--font-body), "Inter", "Segoe UI", sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  background-image:
-    radial-gradient(circle at top left, color-mix(in oklab, var(--glow) 30%, transparent), transparent 28%),
-    radial-gradient(circle at 85% 12%, color-mix(in oklab, var(--accent-soft) 65%, transparent), transparent 22%),
-    linear-gradient(180deg, color-mix(in oklab, var(--surface) 88%, white) 0%, var(--background) 46%, color-mix(in oklab, var(--surface-strong) 54%, white) 100%);
 }
 
 ::selection {
-  background: color-mix(in oklab, var(--accent) 18%, white);
-  color: var(--accent-deep);
+  background: color-mix(in oklab, var(--accent) 30%, transparent);
+  color: var(--foreground);
 }
 
 a {
@@ -57,41 +53,15 @@ a {
   isolation: isolate;
 }
 
-.fc-shell::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), color-mix(in oklab, var(--line) 55%, transparent) calc(100% - 1px)),
-    linear-gradient(transparent 0, transparent calc(100% - 1px), color-mix(in oklab, var(--line) 45%, transparent) calc(100% - 1px));
-  background-size: 32px 32px;
-  mask-image: linear-gradient(180deg, transparent, black 12%, black 88%, transparent);
-  opacity: 0.22;
-  z-index: -2;
-}
-
-.fc-shell::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 10% 18%, color-mix(in oklab, var(--accent-soft) 60%, transparent), transparent 24%),
-    radial-gradient(circle at 82% 12%, color-mix(in oklab, var(--glow) 25%, transparent), transparent 18%);
-  opacity: 0.9;
-  z-index: -1;
-}
-
 .fc-rule {
   height: 1px;
   width: 100%;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    color-mix(in oklab, var(--line-strong) 45%, transparent) 18%,
-    color-mix(in oklab, var(--line) 85%, transparent) 50%,
-    color-mix(in oklab, var(--line-strong) 45%, transparent) 82%,
+    var(--line) 18%,
+    var(--line-strong) 50%,
+    var(--line) 82%,
     transparent 100%
   );
 }
@@ -102,24 +72,21 @@ a {
 }
 
 .fc-panel {
-  background:
-    linear-gradient(145deg, color-mix(in oklab, var(--surface) 92%, white), color-mix(in oklab, var(--surface-strong) 56%, white));
-  border: 1px solid color-mix(in oklab, var(--line) 82%, white);
-  box-shadow:
-    0 20px 60px -44px color-mix(in oklab, var(--accent-deep) 24%, transparent),
-    inset 0 1px 0 color-mix(in oklab, white 70%, transparent);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.4);
 }
 
 .fc-text-muted {
-  color: color-mix(in oklab, var(--foreground) 64%, white);
+  color: var(--muted);
 }
 
 .fc-text-soft {
-  color: color-mix(in oklab, var(--foreground) 48%, white);
+  color: color-mix(in oklab, var(--foreground) 60%, transparent);
 }
 
 .fc-accent {
-  color: var(--accent-deep);
+  color: var(--accent);
 }
 
 .fc-balance {

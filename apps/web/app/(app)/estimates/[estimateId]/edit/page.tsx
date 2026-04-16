@@ -39,43 +39,64 @@ export default async function EstimateEditPage({
   }));
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <section className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-              Edit Estimate
-            </p>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-              {estimate.referenceNumber}
-            </h2>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Update estimate details, line items, tax, discount, and notes.
-              The proposal view stays separate so the outward-facing document
-              remains clean and readable.
-            </p>
-          </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
           <Link
             href={`/estimates/${estimate.id}`}
-            className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+            className="rounded-lg p-2 text-[--muted] transition hover:bg-[--surface] hover:text-white"
           >
-            Back to proposal
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
           </Link>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-white">
+              Edit Estimate
+            </h1>
+            <p className="mt-1 text-sm text-[--muted]">
+              {estimate.referenceNumber} · Update details and line items
+            </p>
+          </div>
         </div>
+        <Link
+          href={`/estimates/${estimate.id}`}
+          className="inline-flex items-center gap-2 rounded-lg border border-[--line] bg-[--background] px-4 py-2 text-sm font-medium text-white transition hover:bg-[--surface-strong]"
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          View Proposal
+        </Link>
+      </div>
 
-        {resolvedSearchParams.error ? (
-          <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
-            {resolvedSearchParams.error}
-          </div>
-        ) : null}
+      {/* Alerts */}
+      {resolvedSearchParams.error && (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {resolvedSearchParams.error}
+        </div>
+      )}
+      {resolvedSearchParams.message && (
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+          {resolvedSearchParams.message}
+        </div>
+      )}
 
-        {resolvedSearchParams.message ? (
-          <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
-            {resolvedSearchParams.message}
-          </div>
-        ) : null}
-
-        <div className="mt-8">
+      {/* Form */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <div className="rounded-xl border border-[--line] bg-[--surface] p-6">
           <EstimateForm
             action={updateEstimateAction}
             submitLabel="Save estimate"
@@ -84,29 +105,26 @@ export default async function EstimateEditPage({
             estimate={estimate}
           />
         </div>
-      </section>
 
-      <aside className="rounded-3xl border border-slate-200 bg-white/85 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-          Editing Notes
-        </p>
-        <div className="mt-6 space-y-4 text-sm leading-6 text-slate-600">
-          <p>
-            Line item totals roll into the estimate subtotal automatically, and
-            the database recalculates the final total after tax and discount.
-          </p>
-          <p>
-            Use the proposal page when you want a cleaner internal review or a
-            shareable layout for discussing the estimate with a customer.
-          </p>
-          <Link
-            href={`/estimates/${estimate.id}`}
-            className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-          >
-            Open proposal view
-          </Link>
+        <div className="lg:sticky lg:top-6 lg:self-start">
+          <div className="rounded-xl border border-[--line] bg-[--surface] p-6">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-[--muted]">
+              Editing Notes
+            </h3>
+            <div className="mt-4 space-y-3 text-sm text-[--muted]">
+              <p>
+                Line item totals roll into the estimate subtotal automatically.
+              </p>
+              <p>
+                The database recalculates the final total after tax and discount.
+              </p>
+              <p>
+                Use the proposal view for a cleaner layout when reviewing with customers.
+              </p>
+            </div>
+          </div>
         </div>
-      </aside>
+      </div>
     </div>
   );
 }

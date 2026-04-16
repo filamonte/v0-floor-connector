@@ -1,10 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useTransition } from "react";
 import type { Estimate, EstimateLineItem, Project } from "@floorconnector/types";
-
-import { AuthField } from "@/components/auth-field";
-import { AuthSubmitButton } from "@/components/auth-submit-button";
 
 type EstimateProjectOption = Pick<Project, "id" | "name" | "customerId"> & {
   customerName?: string | null;
@@ -42,7 +39,6 @@ function formatStatusLabel(status: string) {
 
 function parseAmount(value: string) {
   const amount = Number(value);
-
   return Number.isFinite(amount) ? amount : 0;
 }
 
@@ -87,6 +83,7 @@ export function EstimateForm({
   estimate,
   initialProjectId
 }: EstimateFormProps) {
+  const [isPending, startTransition] = useTransition();
   const [lineItems, setLineItems] = useState<LineItemDraft[]>(() =>
     createInitialLineItems(estimate)
   );
@@ -117,7 +114,6 @@ export function EstimateForm({
 
   function addLineItem() {
     const nextKey = `new-${nextLineItemId.current}`;
-
     nextLineItemId.current += 1;
     setLineItems((current) => [...current, createBlankLineItem(nextKey)]);
   }
@@ -128,26 +124,28 @@ export function EstimateForm({
     );
   }
 
+  function handleSubmit(formData: FormData) {
+    startTransition(async () => {
+      await action(formData);
+    });
+  }
+
   return (
-    <form action={action} className="space-y-6">
-      {estimate ? <input type="hidden" name="estimateId" value={estimate.id} /> : null}
+    <form action={handleSubmit} className="space-y-6">
+      {estimate && <input type="hidden" name="estimateId" value={estimate.id} />}
+      <input type="hidden" name="status" value={estimate?.status ?? "draft"} />
 
+      {/* Project & Status */}
       <div className="grid gap-4 md:grid-cols-2">
-        <input type="hidden" name="status" value={estimate?.status ?? "draft"} />
-
-        <label className="block md:col-span-2">
-          <span className="mb-2 block text-sm font-medium text-slate-800">
-            Project
-          </span>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-[--muted]">Project</label>
           <select
             name="projectId"
             defaultValue={estimate?.projectId ?? initialProjectId ?? ""}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className="mt-1 w-full rounded-lg border border-[--line] bg-[--background] px-3 py-2 text-sm text-white outline-none transition focus:border-[--line-strong] focus:ring-1 focus:ring-[--line-strong]"
             required
           >
-            <option value="" disabled>
-              Select a project
-            </option>
+            <option value="" disabled>Select a project</option>
             {projects.map((project) => (
               <option key={project.id} value={project.id}>
                 {project.name}
@@ -155,222 +153,226 @@ export function EstimateForm({
               </option>
             ))}
           </select>
-          <span className="mt-2 block text-xs leading-5 text-slate-500">
-            The customer stays aligned automatically with the selected project.
-          </span>
-        </label>
-
-        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4">
-          <p className="text-sm font-medium text-slate-900">Current status</p>
-          <p className="mt-2 text-lg font-semibold capitalize text-slate-950">
-            {formatStatusLabel(estimate?.status ?? "draft")}
-          </p>
-          <p className="mt-2 text-xs leading-5 text-slate-500">
-            Proposal workflow changes happen from the proposal page so transitions
-            stay explicit and review-friendly.
+          <p className="mt-1 text-xs text-[--muted]">
+            The customer stays aligned with the selected project.
           </p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4">
-          <p className="text-sm font-medium text-slate-900">Calculated totals</p>
-          <dl className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-            <div className="flex items-center justify-between gap-4">
-              <dt>Subtotal</dt>
-              <dd className="font-medium text-slate-950">{formatMoney(subtotal)}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <dt>Tax</dt>
-              <dd>{formatMoney(parseAmount(taxAmount))}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <dt>Discount</dt>
-              <dd>{formatMoney(parseAmount(discountAmount))}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-4 border-t border-slate-200 pt-2 text-base">
-              <dt className="font-medium text-slate-950">Total</dt>
-              <dd className="font-semibold text-slate-950">{formatMoney(total)}</dd>
-            </div>
-          </dl>
+        <div className="rounded-lg border border-[--line] bg-[--background] p-4">
+          <p className="text-sm font-medium text-[--muted]">Current status</p>
+          <p className="mt-1 text-lg font-semibold capitalize text-white">
+            {formatStatusLabel(estimate?.status ?? "draft")}
+          </p>
+        </div>
+
+        <div className="rounded-lg border border-[--line] bg-[--background] p-4">
+          <p className="text-sm font-medium text-[--muted]">Calculated total</p>
+          <p className="mt-1 text-lg font-semibold tabular-nums text-white">
+            {formatMoney(total)}
+          </p>
         </div>
       </div>
 
-      <section className="rounded-3xl border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      {/* Line Items */}
+      <div className="rounded-xl border border-[--line] bg-[--background] p-5">
+        <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base font-semibold text-slate-950">Line items</h3>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              Add the work items that make up this estimate. Line totals and summary
-              totals are calculated automatically.
+            <h3 className="font-medium text-white">Line Items</h3>
+            <p className="mt-1 text-sm text-[--muted]">
+              Add work items for this estimate
             </p>
           </div>
           <button
             type="button"
             onClick={addLineItem}
-            className="inline-flex items-center justify-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+            className="inline-flex items-center gap-2 rounded-lg border border-[--line] bg-[--surface] px-3 py-2 text-sm font-medium text-white transition hover:bg-[--surface-strong]"
           >
-            Add line item
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add Item
           </button>
         </div>
 
-        <div className="mt-6 space-y-4">
+        <div className="mt-4 space-y-4">
           {lineItems.map((lineItem, index) => {
             const lineTotal = parseAmount(lineItem.quantity) * parseAmount(lineItem.unitPrice);
 
             return (
               <div
                 key={lineItem.key}
-                className="rounded-2xl border border-slate-200 bg-white p-5"
+                className="rounded-lg border border-[--line] bg-[--surface] p-4"
               >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm font-medium text-slate-900">
-                    Line item {index + 1}
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm font-medium text-slate-600">
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="text-sm font-medium text-[--muted]">
+                    Item {index + 1}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold tabular-nums text-white">
                       {formatMoney(lineTotal)}
                     </span>
-                    {lineItems.length > 1 ? (
+                    {lineItems.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeLineItem(lineItem.key)}
-                        className="text-sm font-medium text-rose-700 transition hover:text-rose-800"
+                        className="text-sm font-medium text-red-400 transition hover:text-red-300"
                       >
                         Remove
                       </button>
-                    ) : null}
+                    )}
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <label className="block md:col-span-2">
-                    <span className="mb-2 block text-sm font-medium text-slate-800">
-                      Name
-                    </span>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-[--muted]">Name</label>
                     <input
                       name="lineItemName"
                       type="text"
                       value={lineItem.name}
-                      onChange={(event) =>
-                        updateLineItem(lineItem.key, "name", event.target.value)
-                      }
-                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                      onChange={(e) => updateLineItem(lineItem.key, "name", e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-[--line] bg-[--background] px-3 py-2 text-sm text-white placeholder:text-[--muted] outline-none transition focus:border-[--line-strong] focus:ring-1 focus:ring-[--line-strong]"
                       placeholder="Epoxy base coat"
                       required
                     />
-                  </label>
+                  </div>
 
-                  <label className="block md:col-span-2">
-                    <span className="mb-2 block text-sm font-medium text-slate-800">
-                      Description
-                    </span>
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-[--muted]">Description</label>
                     <textarea
                       name="lineItemDescription"
                       value={lineItem.description}
-                      onChange={(event) =>
-                        updateLineItem(lineItem.key, "description", event.target.value)
-                      }
-                      rows={3}
-                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
-                      placeholder="Optional scope notes for this line item"
+                      onChange={(e) => updateLineItem(lineItem.key, "description", e.target.value)}
+                      rows={2}
+                      className="mt-1 w-full rounded-lg border border-[--line] bg-[--background] px-3 py-2 text-sm text-white placeholder:text-[--muted] outline-none transition focus:border-[--line-strong] focus:ring-1 focus:ring-[--line-strong]"
+                      placeholder="Optional scope notes"
                     />
-                  </label>
+                  </div>
 
-                  <AuthField
-                    label="Quantity"
-                    id={`${lineItem.key}-quantity`}
-                    name="lineItemQuantity"
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    value={lineItem.quantity}
-                    onChange={(event) =>
-                      updateLineItem(lineItem.key, "quantity", event.target.value)
-                    }
-                    required
-                  />
-                  <AuthField
-                    label="Unit"
-                    id={`${lineItem.key}-unit`}
-                    name="lineItemUnit"
-                    type="text"
-                    value={lineItem.unit}
-                    onChange={(event) =>
-                      updateLineItem(lineItem.key, "unit", event.target.value)
-                    }
-                    placeholder="each"
-                    required
-                  />
-                  <AuthField
-                    label="Unit price"
-                    id={`${lineItem.key}-unit-price`}
-                    name="lineItemUnitPrice"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={lineItem.unitPrice}
-                    onChange={(event) =>
-                      updateLineItem(lineItem.key, "unitPrice", event.target.value)
-                    }
-                    required
-                  />
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                    <span className="block text-sm font-medium text-slate-800">
-                      Line total
-                    </span>
-                    <span className="mt-2 block text-lg font-semibold text-slate-950">
+                  <div>
+                    <label className="block text-sm font-medium text-[--muted]">Quantity</label>
+                    <input
+                      name="lineItemQuantity"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      value={lineItem.quantity}
+                      onChange={(e) => updateLineItem(lineItem.key, "quantity", e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-[--line] bg-[--background] px-3 py-2 text-sm text-white outline-none transition focus:border-[--line-strong] focus:ring-1 focus:ring-[--line-strong]"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[--muted]">Unit</label>
+                    <input
+                      name="lineItemUnit"
+                      type="text"
+                      value={lineItem.unit}
+                      onChange={(e) => updateLineItem(lineItem.key, "unit", e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-[--line] bg-[--background] px-3 py-2 text-sm text-white placeholder:text-[--muted] outline-none transition focus:border-[--line-strong] focus:ring-1 focus:ring-[--line-strong]"
+                      placeholder="each"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[--muted]">Unit Price</label>
+                    <div className="relative mt-1">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[--muted]">$</span>
+                      <input
+                        name="lineItemUnitPrice"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={lineItem.unitPrice}
+                        onChange={(e) => updateLineItem(lineItem.key, "unitPrice", e.target.value)}
+                        className="w-full rounded-lg border border-[--line] bg-[--background] py-2 pl-7 pr-3 text-sm text-white outline-none transition focus:border-[--line-strong] focus:ring-1 focus:ring-[--line-strong]"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-[--line] bg-[--background] p-3">
+                    <p className="text-sm font-medium text-[--muted]">Line Total</p>
+                    <p className="mt-1 text-lg font-semibold tabular-nums text-white">
                       {formatMoney(lineTotal)}
-                    </span>
+                    </p>
                   </div>
                 </div>
               </div>
             );
           })}
         </div>
-      </section>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <AuthField
-          label="Tax"
-          name="taxAmount"
-          type="number"
-          step="0.01"
-          min="0"
-          value={taxAmount}
-          onChange={(event) => setTaxAmount(event.target.value)}
-          required
-        />
-        <AuthField
-          label="Discount"
-          name="discountAmount"
-          type="number"
-          step="0.01"
-          min="0"
-          value={discountAmount}
-          onChange={(event) => setDiscountAmount(event.target.value)}
-          required
-        />
       </div>
 
-      <label className="block">
-        <span className="mb-2 block text-sm font-medium text-slate-800">
-          Notes
-        </span>
+      {/* Tax & Discount */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="block text-sm font-medium text-[--muted]">Tax</label>
+          <div className="relative mt-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[--muted]">$</span>
+            <input
+              name="taxAmount"
+              type="number"
+              step="0.01"
+              min="0"
+              value={taxAmount}
+              onChange={(e) => setTaxAmount(e.target.value)}
+              className="w-full rounded-lg border border-[--line] bg-[--background] py-2 pl-7 pr-3 text-sm text-white outline-none transition focus:border-[--line-strong] focus:ring-1 focus:ring-[--line-strong]"
+              required
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-[--muted]">Discount</label>
+          <div className="relative mt-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[--muted]">$</span>
+            <input
+              name="discountAmount"
+              type="number"
+              step="0.01"
+              min="0"
+              value={discountAmount}
+              onChange={(e) => setDiscountAmount(e.target.value)}
+              className="w-full rounded-lg border border-[--line] bg-[--background] py-2 pl-7 pr-3 text-sm text-white outline-none transition focus:border-[--line-strong] focus:ring-1 focus:ring-[--line-strong]"
+              required
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Notes */}
+      <div>
+        <label className="block text-sm font-medium text-[--muted]">Notes</label>
         <textarea
           name="notes"
           defaultValue={getValue(estimate?.notes)}
-          rows={5}
-          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+          rows={4}
+          className="mt-1 w-full rounded-lg border border-[--line] bg-[--background] px-3 py-2 text-sm text-white placeholder:text-[--muted] outline-none transition focus:border-[--line-strong] focus:ring-1 focus:ring-[--line-strong]"
           placeholder="Optional notes for the estimate"
         />
-      </label>
+      </div>
 
-      <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-        <AuthSubmitButton pendingLabel={pendingLabel} className="sm:min-w-[200px]">
-          <span>{submitLabel}</span>
-        </AuthSubmitButton>
-        <p className="text-sm leading-6 text-slate-500">
-          Totals are recalculated from line items in the database for auditability.
+      {/* Submit */}
+      <div className="flex items-center justify-between border-t border-[--line] pt-6">
+        <p className="text-sm text-[--muted]">
+          Totals are recalculated from line items in the database.
         </p>
+        <button
+          type="submit"
+          disabled={isPending}
+          className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-white/90 disabled:opacity-50"
+        >
+          {isPending ? (
+            <>
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black" />
+              {pendingLabel}
+            </>
+          ) : (
+            submitLabel
+          )}
+        </button>
       </div>
     </form>
   );

@@ -26,8 +26,8 @@ type RootLayoutProps = {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" className={`${bodyFont.variable} ${displayFont.variable}`}>
-      <body>{children}</body>
+    <html lang="en" className={`${bodyFont.variable} ${displayFont.variable} bg-[--background]`}>
+      <body className="bg-[--background]">{children}</body>
     </html>
   );
 }

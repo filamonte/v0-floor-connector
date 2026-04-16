@@ -15,13 +15,13 @@ function formatStatusLabel(status: EstimateStatus) {
 function getStatusButtonStyles(status: EstimateStatus) {
   switch (status) {
     case "sent":
-      return "border-amber-300 bg-amber-50 text-amber-900 hover:border-amber-400 hover:bg-amber-100";
+      return "border-blue-500/30 bg-blue-500/15 text-blue-400 hover:bg-blue-500/25";
     case "approved":
-      return "border-emerald-300 bg-emerald-50 text-emerald-900 hover:border-emerald-400 hover:bg-emerald-100";
+      return "border-emerald-500/30 bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25";
     case "rejected":
-      return "border-rose-300 bg-rose-50 text-rose-900 hover:border-rose-400 hover:bg-rose-100";
+      return "border-red-500/30 bg-red-500/15 text-red-400 hover:bg-red-500/25";
     default:
-      return "border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50";
+      return "border-[--line] bg-[--background] text-white hover:bg-[--surface-strong]";
   }
 }
 
@@ -33,9 +33,8 @@ export function EstimateStatusActions({
 
   if (nextStatuses.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
-        This estimate is in a final review state. No further status changes are
-        available from here.
+      <div className="rounded-lg border border-[--line] bg-[--background] px-4 py-3 text-sm text-[--muted]">
+        This estimate is in a final state. No further status changes are available.
       </div>
     );
   }
@@ -49,7 +48,7 @@ export function EstimateStatusActions({
           <input type="hidden" name="nextStatus" value={nextStatus} />
           <button
             type="submit"
-            className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium transition ${getStatusButtonStyles(nextStatus)}`}
+            className={`inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium transition ${getStatusButtonStyles(nextStatus)}`}
           >
             Mark as {formatStatusLabel(nextStatus)}
           </button>

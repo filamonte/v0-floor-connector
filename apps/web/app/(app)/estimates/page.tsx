@@ -1,30 +1,21 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
-import { EstimateBuilder } from "@/components/estimate-builder";
+import { EstimatesTable } from "@/components/estimates-table";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
-import { createEstimateAction } from "@/lib/estimates/actions";
 import { listEstimates } from "@/lib/estimates/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { listProjects } from "@/lib/projects/data";
 
 type EstimatesPageProps = {
   searchParams?: Promise<{
+    status?: string;
     projectId?: string;
+    search?: string;
     error?: string;
     message?: string;
   }>;
 };
-
-function formatStatusLabel(status: string) {
-  return status.replaceAll("_", " ");
-}
-
-function formatMoney(amount: string) {
-  return Number(amount).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD"
-  });
-}
 
 export default async function EstimatesPage({
   searchParams
@@ -35,14 +26,18 @@ export default async function EstimatesPage({
 
   if (!organizationContext) {
     return (
-      <section className="rounded-3xl border border-amber-200 bg-amber-50 px-8 py-6 text-sm leading-6 text-amber-900">
+      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-6 py-4 text-sm text-amber-200">
         Estimate records need an active organization before they can be created.
         Sign out and back in if this account was just initialized.
-      </section>
+      </div>
     );
   }
 
-  const [estimates, projects] = await Promise.all([listEstimates(), listProjects()]);
+  const [estimates, projects] = await Promise.all([
+    listEstimates(),
+    listProjects()
+  ]);
+
   const projectOptions = projects.map((project) => ({
     id: project.id,
     name: project.name,
@@ -51,87 +46,70 @@ export default async function EstimatesPage({
   }));
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(420px,1.05fr)]">
-      <section className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-          Estimates
-        </p>
-        <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-          Estimate records for {organizationContext.organization.displayName}
-        </h2>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-          Estimates are linked to projects, inherit the correct customer from
-          that project, and calculate their totals from explicit line items inside
-          the active organization.
-        </p>
-        <p className="mt-3 text-sm leading-6 text-slate-500">
-          Ordered by estimate status first, then most recently updated.
-        </p>
-
-        {resolvedSearchParams.error ? (
-          <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
-            {resolvedSearchParams.error}
-          </div>
-        ) : null}
-
-        {resolvedSearchParams.message ? (
-          <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
-            {resolvedSearchParams.message}
-          </div>
-        ) : null}
-
-        <div className="mt-8 grid gap-4">
-          {estimates.length > 0 ? (
-            estimates.map((estimate) => (
-              <Link
-                key={estimate.id}
-                href={`/estimates/${estimate.id}`}
-                className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4 transition hover:border-brand-200 hover:bg-white"
-              >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <h3 className="text-base font-medium text-slate-950">
-                      {estimate.referenceNumber}
-                    </h3>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">
-                      {estimate.project?.name ?? "Unknown project"}
-                    </p>
-                  </div>
-                  <div className="text-sm leading-6 text-slate-500 sm:text-right">
-                    <p className="capitalize">{formatStatusLabel(estimate.status)}</p>
-                    <p>{formatMoney(estimate.totalAmount)}</p>
-                  </div>
-                </div>
-                <p className="mt-3 text-sm leading-6 text-slate-500">
-                  {estimate.customer?.name ?? "Unknown customer"}
-                </p>
-              </Link>
-            ))
-          ) : (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-sm leading-6 text-slate-600">
-              No estimates have been created yet. Start with a project and create
-              the first estimate using the form in the right column.
-            </div>
-          )}
-        </div>
-      </section>
-
-      {projectOptions.length > 0 ? (
-        <EstimateBuilder
-          action={createEstimateAction}
-          projects={projectOptions}
-          initialProjectId={resolvedSearchParams.projectId}
-        />
-      ) : (
-        <aside className="rounded-3xl border border-slate-200 bg-white/85 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-            Estimate Builder
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-white">
+            Estimates
+          </h1>
+          <p className="mt-1 text-sm text-[--muted]">
+            Manage and track all your project estimates
           </p>
-          <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
-            Add at least one project before creating an estimate.
-          </div>
-        </aside>
+        </div>
+        <Link
+          href="/estimates/new"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-black transition hover:bg-white/90"
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+          Create Estimate
+        </Link>
+      </div>
+
+      {/* Alerts */}
+      {resolvedSearchParams.error && (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {resolvedSearchParams.error}
+        </div>
       )}
+      {resolvedSearchParams.message && (
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+          {resolvedSearchParams.message}
+        </div>
+      )}
+
+      {/* Table */}
+      <Suspense
+        fallback={
+          <div className="rounded-xl border border-[--line] bg-[--surface] p-8">
+            <div className="flex items-center justify-center">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--muted] border-t-white" />
+            </div>
+          </div>
+        }
+      >
+        <EstimatesTable
+          estimates={estimates}
+          projects={projectOptions}
+          initialFilters={{
+            status: resolvedSearchParams.status,
+            projectId: resolvedSearchParams.projectId,
+            search: resolvedSearchParams.search
+          }}
+        />
+      </Suspense>
     </div>
   );
 }
