@@ -13,6 +13,9 @@ export type TemplateId = string;
 export type PlatformTemplateSeedId = string;
 export type ContractId = string;
 export type ContractRevisionId = string;
+export type CatalogItemId = string;
+export type PlatformCatalogItemSeedId = string;
+export type PlatformUserRoleId = string;
 
 export type MembershipRole = "owner" | "admin" | "manager" | "member";
 export type ProjectStatus =
@@ -51,6 +54,7 @@ export type PaymentStatus = "recorded" | "void";
 export type TaxBehavior = "exclusive" | "inclusive" | "none";
 export type TemplateType = "estimate" | "invoice" | "contract";
 export type DocumentTemplateStatus = "active" | "archived";
+export type CatalogItemType = "material" | "service" | "system";
 
 export type MembershipStatus =
   | "invited"
@@ -150,8 +154,36 @@ export interface OrganizationFinancialSettings {
   organizationId: OrganizationId;
   defaultTaxRate: string;
   defaultTaxBehavior: TaxBehavior;
+  defaultRetainagePercentage: string;
   externalTaxProvider: string | null;
   externalTaxProviderConfig: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OrganizationWorkflowSettings {
+  organizationId: OrganizationId;
+  approvedEstimateContractTemplateId: TemplateId | null;
+  requireContractInternalApproval: boolean;
+  requireDepositBeforeJobScheduling: boolean;
+  defaultDepositPercentage: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlatformFinancialDefaults {
+  defaultTaxRate: string;
+  defaultTaxBehavior: TaxBehavior;
+  defaultRetainagePercentage: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlatformWorkflowDefaults {
+  approvedEstimateContractSeedId: PlatformTemplateSeedId | null;
+  requireContractInternalApproval: boolean;
+  requireDepositBeforeJobScheduling: boolean;
+  defaultDepositPercentage: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -378,6 +410,40 @@ export interface DocumentTemplate {
   isDefault: boolean;
   mergeFieldManifest: string[];
   metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlatformCatalogItemSeed {
+  id: PlatformCatalogItemSeedId;
+  itemType: CatalogItemType;
+  seedKey: string;
+  name: string;
+  description: string | null;
+  unit: string;
+  defaultUnitPrice: string;
+  isActive: boolean;
+  isDefault: boolean;
+  metadata: Record<string, unknown>;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CatalogItem {
+  id: CatalogItemId;
+  organizationId: OrganizationId;
+  sourceSeedId: PlatformCatalogItemSeedId | null;
+  sourceSeedKey: string | null;
+  itemType: CatalogItemType;
+  name: string;
+  description: string | null;
+  unit: string;
+  defaultUnitPrice: string;
+  status: DocumentTemplateStatus;
+  isDefault: boolean;
+  metadata: Record<string, unknown>;
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { DetailPageHeader } from "@/components/detail-page-header";
+import { DetailPanel } from "@/components/detail-panel";
 import { EstimateStatusActions } from "@/components/estimate-status-actions";
+import { LinkedRecordCard } from "@/components/linked-record-card";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { listContracts } from "@/lib/contracts/data";
 import { getEstimateById } from "@/lib/estimates/data";
+import { listInvoices } from "@/lib/invoices/data";
+import { listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 
 function formatStatusLabel(status: string) {
@@ -53,14 +59,21 @@ export default async function EstimateDetailPage({
   const { estimateId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
   const user = await requireAuthenticatedUser(`/estimates/${estimateId}`);
-  const [estimate, organizationContext] = await Promise.all([
+  const [estimate, organizationContext, contracts, jobs, invoices] = await Promise.all([
     getEstimateById(estimateId, `/estimates/${estimateId}`),
-    getActiveOrganizationContext(user.id)
+    getActiveOrganizationContext(user.id),
+    listContracts(),
+    listJobs(),
+    listInvoices()
   ]);
 
   if (!estimate) {
     notFound();
   }
+
+  const estimateContracts = contracts.filter((contract) => contract.estimateId === estimate.id);
+  const estimateJobs = jobs.filter((job) => job.estimateId === estimate.id);
+  const estimateInvoices = invoices.filter((invoice) => invoice.estimateId === estimate.id);
 
   const customerAddress = estimate.customer
     ? formatAddress([
@@ -86,73 +99,63 @@ export default async function EstimateDetailPage({
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 print:max-w-none">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between print:hidden">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-            Estimate Proposal
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-            {estimate.referenceNumber}
-          </h1>
-          <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-            Review the estimate in a cleaner proposal layout, then move it
-            through the first outward-facing workflow when it is ready.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/estimates"
-            className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-          >
-            Back to estimates
-          </Link>
-          {estimate.status === "approved" ? (
+      <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10 print:hidden">
+        <DetailPageHeader
+          eyebrow="Estimate Review"
+          title={estimate.referenceNumber}
+          description="Review the estimate as a customer-facing proposal while keeping the project, contract, job, and invoice context visible in the same workflow chain."
+          backHref="/estimates"
+          backLabel="Back to estimates"
+          actions={
             <>
+              {estimate.status === "approved" ? (
+                <>
+                  <Link
+                    href={`/contracts?estimateId=${estimate.id}`}
+                    className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                  >
+                    Generate contract
+                  </Link>
+                  <Link
+                    href={`/jobs?projectId=${estimate.projectId}&estimateId=${estimate.id}`}
+                    className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                  >
+                    Create job
+                  </Link>
+                  <Link
+                    href={`/invoices?projectId=${estimate.projectId}&estimateId=${estimate.id}`}
+                    className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                  >
+                    Create invoice
+                  </Link>
+                </>
+              ) : null}
               <Link
-                href={`/contracts?estimateId=${estimate.id}`}
-                className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                href={`/estimates/${estimate.id}/edit`}
+                className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-medium transition ${
+                  estimate.status === "approved"
+                    ? "border border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-white"
+                    : "bg-brand-700 text-white hover:bg-brand-900"
+                }`}
               >
-                Generate contract from approved estimate
-              </Link>
-              <Link
-                href={`/jobs?projectId=${estimate.projectId}&estimateId=${estimate.id}`}
-                className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-              >
-                Create job from approved estimate
-              </Link>
-              <Link
-                href={`/invoices?projectId=${estimate.projectId}&estimateId=${estimate.id}`}
-                className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-              >
-                Create invoice directly
+                Edit estimate
               </Link>
             </>
-          ) : null}
-          <Link
-            href={`/estimates/${estimate.id}/edit`}
-            className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-medium transition ${
-              estimate.status === "approved"
-                ? "border border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-white"
-                : "bg-brand-700 text-white hover:bg-brand-900"
-            }`}
-          >
-            Edit estimate
-          </Link>
-        </div>
+          }
+        />
+
+        {resolvedSearchParams.error ? (
+          <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+            {resolvedSearchParams.error}
+          </div>
+        ) : null}
+
+        {resolvedSearchParams.message ? (
+          <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+            {resolvedSearchParams.message}
+          </div>
+        ) : null}
       </div>
-
-      {resolvedSearchParams.error ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800 print:hidden">
-          {resolvedSearchParams.error}
-        </div>
-      ) : null}
-
-      {resolvedSearchParams.message ? (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800 print:hidden">
-          {resolvedSearchParams.message}
-        </div>
-      ) : null}
 
       <section className="rounded-[2rem] border border-slate-200 bg-white px-6 py-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] sm:px-8 sm:py-10 print:rounded-none print:border-none print:px-0 print:py-0 print:shadow-none">
         <div className="flex flex-col gap-6 border-b border-slate-200 pb-8 sm:flex-row sm:items-start sm:justify-between">
@@ -263,7 +266,7 @@ export default async function EstimateDetailPage({
           </div>
         </div>
 
-        <div className="grid gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="grid gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-6">
             {estimate.notes ? (
               <section>
@@ -285,51 +288,105 @@ export default async function EstimateDetailPage({
               </section>
             )}
 
-            <section className="print:hidden">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-                Workflow Actions
-              </p>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                Move the estimate through the first outward-facing workflow using
-                the status actions below. Final states intentionally block further
-                changes from this view.
-              </p>
-              <div className="mt-4">
-                <EstimateStatusActions
-                  estimateId={estimate.id}
-                  currentStatus={estimate.status}
-                />
-              </div>
+            <DetailPanel
+              title="Workflow Actions"
+              description="Move the estimate through the commercial workflow while keeping downstream actions in the right order."
+            >
+              <EstimateStatusActions estimateId={estimate.id} currentStatus={estimate.status} />
               {estimate.status !== "approved" ? (
                 <p className="mt-4 text-sm leading-6 text-slate-500">
-                  Jobs can be created from this estimate after it reaches the approved state.
+                  Jobs and contracts should be created after this estimate reaches the approved state.
                 </p>
               ) : null}
-            </section>
+            </DetailPanel>
           </div>
 
-          <aside className="rounded-3xl border border-slate-200 bg-slate-50/70 px-6 py-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-              Totals
-            </p>
-            <dl className="mt-5 space-y-3 text-sm leading-6 text-slate-600">
-              <div className="flex items-center justify-between gap-4">
-                <dt>Subtotal</dt>
-                <dd>{formatMoney(estimate.subtotalAmount)}</dd>
+          <aside className="space-y-6">
+            <DetailPanel title="Connected Records">
+              <div className="grid gap-4">
+                {estimate.project ? (
+                  <LinkedRecordCard
+                    href={`/projects/${estimate.project.id}`}
+                    title={estimate.project.name}
+                    subtitle="Project"
+                    meta={estimate.customer?.name ?? "Unknown customer"}
+                    badge={
+                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                        {formatStatusLabel(estimate.project.status)}
+                      </span>
+                    }
+                  />
+                ) : null}
+                {estimateContracts.map((contract) => (
+                  <LinkedRecordCard
+                    key={contract.id}
+                    href={`/contracts/${contract.id}`}
+                    title={contract.title}
+                    subtitle="Contract"
+                    meta={contract.template?.name ?? "Shared template"}
+                    badge={
+                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                        {formatStatusLabel(contract.status)}
+                      </span>
+                    }
+                  />
+                ))}
+                {estimateJobs.map((job) => (
+                  <LinkedRecordCard
+                    key={job.id}
+                    href={`/jobs/${job.id}`}
+                    title={job.project?.name ?? "Job"}
+                    subtitle="Job"
+                    meta={job.scheduledDate ? `Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}` : "Unscheduled"}
+                    badge={
+                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                        {formatStatusLabel(job.status)}
+                      </span>
+                    }
+                  />
+                ))}
+                {estimateInvoices.map((invoice) => (
+                  <LinkedRecordCard
+                    key={invoice.id}
+                    href={`/invoices/${invoice.id}`}
+                    title={invoice.referenceNumber}
+                    subtitle="Invoice"
+                    meta={`Balance due ${formatMoney(invoice.balanceDueAmount)}`}
+                    badge={
+                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                        {formatStatusLabel(invoice.status)}
+                      </span>
+                    }
+                  />
+                ))}
+                {estimateContracts.length === 0 && estimateJobs.length === 0 && estimateInvoices.length === 0 ? (
+                  <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
+                    No downstream contract, job, or invoice records are linked to this estimate yet.
+                  </p>
+                ) : null}
               </div>
-              <div className="flex items-center justify-between gap-4">
-                <dt>Discount</dt>
-                <dd>-{formatMoney(estimate.discountAmount)}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <dt>Tax</dt>
-                <dd>{formatMoney(estimate.taxAmount)}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-4 border-t border-slate-200 pt-3 text-base font-semibold text-slate-950">
-                <dt>Total</dt>
-                <dd>{formatMoney(estimate.totalAmount)}</dd>
-              </div>
-            </dl>
+            </DetailPanel>
+
+            <DetailPanel title="Totals">
+              <dl className="space-y-3 text-sm leading-6 text-slate-600">
+                <div className="flex items-center justify-between gap-4">
+                  <dt>Subtotal</dt>
+                  <dd>{formatMoney(estimate.subtotalAmount)}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <dt>Discount</dt>
+                  <dd>-{formatMoney(estimate.discountAmount)}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <dt>Tax</dt>
+                  <dd>{formatMoney(estimate.taxAmount)}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-4 border-t border-slate-200 pt-3 text-base font-semibold text-slate-950">
+                  <dt>Total</dt>
+                  <dd>{formatMoney(estimate.totalAmount)}</dd>
+                </div>
+              </dl>
+            </DetailPanel>
           </aside>
         </div>
       </section>

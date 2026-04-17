@@ -8,6 +8,7 @@ import type { Opportunity as OpportunityRecord } from "@floorconnector/types";
 import type { OpportunityInput } from "./schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 type OpportunityRow = {
@@ -396,6 +397,7 @@ export async function ensureOpportunityEstimateFlow(opportunityId: string) {
   let projectId = opportunity.projectId;
 
   if (!customerId) {
+    const financialSettings = await getOrganizationFinancialSettings(scope.organizationId);
     const customerResponse = await supabase
       .from("customers")
       .insert({
@@ -412,7 +414,7 @@ export async function ensureOpportunityEstimateFlow(opportunityId: string) {
         country_code: opportunity.countryCode,
         notes: opportunity.notes,
         is_tax_exempt: false,
-        retainage_percentage_default: "0.00",
+        retainage_percentage_default: financialSettings.defaultRetainagePercentage,
         created_by: scope.userId,
         updated_by: scope.userId
       })

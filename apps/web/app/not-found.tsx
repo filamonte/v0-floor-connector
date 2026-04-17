@@ -12,14 +12,22 @@ export default function NotFoundPage() {
         </h1>
         <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600">
           The route you requested is not available in the current FloorConnector
-          foundation.
+          application or may no longer be valid.
         </p>
-        <Link
-          href="/"
-          className="mt-8 inline-flex rounded-full bg-brand-700 px-5 py-3 text-sm font-medium text-white transition hover:bg-brand-900"
-        >
-          Return home
-        </Link>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link
+            href="/"
+            className="inline-flex rounded-full bg-brand-700 px-5 py-3 text-sm font-medium text-white transition hover:bg-brand-900"
+          >
+            Return home
+          </Link>
+          <Link
+            href="/dashboard"
+            className="inline-flex rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
+          >
+            Open dashboard
+          </Link>
+        </div>
       </div>
     </main>
   );

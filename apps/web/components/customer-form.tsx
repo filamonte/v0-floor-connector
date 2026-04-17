@@ -8,6 +8,7 @@ type CustomerFormProps = {
   submitLabel: string;
   pendingLabel: string;
   customer?: Customer | null;
+  defaultRetainagePercentage?: string;
 };
 
 function getValue(value: string | null | undefined) {
@@ -18,7 +19,8 @@ export function CustomerForm({
   action,
   submitLabel,
   pendingLabel,
-  customer
+  customer,
+  defaultRetainagePercentage
 }: CustomerFormProps) {
   return (
     <form action={action} className="space-y-5">
@@ -93,7 +95,7 @@ export function CustomerForm({
         />
       </div>
 
-      <section className="rounded-3xl border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
+      <section className="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
         <div className="flex flex-col gap-2">
           <p className="text-base font-semibold text-slate-950">Financial defaults</p>
           <p className="text-sm leading-6 text-slate-600">
@@ -102,7 +104,7 @@ export function CustomerForm({
         </div>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 md:col-span-2">
+          <label className="flex items-start gap-3 rounded-[1.5rem] border border-slate-200 bg-white px-4 py-4 md:col-span-2">
             <input
               type="checkbox"
               name="isTaxExempt"
@@ -144,7 +146,11 @@ export function CustomerForm({
             min="0"
             max="100"
             step="0.01"
-            defaultValue={customer?.retainagePercentageDefault ?? "0.00"}
+            defaultValue={
+              customer?.retainagePercentageDefault ??
+              defaultRetainagePercentage ??
+              "0.00"
+            }
             hint="Used as the first retainage default for invoices and future SOV workflows."
             required
           />

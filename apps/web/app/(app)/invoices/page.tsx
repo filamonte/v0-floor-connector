@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AppEmptyState } from "@/components/app-empty-state";
 import { InvoiceForm } from "@/components/invoice-form";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { createInvoiceAction } from "@/lib/invoices/actions";
@@ -116,99 +117,152 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
     estimateId: job.estimate?.id ?? null
   }));
 
+  const draftCount = invoices.filter((invoice) => invoice.status === "draft").length;
+  const sentCount = invoices.filter((invoice) => invoice.status === "sent").length;
+  const overdueCount = invoices.filter(
+    (invoice) =>
+      invoice.dueDate !== null &&
+      invoice.status !== "paid" &&
+      invoice.status !== "void" &&
+      invoice.dueDate < "2026-04-16"
+  ).length;
+
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
-      <section className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-          Invoices
-        </p>
-        <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-          Invoice records for {organizationContext.organization.displayName}
-        </h2>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-          Invoices are canonical financial records connected to projects, customers,
-          and optionally the approved estimate or job they came from.
-        </p>
-        <div className="mt-4 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4 text-sm leading-6 text-slate-600 sm:grid-cols-3">
-          <div>
-            <p className="font-medium text-slate-950">Org tax default</p>
-            <p>{financialSettings.defaultTaxBehavior.replaceAll("_", " ")}</p>
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(390px,0.9fr)]">
+      <section className="space-y-6">
+        <section className="rounded-[2rem] border border-slate-200 bg-white/92 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-700">
+            Invoices
+          </p>
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+            Billing records for {organizationContext.organization.displayName}
+          </h2>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
+            Invoices stay connected to projects, customers, estimates, and jobs so collections and payment history never drift away from the operational record.
+          </p>
+          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
+              <p className="text-sm font-medium text-slate-950">Draft</p>
+              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{draftCount}</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
+              <p className="text-sm font-medium text-slate-950">Sent</p>
+              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{sentCount}</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
+              <p className="text-sm font-medium text-slate-950">Overdue</p>
+              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{overdueCount}</p>
+            </div>
           </div>
-          <div>
-            <p className="font-medium text-slate-950">Org tax rate</p>
-            <p>{formatRate(financialSettings.defaultTaxRate)}</p>
+          <div className="mt-6 grid gap-3 rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4 text-sm leading-6 text-slate-600 sm:grid-cols-3">
+            <div>
+              <p className="font-medium text-slate-950">Org tax default</p>
+              <p>{financialSettings.defaultTaxBehavior.replaceAll("_", " ")}</p>
+            </div>
+            <div>
+              <p className="font-medium text-slate-950">Org tax rate</p>
+              <p>{formatRate(financialSettings.defaultTaxRate)}</p>
+            </div>
+            <div>
+              <p className="font-medium text-slate-950">AIA-ready billing</p>
+              <p>Approved estimate items can seed future SOV records.</p>
+            </div>
           </div>
-          <div>
-            <p className="font-medium text-slate-950">AIA-ready billing</p>
-            <p>Approved estimate items can seed future SOV records.</p>
-          </div>
-        </div>
-        <p className="mt-3 text-sm leading-6 text-slate-500">
-          Ordered by invoice status first, then due date where available.
-        </p>
+        </section>
 
         {resolvedSearchParams.error ? (
-          <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
             {resolvedSearchParams.error}
           </div>
         ) : null}
 
         {resolvedSearchParams.message ? (
-          <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
             {resolvedSearchParams.message}
           </div>
         ) : null}
 
-        <div className="mt-8 grid gap-4">
-          {invoices.length > 0 ? (
-            invoices.map((invoice) => (
-              <Link
-                key={invoice.id}
-                href={`/invoices/${invoice.id}`}
-                className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4 transition hover:border-brand-200 hover:bg-white"
-              >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <h3 className="text-base font-medium text-slate-950">
-                      {invoice.referenceNumber}
-                    </h3>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">
-                      {invoice.project?.name ?? "Unknown project"}
-                    </p>
-                  </div>
-                  <div className="text-sm leading-6 text-slate-500 sm:text-right">
-                    <p className="capitalize">{formatStatusLabel(invoice.status)}</p>
-                    <p>{formatMoney(invoice.balanceDueAmount)}</p>
-                  </div>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-3 text-sm leading-6 text-slate-500">
-                  <span>{invoice.customer?.name ?? "Unknown customer"}</span>
-                  <span>
-                    Taxable: {formatMoney(invoice.taxableSalesAmount)}
-                  </span>
-                  <span>
-                    Tax collected: {formatMoney(invoice.taxCollectedAmount)}
-                  </span>
-                </div>
-              </Link>
-            ))
-          ) : (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-sm leading-6 text-slate-600">
-              No invoices have been created yet. Start from a project, approved
-              estimate, or job to create the first financial record.
+        <section className="rounded-[2rem] border border-slate-200 bg-white/92 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur">
+          <div className="border-b border-slate-200 px-6 py-5 sm:px-8">
+            <div className="hidden grid-cols-[minmax(0,1.35fr)_1fr_160px_140px] gap-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 md:grid">
+              <span>Invoice</span>
+              <span>Project</span>
+              <span>Status</span>
+              <span className="text-right">Balance due</span>
             </div>
-          )}
-        </div>
+            <div className="md:hidden">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                Invoices list
+              </p>
+            </div>
+          </div>
+
+          <div className="divide-y divide-slate-200">
+            {invoices.length > 0 ? (
+              invoices.map((invoice) => (
+                <Link
+                  key={invoice.id}
+                  href={`/invoices/${invoice.id}`}
+                  className="group block px-6 py-5 transition hover:bg-slate-50/70 sm:px-8"
+                >
+                  <div className="grid gap-4 md:grid-cols-[minmax(0,1.35fr)_1fr_160px_140px] md:items-center">
+                    <div className="min-w-0">
+                      <h3 className="text-base font-semibold text-slate-950 transition group-hover:text-brand-700">
+                        {invoice.referenceNumber}
+                      </h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-500">
+                        {invoice.customer?.name ?? "Unknown customer"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                        Project
+                      </p>
+                      <p className="text-sm font-medium text-slate-700">
+                        {invoice.project?.name ?? "Unknown project"}
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">
+                        Tax collected {formatMoney(invoice.taxCollectedAmount)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                        Status
+                      </p>
+                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                        {formatStatusLabel(invoice.status)}
+                      </span>
+                    </div>
+                    <div className="md:text-right">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                        Balance due
+                      </p>
+                      <p className="text-sm font-semibold text-slate-950">
+                        {formatMoney(invoice.balanceDueAmount)}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="px-6 py-8 sm:px-8">
+                <AppEmptyState
+                  eyebrow="No invoices yet"
+                  title="Create the first invoice"
+                  description="Invoices remain canonical financial records tied to the same project, customer, estimate, and job context instead of becoming a disconnected billing module."
+                />
+              </div>
+            )}
+          </div>
+        </section>
       </section>
 
-      <aside className="rounded-3xl border border-slate-200 bg-white/85 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+      <aside className="rounded-[2rem] border border-slate-200 bg-white/88 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-700">
           New Invoice
         </p>
         <p className="mt-4 text-sm leading-6 text-slate-600">
-          Create a connected invoice from an existing project. Approved estimates
-          and jobs can prefill line items and source relationships without duplicating
-          customer or project data.
+          Create a connected invoice from an existing project. Approved estimates and jobs can prefill line items and source relationships without duplicating customer or project data.
         </p>
         {projectOptions.length > 0 ? (
           <div className="mt-6">

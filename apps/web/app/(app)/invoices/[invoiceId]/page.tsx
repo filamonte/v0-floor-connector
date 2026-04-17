@@ -1,8 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { DetailPageHeader } from "@/components/detail-page-header";
+import { DetailPanel } from "@/components/detail-panel";
 import { InvoiceForm } from "@/components/invoice-form";
 import { InvoicePaymentForm } from "@/components/invoice-payment-form";
+import { LinkedRecordCard } from "@/components/linked-record-card";
 import {
   recordInvoicePaymentAction,
   updateInvoiceAction
@@ -27,7 +29,7 @@ function formatStatusLabel(status: string) {
   return status.replaceAll("_", " ");
 }
 
-function formatMoney(amount: string) {
+function formatMoney(amount: string | number) {
   return Number(amount).toLocaleString("en-US", {
     style: "currency",
     currency: "USD"
@@ -87,42 +89,38 @@ export default async function InvoiceDetailPage({
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <section className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-              Invoice Detail
-            </p>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-              {invoice.referenceNumber}
-            </h2>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Update the canonical invoice record here. Invoices stay connected to
-              the same project, customer, optional estimate/job, line items, tax
-              snapshots, retainage, and recorded payments.
-            </p>
-          </div>
-          <Link
-            href="/invoices"
-            className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-          >
-            Back to invoices
-          </Link>
-        </div>
+      <section className="space-y-6">
+        <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+          <DetailPageHeader
+            eyebrow="Invoice Review"
+            title={invoice.referenceNumber}
+            description="Review the canonical invoice in project context, with the connected customer, estimate, job, totals, and payments all visible from one billing surface."
+            backHref="/invoices"
+            backLabel="Back to invoices"
+            actions={
+              invoice.status !== "void" ? (
+                <a
+                  href="#payment-recording"
+                  className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                >
+                  Record payment
+                </a>
+              ) : null
+            }
+          />
 
-        {resolvedSearchParams.error ? (
-          <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
-            {resolvedSearchParams.error}
-          </div>
-        ) : null}
+          {resolvedSearchParams.error ? (
+            <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+              {resolvedSearchParams.error}
+            </div>
+          ) : null}
 
-        {resolvedSearchParams.message ? (
-          <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
-            {resolvedSearchParams.message}
-          </div>
-        ) : null}
+          {resolvedSearchParams.message ? (
+            <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+              {resolvedSearchParams.message}
+            </div>
+          ) : null}
 
-        <div className="mt-8">
           <InvoiceForm
             action={updateInvoiceAction}
             submitLabel="Save invoice"
@@ -142,71 +140,60 @@ export default async function InvoiceDetailPage({
       </section>
 
       <aside className="space-y-6">
-        <section className="rounded-3xl border border-slate-200 bg-white/85 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-            Invoice Summary
-          </p>
-          <dl className="mt-6 space-y-4 text-sm leading-6 text-slate-600">
-            <div>
-              <dt className="font-medium text-slate-950">Customer</dt>
-              <dd>
-                {invoice.customer ? (
-                  <Link
-                    href={`/customers/${invoice.customer.id}`}
-                    className="font-medium text-brand-700"
-                  >
-                    {invoice.customer.name}
-                  </Link>
-                ) : (
-                  "Unknown customer"
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt className="font-medium text-slate-950">Project</dt>
-              <dd>
-                {invoice.project ? (
-                  <Link
-                    href={`/projects/${invoice.project.id}`}
-                    className="font-medium text-brand-700"
-                  >
-                    {invoice.project.name}
-                  </Link>
-                ) : (
-                  "Unknown project"
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt className="font-medium text-slate-950">Estimate</dt>
-              <dd>
-                {invoice.estimate ? (
-                  <Link
-                    href={`/estimates/${invoice.estimate.id}`}
-                    className="font-medium text-brand-700"
-                  >
-                    {invoice.estimate.referenceNumber}
-                  </Link>
-                ) : (
-                  "No linked estimate"
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt className="font-medium text-slate-950">Job</dt>
-              <dd>
-                {invoice.job ? (
-                  <Link
-                    href={`/jobs/${invoice.job.id}`}
-                    className="font-medium text-brand-700"
-                  >
+        <DetailPanel title="Connected Records">
+          <div className="grid gap-4">
+            {invoice.project ? (
+              <LinkedRecordCard
+                href={`/projects/${invoice.project.id}`}
+                title={invoice.project.name}
+                subtitle="Project"
+                meta={invoice.customer?.name ?? "Unknown customer"}
+                badge={
+                  <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                    {formatStatusLabel(invoice.project.status)}
+                  </span>
+                }
+              />
+            ) : null}
+            {invoice.customer ? (
+              <LinkedRecordCard
+                href={`/customers/${invoice.customer.id}`}
+                title={invoice.customer.name}
+                subtitle="Customer"
+                meta={invoice.customer.companyName ?? "Customer record"}
+              />
+            ) : null}
+            {invoice.estimate ? (
+              <LinkedRecordCard
+                href={`/estimates/${invoice.estimate.id}`}
+                title={invoice.estimate.referenceNumber}
+                subtitle="Estimate"
+                meta={invoice.project?.name ?? "Source estimate"}
+                badge={
+                  <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                    {formatStatusLabel(invoice.estimate.status)}
+                  </span>
+                }
+              />
+            ) : null}
+            {invoice.job ? (
+              <LinkedRecordCard
+                href={`/jobs/${invoice.job.id}`}
+                title={invoice.project?.name ?? "Job"}
+                subtitle="Job"
+                meta="Execution record linked to this invoice"
+                badge={
+                  <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
                     {formatStatusLabel(invoice.job.status)}
-                  </Link>
-                ) : (
-                  "No linked job"
-                )}
-              </dd>
-            </div>
+                  </span>
+                }
+              />
+            ) : null}
+          </div>
+        </DetailPanel>
+
+        <DetailPanel title="Invoice Summary">
+          <dl className="space-y-4 text-sm leading-6 text-slate-600">
             <div>
               <dt className="font-medium text-slate-950">Billing model</dt>
               <dd>{invoice.billingModel}</dd>
@@ -290,56 +277,53 @@ export default async function InvoiceDetailPage({
               <dd>{formatMoney(invoice.balanceDueAmount)}</dd>
             </div>
           </dl>
-        </section>
+        </DetailPanel>
 
-        <section className="rounded-3xl border border-slate-200 bg-white/85 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-            Payment Recording
-          </p>
-          <p className="mt-4 text-sm leading-6 text-slate-600">
-            Record a payment against this invoice to update balance due and paid status.
-          </p>
-          {invoice.status === "void" ? (
-            <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
-              Void invoices do not accept recorded payments.
-            </div>
-          ) : (
-            <div className="mt-6">
+        <DetailPanel
+          title="Payment Recording"
+          description="Record a payment against this invoice to update balance due and paid status."
+        >
+          <div id="payment-recording" className="space-y-4">
+            {invoice.status === "void" ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
+                Void invoices do not accept recorded payments.
+              </div>
+            ) : (
               <InvoicePaymentForm
                 invoiceId={invoice.id}
                 action={recordInvoicePaymentAction}
               />
-            </div>
-          )}
-
-          <div className="mt-6 space-y-3">
-            {invoice.payments.length > 0 ? (
-              invoice.payments.map((payment) => (
-                <div
-                  key={payment.id}
-                  className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4 text-sm leading-6 text-slate-600"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="font-medium text-slate-950">
-                      {formatMoney(payment.amount)}
-                    </p>
-                    <p className="capitalize">{formatStatusLabel(payment.status)}</p>
-                  </div>
-                  <p className="mt-1">
-                    {new Date(`${payment.paymentDate}T00:00:00`).toLocaleDateString()}
-                  </p>
-                  <p>{payment.paymentMethod}</p>
-                  {payment.reference ? <p>Ref: {payment.reference}</p> : null}
-                  {payment.notes ? <p>{payment.notes}</p> : null}
-                </div>
-              ))
-            ) : (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
-                No payments have been recorded for this invoice yet.
-              </div>
             )}
+
+            <div className="space-y-3">
+              {invoice.payments.length > 0 ? (
+                invoice.payments.map((payment) => (
+                  <div
+                    key={payment.id}
+                    className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4 text-sm leading-6 text-slate-600"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="font-medium text-slate-950">
+                        {formatMoney(payment.amount)}
+                      </p>
+                      <p className="capitalize">{formatStatusLabel(payment.status)}</p>
+                    </div>
+                    <p className="mt-1">
+                      {new Date(`${payment.paymentDate}T00:00:00`).toLocaleDateString()}
+                    </p>
+                    <p>{payment.paymentMethod}</p>
+                    {payment.reference ? <p>Ref: {payment.reference}</p> : null}
+                    {payment.notes ? <p>{payment.notes}</p> : null}
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
+                  No payments have been recorded for this invoice yet.
+                </div>
+              )}
+            </div>
           </div>
-        </section>
+        </DetailPanel>
       </aside>
     </div>
   );

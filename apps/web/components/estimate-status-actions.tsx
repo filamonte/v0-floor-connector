@@ -33,7 +33,7 @@ export function EstimateStatusActions({
 
   if (nextStatuses.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+      <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
         This estimate is in a final review state. No further status changes are
         available from here.
       </div>
@@ -49,7 +49,7 @@ export function EstimateStatusActions({
           <input type="hidden" name="nextStatus" value={nextStatus} />
           <button
             type="submit"
-            className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium transition ${getStatusButtonStyles(nextStatus)}`}
+            className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition ${getStatusButtonStyles(nextStatus)}`}
           >
             Mark as {formatStatusLabel(nextStatus)}
           </button>

@@ -20,6 +20,7 @@ import type {
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getEstimateById, listEstimates } from "@/lib/estimates/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { listDocumentTemplates } from "@/lib/templates/data";
 import { prepareContractTemplateContextFromEstimate } from "@/lib/templates/workflows";
@@ -496,9 +497,12 @@ export async function createContractFromEstimate(
 ) {
   const scope = await requireContractScope("/contracts");
   const estimate = await resolveApprovedEstimateForContract(input.estimateId);
+  const workflowSettings = await getOrganizationWorkflowSettings(scope.organizationId);
+  const preferredTemplateId =
+    input.templateId ?? workflowSettings.approvedEstimateContractTemplateId ?? null;
   const templateContext = await prepareContractTemplateContextFromEstimate({
     estimateId: input.estimateId,
-    templateId: input.templateId,
+    templateId: preferredTemplateId,
     next: "/contracts"
   });
 

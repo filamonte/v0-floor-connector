@@ -1,10 +1,12 @@
 import Link from "next/link";
 
+import { AppEmptyState } from "@/components/app-empty-state";
 import { CustomerForm } from "@/components/customer-form";
 import { createCustomerAction } from "@/lib/customers/actions";
 import { listCustomers } from "@/lib/customers/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 
 type CustomersPageProps = {
   searchParams?: Promise<{
@@ -29,7 +31,10 @@ export default async function CustomersPage({
     );
   }
 
-  const customers = await listCustomers();
+  const [customers, financialSettings] = await Promise.all([
+    listCustomers(),
+    getOrganizationFinancialSettings(organizationContext.organization.id)
+  ]);
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
@@ -41,8 +46,8 @@ export default async function CustomersPage({
           Customer records for {organizationContext.organization.displayName}
         </h2>
         <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-          This is the first real business object in the protected app area. Use
-          it to create and review customer records that stay scoped to the active
+          Review the canonical customer records that anchor projects, estimates,
+          contracts, invoices, and tax-aware financial behavior across the active
           organization.
         </p>
         <p className="mt-3 text-sm leading-6 text-slate-500">
@@ -101,11 +106,11 @@ export default async function CustomersPage({
               </Link>
             ))
           ) : (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-sm leading-6 text-slate-600">
-              No customers have been added yet. Create the first one using the
-              form in the right column so projects can be linked to a real
-              customer next.
-            </div>
+            <AppEmptyState
+              eyebrow="No customers yet"
+              title="Create the first customer"
+              description="Customer records need to exist before projects, estimates, and invoices can stay connected to the same canonical account."
+            />
           )}
         </div>
       </section>
@@ -115,14 +120,15 @@ export default async function CustomersPage({
           New Customer
         </p>
         <p className="mt-4 text-sm leading-6 text-slate-600">
-          Add a customer record for this organization. The form is intentionally
-          minimal but uses the real create flow and the real tenant-scoped table.
+          Add a customer record for this organization using the live tenant-scoped
+          create flow.
         </p>
         <div className="mt-6">
           <CustomerForm
             action={createCustomerAction}
             submitLabel="Create customer"
             pendingLabel="Creating customer..."
+            defaultRetainagePercentage={financialSettings.defaultRetainagePercentage}
           />
         </div>
       </aside>

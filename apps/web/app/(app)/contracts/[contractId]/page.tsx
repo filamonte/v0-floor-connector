@@ -2,8 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ContractStatusActions } from "@/components/contract-status-actions";
-import { getContractById } from "@/lib/contracts/data";
+import { DetailPageHeader } from "@/components/detail-page-header";
+import { DetailPanel } from "@/components/detail-panel";
+import { LinkedRecordCard } from "@/components/linked-record-card";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { getContractById } from "@/lib/contracts/data";
+import { listInvoices } from "@/lib/invoices/data";
+import { listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 
 type ContractDetailPageProps = {
@@ -39,6 +44,13 @@ function formatLockReason(reason: string | null) {
   }
 }
 
+function formatMoney(value: string | number) {
+  return Number(value).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD"
+  });
+}
+
 function getStatusBadgeClassName(status: string) {
   switch (status) {
     case "sent":
@@ -61,75 +73,71 @@ export default async function ContractDetailPage({
   const { contractId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
   const user = await requireAuthenticatedUser(`/contracts/${contractId}`);
-  const [contract, organizationContext] = await Promise.all([
+  const [contract, organizationContext, jobs, invoices] = await Promise.all([
     getContractById(contractId, `/contracts/${contractId}`),
-    getActiveOrganizationContext(user.id)
+    getActiveOrganizationContext(user.id),
+    listJobs(),
+    listInvoices()
   ]);
 
   if (!contract) {
     notFound();
   }
 
+  const relatedJobs = jobs.filter((job) => job.projectId === contract.projectId);
+  const relatedInvoices = invoices.filter((invoice) => invoice.projectId === contract.projectId);
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 print:max-w-none">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between print:hidden">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-            Contract Review
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-            {contract.title}
-          </h1>
-          <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-            Review the generated contract in canonical project context, then move it through the early contract lifecycle.
-          </p>
-        </div>
+      <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10 print:hidden">
+        <DetailPageHeader
+          eyebrow="Contract Review"
+          title={contract.title}
+          description="Review the generated contract in project context, with the connected estimate, jobs, and invoices visible alongside the document itself."
+          backHref="/contracts"
+          backLabel="Back to contracts"
+          actions={
+            <>
+              {contract.isEditable ? (
+                <Link
+                  href={`/contracts/${contract.id}/edit`}
+                  className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                >
+                  Edit draft
+                </Link>
+              ) : null}
+              {contract.estimate ? (
+                <Link
+                  href={`/estimates/${contract.estimate.id}`}
+                  className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                >
+                  View source estimate
+                </Link>
+              ) : null}
+              {contract.status === "signed" ? (
+                <Link
+                  href={`/invoices?projectId=${contract.projectId}&estimateId=${contract.estimateId ?? ""}`}
+                  className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                >
+                  Create invoice
+                </Link>
+              ) : null}
+            </>
+          }
+        />
 
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/contracts"
-            className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-          >
-            Back to contracts
-          </Link>
-          {contract.isEditable ? (
-            <Link
-              href={`/contracts/${contract.id}/edit`}
-              className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-            >
-              Edit draft
-            </Link>
-          ) : null}
-          {contract.estimate ? (
-            <Link
-              href={`/estimates/${contract.estimate.id}`}
-              className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-            >
-              View source estimate
-            </Link>
-          ) : null}
-          {contract.status === "signed" ? (
-            <Link
-              href={`/invoices?projectId=${contract.projectId}&estimateId=${contract.estimateId ?? ""}`}
-              className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-            >
-              Create invoice from signed contract context
-            </Link>
-          ) : null}
-        </div>
+        {resolvedSearchParams.error ? (
+          <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+            {resolvedSearchParams.error}
+          </div>
+        ) : null}
+
+        {resolvedSearchParams.message ? (
+          <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+            {resolvedSearchParams.message}
+          </div>
+        ) : null}
       </div>
-
-      {resolvedSearchParams.error ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800 print:hidden">
-          {resolvedSearchParams.error}
-        </div>
-      ) : null}
-
-      {resolvedSearchParams.message ? (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800 print:hidden">
-          {resolvedSearchParams.message}
-        </div>
-      ) : null}
 
       <section className="rounded-[2rem] border border-slate-200 bg-white px-6 py-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] sm:px-8 sm:py-10 print:rounded-none print:border-none print:px-0 print:py-0 print:shadow-none">
         <div className="flex flex-col gap-6 border-b border-slate-200 pb-8 sm:flex-row sm:items-start sm:justify-between">
@@ -202,25 +210,85 @@ export default async function ContractDetailPage({
           </section>
         </div>
 
-        <div className="grid gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <article className="rounded-3xl border border-slate-200 bg-slate-50/50 px-6 py-6 text-sm leading-7 text-slate-700 whitespace-pre-wrap">
+        <div className="grid gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <article className="rounded-3xl border border-slate-200 bg-slate-50/50 px-6 py-6 whitespace-pre-wrap text-sm leading-7 text-slate-700">
             {contract.renderedContent}
           </article>
 
           <aside className="space-y-6 print:hidden">
-            <section>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Workflow Actions</p>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                Move the contract through the first review lifecycle. Once signature activity begins, unrestricted editing is locked on the canonical record.
-              </p>
-              <div className="mt-4">
-                <ContractStatusActions contractId={contract.id} currentStatus={contract.status} />
-              </div>
-            </section>
+            <DetailPanel
+              title="Workflow Actions"
+              description="Move the contract through the review and signature lifecycle while keeping the connected project context visible."
+            >
+              <ContractStatusActions contractId={contract.id} currentStatus={contract.status} />
+            </DetailPanel>
 
-            <section className="rounded-3xl border border-slate-200 bg-slate-50/70 px-6 py-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Editability</p>
-              <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+            <DetailPanel title="Connected Records">
+              <div className="grid gap-4">
+                {contract.project ? (
+                  <LinkedRecordCard
+                    href={`/projects/${contract.project.id}`}
+                    title={contract.project.name}
+                    subtitle="Project"
+                    meta={contract.customer?.name ?? "Unknown customer"}
+                    badge={
+                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                        {formatStatusLabel(contract.project.status)}
+                      </span>
+                    }
+                  />
+                ) : null}
+                {contract.estimate ? (
+                  <LinkedRecordCard
+                    href={`/estimates/${contract.estimate.id}`}
+                    title={contract.estimate.referenceNumber}
+                    subtitle="Estimate"
+                    meta={contract.template?.name ?? "Shared template"}
+                    badge={
+                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                        {formatStatusLabel(contract.estimate.status)}
+                      </span>
+                    }
+                  />
+                ) : null}
+                {relatedJobs.map((job) => (
+                  <LinkedRecordCard
+                    key={job.id}
+                    href={`/jobs/${job.id}`}
+                    title={job.project?.name ?? "Job"}
+                    subtitle="Job"
+                    meta={job.scheduledDate ? `Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}` : "Unscheduled"}
+                    badge={
+                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                        {formatStatusLabel(job.status)}
+                      </span>
+                    }
+                  />
+                ))}
+                {relatedInvoices.map((invoice) => (
+                  <LinkedRecordCard
+                    key={invoice.id}
+                    href={`/invoices/${invoice.id}`}
+                    title={invoice.referenceNumber}
+                    subtitle="Invoice"
+                    meta={`Balance due ${formatMoney(invoice.balanceDueAmount)}`}
+                    badge={
+                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                        {formatStatusLabel(invoice.status)}
+                      </span>
+                    }
+                  />
+                ))}
+                {relatedJobs.length === 0 && relatedInvoices.length === 0 ? (
+                  <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
+                    No jobs or invoices are connected to this contract's project yet.
+                  </p>
+                ) : null}
+              </div>
+            </DetailPanel>
+
+            <DetailPanel title="Editability">
+              <div className="space-y-3 text-sm leading-6 text-slate-600">
                 {contract.isEditable ? (
                   <>
                     <p>This contract is still editable because it remains in draft and no signature activity has started.</p>
@@ -233,11 +301,10 @@ export default async function ContractDetailPage({
                   </>
                 )}
               </div>
-            </section>
+            </DetailPanel>
 
-            <section className="rounded-3xl border border-slate-200 bg-slate-50/70 px-6 py-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Revision History</p>
-              <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+            <DetailPanel title="Revision History">
+              <div className="space-y-3 text-sm leading-6 text-slate-600">
                 {contract.revisions.length > 0 ? (
                   contract.revisions.map((revision) => (
                     <div key={revision.id} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
@@ -250,16 +317,7 @@ export default async function ContractDetailPage({
                   <p>No draft revisions have been saved yet.</p>
                 )}
               </div>
-            </section>
-
-            <section className="rounded-3xl border border-slate-200 bg-slate-50/70 px-6 py-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Connected Workflow</p>
-              <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
-                <p>Project: {contract.project?.name ?? "Unknown project"}</p>
-                <p>Estimate: {contract.estimate?.referenceNumber ?? "Not linked"}</p>
-                <p>Invoices continue to derive from the same project and estimate context instead of a disconnected contract billing model.</p>
-              </div>
-            </section>
+            </DetailPanel>
           </aside>
         </div>
       </section>

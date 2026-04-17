@@ -1,9 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AppEmptyState } from "@/components/app-empty-state";
 import { CustomerForm } from "@/components/customer-form";
-import { getCustomerById } from "@/lib/customers/data";
+import { DetailPageHeader } from "@/components/detail-page-header";
+import { DetailPanel } from "@/components/detail-panel";
+import { LinkedRecordCard } from "@/components/linked-record-card";
 import { updateCustomerAction } from "@/lib/customers/actions";
+import { getCustomerById } from "@/lib/customers/data";
+import { listEstimates } from "@/lib/estimates/data";
+import { listInvoices } from "@/lib/invoices/data";
+import { listJobs } from "@/lib/jobs/data";
 import { listProjectsByCustomer } from "@/lib/projects/data";
 
 type CustomerDetailPageProps = {
@@ -16,185 +23,209 @@ type CustomerDetailPageProps = {
   }>;
 };
 
+function formatMoney(amount: string | number) {
+  return Number(amount).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD"
+  });
+}
+
 export default async function CustomerDetailPage({
   params,
   searchParams
 }: CustomerDetailPageProps) {
   const { customerId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
-  const [customer, projects] = await Promise.all([
+  const [customer, projects, estimates, jobs, invoices] = await Promise.all([
     getCustomerById(customerId, `/customers/${customerId}`),
-    listProjectsByCustomer(customerId, `/customers/${customerId}`)
+    listProjectsByCustomer(customerId, `/customers/${customerId}`),
+    listEstimates(),
+    listJobs(),
+    listInvoices()
   ]);
 
   if (!customer) {
     notFound();
   }
 
+  const projectIds = new Set(projects.map((project) => project.id));
+  const customerEstimates = estimates.filter((estimate) => projectIds.has(estimate.projectId));
+  const customerJobs = jobs.filter((job) => job.customerId === customer.id);
+  const customerInvoices = invoices.filter((invoice) => invoice.customerId === customer.id);
+  const openInvoices = customerInvoices.filter(
+    (invoice) => invoice.status !== "paid" && invoice.status !== "void"
+  );
+
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <section className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-              Customer Detail
-            </p>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-              {customer.name}
-            </h2>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Update the customer record here. Changes stay scoped to the active
-              organization and are immediately reflected in the protected app area.
-            </p>
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <section className="space-y-6">
+        <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+          <DetailPageHeader
+            eyebrow="Customer Review"
+            title={customer.name}
+            description="Customers remain canonical across projects, estimates, jobs, invoices, and tax-aware financial settings. Review the relationship context here before drilling into connected records."
+            backHref="/customers"
+            backLabel="Back to customers"
+            actions={
+              <Link
+                href={`/projects?customerId=${customer.id}`}
+                className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+              >
+                Create project
+              </Link>
+            }
+          />
+
+          {resolvedSearchParams.error ? (
+            <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+              {resolvedSearchParams.error}
+            </div>
+          ) : null}
+
+          {resolvedSearchParams.message ? (
+            <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+              {resolvedSearchParams.message}
+            </div>
+          ) : null}
+
+          <div className="mt-8 grid gap-4 md:grid-cols-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4">
+              <p className="text-sm font-medium text-slate-950">Projects</p>
+              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+                {projects.length}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4">
+              <p className="text-sm font-medium text-slate-950">Estimates</p>
+              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+                {customerEstimates.length}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4">
+              <p className="text-sm font-medium text-slate-950">Jobs</p>
+              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+                {customerJobs.length}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4">
+              <p className="text-sm font-medium text-slate-950">Open invoices</p>
+              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+                {openInvoices.length}
+              </p>
+            </div>
           </div>
-          <Link
-            href="/customers"
-            className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-          >
-            Back to customers
-          </Link>
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link
-            href={`/projects?customerId=${customer.id}`}
-            className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-          >
-            Create project for this customer
-          </Link>
-        </div>
-
-        {resolvedSearchParams.error ? (
-          <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
-            {resolvedSearchParams.error}
+        <DetailPanel
+          title="Connected Projects"
+          description="Projects are the operational handoff point for this customer relationship."
+        >
+          <div className="grid gap-4">
+            {projects.length > 0 ? (
+              projects.map((project) => (
+                <LinkedRecordCard
+                  key={project.id}
+                  href={`/projects/${project.id}`}
+                  title={project.name}
+                  subtitle={project.customer?.companyName ?? customer.companyName ?? "Customer relationship"}
+                  meta={`Updated ${new Date(project.updatedAt).toLocaleDateString()}`}
+                  badge={
+                    <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                      {project.status.replaceAll("_", " ")}
+                    </span>
+                  }
+                />
+              ))
+            ) : (
+              <AppEmptyState
+                eyebrow="No projects"
+                title="Create the first project"
+                description="Projects are the main operational root for this customer. Create one to move the relationship into estimating and delivery work."
+              />
+            )}
           </div>
-        ) : null}
+        </DetailPanel>
 
-        {resolvedSearchParams.message ? (
-          <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
-            {resolvedSearchParams.message}
-          </div>
-        ) : null}
-
-        <div className="mt-8">
+        <DetailPanel
+          title="Edit Customer"
+          description="Keep customer editing available here while the connected relationship context stays visible above."
+        >
           <CustomerForm
             action={updateCustomerAction}
             submitLabel="Save customer"
             pendingLabel="Saving customer..."
             customer={customer}
           />
-        </div>
-
-        <div className="mt-10 border-t border-slate-200 pt-8">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-                Associated Projects
-              </p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                Projects for this customer stay scoped to the current organization.
-              </p>
-            </div>
-            <div className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600">
-              {projects.length} total
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-4">
-            {projects.length > 0 ? (
-              projects.map((project) => (
-                <Link
-                  key={project.id}
-                  href={`/projects/${project.id}`}
-                  className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4 transition hover:border-brand-200 hover:bg-white"
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <h3 className="text-base font-medium text-slate-950">
-                        {project.name}
-                      </h3>
-                      <p className="mt-1 text-sm capitalize leading-6 text-slate-600">
-                        {project.status.replaceAll("_", " ")}
-                      </p>
-                    </div>
-                    <div className="text-sm leading-6 text-slate-500 sm:text-right">
-                      <p>Updated</p>
-                      <p>{new Date(project.updatedAt).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-sm leading-6 text-slate-600">
-                No projects are linked to this customer yet. Use the action above
-                to create the first one.
-              </div>
-            )}
-          </div>
-        </div>
+        </DetailPanel>
       </section>
 
-      <aside className="rounded-3xl border border-slate-200 bg-white/85 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-          Record Summary
-        </p>
-        <dl className="mt-6 space-y-4 text-sm leading-6 text-slate-600">
-          <div>
-            <dt className="font-medium text-slate-950">Company</dt>
-            <dd>{customer.companyName ?? "Not provided"}</dd>
+      <aside className="space-y-6">
+        <DetailPanel title="Customer Summary">
+          <dl className="space-y-4 text-sm leading-6 text-slate-600">
+            <div>
+              <dt className="font-medium text-slate-950">Company</dt>
+              <dd>{customer.companyName ?? "Not provided"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-slate-950">Email</dt>
+              <dd>{customer.email ?? "Not provided"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-slate-950">Phone</dt>
+              <dd>{customer.phone ?? "Not provided"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-slate-950">Address</dt>
+              <dd>
+                {[
+                  customer.addressLine1,
+                  customer.addressLine2,
+                  customer.city,
+                  customer.stateRegion,
+                  customer.postalCode,
+                  customer.countryCode
+                ]
+                  .filter(Boolean)
+                  .join(", ") || "Not provided"}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-medium text-slate-950">Tax treatment</dt>
+              <dd>{customer.isTaxExempt ? "Tax exempt" : "Taxable by default"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-slate-950">Default retainage</dt>
+              <dd>{customer.retainagePercentageDefault}%</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-slate-950">Created</dt>
+              <dd>{new Date(customer.createdAt).toLocaleString()}</dd>
+            </div>
+          </dl>
+        </DetailPanel>
+
+        <DetailPanel
+          title="Relationship Snapshot"
+          description="A quick read on the work currently flowing from this customer into the rest of the system."
+        >
+          <div className="space-y-3 text-sm leading-6 text-slate-600">
+            <p>Projects: {projects.length}</p>
+            <p>Estimates: {customerEstimates.length}</p>
+            <p>Jobs: {customerJobs.length}</p>
+            <p>Open invoices: {openInvoices.length}</p>
+            {openInvoices[0] ? (
+              <p>
+                Latest open invoice:{" "}
+                <Link href={`/invoices/${openInvoices[0].id}`} className="font-medium text-brand-700">
+                  {openInvoices[0].referenceNumber}
+                </Link>{" "}
+                for {formatMoney(openInvoices[0].balanceDueAmount)}
+              </p>
+            ) : (
+              <p>No open invoices are currently tied to this customer.</p>
+            )}
           </div>
-          <div>
-            <dt className="font-medium text-slate-950">Email</dt>
-            <dd>{customer.email ?? "Not provided"}</dd>
-          </div>
-          <div>
-            <dt className="font-medium text-slate-950">Phone</dt>
-            <dd>{customer.phone ?? "Not provided"}</dd>
-          </div>
-          <div>
-            <dt className="font-medium text-slate-950">Address</dt>
-            <dd>
-              {[
-                customer.addressLine1,
-                customer.addressLine2,
-                customer.city,
-                customer.stateRegion,
-                customer.postalCode,
-                customer.countryCode
-              ]
-                .filter(Boolean)
-                .join(", ") || "Not provided"}
-            </dd>
-          </div>
-          <div>
-            <dt className="font-medium text-slate-950">Tax treatment</dt>
-            <dd>{customer.isTaxExempt ? "Tax exempt" : "Taxable by default"}</dd>
-          </div>
-          <div>
-            <dt className="font-medium text-slate-950">Exemption reference</dt>
-            <dd>{customer.taxExemptionReference ?? "Not provided"}</dd>
-          </div>
-          <div>
-            <dt className="font-medium text-slate-950">Exemption expires</dt>
-            <dd>
-              {customer.taxExemptionExpiresOn
-                ? new Date(`${customer.taxExemptionExpiresOn}T00:00:00`).toLocaleDateString()
-                : "Not provided"}
-            </dd>
-          </div>
-          <div>
-            <dt className="font-medium text-slate-950">Default retainage</dt>
-            <dd>{customer.retainagePercentageDefault}%</dd>
-          </div>
-          <div>
-            <dt className="font-medium text-slate-950">Created</dt>
-            <dd>{new Date(customer.createdAt).toLocaleString()}</dd>
-          </div>
-          <div>
-            <dt className="font-medium text-slate-950">Updated</dt>
-            <dd>{new Date(customer.updatedAt).toLocaleString()}</dd>
-          </div>
-        </dl>
+        </DetailPanel>
       </aside>
     </div>
   );

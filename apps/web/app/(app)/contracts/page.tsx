@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AppEmptyState } from "@/components/app-empty-state";
 import { createContractFromEstimateAction } from "@/lib/contracts/actions";
 import {
   getContractTemplateOptions,
@@ -8,6 +9,7 @@ import {
 } from "@/lib/contracts/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 
 type ContractsPageProps = {
   searchParams?: Promise<{
@@ -43,11 +45,14 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
     );
   }
 
-  const [contracts, approvedEstimates, contractTemplates] = await Promise.all([
+  const [contracts, approvedEstimates, contractTemplates, workflowSettings] = await Promise.all([
     listContracts(),
     listApprovedEstimatesForContracts(),
-    getContractTemplateOptions()
+    getContractTemplateOptions(),
+    getOrganizationWorkflowSettings(organizationContext.organization.id)
   ]);
+  const preferredTemplateId =
+    workflowSettings.approvedEstimateContractTemplateId ?? "";
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
@@ -107,9 +112,11 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
               </Link>
             ))
           ) : (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-sm leading-6 text-slate-600">
-              No contracts have been generated yet. Start from an approved estimate to create the first contract.
-            </div>
+            <AppEmptyState
+              eyebrow="No contracts yet"
+              title="Generate the first contract"
+              description="Contracts are generated from approved estimates so the signed commercial record stays connected to the same project and customer chain."
+            />
           )}
         </div>
       </section>
@@ -121,6 +128,11 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
         <p className="mt-4 text-sm leading-6 text-slate-600">
           Generate a contract from approved estimate and project context using the shared template foundation.
         </p>
+        {workflowSettings.requireContractInternalApproval ? (
+          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+            This organization has internal contract approval turned on in Settings. Use that preference while reviewing the draft-before-send workflow.
+          </div>
+        ) : null}
         {approvedEstimates.length > 0 ? (
           <form action={createContractFromEstimateAction} className="mt-6 space-y-5">
             <label className="block">
@@ -146,7 +158,7 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
               <span className="mb-2 block text-sm font-medium text-slate-800">Contract template</span>
               <select
                 name="templateId"
-                defaultValue=""
+                defaultValue={preferredTemplateId}
                 className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
               >
                 <option value="">Use organization default contract template</option>
@@ -157,6 +169,11 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
                   </option>
                 ))}
               </select>
+              {workflowSettings.approvedEstimateContractTemplateId ? (
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  The approved-estimate workflow default from Settings is preselected here.
+                </p>
+              ) : null}
             </label>
 
             <button

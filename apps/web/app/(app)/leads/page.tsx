@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AppEmptyState } from "@/components/app-empty-state";
 import { OpportunityForm } from "@/components/opportunity-form";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
@@ -128,10 +129,11 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
               </Link>
             ))
           ) : (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-sm leading-6 text-slate-600">
-              No leads have been added yet. Create the first one using the form
-              in the right column to start the contractor revenue path.
-            </div>
+            <AppEmptyState
+              eyebrow="No leads yet"
+              title="Create the first lead"
+              description="Leads are the earliest live intake point in the contractor workflow and can move forward into canonical customer, project, and estimate records."
+            />
           )}
         </div>
       </section>

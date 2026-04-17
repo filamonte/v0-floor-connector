@@ -15,9 +15,9 @@ const displayFont = Prata({
 });
 
 export const metadata: Metadata = {
-  title: "FloorConnector | The Operating System for Specialty Surface Contractors",
+  title: "FloorConnector | Operating System for Epoxy Flooring and Concrete Polishing Contractors",
   description:
-    "Investor-facing overview of FloorConnector, a vertical SaaS operating system and transaction platform for specialty surface contractors."
+    "FloorConnector helps epoxy flooring and concrete polishing contractors run leads, estimates, jobs, invoices, and payments from one connected system."
 };
 
 type RootLayoutProps = {

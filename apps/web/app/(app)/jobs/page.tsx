@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AppEmptyState } from "@/components/app-empty-state";
 import { listEstimates } from "@/lib/estimates/data";
 import { listJobs } from "@/lib/jobs/data";
 
@@ -45,25 +46,57 @@ function getStatusClasses(status: string) {
 export default async function JobsPage({ searchParams }: JobsPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const [jobs, estimates] = await Promise.all([listJobs(), listEstimates()]);
-  const estimateTotals = new Map(
-    estimates.map((estimate) => [estimate.id, estimate.totalAmount])
-  );
+  const estimateTotals = new Map(estimates.map((estimate) => [estimate.id, estimate.totalAmount]));
+  const unscheduledCount = jobs.filter((job) => job.status === "unscheduled").length;
+  const scheduledCount = jobs.filter((job) => job.status === "scheduled").length;
+  const inProgressCount = jobs.filter((job) => job.status === "in_progress").length;
+  const completedCount = jobs.filter((job) => job.status === "completed").length;
 
   return (
     <div className="space-y-6">
       <section className="rounded-[2rem] border border-slate-200 bg-white/92 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-brand-700">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-700">
               Jobs
             </p>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-              Field work at a glance
+              Field work with clear operational status
             </h1>
             <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-              Track live tenant-scoped jobs as work moves from approved scope into
-              production and finally into billing.
+              Track live tenant-scoped jobs as approved scope turns into scheduled work, in-progress execution, and invoice-ready completion.
             </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <div className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600">
+              {jobs.length} total jobs
+            </div>
+            <Link
+              href="/projects"
+              className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400"
+            >
+              Open project hub
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 px-5 py-4">
+            <p className="text-sm font-medium text-amber-950">Unscheduled</p>
+            <p className="mt-3 text-3xl font-semibold tracking-tight text-amber-950">{unscheduledCount}</p>
+          </div>
+          <div className="rounded-[1.5rem] border border-sky-200 bg-sky-50 px-5 py-4">
+            <p className="text-sm font-medium text-sky-950">Scheduled</p>
+            <p className="mt-3 text-3xl font-semibold tracking-tight text-sky-950">{scheduledCount}</p>
+          </div>
+          <div className="rounded-[1.5rem] border border-violet-200 bg-violet-50 px-5 py-4">
+            <p className="text-sm font-medium text-violet-950">In progress</p>
+            <p className="mt-3 text-3xl font-semibold tracking-tight text-violet-950">{inProgressCount}</p>
+          </div>
+          <div className="rounded-[1.5rem] border border-emerald-200 bg-emerald-50 px-5 py-4">
+            <p className="text-sm font-medium text-emerald-950">Completed</p>
+            <p className="mt-3 text-3xl font-semibold tracking-tight text-emerald-950">{completedCount}</p>
           </div>
         </div>
       </section>
@@ -82,6 +115,17 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 
       <section className="rounded-[2rem] border border-slate-200 bg-white/92 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur">
         <div className="border-b border-slate-200 px-6 py-5 sm:px-8">
+          <div className="mb-5 flex flex-wrap gap-3">
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+              Live data only
+            </span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+              Tenant scoped
+            </span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+              Click row for workflow detail
+            </span>
+          </div>
           <div className="hidden grid-cols-[minmax(0,1.35fr)_1fr_160px_140px_140px] gap-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 md:grid">
             <span>Job</span>
             <span>Customer</span>
@@ -99,8 +143,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
         <div className="divide-y divide-slate-200">
           {jobs.length > 0 ? (
             jobs.map((job) => {
-              const estimateTotal =
-                job.estimateId ? estimateTotals.get(job.estimateId) ?? null : null;
+              const estimateTotal = job.estimateId ? estimateTotals.get(job.estimateId) ?? null : null;
 
               return (
                 <Link
@@ -161,10 +204,11 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             })
           ) : (
             <div className="px-6 py-8 sm:px-8">
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-sm leading-6 text-slate-600">
-                No jobs have been created yet. Approve an estimate and generate a
-                job when work is ready to move into production.
-              </div>
+              <AppEmptyState
+                eyebrow="No jobs yet"
+                title="Create the first job"
+                description="Jobs move approved work into execution. Once a project or estimate is ready for production, create a job and track it through completion."
+              />
             </div>
           )}
         </div>
@@ -172,4 +216,3 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
     </div>
   );
 }
-

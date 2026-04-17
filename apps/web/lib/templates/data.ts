@@ -358,3 +358,106 @@ export async function resolveDocumentTemplateReference(options: {
 
   return ensureDefaultDocumentTemplateForType(options.templateType, next);
 }
+
+export async function adoptPlatformTemplateSeedForOrganization(
+  seedId: string,
+  next = "/settings"
+) {
+  const scope = await requireTemplateScope(next);
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase.rpc("copy_platform_template_seed_to_company", {
+    target_seed_id: seedId,
+    target_company_id: scope.organizationId,
+    acting_user_id: scope.userId
+  });
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to adopt the platform template seed: ${response.error.message}`
+    );
+  }
+
+  if (typeof data !== "string") {
+    throw new Error("Platform template seed adoption returned an invalid response.");
+  }
+
+  const template = await getDocumentTemplateById(data, next);
+
+  if (!template) {
+    throw new Error("Template copy was created but could not be loaded.");
+  }
+
+  return template;
+}
+
+export async function updateDocumentTemplateForOrganization(input: {
+  templateId: string;
+  name: string;
+  description: string | null;
+  subjectTemplate: string | null;
+  bodyTemplate: string;
+  status: "active" | "archived";
+  isDefault: boolean;
+  next?: string;
+}) {
+  const next = input.next ?? "/settings";
+  const scope = await requireTemplateScope(next);
+  const currentTemplate = await getDocumentTemplateById(input.templateId, next);
+
+  if (!currentTemplate) {
+    throw new Error("Document template not found for this organization.");
+  }
+
+  if (input.status === "archived" && input.isDefault) {
+    throw new Error("Archived templates cannot be marked as the organization default.");
+  }
+
+  const supabase = await getSupabaseServerClient();
+
+  if (input.isDefault) {
+    const clearDefaultsResponse = await supabase
+      .from("document_templates")
+      .update({
+        is_default: false,
+        updated_by: scope.userId
+      })
+      .eq("company_id", scope.organizationId)
+      .eq("template_type", currentTemplate.templateType)
+      .eq("is_default", true)
+      .neq("id", input.templateId);
+
+    if (clearDefaultsResponse.error) {
+      throw new Error(
+        `Unable to update template defaults: ${clearDefaultsResponse.error.message}`
+      );
+    }
+  }
+
+  const response = await supabase
+    .from("document_templates")
+    .update({
+      name: input.name,
+      description: input.description,
+      subject_template: input.subjectTemplate,
+      body_template: input.bodyTemplate,
+      status: input.status,
+      is_default: input.isDefault,
+      updated_by: scope.userId
+    })
+    .eq("company_id", scope.organizationId)
+    .eq("id", input.templateId)
+    .select(documentTemplateSelect)
+    .maybeSingle();
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(`Unable to update the document template: ${response.error.message}`);
+  }
+
+  if (!isDocumentTemplateRow(data)) {
+    throw new Error("Document template not found for this organization.");
+  }
+
+  return mapDocumentTemplate(data);
+}
