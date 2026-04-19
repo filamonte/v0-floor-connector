@@ -78,6 +78,9 @@ importers:
       '@floorconnector/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@floorconnector/integrations':
+        specifier: workspace:*
+        version: link:../../packages/integrations
       '@floorconnector/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -123,7 +126,11 @@ importers:
         specifier: workspace:*
         version: link:../types
 
-  packages/integrations: {}
+  packages/integrations:
+    dependencies:
+      '@floorconnector/config':
+        specifier: workspace:*
+        version: link:../config
 
   packages/types: {}
 
