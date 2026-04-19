@@ -18,18 +18,20 @@ export function WorkspaceCommandBar({
   }
 
   return (
-    <section className="rounded-[1.9rem] border border-slate-200 bg-white/90 px-5 py-4 shadow-[0_24px_70px_-44px_rgba(15,23,42,0.45)] backdrop-blur sm:px-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+    <section className="rounded-xl border border-neutral-200 bg-white px-5 py-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 flex-1 space-y-3">
-          {supportSlot ? (
-            <div className="text-sm leading-6 text-slate-600">{supportSlot}</div>
-          ) : null}
-          {filterSlot ? <div className="flex flex-wrap gap-2">{filterSlot}</div> : null}
+          {supportSlot && (
+            <div className="text-sm text-neutral-600">{supportSlot}</div>
+          )}
+          {filterSlot && <div className="flex flex-wrap gap-2">{filterSlot}</div>}
         </div>
 
-        <div className="flex flex-col gap-3 xl:min-w-[420px] xl:max-w-[520px] xl:items-end">
-          {searchSlot ? <div className="w-full">{searchSlot}</div> : null}
-          {actionSlot ? <div className="flex flex-wrap justify-end gap-2">{actionSlot}</div> : null}
+        <div className="flex flex-col gap-3 lg:min-w-[320px] lg:max-w-[420px] lg:items-end">
+          {searchSlot && <div className="w-full">{searchSlot}</div>}
+          {actionSlot && (
+            <div className="flex flex-wrap justify-end gap-2">{actionSlot}</div>
+          )}
         </div>
       </div>
     </section>

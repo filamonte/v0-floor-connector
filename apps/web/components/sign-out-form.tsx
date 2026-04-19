@@ -5,17 +5,12 @@ type SignOutFormProps = {
 };
 
 export function SignOutForm({ className }: SignOutFormProps) {
+  const baseStyles =
+    "rounded-md border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50";
+
   return (
     <form action={signOutAction}>
-      <button
-        type="submit"
-        className={[
-          "rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white",
-          className
-        ]
-          .filter(Boolean)
-          .join(" ")}
-      >
+      <button type="submit" className={className ?? baseStyles}>
         Sign out
       </button>
     </form>

@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
+import Link from "next/link";
 
 import type { ActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { AppShellMobileNav } from "@/components/app-shell-mobile-nav";
-import { ProtectedAppTopNav } from "@/components/protected-app-top-nav";
-import { ProtectedAppWorkspaceBand } from "@/components/protected-app-workspace-band";
+import { DashboardTopNav } from "@/components/dashboard-top-nav";
 import { SignOutForm } from "@/components/sign-out-form";
 
 type ContractorAppShellProps = {
@@ -19,81 +19,66 @@ export function ContractorAppShell({
   organizationContext
 }: ContractorAppShellProps) {
   const organizationName =
-    organizationContext?.organization.displayName ?? "Organization setup pending";
-  const organizationStatus = organizationContext
-    ? `${organizationContext.organization.slug} · ${organizationContext.membership.status}`
-    : "Initialization pending";
+    organizationContext?.organization.displayName ?? "Setup pending";
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#f3efe6_0%,#eef2f7_42%,#e6ebf2_100%)] text-slate-950">
-      <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-[#f7f4ee]/88 backdrop-blur">
-          <div className="mx-auto w-full max-w-[1500px] px-5 py-4 sm:px-8 sm:py-5">
-            <div className="flex flex-col gap-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-brand-700">
-                    FloorConnector
-                  </p>
-                  <div className="mt-3 flex flex-col gap-3 xl:flex-row xl:items-end xl:gap-5">
-                    <div className="min-w-0">
-                      <h1 className="truncate text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-                        Contractor workspace
-                      </h1>
-                      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                        Sales, contracts, billing, workforce, and execution stay connected here instead of getting split across separate tools.
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-                      <span className="rounded-full border border-slate-200 bg-white/85 px-3 py-1.5 shadow-sm">
-                        {organizationName}
-                      </span>
-                      <span className="rounded-full border border-slate-200 bg-white/85 px-3 py-1.5 shadow-sm">
-                        {organizationContext
-                          ? `${organizationContext.membership.role} access`
-                          : "Waiting for organization context"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 lg:hidden">
-                  <AppShellMobileNav currentRole={organizationContext?.membership.role} />
-                  <SignOutForm className="border-slate-900 bg-slate-950 px-4 py-2 text-white hover:border-slate-950 hover:bg-slate-800" />
-                </div>
-
-                <div className="hidden items-center gap-3 lg:flex">
-                  <div className="rounded-full border border-slate-200 bg-white/85 px-4 py-2 text-sm text-slate-600 shadow-sm">
-                    {organizationStatus}
-                  </div>
-                  <div className="rounded-full border border-slate-200 bg-white/85 px-4 py-2 text-sm text-slate-600 shadow-sm">
-                    {user.email ?? "Authenticated user"}
-                  </div>
-                  <SignOutForm className="border-slate-900 bg-slate-950 text-white hover:border-slate-950 hover:bg-slate-800" />
-                </div>
+    <div className="min-h-screen bg-[#fafafa]">
+      <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white">
+        <div className="mx-auto flex h-14 max-w-[1400px] items-center justify-between gap-4 px-4 sm:px-6">
+          <div className="flex items-center gap-8">
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-900">
+                <svg
+                  className="h-4 w-4 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"
+                  />
+                </svg>
               </div>
+              <span className="hidden text-sm font-semibold text-neutral-900 sm:block">
+                FloorConnector
+              </span>
+            </Link>
 
-              <div className="hidden lg:block">
-                <ProtectedAppTopNav currentRole={organizationContext?.membership.role} />
-              </div>
-
-              <ProtectedAppWorkspaceBand organizationName={organizationName} />
+            <div className="hidden lg:block">
+              <DashboardTopNav currentRole={organizationContext?.membership.role} />
             </div>
           </div>
-        </header>
 
-        <main className="flex-1 px-5 py-6 sm:px-8 sm:py-8">
-          <div className="mx-auto w-full max-w-[1500px]">
-            {!organizationContext ? (
-              <section className="mb-6 rounded-3xl border border-amber-200 bg-amber-50 px-6 py-5 text-sm leading-6 text-amber-900">
-                Your account is authenticated, but no active organization context is available yet. If this is a brand-new account, sign out and sign back in once to refresh the app against the newly created tenant records.
-              </section>
-            ) : null}
+          <div className="flex items-center gap-3">
+            <div className="hidden items-center gap-2 md:flex">
+              <span className="text-sm text-neutral-500">{organizationName}</span>
+              <span className="text-neutral-300">|</span>
+              <span className="text-sm text-neutral-500">
+                {user.email ?? "User"}
+              </span>
+            </div>
 
-            {children}
+            <div className="lg:hidden">
+              <AppShellMobileNav currentRole={organizationContext?.membership.role} />
+            </div>
+
+            <SignOutForm className="h-8 rounded-md border border-neutral-200 bg-white px-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50" />
           </div>
-        </main>
-      </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
+        {!organizationContext ? (
+          <section className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Your account is authenticated, but no active organization context is available yet. Sign out and sign back in to refresh.
+          </section>
+        ) : null}
+
+        {children}
+      </main>
     </div>
   );
 }
