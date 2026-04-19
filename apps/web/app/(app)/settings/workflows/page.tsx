@@ -33,7 +33,7 @@ export default async function SettingsWorkflowsPage({ searchParams }: PageProps)
 
       <DetailPanel
         title="Workflow Defaults"
-        description="Set the preferred contract template for approved-estimate generation and store contractor approval and deposit-readiness defaults without breaking the canonical estimate → contract → invoice chain."
+        description="Set the preferred contract template for approved-estimate generation and store contractor approval, signature, deposit, and financing readiness defaults without breaking the canonical estimate -> contract -> invoice chain."
       >
         <form action={updateOrganizationWorkflowSettingsAction} className="space-y-5">
           <label className="block">
@@ -89,6 +89,44 @@ export default async function SettingsWorkflowsPage({ searchParams }: PageProps)
             </span>
           </label>
 
+          <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <input
+              type="checkbox"
+              name="requireContractSignatureBeforeJobScheduling"
+              defaultChecked={
+                workflowSettings.requireContractSignatureBeforeJobScheduling
+              }
+              className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
+            />
+            <span>
+              <span className="block text-sm font-medium text-slate-900">
+                Require signed contract before scheduling
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-slate-500">
+                Keeps commercial readiness aligned with the canonical contract record instead of relying on ad hoc job-side exceptions.
+              </span>
+            </span>
+          </label>
+
+          <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <input
+              type="checkbox"
+              name="requireFinancingApprovalBeforeJobScheduling"
+              defaultChecked={
+                workflowSettings.requireFinancingApprovalBeforeJobScheduling
+              }
+              className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
+            />
+            <span>
+              <span className="block text-sm font-medium text-slate-900">
+                Require financing approval before scheduling
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-slate-500">
+                Stores whether financed jobs must clear commercial readiness before they become eligible for scheduling.
+              </span>
+            </span>
+          </label>
+
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-800">
               Default deposit %
@@ -106,7 +144,7 @@ export default async function SettingsWorkflowsPage({ searchParams }: PageProps)
           </label>
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
-            Contracts still generate from approved estimates using canonical project, customer, and estimate context. Draft contracts can be customized before signature activity locks the record.
+            Contracts still generate from approved estimates using canonical project, customer, and estimate context. Draft contracts can be customized before signature activity locks the record, while deposit, financing, and signature expectations remain organization-scoped readiness inputs for the upstream commercial flow.
           </div>
 
           <button

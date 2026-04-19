@@ -34,6 +34,7 @@ function parseProjectInput(formData: FormData) {
     name: getFieldValue(formData, "name"),
     customerId: getFieldValue(formData, "customerId"),
     status: getFieldValue(formData, "status"),
+    financingStatus: getFieldValue(formData, "financingStatus"),
     description: getFieldValue(formData, "description"),
     addressLine1: getFieldValue(formData, "addressLine1"),
     addressLine2: getFieldValue(formData, "addressLine2"),

@@ -24,6 +24,19 @@ function optionalTrimmedString(maxLength: number) {
     .transform((value) => value ?? null);
 }
 
+function optionalDateField(label: string) {
+  return z
+    .string()
+    .trim()
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .optional()
+    .refine((value) => value == null || /^\d{4}-\d{2}-\d{2}$/.test(value), {
+      message: `${label} must be a valid date.`
+    })
+    .transform((value) => value ?? null);
+}
+
 export const opportunityStatusSchema = z.enum(opportunityStatuses);
 
 export const opportunityInputSchema = z.object({
@@ -53,7 +66,22 @@ export const opportunityInputSchema = z.object({
   countryCode: optionalTrimmedString(2).transform((value) =>
     value ? value.toUpperCase() : null
   ),
+  siteAssessmentScheduledOn: optionalDateField("Site assessment scheduled date"),
+  siteAssessmentCompletedOn: optionalDateField("Site assessment completed date"),
+  requirementsSummary: optionalTrimmedString(4000),
   notes: optionalTrimmedString(4000)
+}).superRefine((value, ctx) => {
+  if (
+    value.siteAssessmentScheduledOn &&
+    value.siteAssessmentCompletedOn &&
+    value.siteAssessmentCompletedOn < value.siteAssessmentScheduledOn
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Site assessment completion cannot be before the scheduled date.",
+      path: ["siteAssessmentCompletedOn"]
+    });
+  }
 });
 
 export type OpportunityInput = z.infer<typeof opportunityInputSchema>;

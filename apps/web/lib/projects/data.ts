@@ -3,11 +3,17 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { compareProjectStatuses } from "@floorconnector/domain";
-import type { Project as ProjectRecord, ProjectStatus } from "@floorconnector/types";
+import type {
+  CommercialReadinessStatus,
+  FinancingStatus,
+  Project as ProjectRecord,
+  ProjectStatus
+} from "@floorconnector/types";
 
 import type { ProjectInput } from "./schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { syncProjectCommercialReadiness } from "@/lib/projects/readiness";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 type ProjectRow = {
@@ -16,6 +22,9 @@ type ProjectRow = {
   customer_id: string;
   name: string;
   status: ProjectStatus;
+  commercial_readiness_status: CommercialReadinessStatus;
+  financing_status: FinancingStatus;
+  ready_to_schedule_at: string | null;
   description: string | null;
   address_line_1: string | null;
   address_line_2: string | null;
@@ -46,6 +55,33 @@ export type ProjectListItem = ProjectRecord & {
   } | null;
 };
 
+const projectSelect = `
+  id,
+  company_id,
+  customer_id,
+  name,
+  status,
+  commercial_readiness_status,
+  financing_status,
+  ready_to_schedule_at,
+  description,
+  address_line_1,
+  address_line_2,
+  city,
+  state_region,
+  postal_code,
+  country_code,
+  created_at,
+  updated_at,
+  customers (
+    id,
+    name,
+    company_name,
+    is_tax_exempt,
+    retainage_percentage_default
+  )
+`;
+
 type ProjectScope = {
   userId: string;
   organizationId: string;
@@ -64,6 +100,8 @@ function isProjectRow(value: unknown): value is ProjectRow {
     typeof row.customer_id === "string" &&
     typeof row.name === "string" &&
     typeof row.status === "string" &&
+    typeof row.commercial_readiness_status === "string" &&
+    typeof row.financing_status === "string" &&
     typeof row.created_at === "string" &&
     typeof row.updated_at === "string"
   );
@@ -80,6 +118,9 @@ function mapProject(row: ProjectRow): ProjectRecord {
     customerId: row.customer_id,
     name: row.name,
     status: row.status,
+    commercialReadinessStatus: row.commercial_readiness_status,
+    financingStatus: row.financing_status,
+    readyToScheduleAt: row.ready_to_schedule_at,
     description: row.description,
     addressLine1: row.address_line_1,
     addressLine2: row.address_line_2,
@@ -128,31 +169,7 @@ export const listProjects = cache(async (): Promise<ProjectListItem[]> => {
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("projects")
-    .select(
-      `
-        id,
-        company_id,
-        customer_id,
-        name,
-        status,
-        description,
-        address_line_1,
-        address_line_2,
-        city,
-        state_region,
-        postal_code,
-        country_code,
-        created_at,
-        updated_at,
-        customers (
-          id,
-          name,
-          company_name,
-          is_tax_exempt,
-          retainage_percentage_default
-        )
-      `
-    )
+    .select(projectSelect)
     .eq("company_id", scope.organizationId)
     .order("updated_at", { ascending: false });
   const data: unknown = response.data;
@@ -197,31 +214,7 @@ export async function listProjectsByCustomer(customerId: string, next = "/custom
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("projects")
-    .select(
-      `
-        id,
-        company_id,
-        customer_id,
-        name,
-        status,
-        description,
-        address_line_1,
-        address_line_2,
-        city,
-        state_region,
-        postal_code,
-        country_code,
-        created_at,
-        updated_at,
-        customers (
-          id,
-          name,
-          company_name,
-          is_tax_exempt,
-          retainage_percentage_default
-        )
-      `
-    )
+    .select(projectSelect)
     .eq("company_id", scope.organizationId)
     .eq("customer_id", customerId)
     .order("updated_at", { ascending: false });
@@ -267,31 +260,7 @@ export async function getProjectById(projectId: string, next = "/projects") {
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("projects")
-    .select(
-      `
-        id,
-        company_id,
-        customer_id,
-        name,
-        status,
-        description,
-        address_line_1,
-        address_line_2,
-        city,
-        state_region,
-        postal_code,
-        country_code,
-        created_at,
-        updated_at,
-        customers (
-          id,
-          name,
-          company_name,
-          is_tax_exempt,
-          retainage_percentage_default
-        )
-      `
-    )
+    .select(projectSelect)
     .eq("company_id", scope.organizationId)
     .eq("id", projectId)
     .maybeSingle();
@@ -332,6 +301,8 @@ export async function createProject(input: ProjectInput) {
       customer_id: input.customerId,
       name: input.name,
       status: input.status,
+      commercial_readiness_status: "waiting_on_estimate_approval",
+      financing_status: input.financingStatus,
       description: input.description,
       address_line_1: input.addressLine1,
       address_line_2: input.addressLine2,
@@ -342,24 +313,7 @@ export async function createProject(input: ProjectInput) {
       created_by: scope.userId,
       updated_by: scope.userId
     })
-    .select(
-      `
-        id,
-        company_id,
-        customer_id,
-        name,
-        status,
-        description,
-        address_line_1,
-        address_line_2,
-        city,
-        state_region,
-        postal_code,
-        country_code,
-        created_at,
-        updated_at
-      `
-    )
+    .select(projectSelect)
     .single();
   const data: unknown = response.data;
   const error = response.error;
@@ -384,6 +338,7 @@ export async function updateProject(projectId: string, input: ProjectInput) {
       customer_id: input.customerId,
       name: input.name,
       status: input.status,
+      financing_status: input.financingStatus,
       description: input.description,
       address_line_1: input.addressLine1,
       address_line_2: input.addressLine2,
@@ -395,24 +350,7 @@ export async function updateProject(projectId: string, input: ProjectInput) {
     })
     .eq("company_id", scope.organizationId)
     .eq("id", projectId)
-    .select(
-      `
-        id,
-        company_id,
-        customer_id,
-        name,
-        status,
-        description,
-        address_line_1,
-        address_line_2,
-        city,
-        state_region,
-        postal_code,
-        country_code,
-        created_at,
-        updated_at
-      `
-    )
+    .select(projectSelect)
     .maybeSingle();
   const data: unknown = response.data;
   const error = response.error;
@@ -424,6 +362,11 @@ export async function updateProject(projectId: string, input: ProjectInput) {
   if (!isProjectRow(data)) {
     throw new Error("Project not found for this organization.");
   }
+
+  await syncProjectCommercialReadiness({
+    organizationId: scope.organizationId,
+    projectId
+  });
 
   return mapProject(data);
 }

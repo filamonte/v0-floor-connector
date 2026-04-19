@@ -5,6 +5,7 @@ import type {
   EstimateStatus,
   Invoice,
   InvoiceLineItem,
+  InvoiceWorkflowRole,
   InvoiceStatus,
   JobStatus,
   OrganizationFinancialSettings,
@@ -14,7 +15,10 @@ import type {
 
 import { AuthField } from "@/components/auth-field";
 import { AuthSubmitButton } from "@/components/auth-submit-button";
-import { editableInvoiceStatusesList } from "@/lib/invoices/schemas";
+import {
+  editableInvoiceStatusesList,
+  invoiceWorkflowRolesList
+} from "@/lib/invoices/schemas";
 
 type InvoiceProjectOption = Pick<Project, "id" | "name" | "customerId"> & {
   customerName?: string | null;
@@ -58,6 +62,7 @@ type InvoiceFormProps = {
   initialProjectId?: string | null;
   initialEstimateId?: string | null;
   initialJobId?: string | null;
+  initialWorkflowRole?: InvoiceWorkflowRole | null;
   initialDiscountAmount?: string | null;
   initialLineItems?: Array<{
     name: string;
@@ -94,6 +99,10 @@ function getValue(value: string | null | undefined) {
 
 function formatStatusLabel(status: string) {
   return status.replaceAll("_", " ");
+}
+
+function formatWorkflowRoleLabel(role: InvoiceWorkflowRole) {
+  return role === "deposit" ? "Deposit request" : "Standard invoice";
 }
 
 function formatTaxBehaviorLabel(taxBehavior: TaxBehavior) {
@@ -283,6 +292,7 @@ export function InvoiceForm({
   initialProjectId,
   initialEstimateId,
   initialJobId,
+  initialWorkflowRole,
   initialDiscountAmount,
   initialLineItems,
   paidAmount
@@ -298,6 +308,9 @@ export function InvoiceForm({
   );
   const [selectedJobId, setSelectedJobId] = useState(
     invoice?.jobId ?? initialJobId ?? ""
+  );
+  const [workflowRole, setWorkflowRole] = useState<InvoiceWorkflowRole>(
+    invoice?.workflowRole ?? initialWorkflowRole ?? "standard"
   );
   const nextLineItemId = useRef(lineItems.length);
   const [discountAmount, setDiscountAmount] = useState(
@@ -396,6 +409,14 @@ export function InvoiceForm({
     });
   }
 
+  function handleWorkflowRoleChange(nextRole: InvoiceWorkflowRole) {
+    setWorkflowRole(nextRole);
+
+    if (nextRole === "deposit") {
+      setSelectedJobId("");
+    }
+  }
+
   return (
     <form action={action} className="space-y-6">
       {invoice ? <input type="hidden" name="invoiceId" value={invoice.id} /> : null}
@@ -433,6 +454,30 @@ export function InvoiceForm({
 
         <label className="block">
           <span className="mb-2 block text-sm font-medium text-slate-800">
+            Workflow role
+          </span>
+          <select
+            name="workflowRole"
+            value={workflowRole}
+            onChange={(event) =>
+              handleWorkflowRoleChange(event.target.value as InvoiceWorkflowRole)
+            }
+            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            required
+          >
+            {invoiceWorkflowRolesList.map((role) => (
+              <option key={role} value={role}>
+                {formatWorkflowRoleLabel(role)}
+              </option>
+            ))}
+          </select>
+          <span className="mt-2 block text-xs leading-5 text-slate-500">
+            Deposit requests stay on the canonical invoice record so readiness can be derived from invoice and payment state.
+          </span>
+        </label>
+
+        <label className="block">
+          <span className="mb-2 block text-sm font-medium text-slate-800">
             Linked approved estimate
           </span>
           <select
@@ -459,6 +504,7 @@ export function InvoiceForm({
             name="jobId"
             value={selectedJobId}
             onChange={(event) => setSelectedJobId(event.target.value)}
+            disabled={workflowRole === "deposit"}
             className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
           >
             <option value="">No linked job</option>
@@ -469,6 +515,11 @@ export function InvoiceForm({
               </option>
             ))}
           </select>
+          {workflowRole === "deposit" ? (
+            <span className="mt-2 block text-xs leading-5 text-slate-500">
+              Deposit invoices stay upstream of execution and do not link to a specific job.
+            </span>
+          ) : null}
         </label>
 
         {invoice && isDerivedStatus(invoice.status) ? (

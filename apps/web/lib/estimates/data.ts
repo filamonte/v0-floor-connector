@@ -17,6 +17,7 @@ import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { ensureScheduleOfValuesForEstimate } from "@/lib/financial/sov";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getProjectById } from "@/lib/projects/data";
+import { syncProjectCommercialReadiness } from "@/lib/projects/readiness";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 type EstimateRow = {
@@ -426,6 +427,22 @@ async function resolveScopedProject(projectId: string, next: string) {
   return project;
 }
 
+async function syncEstimateProjectReadiness(
+  organizationId: string,
+  projectIds: Array<string | null | undefined>
+) {
+  const uniqueProjectIds = [
+    ...new Set(projectIds.filter((projectId): projectId is string => Boolean(projectId)))
+  ];
+
+  for (const projectId of uniqueProjectIds) {
+    await syncProjectCommercialReadiness({
+      organizationId,
+      projectId
+    });
+  }
+}
+
 export const listEstimates = cache(async (): Promise<EstimateListItem[]> => {
   const scope = await requireEstimateScope("/estimates");
   const supabase = await getSupabaseServerClient();
@@ -563,11 +580,19 @@ export async function createEstimate(input: EstimateInput) {
     throw new Error("Unexpected estimate response after create.");
   }
 
+  await syncEstimateProjectReadiness(scope.organizationId, [project.id]);
+
   return mapEstimate(estimate);
 }
 
 export async function updateEstimate(estimateId: string, input: EstimateInput) {
   const scope = await requireEstimateScope(`/estimates/${estimateId}`);
+  const currentEstimate = await getEstimateRecordById(scope.organizationId, estimateId);
+
+  if (!currentEstimate) {
+    throw new Error("Estimate not found for this organization.");
+  }
+
   const project = await resolveScopedProject(input.projectId, `/estimates/${estimateId}`);
   const supabase = await getSupabaseServerClient();
   const response = await supabase
@@ -608,6 +633,11 @@ export async function updateEstimate(estimateId: string, input: EstimateInput) {
   if (!estimate) {
     throw new Error("Estimate not found for this organization.");
   }
+
+  await syncEstimateProjectReadiness(scope.organizationId, [
+    currentEstimate.project_id,
+    project.id
+  ]);
 
   return mapEstimate(estimate);
 }
@@ -660,6 +690,8 @@ export async function updateEstimateStatus(
   if (nextStatus === "approved") {
     await ensureScheduleOfValuesForEstimate(estimateId);
   }
+
+  await syncEstimateProjectReadiness(scope.organizationId, [currentEstimate.project_id]);
 
   return mapEstimate(updatedEstimate);
 }

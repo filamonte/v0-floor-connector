@@ -1,11 +1,17 @@
 # Contractor App Target Information Architecture
 
+Status: target contractor app information architecture.
+
 This document defines the **target information architecture** for the contractor app.
 
 It is intended to guide future navigation, workspace structure, and route decisions without forcing an immediate refactor of the current application. It should be read alongside:
+- [docs/current-state.md](C:/FloorConnector/docs/current-state.md): source of truth for what is implemented today
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
-- [docs/current-state.md](C:/FloorConnector/docs/current-state.md): source of truth for what is implemented today
+- [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow direction
+- [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
+
+This document describes the intended contractor app structure over time. It should not be read as the current route map or current implementation truth.
 
 ## Purpose
 
@@ -22,6 +28,8 @@ This document exists to answer:
 ### 1. Project Is The Operational Root
 
 Projects should become the main workspace for work delivery. Operational records such as estimates, jobs, files, daily execution, and invoices should feel connected to the project rather than like isolated modules.
+
+That also means project detail should be the primary workflow and readiness hub in page-structure terms, while related record pages support that hub rather than competing with it as parallel workflow homes.
 
 ### 2. Customers Are Relationship Roots, Not Execution Roots
 
@@ -187,10 +195,15 @@ This area should include:
 - integrations
 - financial defaults
 - templates
+- reusable catalogs and starter items
 - automation settings later
 - terminology/workflow defaults later
 
 Settings should remain administrative, not operational.
+
+Important boundary:
+- contractor `Settings` is tenant-scoped organization administration
+- platform-wide defaults and rollout policy belong in the separate super-admin surface
 
 ## Project As The Operational Root
 
@@ -284,6 +297,27 @@ Practical direction:
 - increase project-centric linking between records
 - evolve project detail into a richer project workspace over time
 - treat global list routes as queue/reporting surfaces rather than the final operational home for every object
+- apply one shared record-detail layout language across project, estimate, contract, invoice, and job pages so the contractor app feels like one connected workspace system
+
+## Shared Record Workspace Pattern
+
+Target contractor record pages should converge on the same structural pattern:
+- header band: title, status, primary action, secondary actions
+- workflow summary band: readiness, blockers, next best action
+- primary workspace: the main review or execution surface for that record
+- context rail: connected records and compact supporting metadata
+- secondary sections: lower-priority editing, history, labor, files, or related modules
+
+Page-role guidance inside that shared pattern:
+- project detail is the authoritative workflow and readiness hub
+- estimate and contract detail support document review and workflow progression, then point back to the project hub for broader handoff state
+- invoice detail should be structured as review-first billing workspace, not primarily as a top-heavy edit form
+- job detail should use the same shared page language rather than a separate ad hoc detail pattern
+
+Current implementation note:
+- the first major contractor workspace UI polish pass is now complete enough to stop
+- project, estimate, contract, invoice, and job detail pages now broadly follow this shared pattern on the current branch
+- further layout work should be treated as incremental polish unless a future structural break is introduced
 
 This means a route like `/jobs` can continue to exist while the long-term UX emphasizes jobs inside project workspaces.
 

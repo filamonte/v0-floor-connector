@@ -44,6 +44,7 @@ function parseInvoiceInput(formData: FormData) {
     projectId: getFieldValue(formData, "projectId"),
     estimateId: getFieldValue(formData, "estimateId"),
     jobId: getFieldValue(formData, "jobId"),
+    workflowRole: getFieldValue(formData, "workflowRole"),
     status: getFieldValue(formData, "status"),
     issueDate: getFieldValue(formData, "issueDate"),
     dueDate: getFieldValue(formData, "dueDate"),
@@ -64,6 +65,7 @@ export async function createInvoiceAction(formData: FormData) {
   const projectId = getFieldValue(formData, "projectId");
   const estimateId = getFieldValue(formData, "estimateId");
   const jobId = getFieldValue(formData, "jobId");
+  const workflowRole = getFieldValue(formData, "workflowRole");
 
   if (!result.success) {
     redirect(
@@ -71,6 +73,7 @@ export async function createInvoiceAction(formData: FormData) {
         projectId,
         estimateId,
         jobId,
+        workflowRole,
         error: result.error.issues[0]?.message ?? "Unable to create invoice."
       })
     );
@@ -86,6 +89,7 @@ export async function createInvoiceAction(formData: FormData) {
         projectId,
         estimateId,
         jobId,
+        workflowRole,
         error: error instanceof Error ? error.message : "Unable to create invoice."
       })
     );

@@ -28,6 +28,10 @@ function formatAddress(parts: Array<string | null | undefined>) {
   return filtered.length > 0 ? filtered.join(", ") : "Not provided";
 }
 
+function formatDate(value: string | null) {
+  return value ? new Date(value).toLocaleDateString() : "Not scheduled";
+}
+
 function getStatusClasses(status: string) {
   switch (status) {
     case "qualified":
@@ -64,6 +68,15 @@ export default async function LeadDetailPage({
     ? `/estimates?projectId=${opportunity.projectId}`
     : null;
   const canStartEstimate = opportunity.status !== "lost";
+  const estimatingReadiness = opportunity.projectId
+    ? "This opportunity is already linked into the live project and estimating chain."
+    : opportunity.siteAssessmentStatus === "completed" ||
+        (opportunity.requirementsSummary &&
+          opportunity.requirementsSummary.trim().length > 0)
+      ? "Commercial context is ready to feed estimating. Start the estimate flow when you are ready."
+      : opportunity.siteAssessmentStatus === "scheduled"
+        ? "A site assessment is scheduled. Complete it and capture requirements before handing off to estimating."
+        : "Capture assessment timing and requirements here so the estimating handoff does not rely on re-entry later.";
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -180,6 +193,22 @@ export default async function LeadDetailPage({
                   <dd>{opportunity.source ?? "Not provided"}</dd>
                 </div>
                 <div>
+                  <dt className="font-medium text-slate-950">Site assessment</dt>
+                  <dd>{formatStatusLabel(opportunity.siteAssessmentStatus)}</dd>
+                </div>
+                <div>
+                  <dt className="font-medium text-slate-950">Assessment scheduled</dt>
+                  <dd>{formatDate(opportunity.siteAssessmentScheduledAt)}</dd>
+                </div>
+                <div>
+                  <dt className="font-medium text-slate-950">Assessment completed</dt>
+                  <dd>
+                    {opportunity.siteAssessmentCompletedAt
+                      ? new Date(opportunity.siteAssessmentCompletedAt).toLocaleDateString()
+                      : "Not completed yet"}
+                  </dd>
+                </div>
+                <div>
                   <dt className="font-medium text-slate-950">Service type</dt>
                   <dd>{opportunity.serviceType ?? "Not provided"}</dd>
                 </div>
@@ -235,6 +264,10 @@ export default async function LeadDetailPage({
         </div>
 
         <div className="mt-8">
+          <div className="mb-6 rounded-2xl border border-brand-200 bg-brand-50/60 px-5 py-4 text-sm leading-6 text-slate-700">
+            <p className="font-medium text-slate-950">Estimating readiness</p>
+            <p className="mt-2">{estimatingReadiness}</p>
+          </div>
           <OpportunityForm
             action={updateOpportunityAction}
             submitLabel="Save lead"
@@ -262,6 +295,14 @@ export default async function LeadDetailPage({
             Lost leads do not move into the estimate workflow unless the status is reopened.
           </div>
         )}
+
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">
+          Requirements summary:
+          <div className="mt-2 text-slate-500">
+            {opportunity.requirementsSummary ??
+              "No assessment-based requirements have been captured yet."}
+          </div>
+        </div>
 
         <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">
           Notes:

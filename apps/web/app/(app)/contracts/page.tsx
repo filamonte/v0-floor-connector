@@ -130,7 +130,7 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
         </p>
         {workflowSettings.requireContractInternalApproval ? (
           <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-            This organization has internal contract approval turned on in Settings. Use that preference while reviewing the draft-before-send workflow.
+            This organization has internal contract approval turned on in Settings. New draft contracts must be approved before the send action becomes available.
           </div>
         ) : null}
         {approvedEstimates.length > 0 ? (

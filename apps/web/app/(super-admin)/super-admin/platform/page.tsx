@@ -158,6 +158,34 @@ export default async function PlatformDefaultsPage({ searchParams }: PageProps) 
             </span>
           </label>
 
+          <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <input
+              type="checkbox"
+              name="requireContractSignatureBeforeJobScheduling"
+              defaultChecked={
+                workflowDefaults.requireContractSignatureBeforeJobScheduling
+              }
+              className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
+            />
+            <span className="text-sm leading-6 text-slate-700">
+              Require signed contract before scheduling by default
+            </span>
+          </label>
+
+          <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <input
+              type="checkbox"
+              name="requireFinancingApprovalBeforeJobScheduling"
+              defaultChecked={
+                workflowDefaults.requireFinancingApprovalBeforeJobScheduling
+              }
+              className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
+            />
+            <span className="text-sm leading-6 text-slate-700">
+              Require financing approval before scheduling by default
+            </span>
+          </label>
+
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-800">
               Default deposit %

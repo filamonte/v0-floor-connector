@@ -1,248 +1,223 @@
-FloorConnector Sales → Production Workflow (v1)
-Purpose
+# Sales To Production Workflow
 
-This document defines the end-to-end workflow from lead intake through job scheduling.
+Status: target sales and commercial workflow design.
 
-It ensures:
+This document describes the broader sales, commercial, and readiness workflow FloorConnector is intended to support from first inquiry through production readiness.
 
-no data duplication
-full shared data flow across all stages
-consistent contractor operations
-support for financing, contracts, and scheduling
-🧠 Core Principles
-1. Single Source of Truth
+It complements:
+- [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth
+- [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
+- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
+- [docs/workflows.md](C:/FloorConnector/docs/workflows.md): implemented and near-term workflow direction
+- [docs/workflow-spec.md](C:/FloorConnector/docs/workflow-spec.md): primary guided contractor path
+- [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
 
-All data flows forward:
+Use [docs/workflows.md](C:/FloorConnector/docs/workflows.md) as the canonical current and near-term contractor workflow document. This file is the broader target commercial workflow framing.
 
-lead → customer → project → estimate → contract → invoice → job
+## Purpose
 
-No re-entry of data at later stages.
+This document exists to capture the wider business process around contractor revenue generation so product decisions stay aligned with how specialty surface contractors actually operate.
 
-2. Project as Operational Root
+It is not a claim that every stage below is already fully implemented. For implemented status, trust [docs/current-state.md](C:/FloorConnector/docs/current-state.md).
 
-All downstream workflows attach to:
+## Core Principles
 
-project
-customer
-organization
-3. Workflow Over Modules
+### 1. Single Shared Record Flow
 
-The system is not:
+Data should move forward through the same canonical chain:
 
-“CRM module”
-“Estimate module”
-“Invoice module”
+`opportunity -> customer -> project -> estimate -> contract -> financial readiness -> job / production -> invoice -> payment`
 
-It is:
+That flow may tighten over time into a more project-centered UX, but the key rule is unchanged:
+- no duplicate re-entry of core business data at later stages
+- no disconnected contract, billing, or production records
 
-one continuous operational workflow
+### 2. Project As Operational Root
 
-4. Financing is a Conversion Tool
+Once work becomes real enough to deliver, the project should become the operational home for:
+- commercial context
+- execution readiness
+- job planning
+- downstream billing context
 
-Financing is introduced during estimate review, not only after contract.
+### 3. Workflow Over Modules
 
-🔁 Full Workflow
-1. Lead Intake
-Sources
-website instant estimator
-website contact form
-inspection request
-online scheduler
-manual sales entry
-Lead Data
-name
-contact info
-address
-service type
-notes
-source
-Lead Status
-new
-contacted
-qualified
-inspection_scheduled
-inspection_complete
-converted
-lost
-2. Customer Creation
+FloorConnector should behave like one connected contractor workflow, not a stack of disconnected modules.
+
+### 4. Financing And Financial Readiness Are Workflow Stages
+
+Financial readiness may include:
+- deposit requirements
+- financing qualification or approval
+- internal commercial approval
+- readiness-to-schedule checks
+
+The point is not simply whether an invoice exists. The point is whether sold work is truly ready to move into operations.
+
+## End-To-End Workflow
+
+### 1. Lead Intake
+
+Possible sources:
+- website contact form
+- inbound phone or email
+- inspection request
+- manual sales entry
+- future estimator or scheduler entry points
+
+Core intake data:
+- name
+- contact information
+- address
+- service type
+- notes
+- source
+
+### 2. Qualification And Customer Creation
 
 Qualified leads become:
+- canonical customer records
+- optionally linked opportunities if intake started before the customer record existed
 
-customer record
-optionally linked to organization/company
+Customer becomes the shared relationship record for all future work.
 
-Customer becomes canonical entity for all future work.
+### 3. Opportunity And Site Assessment
 
-3. Opportunity / Site Assessment
-Purpose
+Purpose:
+- preserve real job context before final scope is priced
 
-Capture real job conditions before estimate.
+May include:
+- measurements or square footage
+- photos
+- substrate condition
+- prep requirements
+- recommended system
+- scope notes
 
-Includes
-measurements (sq ft, areas)
-photos
-substrate condition
-prep requirements
-recommended system
-notes
-Input Sources
-on-site inspection
-customer-provided measurements
-instant estimator
-4. Estimate Creation
-Methods
-custom quote
-system-based (preset assemblies)
-square-foot pricing
-hybrid
-Uses
-reusable catalog items
-system templates
-5. Estimate Workflow
-Statuses
-draft
-sent
-viewed
-approved
-rejected
-expired
-6. Customer Review Stage
+Input sources may be:
+- on-site inspection
+- customer-provided measurements and requirements
+- future instant-estimate tooling
 
-Customer can:
+### 4. Estimate Creation
 
-review estimate
-request changes
-approve estimate
-Financing (Optional)
+Estimate creation may eventually support:
+- custom quote workflows
+- system-based pricing
+- square-foot pricing
+- hybrid estimating
+- reusable catalogs and assemblies
 
-Customer may:
+Current product direction keeps the estimate as the canonical commercial scope record.
 
-pre-qualify using soft credit pull
-view monthly payment options
-Financing Data
-prequalified status
-estimated terms
-7. Estimate Approval
+### 5. Estimate Review
 
-Triggers:
+The estimate stage should support:
+- draft
+- sent
+- customer review
+- revisions
+- approval or rejection
 
-contract generation eligibility
-internal workflow progression
-8. Contract Generation
+### 6. Contract Generation
 
-Contracts are:
+Approved estimates should make the work eligible for contract generation.
 
-generated from approved estimates
-based on job type templates
-merged with project/customer data
-9. Internal Contract Approval (Optional)
+Contracts should be:
+- generated from approved estimates
+- merged with project and customer context
+- editable while still in draft
+- locked after signature activity begins
 
-Configurable per organization:
+### 7. Contract Approval And Signature Readiness
 
-require manager approval
-allow sales rep approval
-10. E-Sign Workflow
-Status Flow
-draft
-internal_review
-ready_to_send
-sent_for_signature
-partially_signed
-signed
-void
-Default Behavior
-customer signs first
-contractor countersigns automatically
-11. Post-Signature Financial Step
+This stage may include:
+- internal approval requirements
+- send readiness
+- customer signature
+- contractor countersign later where needed
 
-After contract is signed:
+### 8. Financial Readiness
 
-Option A: Deposit Required
-fixed amount or %
-invoice generated automatically
-Option B: Financing
-final financing application
-approval/decline
-replaces deposit if approved
-12. Sale Completion
+After contract completion, the work may require:
+- deposit collection
+- financing approval
+- internal green-light checks
 
-Conditions:
+This is the stage that determines whether work is actually ready for production scheduling.
 
-contract signed
-deposit received OR financing approved
+### 9. Scheduling And Production Readiness
 
-System status:
+Once work is commercially and financially ready, operations should be able to:
+- create or confirm the job/work order
+- assign schedule readiness
+- move toward crew assignment and production planning later
 
-ready_to_schedule
-13. Scheduling
-Types
-Sales Scheduling
-inspections
-appointments
-Operations Scheduling
-job scheduling
-crew assignment (future)
-Scheduling Status
-awaiting_deposit
-financing_pending
-ready_to_schedule
-scheduled
-14. Job Execution (Future Phase)
-job tracking
-crew management
-time tracking
-field logs
-💰 Financing Model
-Phase 1: Pre-Qualification
-soft credit pull
-estimate-stage
-optional
-improves conversion
-Phase 2: Final Financing
-post-contract
-replaces or supplements deposit
-Provider Strategy
-initial provider: Wisetack
-future: multi-provider support
-🧱 Key Data Relationships
-Lead
- → Customer
-   → Project
-     → Site Assessment
-     → Estimate
-       → Contract
-         → Invoice / Payment
-         → Financing
-     → Job (scheduled)
-⚙️ Configuration Requirements
+### 10. Job Execution
 
-At organization level:
+Later operational depth should support:
+- field execution tracking
+- crew workflows
+- daily logs
+- time tracking
+- production visibility
 
-financing enabled/disabled
-financing provider
-contract approval required
-estimate approval rules
-deposit rules
-tax settings
-retainage settings
-🚫 What We Avoid
-duplicate data between modules
-disconnected contract/invoice systems
-module-specific templates
-manual re-entry of estimate/contract data
-forcing financing too early or too late
-🚀 Future Extensions
-instant estimator builder (per contractor site)
-online booking system
-customer portal
-full AIA billing workflows
-automated communications
-lead pipelines
-CRM enhancements
-🧭 What this doc does
+### 11. Invoice, Payment, And Closeout
 
-This document defines:
+Billing should stay connected to the same project, customer, estimate, contract, and optional job context.
 
-how contractors actually operate
-how FloorConnector supports revenue generation
-how all systems connect without silos
+This stage should support:
+- invoice creation
+- payment recording
+- balance tracking
+- retainage-aware and future progress-billing-aware financial behavior
+
+## Configuration Requirements
+
+The broader workflow depends on configuration at two layers.
+
+### Platform / Super Admin
+
+Super admin should define:
+- platform starter templates
+- platform starter catalogs
+- global financial defaults
+- global workflow defaults
+- feature and module policy
+
+### Contractor Organization
+
+Contractor admins should manage:
+- organization-owned templates
+- organization-owned reusable items
+- tax defaults
+- retainage defaults
+- contract workflow defaults
+- deposit or readiness preferences
+- allowed feature overrides
+
+## What We Avoid
+
+FloorConnector should avoid:
+- duplicate data between modules
+- disconnected contract and invoice systems
+- module-specific template silos
+- manual re-entry of estimate or contract data downstream
+- contractors depending directly on one mutable global starter record
+
+## Future Extensions
+
+Future workflow expansion may include:
+- richer estimator tooling
+- online scheduling
+- customer portal flows
+- full AIA/progress billing workflows
+- communications and notifications
+- CRM and sales pipeline depth
+- deeper production and field execution tooling
+
+## Summary
+
+This workflow is meant to represent how contractors actually move work from inquiry through sale, readiness, production, billing, and collection.
+
+The product should keep strengthening one connected business chain rather than letting each stage become its own isolated subsystem.

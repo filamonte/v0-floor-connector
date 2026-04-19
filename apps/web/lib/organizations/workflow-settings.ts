@@ -9,7 +9,9 @@ type OrganizationWorkflowSettingsRow = {
   company_id: string;
   approved_estimate_contract_template_id: string | null;
   require_contract_internal_approval: boolean;
+  require_contract_signature_before_job_scheduling: boolean;
   require_deposit_before_job_scheduling: boolean;
+  require_financing_approval_before_job_scheduling: boolean;
   default_deposit_percentage: string | number;
   created_at: string;
   updated_at: string;
@@ -29,7 +31,9 @@ function isOrganizationWorkflowSettingsRow(
     (row.approved_estimate_contract_template_id === null ||
       typeof row.approved_estimate_contract_template_id === "string") &&
     typeof row.require_contract_internal_approval === "boolean" &&
+    typeof row.require_contract_signature_before_job_scheduling === "boolean" &&
     typeof row.require_deposit_before_job_scheduling === "boolean" &&
+    typeof row.require_financing_approval_before_job_scheduling === "boolean" &&
     (typeof row.default_deposit_percentage === "string" ||
       typeof row.default_deposit_percentage === "number") &&
     typeof row.created_at === "string" &&
@@ -44,7 +48,11 @@ function mapOrganizationWorkflowSettings(
     organizationId: row.company_id,
     approvedEstimateContractTemplateId: row.approved_estimate_contract_template_id,
     requireContractInternalApproval: row.require_contract_internal_approval,
+    requireContractSignatureBeforeJobScheduling:
+      row.require_contract_signature_before_job_scheduling,
     requireDepositBeforeJobScheduling: row.require_deposit_before_job_scheduling,
+    requireFinancingApprovalBeforeJobScheduling:
+      row.require_financing_approval_before_job_scheduling,
     defaultDepositPercentage: Number(row.default_deposit_percentage).toFixed(2),
     createdAt: row.created_at,
     updatedAt: row.updated_at
@@ -62,7 +70,9 @@ export async function getOrganizationWorkflowSettings(
         company_id,
         approved_estimate_contract_template_id,
         require_contract_internal_approval,
+        require_contract_signature_before_job_scheduling,
         require_deposit_before_job_scheduling,
+        require_financing_approval_before_job_scheduling,
         default_deposit_percentage,
         created_at,
         updated_at
@@ -86,8 +96,12 @@ export async function getOrganizationWorkflowSettings(
       approvedEstimateContractTemplateId: null,
       requireContractInternalApproval:
         platformDefaults.requireContractInternalApproval,
+      requireContractSignatureBeforeJobScheduling:
+        platformDefaults.requireContractSignatureBeforeJobScheduling,
       requireDepositBeforeJobScheduling:
         platformDefaults.requireDepositBeforeJobScheduling,
+      requireFinancingApprovalBeforeJobScheduling:
+        platformDefaults.requireFinancingApprovalBeforeJobScheduling,
       defaultDepositPercentage: platformDefaults.defaultDepositPercentage,
       createdAt: new Date(0).toISOString(),
       updatedAt: new Date(0).toISOString()
@@ -102,7 +116,9 @@ export async function upsertOrganizationWorkflowSettings(input: {
   userId: string;
   approvedEstimateContractTemplateId: string | null;
   requireContractInternalApproval: boolean;
+  requireContractSignatureBeforeJobScheduling: boolean;
   requireDepositBeforeJobScheduling: boolean;
+  requireFinancingApprovalBeforeJobScheduling: boolean;
   defaultDepositPercentage: string;
 }) {
   const supabase = await getSupabaseServerClient();
@@ -113,8 +129,12 @@ export async function upsertOrganizationWorkflowSettings(input: {
         company_id: input.organizationId,
         approved_estimate_contract_template_id: input.approvedEstimateContractTemplateId,
         require_contract_internal_approval: input.requireContractInternalApproval,
+        require_contract_signature_before_job_scheduling:
+          input.requireContractSignatureBeforeJobScheduling,
         require_deposit_before_job_scheduling:
           input.requireDepositBeforeJobScheduling,
+        require_financing_approval_before_job_scheduling:
+          input.requireFinancingApprovalBeforeJobScheduling,
         default_deposit_percentage: input.defaultDepositPercentage,
         updated_by: input.userId,
         created_by: input.userId
@@ -128,7 +148,9 @@ export async function upsertOrganizationWorkflowSettings(input: {
         company_id,
         approved_estimate_contract_template_id,
         require_contract_internal_approval,
+        require_contract_signature_before_job_scheduling,
         require_deposit_before_job_scheduling,
+        require_financing_approval_before_job_scheduling,
         default_deposit_percentage,
         created_at,
         updated_at

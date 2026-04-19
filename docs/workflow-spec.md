@@ -1,12 +1,12 @@
 # Contractor Workflow Spec
 
-This document defines the **primary contractor workflow** FloorConnector should optimize for next.
+This document defines the primary contractor workflow FloorConnector should optimize for next.
 
 It does not replace the target platform architecture or the current implementation record. It should be read alongside:
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
-- [target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
-- [sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): broader business workflow intent
-- [current-state.md](C:/FloorConnector/docs/current-state.md): source of truth for what is implemented today
+- [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
+- [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): broader business workflow intent
+- [docs/current-state.md](C:/FloorConnector/docs/current-state.md): source of truth for what is implemented today
 
 ## Purpose
 
@@ -64,6 +64,7 @@ over:
 ### 5. Keep Canonical Data Flow Intact
 
 Every step should continue to use the same shared entities:
+- opportunity
 - customer
 - project
 - estimate
@@ -72,7 +73,15 @@ Every step should continue to use the same shared entities:
 - payment
 - job
 
-No step should fork into disconnected “document-only” or “finance-only” records.
+No step should fork into disconnected "document-only" or "finance-only" records.
+
+### 6. Configuration Must Respect Platform Boundaries
+
+Workflow behavior should now be understood through two settings layers:
+- super admin defines platform-wide defaults and rollout policy
+- contractor organizations own their adopted copies and tenant-scoped workflow preferences
+
+That means workflow guidance can be configurable without collapsing tenant-owned records into one global mutable configuration model.
 
 ## Primary Contractor Journey
 
@@ -98,10 +107,6 @@ Should capture:
 - source
 - rough notes
 - qualification state
-
-Why it matters:
-- sales work starts before a project is truly active
-- early context should not live in email, sticky notes, or personal memory
 
 ### 2. Customer
 
@@ -172,7 +177,7 @@ This stage should support:
 - retainage-aware downstream billing
 - readiness-to-schedule gating
 
-The important concept is not “did an invoice exist,” but “is this sold work actually ready for production scheduling.”
+The important concept is not "did an invoice exist," but "is this sold work actually ready for production scheduling."
 
 ### 7. Job / Scheduling
 
@@ -220,7 +225,7 @@ Payment should remain invoice-linked and organization-scoped.
 ## Primary vs Secondary Actions
 
 The system should distinguish between:
-- the **primary path**
+- the primary path
 - valid but secondary fallback actions
 
 ### Primary Actions
@@ -247,15 +252,15 @@ Secondary actions can remain available, but they should not compete visually wit
 The system should evolve toward showing one or two strong recommended actions at a time instead of exposing many equal options.
 
 Examples:
-- Send estimate
-- Revise estimate
-- Generate contract
-- Send contract
-- Waiting on signature
-- Waiting on deposit
-- Ready to schedule
-- Create first invoice
-- Follow up on overdue invoice
+- send estimate
+- revise estimate
+- generate contract
+- send contract
+- waiting on signature
+- waiting on deposit
+- ready to schedule
+- create first invoice
+- follow up on overdue invoice
 
 This model should be powered by canonical status plus blockers, not by ad hoc page copy.
 

@@ -39,7 +39,9 @@ type PlatformWorkflowDefaultsRow = {
   config_key: string;
   approved_estimate_contract_seed_id: string | null;
   require_contract_internal_approval: boolean;
+  require_contract_signature_before_job_scheduling: boolean;
   require_deposit_before_job_scheduling: boolean;
+  require_financing_approval_before_job_scheduling: boolean;
   default_deposit_percentage: string | number;
   created_at: string;
   updated_at: string;
@@ -342,7 +344,9 @@ export async function getPlatformWorkflowDefaults(): Promise<PlatformWorkflowDef
     return {
       approvedEstimateContractSeedId: null,
       requireContractInternalApproval: false,
+      requireContractSignatureBeforeJobScheduling: true,
       requireDepositBeforeJobScheduling: false,
+      requireFinancingApprovalBeforeJobScheduling: false,
       defaultDepositPercentage: "0.00",
       createdAt: new Date(0).toISOString(),
       updatedAt: new Date(0).toISOString()
@@ -352,8 +356,12 @@ export async function getPlatformWorkflowDefaults(): Promise<PlatformWorkflowDef
   return {
     approvedEstimateContractSeedId: row.approved_estimate_contract_seed_id,
     requireContractInternalApproval: row.require_contract_internal_approval,
+    requireContractSignatureBeforeJobScheduling:
+      row.require_contract_signature_before_job_scheduling,
     requireDepositBeforeJobScheduling:
       row.require_deposit_before_job_scheduling,
+    requireFinancingApprovalBeforeJobScheduling:
+      row.require_financing_approval_before_job_scheduling,
     defaultDepositPercentage: Number(row.default_deposit_percentage).toFixed(2),
     createdAt: row.created_at,
     updatedAt: row.updated_at
@@ -364,7 +372,9 @@ export async function upsertPlatformWorkflowDefaults(input: {
   userId: string;
   approvedEstimateContractSeedId: string | null;
   requireContractInternalApproval: boolean;
+  requireContractSignatureBeforeJobScheduling: boolean;
   requireDepositBeforeJobScheduling: boolean;
+  requireFinancingApprovalBeforeJobScheduling: boolean;
   defaultDepositPercentage: string;
 }) {
   const supabase = getSupabaseAdminClient();
@@ -375,8 +385,12 @@ export async function upsertPlatformWorkflowDefaults(input: {
         config_key: "default",
         approved_estimate_contract_seed_id: input.approvedEstimateContractSeedId,
         require_contract_internal_approval: input.requireContractInternalApproval,
+        require_contract_signature_before_job_scheduling:
+          input.requireContractSignatureBeforeJobScheduling,
         require_deposit_before_job_scheduling:
           input.requireDepositBeforeJobScheduling,
+        require_financing_approval_before_job_scheduling:
+          input.requireFinancingApprovalBeforeJobScheduling,
         default_deposit_percentage: input.defaultDepositPercentage,
         created_by: input.userId,
         updated_by: input.userId

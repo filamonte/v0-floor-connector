@@ -111,9 +111,17 @@ export async function updatePlatformWorkflowDefaultsAction(formData: FormData) {
       formData,
       "requireContractInternalApproval"
     ),
+    requireContractSignatureBeforeJobScheduling: getCheckboxValue(
+      formData,
+      "requireContractSignatureBeforeJobScheduling"
+    ),
     requireDepositBeforeJobScheduling: getCheckboxValue(
       formData,
       "requireDepositBeforeJobScheduling"
+    ),
+    requireFinancingApprovalBeforeJobScheduling: getCheckboxValue(
+      formData,
+      "requireFinancingApprovalBeforeJobScheduling"
     ),
     defaultDepositPercentage: getFieldValue(formData, "defaultDepositPercentage")
   });

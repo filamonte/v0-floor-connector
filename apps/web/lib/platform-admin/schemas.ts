@@ -65,7 +65,9 @@ export const platformWorkflowDefaultsInputSchema = z.object({
     "Select a valid contract starter template."
   ),
   requireContractInternalApproval: z.boolean(),
+  requireContractSignatureBeforeJobScheduling: z.boolean(),
   requireDepositBeforeJobScheduling: z.boolean(),
+  requireFinancingApprovalBeforeJobScheduling: z.boolean(),
   defaultDepositPercentage: percentStringField("Default deposit percentage")
 });
 

@@ -1,5 +1,10 @@
 # Figma Redesign Brief
 
+Status:
+- exploratory design brief
+- useful for future design work, but not a source-of-truth implementation or workflow document
+- use [docs/current-state.md](C:/FloorConnector/docs/current-state.md), [docs/workflows.md](C:/FloorConnector/docs/workflows.md), and [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md) for current product truth
+
 This document is a design brief for future Figma work on the contractor app.
 
 It should be read alongside:

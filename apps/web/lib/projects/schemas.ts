@@ -9,6 +9,15 @@ const projectStatuses = [
   "completed"
 ] as const;
 
+const financingStatuses = [
+  "not_applicable",
+  "offered",
+  "prequalified",
+  "pending",
+  "approved",
+  "declined"
+] as const;
+
 function optionalTrimmedString(maxLength: number) {
   return z
     .string()
@@ -21,11 +30,13 @@ function optionalTrimmedString(maxLength: number) {
 }
 
 export const projectStatusSchema = z.enum(projectStatuses);
+export const financingStatusSchema = z.enum(financingStatuses);
 
 export const projectInputSchema = z.object({
   name: z.string().trim().min(1, "Project name is required.").max(160),
   customerId: z.string().uuid("Select a valid customer."),
   status: projectStatusSchema,
+  financingStatus: financingStatusSchema,
   description: optionalTrimmedString(4000),
   addressLine1: optionalTrimmedString(160),
   addressLine2: optionalTrimmedString(160),
@@ -39,3 +50,4 @@ export const projectInputSchema = z.object({
 
 export type ProjectInput = z.infer<typeof projectInputSchema>;
 export const projectStatusesList = projectStatuses;
+export const financingStatusesList = financingStatuses;

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { InvoiceWorkflowRole } from "@floorconnector/types";
 
 import { AppEmptyState } from "@/components/app-empty-state";
 import { InvoiceForm } from "@/components/invoice-form";
@@ -16,6 +17,7 @@ type InvoicesPageProps = {
     projectId?: string;
     estimateId?: string;
     jobId?: string;
+    workflowRole?: string;
     error?: string;
     message?: string;
   }>;
@@ -36,7 +38,28 @@ function formatRate(value: string) {
   return `${(Number(value) * 100).toFixed(2)}%`;
 }
 
-async function getInitialInvoiceState(estimateId?: string, jobId?: string) {
+async function getInitialInvoiceState(
+  estimateId?: string,
+  jobId?: string,
+  workflowRole?: string
+): Promise<{
+  projectId: string | null;
+  estimateId: string | null;
+  jobId: string | null;
+  workflowRole: InvoiceWorkflowRole;
+  discountAmount: string | null;
+  lineItems:
+    | Array<{
+        name: string;
+        description: string | null;
+        quantity: string;
+        unit: string;
+        unitPrice: string;
+      }>
+    | null;
+}> {
+  const resolvedWorkflowRole: InvoiceWorkflowRole =
+    workflowRole === "deposit" ? "deposit" : "standard";
   const [estimate, job] = await Promise.all([
     estimateId ? getEstimateById(estimateId, "/invoices") : Promise.resolve(null),
     jobId ? getJobById(jobId, "/invoices") : Promise.resolve(null)
@@ -50,6 +73,7 @@ async function getInitialInvoiceState(estimateId?: string, jobId?: string) {
     projectId: sourceEstimate?.projectId ?? job?.projectId ?? null,
     estimateId: sourceEstimate?.id ?? null,
     jobId: job?.id ?? null,
+    workflowRole: resolvedWorkflowRole,
     discountAmount: sourceEstimate?.discountAmount ?? null,
     lineItems:
       sourceEstimate?.lineItems.map((lineItem) => ({
@@ -84,7 +108,8 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       listJobs(),
       getInitialInvoiceState(
         resolvedSearchParams.estimateId,
-        resolvedSearchParams.jobId
+        resolvedSearchParams.jobId,
+        resolvedSearchParams.workflowRole
       ),
       getOrganizationFinancialSettings(organizationContext.organization.id)
     ]);
@@ -222,7 +247,9 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                         {invoice.project?.name ?? "Unknown project"}
                       </p>
                       <p className="mt-1 text-sm leading-6 text-slate-500">
-                        Tax collected {formatMoney(invoice.taxCollectedAmount)}
+                        {invoice.workflowRole === "deposit"
+                          ? "Deposit readiness invoice"
+                          : `Tax collected ${formatMoney(invoice.taxCollectedAmount)}`}
                       </p>
                     </div>
                     <div>
@@ -277,6 +304,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               initialProjectId={resolvedSearchParams.projectId ?? initialState.projectId}
               initialEstimateId={resolvedSearchParams.estimateId ?? initialState.estimateId}
               initialJobId={resolvedSearchParams.jobId ?? initialState.jobId}
+              initialWorkflowRole={initialState.workflowRole}
               initialDiscountAmount={initialState.discountAmount}
               initialLineItems={initialState.lineItems}
             />

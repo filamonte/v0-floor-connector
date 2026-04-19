@@ -3,12 +3,16 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { compareOpportunityStatuses } from "@floorconnector/domain";
-import type { Opportunity as OpportunityRecord } from "@floorconnector/types";
+import type {
+  Opportunity as OpportunityRecord,
+  SiteAssessmentStatus
+} from "@floorconnector/types";
 
 import type { OpportunityInput } from "./schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
+import { syncProjectCommercialReadiness } from "@/lib/projects/readiness";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 type OpportunityRow = {
@@ -31,6 +35,10 @@ type OpportunityRow = {
   postal_code: string | null;
   country_code: string | null;
   notes: string | null;
+  site_assessment_status: SiteAssessmentStatus;
+  site_assessment_scheduled_at: string | null;
+  site_assessment_completed_at: string | null;
+  requirements_summary: string | null;
   qualified_at: string | null;
   converted_at: string | null;
   lost_at: string | null;
@@ -94,6 +102,10 @@ const opportunitySelect = `
   postal_code,
   country_code,
   notes,
+  site_assessment_status,
+  site_assessment_scheduled_at,
+  site_assessment_completed_at,
+  requirements_summary,
   qualified_at,
   converted_at,
   lost_at,
@@ -126,6 +138,7 @@ function isOpportunityRow(value: unknown): value is OpportunityRow {
     typeof row.status === "string" &&
     typeof row.title === "string" &&
     typeof row.prospect_name === "string" &&
+    typeof row.site_assessment_status === "string" &&
     typeof row.created_at === "string" &&
     typeof row.updated_at === "string"
   );
@@ -164,11 +177,66 @@ function mapOpportunity(row: OpportunityRow): OpportunityRecord {
     postalCode: row.postal_code,
     countryCode: row.country_code,
     notes: row.notes,
+    siteAssessmentStatus: row.site_assessment_status,
+    siteAssessmentScheduledAt: row.site_assessment_scheduled_at,
+    siteAssessmentCompletedAt: row.site_assessment_completed_at,
+    requirementsSummary: row.requirements_summary,
     qualifiedAt: row.qualified_at,
     convertedAt: row.converted_at,
     lostAt: row.lost_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at
+  };
+}
+
+function toStoredAssessmentTimestamp(date: string | null) {
+  return date ? `${date}T12:00:00.000Z` : null;
+}
+
+function resolveSiteAssessmentState(
+  status: OpportunityRecord["status"],
+  input: {
+    siteAssessmentScheduledOn: string | null;
+    siteAssessmentCompletedOn: string | null;
+    requirementsSummary: string | null;
+  },
+  current?: Pick<
+    OpportunityRecord,
+    | "siteAssessmentStatus"
+    | "siteAssessmentScheduledAt"
+    | "siteAssessmentCompletedAt"
+    | "requirementsSummary"
+  >
+) {
+  const scheduledAt =
+    toStoredAssessmentTimestamp(input.siteAssessmentScheduledOn) ??
+    current?.siteAssessmentScheduledAt ??
+    null;
+  const completedAt =
+    toStoredAssessmentTimestamp(input.siteAssessmentCompletedOn) ??
+    current?.siteAssessmentCompletedAt ??
+    null;
+
+  if (completedAt || status === "site_assessment_complete") {
+    return {
+      siteAssessmentStatus: "completed" as const,
+      siteAssessmentScheduledAt: scheduledAt ?? completedAt,
+      siteAssessmentCompletedAt: completedAt ?? scheduledAt
+    };
+  }
+
+  if (scheduledAt || status === "site_assessment_scheduled") {
+    return {
+      siteAssessmentStatus: "scheduled" as const,
+      siteAssessmentScheduledAt: scheduledAt,
+      siteAssessmentCompletedAt: null
+    };
+  }
+
+  return {
+    siteAssessmentStatus: "pending" as const,
+    siteAssessmentScheduledAt: null,
+    siteAssessmentCompletedAt: null
   };
 }
 
@@ -284,6 +352,7 @@ export async function createOpportunity(input: OpportunityInput) {
   const scope = await requireOpportunityScope("/leads");
   const supabase = await getSupabaseServerClient();
   const nowIso = new Date().toISOString();
+  const siteAssessmentState = resolveSiteAssessmentState(input.status, input);
   const response = await supabase
     .from("opportunities")
     .insert({
@@ -303,6 +372,10 @@ export async function createOpportunity(input: OpportunityInput) {
       postal_code: input.postalCode,
       country_code: input.countryCode,
       notes: input.notes,
+      site_assessment_status: siteAssessmentState.siteAssessmentStatus,
+      site_assessment_scheduled_at: siteAssessmentState.siteAssessmentScheduledAt,
+      site_assessment_completed_at: siteAssessmentState.siteAssessmentCompletedAt,
+      requirements_summary: input.requirementsSummary,
       qualified_at: input.status === "qualified" ? nowIso : null,
       lost_at: input.status === "lost" ? nowIso : null,
       created_by: scope.userId,
@@ -333,6 +406,11 @@ export async function updateOpportunity(opportunityId: string, input: Opportunit
   }
 
   const supabase = await getSupabaseServerClient();
+  const siteAssessmentState = resolveSiteAssessmentState(
+    input.status,
+    input,
+    currentOpportunity
+  );
   const qualifiedAt =
     input.status === "qualified" && !currentOpportunity.qualifiedAt
       ? new Date().toISOString()
@@ -362,6 +440,10 @@ export async function updateOpportunity(opportunityId: string, input: Opportunit
       postal_code: input.postalCode,
       country_code: input.countryCode,
       notes: input.notes,
+      site_assessment_status: siteAssessmentState.siteAssessmentStatus,
+      site_assessment_scheduled_at: siteAssessmentState.siteAssessmentScheduledAt,
+      site_assessment_completed_at: siteAssessmentState.siteAssessmentCompletedAt,
+      requirements_summary: input.requirementsSummary,
       qualified_at: qualifiedAt,
       lost_at: lostAt,
       updated_by: scope.userId
@@ -379,6 +461,41 @@ export async function updateOpportunity(opportunityId: string, input: Opportunit
 
   if (!isOpportunityRow(data)) {
     throw new Error("Lead not found for this organization.");
+  }
+
+  if (data.project_id) {
+    await syncProjectCommercialReadiness({
+      organizationId: scope.organizationId,
+      projectId: data.project_id
+    });
+  }
+
+  return mapOpportunityListItem(data);
+}
+
+export async function getOpportunityByProjectId(
+  projectId: string,
+  next = "/projects"
+) {
+  const scope = await requireOpportunityScope(next);
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("opportunities")
+    .select(opportunitySelect)
+    .eq("company_id", scope.organizationId)
+    .eq("project_id", projectId)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const data: unknown = response.data;
+  const error = response.error;
+
+  if (error) {
+    throw new Error(`Unable to load the project lead context: ${error.message}`);
+  }
+
+  if (!isOpportunityRow(data)) {
+    return null;
   }
 
   return mapOpportunityListItem(data);
@@ -440,7 +557,7 @@ export async function ensureOpportunityEstimateFlow(opportunityId: string) {
         customer_id: customerId,
         name: opportunity.title,
         status: "estimating",
-        description: opportunity.notes,
+        description: opportunity.requirementsSummary ?? opportunity.notes,
         address_line_1: opportunity.addressLine1,
         address_line_2: opportunity.addressLine2,
         city: opportunity.city,
@@ -462,6 +579,22 @@ export async function ensureOpportunityEstimateFlow(opportunityId: string) {
     }
 
     projectId = projectData.id;
+  } else if (opportunity.requirementsSummary || opportunity.notes) {
+    const projectSeedResponse = await supabase
+      .from("projects")
+      .update({
+        description: opportunity.requirementsSummary ?? opportunity.notes,
+        updated_by: scope.userId
+      })
+      .eq("company_id", scope.organizationId)
+      .eq("id", projectId)
+      .is("description", null);
+
+    if (projectSeedResponse.error) {
+      throw new Error(
+        `Unable to carry assessment context into the project: ${projectSeedResponse.error.message}`
+      );
+    }
   }
 
   if (!customerId || !projectId) {
@@ -475,6 +608,14 @@ export async function ensureOpportunityEstimateFlow(opportunityId: string) {
       customer_id: customerId,
       project_id: projectId,
       status: "estimating",
+      site_assessment_status:
+        opportunity.siteAssessmentStatus === "pending"
+          ? "completed"
+          : opportunity.siteAssessmentStatus,
+      site_assessment_completed_at:
+        opportunity.siteAssessmentCompletedAt ??
+        opportunity.siteAssessmentScheduledAt ??
+        new Date().toISOString(),
       qualified_at: opportunity.qualifiedAt ?? new Date().toISOString(),
       converted_at: conversionTimestamp,
       updated_by: scope.userId
@@ -485,6 +626,11 @@ export async function ensureOpportunityEstimateFlow(opportunityId: string) {
   if (updateResponse.error) {
     throw new Error(`Unable to prepare the estimate flow: ${updateResponse.error.message}`);
   }
+
+  await syncProjectCommercialReadiness({
+    organizationId: scope.organizationId,
+    projectId
+  });
 
   return {
     opportunityId: opportunity.id,

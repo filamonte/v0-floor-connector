@@ -10,6 +10,7 @@ import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getEstimateById } from "@/lib/estimates/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getProjectById } from "@/lib/projects/data";
+import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 type JobRow = {
@@ -104,6 +105,40 @@ function mapJob(row: JobRow): JobRecord {
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
+}
+
+async function getJobRecordById(
+  organizationId: string,
+  jobId: string
+): Promise<JobRow | null> {
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("jobs")
+    .select(
+      `
+        id,
+        company_id,
+        customer_id,
+        project_id,
+        estimate_id,
+        status,
+        scheduled_date,
+        notes,
+        created_at,
+        updated_at
+      `
+    )
+    .eq("company_id", organizationId)
+    .eq("id", jobId)
+    .maybeSingle();
+  const data: unknown = response.data;
+  const error = response.error;
+
+  if (error) {
+    throw new Error(`Unable to load the job: ${error.message}`);
+  }
+
+  return isJobRow(data) ? data : null;
 }
 
 async function getJobScope(next = "/jobs"): Promise<JobScope | null> {
@@ -326,6 +361,17 @@ export async function createJob(input: JobInput) {
     input.projectId,
     "/jobs"
   );
+  const readinessSnapshot = await getProjectFinancialReadinessSnapshot({
+    organizationId: scope.organizationId,
+    projectId: project.id
+  });
+
+  if (!readinessSnapshot?.isReadyToSchedule) {
+    throw new Error(
+      "Project is not ready for downstream scheduling yet. Review the project readiness hub before creating a job."
+    );
+  }
+
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("jobs")
@@ -371,12 +417,33 @@ export async function createJob(input: JobInput) {
 
 export async function updateJob(jobId: string, input: JobInput) {
   const scope = await requireJobScope(`/jobs/${jobId}`);
+  const currentJob = await getJobRecordById(scope.organizationId, jobId);
+
+  if (!currentJob) {
+    throw new Error("Job not found for this organization.");
+  }
+
   const project = await resolveScopedProject(input.projectId, `/jobs/${jobId}`);
   const estimate = await resolveApprovedEstimate(
     input.estimateId,
     input.projectId,
     `/jobs/${jobId}`
   );
+  const isReassigningProject = currentJob.project_id !== project.id;
+
+  if (isReassigningProject) {
+    const readinessSnapshot = await getProjectFinancialReadinessSnapshot({
+      organizationId: scope.organizationId,
+      projectId: project.id
+    });
+
+    if (!readinessSnapshot?.isReadyToSchedule) {
+      throw new Error(
+        "Project is not ready for downstream scheduling yet. Review the project readiness hub before moving a job onto this project."
+      );
+    }
+  }
+
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("jobs")
@@ -414,7 +481,7 @@ export async function updateJob(jobId: string, input: JobInput) {
   }
 
   if (!isJobRow(data)) {
-    throw new Error("Job not found for this organization.");
+    throw new Error("Unexpected job response after update.");
   }
 
   return mapJob(data);

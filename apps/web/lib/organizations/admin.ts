@@ -85,6 +85,8 @@ export async function listOrganizationMembers(organizationId: string) {
     acting_user_id: null
   });
 
+  // company_memberships also references users through created_by and updated_by,
+  // so the membership user embed must target the user_id foreign key explicitly.
   const response = await supabase
     .from("company_memberships")
     .select(
@@ -95,7 +97,7 @@ export async function listOrganizationMembers(organizationId: string) {
         membership_status,
         invitation_email,
         accepted_at,
-        users (
+        member_user:users!company_memberships_user_id_fkey (
           id,
           email,
           full_name
@@ -118,7 +120,7 @@ export async function listOrganizationMembers(organizationId: string) {
       membership_status: string;
       invitation_email: string | null;
       accepted_at: string | null;
-      users:
+      member_user:
         | Array<{
             id: string;
             email: string;
@@ -134,7 +136,7 @@ export async function listOrganizationMembers(organizationId: string) {
       membership_status: record.membership_status,
       invitation_email: record.invitation_email,
       accepted_at: record.accepted_at,
-      users: Array.isArray(record.users) ? (record.users[0] ?? null) : null
+      users: Array.isArray(record.member_user) ? (record.member_user[0] ?? null) : null
     } satisfies OrganizationMemberRow;
   });
 }

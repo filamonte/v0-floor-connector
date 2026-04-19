@@ -9,6 +9,10 @@ Cross-references:
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): system design
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): next-phase build order
 
+This workflow document assumes the supporting configuration model now has two layers:
+- super admin defines platform defaults and starter records
+- contractor organizations adopt or override within their own tenant-owned settings
+
 ## Workflow Principles
 
 - no duplicate data entry across stages

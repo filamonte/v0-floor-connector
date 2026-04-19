@@ -6,11 +6,23 @@ import { CustomerForm } from "@/components/customer-form";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
+import { PortalAccessGrantForm } from "@/components/portal-access-grant-form";
+import { PortalProjectAccessForm } from "@/components/portal-project-access-form";
 import { updateCustomerAction } from "@/lib/customers/actions";
 import { getCustomerById } from "@/lib/customers/data";
 import { listEstimates } from "@/lib/estimates/data";
 import { listInvoices } from "@/lib/invoices/data";
 import { listJobs } from "@/lib/jobs/data";
+import {
+  createPortalAccessGrantAction,
+  createPortalProjectAccessAction,
+  updatePortalAccessGrantStatusAction,
+  updatePortalProjectAccessStatusAction
+} from "@/lib/portal-access/actions";
+import {
+  listPortalAccessGrantsByCustomer,
+  listPortalProjectAccessByGrantId
+} from "@/lib/portal-access/data";
 import { listProjectsByCustomer } from "@/lib/projects/data";
 
 type CustomerDetailPageProps = {
@@ -30,18 +42,34 @@ function formatMoney(amount: string | number) {
   });
 }
 
+function formatPortalStatusLabel(value: string) {
+  return value.replaceAll("_", " ");
+}
+
+function getPortalAccessStatusClasses(status: string) {
+  switch (status) {
+    case "active":
+      return "border-emerald-200 bg-emerald-50 text-emerald-900";
+    case "revoked":
+      return "border-slate-200 bg-slate-100 text-slate-700";
+    default:
+      return "border-amber-200 bg-amber-50 text-amber-900";
+  }
+}
+
 export default async function CustomerDetailPage({
   params,
   searchParams
 }: CustomerDetailPageProps) {
   const { customerId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
-  const [customer, projects, estimates, jobs, invoices] = await Promise.all([
+  const [customer, projects, estimates, jobs, invoices, portalAccessGrants] = await Promise.all([
     getCustomerById(customerId, `/customers/${customerId}`),
     listProjectsByCustomer(customerId, `/customers/${customerId}`),
     listEstimates(),
     listJobs(),
-    listInvoices()
+    listInvoices(),
+    listPortalAccessGrantsByCustomer(customerId, `/customers/${customerId}`)
   ]);
 
   if (!customer) {
@@ -55,6 +83,22 @@ export default async function CustomerDetailPage({
   const openInvoices = customerInvoices.filter(
     (invoice) => invoice.status !== "paid" && invoice.status !== "void"
   );
+  const portalProjectAccessEntries = await Promise.all(
+    portalAccessGrants.map(async (grant) => [
+      grant.id,
+      await listPortalProjectAccessByGrantId(grant.id, `/customers/${customerId}`)
+    ] as const)
+  );
+  const portalProjectAccessByGrantId = new Map(portalProjectAccessEntries);
+  const activePortalGrantCount = portalAccessGrants.filter(
+    (grant) => grant.status === "active"
+  ).length;
+  const invitedPortalGrantCount = portalAccessGrants.filter(
+    (grant) => grant.status === "invited"
+  ).length;
+  const revokedPortalGrantCount = portalAccessGrants.filter(
+    (grant) => grant.status === "revoked"
+  ).length;
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -147,6 +191,204 @@ export default async function CustomerDetailPage({
         </DetailPanel>
 
         <DetailPanel
+          title="Portal Access"
+          description="Grant and constrain customer-facing portal visibility here so access stays anchored to the canonical customer record and explicitly scoped projects."
+        >
+          <div className="space-y-8">
+            <section className="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
+              <div className="flex flex-col gap-2">
+                <p className="text-base font-semibold text-slate-950">Grant customer portal access</p>
+                <p className="text-sm leading-6 text-slate-600">
+                  Use an email that already belongs to an authenticated FloorConnector user, then add only the projects that customer should see.
+                </p>
+              </div>
+              <div className="mt-5">
+                <PortalAccessGrantForm
+                  action={createPortalAccessGrantAction}
+                  customerId={customer.id}
+                  defaultEmail={customer.email}
+                />
+              </div>
+            </section>
+
+            {portalAccessGrants.length > 0 ? (
+              <div className="space-y-6">
+                {portalAccessGrants.map((grant) => {
+                  const projectAccess = portalProjectAccessByGrantId.get(grant.id) ?? [];
+                  const availableProjects = projects
+                    .filter(
+                      (project) =>
+                        !projectAccess.some((access) => access.projectId === project.id)
+                    )
+                    .map((project) => ({
+                      id: project.id,
+                      label: project.name,
+                      status: project.status
+                    }));
+
+                  return (
+                    <section
+                      key={grant.id}
+                      className="rounded-[1.75rem] border border-slate-200 bg-white px-5 py-5"
+                    >
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="space-y-3">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <p className="text-base font-semibold text-slate-950">
+                              {grant.portalUser?.fullName ?? grant.portalUser?.email ?? grant.invitedEmail}
+                            </p>
+                            <span
+                              className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getPortalAccessStatusClasses(
+                                grant.status
+                              )}`}
+                            >
+                              {formatPortalStatusLabel(grant.status)}
+                            </span>
+                          </div>
+                          <div className="space-y-1 text-sm leading-6 text-slate-600">
+                            <p>
+                              Portal email:{" "}
+                              <span className="font-medium text-slate-950">
+                                {grant.portalUser?.email ?? grant.invitedEmail ?? "Not captured"}
+                              </span>
+                            </p>
+                            <p>
+                              Granted projects:{" "}
+                              <span className="font-medium text-slate-950">
+                                {projectAccess.filter((access) => access.status === "active").length}
+                              </span>
+                            </p>
+                            <p>
+                              Created:{" "}
+                              <span className="font-medium text-slate-950">
+                                {new Date(grant.createdAt).toLocaleString()}
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <form action={updatePortalAccessGrantStatusAction}>
+                          <input type="hidden" name="portalAccessGrantId" value={grant.id} />
+                          <input type="hidden" name="customerId" value={customer.id} />
+                          <input type="hidden" name="userId" value={grant.userId} />
+                          <input
+                            type="hidden"
+                            name="invitedEmail"
+                            value={grant.invitedEmail ?? grant.portalUser?.email ?? ""}
+                          />
+                          <input
+                            type="hidden"
+                            name="status"
+                            value={grant.status === "revoked" ? "active" : "revoked"}
+                          />
+                          <button
+                            type="submit"
+                            className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                          >
+                            {grant.status === "revoked" ? "Reactivate access" : "Revoke access"}
+                          </button>
+                        </form>
+                      </div>
+
+                      <div className="mt-6 space-y-5">
+                        <div className="space-y-3">
+                          <p className="text-sm font-medium text-slate-950">Visible projects</p>
+                          {projectAccess.length > 0 ? (
+                            <div className="grid gap-3">
+                              {projectAccess.map((access) => (
+                                <div
+                                  key={access.id}
+                                  className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4"
+                                >
+                                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                    <div>
+                                      <p className="text-sm font-semibold text-slate-950">
+                                        {access.project?.name ?? "Linked project"}
+                                      </p>
+                                      <p className="mt-1 text-sm leading-6 text-slate-600">
+                                        {access.project
+                                          ? `Project status: ${access.project.status.replaceAll("_", " ")}`
+                                          : "Project context unavailable"}
+                                      </p>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-3">
+                                      <span
+                                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getPortalAccessStatusClasses(
+                                          access.status
+                                        )}`}
+                                      >
+                                        {formatPortalStatusLabel(access.status)}
+                                      </span>
+                                      <form action={updatePortalProjectAccessStatusAction}>
+                                        <input
+                                          type="hidden"
+                                          name="portalProjectAccessId"
+                                          value={access.id}
+                                        />
+                                        <input type="hidden" name="customerId" value={customer.id} />
+                                        <input
+                                          type="hidden"
+                                          name="portalAccessGrantId"
+                                          value={access.portalAccessGrantId}
+                                        />
+                                        <input type="hidden" name="projectId" value={access.projectId} />
+                                        <input
+                                          type="hidden"
+                                          name="status"
+                                          value={access.status === "revoked" ? "active" : "revoked"}
+                                        />
+                                        <button
+                                          type="submit"
+                                          className="inline-flex items-center rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                                        >
+                                          {access.status === "revoked"
+                                            ? "Reactivate"
+                                            : "Revoke visibility"}
+                                        </button>
+                                      </form>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <AppEmptyState
+                              eyebrow="No visible projects"
+                              title="Grant the first project"
+                              description="Portal access is customer-anchored, but the customer still only sees the projects explicitly granted below."
+                            />
+                          )}
+                        </div>
+
+                        {availableProjects.length > 0 && grant.status !== "revoked" ? (
+                          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4">
+                            <p className="text-sm font-medium text-slate-950">Add project visibility</p>
+                            <div className="mt-4">
+                              <PortalProjectAccessForm
+                                action={createPortalProjectAccessAction}
+                                customerId={customer.id}
+                                portalAccessGrantId={grant.id}
+                                projects={availableProjects}
+                              />
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    </section>
+                  );
+                })}
+              </div>
+            ) : (
+              <AppEmptyState
+                eyebrow="No portal access yet"
+                title="Grant the first customer portal user"
+                description="Portal access remains narrow in this pass: connect one authenticated user to this canonical customer, then explicitly grant the projects they should be able to review."
+              />
+            )}
+          </div>
+        </DetailPanel>
+
+        <DetailPanel
           title="Edit Customer"
           description="Keep customer editing available here while the connected relationship context stays visible above."
         >
@@ -223,6 +465,29 @@ export default async function CustomerDetailPage({
               </p>
             ) : (
               <p>No open invoices are currently tied to this customer.</p>
+            )}
+          </div>
+        </DetailPanel>
+
+        <DetailPanel
+          title="Portal Access Snapshot"
+          description="A quick admin read on who can currently see this customer in the portal."
+        >
+          <div className="space-y-3 text-sm leading-6 text-slate-600">
+            <p>Active portal users: {activePortalGrantCount}</p>
+            <p>Invited portal users: {invitedPortalGrantCount}</p>
+            <p>Revoked portal users: {revokedPortalGrantCount}</p>
+            {portalAccessGrants[0] ? (
+              <p>
+                Latest portal grant:{" "}
+                <span className="font-medium text-slate-950">
+                  {portalAccessGrants[0].portalUser?.email ??
+                    portalAccessGrants[0].invitedEmail ??
+                    "Unknown email"}
+                </span>
+              </p>
+            ) : (
+              <p>No portal access has been granted for this customer yet.</p>
             )}
           </div>
         </DetailPanel>

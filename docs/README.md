@@ -13,6 +13,8 @@ Current foundation priorities to document as the repo grows:
 - package ownership and shared boundaries
 - Supabase migration and RLS workflow
 - environment setup and operational checks
+- modular contractor settings and super-admin boundaries
+- platform defaults versus organization-owned copies and overrides
 
 Environment notes:
 - Local `.env.local` files should use valid localhost URLs including `http://`.
@@ -23,6 +25,8 @@ Available setup guides:
 - `docs/auth-setup.md` for the planned shared auth model, Google-first plus email/password support, redirect URL expectations, and local auth verification routes.
 
 Document roles:
+- `docs/documentation-governance.md`: documentation system rules, archival policy, and doc update expectations
+- `docs/developer-source-of-truth.md`: short implementation guardrail summary for day-to-day development
 - `docs/Architecture.md`: target system design
 - `docs/Roadmap.md`: phased implementation plan
 - `docs/current-state.md`: source of truth for implemented status
@@ -31,9 +35,10 @@ Document roles:
 - `docs/target-ia.md`: target contractor app navigation and workspace structure
 - `docs/workflow-spec.md`: primary contractor workflow definition
 - `docs/workflow-state-machine.md`: stages, blockers, and transition guidance
-- `docs/figma-redesign-brief.md`: workflow-first design brief for future Figma work
-- `docs/opportunity-model.md`: formal pre-project sales/intake model
-- `docs/opportunity-implementation-plan.md`: phased implementation plan for introducing opportunity
+- `docs/figma-redesign-brief.md`: exploratory workflow-first design brief for future Figma work
+- `docs/archive/README.md`: archive index for historical planning/reference docs
+- `docs/opportunity-model.md`: archived pointer to the historical opportunity planning doc
+- `docs/opportunity-implementation-plan.md`: archived pointer to the historical opportunity rollout plan
 
 ## Documentation Layers
 
@@ -42,3 +47,11 @@ Document roles:
 - `docs/Roadmap.md` -> what is being built next
 - `docs/Architecture.md` -> target system design
 - `docs/vision.md` -> where the product is intended to expand over time
+
+Current documentation focus:
+- keep implemented truth in `current-state.md`
+- keep workflow guidance in `workflows.md`
+- keep long-term product direction out of current-state and inside `vision.md`
+- keep platform-level defaults and contractor-level administration documented as separate concerns
+- move antiquated planning docs into `docs/archive/` instead of deleting them
+- use `docs/documentation-governance.md` as the rulebook for future doc cleanup and archival decisions

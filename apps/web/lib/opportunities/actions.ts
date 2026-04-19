@@ -49,6 +49,9 @@ function parseOpportunityInput(formData: FormData) {
     stateRegion: getFieldValue(formData, "stateRegion"),
     postalCode: getFieldValue(formData, "postalCode"),
     countryCode: getFieldValue(formData, "countryCode"),
+    siteAssessmentScheduledOn: getFieldValue(formData, "siteAssessmentScheduledOn"),
+    siteAssessmentCompletedOn: getFieldValue(formData, "siteAssessmentCompletedOn"),
+    requirementsSummary: getFieldValue(formData, "requirementsSummary"),
     notes: getFieldValue(formData, "notes")
   });
 }

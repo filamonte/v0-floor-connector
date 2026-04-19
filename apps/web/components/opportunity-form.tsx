@@ -15,6 +15,10 @@ function getValue(value: string | null | undefined) {
   return value ?? "";
 }
 
+function getDateValue(value: string | null | undefined) {
+  return value ? value.slice(0, 10) : "";
+}
+
 function formatStatusLabel(status: OpportunityStatus) {
   return status.replaceAll("_", " ");
 }
@@ -135,7 +139,34 @@ export function OpportunityForm({
           placeholder="US"
           hint="Use a two-letter country code when available."
         />
+        <AuthField
+          label="Assessment scheduled"
+          name="siteAssessmentScheduledOn"
+          type="date"
+          defaultValue={getDateValue(opportunity?.siteAssessmentScheduledAt)}
+          hint="Optional sales-side visit or measurement date."
+        />
+        <AuthField
+          label="Assessment completed"
+          name="siteAssessmentCompletedOn"
+          type="date"
+          defaultValue={getDateValue(opportunity?.siteAssessmentCompletedAt)}
+          hint="Capture when field requirements were confirmed."
+        />
       </div>
+
+      <label className="block">
+        <span className="mb-2 block text-sm font-medium text-slate-800">
+          Requirements summary
+        </span>
+        <textarea
+          name="requirementsSummary"
+          defaultValue={getValue(opportunity?.requirementsSummary)}
+          rows={4}
+          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+          placeholder="Surface condition, prep assumptions, scope boundaries, access constraints, or customer requirements"
+        />
+      </label>
 
       <label className="block">
         <span className="mb-2 block text-sm font-medium text-slate-800">

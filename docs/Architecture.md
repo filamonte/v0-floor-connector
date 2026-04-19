@@ -1,15 +1,21 @@
 # FloorConnector Architecture
 
+Status: target platform architecture.
+
 This document describes the **target platform architecture** for FloorConnector.
 
 It defines the intended end-state system design, shared data model, and platform boundaries. It does **not** imply that every surface, workflow, or module listed here is already implemented today.
 
 Use these docs together:
+- [docs/current-state.md](C:/FloorConnector/docs/current-state.md): source of truth for implemented status
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target system design
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
-- [docs/current-state.md](C:/FloorConnector/docs/current-state.md): source of truth for implemented status
-- [docs/workflows.md](C:/FloorConnector/docs/workflows.md): operational workflow definition
+- [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow direction
+- [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
+- [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
 - [docs/vision.md](C:/FloorConnector/docs/vision.md): long-term product direction
+
+When implementation status matters, defer to [docs/current-state.md](C:/FloorConnector/docs/current-state.md).
 
 ## Platform Overview
 
@@ -32,6 +38,8 @@ Business data should exist once and be reused across the platform.
 ### Project-Centered Operations
 
 Projects are intended to become the operational root of core delivery workflows.
+
+In contractor UX terms, project detail should be the primary workflow and readiness hub, while other record pages should support the connected workflow and point back to the project workspace when broader handoff state matters.
 
 ### Cross-Module Data Flow
 
@@ -79,6 +87,7 @@ Platform-level concerns are intended to include:
 - admin tools
 - super-admin oversight
 - platform-level module entitlements and controls
+- platform starter defaults for templates, catalogs, financial settings, and workflow settings
 
 ### Organization
 
@@ -91,6 +100,7 @@ Organization-level concerns are intended to include:
 - notification and workflow preferences
 - reusable catalogs
 - organization-owned template libraries
+- organization-owned copies and overrides adopted from platform defaults
 
 ### Operations
 
@@ -212,3 +222,25 @@ Shared template and catalog rules:
 - platform-level default catalogs and templates may exist as seed sources for new contractor organizations
 - seeded defaults must become organization-owned copies after provisioning, not globally shared mutable records
 - once seeded, contractor organizations should be free to edit their own copies without affecting platform defaults or other tenants
+
+## Settings And Administration Boundaries
+
+The target settings architecture should remain explicitly two-layered:
+
+- `Super Admin` is the source of truth for platform-wide defaults, starter records, rollout policy, and system controls
+- `Contractor Settings` manages organization-owned copies, tenant-scoped overrides, and operating preferences inside those platform rules
+
+This boundary matters because:
+- tenants must not depend directly on one mutable global template or catalog record
+- platform policy and tenant configuration must stay separable
+- additional modules should be able to plug into the same settings system without inventing disconnected admin models
+
+## Contractor Workspace Direction
+
+The target contractor app should use a shared record-workspace pattern rather than unrelated page-by-page layouts.
+
+Target page-shape rules:
+- detail pages should separate header, workflow summary, primary workspace, context rail, and secondary sections
+- project detail should remain the primary workflow and readiness hub
+- estimate, contract, invoice, and job detail pages should use the same page language and reinforce project-centered continuity
+- invoice detail should be review-first in structure even when edit controls remain available

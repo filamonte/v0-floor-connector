@@ -1,10 +1,17 @@
 # FloorConnector Roadmap
 
+Status: phased implementation plan.
+
 This document describes the **phased implementation plan** for FloorConnector.
 
 It tracks delivery sequence and major platform milestones. It should be read alongside:
-- [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target system design
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): source of truth for implemented status
+- [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target system design
+- [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow direction
+- [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
+- [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
+
+This document is sequencing guidance, not a claim that a later phase is already implemented. If status and plan conflict, trust [docs/current-state.md](C:/FloorConnector/docs/current-state.md) for current reality.
 
 ## Phase 1
 
@@ -34,9 +41,9 @@ Planned focus:
 - align docs, navigation, route protection, and workflow messaging with the already-built system
 - tighten project-centered workflow guidance across leads, projects, estimates, contracts, jobs, and invoices
 - improve dashboard and queue truthfulness
-- make settings and organization-admin surfaces match the real multi-tenant system
-- clarify module controls and entitlement foundations
-- reduce super-admin and contractor-surface ambiguity
+- harden the new modular settings and super-admin architecture with clearer enforcement, permissions, and rollout rules
+- deepen module controls and entitlement behavior beyond the current configuration foundation
+- keep contractor admin and super-admin responsibilities clearly separated as more modules plug into settings
 - reduce route and UI inconsistencies before expanding new domains
 
 ## Phase 3
@@ -68,8 +75,8 @@ Planned focus:
 
 Planned focus:
 - reusable item and materials catalog management
-- seeded organization-owned defaults
-- shared catalog support across estimating, invoicing, and contracts
+- seeded organization-owned defaults beyond the current settings foundation
+- shared catalog support directly inside estimating, invoicing, contracts, and future execution workflows
 - richer shared template and document editing capability
 - broader document workflow refinement
 

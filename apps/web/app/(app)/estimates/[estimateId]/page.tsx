@@ -1,16 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { EstimateStatusActions } from "@/components/estimate-status-actions";
 import { LinkedRecordCard } from "@/components/linked-record-card";
+import { NextActionCard } from "@/components/next-action-card";
+import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { listContracts } from "@/lib/contracts/data";
 import { getEstimateById } from "@/lib/estimates/data";
 import { listInvoices } from "@/lib/invoices/data";
 import { listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
 
 function formatStatusLabel(status: string) {
   return status.replaceAll("_", " ");
@@ -40,6 +44,57 @@ function getStatusBadgeClassName(status: string) {
     default:
       return "border-slate-200 bg-slate-50 text-slate-700";
   }
+}
+
+function formatReadinessLabel(status: string | null) {
+  if (!status) {
+    return "not started";
+  }
+
+  return status.replaceAll("_", " ");
+}
+
+function getEstimateNextAction(input: {
+  estimateStatus: string;
+  projectId: string;
+  estimateId: string;
+  contractId: string | null;
+  readinessStatus: string | null;
+  depositInvoiceId: string | null;
+}) {
+  if (input.estimateStatus !== "approved") {
+    return {
+      title: "Get estimate approval",
+      description: "Approval is still the main commercial gate before contract and readiness work should continue.",
+      href: `/estimates/${input.estimateId}`,
+      label: "Stay on estimate review"
+    };
+  }
+
+  if (!input.contractId) {
+    return {
+      title: "Generate the contract",
+      description: "Approved scope is ready to move into the canonical contract workflow.",
+      href: `/contracts?estimateId=${input.estimateId}`,
+      label: "Generate contract"
+    };
+  }
+
+  if (input.readinessStatus === "waiting_on_deposit" && input.depositInvoiceId) {
+    return {
+      title: "Collect the deposit",
+      description: "A deposit request exists and the project hub is tracking it as the active blocker.",
+      href: `/invoices/${input.depositInvoiceId}`,
+      label: "Review deposit invoice"
+    };
+  }
+
+  return {
+    title: "Use the project readiness hub",
+    description: "The project page is now the authoritative place to clear contract, signature, and financial blockers in order.",
+    href: `/projects/${input.projectId}`,
+    label: "Open project readiness hub"
+  };
 }
 
 type EstimateDetailPageProps = {
@@ -74,6 +129,18 @@ export default async function EstimateDetailPage({
   const estimateContracts = contracts.filter((contract) => contract.estimateId === estimate.id);
   const estimateJobs = jobs.filter((job) => job.estimateId === estimate.id);
   const estimateInvoices = invoices.filter((invoice) => invoice.estimateId === estimate.id);
+  const readinessSnapshot = await getProjectFinancialReadinessSnapshot({
+    organizationId: estimate.organizationId,
+    projectId: estimate.projectId
+  });
+  const nextAction = getEstimateNextAction({
+    estimateStatus: estimate.status,
+    projectId: estimate.projectId,
+    estimateId: estimate.id,
+    contractId: readinessSnapshot?.contractId ?? estimateContracts[0]?.id ?? null,
+    readinessStatus: readinessSnapshot?.status ?? null,
+    depositInvoiceId: readinessSnapshot?.depositInvoiceId ?? null
+  });
 
   const customerAddress = estimate.customer
     ? formatAddress([
@@ -96,6 +163,11 @@ export default async function EstimateDetailPage({
         estimate.project.countryCode
       ])
     : null;
+  const readinessStatusLabel = formatReadinessLabel(readinessSnapshot?.status ?? null);
+  const readinessBlockersLabel =
+    readinessSnapshot && readinessSnapshot.blockers.length > 0
+      ? readinessSnapshot.blockers.map((blocker) => blocker.replaceAll("_", " ")).join(", ")
+      : "No active project-level commercial blockers recorded.";
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 print:max-w-none">
@@ -117,16 +189,10 @@ export default async function EstimateDetailPage({
                     Generate contract
                   </Link>
                   <Link
-                    href={`/jobs?projectId=${estimate.projectId}&estimateId=${estimate.id}`}
+                    href={`/projects/${estimate.projectId}`}
                     className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
                   >
-                    Create job
-                  </Link>
-                  <Link
-                    href={`/invoices?projectId=${estimate.projectId}&estimateId=${estimate.id}`}
-                    className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-                  >
-                    Create invoice
+                    Open project readiness hub
                   </Link>
                 </>
               ) : null}
@@ -155,6 +221,77 @@ export default async function EstimateDetailPage({
             {resolvedSearchParams.message}
           </div>
         ) : null}
+
+        <div className="mt-8 print:hidden">
+          <WorkspaceSummaryBand
+            className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.95fr)_minmax(0,1fr)]"
+            items={[
+              {
+                key: "review-purpose",
+                label: "Review purpose",
+                content: (
+                  <div className="space-y-2 text-sm leading-6 text-slate-600">
+                    <p className="text-base font-semibold text-slate-950 capitalize">
+                      {formatStatusLabel(estimate.status)} estimate
+                    </p>
+                    <p>
+                      Keep the proposal itself front and center here, then use the project hub to
+                      clear downstream contract, signature, deposit, and scheduling-readiness work.
+                    </p>
+                  </div>
+                )
+              },
+              {
+                key: "next-action",
+                label: "Preferred next action",
+                content: (
+                  <NextActionCard
+                    eyebrow="Workflow guidance"
+                    title={nextAction.title}
+                    description={nextAction.description}
+                    primaryAction={
+                      <Link
+                        href={nextAction.href}
+                        className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                      >
+                        {nextAction.label}
+                      </Link>
+                    }
+                  />
+                )
+              },
+              {
+                key: "project-readiness",
+                label: "Project readiness context",
+                content: (
+                  <ContextFactsList
+                    items={[
+                      {
+                        label: "Current readiness",
+                        value: <span className="capitalize">{readinessStatusLabel}</span>
+                      },
+                      {
+                        label: "Active blockers",
+                        value: readinessBlockersLabel
+                      },
+                      {
+                        label: "Authoritative workspace",
+                        value: (
+                          <Link
+                            href={`/projects/${estimate.projectId}`}
+                            className="font-medium text-brand-700 transition hover:text-brand-900"
+                          >
+                            Open the project readiness hub
+                          </Link>
+                        )
+                      }
+                    ]}
+                  />
+                )
+              }
+            ]}
+          />
+        </div>
       </div>
 
       <section className="rounded-[2rem] border border-slate-200 bg-white px-6 py-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] sm:px-8 sm:py-10 print:rounded-none print:border-none print:px-0 print:py-0 print:shadow-none">
@@ -225,6 +362,15 @@ export default async function EstimateDetailPage({
         </div>
 
         <div className="border-b border-slate-200 py-8">
+          <div className="mb-6 print:hidden">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Estimate scope
+            </p>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+              Review the proposal body, scope, pricing, and terms here. Workflow guidance stays
+              above and to the side so this estimate remains the main review surface.
+            </p>
+          </div>
           <div className="overflow-x-auto">
             <table className="min-w-full border-separate border-spacing-y-3">
               <thead>
@@ -297,7 +443,12 @@ export default async function EstimateDetailPage({
                 <p className="mt-4 text-sm leading-6 text-slate-500">
                   Jobs and contracts should be created after this estimate reaches the approved state.
                 </p>
-              ) : null}
+              ) : (
+                <p className="mt-4 text-sm leading-6 text-slate-500">
+                  Approved estimates should now move through the project readiness hub for contract,
+                  signature, and financial handoff before downstream jobs or standard invoices.
+                </p>
+              )}
             </DetailPanel>
           </div>
 
@@ -323,7 +474,11 @@ export default async function EstimateDetailPage({
                     href={`/contracts/${contract.id}`}
                     title={contract.title}
                     subtitle="Contract"
-                    meta={contract.template?.name ?? "Shared template"}
+                    meta={
+                      contract.template?.name
+                        ? `${contract.template.name} | return to the project hub for readiness`
+                        : "Return to the project hub for readiness"
+                    }
                     badge={
                       <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
                         {formatStatusLabel(contract.status)}
@@ -351,7 +506,7 @@ export default async function EstimateDetailPage({
                     href={`/invoices/${invoice.id}`}
                     title={invoice.referenceNumber}
                     subtitle="Invoice"
-                    meta={`Balance due ${formatMoney(invoice.balanceDueAmount)}`}
+                    meta={`Balance due ${formatMoney(invoice.balanceDueAmount)} | project hub governs handoff`}
                     badge={
                       <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
                         {formatStatusLabel(invoice.status)}
@@ -361,7 +516,7 @@ export default async function EstimateDetailPage({
                 ))}
                 {estimateContracts.length === 0 && estimateJobs.length === 0 && estimateInvoices.length === 0 ? (
                   <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
-                    No downstream contract, job, or invoice records are linked to this estimate yet.
+                    No downstream contract, job, or invoice records are linked to this estimate yet. Use the project readiness hub once this estimate is approved.
                   </p>
                 ) : null}
               </div>

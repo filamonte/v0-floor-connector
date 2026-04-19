@@ -87,7 +87,9 @@ export const organizationWorkflowSettingsInputSchema = z.object({
     "Select a valid contract template."
   ),
   requireContractInternalApproval: z.boolean(),
+  requireContractSignatureBeforeJobScheduling: z.boolean(),
   requireDepositBeforeJobScheduling: z.boolean(),
+  requireFinancingApprovalBeforeJobScheduling: z.boolean(),
   defaultDepositPercentage: percentStringField("Default deposit percentage")
 });
 

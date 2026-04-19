@@ -51,6 +51,30 @@ export const protectedAppNavItems: readonly ProtectedAppNavItem[] = [
     section: "operations"
   },
   {
+    href: "/time",
+    label: "Time",
+    minRole: "member",
+    section: "operations"
+  },
+  {
+    href: "/daily-logs",
+    label: "Daily Logs",
+    minRole: "member",
+    section: "operations"
+  },
+  {
+    href: "/people",
+    label: "People",
+    minRole: "member",
+    section: "operations"
+  },
+  {
+    href: "/vendors",
+    label: "Vendors",
+    minRole: "member",
+    section: "operations"
+  },
+  {
     href: "/invoices",
     label: "Invoices",
     minRole: "member",
