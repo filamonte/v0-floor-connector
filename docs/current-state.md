@@ -212,6 +212,7 @@ Implemented:
 - create/list/read/update flows
 - project-to-customer relationship
 - protected projects list page
+- project creation now supports either selecting an existing canonical customer or creating a new canonical customer inline from the same project flow
 - project detail page
 - project detail now surfaces linked lead assessment and requirements context when a canonical opportunity is connected
 - project commercial-readiness sync foundation derived from contract, invoice, payment, financing, and workflow-setting state
@@ -258,7 +259,8 @@ Current portal access design notes:
 - contractor admins now manage portal access from the canonical customer surface rather than a disconnected portal-contact subsystem
 - the customer-facing portal now has a real protected shell, portal home workspace, and project-detail workspace built on that same scoped read layer
 - customer-facing estimate, contract, and invoice review pages now exist inside the portal on top of the same tenant-safe canonical record loaders
-- portal review remains read-first and customer-safe in this pass, with later signature and payment actions still intentionally out of scope
+- portal review remains customer-safe and canonical-record-based in this pass, with contract signing now live on the shared contract record and portal invoice review now able to start customer payment activity on the same canonical invoice and payment chain without introducing a duplicate portal billing model
+- portal home and project workspaces now reflect payment-requested, payment-in-progress, partially-paid, and paid outcomes as part of the same shared project workflow guidance
 
 ### People
 
@@ -658,18 +660,26 @@ Implemented:
 - basic payment recording flow from invoice detail
 - automatic invoice balance due updates from recorded payments
 - automatic `partially_paid` and `paid` invoice status handling
-- canonical online-payment foundation on `payments` for future customer-portal and gateway-backed payment actions
+- canonical online-payment foundation on `payments`, including pending checkout records for real customer-portal and gateway-backed payment actions
 - immutable `payment_events` audit foundation for payment request, checkout, success, failure, void, and provider-sync lifecycle events
+- reconciliation-ready gateway/session metadata on canonical `payments` and immutable `payment_events` so future provider callbacks can finalize the same payment chain idempotently
 - tenant-safe payment workflow helpers for payment request, checkout start, payment success, payment failure, and payment voiding on the same canonical invoice/payment chain
 - successful customer-facing payment workflow events now create or finalize canonical `payments` rows instead of introducing a second checkout or portal-payment model
+- verified Stripe webhook/callback handling now finalizes or voids the same canonical pending payment rows idempotently using provider event identifiers and canonical payment references
 - project commercial-readiness sync continues to flow from canonical invoice/payment status after successful payment finalization or payment voiding
 - contractor-side invoice detail now surfaces online-payment readiness, recent payment-event signals, and customer-facing payment continuity without leaving the canonical invoice workspace
 - contractor-side project detail now reflects deposit and invoice payment outcomes more clearly in readiness guidance and linked invoice summaries
+- portal invoice review now surfaces customer-safe payment state, recent immutable payment activity, and a real customer-facing checkout-session handoff on the same canonical invoice/payment chain
+- portal home and portal project workspaces now carry forward the latest canonical invoice payment progress so payment requests, in-progress checkout, partial payment, and settled outcomes read as part of one connected customer-facing workflow
+- contractor and portal payment guidance now distinguish real provider-backed completion, failure, void, pending, partial, and paid outcomes without introducing any separate billing model or checkout record
 
 Payment design notes:
 - payment records remain invoice-linked and organization-scoped
 - future online payments extend the canonical payment record rather than create a second payment model
+- in-progress checkout sessions now attach to canonical `payments` as pending rows rather than a separate pending-payment or checkout-attempt table
 - provider-specific transaction references now belong primarily on canonical `payments` and immutable `payment_events`, not on a duplicate portal billing model and not as broad duplicated invoice fields
+- provider event identifiers and gateway references are now stored on canonical payment records and immutable payment events in preparation for idempotent webhook processing on the same financial chain
+- provider callback processing now stays server-owned, signature-verified, and idempotent so only canonical completed payment states affect invoice paid totals and downstream readiness
 - recorded payments on deposit-role invoices can now feed project commercial-readiness status through shared readiness utilities
 
 ### Financial Settings, Tax, And AIA Scaffolding
@@ -877,10 +887,10 @@ Not implemented yet:
 - crew assignment
 - notifications
 - PDF generation
-- e-signature
-- external payment gateway flows
+- external e-sign provider integration
+- deeper gateway-backed reconciliation, retry, and provider-sync workflows
 - billing/subscriptions
-- customer-facing online payment actions
+- deeper gateway-backed customer-facing payment completion and reconciliation workflows
 - advanced permissions UI
 - full AIA/progress billing UX
 - external tax provider integration

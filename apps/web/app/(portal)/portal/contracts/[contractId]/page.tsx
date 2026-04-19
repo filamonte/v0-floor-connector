@@ -147,12 +147,12 @@ export default async function PortalContractReviewPage({
 
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
-      <section className="space-y-8">
+      <section className="space-y-10">
         <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
           <DetailPageHeader
             eyebrow="Contract Review"
             title={contract.title}
-            description="Review the shared agreement body, project context, and signature state for this project. This page stays customer-safe and intentionally avoids contractor-only controls."
+            description="Review the agreement, confirm the current signature state, and complete the next customer step on this same shared contract."
             backHref={`/portal/projects/${contract.projectId}`}
             backLabel="Back to project workspace"
             actions={
@@ -170,92 +170,94 @@ export default async function PortalContractReviewPage({
 
           {resolvedSearchParams.message ? (
             <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
-              {resolvedSearchParams.message}
-            </div>
-          ) : null}
+            {resolvedSearchParams.message}
+          </div>
+        ) : null}
 
-          <div className="mt-8">
-            <WorkspaceSummaryBand
-              items={[
-                {
-                  key: "purpose",
-                  label: "What this page is for",
-                  content: (
-                    <p className="text-sm leading-6 text-slate-600">
-                      Review the customer-facing agreement itself and understand where it sits in
-                      the shared commercial chain.
-                    </p>
-                  )
-                },
-                {
-                  key: "signature-state",
-                  label: "Signature state",
-                  content: (
-                    <div className="space-y-2 text-sm leading-6 text-slate-600">
-                      <p className="font-semibold capitalize text-slate-950">
-                        {formatStatusLabel(contract.status)}
-                      </p>
-                      <p>{signatureGuidance}</p>
-                      <p>
-                        Customer signers {contract.signatureSummary.signedCustomerSignerCount}/
-                        {contract.signatureSummary.customerSignerCount || 0} complete
-                      </p>
-                      <p>
-                        Contractor countersign{" "}
-                        {contract.signatureSummary.requiresCountersign
-                          ? contract.signatureSummary.signedContractorSignerCount > 0
-                            ? "complete"
-                            : "still required"
-                          : "not required"}
-                      </p>
-                    </div>
-                  )
-                },
-                {
-                  key: "project-context",
-                  label: "Project context",
-                  content: (
-                    <div className="space-y-2 text-sm leading-6 text-slate-600">
-                      <p>{contract.project?.name ?? "Unknown project"}</p>
-                      <p>
-                        Customer:{" "}
+          <div className="mt-10 space-y-5">
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+              <section className="rounded-[1.85rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,1))] px-6 py-6">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-brand-700">
+                  Signature state
+                </p>
+                <div className="mt-4 space-y-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="inline-flex rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium capitalize text-slate-700">
+                      {formatStatusLabel(contract.status)}
+                    </span>
+                    <span className="inline-flex rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-600">
+                      {contract.project?.name ?? "Shared project"}
+                    </span>
+                  </div>
+                  <p className="text-lg font-semibold tracking-tight text-slate-950">
+                    {signatureGuidance}
+                  </p>
+                  <p className="text-sm leading-6 text-slate-600">
+                    Customer signers {contract.signatureSummary.signedCustomerSignerCount}/
+                    {contract.signatureSummary.customerSignerCount || 0} complete
+                    {" | "}
+                    Contractor countersign{" "}
+                    {contract.signatureSummary.requiresCountersign
+                      ? contract.signatureSummary.signedContractorSignerCount > 0
+                        ? "complete"
+                        : "still required"
+                      : "not required"}
+                  </p>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/85 px-4 py-4 text-sm leading-6 text-slate-600">
+                    This contract stays attached to the same shared project and signature workflow your contractor sees.
+                  </div>
+                </div>
+              </section>
+
+              <WorkspaceSummaryBand
+                className="grid gap-3 sm:grid-cols-2"
+                itemClassName="rounded-2xl border border-slate-200/80 bg-slate-50/65 px-4 py-4"
+                labelClassName="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"
+                items={[
+                  {
+                    key: "next-action",
+                    label: "Next step",
+                    content: (
+                      <NextActionCard
+                        eyebrow="Customer guidance"
+                        title={nextAction.title}
+                        description={
+                          contract.currentUserCanSign
+                            ? "Review the agreement, then sign or decline this same shared contract record."
+                            : nextAction.description
+                        }
+                        primaryAction={
+                          <Link
+                            href={nextAction.href}
+                            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
+                          >
+                            {nextAction.label}
+                          </Link>
+                        }
+                      />
+                    )
+                  },
+                  {
+                    key: "project-context",
+                    label: "Project context",
+                    content: (
+                      <p className="text-sm text-slate-600">
                         {contract.customer?.companyName ??
                           contract.customer?.name ??
-                          "Not provided"}
+                          "Customer"}{" "}
+                        on {contract.project?.name ?? "the shared project"}.
                       </p>
-                    </div>
-                  )
-                },
-                {
-                  key: "next-action",
-                  label: "Next step",
-                  content: (
-                    <NextActionCard
-                      title={nextAction.title}
-                      description={
-                        contract.currentUserCanSign
-                          ? "You can sign or decline this contract here. The action updates the same shared contract record the contractor sees."
-                          : nextAction.description
-                      }
-                      primaryAction={
-                        <Link
-                          href={nextAction.href}
-                          className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-                        >
-                          {nextAction.label}
-                        </Link>
-                      }
-                    />
-                  )
-                }
-              ]}
-            />
+                    )
+                  }
+                ]}
+              />
+            </div>
           </div>
         </div>
 
         <DetailPanel
           title="Agreement Body"
-          description="This is the shared contract content currently visible to the customer."
+          description="Review the agreement first. Signature actions remain available to the side when you are ready."
         >
           <div className="space-y-5">
             {contract.renderedSubject ? (
@@ -274,72 +276,11 @@ export default async function PortalContractReviewPage({
 
       <aside className="space-y-6">
         <DetailPanel
-          title="Contract Context"
-          description="Compact shared record context without internal contractor workflow detail."
-        >
-          <ContextFactsList
-            items={[
-              {
-                label: "Project",
-                value: contract.project ? (
-                  <Link href={`/portal/projects/${contract.project.id}`} className="font-medium text-brand-700">
-                    {contract.project.name}
-                  </Link>
-                ) : (
-                  "Unknown project"
-                )
-              },
-              {
-                label: "Customer",
-                value: contract.customer?.companyName ?? contract.customer?.name ?? "Not provided"
-              },
-              {
-                label: "Source estimate",
-                value: contract.estimate ? (
-                  <Link
-                    href={`/portal/estimates/${contract.estimate.id}`}
-                    className="font-medium text-brand-700"
-                  >
-                    {contract.estimate.referenceNumber}
-                  </Link>
-                ) : (
-                  "No linked estimate"
-                )
-              },
-              {
-                label: "Status",
-                value: <span className="capitalize">{formatStatusLabel(contract.status)}</span>
-              },
-              {
-                label: "Customer viewed",
-                value: formatDateTime(contract.customerViewedAt)
-              },
-              {
-                label: "Customer signed",
-                value: formatDateTime(contract.customerSignedAt)
-              },
-              {
-                label: "Contractor countersigned",
-                value: formatDateTime(contract.contractorCountersignedAt)
-              },
-              {
-                label: "Created",
-                value: formatDateTime(contract.createdAt)
-              },
-              {
-                label: "Updated",
-                value: formatDateTime(contract.updatedAt)
-              }
-            ]}
-          />
-        </DetailPanel>
-
-        <DetailPanel
           title="Signature Actions"
-          description="Review-first customer actions on this same shared contract record."
+          description="Customer actions on this shared contract record."
         >
           <div className="space-y-4 text-sm leading-6 text-slate-600">
-            <p>{signatureGuidance}</p>
+            <p className="max-w-[34ch]">{signatureGuidance}</p>
 
             {contract.currentUserCanSign ? (
               <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
@@ -391,8 +332,57 @@ export default async function PortalContractReviewPage({
         </DetailPanel>
 
         <DetailPanel
+          title="Contract Context"
+          description="Compact shared record context without contractor-only workflow detail."
+        >
+          <ContextFactsList
+            items={[
+              {
+                label: "Project",
+                value: contract.project ? (
+                  <Link href={`/portal/projects/${contract.project.id}`} className="font-medium text-brand-700">
+                    {contract.project.name}
+                  </Link>
+                ) : (
+                  "Unknown project"
+                )
+              },
+              {
+                label: "Customer",
+                value: contract.customer?.companyName ?? contract.customer?.name ?? "Not provided"
+              },
+              {
+                label: "Source estimate",
+                value: contract.estimate ? (
+                  <Link
+                    href={`/portal/estimates/${contract.estimate.id}`}
+                    className="font-medium text-brand-700"
+                  >
+                    {contract.estimate.referenceNumber}
+                  </Link>
+                ) : (
+                  "No linked estimate"
+                )
+              },
+              {
+                label: "Customer viewed",
+                value: formatDateTime(contract.customerViewedAt)
+              },
+              {
+                label: "Customer signed",
+                value: formatDateTime(contract.customerSignedAt)
+              },
+              {
+                label: "Contractor countersigned",
+                value: formatDateTime(contract.contractorCountersignedAt)
+              }
+            ]}
+          />
+        </DetailPanel>
+
+        <DetailPanel
           title="Signer Visibility"
-          description="Minimal shared signer routing so the contract status is understandable without exposing contractor-only operations."
+          description="Minimal shared signer routing for understanding the current signature state."
         >
           <div className="space-y-3">
             {contract.signers.length > 0 ? (

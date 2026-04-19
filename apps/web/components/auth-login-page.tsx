@@ -8,6 +8,7 @@ import {
   signInWithPasswordAction
 } from "@/lib/auth/actions";
 import {
+  getAuthSurfaceContext,
   forgotPasswordPath,
   sanitizeRedirectPath,
   signUpPath
@@ -25,15 +26,18 @@ type AuthLoginPageProps = {
 export async function AuthLoginPage({ searchParams }: AuthLoginPageProps) {
   const params = (await searchParams) ?? {};
   const next = sanitizeRedirectPath(params.next);
+  const surfaceContext = getAuthSurfaceContext(next);
 
   await redirectIfAuthenticated(next);
 
   return (
     <AuthShell
-      title="Log in"
-      description="Use Google for the preferred sign-in flow, or use email and password when you need the fallback path. Both options run through the same Supabase-backed authentication system."
+      eyebrow={surfaceContext.shellEyebrow}
+      title="Log in to continue"
+      description={`Use Google for the preferred sign-in flow, or use email and password when you need the fallback path. After sign-in, you will return to the same ${surfaceContext.surfaceKey === "portal" ? "portal" : surfaceContext.surfaceKey === "superAdmin" ? "admin" : "workspace"} destination.`}
       error={params.error}
       message={params.message}
+      surfaceContext={surfaceContext}
       footer={
         <>
           Need an account?{" "}
@@ -53,7 +57,7 @@ export async function AuthLoginPage({ searchParams }: AuthLoginPageProps) {
           </p>
           <p className="mt-1 text-sm leading-6 text-slate-600">
             Google is the primary login method for FloorConnector. Use email and
-            password below when you need the fallback flow.
+            password below when you need the fallback path for this same destination.
           </p>
         </div>
 
@@ -63,10 +67,10 @@ export async function AuthLoginPage({ searchParams }: AuthLoginPageProps) {
             <span className="text-base" aria-hidden="true">
               G
             </span>
-            <span>Continue with Google</span>
+            <span>{`Continue with Google`}</span>
           </AuthSubmitButton>
           <p className="text-xs leading-5 text-slate-500">
-            You will be redirected to Google and then returned to FloorConnector.
+            {surfaceContext.nextStepDescription}
           </p>
         </form>
 

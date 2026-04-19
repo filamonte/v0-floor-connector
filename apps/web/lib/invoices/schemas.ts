@@ -15,7 +15,7 @@ const editableInvoiceStatuses = [
   "void"
 ] as const;
 
-const paymentStatuses = ["recorded", "void"] as const;
+const paymentStatuses = ["pending", "recorded", "void"] as const;
 const paymentEventActorTypes = [
   "portal_user",
   "organization_user",
@@ -247,6 +247,7 @@ export const invoiceCustomerPaymentRequestInputSchema = withPaymentActorContextV
 export const invoiceCheckoutStartInputSchema = withPaymentActorContextValidation(
   z.object({
     ...paymentActorContextShape,
+  paymentId: z.string().uuid("Payment id is required."),
   invoiceId: z.string().uuid("Invoice id is required."),
   amount: positiveCurrencyAmountField("Checkout amount"),
   gatewayProvider: z.string().trim().min(1, "Gateway provider is required.").max(80),

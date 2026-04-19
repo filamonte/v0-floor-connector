@@ -7,6 +7,7 @@ import {
   compareInvoiceStatuses,
   computeInvoicePaymentWorkflowGate
 } from "@floorconnector/domain";
+import type { PaymentGatewayWebhookEvent } from "@floorconnector/integrations";
 import type {
   Invoice as InvoiceRecord,
   InvoiceLineItem,
@@ -156,6 +157,7 @@ type PaymentEventRow = {
   actor_type: PaymentEventActorType;
   actor_user_id: string | null;
   portal_user_id: string | null;
+  gateway_provider: string | null;
   provider_event_id: string | null;
   payload: Record<string, unknown> | null;
   occurred_at: string;
@@ -178,6 +180,7 @@ type PaymentEventInsert = {
   actorType: PaymentEventActorType;
   actorUserId?: string | null;
   portalUserId?: string | null;
+  gatewayProvider?: string | null;
   providerEventId?: string | null;
   payload?: Record<string, unknown> | null;
   occurredAt?: string;
@@ -398,6 +401,7 @@ function isPaymentEventRow(value: unknown): value is PaymentEventRow {
     typeof row.actor_type === "string" &&
     (row.actor_user_id === null || typeof row.actor_user_id === "string") &&
     (row.portal_user_id === null || typeof row.portal_user_id === "string") &&
+    (row.gateway_provider === null || typeof row.gateway_provider === "string") &&
     (row.provider_event_id === null || typeof row.provider_event_id === "string") &&
     (row.payload === null ||
       (typeof row.payload === "object" && !Array.isArray(row.payload))) &&
@@ -504,6 +508,7 @@ function mapPaymentEvent(row: PaymentEventRow): PaymentEvent {
     actorType: row.actor_type,
     actorUserId: row.actor_user_id,
     portalUserId: row.portal_user_id,
+    gatewayProvider: row.gateway_provider,
     providerEventId: row.provider_event_id,
     payload: row.payload,
     occurredAt: row.occurred_at,
@@ -747,6 +752,7 @@ async function listInvoicePaymentEvents(
         actor_type,
         actor_user_id,
         portal_user_id,
+        gateway_provider,
         provider_event_id,
         payload,
         occurred_at,
@@ -779,6 +785,7 @@ export async function recordPaymentEvent(input: {
   actorType: PaymentEventActorType;
   actorUserId?: string | null;
   portalUserId?: string | null;
+  gatewayProvider?: string | null;
   providerEventId?: string | null;
   payload?: Record<string, unknown> | null;
   occurredAt?: string;
@@ -794,6 +801,7 @@ export async function recordPaymentEvent(input: {
       actor_type: input.actorType,
       actor_user_id: input.actorUserId ?? null,
       portal_user_id: input.portalUserId ?? null,
+      gateway_provider: input.gatewayProvider ?? null,
       provider_event_id: input.providerEventId ?? null,
       payload: input.payload ?? null,
       occurred_at: input.occurredAt ?? new Date().toISOString()
@@ -808,6 +816,7 @@ export async function recordPaymentEvent(input: {
         actor_type,
         actor_user_id,
         portal_user_id,
+        gateway_provider,
         provider_event_id,
         payload,
         occurred_at,
@@ -829,6 +838,111 @@ export async function recordPaymentEvent(input: {
   return mapPaymentEvent(data);
 }
 
+async function findPaymentEventByProviderReference(
+  organizationId: string,
+  gatewayProvider: string,
+  providerEventId: string
+): Promise<PaymentEventRow | null> {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("payment_events")
+    .select(
+      `
+        id,
+        company_id,
+        invoice_id,
+        payment_id,
+        event_type,
+        actor_type,
+        actor_user_id,
+        portal_user_id,
+        gateway_provider,
+        provider_event_id,
+        payload,
+        occurred_at,
+        created_at
+      `
+    )
+    .eq("company_id", organizationId)
+    .eq("gateway_provider", gatewayProvider)
+    .eq("provider_event_id", providerEventId)
+    .maybeSingle();
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load provider payment event history: ${response.error.message}`
+    );
+  }
+
+  return isPaymentEventRow(data) ? data : null;
+}
+
+class DuplicateProviderPaymentEventError extends Error {
+  readonly organizationId: string;
+  readonly invoiceId: string;
+  readonly gatewayProvider: string;
+  readonly providerEventId: string;
+
+  constructor(input: {
+    organizationId: string;
+    invoiceId: string;
+    gatewayProvider: string;
+    providerEventId: string;
+  }) {
+    super(
+      `Duplicate provider payment event acknowledged for ${input.gatewayProvider}:${input.providerEventId}.`
+    );
+    this.name = "DuplicateProviderPaymentEventError";
+    this.organizationId = input.organizationId;
+    this.invoiceId = input.invoiceId;
+    this.gatewayProvider = input.gatewayProvider;
+    this.providerEventId = input.providerEventId;
+  }
+}
+
+function getDuplicateProviderEventCandidate(
+  organizationId: string,
+  invoiceId: string,
+  events: readonly PaymentEventInsert[]
+) {
+  return events.find(
+    (event): event is PaymentEventInsert & {
+      gatewayProvider: string;
+      providerEventId: string;
+    } =>
+      typeof event.gatewayProvider === "string" &&
+      event.gatewayProvider.length > 0 &&
+      typeof event.providerEventId === "string" &&
+      event.providerEventId.length > 0
+  )
+    ? {
+        organizationId,
+        invoiceId,
+        gatewayProvider: events.find(
+          (event): event is PaymentEventInsert & {
+            gatewayProvider: string;
+            providerEventId: string;
+          } =>
+            typeof event.gatewayProvider === "string" &&
+            event.gatewayProvider.length > 0 &&
+            typeof event.providerEventId === "string" &&
+            event.providerEventId.length > 0
+        )!.gatewayProvider,
+        providerEventId: events.find(
+          (event): event is PaymentEventInsert & {
+            gatewayProvider: string;
+            providerEventId: string;
+          } =>
+            typeof event.gatewayProvider === "string" &&
+            event.gatewayProvider.length > 0 &&
+            typeof event.providerEventId === "string" &&
+            event.providerEventId.length > 0
+        )!.providerEventId
+      }
+    : null;
+}
+
 async function insertPaymentEventsAdmin(
   organizationId: string,
   invoiceId: string,
@@ -848,6 +962,7 @@ async function insertPaymentEventsAdmin(
       actor_type: event.actorType,
       actor_user_id: event.actorUserId ?? null,
       portal_user_id: event.portalUserId ?? null,
+      gateway_provider: event.gatewayProvider ?? null,
       provider_event_id: event.providerEventId ?? null,
       payload: event.payload ?? null,
       occurred_at: event.occurredAt ?? new Date().toISOString()
@@ -855,6 +970,16 @@ async function insertPaymentEventsAdmin(
   );
 
   if (response.error) {
+    const duplicateCandidate = getDuplicateProviderEventCandidate(
+      organizationId,
+      invoiceId,
+      events
+    );
+
+    if (response.error.code === "23505" && duplicateCandidate) {
+      throw new DuplicateProviderPaymentEventError(duplicateCandidate);
+    }
+
     throw new Error(`Unable to record payment events: ${response.error.message}`);
   }
 }
@@ -928,6 +1053,10 @@ function resolveRecordedVia(actorType: PaymentEventActorType): PaymentRecordedVi
   }
 
   return "system";
+}
+
+function getPendingCheckoutPaymentMethod(gatewayProvider: string) {
+  return gatewayProvider === "stripe" ? "Secure checkout" : "Local checkout";
 }
 
 function getInvoicePaymentWorkflow(invoice: InvoiceRow) {
@@ -1010,6 +1139,7 @@ async function findPaymentByGatewayReference(
   organizationId: string,
   invoiceId: string,
   input: {
+    gatewayProvider: string;
     gatewayPaymentIntentReference: string | null;
     gatewayCheckoutSessionReference: string | null;
   }
@@ -1045,6 +1175,7 @@ async function findPaymentByGatewayReference(
       )
       .eq("company_id", organizationId)
       .eq("invoice_id", invoiceId)
+      .eq("gateway_provider", input.gatewayProvider)
       .eq("gateway_payment_intent_reference", input.gatewayPaymentIntentReference)
       .maybeSingle();
     const intentData: unknown = intentResponse.data;
@@ -1087,6 +1218,7 @@ async function findPaymentByGatewayReference(
       )
       .eq("company_id", organizationId)
       .eq("invoice_id", invoiceId)
+      .eq("gateway_provider", input.gatewayProvider)
       .eq("gateway_checkout_session_reference", input.gatewayCheckoutSessionReference)
       .maybeSingle();
     const sessionData: unknown = sessionResponse.data;
@@ -1101,6 +1233,59 @@ async function findPaymentByGatewayReference(
   }
 
   return null;
+}
+
+async function findPendingPaymentForInvoice(
+  organizationId: string,
+  invoiceId: string,
+  gatewayProvider: string
+): Promise<PaymentRow | null> {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("payments")
+    .select(
+      `
+        id,
+        company_id,
+        invoice_id,
+        amount,
+        payment_date,
+        payment_method,
+        payment_source,
+        recorded_via,
+        gateway_provider,
+        gateway_payment_intent_reference,
+        gateway_checkout_session_reference,
+        gateway_status,
+        payment_method_summary,
+        payer_user_id,
+        payer_email,
+        reference,
+        notes,
+        status,
+        created_at,
+        updated_at
+      `
+    )
+    .eq("company_id", organizationId)
+    .eq("invoice_id", invoiceId)
+    .eq("gateway_provider", gatewayProvider)
+    .eq("status", "pending")
+    .order("updated_at", { ascending: false })
+    .limit(1);
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load the pending checkout payment: ${response.error.message}`
+    );
+  }
+
+  if (!isPaymentRowArray(data) || data.length === 0) {
+    return null;
+  }
+
+  return data[0] ?? null;
 }
 
 async function syncInvoiceProjectReadiness(invoice: InvoiceRow) {
@@ -1549,6 +1734,152 @@ export async function requestInvoicePayment(
   return mapInvoice(portalScope.invoice);
 }
 
+export async function ensurePendingPortalInvoicePayment(input: {
+  actorType: PaymentEventActorType;
+  actorUserId?: string | null;
+  portalUserId?: string | null;
+  invoiceId: string;
+  amount: string;
+  gatewayProvider: string;
+  payerEmail?: string | null;
+  notes?: string | null;
+  occurredAt?: string | null;
+}, next = "/portal") {
+  const portalScope = await getScopedPortalInvoice(input.invoiceId, next);
+
+  if (input.portalUserId !== portalScope.userId) {
+    throw new Error("This checkout payment is not available for the current portal user.");
+  }
+
+  assertInvoiceAllowsCustomerPayment(portalScope.invoice, input.amount, "checkout");
+
+  const paymentDate =
+    input.occurredAt?.slice(0, 10) ?? new Date().toISOString().slice(0, 10);
+  const existingPayment = await findPendingPaymentForInvoice(
+    portalScope.invoice.company_id,
+    input.invoiceId,
+    input.gatewayProvider
+  );
+  const admin = getSupabaseAdminClient();
+
+  if (existingPayment) {
+    const updateResponse = await admin
+      .from("payments")
+      .update({
+        amount: input.amount,
+        payment_date: paymentDate,
+        payment_method: getPendingCheckoutPaymentMethod(input.gatewayProvider),
+        payment_source: "customer_portal",
+        recorded_via: resolveRecordedVia(input.actorType),
+        gateway_provider: input.gatewayProvider,
+        gateway_status: "pending",
+        payment_method_summary: null,
+        payer_user_id: input.portalUserId ?? input.actorUserId ?? null,
+        payer_email: input.payerEmail ?? null,
+        notes: input.notes ?? null,
+        updated_by: input.actorUserId ?? input.portalUserId ?? null
+      })
+      .eq("company_id", portalScope.invoice.company_id)
+      .eq("invoice_id", input.invoiceId)
+      .eq("id", existingPayment.id)
+      .select(
+        `
+          id,
+          company_id,
+          invoice_id,
+          amount,
+          payment_date,
+          payment_method,
+          payment_source,
+          recorded_via,
+          gateway_provider,
+          gateway_payment_intent_reference,
+          gateway_checkout_session_reference,
+          gateway_status,
+          payment_method_summary,
+          payer_user_id,
+          payer_email,
+          reference,
+          notes,
+          status,
+          created_at,
+          updated_at
+        `
+      )
+      .single();
+    const updateData: unknown = updateResponse.data;
+
+    if (updateResponse.error || !isPaymentRow(updateData)) {
+      throw new Error(
+        `Unable to prepare the canonical checkout payment: ${updateResponse.error?.message ?? "Unknown error."}`
+      );
+    }
+
+    return {
+      invoice: mapInvoice(portalScope.invoice),
+      payment: mapPayment(updateData)
+    };
+  }
+
+  const insertResponse = await admin
+    .from("payments")
+    .insert({
+      company_id: portalScope.invoice.company_id,
+      invoice_id: input.invoiceId,
+      amount: input.amount,
+      payment_date: paymentDate,
+      payment_method: getPendingCheckoutPaymentMethod(input.gatewayProvider),
+      payment_source: "customer_portal",
+      recorded_via: resolveRecordedVia(input.actorType),
+      gateway_provider: input.gatewayProvider,
+      gateway_status: "pending",
+      payment_method_summary: null,
+      payer_user_id: input.portalUserId ?? input.actorUserId ?? null,
+      payer_email: input.payerEmail ?? null,
+      notes: input.notes ?? null,
+      status: "pending",
+      created_by: input.actorUserId ?? input.portalUserId ?? null,
+      updated_by: input.actorUserId ?? input.portalUserId ?? null
+    })
+    .select(
+      `
+        id,
+        company_id,
+        invoice_id,
+        amount,
+        payment_date,
+        payment_method,
+        payment_source,
+        recorded_via,
+        gateway_provider,
+        gateway_payment_intent_reference,
+        gateway_checkout_session_reference,
+        gateway_status,
+        payment_method_summary,
+        payer_user_id,
+        payer_email,
+        reference,
+        notes,
+        status,
+        created_at,
+        updated_at
+      `
+    )
+    .single();
+  const insertData: unknown = insertResponse.data;
+
+  if (insertResponse.error || !isPaymentRow(insertData)) {
+    throw new Error(
+      `Unable to create the canonical checkout payment: ${insertResponse.error?.message ?? "Unknown error."}`
+    );
+  }
+
+  return {
+    invoice: mapInvoice(portalScope.invoice),
+    payment: mapPayment(insertData)
+  };
+}
+
 export async function startInvoiceCheckout(
   input: InvoiceCheckoutStartInput,
   next = "/portal"
@@ -1561,11 +1892,68 @@ export async function startInvoiceCheckout(
 
   assertInvoiceAllowsCustomerPayment(portalScope.invoice, input.amount, "checkout");
 
+  const payment = await findInvoicePaymentById(
+    portalScope.invoice.company_id,
+    input.invoiceId,
+    input.paymentId,
+    true
+  );
+
+  if (!payment) {
+    throw new Error("The canonical checkout payment could not be found for this invoice.");
+  }
+
+  if (payment.status === "void") {
+    throw new Error("A voided canonical payment cannot start checkout.");
+  }
+
+  if (payment.status === "recorded") {
+    throw new Error("A completed canonical payment does not need a new checkout session.");
+  }
+
+  if (Number(payment.amount) !== Number(input.amount)) {
+    throw new Error("Checkout amount must match the canonical pending payment amount.");
+  }
+
+  const admin = getSupabaseAdminClient();
+  const updateResponse = await admin
+    .from("payments")
+    .update({
+      payment_method: getPendingCheckoutPaymentMethod(input.gatewayProvider),
+      payment_source: "customer_portal",
+      recorded_via: resolveRecordedVia(input.actorType),
+      gateway_provider: input.gatewayProvider,
+      gateway_payment_intent_reference: input.gatewayPaymentIntentReference,
+      gateway_checkout_session_reference: input.gatewayCheckoutSessionReference,
+      gateway_status: input.gatewayStatus,
+      payment_method_summary: null,
+      payer_user_id: input.portalUserId ?? input.actorUserId ?? null,
+      payer_email: input.payerEmail,
+      reference:
+        input.gatewayPaymentIntentReference ?? input.gatewayCheckoutSessionReference,
+      updated_by: input.actorUserId ?? input.portalUserId ?? null
+    })
+    .eq("company_id", portalScope.invoice.company_id)
+    .eq("invoice_id", input.invoiceId)
+    .eq("id", input.paymentId)
+    .select("id")
+    .single();
+  const updateData: unknown = updateResponse.data;
+
+  if (updateResponse.error || !isIdRow(updateData)) {
+    throw new Error(
+      `Unable to attach checkout metadata to the canonical payment: ${updateResponse.error?.message ?? "Unknown error."}`
+    );
+  }
+
   await insertPaymentEventsAdmin(portalScope.invoice.company_id, input.invoiceId, [
     {
+      paymentId: input.paymentId,
       eventType: "checkout_started",
-      actorType: "portal_user",
-      portalUserId: portalScope.userId,
+      actorType: input.actorType,
+      actorUserId: input.actorUserId,
+      portalUserId: input.portalUserId ?? portalScope.userId,
+      gatewayProvider: input.gatewayProvider,
       payload: {
         amount: input.amount,
         gatewayProvider: input.gatewayProvider,
@@ -1593,6 +1981,7 @@ export async function recordInvoicePaymentSuccess(input: InvoicePaymentSuccessIn
     input.organizationId,
     input.invoiceId,
     {
+      gatewayProvider: input.gatewayProvider,
       gatewayPaymentIntentReference: input.gatewayPaymentIntentReference,
       gatewayCheckoutSessionReference: input.gatewayCheckoutSessionReference
     }
@@ -1694,6 +2083,7 @@ export async function recordInvoicePaymentSuccess(input: InvoicePaymentSuccessIn
       actorType: input.actorType,
       actorUserId: input.actorUserId,
       portalUserId: input.portalUserId,
+      gatewayProvider: input.gatewayProvider,
       providerEventId: input.providerEventId,
       payload: {
         amount: input.amount,
@@ -1735,10 +2125,38 @@ export async function recordInvoicePaymentFailure(input: InvoicePaymentFailureIn
     input.organizationId,
     input.invoiceId,
     {
+      gatewayProvider: input.gatewayProvider,
       gatewayPaymentIntentReference: input.gatewayPaymentIntentReference,
       gatewayCheckoutSessionReference: input.gatewayCheckoutSessionReference
     }
   );
+
+  if (existingPayment && existingPayment.status !== "recorded" && existingPayment.status !== "void") {
+    const admin = getSupabaseAdminClient();
+    const updateResponse = await admin
+      .from("payments")
+      .update({
+        gateway_provider: input.gatewayProvider,
+        gateway_payment_intent_reference: input.gatewayPaymentIntentReference,
+        gateway_checkout_session_reference: input.gatewayCheckoutSessionReference,
+        gateway_status: input.gatewayStatus ?? "failed",
+        payer_email: input.payerEmail,
+        notes: input.notes,
+        updated_by: input.actorUserId ?? input.portalUserId ?? null
+      })
+      .eq("company_id", input.organizationId)
+      .eq("invoice_id", input.invoiceId)
+      .eq("id", existingPayment.id)
+      .select("id")
+      .single();
+    const updateData: unknown = updateResponse.data;
+
+    if (updateResponse.error || !isIdRow(updateData)) {
+      throw new Error(
+        `Unable to update the canonical payment failure state: ${updateResponse.error?.message ?? "Unknown error."}`
+      );
+    }
+  }
 
   await insertPaymentEventsAdmin(input.organizationId, input.invoiceId, [
     {
@@ -1747,6 +2165,7 @@ export async function recordInvoicePaymentFailure(input: InvoicePaymentFailureIn
       actorType: input.actorType,
       actorUserId: input.actorUserId,
       portalUserId: input.portalUserId,
+      gatewayProvider: input.gatewayProvider,
       providerEventId: input.providerEventId,
       payload: {
         amount: input.amount,
@@ -1815,6 +2234,7 @@ export async function voidInvoicePayment(input: InvoicePaymentVoidInput) {
     actorType: input.actorType,
     actorUserId: input.actorUserId ?? scope.userId,
     portalUserId: input.portalUserId,
+    gatewayProvider: payment.gateway_provider,
     providerEventId: input.providerEventId,
     payload: {
       notes: input.notes,
@@ -1832,4 +2252,272 @@ export async function voidInvoicePayment(input: InvoicePaymentVoidInput) {
   await syncInvoiceProjectReadiness(updatedInvoice);
 
   return mapInvoice(updatedInvoice);
+}
+
+async function voidInvoicePaymentFromProvider(input: {
+  organizationId: string;
+  invoiceId: string;
+  paymentId: string;
+  gatewayProvider: string;
+  gatewayStatus: string | null;
+  providerEventId: string;
+  notes?: string | null;
+  payload?: Record<string, unknown> | null;
+  occurredAt?: string | null;
+}) {
+  const invoice = await getInvoiceRecordByIdAdmin(input.organizationId, input.invoiceId);
+
+  if (!invoice) {
+    throw new Error("Invoice not found for this organization.");
+  }
+
+  const payment = await findInvoicePaymentById(
+    input.organizationId,
+    input.invoiceId,
+    input.paymentId,
+    true
+  );
+
+  if (!payment) {
+    throw new Error("Canonical payment not found for this provider callback.");
+  }
+
+  if (payment.status !== "void") {
+    if (!canTransitionPaymentStatus(payment.status, "void")) {
+      throw new Error("This canonical payment cannot be voided from its current status.");
+    }
+
+    const admin = getSupabaseAdminClient();
+    const response = await admin
+      .from("payments")
+      .update({
+        gateway_provider: input.gatewayProvider,
+        gateway_status: input.gatewayStatus ?? "void",
+        status: "void"
+      })
+      .eq("company_id", input.organizationId)
+      .eq("invoice_id", input.invoiceId)
+      .eq("id", input.paymentId)
+      .select("id")
+      .single();
+    const data: unknown = response.data;
+
+    if (response.error || !isIdRow(data)) {
+      throw new Error(
+        `Unable to void the canonical payment from provider callback: ${response.error?.message ?? "Unknown error."}`
+      );
+    }
+  }
+
+  await insertPaymentEventsAdmin(input.organizationId, input.invoiceId, [
+    {
+      paymentId: input.paymentId,
+      eventType: "payment_voided",
+      actorType: "provider",
+      gatewayProvider: input.gatewayProvider,
+      providerEventId: input.providerEventId,
+      payload: {
+        gatewayStatus: input.gatewayStatus,
+        notes: input.notes,
+        ...(input.payload ?? {})
+      },
+      occurredAt: input.occurredAt ?? undefined
+    }
+  ]);
+
+  const updatedInvoice = await getInvoiceRecordByIdAdmin(input.organizationId, input.invoiceId);
+
+  if (!updatedInvoice) {
+    throw new Error("Invoice not found for this organization.");
+  }
+
+  await syncInvoiceProjectReadiness(updatedInvoice);
+
+  return mapInvoice(updatedInvoice);
+}
+
+export async function processProviderPaymentWebhookEvent(
+  event: PaymentGatewayWebhookEvent
+) {
+  if (!event.organizationId || !event.invoiceId) {
+    return {
+      handled: false,
+      duplicate: false,
+      reason: "missing_canonical_references"
+    } as const;
+  }
+
+  const existingEvent = await findPaymentEventByProviderReference(
+    event.organizationId,
+    event.gatewayProvider,
+    event.providerEventId
+  );
+
+  if (existingEvent) {
+    return {
+      handled: true,
+      duplicate: true,
+      reason: "duplicate_provider_event",
+      invoice: await getInvoiceByIdAdminSafe(event.organizationId, event.invoiceId)
+    } as const;
+  }
+
+  if (event.outcome === "ignore") {
+    return {
+      handled: false,
+      duplicate: false,
+      reason: "ignored_event_type"
+    } as const;
+  }
+
+  if (event.paymentId) {
+    const referencedPayment = await findInvoicePaymentById(
+      event.organizationId,
+      event.invoiceId,
+      event.paymentId,
+      true
+    );
+
+    if (referencedPayment && referencedPayment.status !== "void") {
+      const admin = getSupabaseAdminClient();
+      const response = await admin
+        .from("payments")
+        .update({
+          gateway_provider: event.gatewayProvider,
+          gateway_payment_intent_reference:
+            event.gatewayPaymentIntentReference ??
+            referencedPayment.gateway_payment_intent_reference,
+          gateway_checkout_session_reference:
+            event.gatewayCheckoutSessionReference ??
+            referencedPayment.gateway_checkout_session_reference,
+          gateway_status: event.gatewayStatus ?? referencedPayment.gateway_status,
+          payer_email: event.payerEmail ?? referencedPayment.payer_email,
+          updated_by: null
+        })
+        .eq("company_id", event.organizationId)
+        .eq("invoice_id", event.invoiceId)
+        .eq("id", event.paymentId)
+        .select("id")
+        .single();
+      const data: unknown = response.data;
+
+      if (response.error || !isIdRow(data)) {
+        throw new Error(
+          `Unable to attach provider references to the canonical payment: ${response.error?.message ?? "Unknown error."}`
+        );
+      }
+    }
+  }
+
+  try {
+    if (event.outcome === "success") {
+      const invoice = await recordInvoicePaymentSuccess({
+        actorType: "provider",
+        actorUserId: null,
+        portalUserId: null,
+        organizationId: event.organizationId,
+        invoiceId: event.invoiceId,
+        amount: event.amount ?? "0.00",
+        paymentDate: event.paymentDate,
+        paymentMethod: event.paymentMethod ?? "Gateway payment",
+        gatewayProvider: event.gatewayProvider,
+        gatewayPaymentIntentReference: event.gatewayPaymentIntentReference,
+        gatewayCheckoutSessionReference: event.gatewayCheckoutSessionReference,
+        gatewayStatus: event.gatewayStatus,
+        paymentMethodSummary: event.paymentMethodSummary,
+        payerEmail: event.payerEmail,
+        reference:
+          event.gatewayPaymentIntentReference ?? event.gatewayCheckoutSessionReference,
+        notes: event.notes,
+        providerEventId: event.providerEventId,
+        occurredAt: event.occurredAt,
+        payload: event.payload
+      });
+
+      return {
+        handled: true,
+        duplicate: false,
+        invoice
+      } as const;
+    }
+
+    if (event.outcome === "failure") {
+      const invoice = await recordInvoicePaymentFailure({
+        actorType: "provider",
+        actorUserId: null,
+        portalUserId: null,
+        organizationId: event.organizationId,
+        invoiceId: event.invoiceId,
+        amount: event.amount ?? "0.00",
+        gatewayProvider: event.gatewayProvider,
+        gatewayPaymentIntentReference: event.gatewayPaymentIntentReference,
+        gatewayCheckoutSessionReference: event.gatewayCheckoutSessionReference,
+        gatewayStatus: event.gatewayStatus,
+        payerEmail: event.payerEmail,
+        notes: event.notes,
+        providerEventId: event.providerEventId,
+        occurredAt: event.occurredAt,
+        payload: event.payload
+      });
+
+      return {
+        handled: true,
+        duplicate: false,
+        invoice
+      } as const;
+    }
+
+    const paymentId =
+      event.paymentId ??
+      (
+        await findPaymentByGatewayReference(event.organizationId, event.invoiceId, {
+          gatewayProvider: event.gatewayProvider,
+          gatewayPaymentIntentReference: event.gatewayPaymentIntentReference,
+          gatewayCheckoutSessionReference: event.gatewayCheckoutSessionReference
+        })
+      )?.id ??
+      null;
+
+    if (!paymentId) {
+      return {
+        handled: false,
+        duplicate: false,
+        reason: "missing_canonical_payment"
+      } as const;
+    }
+
+    const invoice = await voidInvoicePaymentFromProvider({
+      organizationId: event.organizationId,
+      invoiceId: event.invoiceId,
+      paymentId,
+      gatewayProvider: event.gatewayProvider,
+      gatewayStatus: event.gatewayStatus,
+      providerEventId: event.providerEventId,
+      notes: event.notes,
+      payload: event.payload,
+      occurredAt: event.occurredAt
+    });
+
+    return {
+      handled: true,
+      duplicate: false,
+      invoice
+    } as const;
+  } catch (error) {
+    if (error instanceof DuplicateProviderPaymentEventError) {
+      return {
+        handled: true,
+        duplicate: true,
+        reason: "duplicate_provider_event",
+        invoice: await getInvoiceByIdAdminSafe(event.organizationId, event.invoiceId)
+      } as const;
+    }
+
+    throw error;
+  }
+}
+
+async function getInvoiceByIdAdminSafe(organizationId: string, invoiceId: string) {
+  const invoice = await getInvoiceRecordByIdAdmin(organizationId, invoiceId);
+  return invoice ? mapInvoice(invoice) : null;
 }

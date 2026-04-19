@@ -89,7 +89,7 @@ const personSelect = `
     vendor_type,
     is_labor_provider
   ),
-  users (
+  users!people_membership_user_id_fkey (
     id,
     email,
     full_name

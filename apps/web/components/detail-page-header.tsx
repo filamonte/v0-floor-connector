@@ -19,27 +19,33 @@ export function DetailPageHeader({
   actions
 }: DetailPageHeaderProps) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-700">
-          {eyebrow}
-        </p>
-        <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-          {title}
-        </h2>
-        <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-          {description}
-        </p>
-      </div>
+    <div className="space-y-5">
+      <div className="flex flex-col gap-7 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0 max-w-3xl space-y-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-brand-700">
+            {eyebrow}
+          </p>
+          <div className="space-y-3">
+            <h2 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2.4rem]">
+              {title}
+            </h2>
+            <p className="max-w-[65ch] text-sm leading-6 text-slate-600 sm:text-[0.95rem]">
+              {description}
+            </p>
+          </div>
+        </div>
 
-      <div className="flex flex-wrap gap-3">
-        <Link
-          href={backHref}
-          className="inline-flex items-center rounded-full border border-slate-300 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-        >
-          {backLabel}
-        </Link>
-        {actions}
+        <div className="flex flex-col items-start gap-3 lg:max-w-[26rem] lg:items-end">
+          <Link
+            href={backHref}
+            className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50/80 px-3.5 py-2 text-sm font-medium text-slate-500 transition hover:border-slate-300 hover:bg-white hover:text-slate-700"
+          >
+            {backLabel}
+          </Link>
+          {actions ? (
+            <div className="flex flex-wrap items-start gap-2.5 lg:justify-end">{actions}</div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

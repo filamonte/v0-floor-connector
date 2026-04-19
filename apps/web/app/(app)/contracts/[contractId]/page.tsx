@@ -312,12 +312,12 @@ export default async function ContractDetailPage({
     .slice(0, 6);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 print:max-w-none">
+    <div className="mx-auto max-w-6xl space-y-8 print:max-w-none">
       <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10 print:hidden">
         <DetailPageHeader
           eyebrow="Contract Review"
           title={contract.title}
-          description="Review the generated contract in project context, with the connected estimate, jobs, and invoices visible alongside the document itself."
+          description="Use this page to review the agreement, confirm signature state, and move the contract through the next gate."
           backHref="/contracts"
           backLabel="Back to contracts"
           actions={
@@ -325,7 +325,7 @@ export default async function ContractDetailPage({
               {contract.isEditable ? (
                 <Link
                   href={`/contracts/${contract.id}/edit`}
-                  className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                  className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
                 >
                   Edit draft
                 </Link>
@@ -333,14 +333,14 @@ export default async function ContractDetailPage({
               {contract.estimate ? (
                 <Link
                   href={`/estimates/${contract.estimate.id}`}
-                  className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                  className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
                 >
                   View source estimate
                 </Link>
               ) : null}
               <Link
                 href={`/projects/${contract.projectId}`}
-                className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
               >
                 Open project readiness hub
               </Link>
@@ -374,120 +374,126 @@ export default async function ContractDetailPage({
           </div>
         ) : null}
 
-        <div className="mt-8 print:hidden">
-          <WorkspaceSummaryBand
-            className="grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.1fr)_minmax(0,0.95fr)_minmax(0,1fr)]"
-            items={[
-              {
-                key: "review-purpose",
-                label: "Review purpose",
-                content: (
-                  <div className="space-y-2 text-sm leading-6 text-slate-600">
-                    <p className="text-base font-semibold text-slate-950 capitalize">
-                      {formatStatusLabel(contract.status)} contract
-                    </p>
-                    <p>
-                      Use this page to review the contract body and drive approval, send, and
-                      signature progress without losing sight of the connected project handoff.
-                    </p>
+        <div className="mt-10 space-y-5 print:hidden">
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+            <section className="rounded-[1.85rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,1))] px-6 py-6">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-brand-700">
+                Signature state
+              </p>
+              <div className="mt-4 space-y-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div
+                    className={`inline-flex rounded-full border px-3.5 py-1.5 text-sm font-medium capitalize ${getStatusBadgeClassName(
+                      contract.status
+                    )}`}
+                  >
+                    {formatStatusLabel(contract.status)}
                   </div>
-                )
-              },
-              {
-                key: "next-action",
-                label: "Preferred next action",
-                content: (
-                  <NextActionCard
-                    eyebrow="Workflow guidance"
-                    title={nextAction.title}
-                    description={nextAction.description}
-                    primaryAction={
-                      <Link
-                        href={nextAction.href}
-                        className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                      >
-                        {nextAction.label}
-                      </Link>
-                    }
-                  />
-                )
-              },
-              {
-                key: "approval-send",
-                label: "Approval and signature flow",
-                content: (
-                  <ContextFactsList
-                    items={[
-                      {
-                        label: "Internal approval",
-                        value: <span className="capitalize">{formatStatusLabel(contract.internalApprovalStatus)}</span>
-                      },
-                      {
-                        label: "Signature readiness",
-                        value: <span className="capitalize">{formatStatusLabel(contract.signatureReadinessStatus)}</span>
-                      },
-                      {
-                        label: "Customer signers",
-                        value:
-                          signatureSummary.customerSignerCount > 0
-                            ? `${signatureSummary.signedCustomerSignerCount}/${signatureSummary.customerSignerCount} signed`
-                            : "Not routed yet"
-                      },
-                      {
-                        label: "Contractor countersign",
-                        value: signatureSummary.requiresCountersign
+                  <span className="inline-flex rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium capitalize text-slate-600">
+                    {formatStatusLabel(contract.signatureReadinessStatus)}
+                  </span>
+                </div>
+                <p className="text-lg font-semibold tracking-tight text-slate-950">
+                  {signatureStateMessage}
+                </p>
+                <p className="text-sm leading-6 text-slate-600">
+                  {contract.status === "draft" ? sendReadinessMessage : financialBlockersLabel}
+                </p>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/85 px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    Signer routing
+                  </p>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">
+                        {signatureSummary.customerSignerCount > 0
+                          ? `${signatureSummary.signedCustomerSignerCount}/${signatureSummary.customerSignerCount} customer signer${signatureSummary.customerSignerCount === 1 ? "" : "s"} complete`
+                          : "No customer signer routed yet"}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {signatureSummary.requiresCountersign
                           ? signatureSummary.signedContractorSignerCount > 0
-                            ? "Complete"
-                            : "Required"
-                          : "Not required"
-                      },
-                      {
-                        label: "Current flow",
-                        value:
-                          contract.status === "draft"
-                            ? sendReadinessMessage
-                            : signatureStateMessage
+                            ? "Contractor countersign complete"
+                            : "Contractor countersign still required"
+                          : "No contractor countersign required"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">
+                        Internal approval: {formatStatusLabel(contract.internalApprovalStatus)}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Project readiness: {financialReadinessLabel}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <WorkspaceSummaryBand
+              className="grid gap-3 sm:grid-cols-2"
+              itemClassName="rounded-2xl border border-slate-200/80 bg-slate-50/65 px-4 py-4"
+              labelClassName="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"
+              items={[
+                {
+                  key: "next-action",
+                  label: "Next best action",
+                  content: (
+                    <NextActionCard
+                      eyebrow="Workflow guidance"
+                      title={nextAction.title}
+                      description={nextAction.description}
+                      primaryAction={
+                        <Link
+                          href={nextAction.href}
+                          className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                        >
+                          {nextAction.label}
+                        </Link>
                       }
-                    ]}
-                  />
-                )
-              },
-              {
-                key: "financial-context",
-                label: "Financial readiness context",
-                content: (
-                  <ContextFactsList
-                    items={[
-                      {
-                        label: "Project readiness",
-                        value: <span className="capitalize">{financialReadinessLabel}</span>
-                      },
-                      {
-                        label: "Deposit",
-                        value: readinessSnapshot?.depositRequired
-                          ? readinessSnapshot.depositSatisfied
-                            ? "Satisfied"
-                            : "Required"
-                          : "Not required"
-                      },
-                      {
-                        label: "Financing",
-                        value: (
-                          <span className="capitalize">
-                            {formatStatusLabel(readinessSnapshot?.financingStatus ?? "not_applicable")}
-                          </span>
-                        )
-                      },
-                      {
-                        label: "Commercial blockers",
-                        value: financialBlockersLabel
-                      }
-                    ]}
-                  />
-                )
-              }
-            ]}
-          />
+                    />
+                  )
+                },
+                {
+                  key: "review-purpose",
+                  label: "Review focus",
+                  content: (
+                    <p className="text-sm text-slate-600">
+                      Review the agreement body here first, then use the workflow controls and supporting sections to move the contract forward.
+                    </p>
+                  )
+                },
+                {
+                  key: "financial-context",
+                  label: "Financial context",
+                  content: (
+                    <ContextFactsList
+                      items={[
+                        {
+                          label: "Deposit",
+                          value: readinessSnapshot?.depositRequired
+                            ? readinessSnapshot.depositSatisfied
+                              ? "Satisfied"
+                              : "Required"
+                            : "Not required"
+                        },
+                        {
+                          label: "Financing",
+                          value: (
+                            <span className="capitalize">
+                              {formatStatusLabel(readinessSnapshot?.financingStatus ?? "not_applicable")}
+                            </span>
+                          )
+                        }
+                      ]}
+                    />
+                  )
+                }
+              ]}
+            />
+          </div>
+
         </div>
       </div>
 
@@ -552,15 +558,14 @@ export default async function ContractDetailPage({
           </section>
         </div>
 
-        <div className="grid gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="space-y-6">
+        <div className="grid gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="space-y-7">
             <div className="print:hidden">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-                Contract body
+                Agreement body
               </p>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-                Review the generated agreement itself here. Approval, signature, and financial
-                context stay above and to the side so the document remains the main workspace.
+                Review the generated agreement here first. Signature workflow and supporting record context stay to the side so the document remains the main workspace.
               </p>
             </div>
 
@@ -572,7 +577,7 @@ export default async function ContractDetailPage({
           <aside className="space-y-6 print:hidden">
             <DetailPanel
               title="Workflow Actions"
-              description="Move the contract through the review and signature lifecycle while keeping the connected project context visible."
+              description="Move the contract through approval, send, and countersign from this review surface."
             >
               <ContractStatusActions
                 contractId={contract.id}
@@ -596,8 +601,8 @@ export default async function ContractDetailPage({
             </DetailPanel>
 
             <DetailPanel
-              title="Signature State"
-              description="Review the canonical signature lifecycle, assigned signers, and the latest immutable signature events without leaving the contract workspace."
+              title="Signer Routing"
+              description="Assigned signers and current signature timing on this contract."
             >
               <div className="space-y-5 text-sm leading-6 text-slate-600">
                 <ContextFactsList
@@ -674,41 +679,13 @@ export default async function ContractDetailPage({
                   )}
                 </div>
 
-                <div className="space-y-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Recent signature events
-                  </p>
-                  {recentSignatureEvents.length > 0 ? (
-                    recentSignatureEvents.map((event) => (
-                      <div
-                        key={event.id}
-                        className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
-                      >
-                        <p className="font-medium text-slate-950">
-                          {formatEventType(event.eventType)}
-                        </p>
-                        <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
-                          {formatStatusLabel(event.actorType)}
-                        </p>
-                        <p className="mt-1 text-xs leading-5 text-slate-500">
-                          {formatDateTime(event.occurredAt)}
-                        </p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4">
-                      No signature events have been recorded yet.
-                    </p>
-                  )}
-                </div>
               </div>
             </DetailPanel>
 
-            <DetailPanel title="Connected Records">
-              <p className="mb-4 text-sm leading-6 text-slate-500">
-                Review connected records here, then return to the project hub for the authoritative
-                readiness state and next gate.
-              </p>
+            <DetailPanel
+              title="Connected Records"
+              description="Nearby project, estimate, job, and invoice shortcuts that support the contract workflow without replacing it."
+            >
               <div className="grid gap-4">
                 {contract.project ? (
                   <LinkedRecordCard
@@ -772,7 +749,42 @@ export default async function ContractDetailPage({
               </div>
             </DetailPanel>
 
-            <DetailPanel title="Editability">
+            <DetailPanel
+              title="Recent Signature Events"
+              description="Recent signature milestones for verification, kept secondary to the active workflow."
+            >
+              <div className="space-y-3 text-sm leading-6 text-slate-600">
+                {recentSignatureEvents.length > 0 ? (
+                  recentSignatureEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="font-medium text-slate-950">
+                          {formatEventType(event.eventType)}
+                        </p>
+                        <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                          {formatStatusLabel(event.actorType)}
+                        </p>
+                      </div>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        {formatDateTime(event.occurredAt)}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4">
+                    No signature events have been recorded yet.
+                  </p>
+                )}
+              </div>
+            </DetailPanel>
+
+            <DetailPanel
+              title="Editability"
+              description="Lower-priority draft administration and lock context."
+            >
               <div className="space-y-5 text-sm leading-6 text-slate-600">
                 <ContextFactsList
                   items={[
@@ -818,7 +830,10 @@ export default async function ContractDetailPage({
               </div>
             </DetailPanel>
 
-            <DetailPanel title="Revision History">
+            <DetailPanel
+              title="Revision History"
+              description="Prior draft snapshots and revision notes."
+            >
               <div className="space-y-3 text-sm leading-6 text-slate-600">
                 {contract.revisions.length > 0 ? (
                   contract.revisions.map((revision) => (

@@ -19,6 +19,65 @@ function formatDateTime(value: string) {
   return new Date(value).toLocaleString();
 }
 
+function formatMoney(value: string) {
+  return Number(value).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD"
+  });
+}
+
+function getPortalInvoiceProgressSummary(project: Awaited<ReturnType<typeof listPortalAccessibleProjects>>[number]) {
+  if (!project.latestInvoiceStatus) {
+    return "No shared billing record yet";
+  }
+
+  if (project.latestInvoicePaymentEventType === "payment_failed") {
+    return "Recent payment attempt failed";
+  }
+
+  if (project.latestInvoicePaymentEventType === "checkout_started") {
+    return "Payment is currently in progress";
+  }
+
+  if (project.latestInvoicePaymentEventType === "payment_succeeded") {
+    return project.latestInvoiceStatus === "partially_paid"
+      ? project.latestInvoiceWorkflowRole === "deposit"
+        ? `A deposit payment completed | ${formatMoney(project.latestInvoiceBalanceDueAmount ?? "0")} still remains`
+        : `A payment completed | ${formatMoney(project.latestInvoiceBalanceDueAmount ?? "0")} still remains`
+      : project.latestInvoiceWorkflowRole === "deposit"
+        ? "Deposit payment completed"
+        : "Invoice payment completed";
+  }
+
+  if (project.latestInvoicePaymentEventType === "payment_requested") {
+    return "Payment has been requested";
+  }
+
+  if (project.latestInvoicePaymentEventType === "payment_voided") {
+    return "A recent payment was voided";
+  }
+
+  if (project.latestInvoiceStatus === "paid") {
+    return project.latestInvoiceWorkflowRole === "deposit"
+      ? "Deposit is fully paid"
+      : "Invoice is fully paid";
+  }
+
+  if (project.latestInvoiceStatus === "partially_paid") {
+    return project.latestInvoiceWorkflowRole === "deposit"
+      ? `Deposit partially paid | ${formatMoney(project.latestInvoiceBalanceDueAmount ?? "0")} remaining`
+      : `Partially paid | ${formatMoney(project.latestInvoiceBalanceDueAmount ?? "0")} remaining`;
+  }
+
+  if (project.latestInvoiceStatus === "void") {
+    return "Invoice has been voided";
+  }
+
+  return project.latestInvoiceWorkflowRole === "deposit"
+    ? `Deposit due | ${formatMoney(project.latestInvoiceBalanceDueAmount ?? "0")} remaining`
+    : `Balance due | ${formatMoney(project.latestInvoiceBalanceDueAmount ?? "0")} remaining`;
+}
+
 function getPortalHomeNextAction(
   projects: Awaited<ReturnType<typeof listPortalAccessibleProjects>>
 ) {
@@ -29,12 +88,74 @@ function getPortalHomeNextAction(
   );
 
   if (invoiceProject) {
+    if (invoiceProject.latestInvoicePaymentEventType === "checkout_started") {
+      return {
+        title: `Continue payment for ${invoiceProject.name}`,
+        description:
+          "A checkout session has already started on the shared invoice, so this project is the clearest place to confirm payment progress.",
+        href: `/portal/projects/${invoiceProject.id}`,
+        label: "Open payment context"
+      };
+    }
+
+    if (invoiceProject.latestInvoicePaymentEventType === "payment_requested") {
+      return {
+        title: `Payment has been requested for ${invoiceProject.name}`,
+        description:
+          "Customer payment activity has started on this invoice, so review that project workspace for the current shared billing state.",
+        href: `/portal/projects/${invoiceProject.id}`,
+        label: "Open payment context"
+      };
+    }
+
+    if (invoiceProject.latestInvoicePaymentEventType === "payment_succeeded") {
+      return {
+        title: `Review the remaining balance for ${invoiceProject.name}`,
+        description:
+          "A real provider-backed payment has already landed on the shared invoice, but the project still carries an open balance to review.",
+        href: `/portal/projects/${invoiceProject.id}`,
+        label: "Open payment context"
+      };
+    }
+
+    if (invoiceProject.latestInvoicePaymentEventType === "payment_voided") {
+      return {
+        title: `Review reopened billing for ${invoiceProject.name}`,
+        description:
+          "The latest provider-backed payment was voided, so the invoice has returned to an open billing state on this project.",
+        href: `/portal/projects/${invoiceProject.id}`,
+        label: "Open payment context"
+      };
+    }
+
+    if (invoiceProject.latestInvoiceStatus === "partially_paid") {
+      return {
+        title: `Review the remaining balance for ${invoiceProject.name}`,
+        description:
+          "A payment has already been recorded on the shared invoice, but there is still an outstanding balance to review.",
+        href: `/portal/projects/${invoiceProject.id}`,
+        label: "Open project billing"
+      };
+    }
+
     return {
       title: `Review billing for ${invoiceProject.name}`,
       description:
         "This project has an active invoice in view, so it is the clearest next record to review from the portal.",
       href: `/portal/projects/${invoiceProject.id}`,
       label: "Open project billing"
+    };
+  }
+
+  const paidInvoiceProject = projects.find((project) => project.latestInvoiceStatus === "paid");
+
+  if (paidInvoiceProject) {
+    return {
+      title: `Billing is current for ${paidInvoiceProject.name}`,
+      description:
+        "The latest shared invoice is fully paid on this project, so the project workspace is the best place to confirm the broader shared context.",
+      href: `/portal/projects/${paidInvoiceProject.id}`,
+      label: "Open paid billing context"
     };
   }
 
@@ -72,10 +193,14 @@ function getPortalHomeNextAction(
 export default async function PortalHomePage() {
   const projects = await listPortalAccessibleProjects("/portal");
   const nextAction = getPortalHomeNextAction(projects);
+  const primaryProject =
+    (nextAction
+      ? projects.find((project) => nextAction.href === `/portal/projects/${project.id}`)
+      : null) ?? projects[0] ?? null;
 
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
-      <section className="space-y-8">
+      <section className="space-y-10">
         <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
           <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-700">
             Customer Workspace
@@ -84,78 +209,93 @@ export default async function PortalHomePage() {
             Review the work your contractor has shared
           </h1>
           <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-            This portal is project-centered. Start with the project you want to review, then use
-            that workspace to see the estimate, contract, and invoice context connected to it.
+            Start with the project that needs attention most, then move into its shared estimate, contract, or invoice record from there.
           </p>
 
-          <div className="mt-8">
-            <WorkspaceSummaryBand
-              items={[
-                {
-                  key: "purpose",
-                  label: "What this portal is for",
-                  content: (
-                    <p className="text-sm leading-6 text-slate-600">
-                      Review customer-facing project documents and billing updates without wading
-                      through contractor-only workflow detail.
-                    </p>
-                  )
-                },
-                {
-                  key: "projects",
-                  label: "Accessible projects",
-                  content: (
-                    <>
-                      <p className="text-2xl font-semibold tracking-tight text-slate-950">
-                        {projects.length}
+          <div className="mt-10 space-y-5">
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+              <section className="rounded-[1.85rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,1))] px-6 py-6">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-brand-700">
+                  Where you are
+                </p>
+                <div className="mt-4 space-y-3">
+                  <p className="text-lg font-semibold tracking-tight text-slate-950">
+                    This portal is organized around shared projects.
+                  </p>
+                  <p className="text-sm leading-6 text-slate-600">
+                    Each project holds the customer-facing estimate, contract, and invoice records your contractor has shared with you.
+                  </p>
+                  {primaryProject ? (
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/85 px-4 py-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        Project needing attention
                       </p>
-                      <p className="mt-2 text-sm text-slate-600">
-                        Shared by your contractor through customer- and project-scoped access.
+                      <p className="mt-2 text-sm font-semibold text-slate-950">
+                        {primaryProject.name}
                       </p>
-                    </>
-                  )
-                },
-                {
-                  key: "shared-records",
-                  label: "Shared record visibility",
-                  content: (
-                    <div className="space-y-2 text-sm leading-6 text-slate-600">
-                      <p>Estimates, contracts, and invoices appear inside the project workspace.</p>
-                      <p>Only explicitly granted projects are visible here.</p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {getPortalInvoiceProgressSummary(primaryProject)}
+                      </p>
                     </div>
-                  )
-                },
-                {
-                  key: "next-action",
-                  label: "Next record to review",
-                  content: nextAction ? (
-                    <NextActionCard
-                      title={nextAction.title}
-                      description={nextAction.description}
-                      primaryAction={
-                        <Link
-                          href={nextAction.href}
-                          className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-                        >
-                          {nextAction.label}
-                        </Link>
-                      }
-                    />
                   ) : (
-                    <p className="text-sm leading-6 text-slate-600">
-                      No commercial records are shared yet. When your contractor publishes them to
-                      this portal, they will appear under the relevant project.
-                    </p>
-                  )
-                }
-              ]}
-            />
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/85 px-4 py-4 text-sm leading-6 text-slate-600">
+                      Shared projects will appear here once your contractor grants access.
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <WorkspaceSummaryBand
+                className="grid gap-3 sm:grid-cols-2"
+                itemClassName="rounded-2xl border border-slate-200/80 bg-slate-50/65 px-4 py-4"
+                labelClassName="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"
+                items={[
+                  {
+                    key: "next-action",
+                    label: "What to do next",
+                    content: nextAction ? (
+                      <NextActionCard
+                        eyebrow="Portal guidance"
+                        title={nextAction.title}
+                        description={nextAction.description}
+                        primaryAction={
+                          <Link
+                            href={nextAction.href}
+                            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
+                          >
+                            {nextAction.label}
+                          </Link>
+                        }
+                      />
+                    ) : (
+                      <p className="text-sm leading-6 text-slate-600">
+                        No commercial records are shared yet. When they are published, the right project to review will appear here first.
+                      </p>
+                    )
+                  },
+                  {
+                    key: "projects",
+                    label: "Accessible projects",
+                    content: (
+                      <>
+                        <p className="text-2xl font-semibold tracking-tight text-slate-950">
+                          {projects.length}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          Shared through customer- and project-scoped access.
+                        </p>
+                      </>
+                    )
+                  }
+                ]}
+              />
+            </div>
           </div>
         </div>
 
         <DetailPanel
           title="Projects"
-          description="Each project acts as the customer-facing anchor for the records your contractor has shared."
+          description="Start with the project that needs attention most, then move into the shared estimate, contract, or invoice from there."
         >
           {projects.length > 0 ? (
             <div className="grid gap-4">
@@ -212,6 +352,22 @@ export default async function PortalHomePage() {
                       </p>
                     </div>
                   </div>
+
+                  {project.latestInvoiceStatus ? (
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-white/85 px-4 py-3 text-sm leading-6 text-slate-600">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        What matters now
+                      </p>
+                      <p className="mt-2 font-medium text-slate-950">
+                        {getPortalInvoiceProgressSummary(project)}
+                      </p>
+                      {project.latestInvoicePaymentEventAt ? (
+                        <p className="mt-1 text-slate-500">
+                          Latest activity {formatDateTime(project.latestInvoicePaymentEventAt)}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </Link>
               ))}
             </div>
@@ -227,8 +383,8 @@ export default async function PortalHomePage() {
 
       <aside className="space-y-6">
         <DetailPanel
-          title="Portal Context"
-          description="A compact explanation of how access and record visibility work in this first portal foundation."
+          title="Access Scope"
+          description="Shared access and record visibility for this workspace."
         >
           <ContextFactsList
             items={[
@@ -244,15 +400,15 @@ export default async function PortalHomePage() {
               {
                 label: "What is not here",
                 value:
-                  "Messaging, project self-service, signing, and online payments are intentionally outside this first portal foundation."
+                  "Messaging and broad project self-service are still outside this customer workspace."
               }
             ]}
           />
         </DetailPanel>
 
         <DetailPanel
-          title="Recent access"
-          description="The newest shared project appears first so the workspace stays easy to scan."
+          title="Recently updated"
+          description="Quick project references when you want a fast return path."
         >
           {projects.length > 0 ? (
             <div className="space-y-3">

@@ -112,7 +112,7 @@ export type ContractSignatureActorType =
   | "organization_user"
   | "provider"
   | "system";
-export type PaymentStatus = "recorded" | "void";
+export type PaymentStatus = "pending" | "recorded" | "void";
 export type PaymentSource = "manual" | "customer_portal";
 export type PaymentRecordedVia = "contractor_app" | "customer_portal" | "system";
 export type PaymentEventType =
@@ -556,6 +556,7 @@ export interface PaymentEvent {
   actorType: PaymentEventActorType;
   actorUserId: ProfileId | null;
   portalUserId: ProfileId | null;
+  gatewayProvider: string | null;
   providerEventId: string | null;
   payload: Record<string, unknown> | null;
   occurredAt: string;

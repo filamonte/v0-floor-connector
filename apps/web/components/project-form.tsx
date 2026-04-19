@@ -7,6 +7,7 @@ import type {
 
 import { AuthField } from "@/components/auth-field";
 import { AuthSubmitButton } from "@/components/auth-submit-button";
+import { CustomerPickerField } from "@/components/customer-picker-field";
 import { financingStatusesList, projectStatusesList } from "@/lib/projects/schemas";
 
 type ProjectFormProps = {
@@ -16,6 +17,7 @@ type ProjectFormProps = {
   customers: Customer[];
   project?: Project | null;
   initialCustomerId?: string | null;
+  allowInlineCustomerCreate?: boolean;
 };
 
 function getValue(value: string | null | undefined) {
@@ -36,7 +38,8 @@ export function ProjectForm({
   pendingLabel,
   customers,
   project,
-  initialCustomerId
+  initialCustomerId,
+  allowInlineCustomerCreate = !project
 }: ProjectFormProps) {
   return (
     <form action={action} className="space-y-5">
@@ -52,30 +55,12 @@ export function ProjectForm({
           required
         />
 
-        <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-800">
-            Customer
-          </span>
-          <select
-            name="customerId"
-            defaultValue={project?.customerId ?? initialCustomerId ?? ""}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
-            required
-          >
-            <option value="" disabled>
-              Select a customer
-            </option>
-            {customers.map((customer) => (
-              <option key={customer.id} value={customer.id}>
-                {customer.name}
-                {customer.companyName ? ` - ${customer.companyName}` : ""}
-              </option>
-            ))}
-          </select>
-          <span className="mt-2 block text-xs leading-5 text-slate-500">
-            Projects must belong to an existing customer in the same organization.
-          </span>
-        </label>
+        <CustomerPickerField
+          customers={customers}
+          initialCustomerId={project?.customerId ?? initialCustomerId ?? ""}
+          allowCreate={allowInlineCustomerCreate}
+          required={!allowInlineCustomerCreate}
+        />
 
         <label className="block">
           <span className="mb-2 block text-sm font-medium text-slate-800">

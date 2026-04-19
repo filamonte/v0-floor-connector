@@ -212,6 +212,7 @@ export const contractSignerStatusTransitions: Record<
 };
 
 export const paymentStatuses = [
+  "pending",
   "recorded",
   "void"
 ] as const satisfies readonly PaymentStatus[];
@@ -247,6 +248,7 @@ export const paymentStatusTransitions: Record<
   PaymentStatus,
   readonly PaymentStatus[]
 > = {
+  pending: ["recorded", "void"],
   recorded: ["void"],
   void: []
 };

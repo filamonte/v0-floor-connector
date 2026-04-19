@@ -1,12 +1,17 @@
 import "server-only";
 
-import { computeContractSignatureWorkflowSummary } from "@floorconnector/domain";
+import {
+  computeContractSignatureWorkflowSummary,
+  computeInvoicePaymentWorkflowGate
+} from "@floorconnector/domain";
 import type {
   ContractSignerRole,
   ContractSignerStatus,
   ContractStatus,
   EstimateStatus,
   InvoiceStatus,
+  PaymentEventActorType,
+  PaymentEventType,
   PortalRecordViewSubjectType,
   ProjectStatus
 } from "@floorconnector/types";
@@ -202,6 +207,16 @@ type PortalPaymentRow = {
   status: string;
 };
 
+type PortalPaymentEventRow = {
+  id: string;
+  invoice_id: string;
+  payment_id: string | null;
+  event_type: PaymentEventType;
+  actor_type: PaymentEventActorType;
+  occurred_at: string;
+  payload: Record<string, unknown> | null;
+};
+
 type ProjectStatusRow = {
   project_id: string;
   status: string;
@@ -226,6 +241,11 @@ export type PortalAccessibleProjectListItem = {
   latestEstimateStatus: string | null;
   latestContractStatus: string | null;
   latestInvoiceStatus: string | null;
+  latestInvoiceReferenceNumber: string | null;
+  latestInvoiceWorkflowRole: string | null;
+  latestInvoiceBalanceDueAmount: string | null;
+  latestInvoicePaymentEventType: PaymentEventType | null;
+  latestInvoicePaymentEventAt: string | null;
   updatedAt: string;
 };
 
@@ -257,6 +277,11 @@ export type PortalProjectDetailSummary = {
   latestEstimateStatus: string | null;
   latestContractStatus: string | null;
   latestInvoiceStatus: string | null;
+  latestInvoiceReferenceNumber: string | null;
+  latestInvoiceWorkflowRole: string | null;
+  latestInvoiceBalanceDueAmount: string | null;
+  latestInvoicePaymentEventType: PaymentEventType | null;
+  latestInvoicePaymentEventAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -307,8 +332,29 @@ export type PortalProjectInvoiceListItem = {
   dueDate: string | null;
   totalAmount: string;
   balanceDueAmount: string;
+  latestPaymentEventType: PaymentEventType | null;
+  latestPaymentEventAt: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+type PortalProjectLatestInvoiceRow = {
+  id: string;
+  project_id: string;
+  reference_number: string;
+  workflow_role: string;
+  status: InvoiceStatus;
+  balance_due_amount: string | number;
+  updated_at: string;
+};
+
+type PortalProjectLatestInvoiceSummary = {
+  referenceNumber: string;
+  workflowRole: string;
+  status: InvoiceStatus;
+  balanceDueAmount: string;
+  latestPaymentEventType: PaymentEventType | null;
+  latestPaymentEventAt: string | null;
 };
 
 export type PortalEstimateReviewDetail = {
@@ -466,6 +512,22 @@ export type PortalInvoiceReviewDetail = {
     reference: string | null;
     status: string;
   }>;
+  paymentEvents: Array<{
+    id: string;
+    paymentId: string | null;
+    eventType: PaymentEventType;
+    actorType: PaymentEventActorType;
+    occurredAt: string;
+    payload: Record<string, unknown> | null;
+  }>;
+  paymentWorkflow: {
+    canRequestPayment: boolean;
+    canStartCheckout: boolean;
+    canRecordSuccess: boolean;
+    hasBalanceDue: boolean;
+    isSettled: boolean;
+    requestBlockers: string[];
+  };
   createdAt: string;
   updatedAt: string;
 };
@@ -632,6 +694,17 @@ function mapPortalContractSigner(row: PortalContractSignerRow) {
   };
 }
 
+function mapPortalPaymentEvent(row: PortalPaymentEventRow) {
+  return {
+    id: row.id,
+    paymentId: row.payment_id,
+    eventType: row.event_type,
+    actorType: row.actor_type,
+    occurredAt: row.occurred_at,
+    payload: row.payload
+  };
+}
+
 async function getPortalScope(next = "/portal"): Promise<PortalScope> {
   const user = await requireAuthenticatedUser(next);
   const activeGrants = (await listPortalAccessGrantsForCurrentUser(next)).filter(
@@ -710,13 +783,12 @@ async function getLatestStatusesByProjectIds(projectIds: string[]) {
   if (projectIds.length === 0) {
     return {
       estimates: new Map<string, string>(),
-      contracts: new Map<string, string>(),
-      invoices: new Map<string, string>()
+      contracts: new Map<string, string>()
     };
   }
 
   const supabase = await getSupabaseServerClient();
-  const [estimatesResponse, contractsResponse, invoicesResponse] = await Promise.all([
+  const [estimatesResponse, contractsResponse] = await Promise.all([
     supabase
       .from("estimates")
       .select("project_id, status, updated_at")
@@ -724,11 +796,6 @@ async function getLatestStatusesByProjectIds(projectIds: string[]) {
       .order("updated_at", { ascending: false }),
     supabase
       .from("contracts")
-      .select("project_id, status, updated_at")
-      .in("project_id", projectIds)
-      .order("updated_at", { ascending: false }),
-    supabase
-      .from("invoices")
       .select("project_id, status, updated_at")
       .in("project_id", projectIds)
       .order("updated_at", { ascending: false })
@@ -746,19 +813,11 @@ async function getLatestStatusesByProjectIds(projectIds: string[]) {
     );
   }
 
-  if (invoicesResponse.error) {
-    throw new Error(
-      `Unable to load latest portal invoice statuses: ${invoicesResponse.error.message}`
-    );
-  }
-
   const estimateRows = (estimatesResponse.data as ProjectStatusRow[] | null) ?? [];
   const contractRows = (contractsResponse.data as ProjectStatusRow[] | null) ?? [];
-  const invoiceRows = (invoicesResponse.data as ProjectStatusRow[] | null) ?? [];
 
   const estimateMap = new Map<string, string>();
   const contractMap = new Map<string, string>();
-  const invoiceMap = new Map<string, string>();
 
   for (const row of estimateRows) {
     if (!estimateMap.has(row.project_id)) {
@@ -772,17 +831,121 @@ async function getLatestStatusesByProjectIds(projectIds: string[]) {
     }
   }
 
-  for (const row of invoiceRows) {
-    if (!invoiceMap.has(row.project_id)) {
-      invoiceMap.set(row.project_id, row.status);
+  return {
+    estimates: estimateMap,
+    contracts: contractMap
+  };
+}
+
+function isCustomerActiveInvoiceStatus(status: InvoiceStatus) {
+  return status !== "paid" && status !== "void";
+}
+
+async function getLatestPaymentEventsByInvoiceIds(invoiceIds: string[]) {
+  if (invoiceIds.length === 0) {
+    return new Map<string, PortalPaymentEventRow>();
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("payment_events")
+    .select(
+      `
+        id,
+        invoice_id,
+        payment_id,
+        event_type,
+        actor_type,
+        occurred_at,
+        payload
+      `
+    )
+    .in("invoice_id", invoiceIds)
+    .order("occurred_at", { ascending: false });
+  const rows = (response.data as PortalPaymentEventRow[] | null) ?? [];
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load portal invoice payment activity: ${response.error.message}`
+    );
+  }
+
+  const latestEvents = new Map<string, PortalPaymentEventRow>();
+
+  for (const row of rows) {
+    if (!latestEvents.has(row.invoice_id)) {
+      latestEvents.set(row.invoice_id, row);
     }
   }
 
-  return {
-    estimates: estimateMap,
-    contracts: contractMap,
-    invoices: invoiceMap
-  };
+  return latestEvents;
+}
+
+async function getLatestInvoiceSummariesByProjectIds(projectIds: string[]) {
+  if (projectIds.length === 0) {
+    return new Map<string, PortalProjectLatestInvoiceSummary>();
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("invoices")
+    .select(
+      `
+        id,
+        project_id,
+        reference_number,
+        workflow_role,
+        status,
+        balance_due_amount,
+        updated_at
+      `
+    )
+    .in("project_id", projectIds)
+    .order("updated_at", { ascending: false });
+  const rows = (response.data as PortalProjectLatestInvoiceRow[] | null) ?? [];
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load latest portal invoice summaries: ${response.error.message}`
+    );
+  }
+
+  const latestInvoicesByProject = new Map<string, PortalProjectLatestInvoiceRow>();
+
+  for (const row of rows) {
+    const current = latestInvoicesByProject.get(row.project_id);
+
+    if (!current) {
+      latestInvoicesByProject.set(row.project_id, row);
+      continue;
+    }
+
+    if (!isCustomerActiveInvoiceStatus(current.status) && isCustomerActiveInvoiceStatus(row.status)) {
+      latestInvoicesByProject.set(row.project_id, row);
+    }
+  }
+
+  const latestPaymentEventsByInvoiceId = await getLatestPaymentEventsByInvoiceIds(
+    [...latestInvoicesByProject.values()].map((row) => row.id)
+  );
+
+  return new Map(
+    [...latestInvoicesByProject.entries()].map(([projectId, row]) => {
+      const latestEvent = latestPaymentEventsByInvoiceId.get(row.id) ?? null;
+
+      return [
+        projectId,
+        {
+          referenceNumber: row.reference_number,
+          workflowRole: row.workflow_role,
+          status: row.status,
+          balanceDueAmount: formatMoney(row.balance_due_amount),
+          latestPaymentEventType: latestEvent?.event_type ?? null,
+          latestPaymentEventAt: latestEvent?.occurred_at ?? null
+        }
+      ];
+    })
+  );
 }
 
 export async function listPortalAccessibleProjects(
@@ -807,8 +970,14 @@ export async function listPortalAccessibleProjects(
   }
 
   const latestStatuses = await getLatestStatusesByProjectIds(scope.accessibleProjectIds);
+  const latestInvoiceSummaries = await getLatestInvoiceSummariesByProjectIds(
+    scope.accessibleProjectIds
+  );
 
-  return rows.map((row) => ({
+  return rows.map((row) => {
+    const latestInvoiceSummary = latestInvoiceSummaries.get(row.id) ?? null;
+
+    return {
     id: row.id,
     organizationId: row.company_id,
     customerId: row.customer_id,
@@ -827,9 +996,15 @@ export async function listPortalAccessibleProjects(
     locationSummary: formatLocationSummary(row),
     latestEstimateStatus: latestStatuses.estimates.get(row.id) ?? null,
     latestContractStatus: latestStatuses.contracts.get(row.id) ?? null,
-    latestInvoiceStatus: latestStatuses.invoices.get(row.id) ?? null,
+    latestInvoiceStatus: latestInvoiceSummary?.status ?? null,
+    latestInvoiceReferenceNumber: latestInvoiceSummary?.referenceNumber ?? null,
+    latestInvoiceWorkflowRole: latestInvoiceSummary?.workflowRole ?? null,
+    latestInvoiceBalanceDueAmount: latestInvoiceSummary?.balanceDueAmount ?? null,
+    latestInvoicePaymentEventType: latestInvoiceSummary?.latestPaymentEventType ?? null,
+    latestInvoicePaymentEventAt: latestInvoiceSummary?.latestPaymentEventAt ?? null,
     updatedAt: row.updated_at
-  }));
+    };
+  });
 }
 
 export async function getPortalProjectDetailSummary(
@@ -860,12 +1035,19 @@ export async function getPortalProjectDetailSummary(
     return null;
   }
 
-  const [estimateCountResponse, contractCountResponse, invoiceCountResponse, latestStatuses] =
+  const [
+    estimateCountResponse,
+    contractCountResponse,
+    invoiceCountResponse,
+    latestStatuses,
+    latestInvoiceSummaries
+  ] =
     await Promise.all([
       supabase.from("estimates").select("id", { count: "exact", head: true }).eq("project_id", projectId),
       supabase.from("contracts").select("id", { count: "exact", head: true }).eq("project_id", projectId),
       supabase.from("invoices").select("id", { count: "exact", head: true }).eq("project_id", projectId),
-      getLatestStatusesByProjectIds([projectId])
+      getLatestStatusesByProjectIds([projectId]),
+      getLatestInvoiceSummariesByProjectIds([projectId])
     ]);
 
   if (estimateCountResponse.error) {
@@ -897,6 +1079,8 @@ export async function getPortalProjectDetailSummary(
     next
   );
 
+  const latestInvoiceSummary = latestInvoiceSummaries.get(projectId) ?? null;
+
   return {
     id: row.id,
     organizationId: row.company_id,
@@ -926,7 +1110,12 @@ export async function getPortalProjectDetailSummary(
     visibleInvoiceCount: invoiceCountResponse.count ?? 0,
     latestEstimateStatus: latestStatuses.estimates.get(projectId) ?? null,
     latestContractStatus: latestStatuses.contracts.get(projectId) ?? null,
-    latestInvoiceStatus: latestStatuses.invoices.get(projectId) ?? null,
+    latestInvoiceStatus: latestInvoiceSummary?.status ?? null,
+    latestInvoiceReferenceNumber: latestInvoiceSummary?.referenceNumber ?? null,
+    latestInvoiceWorkflowRole: latestInvoiceSummary?.workflowRole ?? null,
+    latestInvoiceBalanceDueAmount: latestInvoiceSummary?.balanceDueAmount ?? null,
+    latestInvoicePaymentEventType: latestInvoiceSummary?.latestPaymentEventType ?? null,
+    latestInvoicePaymentEventAt: latestInvoiceSummary?.latestPaymentEventAt ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -1038,7 +1227,14 @@ export async function listPortalProjectInvoices(
     );
   }
 
-  return rows.map((row) => ({
+  const latestPaymentEventsByInvoiceId = await getLatestPaymentEventsByInvoiceIds(
+    rows.map((row) => row.id)
+  );
+
+  return rows.map((row) => {
+    const latestPaymentEvent = latestPaymentEventsByInvoiceId.get(row.id) ?? null;
+
+    return {
     id: row.id,
     organizationId: row.company_id,
     customerId: row.customer_id,
@@ -1052,9 +1248,12 @@ export async function listPortalProjectInvoices(
     dueDate: row.due_date,
     totalAmount: formatMoney(row.total_amount),
     balanceDueAmount: formatMoney(row.balance_due_amount),
+    latestPaymentEventType: latestPaymentEvent?.event_type ?? null,
+    latestPaymentEventAt: latestPaymentEvent?.occurred_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at
-  }));
+    };
+  });
 }
 
 export async function getPortalEstimateReviewData(
@@ -1335,7 +1534,7 @@ export async function getPortalInvoiceReviewData(
     return null;
   }
 
-  const [lineItemsResponse, paymentsResponse] = await Promise.all([
+  const [lineItemsResponse, paymentsResponse, paymentEventsResponse] = await Promise.all([
     supabase
       .from("invoice_line_items")
       .select(
@@ -1368,12 +1567,30 @@ export async function getPortalInvoiceReviewData(
       )
       .eq("invoice_id", invoiceId)
       .eq("status", "recorded")
-      .order("payment_date", { ascending: false })
+      .order("payment_date", { ascending: false }),
+    supabase
+      .from("payment_events")
+      .select(
+        `
+          id,
+          invoice_id,
+          payment_id,
+          event_type,
+          actor_type,
+          occurred_at,
+          payload
+        `
+      )
+      .eq("invoice_id", invoiceId)
+      .order("occurred_at", { ascending: false })
+      .limit(6)
   ]);
 
   const lineItemRows =
     (lineItemsResponse.data as PortalInvoiceLineItemRow[] | null) ?? [];
   const paymentRows = (paymentsResponse.data as PortalPaymentRow[] | null) ?? [];
+  const paymentEventRows =
+    (paymentEventsResponse.data as PortalPaymentEventRow[] | null) ?? [];
 
   if (lineItemsResponse.error) {
     throw new Error(
@@ -1384,6 +1601,12 @@ export async function getPortalInvoiceReviewData(
   if (paymentsResponse.error) {
     throw new Error(
       `Unable to load portal invoice payments: ${paymentsResponse.error.message}`
+    );
+  }
+
+  if (paymentEventsResponse.error) {
+    throw new Error(
+      `Unable to load portal invoice payment activity: ${paymentEventsResponse.error.message}`
     );
   }
 
@@ -1399,6 +1622,10 @@ export async function getPortalInvoiceReviewData(
   );
 
   const paidAmount = paymentRows.reduce((sum, payment) => sum + Number(payment.amount), 0);
+  const paymentWorkflow = computeInvoicePaymentWorkflowGate({
+    invoiceStatus: row.status,
+    balanceDueAmount: formatMoney(row.balance_due_amount)
+  });
 
   return {
     id: row.id,
@@ -1452,6 +1679,8 @@ export async function getPortalInvoiceReviewData(
       reference: payment.reference,
       status: payment.status
     })),
+    paymentEvents: paymentEventRows.map(mapPortalPaymentEvent),
+    paymentWorkflow,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };

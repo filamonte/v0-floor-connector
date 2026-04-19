@@ -121,10 +121,14 @@ Implemented flow:
 - contracts use the shared template foundation
 - draft contracts may be lightly edited
 - unrestricted editing locks once signature activity begins
+- contractor-side send-for-signature and optional countersign workflow now run on the same canonical contract record
+- portal customers can now review, sign, and decline the same canonical contract through tenant-safe portal access
 
 Current canonical records involved:
 - estimate
 - contract
+- contract signers
+- contract signature events
 - shared template reference
 - project and customer context carried forward
 
@@ -162,10 +166,31 @@ Implemented flow:
 - payments are recorded directly against canonical invoices
 - invoice balances update from recorded payments
 - invoice status updates into `partially_paid` and `paid` based on recorded payments
+- customer-facing payment workflow foundations now exist on the same canonical invoice and payment chain
+- payment request, checkout-start, success, failure, and void events now write immutable payment events instead of introducing a second checkout or portal-payment model
+- contractor-side invoice and project workspaces now surface payment continuity and next-step guidance from the same canonical invoice and payment state
 
 Current canonical records involved:
 - invoice
 - payment
+- payment events
+
+### Workforce And Field Execution Support
+
+Implemented flow:
+- workforce participants now live on shared canonical people records, with vendors modeling external labor companies and compliance records attaching to either subject type
+- auditable time capture now flows through canonical time punch events and derived time cards
+- daily execution now flows through canonical daily logs, field notes, and lightweight execution attachments
+- project and job workspaces now surface linked labor and field-execution context through those same shared records
+
+Current canonical records involved:
+- person
+- vendor
+- compliance record
+- time punch event
+- time card
+- daily log
+- field note
 
 ## Recommended Contractor Revenue Path
 
@@ -230,7 +255,9 @@ Today, the app should be understood this way:
 - customers and projects anchor the operational path
 - estimates define proposed commercial scope
 - approved estimates feed downstream contract and job creation
+- contracts now carry the live customer-facing signature workflow on the same canonical contract record across contractor and portal surfaces
 - jobs represent execution
-- invoices and payments complete the financial path
+- workforce time and field execution now support the same project-centered operating chain through shared people, vendor, time-card, and daily-log records
+- invoices and payments complete the financial path, with customer-facing online payment workflow foundations now attached to the same canonical invoice and payment records
 
 That means FloorConnector is already operating on one shared business chain, even though some screens still expose the workflow in a more module-driven way than the intended product direction.

@@ -4,9 +4,9 @@ export default function ProtectedAppLoading() {
   return (
     <div className="mx-auto w-full max-w-7xl">
       <AppLoadingState
-        eyebrow="Loading workspace"
-        title="Refreshing tenant-scoped data"
-        description="FloorConnector is loading the latest protected records for this area."
+        eyebrow="Opening contractor workspace"
+        title="Checking secure workspace access"
+        description="FloorConnector is confirming your organization access and loading the protected records for this contractor workflow."
       />
     </div>
   );

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { DashboardAppShell } from "@/components/dashboard-app-shell";
+import { ContractorAppShell } from "@/components/contractor-app-shell";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 
@@ -17,8 +17,8 @@ export default async function ProtectedAppLayout({
   const organizationContext = await getActiveOrganizationContext(user.id);
 
   return (
-    <DashboardAppShell user={user} organizationContext={organizationContext}>
+    <ContractorAppShell user={user} organizationContext={organizationContext}>
       {children}
-    </DashboardAppShell>
+    </ContractorAppShell>
   );
 }

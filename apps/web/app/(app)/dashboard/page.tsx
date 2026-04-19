@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { listContracts } from "@/lib/contracts/data";
 import { listCustomers } from "@/lib/customers/data";
@@ -158,36 +159,73 @@ export default async function DashboardPage() {
   ] as const;
 
   return (
+    <ContractorWorkspacePage
+      eyebrow="Dashboard"
+      title="Run the day from one connected workspace"
+      description="Review live tenant-scoped work across intake, estimating, execution, workforce, and billing without bouncing between disconnected modules."
+      summary={
+        <div className="rounded-[1.75rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.92),rgba(255,255,255,0.98))] px-5 py-5 text-sm leading-6 text-slate-600">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-brand-700">
+            Workspace status
+          </p>
+          <p className="mt-3 font-medium text-slate-950">
+            {organizationContext?.organization.displayName ?? "Organization setup pending"}
+          </p>
+          <p className="mt-2">
+            {organizationContext
+              ? `${organizationContext.membership.role} access · ${organizationContext.membership.status}`
+              : "Waiting for active organization context."}
+          </p>
+        </div>
+      }
+      commandBar={{
+        supportSlot: (
+          <p>
+            Use the top navigation to move between major operating areas, then use this command bar to jump directly into the queues that need attention most.
+          </p>
+        ),
+        filterSlot: reviewAreas.map((area) => (
+          <Link
+            key={area.href}
+            href={area.href}
+            className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-white"
+          >
+            {area.label}
+          </Link>
+        )),
+        actionSlot: (
+          <>
+            <Link
+              href="/leads"
+              className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400"
+            >
+              Review leads
+            </Link>
+            <Link
+              href="/projects"
+              className="inline-flex items-center rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+            >
+              Open projects
+            </Link>
+          </>
+        )
+      }}
+    >
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_360px]">
       <section className="space-y-6">
         <section className="rounded-[2rem] border border-slate-200 bg-white/92 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-700">
-                Dashboard
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-brand-700">
+                Today&apos;s operating view
               </p>
-              <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-                Run the day from one project-centered workspace
-              </h2>
-              <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-                Review live tenant-scoped work across intake, estimating, execution, and billing without jumping between disconnected modules.
-              </p>
+              <h3 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
+                Counts that frame the day
+              </h3>
             </div>
-
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/leads"
-                className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-              >
-                Review leads
-              </Link>
-              <Link
-                href="/projects"
-                className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400"
-              >
-                Open projects
-              </Link>
-            </div>
+            <p className="max-w-sm text-right text-sm leading-6 text-slate-500">
+              These summary cards stay wide and scannable so the dashboard reads like an operating overview instead of a cramped report.
+            </p>
           </div>
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -438,5 +476,6 @@ export default async function DashboardPage() {
         </section>
       </aside>
     </div>
+    </ContractorWorkspacePage>
   );
 }

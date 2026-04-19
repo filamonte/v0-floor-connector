@@ -21,7 +21,10 @@ export const getCurrentUser = cache(async () => {
 });
 
 export async function requireAuthenticatedUser(next = defaultAuthenticatedPath) {
-  const user = await getCurrentUser();
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
 
   if (!user) {
     const destination = new URL(signInPath, "http://floorconnector.local");
@@ -31,16 +34,19 @@ export async function requireAuthenticatedUser(next = defaultAuthenticatedPath) 
     redirect(`${destination.pathname}${destination.search}`);
   }
 
-  await ensureAuthenticatedUserBootstrap();
+  await ensureAuthenticatedUserBootstrap(supabase);
 
   return user;
 }
 
 export async function redirectIfAuthenticated(next = defaultAuthenticatedPath) {
-  const user = await getCurrentUser();
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
 
   if (user) {
-    await ensureAuthenticatedUserBootstrap();
+    await ensureAuthenticatedUserBootstrap(supabase);
     redirect(sanitizeRedirectPath(next));
   }
 }

@@ -28,9 +28,15 @@ Included in Phase 1:
 - estimates and estimate line items
 - shared templates
 - contracts
+- contract signature foundation and customer-facing signature workflow on canonical contracts
 - jobs
 - invoices and invoice line items
 - payments
+- customer-facing payment foundation on canonical invoices and payments
+- people, vendors, and compliance foundations
+- time tracking foundations
+- daily logs and field-execution foundations
+- customer portal access, review, and contract-signature foundations
 - tax, retainage, and AIA-ready financial scaffolding
 
 ## Phase 2
@@ -63,11 +69,9 @@ Planned focus:
 
 Planned focus:
 - scheduling and schedule-readiness workflows
-- field execution depth
 - crew assignment
-- time tracking foundations
-- daily logs
 - calendar and board views
+- deeper execution planning and operational scheduling on top of the already-implemented time and daily-log foundations
 
 ## Phase 5
 
@@ -93,20 +97,18 @@ Planned focus:
 
 ## Phase 7
 
-**Later: portal and communications**
+**Later: portal expansion and communications**
 
 Planned focus:
-- customer portal workflows
+- broader customer portal workflows beyond the current access, review, and contract-signature foundation
 - communication system
-- customer-facing approvals, signatures, and payment surfaces
+- customer-facing online payment UI and richer post-review customer actions
 
 ## Phase 8
 
 **Later: broader platform expansion**
 
 Planned focus:
-- people system
-- subcontractor system
 - growth and marketing engine
 - marketplace
 - broader ecosystem expansion

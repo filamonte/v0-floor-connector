@@ -99,7 +99,54 @@ function getOnlinePaymentReadinessSummary(input: {
     return "Customer-facing payment is effectively complete because no balance remains due.";
   }
 
-  return "This invoice is in a usable state for customer-facing payment request and checkout flow when that portal action is exposed.";
+  return "This invoice is ready for customer-facing secure checkout on the same canonical invoice and payment chain.";
+}
+
+function getCustomerPaymentProgressSummary(input: {
+  workflowRole: string;
+  invoiceStatus: string;
+  balanceDueAmount: string;
+  latestPaymentEventType: PaymentEvent["eventType"] | null;
+}) {
+  if (input.latestPaymentEventType === "payment_failed") {
+    return "A recent customer payment attempt failed, so collections follow-through is still needed before this invoice can be treated as clear.";
+  }
+
+  if (input.latestPaymentEventType === "checkout_started") {
+    return "Customer checkout is in motion, but the invoice remains open until a canonical payment succeeds.";
+  }
+
+  if (input.latestPaymentEventType === "payment_succeeded") {
+    return input.invoiceStatus === "paid" || Number(input.balanceDueAmount) <= 0
+      ? "A provider-backed payment completed and this invoice is now financially settled."
+      : input.workflowRole === "deposit"
+        ? `A provider-backed deposit payment completed, but ${formatMoney(input.balanceDueAmount)} still remains before readiness is fully clear.`
+        : `A provider-backed payment completed, but ${formatMoney(input.balanceDueAmount)} still remains due.`;
+  }
+
+  if (input.latestPaymentEventType === "payment_requested") {
+    return "Customer payment has been requested on this invoice and is waiting for the next payment step.";
+  }
+
+  if (input.latestPaymentEventType === "payment_voided") {
+    return "The most recent provider-backed payment was voided, so the invoice has returned to an open collection state.";
+  }
+
+  if (input.invoiceStatus === "paid" || Number(input.balanceDueAmount) <= 0) {
+    return input.workflowRole === "deposit"
+      ? "Deposit readiness is satisfied from this canonical invoice."
+      : "The invoice is financially settled.";
+  }
+
+  if (input.invoiceStatus === "partially_paid") {
+    return input.workflowRole === "deposit"
+      ? `A deposit payment is already recorded, but ${formatMoney(input.balanceDueAmount)} still remains.`
+      : `A payment is already recorded, but ${formatMoney(input.balanceDueAmount)} still remains due.`;
+  }
+
+  return input.workflowRole === "deposit"
+    ? `Deposit collection is still open for ${formatMoney(input.balanceDueAmount)}.`
+    : `The invoice still carries ${formatMoney(input.balanceDueAmount)} due.`;
 }
 
 function getRecentPaymentSignal(input: {
@@ -114,8 +161,16 @@ function getRecentPaymentSignal(input: {
     return `A customer checkout session started ${formatDateTime(input.latestEvent.occurredAt)}. Use this as a signal that payment is in motion, not yet complete.`;
   }
 
+  if (input.latestEvent?.eventType === "payment_succeeded") {
+    return `A provider-backed payment completed ${formatDateTime(input.latestEvent.occurredAt)} and was applied to the same canonical invoice record.`;
+  }
+
   if (input.latestEvent?.eventType === "payment_requested") {
     return `Customer-facing payment was requested ${formatDateTime(input.latestEvent.occurredAt)}. The invoice is now in a collections follow-through phase.`;
+  }
+
+  if (input.latestEvent?.eventType === "payment_voided") {
+    return `A provider-backed payment was voided ${formatDateTime(input.latestEvent.occurredAt)}. Treat the invoice as open again until a completed payment lands.`;
   }
 
   if (input.latestPayment) {
@@ -164,8 +219,12 @@ export default async function InvoiceDetailPage({
     invoice.paymentEvents.find((event) => event.eventType === "payment_failed") ?? null;
   const latestCheckoutStarted =
     invoice.paymentEvents.find((event) => event.eventType === "checkout_started") ?? null;
+  const latestPaymentSucceeded =
+    invoice.paymentEvents.find((event) => event.eventType === "payment_succeeded") ?? null;
   const latestPaymentRequested =
     invoice.paymentEvents.find((event) => event.eventType === "payment_requested") ?? null;
+  const latestPaymentVoided =
+    invoice.paymentEvents.find((event) => event.eventType === "payment_voided") ?? null;
   const nextAction =
     invoice.status === "void"
       ? {
@@ -175,11 +234,44 @@ export default async function InvoiceDetailPage({
         }
       : Number(invoice.balanceDueAmount) > 0
         ? {
-            title: "Record the next payment",
+            title:
+              latestPaymentFailure
+                ? "Follow up on the failed payment attempt"
+                : latestCheckoutStarted
+                  ? "Wait for payment completion"
+                  : latestPaymentSucceeded && invoice.status === "partially_paid"
+                    ? invoice.workflowRole === "deposit"
+                      ? "Close the remaining deposit after the recent payment"
+                      : "Close the remaining balance after the recent payment"
+                  : latestPaymentRequested
+                    ? "Monitor the customer payment request"
+                    : latestPaymentVoided
+                      ? "Restart payment follow-through after the void"
+                    : invoice.status === "partially_paid"
+                      ? invoice.workflowRole === "deposit"
+                        ? "Collect the remaining deposit balance"
+                        : "Collect the remaining balance"
+                      : "Record the next payment",
             description:
-              invoice.workflowRole === "deposit"
-                ? "This invoice is carrying deposit readiness. Keep payment collection and project handoff aligned before moving further downstream."
-                : "Balance is still outstanding on this invoice, so payment recording is the clearest next operational step from this page.",
+              latestPaymentFailure
+                ? "A customer payment attempt failed, so the remaining balance still needs active follow-through from this invoice workspace."
+                : latestCheckoutStarted
+                  ? "A customer has already entered checkout. Keep attention on the outcome instead of recording a parallel payment unless the provider flow fails."
+                  : latestPaymentSucceeded && invoice.status === "partially_paid"
+                    ? invoice.workflowRole === "deposit"
+                      ? "A provider-backed deposit payment has landed, but part of the deposit still remains before the commercial handoff is complete."
+                      : "A provider-backed payment has landed, but the invoice still carries an open balance."
+                  : latestPaymentRequested
+                    ? "Customer-facing payment intent has already been recorded on this invoice, so the next operational step is following the request through."
+                    : latestPaymentVoided
+                      ? "The most recent provider-backed payment was voided, so this invoice has returned to an active collection state."
+                    : invoice.status === "partially_paid"
+                      ? invoice.workflowRole === "deposit"
+                        ? "This invoice is carrying deposit readiness. A payment has already been recorded, but the remaining balance still blocks the commercial handoff."
+                        : "A payment has already been recorded on this invoice, but the balance is still outstanding."
+                      : invoice.workflowRole === "deposit"
+                        ? "This invoice is carrying deposit readiness. Keep payment collection and project handoff aligned before moving further downstream."
+                        : "Balance is still outstanding on this invoice, so payment recording is the clearest next operational step from this page.",
             primaryLabel: "Record payment",
             primaryHref: "#payment-recording"
           }
@@ -223,17 +315,17 @@ export default async function InvoiceDetailPage({
 
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
-      <section className="space-y-8">
+      <section className="space-y-10">
         <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
           <DetailPageHeader
             eyebrow="Invoice Review"
             title={invoice.referenceNumber}
-            description="Use this page as the billing review workspace for the canonical invoice. Payment state stays front and center here, while the connected project hub remains the place for broader readiness and workflow decisions."
+            description="Use this page to review canonical billing truth, confirm payment state, and decide the next collection step."
             backHref="/invoices"
             backLabel="Back to invoices"
             actions={
               <>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2.5">
                   {invoice.status !== "void" ? (
                     <a
                       href="#payment-recording"
@@ -244,12 +336,12 @@ export default async function InvoiceDetailPage({
                   ) : null}
                   <Link
                     href={`/projects/${invoice.projectId}`}
-                    className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                    className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
                   >
                     Open project readiness hub
                   </Link>
                 </div>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2.5">
                   {renderStatusBadge(formatStatusLabel(invoice.status))}
                   {renderStatusBadge(
                     invoice.workflowRole === "deposit" ? "Deposit request" : "Standard invoice"
@@ -271,94 +363,132 @@ export default async function InvoiceDetailPage({
             </div>
           ) : null}
 
-          <div className="mt-8">
-            <WorkspaceSummaryBand
-              items={[
-                {
-                  key: "purpose",
-                  label: "What this page is for",
-                  content: (
-                    <p className="text-sm leading-6 text-slate-600">
-                      Review invoice scope, balance due, and recorded payments before dropping into edit tools or broader project workflow context.
+          <div className="mt-10 space-y-5">
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+              <section className="rounded-[1.85rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,1))] px-6 py-6">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-brand-700">
+                  Billing state
+                </p>
+                <div className="mt-4 space-y-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    {renderStatusBadge(formatStatusLabel(invoice.status))}
+                    {renderStatusBadge(
+                      invoice.workflowRole === "deposit" ? "Deposit request" : "Standard invoice"
+                    )}
+                  </div>
+                  <p className="text-[2rem] font-semibold tracking-tight text-slate-950">
+                    {formatMoney(invoice.balanceDueAmount)}
+                  </p>
+                  <p className="text-sm leading-6 text-slate-600">
+                    {formatMoney(invoice.paidAmount)} paid of {formatMoney(invoice.totalAmount)} total
+                  </p>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/85 px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      Payment progress
                     </p>
-                  )
-                },
-                {
-                  key: "balance",
-                  label: "Balance due",
-                  content: (
-                    <>
-                      <p className="text-2xl font-semibold tracking-tight text-slate-950">
-                        {formatMoney(invoice.balanceDueAmount)}
-                      </p>
-                      <p className="mt-2 text-sm text-slate-600">
-                        {formatMoney(invoice.paidAmount)} paid of {formatMoney(invoice.totalAmount)} total
-                      </p>
-                    </>
-                  )
-                },
-                {
-                  key: "payment-state",
-                  label: "Payment state",
-                  content: (
-                    <>
-                      <p className="text-sm font-semibold capitalize text-slate-950">
-                        {formatStatusLabel(invoice.status)}
-                      </p>
-                      <p className="mt-2 text-sm text-slate-600">
-                        Due {formatDate(invoice.dueDate)} | {activePayments.length} recorded payment
-                        {activePayments.length === 1 ? "" : "s"}
-                      </p>
-                      <p className="mt-2 text-sm text-slate-600">
-                        {getOnlinePaymentReadinessSummary({
-                          canStartCheckout: onlinePaymentGate.canStartCheckout,
-                          invoiceStatus: invoice.status,
-                          balanceDueAmount: invoice.balanceDueAmount
-                        })}
-                      </p>
-                    </>
-                  )
-                },
-                {
-                  key: "next-action",
-                  label: "Next best action",
-                  content: (
-                    <NextActionCard
-                      title={nextAction.title}
-                      description={nextAction.description}
-                      primaryAction={
-                        nextAction.primaryLabel && nextAction.primaryHref
-                          ? nextAction.primaryHref.startsWith("#")
-                            ? (
-                              <a
-                                href={nextAction.primaryHref}
-                                className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-                              >
-                                {nextAction.primaryLabel}
-                              </a>
-                            )
-                            : (
-                              <Link
-                                href={nextAction.primaryHref}
-                                className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-                              >
-                                {nextAction.primaryLabel}
-                              </Link>
-                            )
-                          : undefined
-                      }
-                      className="space-y-3 text-sm leading-6 text-slate-600"
-                    />
-                  )
-                }
-              ]}
-            />
+                    <p className="mt-2 text-sm font-semibold capitalize text-slate-950">
+                      {formatStatusLabel(invoice.status)}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {getCustomerPaymentProgressSummary({
+                        workflowRole: invoice.workflowRole,
+                        invoiceStatus: invoice.status,
+                        balanceDueAmount: invoice.balanceDueAmount,
+                        latestPaymentEventType: latestPaymentEvent?.eventType ?? null
+                      })}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      Due {formatDate(invoice.dueDate)} | {activePayments.length} payment
+                      {activePayments.length === 1 ? "" : "s"} recorded
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              <WorkspaceSummaryBand
+                className="grid gap-3 sm:grid-cols-2"
+                itemClassName="rounded-2xl border border-slate-200/80 bg-slate-50/65 px-4 py-4"
+                labelClassName="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"
+                items={[
+                  {
+                    key: "next-action",
+                    label: "Next best action",
+                    content: (
+                      <NextActionCard
+                        eyebrow="Billing guidance"
+                        title={nextAction.title}
+                        description={nextAction.description}
+                        primaryAction={
+                          nextAction.primaryLabel && nextAction.primaryHref
+                            ? nextAction.primaryHref.startsWith("#")
+                              ? (
+                                <a
+                                  href={nextAction.primaryHref}
+                                  className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                                >
+                                  {nextAction.primaryLabel}
+                                </a>
+                              )
+                              : (
+                                <Link
+                                  href={nextAction.primaryHref}
+                                  className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                                >
+                                  {nextAction.primaryLabel}
+                                </Link>
+                              )
+                            : undefined
+                        }
+                      />
+                    )
+                  },
+                  {
+                    key: "payment-readiness",
+                    label: "Online payment state",
+                    content: (
+                      <>
+                        <p className="text-sm font-semibold text-slate-950">
+                          {onlinePaymentGate.canStartCheckout ? "Ready for online payment" : "Not ready"}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {getOnlinePaymentReadinessSummary({
+                            canStartCheckout: onlinePaymentGate.canStartCheckout,
+                            invoiceStatus: invoice.status,
+                            balanceDueAmount: invoice.balanceDueAmount
+                          })}
+                        </p>
+                      </>
+                    )
+                  },
+                  {
+                    key: "recent-signal",
+                    label: "Recent payment signal",
+                    content: (
+                      <>
+                        <p className="text-sm font-semibold text-slate-950">
+                          {latestPaymentEvent
+                            ? getPaymentEventLabel(latestPaymentEvent.eventType)
+                            : "No recent customer-facing signal"}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {getRecentPaymentSignal({
+                            latestPayment,
+                            latestEvent: latestPaymentEvent
+                          })}
+                        </p>
+                      </>
+                    )
+                  }
+                ]}
+              />
+            </div>
+
           </div>
         </div>
 
         <DetailPanel
           title="Invoice Review"
-          description="Review line items, totals, payment progress, and billing notes here first. Edit tools stay below so this page reads like a billing workspace instead of a form screen."
+          description="Review the invoice body, totals, and recent billing activity here first."
         >
           <div className="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
             <div className="space-y-6">
@@ -435,7 +565,7 @@ export default async function InvoiceDetailPage({
                       )}
                       <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3">
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                          Recent signal
+                          Customer-facing signal
                         </p>
                         <p className="mt-2">
                           {getRecentPaymentSignal({
@@ -572,12 +702,12 @@ export default async function InvoiceDetailPage({
         <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <DetailPanel
             title="Payment Recording"
-            description="Payment collection stays available here, but it now follows the review workspace instead of competing with it at the top of the page. Customer-facing online payment continuity is summarized here too, without turning the page into a provider dashboard."
+            description="Record canonical payments here while keeping customer-facing checkout signals in view."
           >
             <div id="payment-recording" className="space-y-4">
               <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5">
                 <p className="text-sm font-medium text-slate-950">
-                  Customer-facing online payment continuity
+                  Customer-facing payment continuity
                 </p>
                 <div className="mt-4 grid gap-3 lg:grid-cols-3">
                   <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4 text-sm leading-6 text-slate-600">
@@ -597,7 +727,7 @@ export default async function InvoiceDetailPage({
                   </div>
                   <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4 text-sm leading-6 text-slate-600">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                      Current portal signal
+                      Latest shared signal
                     </p>
                     <p className="mt-2 font-semibold text-slate-950">
                       {latestPaymentEvent
@@ -630,8 +760,14 @@ export default async function InvoiceDetailPage({
                         ? "A customer payment attempt failed. Keep the conversation focused on remaining balance and retry path."
                         : latestCheckoutStarted
                           ? "A customer has entered the payment flow, but the invoice is not complete until a canonical payment succeeds."
+                          : latestPaymentSucceeded
+                            ? Number(invoice.balanceDueAmount) > 0
+                              ? "A provider-backed payment has been applied, but the invoice still carries an open balance."
+                              : "The most recent provider-backed payment completed successfully."
                           : latestPaymentRequested
                             ? "Collections activity has started, even if the invoice still needs the actual payment completion event."
+                            : latestPaymentVoided
+                              ? "A provider-backed payment was voided, so collection attention has reopened on this invoice."
                             : Number(invoice.balanceDueAmount) > 0
                               ? "No recent customer-facing payment signal is recorded yet."
                               : "No further collection step is currently needed on this invoice."}
@@ -652,6 +788,7 @@ export default async function InvoiceDetailPage({
               )}
 
               <div className="space-y-3">
+                <p className="text-sm font-medium text-slate-950">Recorded payments</p>
                 {invoice.payments.length > 0 ? (
                   invoice.payments.map((payment) => (
                     <div
@@ -681,7 +818,7 @@ export default async function InvoiceDetailPage({
 
           <DetailPanel
             title="Edit Invoice"
-            description="Editing stays available from the same record, but it is intentionally demoted below the billing review workspace."
+            description="Editing stays available from the same record, but it is intentionally secondary to billing review."
           >
             <InvoiceForm
               action={updateInvoiceAction}
@@ -703,11 +840,10 @@ export default async function InvoiceDetailPage({
       </section>
 
       <aside className="space-y-6">
-        <DetailPanel title="Connected Records">
-          <p className="mb-4 text-sm leading-6 text-slate-500">
-            Invoices stay connected to the same commercial chain, but the project page remains the
-            readiness hub when you need the current upstream handoff state.
-          </p>
+        <DetailPanel
+          title="Connected Records"
+          description="Shortcuts to the surrounding commercial chain without displacing the invoice as billing truth."
+        >
           <div className="grid gap-4">
             {invoice.project ? (
               <LinkedRecordCard
@@ -761,7 +897,7 @@ export default async function InvoiceDetailPage({
 
         <DetailPanel
           title="Invoice Context"
-          description="Use these compact facts when you need surrounding workflow context without pulling attention away from invoice review and payment state."
+          description="Compact workflow facts that support review without competing with billing state."
         >
           <ContextFactsList
             items={[

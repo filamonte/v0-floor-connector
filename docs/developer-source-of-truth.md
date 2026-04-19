@@ -22,8 +22,14 @@ The current branch already includes a real multi-tenant contractor app with:
 - projects
 - estimates and line items
 - contracts
+- contract-signature foundation and customer-facing contract signing on the canonical contract record
 - jobs
 - invoices and payments
+- customer-facing payment foundation on the canonical invoice/payment chain
+- people, vendors, and compliance foundations
+- time tracking foundations
+- daily logs, field notes, and execution attachments
+- customer portal access, review, and contract-signature workflows
 - shared templates
 - reusable catalog foundations
 - contractor settings / admin
@@ -50,6 +56,8 @@ Important workflow rules:
 - projects should become the operational hub over time
 - the current contractor app may still use parallel top-level routes during that transition
 - contracts, invoices, and estimates must stay connected through the shared canonical model
+- customer-facing signature actions now attach to the same canonical contract record used in the contractor app
+- customer-facing payment workflow foundations now attach to the same canonical invoice/payment chain used in the contractor app
 - templates are shared infrastructure across estimates, contracts, and invoices
 - records should flow forward instead of being recreated downstream
 - project detail is the primary workflow/readiness hub for the connected contractor flow

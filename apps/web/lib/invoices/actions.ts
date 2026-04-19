@@ -1,10 +1,26 @@
 "use server";
 
+import { getPublicEnv } from "@floorconnector/config";
+import { getPaymentGatewayAdapter } from "@floorconnector/integrations";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { createInvoice, recordInvoicePayment, updateInvoice } from "./data";
-import { invoiceInputSchema, invoicePaymentInputSchema } from "./schemas";
+import { requireAuthenticatedUser } from "@/lib/auth/session";
+
+import {
+  createInvoice,
+  ensurePendingPortalInvoicePayment,
+  recordInvoicePayment,
+  requestInvoicePayment,
+  startInvoiceCheckout,
+  updateInvoice
+} from "./data";
+import {
+  invoiceCheckoutStartInputSchema,
+  invoiceCustomerPaymentRequestInputSchema,
+  invoiceInputSchema,
+  invoicePaymentInputSchema
+} from "./schemas";
 
 function getFieldValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -16,10 +32,7 @@ function getFieldValues(formData: FormData, key: string) {
   return formData.getAll(key).map((value) => (typeof value === "string" ? value : ""));
 }
 
-function buildRedirect(
-  pathname: string,
-  params: Record<string, string | undefined>
-) {
+function buildRedirect(pathname: string, params: Record<string, string | undefined>) {
   const search = new URLSearchParams();
 
   for (const [key, value] of Object.entries(params)) {
@@ -33,12 +46,47 @@ function buildRedirect(
   return query ? `${pathname}?${query}` : pathname;
 }
 
+function buildAbsoluteAppUrl(
+  pathname: string,
+  params: Record<string, string | undefined> = {}
+) {
+  const appUrl = getPublicEnv().NEXT_PUBLIC_APP_URL;
+
+  if (!appUrl) {
+    throw new Error(
+      "NEXT_PUBLIC_APP_URL must be configured before customer checkout can start."
+    );
+  }
+
+  const url = new URL(pathname, appUrl);
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value) {
+      url.searchParams.set(key, value);
+    }
+  }
+
+  return url.toString();
+}
+
 function parseInvoiceInput(formData: FormData) {
   const lineItemNames = getFieldValues(formData, "lineItemName");
   const lineItemDescriptions = getFieldValues(formData, "lineItemDescription");
   const lineItemQuantities = getFieldValues(formData, "lineItemQuantity");
   const lineItemUnits = getFieldValues(formData, "lineItemUnit");
   const lineItemUnitPrices = getFieldValues(formData, "lineItemUnitPrice");
+
+  const lineItems = lineItemNames
+    .map((name, index) => ({
+      name,
+      description: lineItemDescriptions[index] ?? "",
+      quantity: lineItemQuantities[index] ?? "",
+      unit: lineItemUnits[index] ?? "",
+      unitPrice: lineItemUnitPrices[index] ?? ""
+    }))
+    .filter((lineItem) =>
+      Object.values(lineItem).some((value) => value.trim().length > 0)
+    );
 
   return invoiceInputSchema.safeParse({
     projectId: getFieldValue(formData, "projectId"),
@@ -49,31 +97,17 @@ function parseInvoiceInput(formData: FormData) {
     issueDate: getFieldValue(formData, "issueDate"),
     dueDate: getFieldValue(formData, "dueDate"),
     discountAmount: getFieldValue(formData, "discountAmount"),
-    lineItems: lineItemNames.map((name, index) => ({
-      name,
-      description: lineItemDescriptions[index] ?? "",
-      quantity: lineItemQuantities[index] ?? "",
-      unit: lineItemUnits[index] ?? "",
-      unitPrice: lineItemUnitPrices[index] ?? ""
-    })),
+    lineItems,
     notes: getFieldValue(formData, "notes")
   });
 }
 
 export async function createInvoiceAction(formData: FormData) {
   const result = parseInvoiceInput(formData);
-  const projectId = getFieldValue(formData, "projectId");
-  const estimateId = getFieldValue(formData, "estimateId");
-  const jobId = getFieldValue(formData, "jobId");
-  const workflowRole = getFieldValue(formData, "workflowRole");
 
   if (!result.success) {
     redirect(
       buildRedirect("/invoices", {
-        projectId,
-        estimateId,
-        jobId,
-        workflowRole,
         error: result.error.issues[0]?.message ?? "Unable to create invoice."
       })
     );
@@ -86,10 +120,6 @@ export async function createInvoiceAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect("/invoices", {
-        projectId,
-        estimateId,
-        jobId,
-        workflowRole,
         error: error instanceof Error ? error.message : "Unable to create invoice."
       })
     );
@@ -98,12 +128,7 @@ export async function createInvoiceAction(formData: FormData) {
   revalidatePath("/invoices");
   revalidatePath(`/invoices/${invoice.id}`);
   revalidatePath(`/projects/${invoice.projectId}`);
-  if (invoice.estimateId) {
-    revalidatePath(`/estimates/${invoice.estimateId}`);
-  }
-  if (invoice.jobId) {
-    revalidatePath(`/jobs/${invoice.jobId}`);
-  }
+  revalidatePath(`/portal/projects/${invoice.projectId}`);
 
   redirect(
     buildRedirect("/invoices", {
@@ -147,12 +172,7 @@ export async function updateInvoiceAction(formData: FormData) {
   revalidatePath("/invoices");
   revalidatePath(`/invoices/${invoice.id}`);
   revalidatePath(`/projects/${invoice.projectId}`);
-  if (invoice.estimateId) {
-    revalidatePath(`/estimates/${invoice.estimateId}`);
-  }
-  if (invoice.jobId) {
-    revalidatePath(`/jobs/${invoice.jobId}`);
-  }
+  revalidatePath(`/portal/projects/${invoice.projectId}`);
 
   redirect(
     buildRedirect(`/invoices/${invoice.id}`, {
@@ -172,17 +192,9 @@ export async function recordInvoicePaymentAction(formData: FormData) {
   });
   const invoiceId = getFieldValue(formData, "invoiceId");
 
-  if (!invoiceId) {
-    redirect(
-      buildRedirect("/invoices", {
-        error: "Invoice id is required for payments."
-      })
-    );
-  }
-
   if (!result.success) {
     redirect(
-      buildRedirect(`/invoices/${invoiceId}`, {
+      buildRedirect(`/invoices/${invoiceId || ""}`, {
         error: result.error.issues[0]?.message ?? "Unable to record payment."
       })
     );
@@ -194,7 +206,7 @@ export async function recordInvoicePaymentAction(formData: FormData) {
     invoice = await recordInvoicePayment(result.data);
   } catch (error) {
     redirect(
-      buildRedirect(`/invoices/${invoiceId}`, {
+      buildRedirect(`/invoices/${result.data.invoiceId}`, {
         error: error instanceof Error ? error.message : "Unable to record payment."
       })
     );
@@ -203,16 +215,127 @@ export async function recordInvoicePaymentAction(formData: FormData) {
   revalidatePath("/invoices");
   revalidatePath(`/invoices/${invoice.id}`);
   revalidatePath(`/projects/${invoice.projectId}`);
-  if (invoice.estimateId) {
-    revalidatePath(`/estimates/${invoice.estimateId}`);
-  }
-  if (invoice.jobId) {
-    revalidatePath(`/jobs/${invoice.jobId}`);
-  }
+  revalidatePath(`/portal/projects/${invoice.projectId}`);
 
   redirect(
     buildRedirect(`/invoices/${invoice.id}`, {
-      message: `Payment recorded on ${invoice.referenceNumber}.`
+      message: `${invoice.referenceNumber} payment was recorded successfully.`
     })
   );
+}
+
+export async function requestPortalInvoicePaymentAction(formData: FormData) {
+  const invoiceId = getFieldValue(formData, "invoiceId");
+  const amount = getFieldValue(formData, "amount");
+  const notes = getFieldValue(formData, "notes");
+
+  if (!invoiceId) {
+    redirect(
+      buildRedirect("/portal", {
+        error: "Invoice id is required to start payment."
+      })
+    );
+  }
+
+  const nextPath = `/portal/invoices/${invoiceId}`;
+  const user = await requireAuthenticatedUser(nextPath);
+  const result = invoiceCustomerPaymentRequestInputSchema.safeParse({
+    actorType: "portal_user",
+    actorUserId: null,
+    portalUserId: user.id,
+    invoiceId,
+    amount,
+    payerEmail: user.email ?? null,
+    notes,
+    occurredAt: new Date().toISOString(),
+    payload: null
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(nextPath, {
+        error: result.error.issues[0]?.message ?? "Unable to start payment for this invoice."
+      })
+    );
+  }
+
+  let invoice;
+  let checkoutUrl = nextPath;
+
+  try {
+    invoice = await requestInvoicePayment(result.data, nextPath);
+    const gateway = getPaymentGatewayAdapter();
+    const pendingPayment = await ensurePendingPortalInvoicePayment(
+      {
+        actorType: "portal_user",
+        actorUserId: null,
+        portalUserId: user.id,
+        invoiceId: invoice.id,
+        amount: result.data.amount,
+        gatewayProvider: gateway.provider,
+        payerEmail: user.email ?? null,
+        notes,
+        occurredAt: result.data.occurredAt
+      },
+      nextPath
+    );
+    const checkoutSession = await gateway.createCheckoutSession({
+      organizationId: invoice.organizationId,
+      invoiceId: invoice.id,
+      paymentId: pendingPayment.payment.id,
+      referenceNumber: invoice.referenceNumber,
+      workflowRole: invoice.workflowRole,
+      amount: result.data.amount,
+      currency: "usd",
+      payerEmail: user.email ?? null,
+      successUrl: buildAbsoluteAppUrl(nextPath, {
+        message:
+          "Checkout was submitted. Payment status will update here after provider confirmation."
+      }),
+      cancelUrl: buildAbsoluteAppUrl(nextPath, {
+        message: "Checkout was not completed, so the invoice still needs payment."
+      })
+    });
+    const checkoutStartResult = invoiceCheckoutStartInputSchema.safeParse({
+      actorType: "portal_user",
+      actorUserId: null,
+      portalUserId: user.id,
+      paymentId: pendingPayment.payment.id,
+      invoiceId: invoice.id,
+      amount: result.data.amount,
+      gatewayProvider: checkoutSession.gatewayProvider,
+      gatewayCheckoutSessionReference:
+        checkoutSession.gatewayCheckoutSessionReference,
+      gatewayPaymentIntentReference:
+        checkoutSession.gatewayPaymentIntentReference,
+      gatewayStatus: checkoutSession.gatewayStatus,
+      payerEmail: user.email ?? null,
+      occurredAt: result.data.occurredAt,
+      payload: checkoutSession.payload
+    });
+
+    if (!checkoutStartResult.success) {
+      throw new Error(
+        checkoutStartResult.error.issues[0]?.message ??
+          "Unable to attach the checkout session to the canonical payment."
+      );
+    }
+
+    invoice = await startInvoiceCheckout(checkoutStartResult.data, nextPath);
+    checkoutUrl = checkoutSession.checkoutUrl;
+  } catch (error) {
+    redirect(
+      buildRedirect(nextPath, {
+        error:
+          error instanceof Error ? error.message : "Unable to start payment for this invoice."
+      })
+    );
+  }
+
+  revalidatePath(`/portal/invoices/${invoice.id}`);
+  revalidatePath(`/portal/projects/${invoice.projectId}`);
+  revalidatePath(`/invoices/${invoice.id}`);
+  revalidatePath(`/projects/${invoice.projectId}`);
+
+  redirect(checkoutUrl);
 }

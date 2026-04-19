@@ -4,7 +4,11 @@ import { AuthField } from "@/components/auth-field";
 import { AuthShell } from "@/components/auth-shell";
 import { AuthSubmitButton } from "@/components/auth-submit-button";
 import { signInWithGoogleAction, signUpAction } from "@/lib/auth/actions";
-import { sanitizeRedirectPath, signInPath } from "@/lib/auth/paths";
+import {
+  getAuthSurfaceContext,
+  sanitizeRedirectPath,
+  signInPath
+} from "@/lib/auth/paths";
 import { redirectIfAuthenticated } from "@/lib/auth/session";
 
 type AuthSignupPageProps = {
@@ -18,15 +22,18 @@ type AuthSignupPageProps = {
 export async function AuthSignupPage({ searchParams }: AuthSignupPageProps) {
   const params = (await searchParams) ?? {};
   const next = sanitizeRedirectPath(params.next);
+  const surfaceContext = getAuthSurfaceContext(next);
 
   await redirectIfAuthenticated(next);
 
   return (
     <AuthShell
+      eyebrow={surfaceContext.shellEyebrow}
       title="Create your account"
-      description="Start with Google for the preferred setup flow, or create an email/password account when you need the fallback option. Both methods feed the same shared authentication system."
+      description={`Start with Google for the preferred setup flow, or create an email/password account when you need the fallback option. After sign-up, you will continue to the same ${surfaceContext.surfaceKey === "portal" ? "portal" : surfaceContext.surfaceKey === "superAdmin" ? "admin" : "workspace"} destination.`}
       error={params.error}
       message={params.message}
+      surfaceContext={surfaceContext}
       footer={
         <>
           Already have an account?{" "}
@@ -46,7 +53,7 @@ export async function AuthSignupPage({ searchParams }: AuthSignupPageProps) {
           </p>
           <p className="mt-1 text-sm leading-6 text-slate-600">
             Google is the primary sign-up path. Email and password remain fully
-            supported for testing and for users who cannot use Google.
+            supported for users who cannot use Google.
           </p>
         </div>
 
@@ -59,8 +66,7 @@ export async function AuthSignupPage({ searchParams }: AuthSignupPageProps) {
             <span>Continue with Google</span>
           </AuthSubmitButton>
           <p className="text-xs leading-5 text-slate-500">
-            If Google sign-up succeeds, you will come back to FloorConnector with
-            the same shared account model used by the email flow.
+            {surfaceContext.nextStepDescription}
           </p>
         </form>
 

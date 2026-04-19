@@ -50,12 +50,81 @@ function formatLocation(parts: Array<string | null | undefined>) {
 function getProjectNextAction(input: {
   projectName: string;
   visibleInvoiceCount: number;
+  latestInvoiceReferenceNumber: string | null;
   latestInvoiceStatus: string | null;
+  latestInvoiceWorkflowRole: string | null;
+  latestInvoiceBalanceDueAmount: string | null;
+  latestInvoicePaymentEventType: string | null;
   visibleContractCount: number;
   latestContractStatus: string | null;
   visibleEstimateCount: number;
   latestEstimateStatus: string | null;
 }) {
+  if (input.visibleInvoiceCount > 0 && input.latestInvoicePaymentEventType === "checkout_started") {
+    return {
+      title: `Payment is in progress for ${input.projectName}`,
+      description:
+        "A checkout session has already started on the shared invoice, so billing is still the clearest customer-facing record to review on this project."
+    };
+  }
+
+  if (input.visibleInvoiceCount > 0 && input.latestInvoicePaymentEventType === "payment_requested") {
+    return {
+      title: `Payment has been requested for ${input.projectName}`,
+      description:
+        "The invoice is already in an active payment-request state, so stay with the billing records below for the current shared update."
+    };
+  }
+
+  if (input.visibleInvoiceCount > 0 && input.latestInvoicePaymentEventType === "payment_succeeded") {
+    return {
+      title:
+        input.latestInvoiceStatus === "partially_paid"
+          ? `Review the remaining balance for ${input.projectName}`
+          : `Billing is current for ${input.projectName}`,
+      description:
+        input.latestInvoiceStatus === "partially_paid"
+          ? input.latestInvoiceWorkflowRole === "deposit"
+            ? `A real deposit payment has already landed, but ${formatMoney(
+                input.latestInvoiceBalanceDueAmount ?? "0"
+              )} still remains before the shared commercial step is clear.`
+            : `A real payment has already landed on ${input.latestInvoiceReferenceNumber ?? "the shared invoice"}, but ${formatMoney(
+                input.latestInvoiceBalanceDueAmount ?? "0"
+              )} still remains due.`
+          : "A provider-backed payment completed on the shared invoice, so billing is no longer the active blocker on this project."
+    };
+  }
+
+  if (input.visibleInvoiceCount > 0 && input.latestInvoicePaymentEventType === "payment_failed") {
+    return {
+      title: `Review the billing follow-up for ${input.projectName}`,
+      description:
+        "A recent customer payment attempt failed, so the invoice remains the clearest shared record to review before assuming billing is complete."
+    };
+  }
+
+  if (input.visibleInvoiceCount > 0 && input.latestInvoicePaymentEventType === "payment_voided") {
+    return {
+      title: `Billing has reopened for ${input.projectName}`,
+      description:
+        "The latest provider-backed payment was voided, so the invoice has returned to an open billing state on this shared project."
+    };
+  }
+
+  if (input.visibleInvoiceCount > 0 && input.latestInvoiceStatus === "partially_paid") {
+    return {
+      title: `Review the remaining balance for ${input.projectName}`,
+      description:
+        input.latestInvoiceWorkflowRole === "deposit"
+          ? `A deposit payment has already been recorded, but ${formatMoney(
+              input.latestInvoiceBalanceDueAmount ?? "0"
+            )} still remains before the shared commercial chain is clear.`
+          : `A payment has already been recorded on ${input.latestInvoiceReferenceNumber ?? "the shared invoice"}, but ${formatMoney(
+              input.latestInvoiceBalanceDueAmount ?? "0"
+            )} still remains due.`
+    };
+  }
+
   if (
     input.visibleInvoiceCount > 0 &&
     input.latestInvoiceStatus &&
@@ -132,6 +201,58 @@ function getPortalContractSummary(contract: {
   return "Contract shared on this project";
 }
 
+function getPortalInvoiceSummary(invoice: {
+  workflowRole: string;
+  status: string;
+  balanceDueAmount: string;
+  latestPaymentEventType: string | null;
+  latestPaymentEventAt: string | null;
+}) {
+  if (invoice.latestPaymentEventType === "payment_failed") {
+    return `Recent payment attempt failed${invoice.latestPaymentEventAt ? ` | ${formatDateTime(invoice.latestPaymentEventAt)}` : ""}`;
+  }
+
+  if (invoice.latestPaymentEventType === "checkout_started") {
+    return `Payment in progress${invoice.latestPaymentEventAt ? ` | ${formatDateTime(invoice.latestPaymentEventAt)}` : ""}`;
+  }
+
+  if (invoice.latestPaymentEventType === "payment_succeeded") {
+    return invoice.status === "partially_paid"
+      ? invoice.workflowRole === "deposit"
+        ? `Deposit payment completed${invoice.latestPaymentEventAt ? ` | ${formatDateTime(invoice.latestPaymentEventAt)}` : ""} | ${formatMoney(invoice.balanceDueAmount)} remaining`
+        : `Payment completed${invoice.latestPaymentEventAt ? ` | ${formatDateTime(invoice.latestPaymentEventAt)}` : ""} | ${formatMoney(invoice.balanceDueAmount)} remaining`
+      : `Payment completed${invoice.latestPaymentEventAt ? ` | ${formatDateTime(invoice.latestPaymentEventAt)}` : ""}`;
+  }
+
+  if (invoice.latestPaymentEventType === "payment_requested") {
+    return `Payment requested${invoice.latestPaymentEventAt ? ` | ${formatDateTime(invoice.latestPaymentEventAt)}` : ""}`;
+  }
+
+  if (invoice.latestPaymentEventType === "payment_voided") {
+    return `Payment voided${invoice.latestPaymentEventAt ? ` | ${formatDateTime(invoice.latestPaymentEventAt)}` : ""}`;
+  }
+
+  if (invoice.status === "paid") {
+    return invoice.workflowRole === "deposit"
+      ? "Deposit paid in full"
+      : "Invoice paid in full";
+  }
+
+  if (invoice.status === "partially_paid") {
+    return invoice.workflowRole === "deposit"
+      ? `Deposit partially paid | ${formatMoney(invoice.balanceDueAmount)} remaining`
+      : `Partially paid | ${formatMoney(invoice.balanceDueAmount)} remaining`;
+  }
+
+  if (invoice.status === "void") {
+    return "Invoice voided";
+  }
+
+  return invoice.workflowRole === "deposit"
+    ? `Deposit due | ${formatMoney(invoice.balanceDueAmount)} remaining`
+    : `Balance due | ${formatMoney(invoice.balanceDueAmount)} remaining`;
+}
+
 function RecordSummaryCard({
   eyebrow,
   title,
@@ -194,7 +315,11 @@ export default async function PortalProjectDetailPage({
   const nextAction = getProjectNextAction({
     projectName: project.name,
     visibleInvoiceCount: project.visibleInvoiceCount,
+    latestInvoiceReferenceNumber: project.latestInvoiceReferenceNumber,
     latestInvoiceStatus: project.latestInvoiceStatus,
+    latestInvoiceWorkflowRole: project.latestInvoiceWorkflowRole,
+    latestInvoiceBalanceDueAmount: project.latestInvoiceBalanceDueAmount,
+    latestInvoicePaymentEventType: project.latestInvoicePaymentEventType,
     visibleContractCount: project.visibleContractCount,
     latestContractStatus: project.latestContractStatus,
     visibleEstimateCount: project.visibleEstimateCount,
@@ -203,12 +328,12 @@ export default async function PortalProjectDetailPage({
 
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
-      <section className="space-y-8">
+      <section className="space-y-10">
         <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
           <DetailPageHeader
             eyebrow="Shared Project Workspace"
             title={project.name}
-            description="Use this page as the customer-facing anchor for the commercial records tied to this project. It stays focused on review, visibility, and the next shared record to look at."
+            description="Use this page to see what matters most on this project, then move into the shared record that needs your attention."
             backHref="/portal"
             backLabel="Back to portal home"
             actions={
@@ -218,59 +343,88 @@ export default async function PortalProjectDetailPage({
             }
           />
 
-          <div className="mt-8">
-            <WorkspaceSummaryBand
-              items={[
-                {
-                  key: "purpose",
-                  label: "What this page is for",
-                  content: (
-                    <p className="text-sm leading-6 text-slate-600">
-                      Keep this project as your anchor for reviewing proposals, contracts, and
-                      invoices shared by your contractor.
+          <div className="mt-10 space-y-5">
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+              <section className="rounded-[1.85rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,1))] px-6 py-6">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-brand-700">
+                  Current project state
+                </p>
+                <div className="mt-4 space-y-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="inline-flex rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium capitalize text-slate-700">
+                      {formatStatusLabel(project.status)}
+                    </span>
+                    {project.latestInvoiceStatus ? (
+                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-600">
+                        {formatStatusLabel(project.latestInvoiceStatus)}
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="text-lg font-semibold tracking-tight text-slate-950">
+                    {nextAction.title}
+                  </p>
+                  <p className="text-sm leading-6 text-slate-600">{nextAction.description}</p>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/85 px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      Shared workflow
                     </p>
-                  )
-                },
-                {
-                  key: "record-visibility",
-                  label: "Shared records",
-                  content: (
-                    <div className="space-y-2 text-sm leading-6 text-slate-600">
-                      <p>{project.visibleEstimateCount} estimate record(s)</p>
-                      <p>{project.visibleContractCount} contract record(s)</p>
-                      <p>{project.visibleInvoiceCount} invoice record(s)</p>
-                    </div>
-                  )
-                },
-                {
-                  key: "current-state",
-                  label: "Current shared state",
-                  content: (
-                    <div className="space-y-2 text-sm leading-6 text-slate-600">
+                    <div className="mt-2 space-y-1 text-sm leading-6 text-slate-600">
                       <p>Estimate: {formatStatusLabel(project.latestEstimateStatus)}</p>
                       <p>Contract: {formatStatusLabel(project.latestContractStatus)}</p>
                       <p>Invoice: {formatStatusLabel(project.latestInvoiceStatus)}</p>
-                      {project.latestContractStatus === "signed" ? (
-                        <p>Contract signing is complete for this shared project workflow.</p>
+                      {project.latestInvoiceStatus ? (
+                        <p>
+                          Payment:{" "}
+                          {getPortalInvoiceSummary({
+                            workflowRole: project.latestInvoiceWorkflowRole ?? "standard",
+                            status: project.latestInvoiceStatus,
+                            balanceDueAmount: project.latestInvoiceBalanceDueAmount ?? "0",
+                            latestPaymentEventType: project.latestInvoicePaymentEventType,
+                            latestPaymentEventAt: project.latestInvoicePaymentEventAt
+                          })}
+                        </p>
                       ) : null}
                     </div>
-                  )
-                },
-                {
-                  key: "next-action",
-                  label: "Next record to review",
-                  content: (
-                    <NextActionCard title={nextAction.title} description={nextAction.description} />
-                  )
-                }
-              ]}
-            />
+                  </div>
+                </div>
+              </section>
+
+              <WorkspaceSummaryBand
+                className="grid gap-3 sm:grid-cols-2"
+                itemClassName="rounded-2xl border border-slate-200/80 bg-slate-50/65 px-4 py-4"
+                labelClassName="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"
+                items={[
+                  {
+                    key: "next-action",
+                    label: "What to review next",
+                    content: (
+                      <NextActionCard
+                        eyebrow="Project guidance"
+                        title={nextAction.title}
+                        description={nextAction.description}
+                      />
+                    )
+                  },
+                  {
+                    key: "record-visibility",
+                    label: "Shared records",
+                    content: (
+                      <div className="space-y-1 text-sm text-slate-600">
+                        <p>{project.visibleEstimateCount} estimate record(s)</p>
+                        <p>{project.visibleContractCount} contract record(s)</p>
+                        <p>{project.visibleInvoiceCount} invoice record(s)</p>
+                      </div>
+                    )
+                  }
+                ]}
+              />
+            </div>
           </div>
         </div>
 
         <DetailPanel
           title="Commercial Records"
-          description="These are the customer-facing records currently visible on this project. They stay grouped under the project so the portal remains simple and easy to follow."
+          description="Customer-facing records grouped by the current shared step on this project."
         >
           <div className="space-y-8">
             <section className="space-y-4">
@@ -354,7 +508,7 @@ export default async function PortalProjectDetailPage({
                       eyebrow={invoice.workflowRole === "deposit" ? "Deposit invoice" : "Invoice"}
                       title={invoice.referenceNumber}
                       description={`Total ${formatMoney(invoice.totalAmount)} with ${formatMoney(invoice.balanceDueAmount)} currently due.`}
-                      meta={`Issued ${formatDate(invoice.issueDate)} | Due ${formatDate(invoice.dueDate)}`}
+                      meta={`${getPortalInvoiceSummary(invoice)} | Issued ${formatDate(invoice.issueDate)} | Due ${formatDate(invoice.dueDate)}`}
                       badge={formatStatusLabel(invoice.status)}
                       href={`/portal/invoices/${invoice.id}`}
                     />
@@ -415,17 +569,12 @@ export default async function PortalProjectDetailPage({
         </DetailPanel>
 
         <DetailPanel
-          title="Portal Guidance"
-          description="This first portal foundation stays intentionally narrow and review-first."
+          title="Workspace Guidance"
+          description="Use this project as the bridge into the record carrying the current step."
         >
           <div className="space-y-3 text-sm leading-6 text-slate-600">
             <p>
-              Commercial records stay tied to the same canonical project your contractor uses
-              internally.
-            </p>
-            <p>
-              Contract signing now updates the same shared project workflow, so the contract and
-              invoice sections above reflect the next customer-facing commercial step as it changes.
+              Contract signing and invoice payment progress feed back into this project workspace, so the next shared step changes here as the workflow moves.
             </p>
             <Link
               href="/portal"

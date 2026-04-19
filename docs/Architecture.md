@@ -63,9 +63,12 @@ The target canonical model includes:
 - Job
 - Invoice
 - Payment
-- Employee
-- Subcontractor/Vendor
+- Person
+- Vendor
 - Time Card
+- Time Punch Event
+- Daily Log
+- Field Note
 - Document
 - Activity/Event
 - Message/Conversation
@@ -171,8 +174,8 @@ Financial system design rules:
 ## People System
 
 The target people system is intended to include:
-- employees
-- subcontractors/vendors
+- shared people records for employees and vendor-linked subcontractor workers
+- vendors
 - certifications
 - insurance
 - compliance
