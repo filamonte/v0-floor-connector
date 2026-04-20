@@ -58,7 +58,7 @@ function StarIcon() {
     <svg
       aria-hidden="true"
       viewBox="0 0 20 20"
-      className="mr-1.5 inline h-3.5 w-3.5 text-[#d86d2a]"
+      className="mr-1.5 inline h-3.5 w-3.5 text-[#ea580c]"
       fill="currentColor"
     >
       <path d="m10 2.2 2.2 4.5 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 7.4l5-.7L10 2.2Z" />
@@ -226,7 +226,7 @@ export function ProtectedAppTopNav({
                 aria-current={isActive ? "page" : undefined}
                 className={[
                   "text-[13px] font-medium transition",
-                  isActive ? "text-[#c96a2b]" : "text-[#1f2f4f] hover:text-[#0f1d36]"
+                  isActive ? "text-[#ea580c]" : "text-[#1f2f4f] hover:text-[#0f1d36]"
                 ].join(" ")}
               >
                 {index === 0 ? <StarIcon /> : null}
@@ -239,7 +239,7 @@ export function ProtectedAppTopNav({
         <div className="flex shrink-0 items-center border-l border-[#d8dee8] px-4">
           <UniversalCreateMenu
             buttonLabel="Create"
-            buttonClassName="h-10 border-[#233a64] bg-[#233a64] px-4 py-2 text-[13px]"
+            buttonClassName="h-10 border-[#111111] bg-[#111111] px-4 py-2 text-[13px] hover:bg-[#292929]"
           />
         </div>
 

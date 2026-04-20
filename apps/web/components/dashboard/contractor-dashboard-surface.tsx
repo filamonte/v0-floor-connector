@@ -5,6 +5,12 @@ import { startTransition, useDeferredValue, useState } from "react";
 import Link from "next/link";
 
 import { UniversalCreateMenu } from "@/components/universal-create-menu";
+import { DashboardCalendarWidget } from "@/components/dashboard/dashboard-calendar-widget";
+import { DashboardWeatherWidget } from "@/components/dashboard/dashboard-weather-widget";
+import { DashboardAppointmentsWidget } from "@/components/dashboard/dashboard-appointments-widget";
+import { DashboardTodosWidget } from "@/components/dashboard/dashboard-todos-widget";
+import { DashboardPunchlistsWidget } from "@/components/dashboard/dashboard-punchlists-widget";
+import { DashboardUnpaidInvoicesWidget } from "@/components/dashboard/dashboard-unpaid-invoices-widget";
 
 export type ContractorDashboardSurfaceItem = {
   id: string;
@@ -412,13 +418,21 @@ export function ContractorDashboardSurface({
               </SmallIconButton>
               <UniversalCreateMenu
                 buttonLabel="Create"
-                buttonClassName="inline-flex h-11 items-center rounded-[4px] border border-[#d7ddea] bg-[#f4f7fb] px-4 text-[15px] font-medium text-[#233a64] transition hover:bg-white"
+                buttonClassName="inline-flex h-11 items-center rounded-[4px] border border-[#d7ddea] bg-[#f4f7fb] px-4 text-[15px] font-medium text-[#111111] transition hover:bg-white"
               />
             </div>
           </div>
         </div>
 
         <div className="px-4 py-5 sm:px-6 sm:py-6">
+          {/* Top Row: Calendar, Weather, To-Dos, Appointments */}
+          <div className="mb-5 grid gap-5 lg:grid-cols-4">
+            <DashboardCalendarWidget />
+            <DashboardWeatherWidget />
+            <DashboardTodosWidget />
+            <DashboardAppointmentsWidget />
+          </div>
+
           <div className="grid gap-5 xl:grid-cols-12">
             <DashboardCard
               title="Projects Needing Attention"
@@ -479,6 +493,12 @@ export function ContractorDashboardSurface({
             </DashboardCard>
 
             <WorkflowPulse overviewCards={overviewCards} summary={summary} />
+          </div>
+
+          {/* Bottom Row: Punchlists and Unpaid Invoices */}
+          <div className="mt-5 grid gap-5 lg:grid-cols-2">
+            <DashboardPunchlistsWidget />
+            <DashboardUnpaidInvoicesWidget />
           </div>
         </div>
       </div>

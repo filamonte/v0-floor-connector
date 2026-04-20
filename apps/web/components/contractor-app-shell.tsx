@@ -37,6 +37,7 @@ export function ContractorAppShell({
       <div className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-30 border-b border-[#d8dee8] bg-white">
           <div className="hidden lg:block">
+            <ProtectedAppWorkspaceBand organizationName={organizationName} />
             <ProtectedAppTopNav
               currentRole={organizationContext?.membership.role}
               organizationName={organizationName}
@@ -46,7 +47,6 @@ export function ContractorAppShell({
               timestampLabel={timestampLabel}
               homeHref="/dashboard"
             />
-            <ProtectedAppWorkspaceBand organizationName={organizationName} />
           </div>
 
           <div className="border-b border-[#d8dee8] bg-white px-5 py-3 lg:hidden">
@@ -60,7 +60,7 @@ export function ContractorAppShell({
               />
               <div className="flex items-center gap-2">
                 <AppShellMobileNav currentRole={organizationContext?.membership.role} />
-                <SignOutForm className="border-[#d7ddea] bg-[#f4f7fb] px-3 py-2 text-[#233a64] hover:border-[#c8d1df] hover:bg-white" />
+                <SignOutForm className="border-[#d7ddea] bg-[#f4f7fb] px-3 py-2 text-[#111111] hover:border-[#c8d1df] hover:bg-white" />
               </div>
             </div>
           </div>

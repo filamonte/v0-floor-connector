@@ -63,6 +63,26 @@ const universalCreateGroups: UniversalCreateGroup[] = [
         label: "Invoice",
         description: "Create the billing record before opening the full workspace.",
         href: "/invoices?compose=1#invoice-create"
+      },
+      {
+        label: "Punchlist",
+        description: "Document a punch item that needs to be addressed.",
+        href: "/projects?compose=1#punchlist-create"
+      }
+    ]
+  },
+  {
+    title: "Tasks and scheduling",
+    items: [
+      {
+        label: "To-Do",
+        description: "Create a task with due date and priority.",
+        href: "/dashboard?compose=1#todo-create"
+      },
+      {
+        label: "Appointment",
+        description: "Schedule a meeting, site visit, or phone call.",
+        href: "/schedule?compose=1#appointment-create"
       }
     ]
   }
@@ -134,7 +154,7 @@ export function UniversalCreateMenu({
         aria-controls={menuId}
         onClick={() => setOpen((currentValue) => !currentValue)}
         className={[
-          "inline-flex items-center gap-2 rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]",
+          "inline-flex items-center gap-2 rounded-[4px] border border-[#111111] bg-[#111111] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#292929]",
           buttonClassName ?? ""
         ]
           .filter(Boolean)
