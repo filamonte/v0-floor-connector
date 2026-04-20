@@ -134,7 +134,7 @@ export function UniversalCreateMenu({
         aria-controls={menuId}
         onClick={() => setOpen((currentValue) => !currentValue)}
         className={[
-          "inline-flex items-center gap-2 rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]",
+          "inline-flex items-center gap-2 rounded border border-neutral-900 bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800",
           buttonClassName ?? ""
         ]
           .filter(Boolean)
@@ -148,18 +148,18 @@ export function UniversalCreateMenu({
         <div
           id={menuId}
           className={[
-            "absolute top-full z-40 mt-2 w-[min(92vw,29rem)] border border-[#d8dee8] bg-white shadow-[0_24px_60px_-36px_rgba(15,23,42,0.45)]",
+            "absolute top-full z-40 mt-2 w-[min(92vw,29rem)] rounded border border-neutral-200 bg-white shadow-xl",
             align === "left" ? "left-0" : "right-0",
             panelClassName ?? ""
           ]
             .filter(Boolean)
             .join(" ")}
         >
-          <div className="border-b border-[#e7ebf1] bg-[#f8fafc] px-4 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+          <div className="border-b border-neutral-100 bg-neutral-50 px-4 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
               Universal create
             </p>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
+            <p className="mt-1 text-sm leading-6 text-neutral-600">
               Start a canonical record, then finish the work inside its full manager
               workspace.
             </p>
@@ -167,8 +167,8 @@ export function UniversalCreateMenu({
 
           <div className="grid gap-0 md:grid-cols-2">
             {universalCreateGroups.map((group) => (
-              <section key={group.title} className="border-b border-[#eef2f6] p-4 md:border-b-0 md:border-r last:md:border-r-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#75859f]">
+              <section key={group.title} className="border-b border-neutral-100 p-4 md:border-b-0 md:border-r last:md:border-r-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-orange-600">
                   {group.title}
                 </p>
                 <div className="mt-3 space-y-2">
@@ -177,10 +177,10 @@ export function UniversalCreateMenu({
                       key={item.href}
                       href={item.href}
                       onClick={() => setOpen(false)}
-                      className="block border border-[#e5ebf2] bg-[#fbfcfe] px-3 py-3 transition hover:border-[#d2dbe8] hover:bg-white"
+                      className="block rounded border border-neutral-200 bg-neutral-50 px-3 py-3 transition hover:border-neutral-300 hover:bg-white"
                     >
-                      <p className="text-sm font-semibold text-[#17243b]">{item.label}</p>
-                      <p className="mt-1 text-sm leading-5 text-slate-600">
+                      <p className="text-sm font-semibold text-neutral-900">{item.label}</p>
+                      <p className="mt-1 text-sm leading-5 text-neutral-600">
                         {item.description}
                       </p>
                     </Link>

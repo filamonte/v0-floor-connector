@@ -33,10 +33,11 @@ export function ContractorAppShell({
   });
 
   return (
-    <div className="min-h-screen bg-[#eef1f5] text-slate-950">
+    <div className="min-h-screen bg-[#f5f5f5] text-neutral-950">
       <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-30 border-b border-[#d8dee8] bg-white">
+        <header className="sticky top-0 z-30">
           <div className="hidden lg:block">
+            <ProtectedAppWorkspaceBand organizationName={organizationName} />
             <ProtectedAppTopNav
               currentRole={organizationContext?.membership.role}
               organizationName={organizationName}
@@ -46,10 +47,9 @@ export function ContractorAppShell({
               timestampLabel={timestampLabel}
               homeHref="/dashboard"
             />
-            <ProtectedAppWorkspaceBand organizationName={organizationName} />
           </div>
 
-          <div className="border-b border-[#d8dee8] bg-white px-5 py-3 lg:hidden">
+          <div className="border-b border-neutral-200 bg-white px-5 py-3 lg:hidden">
             <div className="flex items-center justify-between gap-3">
               <OrganizationBrandLink
                 href="/dashboard"
@@ -60,16 +60,16 @@ export function ContractorAppShell({
               />
               <div className="flex items-center gap-2">
                 <AppShellMobileNav currentRole={organizationContext?.membership.role} />
-                <SignOutForm className="border-[#d7ddea] bg-[#f4f7fb] px-3 py-2 text-[#233a64] hover:border-[#c8d1df] hover:bg-white" />
+                <SignOutForm className="border-neutral-300 bg-neutral-100 px-3 py-2 text-neutral-900 hover:border-neutral-400 hover:bg-white" />
               </div>
             </div>
           </div>
         </header>
 
-        <main className="flex-1 px-5 py-4 sm:px-8 sm:py-5">
+        <main className="flex-1 bg-white px-5 py-4 sm:px-8 sm:py-5">
           <div className="mx-auto w-full max-w-[1500px]">
             {!organizationContext ? (
-              <section className="mb-4 rounded-[4px] border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
+              <section className="mb-4 rounded-[4px] border border-orange-200 bg-orange-50 px-5 py-4 text-sm leading-6 text-orange-900">
                 Your account is authenticated, but no active organization context is
                 available yet. If this is a brand-new account, sign out and sign back in
                 once to refresh the app against the newly created tenant records.

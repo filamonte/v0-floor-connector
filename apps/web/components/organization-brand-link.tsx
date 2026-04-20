@@ -42,7 +42,7 @@ export function OrganizationBrandLink({
       ].join(" ")}
     >
       {logoUrl ? (
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[4px] border border-[#d8dee8] bg-white">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded border border-neutral-200 bg-white">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={logoUrl}
@@ -51,20 +51,20 @@ export function OrganizationBrandLink({
           />
         </span>
       ) : (
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[4px] border border-[#d8dee8] bg-[#233a64] text-sm font-semibold uppercase tracking-[0.12em] text-white">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded border border-neutral-200 bg-neutral-900 text-sm font-semibold uppercase tracking-[0.12em] text-white">
           {initials}
         </span>
       )}
 
       <span className="min-w-0">
-        <span className="block truncate text-[11px] font-semibold uppercase tracking-[0.22em] text-[#243a67] group-hover:text-[#1b2d4d]">
+        <span className="block truncate text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-600 group-hover:text-orange-700">
           {productLabel}
         </span>
-        <span className="mt-1 block truncate text-[13px] font-medium text-slate-800 group-hover:text-slate-950">
+        <span className="mt-1 block truncate text-[13px] font-medium text-neutral-900 group-hover:text-neutral-700">
           {organizationName}
         </span>
         {supportingLabel ? (
-          <span className="mt-1 block truncate text-[11px] leading-4 text-[#64748b]">
+          <span className="mt-1 block truncate text-[11px] leading-4 text-neutral-500">
             {supportingLabel}
           </span>
         ) : null}
