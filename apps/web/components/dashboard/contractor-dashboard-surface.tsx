@@ -362,22 +362,6 @@ export function ContractorDashboardSurface({
           </div>
         </div>
       </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[4px] border border-[#dde3eb] bg-white px-3.5 py-3">
-              <p className="text-[11px] uppercase tracking-[0.12em] text-[#75859f]">Role</p>
-              <p className="mt-1 text-[15px] font-semibold text-[#1d3157]">{header.roleLabel}</p>
-            </div>
-            <div className="rounded-[4px] border border-[#dde3eb] bg-white px-3.5 py-3">
-              <p className="text-[11px] uppercase tracking-[0.12em] text-[#75859f]">Customers</p>
-              <p className="mt-1 text-[15px] font-semibold text-[#1d3157]">{header.customerCount}</p>
-            </div>
-            <div className="rounded-[4px] border border-[#dde3eb] bg-white px-3.5 py-3">
-              <p className="text-[11px] uppercase tracking-[0.12em] text-[#75859f]">Projects</p>
-              <p className="mt-1 text-[15px] font-semibold text-[#1d3157]">{header.projectCount}</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div className="overflow-hidden bg-[#f8fafc]">
         <div className="border-b border-[#e5e7eb] bg-white px-4 py-2.5 sm:px-6">
