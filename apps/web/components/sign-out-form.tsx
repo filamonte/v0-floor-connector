@@ -10,7 +10,7 @@ export function SignOutForm({ className }: SignOutFormProps) {
       <button
         type="submit"
         className={[
-          "rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white",
+          "rounded border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:border-neutral-400 hover:bg-white",
           className
         ]
           .filter(Boolean)
