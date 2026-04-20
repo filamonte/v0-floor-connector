@@ -11,6 +11,7 @@ import { InvoicePaymentForm } from "@/components/invoice-payment-form";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NextActionCard } from "@/components/next-action-card";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
+import { listInvoiceChangeOrders } from "@/lib/change-orders/data";
 import {
   recordInvoicePaymentAction,
   updateInvoiceAction
@@ -194,11 +195,12 @@ export default async function InvoiceDetailPage({
 }: InvoiceDetailPageProps) {
   const { invoiceId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
-  const [invoice, projects, estimates, jobs] = await Promise.all([
+  const [invoice, projects, estimates, jobs, changeOrders] = await Promise.all([
     getInvoiceById(invoiceId, `/invoices/${invoiceId}`),
     listProjects(),
     listEstimates(),
-    listJobs()
+    listJobs(),
+    listInvoiceChangeOrders(invoiceId, `/invoices/${invoiceId}`)
   ]);
 
   if (!invoice) {
@@ -892,6 +894,20 @@ export default async function InvoiceDetailPage({
                 }
               />
             ) : null}
+            {changeOrders.map((changeOrder) => (
+              <LinkedRecordCard
+                key={changeOrder.id}
+                href={`/change-orders/${changeOrder.id}`}
+                title={changeOrder.title}
+                subtitle="Change order"
+                meta={`${formatMoney(changeOrder.priceAdjustment)}${changeOrder.appliedInvoiceLineItemId ? " | Applied to this invoice" : ""}`}
+                badge={
+                  <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                    {formatStatusLabel(changeOrder.status)}
+                  </span>
+                }
+              />
+            ))}
           </div>
         </DetailPanel>
 

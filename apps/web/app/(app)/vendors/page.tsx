@@ -1,7 +1,9 @@
 import Link from "next/link";
 
 import { AppEmptyState } from "@/components/app-empty-state";
+import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
 import { VendorForm } from "@/components/vendor-form";
+import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { listComplianceRecords } from "@/lib/compliance/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
@@ -11,10 +13,36 @@ import { listVendors } from "@/lib/vendors/data";
 
 type VendorsPageProps = {
   searchParams?: Promise<{
+    compose?: string;
     error?: string;
     message?: string;
+    q?: string;
+    view?: "all" | "labor" | "active";
   }>;
 };
+
+function buildVendorsHref(input: {
+  q?: string;
+  view?: string;
+  compose?: string;
+}) {
+  const searchParams = new URLSearchParams();
+
+  if (input.q && input.q.trim().length > 0) {
+    searchParams.set("q", input.q.trim());
+  }
+
+  if (input.view && input.view !== "all") {
+    searchParams.set("view", input.view);
+  }
+
+  if (input.compose === "1") {
+    searchParams.set("compose", "1");
+  }
+
+  const query = searchParams.toString();
+  return query.length > 0 ? `/vendors?${query}` : "/vendors";
+}
 
 export default async function VendorsPage({ searchParams }: VendorsPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
@@ -36,6 +64,11 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
     listComplianceRecords()
   ]);
 
+  const query = resolvedSearchParams.q?.trim() ?? "";
+  const normalizedQuery = query.toLowerCase();
+  const view = resolvedSearchParams.view ?? "all";
+  const showComposer =
+    resolvedSearchParams.compose === "1" || Boolean(resolvedSearchParams.error);
   const laborProviderCount = vendors.filter((vendor) => vendor.isLaborProvider).length;
   const activeCount = vendors.filter((vendor) => vendor.isActive).length;
   const linkedPeopleByVendorId = new Map<string, number>();
@@ -63,145 +96,241 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
     );
   }
 
+  const filteredVendors = vendors.filter((vendor) => {
+    const matchesView =
+      view === "all"
+        ? true
+        : view === "labor"
+          ? vendor.isLaborProvider
+          : vendor.isActive;
+    const matchesQuery =
+      normalizedQuery.length === 0
+        ? true
+        : [
+            vendor.name,
+            vendor.primaryContactName ?? "",
+            vendor.email ?? "",
+            vendor.city ?? "",
+            vendor.stateRegion ?? "",
+            vendor.vendorType
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(normalizedQuery);
+
+    return matchesView && matchesQuery;
+  });
+  const vendorViews = [
+    { key: "all", label: "All vendors", count: vendors.length },
+    { key: "labor", label: "Labor providers", count: laborProviderCount },
+    { key: "active", label: "Active", count: activeCount }
+  ] as const;
+
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
-      <section className="space-y-6">
-        <section className="rounded-[2rem] border border-slate-200 bg-white/92 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-700">
-            Vendors
+    <ContractorWorkspacePage
+      eyebrow="Vendors"
+      title={`External companies for ${organizationContext.organization.displayName}`}
+      description="Manage subcontractors and supplier companies on the shared vendor foundation so workforce, compliance, and future external operations all stay connected."
+      summary={
+        <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-3">
+          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Total</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{vendors.length}</p>
+          </div>
+          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Labor providers</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{laborProviderCount}</p>
+          </div>
+          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Active</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{activeCount}</p>
+          </div>
+        </div>
+      }
+      commandBar={{
+        supportSlot: (
+          <p>
+            Search the subcontractor and supplier roster, filter for active or labor-provider companies, and open the vendor composer only when you need a new record.
           </p>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-            External companies for {organizationContext.organization.displayName}
-          </h2>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-            Manage subcontractors and supplier companies on the shared vendor foundation so workforce, compliance, and future external operations all stay connected.
-          </p>
+        ),
+        searchSlot: (
+          <form action="/vendors" className="flex flex-col gap-2 sm:flex-row">
+            {view !== "all" ? <input type="hidden" name="view" value={view} /> : null}
+            {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
+            <input
+              type="search"
+              name="q"
+              defaultValue={query}
+              placeholder="Search vendor, contact, email, location, or type"
+              className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+            />
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            >
+              Search
+            </button>
+            {query.length > 0 || view !== "all" || showComposer ? (
+              <Link
+                href="/vendors"
+                className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
+              >
+                Clear
+              </Link>
+            ) : null}
+          </form>
+        ),
+        filterSlot: vendorViews.map((vendorView) => {
+          const isActive = view === vendorView.key;
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
-              <p className="text-sm font-medium text-slate-950">Total vendors</p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-                {vendors.length}
-              </p>
+          return (
+            <Link
+              key={vendorView.key}
+              href={buildVendorsHref({ q: query, view: vendorView.key, compose: showComposer ? "1" : undefined })}
+              className={[
+                "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
+                isActive
+                  ? "bg-[#233a64] text-white"
+                  : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
+              ].join(" ")}
+            >
+              <span>{vendorView.label}</span>
+              <span
+                className={[
+                  "rounded-full px-2 py-0.5 text-xs font-semibold",
+                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                ].join(" ")}
+              >
+                {vendorView.count}
+              </span>
+            </Link>
+          );
+        }),
+        actionSlot: (
+          <Link
+            href={buildVendorsHref({ q: query, view, compose: "1" }) + "#vendor-create"}
+            className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
+          >
+            New vendor
+          </Link>
+        )
+      }}
+    >
+      <div className={showComposer ? "grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_400px]" : "space-y-4"}>
+        <section className="space-y-6">
+          {resolvedSearchParams.error ? (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+              {resolvedSearchParams.error}
             </div>
-            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
-              <p className="text-sm font-medium text-slate-950">Labor providers</p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-                {laborProviderCount}
-              </p>
-            </div>
-            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
-              <p className="text-sm font-medium text-slate-950">Active vendors</p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-                {activeCount}
-              </p>
-            </div>
-          </div>
-        </section>
+          ) : null}
 
-        {resolvedSearchParams.error ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
-            {resolvedSearchParams.error}
-          </div>
-        ) : null}
-
-        {resolvedSearchParams.message ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
-            {resolvedSearchParams.message}
-          </div>
-        ) : null}
-
-        <section className="rounded-[2rem] border border-slate-200 bg-white/92 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur">
-          <div className="border-b border-slate-200 px-6 py-5 sm:px-8">
-            <div className="hidden grid-cols-[minmax(0,1.2fr)_180px_220px] gap-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 md:grid">
-              <span>Vendor</span>
-              <span>Type</span>
-              <span className="text-right">Linked workforce</span>
+          {resolvedSearchParams.message ? (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+              {resolvedSearchParams.message}
             </div>
-            <div className="md:hidden">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                Vendor records
-              </p>
-            </div>
-          </div>
+          ) : null}
 
-          <div className="divide-y divide-slate-200">
-            {vendors.length > 0 ? (
-              vendors.map((vendor) => (
-                <Link
-                  key={vendor.id}
-                  href={`/vendors/${vendor.id}`}
-                  className="group block px-6 py-5 transition hover:bg-slate-50/70 sm:px-8"
-                >
-                  <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_180px_220px] md:items-start">
-                    <div className="min-w-0">
-                      <h3 className="text-base font-semibold text-slate-950 transition group-hover:text-brand-700">
-                        {vendor.name}
-                      </h3>
-                      <p className="mt-2 text-sm leading-6 text-slate-500">
-                        {vendor.primaryContactName ?? vendor.email ?? "No contact added yet"}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        {vendor.city || vendor.stateRegion
-                          ? [vendor.city, vendor.stateRegion].filter(Boolean).join(", ")
-                          : "No location added yet"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                        Type
-                      </p>
-                      <p className="text-sm font-medium capitalize text-slate-700">
-                        {vendor.vendorType}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        {vendor.isLaborProvider ? "Labor provider" : "Company only"}
-                      </p>
-                    </div>
-                    <div className="md:text-right">
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                        Operational context
-                      </p>
-                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
-                        {linkedPeopleByVendorId.get(vendor.id) ?? 0} worker
-                        {(linkedPeopleByVendorId.get(vendor.id) ?? 0) === 1 ? "" : "s"}
-                      </span>
-                      <p className="mt-2 text-sm leading-6 text-slate-500">
-                        {complianceCountByVendorId.get(vendor.id) ?? 0} compliance record
-                        {(complianceCountByVendorId.get(vendor.id) ?? 0) === 1 ? "" : "s"}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="px-6 py-8 sm:px-8">
-                <AppEmptyState
-                  eyebrow="No vendors yet"
-                  title="Create the first vendor"
-                  description="Vendor companies anchor subcontract labor and external compliance without creating a separate subcontractor-only silo."
-                />
+          <section className="border border-[#dde3eb] bg-white">
+            <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
+              <div className="flex items-end justify-between gap-4">
+                <div className="hidden grid-cols-[minmax(0,1.2fr)_180px_220px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
+                  <span>Vendor</span>
+                  <span>Type</span>
+                  <span className="text-right">Linked workforce</span>
+                </div>
+                <div className="md:hidden">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                    Vendor records
+                  </p>
+                </div>
+                <p className="text-sm leading-6 text-slate-500">
+                  {filteredVendors.length} visible
+                </p>
               </div>
-            )}
-          </div>
-        </section>
-      </section>
+            </div>
 
-      <aside className="rounded-[2rem] border border-slate-200 bg-white/88 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-700">
-          New Vendor
-        </p>
-        <p className="mt-4 text-sm leading-6 text-slate-600">
-          Add a subcontractor or supplier company inside the active organization.
-        </p>
-        <div className="mt-6">
+            <div className="divide-y divide-slate-200">
+              {filteredVendors.length > 0 ? (
+                filteredVendors.map((vendor) => (
+                  <Link
+                    key={vendor.id}
+                    href={`/vendors/${vendor.id}`}
+                    className="group block px-5 py-4 transition hover:bg-slate-50/70 sm:px-6"
+                  >
+                    <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_180px_220px] md:items-start">
+                      <div className="min-w-0">
+                        <h3 className="text-base font-semibold text-slate-950 transition group-hover:text-brand-700">
+                          {vendor.name}
+                        </h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                          {vendor.primaryContactName ?? vendor.email ?? "No contact added yet"}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {vendor.city || vendor.stateRegion
+                            ? [vendor.city, vendor.stateRegion].filter(Boolean).join(", ")
+                            : "No location added yet"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                          Type
+                        </p>
+                        <p className="text-sm font-medium capitalize text-slate-700">
+                          {vendor.vendorType}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {vendor.isLaborProvider ? "Labor provider" : "Company only"}
+                        </p>
+                      </div>
+                      <div className="md:text-right">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                          Operational context
+                        </p>
+                        <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                          {linkedPeopleByVendorId.get(vendor.id) ?? 0} worker
+                          {(linkedPeopleByVendorId.get(vendor.id) ?? 0) === 1 ? "" : "s"}
+                        </span>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                          {complianceCountByVendorId.get(vendor.id) ?? 0} compliance record
+                          {(complianceCountByVendorId.get(vendor.id) ?? 0) === 1 ? "" : "s"}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="px-6 py-8 sm:px-8">
+                  <AppEmptyState
+                    eyebrow={vendors.length > 0 ? "No matching vendors" : "No vendors yet"}
+                    title={vendors.length > 0 ? "Adjust the vendor filters" : "Create the first vendor"}
+                    description={
+                      vendors.length > 0
+                        ? "Try a broader search or switch views to find the vendor record you need."
+                        : "Vendor companies anchor subcontract labor and external compliance without creating a separate subcontractor-only silo."
+                    }
+                  />
+                </div>
+              )}
+            </div>
+          </section>
+        </section>
+
+        <WorkspaceComposerSheet
+          id="vendor-create"
+          title="Create vendor"
+          description="Add a subcontractor or supplier company inside the active organization."
+          open={showComposer}
+          openHref={buildVendorsHref({ q: query, view, compose: "1" }) + "#vendor-create"}
+          closeHref={buildVendorsHref({ q: query, view })}
+          openLabel="Open vendor composer"
+        >
           <VendorForm
             action={createVendorAction}
             submitLabel="Create vendor"
             pendingLabel="Creating vendor..."
           />
-        </div>
-      </aside>
-    </div>
+        </WorkspaceComposerSheet>
+      </div>
+    </ContractorWorkspacePage>
   );
 }

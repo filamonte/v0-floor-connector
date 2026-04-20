@@ -1,42 +1,115 @@
 "use client";
 
+import type { ReactNode } from "react";
+
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { ProtectedAppBreadcrumbs } from "@/components/protected-app-breadcrumbs";
-import { getProtectedAppWorkspaceSummary } from "@/lib/app-shell/navigation";
 
 type ProtectedAppWorkspaceBandProps = {
   organizationName: string;
 };
 
+function UtilityIcon({
+  children,
+  href
+}: {
+  children: ReactNode;
+  href: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex h-6 w-6 items-center justify-center rounded-[4px] text-white/80 transition hover:bg-white/10 hover:text-white"
+    >
+      {children}
+    </Link>
+  );
+}
+
+function ArrowIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 15 15 5" />
+      <path d="M8 5h7v7" />
+    </svg>
+  );
+}
+
+function GridIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="5" height="5" rx="1" />
+      <rect x="12" y="3" width="5" height="5" rx="1" />
+      <rect x="3" y="12" width="5" height="5" rx="1" />
+      <rect x="12" y="12" width="5" height="5" rx="1" />
+    </svg>
+  );
+}
+
+function PersonIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="10" cy="6" r="3" />
+      <path d="M4 17a6 6 0 0 1 12 0" />
+    </svg>
+  );
+}
+
+function GearIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="10" cy="10" r="3" />
+      <path d="M10 2v2M10 16v2M18 10h-2M4 10H2M15.7 4.3l-1.4 1.4M5.7 14.3l-1.4 1.4M15.7 15.7l-1.4-1.4M5.7 5.7 4.3 4.3" />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="10" cy="10" r="6" />
+      <path d="M10 6v4l2.5 1.5" />
+    </svg>
+  );
+}
+
 export function ProtectedAppWorkspaceBand({
   organizationName
 }: ProtectedAppWorkspaceBandProps) {
   const pathname = usePathname();
-  const summary = getProtectedAppWorkspaceSummary(pathname);
 
   return (
-    <div className="rounded-[1.9rem] border border-slate-200 bg-white/80 px-5 py-4 shadow-[0_22px_54px_-40px_rgba(15,23,42,0.45)] backdrop-blur sm:px-6">
-      <ProtectedAppBreadcrumbs organizationName={organizationName} />
-      <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <div className="bg-[#243a67] px-5 py-2.5 text-white sm:px-6">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-brand-700">
-            {summary.sectionLabel}
-          </p>
-          <h2 className="mt-2 truncate text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
-            {summary.currentLabel}
-          </h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-            {summary.sectionDescription}
-          </p>
+          <ProtectedAppBreadcrumbs organizationName={organizationName} />
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-            Canonical shared records
-          </span>
-          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-            {organizationName}
-          </span>
+
+        <div className="truncate text-center text-[13px] font-semibold tracking-[0.01em] text-white sm:text-[15px]">
+          {organizationName}
+        </div>
+
+        <div className="flex items-center justify-end gap-1">
+          <UtilityIcon href="/projects">
+            <ArrowIcon />
+          </UtilityIcon>
+          <UtilityIcon href="/daily-logs">
+            <GridIcon />
+          </UtilityIcon>
+          <UtilityIcon href="/time">
+            <ClockIcon />
+          </UtilityIcon>
+          <UtilityIcon href="/people">
+            <PersonIcon />
+          </UtilityIcon>
+          <UtilityIcon href="/settings">
+            <GearIcon />
+          </UtilityIcon>
+          {pathname !== "/dashboard" ? (
+            <span className="hidden text-[11px] text-white/45 sm:inline">Active</span>
+          ) : null}
         </div>
       </div>
     </div>

@@ -3,12 +3,14 @@ import type { InvoiceWorkflowRole } from "@floorconnector/types";
 
 import { AppEmptyState } from "@/components/app-empty-state";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
-import { InvoiceForm } from "@/components/invoice-form";
+import { InvoiceQuickCreateForm } from "@/components/invoice-quick-create-form";
+import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
+import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
-import { createInvoiceAction } from "@/lib/invoices/actions";
+import { quickCreateInvoiceAction } from "@/lib/invoices/actions";
 import { listInvoices } from "@/lib/invoices/data";
-import { getEstimateById, listEstimates } from "@/lib/estimates/data";
-import { getJobById, listJobs } from "@/lib/jobs/data";
+import { getEstimateById } from "@/lib/estimates/data";
+import { getJobById } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 import { listProjects } from "@/lib/projects/data";
@@ -40,6 +42,13 @@ function formatMoney(amount: string) {
 
 function formatRate(value: string) {
   return `${(Number(value) * 100).toFixed(2)}%`;
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric"
+  }).format(new Date(value));
 }
 
 function buildInvoicesHref(input: {
@@ -74,16 +83,6 @@ async function getInitialInvoiceState(
   estimateId: string | null;
   jobId: string | null;
   workflowRole: InvoiceWorkflowRole;
-  discountAmount: string | null;
-  lineItems:
-    | Array<{
-        name: string;
-        description: string | null;
-        quantity: string;
-        unit: string;
-        unitPrice: string;
-      }>
-    | null;
 }> {
   const resolvedWorkflowRole: InvoiceWorkflowRole =
     workflowRole === "deposit" ? "deposit" : "standard";
@@ -100,16 +99,7 @@ async function getInitialInvoiceState(
     projectId: sourceEstimate?.projectId ?? job?.projectId ?? null,
     estimateId: sourceEstimate?.id ?? null,
     jobId: job?.id ?? null,
-    workflowRole: resolvedWorkflowRole,
-    discountAmount: sourceEstimate?.discountAmount ?? null,
-    lineItems:
-      sourceEstimate?.lineItems.map((lineItem) => ({
-        name: lineItem.name,
-        description: lineItem.description,
-        quantity: lineItem.quantity,
-        unit: lineItem.unit,
-        unitPrice: lineItem.unitPrice
-      })) ?? null
+    workflowRole: resolvedWorkflowRole
   };
 }
 
@@ -127,19 +117,16 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
     );
   }
 
-  const [invoices, projects, estimates, jobs, initialState, financialSettings] =
-    await Promise.all([
-      listInvoices(),
-      listProjects(),
-      listEstimates(),
-      listJobs(),
-      getInitialInvoiceState(
-        resolvedSearchParams.estimateId,
-        resolvedSearchParams.jobId,
-        resolvedSearchParams.workflowRole
-      ),
-      getOrganizationFinancialSettings(organizationContext.organization.id)
-    ]);
+  const [invoices, projects, initialState, financialSettings] = await Promise.all([
+    listInvoices(),
+    listProjects(),
+    getInitialInvoiceState(
+      resolvedSearchParams.estimateId,
+      resolvedSearchParams.jobId,
+      resolvedSearchParams.workflowRole
+    ),
+    getOrganizationFinancialSettings(organizationContext.organization.id)
+  ]);
 
   const projectOptions = projects.map((project) => ({
     id: project.id,
@@ -151,33 +138,22 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       project.customer?.retainagePercentageDefault ?? "0.00"
   }));
 
-  const approvedEstimateOptions = estimates
-    .filter((estimate) => estimate.status === "approved")
-    .map((estimate) => ({
-      id: estimate.id,
-      referenceNumber: estimate.referenceNumber,
-      projectId: estimate.projectId,
-      projectName: estimate.project?.name ?? null,
-      status: estimate.status
-    }));
-
-  const jobOptions = jobs.map((job) => ({
-    id: job.id,
-    projectId: job.projectId,
-    projectName: job.project?.name ?? null,
-    status: job.status,
-    estimateId: job.estimate?.id ?? null
-  }));
-
   const draftCount = invoices.filter((invoice) => invoice.status === "draft").length;
   const sentCount = invoices.filter((invoice) => invoice.status === "sent").length;
   const paidCount = invoices.filter((invoice) => invoice.status === "paid").length;
+  const openCount = invoices.filter(
+    (invoice) => invoice.status !== "paid" && invoice.status !== "void"
+  ).length;
+  const partialCount = invoices.filter(
+    (invoice) => invoice.status === "partially_paid"
+  ).length;
+  const todayIso = new Date().toISOString().slice(0, 10);
   const overdueCount = invoices.filter(
     (invoice) =>
       invoice.dueDate !== null &&
       invoice.status !== "paid" &&
       invoice.status !== "void" &&
-      invoice.dueDate < "2026-04-16"
+      invoice.dueDate < todayIso
   ).length;
   const query = resolvedSearchParams.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
@@ -214,36 +190,60 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
     { key: "all", label: "All invoices", count: invoices.length },
     { key: "draft", label: "Draft", count: draftCount },
     { key: "sent", label: "Sent", count: sentCount },
-    { key: "open", label: "Open balance", count: invoices.filter((invoice) => invoice.status !== "paid" && invoice.status !== "void").length },
+    { key: "open", label: "Open balance", count: openCount },
     { key: "paid", label: "Paid", count: paidCount },
     { key: "void", label: "Void", count: invoices.filter((invoice) => invoice.status === "void").length }
   ] as const;
+  const awaitingPaymentQueue = invoices
+    .filter(
+      (invoice) => invoice.status === "sent" || invoice.status === "partially_paid"
+    )
+    .slice(0, 3);
+  const overdueQueue = invoices
+    .filter(
+      (invoice) =>
+        invoice.dueDate !== null &&
+        invoice.status !== "paid" &&
+        invoice.status !== "void" &&
+        invoice.dueDate < todayIso
+    )
+    .slice(0, 3);
+  const draftQueue = invoices
+    .filter((invoice) => invoice.status === "draft")
+    .slice(0, 3);
+  const recentlyPaidQueue = invoices
+    .filter((invoice) => invoice.status === "paid")
+    .slice(0, 3);
 
   return (
     <ContractorWorkspacePage
       eyebrow="Invoices"
-      title={`Billing records for ${organizationContext.organization.displayName}`}
-      description="Invoices stay connected to projects, customers, estimates, and jobs so collections and payment history never drift away from the operational record."
+      title={`Invoice manager for ${organizationContext.organization.displayName}`}
+      description="Review billing that needs attention, collections that need follow-up, and recently settled invoices from one calmer financial workspace."
       summary={
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-          <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
-            <p className="text-sm font-medium text-slate-950">Draft</p>
-            <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{draftCount}</p>
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Draft</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{draftCount}</p>
           </div>
-          <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
-            <p className="text-sm font-medium text-slate-950">Sent</p>
-            <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{sentCount}</p>
+          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Sent</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{sentCount}</p>
           </div>
-          <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
-            <p className="text-sm font-medium text-slate-950">Overdue</p>
-            <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{overdueCount}</p>
+          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Overdue</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{overdueCount}</p>
+          </div>
+          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Open balance</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{openCount}</p>
           </div>
         </div>
       }
       commandBar={{
         supportSlot: (
           <p>
-            Search billing records, switch between working invoice states, and only open the create flow when you actually need to compose a new canonical invoice.
+            Use the billing queues to spot what needs review or collection work first, then quick create the real invoice record before finishing billing details in the invoice workspace.
           </p>
         ),
         searchSlot: (
@@ -255,18 +255,18 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               name="q"
               defaultValue={query}
               placeholder="Search invoice, project, customer, or role"
-              className="min-w-0 flex-1 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-400"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               Search
             </button>
             {query.length > 0 || statusFilter !== "all" || showComposer ? (
               <Link
                 href="/invoices"
-                className="inline-flex items-center justify-center rounded-full border border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
+                className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
               >
                 Clear
               </Link>
@@ -281,17 +281,17 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               key={view.key}
               href={buildInvoicesHref({ q: query, status: view.key, compose: showComposer ? "1" : undefined })}
               className={[
-                "inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium transition",
+                "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
-                  ? "bg-slate-950 text-white shadow-sm"
-                  : "border border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-white"
+                  ? "bg-[#233a64] text-white"
+                  : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
               ].join(" ")}
             >
               <span>{view.label}</span>
               <span
                 className={[
                   "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-white text-slate-500"
+                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
                 ].join(" ")}
               >
                 {view.count}
@@ -302,43 +302,150 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         actionSlot: (
           <Link
             href={buildInvoicesHref({ q: query, status: statusFilter, compose: "1" }) + "#invoice-create"}
-            className="inline-flex items-center rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+            className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
           >
             New invoice
           </Link>
         )
       }}
     >
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.18fr)_minmax(360px,0.82fr)]">
+    <div className={showComposer ? "grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_420px]" : "space-y-4"}>
       <section className="space-y-6">
-        <section className="rounded-[2rem] border border-slate-200 bg-white/92 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-brand-700">
-                Billing defaults
+        <section className="grid gap-4 xl:auto-rows-fr xl:grid-cols-2">
+          <ManagerDashboardCard
+            eyebrow="Collections"
+            title="Invoices awaiting payment activity"
+            description="This queue keeps open customer billing in front of the team before invoices become overdue."
+            actionHref={buildInvoicesHref({ q: query, status: "open", compose: showComposer ? "1" : undefined })}
+            actionLabel="View open"
+            items={awaitingPaymentQueue.map((invoice) => ({
+              href: `/invoices/${invoice.id}`,
+              title: invoice.referenceNumber,
+              subtitle: `${invoice.customer?.name ?? "Unknown customer"} · ${invoice.project?.name ?? "Unknown project"}`,
+              meta: `${formatStatusLabel(invoice.status)} · due ${invoice.dueDate ? formatDate(invoice.dueDate) : "TBD"}`,
+              badge: invoice.workflowRole === "deposit" ? "Deposit" : "Standard",
+              trailing: formatMoney(invoice.balanceDueAmount)
+            }))}
+            emptyTitle="No invoices are waiting on payment right now."
+            emptyDescription="Open customer balances will surface here when billing needs attention."
+          />
+
+          <ManagerDashboardCard
+            eyebrow="Urgent"
+            title="Overdue invoices needing follow-up"
+            description="Keep the past-due queue visible so collections work does not get buried inside the full invoice list."
+            actionHref={buildInvoicesHref({ q: query, status: "open", compose: showComposer ? "1" : undefined })}
+            actionLabel="Review overdue"
+            items={overdueQueue.map((invoice) => ({
+              href: `/invoices/${invoice.id}`,
+              title: invoice.referenceNumber,
+              subtitle: `${invoice.customer?.name ?? "Unknown customer"} · ${invoice.project?.name ?? "Unknown project"}`,
+              meta: `Due ${invoice.dueDate ? formatDate(invoice.dueDate) : "TBD"}`,
+              badge: "Overdue",
+              trailing: formatMoney(invoice.balanceDueAmount)
+            }))}
+            emptyTitle="No overdue invoices need attention."
+            emptyDescription="When an invoice slips past due, it will show up here for collections follow-up."
+          />
+
+          <ManagerDashboardCard
+            eyebrow="Review"
+            title="Draft billing to finish or send"
+            description="Draft invoice work stays visible here without forcing the whole page back into a draft-first CRUD layout."
+            actionHref={buildInvoicesHref({ q: query, status: "draft", compose: showComposer ? "1" : undefined })}
+            actionLabel="View drafts"
+            items={draftQueue.map((invoice) => ({
+              href: `/invoices/${invoice.id}`,
+              title: invoice.referenceNumber,
+              subtitle: `${invoice.customer?.name ?? "Unknown customer"} · ${invoice.project?.name ?? "Unknown project"}`,
+              meta: `Workflow role ${invoice.workflowRole.replaceAll("_", " ")} · updated ${formatDate(invoice.updatedAt)}`,
+              badge: "Draft",
+              trailing: formatMoney(invoice.totalAmount)
+            }))}
+            emptyTitle="No draft invoices need review."
+            emptyDescription="Draft invoices waiting to be finished or sent will appear here."
+          />
+
+          <section className="flex h-full flex-col border border-[#dde3eb] bg-white">
+            <div className="border-b border-[#e8edf4] px-5 py-4 sm:px-6">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7a889d]">
+                Billing context
               </p>
-              <h3 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
-                Financial context behind the queue
+              <h3 className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">
+                Recent payment and billing posture
               </h3>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Financial defaults and recent settled billing stay visible without turning the page into a settings screen.
+              </p>
             </div>
-            <p className="max-w-sm text-right text-sm leading-6 text-slate-500">
-              The manager stays review-first while tax behavior, org defaults, and invoice readiness remain visible in support.
-            </p>
-          </div>
-          <div className="mt-6 grid gap-3 rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4 text-sm leading-6 text-slate-600 sm:grid-cols-3">
-            <div>
-              <p className="font-medium text-slate-950">Org tax default</p>
-              <p>{financialSettings.defaultTaxBehavior.replaceAll("_", " ")}</p>
+
+            <div className="flex flex-1 flex-col space-y-4 px-5 py-4 sm:px-6">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="border border-[#e2e7ef] bg-[#fbfcfe] px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Tax default</p>
+                  <p className="mt-1 text-sm font-medium text-slate-800">
+                    {financialSettings.defaultTaxBehavior.replaceAll("_", " ")}
+                  </p>
+                </div>
+                <div className="border border-[#e2e7ef] bg-[#fbfcfe] px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Tax rate</p>
+                  <p className="mt-1 text-sm font-medium text-slate-800">
+                    {formatRate(financialSettings.defaultTaxRate)}
+                  </p>
+                </div>
+                <div className="border border-[#e2e7ef] bg-[#fbfcfe] px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Partially paid</p>
+                  <p className="mt-1 text-sm font-medium text-slate-800">{partialCount} invoices</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-sm font-semibold text-slate-900">Recently settled invoices</p>
+                  <Link
+                    href={buildInvoicesHref({ q: query, status: "paid", compose: showComposer ? "1" : undefined })}
+                    className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#41536f] transition hover:bg-white"
+                  >
+                    View paid
+                  </Link>
+                </div>
+
+                <div className="divide-y divide-slate-200 border border-[#e5ebf2] bg-white">
+                  {recentlyPaidQueue.length > 0 ? (
+                    recentlyPaidQueue.map((invoice) => (
+                      <Link
+                        key={invoice.id}
+                        href={`/invoices/${invoice.id}`}
+                        className="group flex items-start justify-between gap-4 px-4 py-3 transition hover:bg-slate-50/80"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-slate-950 transition group-hover:text-brand-700">
+                            {invoice.referenceNumber}
+                          </p>
+                          <p className="mt-1 text-sm leading-6 text-slate-600">
+                            {invoice.customer?.name ?? "Unknown customer"} · {invoice.project?.name ?? "Unknown project"}
+                          </p>
+                          <p className="mt-1 text-xs font-medium uppercase tracking-[0.16em] text-[#7a889d]">
+                            Paid · updated {formatDate(invoice.updatedAt)}
+                          </p>
+                        </div>
+                        <p className="shrink-0 text-sm font-semibold text-slate-900">
+                          {formatMoney(invoice.totalAmount)}
+                        </p>
+                      </Link>
+                    ))
+                  ) : (
+                    <div className="px-4 py-5">
+                      <p className="text-sm font-semibold text-slate-900">No recently paid invoices yet.</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-500">
+                        Settled billing will surface here once invoices complete the payment flow.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="font-medium text-slate-950">Org tax rate</p>
-              <p>{formatRate(financialSettings.defaultTaxRate)}</p>
-            </div>
-            <div>
-              <p className="font-medium text-slate-950">AIA-ready billing</p>
-              <p>Approved estimate items can seed future SOV records.</p>
-            </div>
-          </div>
+          </section>
         </section>
 
         {resolvedSearchParams.error ? (
@@ -353,10 +460,18 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           </div>
         ) : null}
 
-        <section className="rounded-[2rem] border border-slate-200 bg-white/92 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur">
-          <div className="border-b border-slate-200 px-6 py-5 sm:px-8">
+        <section className="border border-[#dde3eb] bg-white">
+          <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
             <div className="flex items-end justify-between gap-4">
-              <div className="hidden grid-cols-[minmax(0,1.35fr)_1fr_160px_140px] gap-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 md:grid md:flex-1">
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
+                  Invoice records
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  The complete billing register stays below the dashboard cards so finance review and collections follow-up still have one place to work from.
+                </p>
+              </div>
+              <div className="hidden grid-cols-[minmax(0,1.35fr)_1fr_160px_140px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
                 <span>Invoice</span>
                 <span>Project</span>
                 <span>Status</span>
@@ -379,7 +494,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                 <Link
                   key={invoice.id}
                   href={`/invoices/${invoice.id}`}
-                  className="group block px-6 py-5 transition hover:bg-slate-50/70 sm:px-8"
+                  className="group block px-5 py-4 transition hover:bg-slate-50/70 sm:px-6"
                 >
                   <div className="grid gap-4 md:grid-cols-[minmax(0,1.35fr)_1fr_160px_140px] md:items-center">
                     <div className="min-w-0">
@@ -407,7 +522,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
                         Status
                       </p>
-                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                      <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
                         {formatStatusLabel(invoice.status)}
                       </span>
                     </div>
@@ -438,52 +553,30 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           </div>
         </section>
       </section>
-
-      <aside id="invoice-create" className="rounded-[2rem] border border-slate-200 bg-white/88 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-700">
-          Create invoice
-        </p>
-        <p className="mt-4 text-sm leading-6 text-slate-600">
-          Start billing from an existing project so the invoice stays attached to the same customer, estimate, job, and payment chain.
-        </p>
-        {showComposer ? (
-          projectOptions.length > 0 ? (
-            <div className="mt-6">
-              <InvoiceForm
-                action={createInvoiceAction}
-                submitLabel="Create invoice"
-                pendingLabel="Creating invoice..."
-                projects={projectOptions}
-                estimates={approvedEstimateOptions}
-                jobs={jobOptions}
-                organizationFinancialSettings={financialSettings}
-                initialProjectId={resolvedSearchParams.projectId ?? initialState.projectId}
-                initialEstimateId={resolvedSearchParams.estimateId ?? initialState.estimateId}
-                initialJobId={resolvedSearchParams.jobId ?? initialState.jobId}
-                initialWorkflowRole={initialState.workflowRole}
-                initialDiscountAmount={initialState.discountAmount}
-                initialLineItems={initialState.lineItems}
-              />
-            </div>
-          ) : (
-            <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
-              Add at least one project before creating an invoice.
-            </div>
-          )
+      <WorkspaceComposerSheet
+        id="invoice-create"
+        title="Quick create invoice"
+        description="Capture only the minimum billing context here, create the canonical invoice, and then complete the rest inside the full invoice workspace."
+        open={showComposer}
+        openHref={buildInvoicesHref({ q: query, status: statusFilter, compose: "1" }) + "#invoice-create"}
+        closeHref={buildInvoicesHref({ q: query, status: statusFilter })}
+        openLabel="Open invoice quick create"
+      >
+        {projectOptions.length > 0 ? (
+          <InvoiceQuickCreateForm
+            action={quickCreateInvoiceAction}
+            projects={projectOptions}
+            initialProjectId={resolvedSearchParams.projectId ?? initialState.projectId}
+            initialEstimateId={initialState.estimateId}
+            initialJobId={initialState.jobId}
+            initialWorkflowRole={initialState.workflowRole}
+          />
         ) : (
-          <div className="mt-6 space-y-4">
-            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/75 px-5 py-4 text-sm leading-6 text-slate-600">
-              Open the compose flow when you are ready to build a new invoice. The manager stays focused on review until then.
-            </div>
-            <Link
-              href={buildInvoicesHref({ q: query, status: statusFilter, compose: "1" }) + "#invoice-create"}
-              className="inline-flex items-center rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-            >
-              Open invoice composer
-            </Link>
+          <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+            Add at least one project before creating an invoice.
           </div>
         )}
-      </aside>
+      </WorkspaceComposerSheet>
     </div>
     </ContractorWorkspacePage>
   );

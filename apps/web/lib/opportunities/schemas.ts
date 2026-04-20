@@ -85,4 +85,10 @@ export const opportunityInputSchema = z.object({
 });
 
 export type OpportunityInput = z.infer<typeof opportunityInputSchema>;
+export const opportunityQuickCreateInputSchema = z.object({
+  title: z.string().trim().min(1, "Lead title is required.").max(160),
+  prospectName: z.string().trim().min(1, "Prospect name is required.").max(120)
+});
+
+export type OpportunityQuickCreateInput = z.infer<typeof opportunityQuickCreateInputSchema>;
 export const opportunityStatusesList = opportunityStatuses;

@@ -19,7 +19,8 @@ import {
   invoiceCheckoutStartInputSchema,
   invoiceCustomerPaymentRequestInputSchema,
   invoiceInputSchema,
-  invoicePaymentInputSchema
+  invoicePaymentInputSchema,
+  invoiceQuickCreateInputSchema
 } from "./schemas";
 
 function getFieldValue(formData: FormData, key: string) {
@@ -102,6 +103,15 @@ function parseInvoiceInput(formData: FormData) {
   });
 }
 
+function parseInvoiceQuickCreateInput(formData: FormData) {
+  return invoiceQuickCreateInputSchema.safeParse({
+    projectId: getFieldValue(formData, "projectId"),
+    estimateId: getFieldValue(formData, "estimateId"),
+    jobId: getFieldValue(formData, "jobId"),
+    workflowRole: getFieldValue(formData, "workflowRole")
+  });
+}
+
 export async function createInvoiceAction(formData: FormData) {
   const result = parseInvoiceInput(formData);
 
@@ -133,6 +143,81 @@ export async function createInvoiceAction(formData: FormData) {
   redirect(
     buildRedirect("/invoices", {
       message: `${invoice.referenceNumber} was created successfully.`
+    })
+  );
+}
+
+export async function quickCreateInvoiceAction(formData: FormData) {
+  const projectId = getFieldValue(formData, "projectId");
+  const estimateId = getFieldValue(formData, "estimateId");
+  const jobId = getFieldValue(formData, "jobId");
+  const workflowRole = getFieldValue(formData, "workflowRole");
+  const result = parseInvoiceQuickCreateInput(formData);
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/invoices", {
+        compose: "1",
+        projectId,
+        estimateId,
+        jobId,
+        workflowRole,
+        error: result.error.issues[0]?.message ?? "Unable to create invoice."
+      })
+    );
+  }
+
+  const issueDate = new Date();
+  const dueDate = new Date(issueDate);
+  dueDate.setDate(dueDate.getDate() + 30);
+
+  let invoice;
+
+  try {
+    invoice = await createInvoice({
+      projectId: result.data.projectId,
+      estimateId: result.data.estimateId,
+      jobId: result.data.workflowRole === "deposit" ? null : result.data.jobId,
+      workflowRole: result.data.workflowRole,
+      status: "draft",
+      issueDate: issueDate.toISOString().slice(0, 10),
+      dueDate: dueDate.toISOString().slice(0, 10),
+      discountAmount: "0.00",
+      lineItems: [
+        {
+          name:
+            result.data.workflowRole === "deposit"
+              ? "Deposit line item"
+              : "New invoice item",
+          description: null,
+          quantity: "1.00",
+          unit: "each",
+          unitPrice: "0.00"
+        }
+      ],
+      notes: null
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/invoices", {
+        compose: "1",
+        projectId,
+        estimateId,
+        jobId,
+        workflowRole,
+        error: error instanceof Error ? error.message : "Unable to create invoice."
+      })
+    );
+  }
+
+  revalidatePath("/invoices");
+  revalidatePath(`/invoices/${invoice.id}`);
+  revalidatePath(`/projects/${invoice.projectId}`);
+  revalidatePath(`/portal/projects/${invoice.projectId}`);
+
+  redirect(
+    buildRedirect(`/invoices/${invoice.id}`, {
+      message: `${invoice.referenceNumber} was created. Finish billing details in this workspace.`
     })
   );
 }

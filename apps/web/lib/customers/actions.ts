@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createCustomer, updateCustomer } from "./data";
-import { customerInputSchema } from "./schemas";
+import { customerInputSchema, customerQuickCreateInputSchema } from "./schemas";
 
 function getFieldValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -54,6 +54,12 @@ function parseCustomerInput(formData: FormData) {
   });
 }
 
+function parseCustomerQuickCreateInput(formData: FormData) {
+  return customerQuickCreateInputSchema.safeParse({
+    name: getFieldValue(formData, "name")
+  });
+}
+
 export async function createCustomerAction(formData: FormData) {
   const result = parseCustomerInput(formData);
 
@@ -84,6 +90,79 @@ export async function createCustomerAction(formData: FormData) {
   redirect(
     buildRedirect("/customers", {
       message: `${customer.name} was created successfully.`
+    })
+  );
+}
+
+export async function quickCreateCustomerAction(formData: FormData) {
+  const name = getFieldValue(formData, "name");
+  const retainagePercentageDefault = getFieldValue(
+    formData,
+    "retainagePercentageDefault"
+  );
+  const result = parseCustomerQuickCreateInput(formData);
+  const retainageResult =
+    customerInputSchema.shape.retainagePercentageDefault.safeParse(
+      retainagePercentageDefault || "0.00"
+    );
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/customers", {
+        compose: "1",
+        error: result.error.issues[0]?.message ?? "Unable to create customer."
+      })
+    );
+  }
+
+  if (!retainageResult.success) {
+    redirect(
+      buildRedirect("/customers", {
+        compose: "1",
+        error:
+          retainageResult.error.issues[0]?.message ??
+          "Unable to create customer."
+      })
+    );
+  }
+
+  let customer;
+
+  try {
+    customer = await createCustomer({
+      name: result.data.name,
+      companyName: null,
+      phone: null,
+      email: null,
+      addressLine1: null,
+      addressLine2: null,
+      city: null,
+      stateRegion: null,
+      postalCode: null,
+      countryCode: null,
+      isTaxExempt: false,
+      taxExemptionReason: null,
+      taxExemptionReference: null,
+      taxExemptionExpiresOn: null,
+      retainagePercentageDefault: retainageResult.data,
+      notes: null
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/customers", {
+        compose: "1",
+        error:
+          error instanceof Error ? error.message : "Unable to create customer."
+      })
+    );
+  }
+
+  revalidatePath("/customers");
+  revalidatePath(`/customers/${customer.id}`);
+
+  redirect(
+    buildRedirect(`/customers/${customer.id}`, {
+      message: `${name || customer.name} was created. Finish the full customer setup in this workspace.`
     })
   );
 }

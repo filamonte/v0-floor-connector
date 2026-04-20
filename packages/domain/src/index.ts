@@ -15,6 +15,7 @@ import type {
   ContractSignerRole,
   ContractSignerStatus,
   ContractStatus,
+  ChangeOrderStatus,
   ContractInternalApprovalStatus,
   DocumentTemplateStatus,
   EstimateStatus,
@@ -168,6 +169,13 @@ export const contractStatuses = [
   "signed",
   "void"
 ] as const satisfies readonly ContractStatus[];
+
+export const changeOrderStatuses = [
+  "draft",
+  "sent",
+  "approved",
+  "rejected"
+] as const satisfies readonly ChangeOrderStatus[];
 
 export const contractSignerRoles = [
   "customer",
@@ -390,7 +398,8 @@ export const portalRecordViewSubjectTypes = [
   "project",
   "estimate",
   "contract",
-  "invoice"
+  "invoice",
+  "change_order"
 ] as const satisfies readonly PortalRecordViewSubjectType[];
 
 export const membershipRoleRank: Record<MembershipRole, number> = {
@@ -473,6 +482,13 @@ export const contractStatusRank: Record<ContractStatus, number> = {
   void: 4
 };
 
+export const changeOrderStatusRank: Record<ChangeOrderStatus, number> = {
+  draft: 0,
+  sent: 1,
+  approved: 2,
+  rejected: 3
+};
+
 export const estimateStatusTransitions: Record<
   EstimateStatus,
   readonly EstimateStatus[]
@@ -492,6 +508,16 @@ export const contractStatusTransitions: Record<
   viewed: ["signed", "void"],
   signed: [],
   void: []
+};
+
+export const changeOrderStatusTransitions: Record<
+  ChangeOrderStatus,
+  readonly ChangeOrderStatus[]
+> = {
+  draft: ["sent"],
+  sent: ["approved", "rejected"],
+  approved: [],
+  rejected: ["draft"]
 };
 
 export function isMembershipRole(value: string): value is MembershipRole {
@@ -556,6 +582,13 @@ export function compareContractStatuses(left: ContractStatus, right: ContractSta
   return contractStatusRank[left] - contractStatusRank[right];
 }
 
+export function compareChangeOrderStatuses(
+  left: ChangeOrderStatus,
+  right: ChangeOrderStatus
+) {
+  return changeOrderStatusRank[left] - changeOrderStatusRank[right];
+}
+
 export function canTransitionEstimateStatus(
   from: EstimateStatus,
   to: EstimateStatus
@@ -568,6 +601,13 @@ export function canTransitionContractStatus(
   to: ContractStatus
 ) {
   return contractStatusTransitions[from].includes(to);
+}
+
+export function canTransitionChangeOrderStatus(
+  from: ChangeOrderStatus,
+  to: ChangeOrderStatus
+) {
+  return changeOrderStatusTransitions[from].includes(to);
 }
 
 export function canTransitionContractInternalApprovalStatus(

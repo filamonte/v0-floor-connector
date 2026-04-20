@@ -67,3 +67,8 @@ export const customerInputSchema = z.object({
 });
 
 export type CustomerInput = z.infer<typeof customerInputSchema>;
+export const customerQuickCreateInputSchema = z.object({
+  name: z.string().trim().min(1, "Customer name is required.").max(120)
+});
+
+export type CustomerQuickCreateInput = z.infer<typeof customerQuickCreateInputSchema>;

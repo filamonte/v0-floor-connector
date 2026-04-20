@@ -57,6 +57,7 @@ Current shared canonical model includes:
 - projects
 - estimates
 - estimate line items
+- change orders
 - schedule of values
 - schedule of value items
 - jobs
@@ -118,16 +119,48 @@ The protected contractor app shell is implemented and organization-aware.
 
 Current shell behavior:
 - shared protected layout for authenticated app routes
-- top navigation
+- top-level navigation is now the primary contractor app navigation
 - sign out action
 - current organization display
 - organization-aware breadcrumbs
 - role-aware navigation visibility
-- the first major contractor workspace UI polish pass is now complete enough to stop and move on from
+- wider main workspace and calmer dashboard-first shell framing
+- flattened shell/header chrome with one shared contractor header system instead of competing stacked header layers
+- shared workspace band beneath the top navigation for breadcrumb and page-context continuity
+- shared contractor manager-page wrapper and command-bar pattern now drive the main overview surfaces
+- the always-on left sidebar is no longer the primary navigation pattern
+- left-side navigation is now reserved for contextual workspace use where needed inside deeper screens
+- the first major contractor workspace UI normalization and polish pass is now complete enough to stop and move on from
+- dashboard, projects, leads, invoices, contracts, customers, estimates, daily logs, time, people, vendors, and jobs now follow the shared contractor manager rhythm closely enough that it should be treated as the active UI baseline
 - shared detail-page/workspace pattern is now implemented across the main contractor record pages:
   - project detail is the reference workflow and readiness hub
   - estimate, contract, invoice, and job detail now broadly follow the same shared page language and point back to the project hub when broader handoff state matters
   - remaining UI issues are now iterative polish items rather than structural layout breaks
+
+### Contractor UI System
+
+Implemented contractor UI direction now includes:
+- top-nav-first navigation as the default contractor app model
+- one flattened shell/header system with a thin page-context band rather than a permanent left-nav-plus-header stack
+- thinner command/search strips beneath page identity on manager surfaces
+- dashboard as a card-grid overview surface instead of a dense stacked-panel dashboard
+- manager pages built around:
+  - page identity
+  - command bar
+  - overview/list workspace
+- shared composer-sheet pattern for create flows on the main contractor manager pages instead of permanently open create forms
+- quick-create overlays are now the default contractor manager create behavior where appropriate:
+  - collect minimum required fields only
+  - create the canonical record first
+  - route directly into the full record workspace for complete editing
+
+Current contractor UI design notes:
+- the dashboard is now the visual reference point for the contractor app shell and manager-surface language
+- overview pages should read as operational manager screens rather than dense admin tables or stacked forms
+- deeper record pages may still use contextual side navigation where it helps, but overview navigation should remain top-nav-first
+- the current contractor UI direction should now be treated as implemented truth, not as an experimental branch of the product
+- the contractor UI normalization phase is now complete enough to stop; future contractor UI work should start from this baseline instead of reopening the core shell and manager-page system
+- the contractor-facing app is now coherent enough for broader testing, with remaining issues understood as polish and density work rather than structural UI drift
 
 Current protected routes include:
 - `/dashboard`
@@ -135,6 +168,7 @@ Current protected routes include:
 - `/customers`
 - `/projects`
 - `/estimates`
+- `/change-orders`
 - `/contracts`
 - `/invoices`
 - `/jobs`
@@ -261,6 +295,44 @@ Current portal access design notes:
 - customer-facing estimate, contract, and invoice review pages now exist inside the portal on top of the same tenant-safe canonical record loaders
 - portal review remains customer-safe and canonical-record-based in this pass, with contract signing now live on the shared contract record and portal invoice review now able to start customer payment activity on the same canonical invoice and payment chain without introducing a duplicate portal billing model
 - portal home and project workspaces now reflect payment-requested, payment-in-progress, partially-paid, and paid outcomes as part of the same shared project workflow guidance
+
+### Change Orders
+
+Implemented:
+- organization-scoped canonical change order schema
+- change order linkage to the shared project record and optional linkage to the shared contract and invoice records
+- contractor-side change-order manager page using the shared manager-page and command-bar pattern
+- contractor-side quick-create overlay that captures minimum required fields before routing into the full workspace
+- contractor-side change-order detail/workspace page for draft editing, send-for-review, and review-state visibility
+- customer-facing portal review page for viewing, approving, and rejecting sent change orders
+- portal-view audit foundation on the shared `portal_record_views` model using `change_order` as a canonical subject type
+- project, invoice, and portal-project continuity sections now surface linked change orders on the same shared workflow chain
+- approved positive change orders linked to an invoice now create a real canonical invoice line item on that invoice
+
+Change order statuses currently implemented:
+- `draft`
+- `sent`
+- `approved`
+- `rejected`
+
+Change orders currently link to:
+- project
+- customer
+- optional contract
+- optional invoice
+- optional applied invoice line item
+
+Current change-order design notes:
+- change orders are canonical shared records, not report-only records and not a portal-specific approval object
+- change orders extend the existing project, contract, and invoice chain instead of creating a separate scope-change subsystem
+- contractor-side quick create captures only the minimum project, title, price-adjustment, and optional linked-record context before handing off to the full change-order workspace
+- customer approval and rejection now happen against the same canonical change-order record through the scoped portal surface
+- this first version keeps financial impact intentionally narrow:
+  - approved positive change orders linked to an invoice can create one canonical invoice line item
+  - negative adjustments, richer credit logic, and broader accounting reconciliation are not implemented yet
+- this first version keeps project impact intentionally continuity-based:
+  - approved change orders are surfaced through project continuity and downstream billing context
+  - deeper schedule, production, and messaging propagation is not implemented yet
 
 ### People
 
@@ -635,6 +707,8 @@ Current invoice design notes:
 - deposit requests stay on the same canonical invoice and payment chain rather than becoming a separate deposit model
 - standard invoices without downstream job context are now blocked until the project completes contract, signature, and deposit or financing readiness through the commercial handoff
 - invoice tax, exemption, and retainage values are snapshotted on the invoice so later customer/org setting changes do not break reporting history
+- contractor-side invoice manager quick create now captures only the minimum project and workflow-role context, creates the canonical draft invoice, and routes into the full invoice workspace for complete editing
+- contractor-side project, customer, lead, contract, and daily-log managers now also use quick create overlays that capture only minimum required fields before handing off to the full record workspace
 
 Invoice workflow roles currently implemented:
 - `standard`
@@ -783,7 +857,7 @@ Current contract design notes:
 ## Current Workflow Coverage
 
 The implemented canonical flow currently spans:
-- opportunities or leads -> customers -> projects -> estimates -> contracts -> jobs -> invoices -> payments
+- opportunities or leads -> customers -> projects -> estimates -> contracts -> change orders -> jobs -> invoices -> payments
 
 The current implemented workflow foundation supports:
 - user authentication into a protected contractor app
@@ -801,6 +875,8 @@ The current implemented workflow foundation supports:
 - approved-estimate-to-contract generation and pre-sign contract editing
 - required internal contract approval and send-readiness gating on draft contracts
 - server-side canonical contract signature workflow progression with signer/event updates on the shared contract model
+- canonical change-order authoring, send-for-review, and customer portal approval or rejection on the shared project and contract chain
+- approved positive change orders linked to invoices can now extend the same canonical invoice through real invoice line items
 - project-detail readiness hub for the upstream commercial chain with blockers, next action, and ready-to-schedule handoff visibility
 - downstream job creation now respects the canonical ready-to-schedule gate instead of relying only on estimate approval
 - downstream job reassignment now respects the same canonical ready-to-schedule gate instead of allowing a later project move to bypass the handoff rule
@@ -892,6 +968,7 @@ Not implemented yet:
 - billing/subscriptions
 - deeper gateway-backed customer-facing payment completion and reconciliation workflows
 - advanced permissions UI
+- full change-order credit, negative adjustment, and richer accounting treatment
 - full AIA/progress billing UX
 - external tax provider integration
 - rich template editing UI

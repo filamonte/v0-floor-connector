@@ -16,6 +16,7 @@ export type ContractId = string;
 export type ContractRevisionId = string;
 export type ContractSignerId = string;
 export type ContractSignatureEventId = string;
+export type ChangeOrderId = string;
 export type CatalogItemId = string;
 export type PlatformCatalogItemSeedId = string;
 export type PlatformUserRoleId = string;
@@ -91,6 +92,7 @@ export type InvoiceStatus =
   | "paid"
   | "void";
 export type ContractStatus = "draft" | "sent" | "viewed" | "signed" | "void";
+export type ChangeOrderStatus = "draft" | "sent" | "approved" | "rejected";
 export type ContractSignerRole = "customer" | "contractor";
 export type ContractSignerStatus =
   | "pending"
@@ -182,7 +184,8 @@ export type PortalRecordViewSubjectType =
   | "project"
   | "estimate"
   | "contract"
-  | "invoice";
+  | "invoice"
+  | "change_order";
 export type CommercialReadinessBlocker =
   | "site_assessment_incomplete"
   | "estimate_not_approved"
@@ -522,6 +525,30 @@ export interface ContractSignatureEvent {
   payload: Record<string, unknown> | null;
   occurredAt: string;
   createdAt: string;
+}
+
+export interface ChangeOrder {
+  id: ChangeOrderId;
+  organizationId: OrganizationId;
+  customerId: CustomerId;
+  projectId: ProjectId;
+  contractId: ContractId | null;
+  invoiceId: InvoiceId | null;
+  appliedInvoiceLineItemId: string | null;
+  status: ChangeOrderStatus;
+  title: string;
+  description: string | null;
+  scopeChangeNotes: string | null;
+  priceAdjustment: string;
+  decisionNote: string | null;
+  sentAt: string | null;
+  customerViewedAt: string | null;
+  approvedAt: string | null;
+  rejectedAt: string | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Payment {

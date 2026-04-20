@@ -195,6 +195,23 @@ export const invoiceInputSchema = z
     }
   });
 
+export const invoiceQuickCreateInputSchema = z
+  .object({
+    projectId: z.string().uuid("Select a valid project."),
+    estimateId: optionalUuidField("Select a valid estimate."),
+    jobId: optionalUuidField("Select a valid job."),
+    workflowRole: invoiceWorkflowRoleSchema
+  })
+  .superRefine((value, ctx) => {
+    if (value.workflowRole === "deposit" && value.jobId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Deposit invoices should stay tied to project and estimate context, not a job.",
+        path: ["jobId"]
+      });
+    }
+  });
+
 export const invoicePaymentInputSchema = z.object({
   invoiceId: z.string().uuid("Invoice id is required."),
   amount: positiveCurrencyAmountField("Payment amount"),
@@ -318,6 +335,7 @@ export const invoicePaymentVoidInputSchema = withPaymentActorContextValidation(
 
 export type InvoiceInput = z.infer<typeof invoiceInputSchema>;
 export type InvoiceLineItemInput = z.infer<typeof invoiceLineItemInputSchema>;
+export type InvoiceQuickCreateInput = z.infer<typeof invoiceQuickCreateInputSchema>;
 export type InvoicePaymentInput = z.infer<typeof invoicePaymentInputSchema>;
 export type InvoiceCustomerPaymentRequestInput = z.infer<
   typeof invoiceCustomerPaymentRequestInputSchema

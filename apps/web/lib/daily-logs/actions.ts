@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createDailyLog, updateDailyLog } from "./data";
-import { dailyLogInputSchema } from "./schemas";
+import { dailyLogInputSchema, dailyLogQuickCreateInputSchema } from "./schemas";
 import { createExecutionAttachment } from "@/lib/execution-attachments/data";
 import { executionAttachmentInputSchema } from "@/lib/execution-attachments/schemas";
 import { createFieldNote, updateFieldNote } from "@/lib/field-notes/data";
@@ -48,6 +48,14 @@ function parseDailyLogInput(formData: FormData) {
     weatherConditions: getFieldValue(formData, "weatherConditions"),
     temperatureHighF: getFieldValue(formData, "temperatureHighF"),
     temperatureLowF: getFieldValue(formData, "temperatureLowF")
+  });
+}
+
+function parseDailyLogQuickCreateInput(formData: FormData) {
+  return dailyLogQuickCreateInputSchema.safeParse({
+    projectId: getFieldValue(formData, "projectId"),
+    jobId: getFieldValue(formData, "jobId"),
+    logDate: getFieldValue(formData, "logDate")
   });
 }
 
@@ -116,6 +124,64 @@ export async function createDailyLogAction(formData: FormData) {
   redirect(
     buildRedirect(`/daily-logs/${dailyLog.id}`, {
       message: "Daily log created successfully."
+    })
+  );
+}
+
+export async function quickCreateDailyLogAction(formData: FormData) {
+  const projectId = getFieldValue(formData, "projectId");
+  const jobId = getFieldValue(formData, "jobId");
+  const result = parseDailyLogQuickCreateInput(formData);
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/daily-logs", {
+        compose: "1",
+        projectId,
+        jobId,
+        error:
+          result.error.issues[0]?.message ?? "Unable to create the daily log."
+      })
+    );
+  }
+
+  let dailyLog;
+
+  try {
+    dailyLog = await createDailyLog({
+      projectId: result.data.projectId,
+      jobId: result.data.jobId,
+      logDate: result.data.logDate,
+      status: "draft",
+      summary: null,
+      workCompleted: null,
+      workPlannedNext: null,
+      delaysOrBlockers: null,
+      safetyNotes: null,
+      weatherSummary: null,
+      weatherConditions: null,
+      temperatureHighF: null,
+      temperatureLowF: null
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/daily-logs", {
+        compose: "1",
+        projectId,
+        jobId,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to create the daily log."
+      })
+    );
+  }
+
+  revalidateDailyExecutionPaths(dailyLog.projectId, dailyLog.jobId, dailyLog.id);
+
+  redirect(
+    buildRedirect(`/daily-logs/${dailyLog.id}`, {
+      message: "Daily log created. Finish the full project-day record in this workspace."
     })
   );
 }

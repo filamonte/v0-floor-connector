@@ -86,6 +86,11 @@ export const estimateInputSchema = z.object({
   }
 });
 
+export const estimateQuickCreateInputSchema = z.object({
+  projectId: z.string().uuid("Select a valid project.")
+});
+
 export type EstimateInput = z.infer<typeof estimateInputSchema>;
 export type EstimateLineItemInput = z.infer<typeof estimateLineItemInputSchema>;
+export type EstimateQuickCreateInput = z.infer<typeof estimateQuickCreateInputSchema>;
 export const estimateStatusesList = estimateStatuses;

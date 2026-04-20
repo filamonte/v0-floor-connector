@@ -1,11 +1,13 @@
 import Link from "next/link";
 
 import { AppEmptyState } from "@/components/app-empty-state";
-import { DailyLogForm } from "@/components/daily-log-form";
+import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
+import { DailyLogQuickCreateForm } from "@/components/daily-log-quick-create-form";
 import { NextActionCard } from "@/components/next-action-card";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
+import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
-import { createDailyLogAction } from "@/lib/daily-logs/actions";
+import { quickCreateDailyLogAction } from "@/lib/daily-logs/actions";
 import { listDailyLogs } from "@/lib/daily-logs/data";
 import { listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
@@ -13,8 +15,11 @@ import { listProjects } from "@/lib/projects/data";
 
 type DailyLogsPageProps = {
   searchParams?: Promise<{
+    compose?: string;
     error?: string;
     message?: string;
+    q?: string;
+    status?: "all" | "draft" | "finalized" | "blocked";
     projectId?: string;
     jobId?: string;
   }>;
@@ -32,6 +37,29 @@ function getStatusClasses(status: string) {
   return status === "finalized"
     ? "border-emerald-200 bg-emerald-50 text-emerald-900"
     : "border-amber-200 bg-amber-50 text-amber-900";
+}
+
+function buildDailyLogsHref(input: {
+  q?: string;
+  status?: string;
+  compose?: string;
+}) {
+  const searchParams = new URLSearchParams();
+
+  if (input.q && input.q.trim().length > 0) {
+    searchParams.set("q", input.q.trim());
+  }
+
+  if (input.status && input.status !== "all") {
+    searchParams.set("status", input.status);
+  }
+
+  if (input.compose === "1") {
+    searchParams.set("compose", "1");
+  }
+
+  const query = searchParams.toString();
+  return query.length > 0 ? `/daily-logs?${query}` : "/daily-logs";
 }
 
 export default async function DailyLogsPage({
@@ -56,6 +84,14 @@ export default async function DailyLogsPage({
     listJobs()
   ]);
 
+  const query = resolvedSearchParams.q?.trim() ?? "";
+  const normalizedQuery = query.toLowerCase();
+  const statusFilter = resolvedSearchParams.status ?? "all";
+  const showComposer =
+    resolvedSearchParams.compose === "1" ||
+    Boolean(resolvedSearchParams.error) ||
+    Boolean(resolvedSearchParams.projectId) ||
+    Boolean(resolvedSearchParams.jobId);
   const draftCount = dailyLogs.filter((log) => log.status === "draft").length;
   const blockedCount = dailyLogs.filter((log) => Boolean(log.delaysOrBlockers)).length;
   const nextAction =
@@ -70,6 +106,40 @@ export default async function DailyLogsPage({
           description:
             "No draft execution records are waiting, so the next operational step is creating the next daily log as work moves through the field."
         };
+  const filteredDailyLogs = dailyLogs.filter((dailyLog) => {
+    const matchesStatus =
+      statusFilter === "all"
+        ? true
+        : statusFilter === "blocked"
+          ? Boolean(dailyLog.delaysOrBlockers)
+          : dailyLog.status === statusFilter;
+    const matchesQuery =
+      normalizedQuery.length === 0
+        ? true
+        : [
+            dailyLog.project?.name ?? "",
+            dailyLog.job?.id ?? "",
+            dailyLog.summary ?? "",
+            dailyLog.workCompleted ?? "",
+            dailyLog.weatherSummary ?? "",
+            dailyLog.status
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(normalizedQuery);
+
+    return matchesStatus && matchesQuery;
+  });
+  const dailyLogViews = [
+    { key: "all", label: "All logs", count: dailyLogs.length },
+    { key: "draft", label: "Draft", count: draftCount },
+    {
+      key: "finalized",
+      label: "Finalized",
+      count: dailyLogs.filter((log) => log.status === "finalized").length
+    },
+    { key: "blocked", label: "With blockers", count: blockedCount }
+  ] as const;
 
   const projectOptions = projects.map((project) => ({
     id: project.id,
@@ -91,185 +161,253 @@ export default async function DailyLogsPage({
     : undefined;
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
-      <section className="space-y-6">
-        <section className="rounded-[2rem] border border-slate-200 bg-white/92 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-700">
-            Daily Execution
-          </p>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-            Project-day field logs for {organizationContext.organization.displayName}
-          </h2>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-            Use daily logs as the canonical execution record for what happened on site, what is blocked, and what labor continuity already exists on the same project day.
-          </p>
-
-          <div className="mt-8">
-            <WorkspaceSummaryBand
-              className="grid gap-4 xl:grid-cols-[minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,1fr)]"
-              items={[
-                {
-                  key: "total-logs",
-                  label: "Daily logs",
-                  content: (
-                    <p className="text-3xl font-semibold tracking-tight text-slate-950">
-                      {dailyLogs.length}
-                    </p>
-                  )
-                },
-                {
-                  key: "drafts",
-                  label: "Draft logs",
-                  content: (
-                    <p className="text-3xl font-semibold tracking-tight text-slate-950">
-                      {draftCount}
-                    </p>
-                  )
-                },
-                {
-                  key: "blocked-days",
-                  label: "Days with blockers",
-                  content: (
-                    <p className="text-3xl font-semibold tracking-tight text-slate-950">
-                      {blockedCount}
-                    </p>
-                  )
-                },
-                {
-                  key: "next-action",
-                  label: "Next best action",
-                  content: (
-                    <NextActionCard
-                      eyebrow="Execution guidance"
-                      title={nextAction.title}
-                      description={nextAction.description}
-                      className="space-y-3 text-sm leading-6 text-slate-600"
-                    />
-                  )
-                }
-              ]}
-            />
-          </div>
-        </section>
-
-        {resolvedSearchParams.error ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
-            {resolvedSearchParams.error}
-          </div>
-        ) : null}
-
-        {resolvedSearchParams.message ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
-            {resolvedSearchParams.message}
-          </div>
-        ) : null}
-
-        <section className="rounded-[2rem] border border-slate-200 bg-white/92 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur">
-          <div className="border-b border-slate-200 px-6 py-5 sm:px-8">
-            <div className="hidden grid-cols-[minmax(0,1fr)_220px_160px_120px] gap-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 md:grid">
-              <span>Daily log</span>
-              <span>Project / job</span>
-              <span>Weather</span>
-              <span className="text-right">Status</span>
-            </div>
-            <div className="md:hidden">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                Daily logs
-              </p>
-            </div>
-          </div>
-
-          <div className="divide-y divide-slate-200">
-            {dailyLogs.length > 0 ? (
-              dailyLogs.map((dailyLog) => (
-                <Link
-                  key={dailyLog.id}
-                  href={`/daily-logs/${dailyLog.id}`}
-                  className="group block px-6 py-5 transition hover:bg-slate-50/70 sm:px-8"
-                >
-                  <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_160px_120px] md:items-start">
-                    <div className="min-w-0">
-                      <h3 className="text-base font-semibold text-slate-950 transition group-hover:text-brand-700">
-                        {dailyLog.summary?.trim() || `${formatDate(dailyLog.logDate)} field log`}
-                      </h3>
-                      <p className="mt-2 text-sm leading-6 text-slate-500">
-                        {formatDate(dailyLog.logDate)}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        {dailyLog.workCompleted?.trim() || "Work-completed narrative has not been captured yet."}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                        Attribution
-                      </p>
-                      <p className="text-sm font-medium text-slate-700">
-                        {dailyLog.project?.name ?? "No project"}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        {dailyLog.job ? `Job ${dailyLog.job.id.slice(0, 8)}` : "Project-day log"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                        Weather
-                      </p>
-                      <p className="text-sm font-medium text-slate-700">
-                        {dailyLog.weatherSummary ?? "No weather summary"}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        {dailyLog.temperatureHighF !== null || dailyLog.temperatureLowF !== null
-                          ? `${dailyLog.temperatureLowF ?? "?"}F to ${dailyLog.temperatureHighF ?? "?"}F`
-                          : dailyLog.weatherConditions ?? "No conditions entered"}
-                      </p>
-                    </div>
-                    <div className="md:text-right">
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                        Status
-                      </p>
-                      <span
-                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusClasses(
-                          dailyLog.status
-                        )}`}
-                      >
-                        {formatStatusLabel(dailyLog.status)}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="px-6 py-8 sm:px-8">
-                <AppEmptyState
-                  eyebrow="No daily logs yet"
-                  title="Create the first project-day execution record"
-                  description="Daily logs become the canonical field execution layer without inventing separate issue, blocker, or punch-list modules."
+    <ContractorWorkspacePage
+      eyebrow="Daily Logs"
+      title={`Project-day field logs for ${organizationContext.organization.displayName}`}
+      description="Use daily logs as the canonical execution record for what happened on site, what is blocked, and what labor continuity already exists on the same project day."
+      summary={
+        <WorkspaceSummaryBand
+          className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,1fr)]"
+          items={[
+            {
+              key: "total-logs",
+              label: "Daily logs",
+              content: (
+                <p className="text-3xl font-semibold tracking-tight text-slate-950">
+                  {dailyLogs.length}
+                </p>
+              )
+            },
+            {
+              key: "drafts",
+              label: "Draft logs",
+              content: (
+                <p className="text-3xl font-semibold tracking-tight text-slate-950">
+                  {draftCount}
+                </p>
+              )
+            },
+            {
+              key: "blocked-days",
+              label: "Days with blockers",
+              content: (
+                <p className="text-3xl font-semibold tracking-tight text-slate-950">
+                  {blockedCount}
+                </p>
+              )
+            },
+            {
+              key: "next-action",
+              label: "Next best action",
+              content: (
+                <NextActionCard
+                  eyebrow="Execution guidance"
+                  title={nextAction.title}
+                  description={nextAction.description}
+                  className="space-y-3 text-sm leading-6 text-slate-600"
                 />
-              </div>
-            )}
-          </div>
-        </section>
-      </section>
+              )
+            }
+          ]}
+        />
+      }
+      commandBar={{
+        supportSlot: (
+          <p>
+            Review active project-day execution records, filter for draft or blocked work, and quick create the next day only when you are ready to open its full workspace.
+          </p>
+        ),
+        searchSlot: (
+          <form action="/daily-logs" className="flex flex-col gap-2 sm:flex-row">
+            {statusFilter !== "all" ? <input type="hidden" name="status" value={statusFilter} /> : null}
+            {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
+            <input
+              type="search"
+              name="q"
+              defaultValue={query}
+              placeholder="Search project, summary, weather, or work completed"
+              className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+            />
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            >
+              Search
+            </button>
+            {query.length > 0 || statusFilter !== "all" || showComposer ? (
+              <Link
+                href="/daily-logs"
+                className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
+              >
+                Clear
+              </Link>
+            ) : null}
+          </form>
+        ),
+        filterSlot: dailyLogViews.map((view) => {
+          const isActive = statusFilter === view.key;
 
-      <aside className="rounded-[2rem] border border-slate-200 bg-white/88 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-700">
-          New Daily Log
-        </p>
-        <p className="mt-4 text-sm leading-6 text-slate-600">
-          Start a project-day record, optionally attach one dominant job, and keep execution notes inside the same daily-log workflow.
-        </p>
-        <div className="mt-6">
-          <DailyLogForm
-            action={createDailyLogAction}
-            submitLabel="Create daily log"
-            pendingLabel="Creating daily log..."
+          return (
+            <Link
+              key={view.key}
+              href={buildDailyLogsHref({ q: query, status: view.key, compose: showComposer ? "1" : undefined })}
+              className={[
+                "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
+                isActive
+                  ? "bg-[#233a64] text-white"
+                  : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
+              ].join(" ")}
+            >
+              <span>{view.label}</span>
+              <span
+                className={[
+                  "rounded-full px-2 py-0.5 text-xs font-semibold",
+                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                ].join(" ")}
+              >
+                {view.count}
+              </span>
+            </Link>
+          );
+        }),
+        actionSlot: (
+          <Link
+            href={buildDailyLogsHref({ q: query, status: statusFilter, compose: "1" }) + "#daily-log-create"}
+            className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
+          >
+            New daily log
+          </Link>
+        )
+      }}
+    >
+      <div className={showComposer ? "grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_400px]" : "space-y-4"}>
+        <section className="space-y-6">
+          {resolvedSearchParams.error ? (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+              {resolvedSearchParams.error}
+            </div>
+          ) : null}
+
+          {resolvedSearchParams.message ? (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+              {resolvedSearchParams.message}
+            </div>
+          ) : null}
+
+          <section className="border border-[#dde3eb] bg-white">
+            <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
+              <div className="flex items-end justify-between gap-4">
+                <div className="hidden grid-cols-[minmax(0,1fr)_220px_160px_120px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
+                  <span>Daily log</span>
+                  <span>Project / job</span>
+                  <span>Weather</span>
+                  <span className="text-right">Status</span>
+                </div>
+                <div className="md:hidden">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                    Daily logs
+                  </p>
+                </div>
+                <p className="text-sm leading-6 text-slate-500">
+                  {filteredDailyLogs.length} visible
+                </p>
+              </div>
+            </div>
+
+            <div className="divide-y divide-slate-200">
+              {filteredDailyLogs.length > 0 ? (
+                filteredDailyLogs.map((dailyLog) => (
+                  <Link
+                    key={dailyLog.id}
+                    href={`/daily-logs/${dailyLog.id}`}
+                    className="group block px-5 py-4 transition hover:bg-slate-50/70 sm:px-6"
+                  >
+                    <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_160px_120px] md:items-start">
+                      <div className="min-w-0">
+                        <h3 className="text-base font-semibold text-slate-950 transition group-hover:text-brand-700">
+                          {dailyLog.summary?.trim() || `${formatDate(dailyLog.logDate)} field log`}
+                        </h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                          {formatDate(dailyLog.logDate)}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {dailyLog.workCompleted?.trim() || "Work-completed narrative has not been captured yet."}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                          Attribution
+                        </p>
+                        <p className="text-sm font-medium text-slate-700">
+                          {dailyLog.project?.name ?? "No project"}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {dailyLog.job ? `Job ${dailyLog.job.id.slice(0, 8)}` : "Project-day log"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                          Weather
+                        </p>
+                        <p className="text-sm font-medium text-slate-700">
+                          {dailyLog.weatherSummary ?? "No weather summary"}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {dailyLog.temperatureHighF !== null || dailyLog.temperatureLowF !== null
+                            ? `${dailyLog.temperatureLowF ?? "?"}F to ${dailyLog.temperatureHighF ?? "?"}F`
+                            : dailyLog.weatherConditions ?? "No conditions entered"}
+                        </p>
+                      </div>
+                      <div className="md:text-right">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                          Status
+                        </p>
+                        <span
+                          className={`inline-flex rounded-[4px] border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] ${getStatusClasses(
+                            dailyLog.status
+                          )}`}
+                        >
+                          {formatStatusLabel(dailyLog.status)}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="px-6 py-8 sm:px-8">
+                  <AppEmptyState
+                    eyebrow={dailyLogs.length > 0 ? "No matching daily logs" : "No daily logs yet"}
+                    title={dailyLogs.length > 0 ? "Adjust the execution filters" : "Create the first project-day execution record"}
+                    description={
+                      dailyLogs.length > 0
+                        ? "Try a broader search or switch views to find the execution record you need."
+                        : "Daily logs become the canonical field execution layer without inventing separate issue, blocker, or punch-list modules."
+                    }
+                  />
+                </div>
+              )}
+            </div>
+          </section>
+        </section>
+
+        <WorkspaceComposerSheet
+          id="daily-log-create"
+          title="Quick create daily log"
+          description="Capture only the minimum project-day context here, create the canonical daily log, and then finish the execution record in the full workspace."
+          open={showComposer}
+          openHref={buildDailyLogsHref({ q: query, status: statusFilter, compose: "1" }) + "#daily-log-create"}
+          closeHref={buildDailyLogsHref({ q: query, status: statusFilter })}
+          openLabel="Open daily-log quick create"
+        >
+          <DailyLogQuickCreateForm
+            action={quickCreateDailyLogAction}
             projects={projectOptions}
             jobs={jobOptions}
             defaultProjectId={defaultProjectId}
             defaultJobId={defaultJobId}
           />
-        </div>
-      </aside>
-    </div>
+        </WorkspaceComposerSheet>
+      </div>
+    </ContractorWorkspacePage>
   );
 }

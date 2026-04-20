@@ -6,7 +6,10 @@ import { canTransitionEstimateStatus } from "@floorconnector/domain";
 import type { EstimateStatus } from "@floorconnector/types";
 
 import { createEstimate, updateEstimate, updateEstimateStatus } from "./data";
-import { estimateInputSchema } from "./schemas";
+import {
+  estimateInputSchema,
+  estimateQuickCreateInputSchema
+} from "./schemas";
 
 function getFieldValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -64,6 +67,12 @@ function parseEstimateInput(formData: FormData) {
   });
 }
 
+function parseEstimateQuickCreateInput(formData: FormData) {
+  return estimateQuickCreateInputSchema.safeParse({
+    projectId: getFieldValue(formData, "projectId")
+  });
+}
+
 function getStatusActionLabel(status: EstimateStatus) {
   switch (status) {
     case "sent":
@@ -109,6 +118,62 @@ export async function createEstimateAction(formData: FormData) {
   redirect(
     buildRedirect("/estimates", {
       message: `${estimate.referenceNumber} was created successfully.`
+    })
+  );
+}
+
+export async function quickCreateEstimateAction(formData: FormData) {
+  const projectId = getFieldValue(formData, "projectId");
+  const result = parseEstimateQuickCreateInput(formData);
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/estimates", {
+        compose: "1",
+        projectId,
+        error:
+          result.error.issues[0]?.message ?? "Unable to create estimate."
+      })
+    );
+  }
+
+  let estimate;
+
+  try {
+    estimate = await createEstimate({
+      projectId: result.data.projectId,
+      status: "draft",
+      taxAmount: "0.00",
+      discountAmount: "0.00",
+      lineItems: [
+        {
+          name: "New scope item",
+          description: null,
+          quantity: "1.00",
+          unit: "each",
+          unitPrice: "0.00"
+        }
+      ],
+      notes: null
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/estimates", {
+        compose: "1",
+        projectId,
+        error:
+          error instanceof Error ? error.message : "Unable to create estimate."
+      })
+    );
+  }
+
+  revalidatePath("/estimates");
+  revalidatePath(`/estimates/${estimate.id}`);
+  revalidatePath(`/estimates/${estimate.id}/edit`);
+
+  redirect(
+    buildRedirect(`/estimates/${estimate.id}/edit`, {
+      message: `${estimate.referenceNumber} was created. Finish the full scope in this workspace.`
     })
   );
 }

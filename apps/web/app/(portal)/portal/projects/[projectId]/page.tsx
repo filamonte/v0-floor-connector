@@ -9,6 +9,7 @@ import { NextActionCard } from "@/components/next-action-card";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import {
   getPortalProjectDetailSummary,
+  listPortalProjectChangeOrders,
   listPortalProjectContracts,
   listPortalProjectEstimates,
   listPortalProjectInvoices
@@ -301,11 +302,12 @@ export default async function PortalProjectDetailPage({
   params
 }: PortalProjectDetailPageProps) {
   const { projectId } = await params;
-  const [project, estimates, contracts, invoices] = await Promise.all([
+  const [project, estimates, contracts, invoices, changeOrders] = await Promise.all([
     getPortalProjectDetailSummary(projectId, `/portal/projects/${projectId}`),
     listPortalProjectEstimates(projectId, `/portal/projects/${projectId}`),
     listPortalProjectContracts(projectId, `/portal/projects/${projectId}`),
-    listPortalProjectInvoices(projectId, `/portal/projects/${projectId}`)
+    listPortalProjectInvoices(projectId, `/portal/projects/${projectId}`),
+    listPortalProjectChangeOrders(projectId, `/portal/projects/${projectId}`)
   ]);
 
   if (!project) {
@@ -489,6 +491,43 @@ export default async function PortalProjectDetailPage({
                   eyebrow="No contracts"
                   title="No contract has been shared yet"
                   description="Contract visibility will appear here once your contractor publishes it for this project."
+                />
+              )}
+            </section>
+
+            <section className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-slate-950">Change orders</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Approved or pending scope adjustments stay on this same project chain.
+                </p>
+              </div>
+              {changeOrders.length > 0 ? (
+                <div className="grid gap-4">
+                  {changeOrders.map((changeOrder) => (
+                    <RecordSummaryCard
+                      key={changeOrder.id}
+                      eyebrow="Change order"
+                      title={changeOrder.title}
+                      description={
+                        changeOrder.scopeChangeNotes?.trim() ||
+                        changeOrder.description?.trim() ||
+                        "Scope adjustment shared on this project."
+                      }
+                      meta={`${Number(changeOrder.priceAdjustment).toLocaleString("en-US", {
+                        style: "currency",
+                        currency: "USD"
+                      })} | Updated ${formatDateTime(changeOrder.updatedAt)}`}
+                      badge={formatStatusLabel(changeOrder.status)}
+                      href={`/portal/change-orders/${changeOrder.id}`}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <AppEmptyState
+                  eyebrow="No change orders"
+                  title="No scope changes have been shared yet"
+                  description="If scope or price changes are published for this project, they will appear here."
                 />
               )}
             </section>

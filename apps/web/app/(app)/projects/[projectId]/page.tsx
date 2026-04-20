@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AppEmptyState } from "@/components/app-empty-state";
+import { listProjectChangeOrders } from "@/lib/change-orders/data";
 import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
@@ -501,14 +502,15 @@ export default async function ProjectDetailPage({
 }: ProjectDetailPageProps) {
   const { projectId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
-  const [project, customers, estimates, contracts, jobs, invoices, projectOpportunity] = await Promise.all([
+  const [project, customers, estimates, contracts, jobs, invoices, projectOpportunity, projectChangeOrders] = await Promise.all([
     getProjectById(projectId, `/projects/${projectId}`),
     listCustomers(),
     listEstimates(),
     listContracts(),
     listJobs(),
     listInvoices(),
-    getOpportunityByProjectId(projectId, `/projects/${projectId}`)
+    getOpportunityByProjectId(projectId, `/projects/${projectId}`),
+    listProjectChangeOrders(projectId, `/projects/${projectId}`)
   ]);
 
   if (!project) {
@@ -998,6 +1000,34 @@ export default async function ProjectDetailPage({
 
             <section className="space-y-4">
               <div>
+                <p className="text-sm font-medium text-slate-950">Change orders</p>
+              </div>
+              <div className="grid gap-4">
+                {projectChangeOrders.length > 0 ? (
+                  projectChangeOrders.map((changeOrder) => (
+                    <LinkedRecordCard
+                      key={changeOrder.id}
+                      href={`/change-orders/${changeOrder.id}`}
+                      title={changeOrder.title}
+                      subtitle={changeOrder.customer?.name ?? project.customer?.name ?? "Unknown customer"}
+                      meta={`${formatMoney(changeOrder.priceAdjustment)}${changeOrder.invoice ? ` | Invoice ${changeOrder.invoice.referenceNumber}` : ""}`}
+                      badge={renderStatusBadge(formatStatusLabel(changeOrder.status))}
+                    />
+                  ))
+                ) : (
+                  <AppEmptyState
+                    eyebrow="No change orders"
+                    title="Track scope changes here"
+                    description="When scope or price shifts after contract approval, keep the adjustment on the same project chain with a canonical change order."
+                    actionHref={`/change-orders?projectId=${project.id}&compose=1`}
+                    actionLabel="Create change order"
+                  />
+                )}
+              </div>
+            </section>
+
+            <section className="space-y-4">
+              <div>
                 <p className="text-sm font-medium text-slate-950">Invoices</p>
               </div>
               <div className="grid gap-4">
@@ -1289,12 +1319,22 @@ export default async function ProjectDetailPage({
                 badge={renderStatusBadge(formatStatusLabel(projectInvoices[0].status))}
               />
             ) : null}
+            {projectChangeOrders[0] ? (
+              <LinkedRecordCard
+                href={`/change-orders/${projectChangeOrders[0].id}`}
+                title={projectChangeOrders[0].title}
+                subtitle="Latest change order"
+                meta={`${formatMoney(projectChangeOrders[0].priceAdjustment)} | ${projectChangeOrders[0].invoice ? `Invoice ${projectChangeOrders[0].invoice.referenceNumber}` : "Project-linked scope change"}`}
+                badge={renderStatusBadge(formatStatusLabel(projectChangeOrders[0].status))}
+              />
+            ) : null}
             {!projectEstimates[0] &&
             !projectContracts[0] &&
             !projectJobs[0] &&
-            !projectInvoices[0] ? (
+            !projectInvoices[0] &&
+            !projectChangeOrders[0] ? (
               <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">
-                No related estimate, contract, job, or invoice has been created yet.
+                No related estimate, contract, change order, job, or invoice has been created yet.
               </div>
             ) : null}
           </div>

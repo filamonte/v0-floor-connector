@@ -48,6 +48,12 @@ export const projectInputSchema = z.object({
   )
 });
 
+export const projectQuickCreateInputSchema = z.object({
+  name: z.string().trim().min(1, "Project name is required.").max(160),
+  customerId: z.string().uuid("Select a valid customer.")
+});
+
 export type ProjectInput = z.infer<typeof projectInputSchema>;
+export type ProjectQuickCreateInput = z.infer<typeof projectQuickCreateInputSchema>;
 export const projectStatusesList = projectStatuses;
 export const financingStatusesList = financingStatuses;

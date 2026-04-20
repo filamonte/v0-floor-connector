@@ -185,6 +185,57 @@ type PortalInvoiceRow = {
     | null;
 };
 
+type PortalChangeOrderRow = {
+  id: string;
+  company_id: string;
+  customer_id: string;
+  project_id: string;
+  contract_id: string | null;
+  invoice_id: string | null;
+  applied_invoice_line_item_id: string | null;
+  status: "draft" | "sent" | "approved" | "rejected";
+  title: string;
+  description: string | null;
+  scope_change_notes: string | null;
+  price_adjustment: string | number;
+  decision_note: string | null;
+  sent_at: string | null;
+  customer_viewed_at: string | null;
+  approved_at: string | null;
+  rejected_at: string | null;
+  created_at: string;
+  updated_at: string;
+  customers?:
+    | {
+        id: string;
+        name: string;
+        company_name: string | null;
+      }
+    | null;
+  projects?:
+    | {
+        id: string;
+        name: string;
+        status: string;
+      }
+    | null;
+  contracts?:
+    | {
+        id: string;
+        title: string;
+        status: string;
+      }
+    | null;
+  invoices?:
+    | {
+        id: string;
+        reference_number: string;
+        status: string;
+        balance_due_amount: string | number;
+      }
+    | null;
+};
+
 type PortalInvoiceLineItemRow = {
   id: string;
   invoice_id: string;
@@ -334,6 +385,28 @@ export type PortalProjectInvoiceListItem = {
   balanceDueAmount: string;
   latestPaymentEventType: PaymentEventType | null;
   latestPaymentEventAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PortalProjectChangeOrderListItem = {
+  id: string;
+  organizationId: string;
+  customerId: string;
+  projectId: string;
+  contractId: string | null;
+  invoiceId: string | null;
+  appliedInvoiceLineItemId: string | null;
+  status: "draft" | "sent" | "approved" | "rejected";
+  title: string;
+  description: string | null;
+  scopeChangeNotes: string | null;
+  priceAdjustment: string;
+  decisionNote: string | null;
+  sentAt: string | null;
+  customerViewedAt: string | null;
+  approvedAt: string | null;
+  rejectedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -532,6 +605,49 @@ export type PortalInvoiceReviewDetail = {
   updatedAt: string;
 };
 
+export type PortalChangeOrderReviewDetail = {
+  id: string;
+  organizationId: string;
+  customerId: string;
+  projectId: string;
+  contractId: string | null;
+  invoiceId: string | null;
+  appliedInvoiceLineItemId: string | null;
+  status: "draft" | "sent" | "approved" | "rejected";
+  title: string;
+  description: string | null;
+  scopeChangeNotes: string | null;
+  priceAdjustment: string;
+  decisionNote: string | null;
+  sentAt: string | null;
+  customerViewedAt: string | null;
+  approvedAt: string | null;
+  rejectedAt: string | null;
+  customer: {
+    id: string;
+    name: string;
+    companyName: string | null;
+  } | null;
+  project: {
+    id: string;
+    name: string;
+    status: string;
+  } | null;
+  contract: {
+    id: string;
+    title: string;
+    status: string;
+  } | null;
+  invoice: {
+    id: string;
+    referenceNumber: string;
+    status: string;
+    balanceDueAmount: string;
+  } | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 type PortalScope = {
   userId: string;
   activeCustomerIds: string[];
@@ -660,6 +776,49 @@ const portalInvoiceSelect = `
   )
 `;
 
+const portalChangeOrderSelect = `
+  id,
+  company_id,
+  customer_id,
+  project_id,
+  contract_id,
+  invoice_id,
+  applied_invoice_line_item_id,
+  status,
+  title,
+  description,
+  scope_change_notes,
+  price_adjustment,
+  decision_note,
+  sent_at,
+  customer_viewed_at,
+  approved_at,
+  rejected_at,
+  created_at,
+  updated_at,
+  customers (
+    id,
+    name,
+    company_name
+  ),
+  projects (
+    id,
+    name,
+    status
+  ),
+  contracts (
+    id,
+    title,
+    status
+  ),
+  invoices (
+    id,
+    reference_number,
+    status,
+    balance_due_amount
+  )
+`;
+
 function formatMoney(value: string | number) {
   return Number(value).toFixed(2);
 }
@@ -702,6 +861,30 @@ function mapPortalPaymentEvent(row: PortalPaymentEventRow) {
     actorType: row.actor_type,
     occurredAt: row.occurred_at,
     payload: row.payload
+  };
+}
+
+function mapPortalProjectChangeOrder(row: PortalChangeOrderRow): PortalProjectChangeOrderListItem {
+  return {
+    id: row.id,
+    organizationId: row.company_id,
+    customerId: row.customer_id,
+    projectId: row.project_id,
+    contractId: row.contract_id,
+    invoiceId: row.invoice_id,
+    appliedInvoiceLineItemId: row.applied_invoice_line_item_id,
+    status: row.status,
+    title: row.title,
+    description: row.description,
+    scopeChangeNotes: row.scope_change_notes,
+    priceAdjustment: formatMoney(row.price_adjustment),
+    decisionNote: row.decision_note,
+    sentAt: row.sent_at,
+    customerViewedAt: row.customer_viewed_at,
+    approvedAt: row.approved_at,
+    rejectedAt: row.rejected_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
   };
 }
 
@@ -1256,6 +1439,33 @@ export async function listPortalProjectInvoices(
   });
 }
 
+export async function listPortalProjectChangeOrders(
+  projectId: string,
+  next = "/portal"
+): Promise<PortalProjectChangeOrderListItem[]> {
+  const scope = await getPortalScope(next);
+
+  if (!scope.accessibleProjectIds.includes(projectId)) {
+    return [];
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("change_orders")
+    .select(portalChangeOrderSelect)
+    .eq("project_id", projectId)
+    .order("updated_at", { ascending: false });
+  const rows = (response.data as PortalChangeOrderRow[] | null) ?? [];
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load portal change orders for the project: ${response.error.message}`
+    );
+  }
+
+  return rows.map(mapPortalProjectChangeOrder);
+}
+
 export async function getPortalEstimateReviewData(
   estimateId: string,
   next = "/portal"
@@ -1681,6 +1891,92 @@ export async function getPortalInvoiceReviewData(
     })),
     paymentEvents: paymentEventRows.map(mapPortalPaymentEvent),
     paymentWorkflow,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+export async function getPortalChangeOrderReviewData(
+  changeOrderId: string,
+  next = "/portal"
+): Promise<PortalChangeOrderReviewDetail | null> {
+  const scope = await getPortalScope(next);
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("change_orders")
+    .select(portalChangeOrderSelect)
+    .eq("id", changeOrderId)
+    .maybeSingle();
+  const row = response.data as PortalChangeOrderRow | null;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load the portal change order review data: ${response.error.message}`
+    );
+  }
+
+  if (!row || !scope.accessibleProjectIds.includes(row.project_id)) {
+    return null;
+  }
+
+  await createPortalRecordView(
+    {
+      companyId: row.company_id,
+      customerId: row.customer_id,
+      projectId: row.project_id,
+      subjectType: "change_order",
+      subjectId: row.id
+    },
+    next
+  );
+
+  return {
+    id: row.id,
+    organizationId: row.company_id,
+    customerId: row.customer_id,
+    projectId: row.project_id,
+    contractId: row.contract_id,
+    invoiceId: row.invoice_id,
+    appliedInvoiceLineItemId: row.applied_invoice_line_item_id,
+    status: row.status,
+    title: row.title,
+    description: row.description,
+    scopeChangeNotes: row.scope_change_notes,
+    priceAdjustment: formatMoney(row.price_adjustment),
+    decisionNote: row.decision_note,
+    sentAt: row.sent_at,
+    customerViewedAt: row.customer_viewed_at,
+    approvedAt: row.approved_at,
+    rejectedAt: row.rejected_at,
+    customer: row.customers
+      ? {
+          id: row.customers.id,
+          name: row.customers.name,
+          companyName: row.customers.company_name
+        }
+      : null,
+    project: row.projects
+      ? {
+          id: row.projects.id,
+          name: row.projects.name,
+          status: row.projects.status
+        }
+      : null,
+    contract: row.contracts
+      ? {
+          id: row.contracts.id,
+          title: row.contracts.title,
+          status: row.contracts.status
+        }
+      : null,
+    invoice: row.invoices
+      ? {
+          id: row.invoices.id,
+          referenceNumber: row.invoices.reference_number,
+          status: row.invoices.status,
+          balanceDueAmount: formatMoney(row.invoices.balance_due_amount)
+        }
+      : null,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };

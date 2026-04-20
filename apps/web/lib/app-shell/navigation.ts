@@ -62,6 +62,12 @@ export const protectedAppNavItems: readonly ProtectedAppNavItem[] = [
     section: "pipeline"
   },
   {
+    href: "/change-orders",
+    label: "Change Orders",
+    minRole: "member",
+    section: "pipeline"
+  },
+  {
     href: "/jobs",
     label: "Jobs",
     minRole: "member",

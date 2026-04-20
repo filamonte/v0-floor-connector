@@ -131,6 +131,48 @@ export async function createContractFromEstimateAction(formData: FormData) {
   );
 }
 
+export async function quickCreateContractFromEstimateAction(formData: FormData) {
+  const estimateId = getFieldValue(formData, "estimateId");
+  const templateId = getFieldValue(formData, "templateId");
+  const result = createContractFromEstimateInputSchema.safeParse({
+    estimateId,
+    templateId
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/contracts", {
+        compose: "1",
+        estimateId,
+        error: result.error.issues[0]?.message ?? "Unable to generate contract."
+      })
+    );
+  }
+
+  let contract;
+
+  try {
+    contract = await createContractFromEstimate(result.data);
+  } catch (error) {
+    redirect(
+      buildRedirect("/contracts", {
+        compose: "1",
+        estimateId,
+        error:
+          error instanceof Error ? error.message : "Unable to generate contract."
+      })
+    );
+  }
+
+  revalidateContractPaths(contract);
+
+  redirect(
+    buildRedirect(`/contracts/${contract.id}`, {
+      message: `${contract.title} was created. Finish the full contract review in this workspace.`
+    })
+  );
+}
+
 export async function updateContractDraftAction(formData: FormData) {
   const contractId = getFieldValue(formData, "contractId");
   const result = updateContractDraftInputSchema.safeParse({

@@ -1,7 +1,9 @@
 import Link from "next/link";
 
 import { AppEmptyState } from "@/components/app-empty-state";
+import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
 import { PersonForm } from "@/components/person-form";
+import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { createPersonAction } from "@/lib/people/actions";
 import { listPeople } from "@/lib/people/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
@@ -12,13 +14,39 @@ import { listVendors } from "@/lib/vendors/data";
 
 type PeoplePageProps = {
   searchParams?: Promise<{
+    compose?: string;
     error?: string;
     message?: string;
+    q?: string;
+    view?: "all" | "employees" | "subcontractors" | "active";
   }>;
 };
 
 function formatPersonTypeLabel(value: string) {
   return value === "subcontractor_worker" ? "Subcontractor worker" : "Employee";
+}
+
+function buildPeopleHref(input: {
+  q?: string;
+  view?: string;
+  compose?: string;
+}) {
+  const searchParams = new URLSearchParams();
+
+  if (input.q && input.q.trim().length > 0) {
+    searchParams.set("q", input.q.trim());
+  }
+
+  if (input.view && input.view !== "all") {
+    searchParams.set("view", input.view);
+  }
+
+  if (input.compose === "1") {
+    searchParams.set("compose", "1");
+  }
+
+  const query = searchParams.toString();
+  return query.length > 0 ? `/people?${query}` : "/people";
 }
 
 export default async function PeoplePage({ searchParams }: PeoplePageProps) {
@@ -42,6 +70,11 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
     listOrganizationMembers(organizationContext.organization.id)
   ]);
 
+  const query = resolvedSearchParams.q?.trim() ?? "";
+  const normalizedQuery = query.toLowerCase();
+  const view = resolvedSearchParams.view ?? "all";
+  const showComposer =
+    resolvedSearchParams.compose === "1" || Boolean(resolvedSearchParams.error);
   const employeeCount = people.filter((person) => person.personType === "employee").length;
   const subcontractorCount = people.length - employeeCount;
   const activeCount = people.filter((person) => person.isActive).length;
@@ -70,136 +103,235 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
     name: vendor.name,
     isLaborProvider: vendor.isLaborProvider
   }));
+  const filteredPeople = people.filter((person) => {
+    const matchesView =
+      view === "all"
+        ? true
+        : view === "employees"
+          ? person.personType === "employee"
+          : view === "subcontractors"
+            ? person.personType === "subcontractor_worker"
+            : person.isActive;
+    const matchesQuery =
+      normalizedQuery.length === 0
+        ? true
+        : [
+            person.displayName,
+            person.email ?? "",
+            person.phone ?? "",
+            person.jobTitle ?? "",
+            person.trade ?? "",
+            person.vendor?.name ?? "",
+            person.personType
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(normalizedQuery);
+
+    return matchesView && matchesQuery;
+  });
+  const peopleViews = [
+    { key: "all", label: "All people", count: people.length },
+    { key: "employees", label: "Employees", count: employeeCount },
+    { key: "subcontractors", label: "Subcontractors", count: subcontractorCount },
+    { key: "active", label: "Active", count: activeCount }
+  ] as const;
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
-      <section className="space-y-6">
-        <section className="rounded-[2rem] border border-slate-200 bg-white/92 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-700">
-            Workforce People
+    <ContractorWorkspacePage
+      eyebrow="People"
+      title={`Labor participants for ${organizationContext.organization.displayName}`}
+      description="Manage the shared people foundation for employees and vendor-linked subcontractor workers before time, compliance, and assignment workflows deepen."
+      summary={
+        <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-3">
+          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Employees</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{employeeCount}</p>
+          </div>
+          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Subcontractors</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{subcontractorCount}</p>
+          </div>
+          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Active</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{activeCount}</p>
+          </div>
+        </div>
+      }
+      commandBar={{
+        supportSlot: (
+          <p>
+            Search the workforce roster, switch between employee and subcontractor views, and open the people composer only when you need a new workforce record.
           </p>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-            Labor participants for {organizationContext.organization.displayName}
-          </h2>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-            Manage the shared people foundation for employees and vendor-linked subcontractor workers before time, compliance, and assignment workflows deepen.
-          </p>
+        ),
+        searchSlot: (
+          <form action="/people" className="flex flex-col gap-2 sm:flex-row">
+            {view !== "all" ? <input type="hidden" name="view" value={view} /> : null}
+            {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
+            <input
+              type="search"
+              name="q"
+              defaultValue={query}
+              placeholder="Search person, title, trade, vendor, or contact"
+              className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+            />
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            >
+              Search
+            </button>
+            {query.length > 0 || view !== "all" || showComposer ? (
+              <Link
+                href="/people"
+                className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
+              >
+                Clear
+              </Link>
+            ) : null}
+          </form>
+        ),
+        filterSlot: peopleViews.map((peopleView) => {
+          const isActive = view === peopleView.key;
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
-              <p className="text-sm font-medium text-slate-950">Employees</p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-                {employeeCount}
-              </p>
+          return (
+            <Link
+              key={peopleView.key}
+              href={buildPeopleHref({ q: query, view: peopleView.key, compose: showComposer ? "1" : undefined })}
+              className={[
+                "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
+                isActive
+                  ? "bg-[#233a64] text-white"
+                  : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
+              ].join(" ")}
+            >
+              <span>{peopleView.label}</span>
+              <span
+                className={[
+                  "rounded-full px-2 py-0.5 text-xs font-semibold",
+                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                ].join(" ")}
+              >
+                {peopleView.count}
+              </span>
+            </Link>
+          );
+        }),
+        actionSlot: (
+          <Link
+            href={buildPeopleHref({ q: query, view, compose: "1" }) + "#person-create"}
+            className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
+          >
+            New person
+          </Link>
+        )
+      }}
+    >
+      <div className={showComposer ? "grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_400px]" : "space-y-4"}>
+        <section className="space-y-6">
+          {resolvedSearchParams.error ? (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+              {resolvedSearchParams.error}
             </div>
-            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
-              <p className="text-sm font-medium text-slate-950">Subcontractor workers</p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-                {subcontractorCount}
-              </p>
-            </div>
-            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
-              <p className="text-sm font-medium text-slate-950">Active records</p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-                {activeCount}
-              </p>
-            </div>
-          </div>
-        </section>
+          ) : null}
 
-        {resolvedSearchParams.error ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
-            {resolvedSearchParams.error}
-          </div>
-        ) : null}
-
-        {resolvedSearchParams.message ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
-            {resolvedSearchParams.message}
-          </div>
-        ) : null}
-
-        <section className="rounded-[2rem] border border-slate-200 bg-white/92 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur">
-          <div className="border-b border-slate-200 px-6 py-5 sm:px-8">
-            <div className="hidden grid-cols-[minmax(0,1.2fr)_220px_180px] gap-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 md:grid">
-              <span>Person</span>
-              <span>Type and vendor</span>
-              <span className="text-right">Compliance</span>
+          {resolvedSearchParams.message ? (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+              {resolvedSearchParams.message}
             </div>
-            <div className="md:hidden">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                Workforce records
-              </p>
-            </div>
-          </div>
+          ) : null}
 
-          <div className="divide-y divide-slate-200">
-            {people.length > 0 ? (
-              people.map((person) => (
-                <Link
-                  key={person.id}
-                  href={`/people/${person.id}`}
-                  className="group block px-6 py-5 transition hover:bg-slate-50/70 sm:px-8"
-                >
-                  <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_220px_180px] md:items-start">
-                    <div className="min-w-0">
-                      <h3 className="text-base font-semibold text-slate-950 transition group-hover:text-brand-700">
-                        {person.displayName}
-                      </h3>
-                      <p className="mt-2 text-sm leading-6 text-slate-500">
-                        {person.email ?? person.phone ?? "No direct contact added yet"}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        {person.jobTitle ?? person.trade ?? "Role details not set"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                        Type
-                      </p>
-                      <p className="text-sm font-medium text-slate-700">
-                        {formatPersonTypeLabel(person.personType)}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        {person.vendor?.name ?? "Internal workforce"}
-                      </p>
-                    </div>
-                    <div className="md:text-right">
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                        Compliance
-                      </p>
-                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
-                        {complianceCountByPersonId.get(person.id) ?? 0} record
-                        {(complianceCountByPersonId.get(person.id) ?? 0) === 1 ? "" : "s"}
-                      </span>
-                      <p className="mt-2 text-sm leading-6 text-slate-500">
-                        {person.isActive ? "Active" : "Inactive"}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="px-6 py-8 sm:px-8">
-                <AppEmptyState
-                  eyebrow="No workforce records yet"
-                  title="Create the first person"
-                  description="People become the shared labor identity foundation for future compliance, time tracking, and assignment work."
-                />
+          <section className="border border-[#dde3eb] bg-white">
+            <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
+              <div className="flex items-end justify-between gap-4">
+                <div className="hidden grid-cols-[minmax(0,1.2fr)_220px_180px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
+                  <span>Person</span>
+                  <span>Type and vendor</span>
+                  <span className="text-right">Compliance</span>
+                </div>
+                <div className="md:hidden">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                    Workforce records
+                  </p>
+                </div>
+                <p className="text-sm leading-6 text-slate-500">
+                  {filteredPeople.length} visible
+                </p>
               </div>
-            )}
-          </div>
-        </section>
-      </section>
+            </div>
 
-      <aside className="rounded-[2rem] border border-slate-200 bg-white/88 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-700">
-          New Person
-        </p>
-        <p className="mt-4 text-sm leading-6 text-slate-600">
-          Add an employee or subcontractor worker using the same canonical people model.
-        </p>
-        <div className="mt-6">
+            <div className="divide-y divide-slate-200">
+              {filteredPeople.length > 0 ? (
+                filteredPeople.map((person) => (
+                  <Link
+                    key={person.id}
+                    href={`/people/${person.id}`}
+                    className="group block px-5 py-4 transition hover:bg-slate-50/70 sm:px-6"
+                  >
+                    <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_220px_180px] md:items-start">
+                      <div className="min-w-0">
+                        <h3 className="text-base font-semibold text-slate-950 transition group-hover:text-brand-700">
+                          {person.displayName}
+                        </h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                          {person.email ?? person.phone ?? "No direct contact added yet"}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {person.jobTitle ?? person.trade ?? "Role details not set"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                          Type
+                        </p>
+                        <p className="text-sm font-medium text-slate-700">
+                          {formatPersonTypeLabel(person.personType)}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {person.vendor?.name ?? "Internal workforce"}
+                        </p>
+                      </div>
+                      <div className="md:text-right">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                          Compliance
+                        </p>
+                        <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                          {complianceCountByPersonId.get(person.id) ?? 0} record
+                          {(complianceCountByPersonId.get(person.id) ?? 0) === 1 ? "" : "s"}
+                        </span>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                          {person.isActive ? "Active" : "Inactive"}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="px-6 py-8 sm:px-8">
+                  <AppEmptyState
+                    eyebrow={people.length > 0 ? "No matching workforce records" : "No workforce records yet"}
+                    title={people.length > 0 ? "Adjust the workforce filters" : "Create the first person"}
+                    description={
+                      people.length > 0
+                        ? "Try a broader search or switch views to find the workforce record you need."
+                        : "People become the shared labor identity foundation for future compliance, time tracking, and assignment work."
+                    }
+                  />
+                </div>
+              )}
+            </div>
+          </section>
+        </section>
+
+        <WorkspaceComposerSheet
+          id="person-create"
+          title="Create person"
+          description="Add an employee or subcontractor worker using the same canonical people model."
+          open={showComposer}
+          openHref={buildPeopleHref({ q: query, view, compose: "1" }) + "#person-create"}
+          closeHref={buildPeopleHref({ q: query, view })}
+          openLabel="Open people composer"
+        >
           <PersonForm
             action={createPersonAction}
             submitLabel="Create person"
@@ -207,8 +339,8 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
             vendors={vendorOptions}
             members={memberOptions}
           />
-        </div>
-      </aside>
-    </div>
+        </WorkspaceComposerSheet>
+      </div>
+    </ContractorWorkspacePage>
   );
 }

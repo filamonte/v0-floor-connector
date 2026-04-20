@@ -21,6 +21,7 @@ type EstimateBuilderProps = {
   action: (formData: FormData) => void | Promise<void>;
   projects: EstimateProjectOption[];
   initialProjectId?: string | null;
+  embedded?: boolean;
 };
 
 function createLineItem(id: string): EstimateBuilderLineItem {
@@ -48,7 +49,8 @@ function formatMoney(value: number) {
 export function EstimateBuilder({
   action,
   projects,
-  initialProjectId
+  initialProjectId,
+  embedded = false
 }: EstimateBuilderProps) {
   const [lineItems, setLineItems] = useState<EstimateBuilderLineItem[]>([
     createLineItem("line-0")
@@ -94,25 +96,55 @@ export function EstimateBuilder({
   }
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+    <section
+      className={
+        embedded
+          ? "space-y-6"
+          : "rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10"
+      }
+    >
       <form action={action} className="space-y-6">
         <input type="hidden" name="status" value="draft" />
 
-        <div className="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-start sm:justify-between">
+        <div
+          className={[
+            "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between",
+            embedded ? "border-b border-[#e5ebf2] pb-5" : "border-b border-slate-200 pb-6"
+          ].join(" ")}
+        >
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+            <p
+              className={[
+                "font-semibold uppercase",
+                embedded
+                  ? "text-[10px] tracking-[0.18em] text-[#6f7d92]"
+                  : "text-sm tracking-[0.24em] text-brand-700"
+              ].join(" ")}
+            >
               Estimate Builder
             </p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-              Build an estimate quickly
+            <h2
+              className={[
+                "font-semibold tracking-tight text-slate-950",
+                embedded ? "mt-2 text-xl" : "mt-3 text-3xl sm:text-4xl"
+              ].join(" ")}
+            >
+              Build an estimate
             </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
               Add real line items, keep the running total visible, and create a
               canonical estimate record tied to an existing project.
             </p>
           </div>
 
-          <div className="min-w-[220px] rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
+          <div
+            className={[
+              "min-w-[220px] px-5 py-4",
+              embedded
+                ? "rounded-[4px] border border-[#e5ebf2] bg-[#fbfcfe]"
+                : "rounded-2xl border border-slate-200 bg-slate-50"
+            ].join(" ")}
+          >
             <p className="text-sm font-medium text-slate-600">Estimate total</p>
             <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
               {formatMoney(total)}
@@ -153,7 +185,12 @@ export function EstimateBuilder({
             return (
               <div
                 key={lineItem.id}
-                className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5"
+                className={[
+                  "border p-5",
+                  embedded
+                    ? "rounded-[4px] border-[#e5ebf2] bg-[#fbfcfe]"
+                    : "rounded-2xl border-slate-200 bg-slate-50/70"
+                ].join(" ")}
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
@@ -235,7 +272,14 @@ export function EstimateBuilder({
                     />
                   </label>
 
-                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                  <div
+                    className={[
+                      "border bg-white px-4 py-3",
+                      embedded
+                        ? "rounded-[4px] border-[#e5ebf2]"
+                        : "rounded-2xl border-slate-200"
+                    ].join(" ")}
+                  >
                     <span className="block text-sm font-medium text-slate-800">
                       Total
                     </span>
@@ -256,7 +300,12 @@ export function EstimateBuilder({
           <button
             type="button"
             onClick={addLineItem}
-            className="inline-flex items-center justify-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+            className={[
+              "inline-flex items-center justify-center border px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50",
+              embedded
+                ? "rounded-[4px] border-[#dde3eb] bg-white hover:border-[#cfd8e4]"
+                : "rounded-full border-slate-300 hover:border-slate-400"
+            ].join(" ")}
           >
             Add line item
           </button>

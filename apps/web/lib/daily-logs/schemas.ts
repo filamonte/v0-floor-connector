@@ -89,4 +89,11 @@ export const dailyLogInputSchema = z
   });
 
 export type DailyLogInput = z.infer<typeof dailyLogInputSchema>;
+export const dailyLogQuickCreateInputSchema = z.object({
+  projectId: z.string().trim().uuid("Select a valid project."),
+  jobId: optionalUuidField("Select a valid job."),
+  logDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid log date.")
+});
+
+export type DailyLogQuickCreateInput = z.infer<typeof dailyLogQuickCreateInputSchema>;
 export const dailyLogStatusesList = dailyLogStatuses;

@@ -8,7 +8,7 @@ import {
   ensureOpportunityEstimateFlow,
   updateOpportunity
 } from "./data";
-import { opportunityInputSchema } from "./schemas";
+import { opportunityInputSchema, opportunityQuickCreateInputSchema } from "./schemas";
 
 function getFieldValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -56,6 +56,13 @@ function parseOpportunityInput(formData: FormData) {
   });
 }
 
+function parseOpportunityQuickCreateInput(formData: FormData) {
+  return opportunityQuickCreateInputSchema.safeParse({
+    title: getFieldValue(formData, "title"),
+    prospectName: getFieldValue(formData, "prospectName")
+  });
+}
+
 export async function createOpportunityAction(formData: FormData) {
   const result = parseOpportunityInput(formData);
 
@@ -85,6 +92,61 @@ export async function createOpportunityAction(formData: FormData) {
   redirect(
     buildRedirect("/leads", {
       message: `${opportunity.title} was created successfully.`
+    })
+  );
+}
+
+export async function quickCreateOpportunityAction(formData: FormData) {
+  const title = getFieldValue(formData, "title");
+  const result = parseOpportunityQuickCreateInput(formData);
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/leads", {
+        compose: "1",
+        error: result.error.issues[0]?.message ?? "Unable to create lead."
+      })
+    );
+  }
+
+  let opportunity;
+
+  try {
+    opportunity = await createOpportunity({
+      title: result.data.title,
+      status: "new",
+      source: null,
+      serviceType: null,
+      prospectName: result.data.prospectName,
+      prospectCompanyName: null,
+      email: null,
+      phone: null,
+      addressLine1: null,
+      addressLine2: null,
+      city: null,
+      stateRegion: null,
+      postalCode: null,
+      countryCode: null,
+      siteAssessmentScheduledOn: null,
+      siteAssessmentCompletedOn: null,
+      requirementsSummary: null,
+      notes: null
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/leads", {
+        compose: "1",
+        error: error instanceof Error ? error.message : "Unable to create lead."
+      })
+    );
+  }
+
+  revalidatePath("/leads");
+  revalidatePath(`/leads/${opportunity.id}`);
+
+  redirect(
+    buildRedirect(`/leads/${opportunity.id}`, {
+      message: `${title || opportunity.title} was created. Finish qualification and capture in this workspace.`
     })
   );
 }
