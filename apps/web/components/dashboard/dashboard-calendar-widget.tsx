@@ -95,29 +95,29 @@ export function DashboardCalendarWidget({
   }
 
   return (
-    <section className="overflow-hidden rounded-[4px] border border-[#dde2ea] bg-[#fcfcfd]">
-      <div className="flex items-center justify-between gap-2 border-b border-[#e7ebf1] px-3 py-2">
+    <section className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-black/5">
+      <div className="flex items-center justify-between gap-2 px-3 py-2">
         <button
           type="button"
           onClick={goToPreviousMonth}
           aria-label="Previous month"
-          className="inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-[#56657e] transition hover:bg-[#f2f5f9]"
+          className="inline-flex h-6 w-6 items-center justify-center rounded text-[#94a3b8] transition hover:text-[#64748b]"
         >
           <ChevronLeftIcon />
         </button>
-        <h2 className="text-[14px] font-semibold text-[#17243b]">{monthName}</h2>
+        <h2 className="text-sm font-semibold text-[#17243b]">{monthName}</h2>
         <button
           type="button"
           onClick={goToNextMonth}
           aria-label="Next month"
-          className="inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-[#56657e] transition hover:bg-[#f2f5f9]"
+          className="inline-flex h-6 w-6 items-center justify-center rounded text-[#94a3b8] transition hover:text-[#64748b]"
         >
           <ChevronRightIcon />
         </button>
       </div>
 
-      <div className="p-2">
-        <div className="grid grid-cols-7 gap-0.5 text-center text-[10px] font-semibold uppercase tracking-[0.1em] text-[#75859f]">
+      <div className="px-3 pb-3">
+        <div className="grid grid-cols-7 gap-0.5 text-center text-[9px] font-medium uppercase tracking-wider text-[#94a3b8]">
           {WEEKDAYS.map((day) => (
             <div key={day} className="py-1">
               {day}
@@ -128,7 +128,7 @@ export function DashboardCalendarWidget({
         <div className="mt-1 grid grid-cols-7 gap-0.5">
           {calendarDays.map((day, index) => {
             if (day === null) {
-              return <div key={`empty-${index}`} className="h-7" />;
+              return <div key={`empty-${index}`} className="h-6" />;
             }
 
             const isToday = isCurrentMonth && day === todayDate;
@@ -139,12 +139,12 @@ export function DashboardCalendarWidget({
                 key={day}
                 type="button"
                 className={[
-                  "flex h-7 w-full items-center justify-center rounded-[4px] text-[12px] font-medium transition",
+                  "flex h-6 w-full items-center justify-center rounded text-[11px] font-medium transition",
                   isToday
                     ? "bg-[#111111] text-white"
                     : isHighlighted
-                      ? "bg-[#ea580c] text-white"
-                      : "text-[#334155] hover:bg-[#f2f5f9]"
+                      ? "bg-[#ea580c]/10 text-[#ea580c]"
+                      : "text-[#334155] hover:bg-[#f1f5f9]"
                 ].join(" ")}
               >
                 {day}

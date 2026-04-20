@@ -121,24 +121,6 @@ function RefreshIcon() {
   );
 }
 
-function SmallIconButton({
-  children,
-  label
-}: {
-  children: ReactNode;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      className="inline-flex h-11 w-11 items-center justify-center rounded-[4px] border border-[#d9dee8] bg-[#fbfcfe] transition hover:bg-white"
-    >
-      {children}
-    </button>
-  );
-}
-
 function DashboardCard({
   title,
   href,
@@ -152,27 +134,27 @@ function DashboardCard({
 }) {
   return (
     <section
-      className={`overflow-hidden rounded-[4px] border border-[#dde2ea] bg-[#fcfcfd] ${className}`.trim()}
+      className={`overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-black/5 ${className}`.trim()}
     >
-      <div className="flex items-center justify-between gap-3 border-b border-[#e7ebf1] px-4 py-3">
-        <h2 className="text-[15px] font-semibold text-[#17243b]">{title}</h2>
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+        <h2 className="text-sm font-semibold text-[#17243b]">{title}</h2>
+        <div className="flex items-center gap-2">
           <button
             type="button"
             aria-label={`Refresh ${title}`}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-[#56657e] transition hover:bg-[#f2f5f9]"
+            className="inline-flex h-6 w-6 items-center justify-center rounded text-[#94a3b8] transition hover:text-[#64748b]"
           >
             <RefreshIcon />
           </button>
           <Link
             href={href}
-            className="text-xs font-medium text-[#415473] transition hover:text-[#22365d]"
+            className="text-xs font-medium text-[#ea580c] transition hover:text-[#c2410c]"
           >
-            View all
+            View
           </Link>
         </div>
       </div>
-      <div className="px-4 py-4">{children}</div>
+      <div className="px-4 pb-4">{children}</div>
     </section>
   );
 }
@@ -188,32 +170,32 @@ function DashboardList({
 }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-[4px] border border-dashed border-[#dde3eb] bg-[#f7f9fb] px-4 py-6 text-sm text-[#64748b]">
+      <div className="py-6 text-center text-sm text-[#94a3b8]">
         {emptyMessage}
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="divide-y divide-[#f1f5f9]">
       {items.map((item) => (
         <Link
           key={item.id}
           href={item.href}
-          className="block rounded-[4px] border border-[#edf0f4] bg-[#f8fafc] px-3.5 py-3 transition hover:border-[#d6dde8] hover:bg-white"
+          className="block py-2.5 transition first:pt-0 last:pb-0 hover:bg-[#fafafa]"
         >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="truncate text-[14px] font-medium text-[#17243b]">{item.title}</p>
-              <p className="mt-1 truncate text-[13px] text-[#64748b]">{item.subtitle}</p>
+              <p className="truncate text-[13px] font-medium text-[#17243b]">{item.title}</p>
+              <p className="mt-0.5 truncate text-[12px] text-[#64748b]">{item.subtitle}</p>
             </div>
             {showValues && item.valueLabel ? (
-              <span className="shrink-0 text-[14px] font-semibold text-[#1e3358]">
+              <span className="shrink-0 text-[13px] font-semibold text-[#17243b]">
                 {item.valueLabel}
               </span>
             ) : null}
           </div>
-          <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-[#75859f]">
+          <p className="mt-1 text-[10px] uppercase tracking-[0.1em] text-[#94a3b8]">
             {item.meta}
           </p>
         </Link>
@@ -228,36 +210,36 @@ function WorkflowPulse({
 }: Pick<ContractorDashboardSurfaceProps, "overviewCards" | "summary">) {
   return (
     <DashboardCard title="Workflow Pulse" href="/projects" className="xl:col-span-4">
-      <div className="grid gap-3">
+      <div className="space-y-2">
         {overviewCards.map((card) => (
           <Link
             key={card.label}
             href={card.href}
-            className="rounded-[4px] border border-[#edf0f4] bg-[#f8fafc] px-3.5 py-3 transition hover:border-[#d6dde8] hover:bg-white"
+            className="flex items-center justify-between gap-3 rounded-md px-3 py-2 transition hover:bg-[#f8fafc]"
           >
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-[14px] font-medium text-[#18243c]">{card.label}</p>
-              <span className="text-[20px] font-semibold text-[#22365d]">{card.value}</span>
+            <div className="min-w-0">
+              <p className="text-[13px] font-medium text-[#17243b]">{card.label}</p>
+              <p className="mt-0.5 text-[11px] text-[#94a3b8]">{card.detail}</p>
             </div>
-            <p className="mt-1.5 text-[12px] leading-5 text-[#69798f]">{card.detail}</p>
+            <span className="text-lg font-semibold text-[#17243b]">{card.value}</span>
           </Link>
         ))}
       </div>
 
-      <div className="mt-4 grid gap-3 border-t border-[#e7ebf1] pt-4 sm:grid-cols-2">
-        <div className="rounded-[4px] border border-[#edf0f4] bg-[#f8fafc] px-3.5 py-3">
-          <p className="text-[11px] uppercase tracking-[0.12em] text-[#75859f]">
-            Open receivables
+      <div className="mt-3 flex gap-3 border-t border-[#f1f5f9] pt-3">
+        <div className="flex-1 rounded-md bg-[#fafafa] px-3 py-2">
+          <p className="text-[10px] uppercase tracking-[0.1em] text-[#94a3b8]">
+            Receivables
           </p>
-          <p className="mt-2 text-[22px] font-semibold text-[#1d3157]">
+          <p className="mt-1 text-lg font-semibold text-[#17243b]">
             {summary.receivablesLabel}
           </p>
         </div>
-        <div className="rounded-[4px] border border-[#edf0f4] bg-[#f8fafc] px-3.5 py-3">
-          <p className="text-[11px] uppercase tracking-[0.12em] text-[#75859f]">
+        <div className="flex-1 rounded-md bg-[#fafafa] px-3 py-2">
+          <p className="text-[10px] uppercase tracking-[0.1em] text-[#94a3b8]">
             Active jobs
           </p>
-          <p className="mt-2 text-[22px] font-semibold text-[#1d3157]">
+          <p className="mt-1 text-lg font-semibold text-[#17243b]">
             {summary.activeJobsLabel}
           </p>
         </div>
@@ -275,46 +257,46 @@ function MyTimeThisWeek({
 }) {
   return (
     <DashboardCard title="My Time This Week" href="/time" className="xl:col-span-4">
-      <div className="grid gap-3 sm:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[4px] border border-[#edf0f4] bg-[#f8fafc] px-4 py-4">
-          <p className="text-[11px] uppercase tracking-[0.12em] text-[#75859f]">
+      <div className="grid gap-4 sm:grid-cols-[1.1fr_0.9fr]">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.1em] text-[#94a3b8]">
             Worked today
           </p>
-          <div className="mt-3 flex items-end justify-between gap-4">
-            <p className="text-[36px] font-semibold leading-none text-[#1f335a]">
+          <div className="mt-2 flex items-end justify-between gap-4">
+            <p className="text-3xl font-semibold text-[#17243b]">
               {summary.workedTodayLabel}
             </p>
-            <div className="flex h-16 w-16 items-center justify-center rounded-full border-[6px] border-[#d5e0f5] border-r-[#29426d] text-[10px] font-semibold uppercase tracking-[0.12em] text-[#29426d]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full border-4 border-[#f1f5f9] border-r-[#ea580c] text-[9px] font-semibold uppercase tracking-[0.1em] text-[#ea580c]">
               Live
             </div>
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-[4px] border border-[#e6ebf2] bg-white px-3 py-2.5">
-              <p className="text-[11px] uppercase tracking-[0.12em] text-[#7a8aa3]">
-                Open sessions
+          <div className="mt-3 flex gap-3">
+            <div className="flex-1 rounded-md bg-[#fafafa] px-3 py-2">
+              <p className="text-[10px] uppercase tracking-[0.1em] text-[#94a3b8]">
+                Sessions
               </p>
-              <p className="mt-1 text-[18px] font-semibold text-[#20345a]">
+              <p className="mt-1 text-base font-semibold text-[#17243b]">
                 {summary.openSessionsLabel}
               </p>
             </div>
-            <div className="rounded-[4px] border border-[#e6ebf2] bg-white px-3 py-2.5">
-              <p className="text-[11px] uppercase tracking-[0.12em] text-[#7a8aa3]">
-                Active jobs
+            <div className="flex-1 rounded-md bg-[#fafafa] px-3 py-2">
+              <p className="text-[10px] uppercase tracking-[0.1em] text-[#94a3b8]">
+                Jobs
               </p>
-              <p className="mt-1 text-[18px] font-semibold text-[#20345a]">
+              <p className="mt-1 text-base font-semibold text-[#17243b]">
                 {summary.activeJobsLabel}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-[4px] border border-[#edf0f4] bg-[#fbfcfe] px-3.5 py-3.5">
-          <p className="mb-3 text-[11px] uppercase tracking-[0.12em] text-[#75859f]">
+        <div>
+          <p className="mb-2 text-[10px] uppercase tracking-[0.1em] text-[#94a3b8]">
             Who is clocked in
           </p>
           <DashboardList
             items={items}
-            emptyMessage="Nobody is clocked in right now."
+            emptyMessage="Nobody clocked in."
           />
         </div>
       </div>
@@ -353,19 +335,33 @@ export function ContractorDashboardSurface({
 
   return (
     <div className="-mx-5 space-y-0 sm:-mx-8">
-      <div className="border-y border-[#d6dbe4] bg-[linear-gradient(180deg,#f6f8fb_0%,#eef2f7_100%)] px-4 py-5 sm:px-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#586b89]">
-              Shared job lifecycle
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#17243b]">
+      <div className="border-b border-[#e5e7eb] bg-white px-4 py-3 sm:px-6">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
+            <h2 className="text-lg font-semibold text-[#17243b]">
               {header.organizationName}
             </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#5f6f85]">
-              Commercial work, operations, billing, and field execution stay on the same record chain instead of splitting across separate modules.
+            <span className="hidden text-sm text-[#64748b] lg:inline">|</span>
+            <p className="hidden text-sm text-[#64748b] lg:inline">
+              Unified workflow
             </p>
           </div>
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[#64748b]">Role:</span>
+              <span className="font-medium text-[#17243b]">{header.roleLabel}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[#64748b]">Customers:</span>
+              <span className="font-medium text-[#17243b]">{header.customerCount}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[#64748b]">Projects:</span>
+              <span className="font-medium text-[#17243b]">{header.projectCount}</span>
+            </div>
+          </div>
+        </div>
+      </div>
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="rounded-[4px] border border-[#dde3eb] bg-white px-3.5 py-3">
               <p className="text-[11px] uppercase tracking-[0.12em] text-[#75859f]">Role</p>
@@ -383,11 +379,11 @@ export function ContractorDashboardSurface({
         </div>
       </div>
 
-      <div className="overflow-hidden border-y border-[#d6dbe4] bg-[#eef1f5]">
-        <div className="border-b border-[#d9dee8] bg-[#fbfcfe] px-4 py-3 sm:px-6">
+      <div className="overflow-hidden bg-[#f8fafc]">
+        <div className="border-b border-[#e5e7eb] bg-white px-4 py-2.5 sm:px-6">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
             <label className="relative min-w-0 flex-1">
-              <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
                 <SearchIcon />
               </span>
               <input
@@ -399,26 +395,30 @@ export function ContractorDashboardSurface({
                     setQuery(nextValue);
                   });
                 }}
-                placeholder="Search dashboard activity"
-                className="h-11 w-full rounded-[4px] border border-[#d9dee8] bg-white pl-12 pr-4 text-[15px] text-[#17243b] outline-none placeholder:text-[#8a97ad] focus:border-[#9fb0cb]"
+                placeholder="Search dashboard..."
+                className="h-9 w-full rounded-md border border-[#e5e7eb] bg-[#fafafa] pl-10 pr-4 text-sm text-[#17243b] outline-none placeholder:text-[#94a3b8] focus:border-[#ea580c] focus:ring-1 focus:ring-[#ea580c]"
               />
             </label>
 
             <div className="flex items-center gap-2">
-              <div className="hidden items-center gap-2 pr-2 text-[11px] text-[#6f7d92] lg:flex">
-                <span className="rounded-[4px] border border-[#dde3eb] bg-white px-2 py-1">
-                  Live dashboard
-                </span>
-              </div>
-              <SmallIconButton label="Grid view">
+              <span className="hidden text-xs text-[#94a3b8] lg:inline">Live</span>
+              <button
+                type="button"
+                aria-label="Grid view"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md text-[#64748b] transition hover:bg-[#f1f5f9]"
+              >
                 <GridIcon />
-              </SmallIconButton>
-              <SmallIconButton label="Filter dashboard">
+              </button>
+              <button
+                type="button"
+                aria-label="Filter"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md text-[#64748b] transition hover:bg-[#f1f5f9]"
+              >
                 <FilterIcon />
-              </SmallIconButton>
+              </button>
               <UniversalCreateMenu
                 buttonLabel="Create"
-                buttonClassName="inline-flex h-11 items-center rounded-[4px] border border-[#d7ddea] bg-[#f4f7fb] px-4 text-[15px] font-medium text-[#111111] transition hover:bg-white"
+                buttonClassName="inline-flex h-9 items-center rounded-md bg-[#111111] px-4 text-sm font-medium text-white transition hover:bg-[#292929]"
               />
             </div>
           </div>

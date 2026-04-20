@@ -117,34 +117,34 @@ export function DashboardWeatherWidget({
   forecast = DEFAULT_FORECAST
 }: DashboardWeatherWidgetProps) {
   return (
-    <section className="overflow-hidden rounded-[4px] border border-[#dde2ea] bg-[#fcfcfd]">
-      <div className="flex items-center justify-between gap-3 border-b border-[#e7ebf1] px-4 py-3">
-        <h2 className="text-[15px] font-semibold text-[#17243b]">Next Hour: {currentCondition}</h2>
-        <span className="text-[11px] text-[#64748b]">{currentTemp}°F</span>
+    <section className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-black/5">
+      <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+        <h2 className="text-sm font-semibold text-[#17243b]">{currentCondition}</h2>
+        <span className="text-sm font-medium text-[#ea580c]">{currentTemp}°F</span>
       </div>
 
-      <div className="p-3">
-        <div className="grid grid-cols-7 gap-1">
+      <div className="px-3 pb-3">
+        <div className="grid grid-cols-7 gap-0.5">
           {forecast.map((day) => (
             <div
               key={day.day}
-              className="flex flex-col items-center gap-1 rounded-[4px] px-1 py-2"
+              className="flex flex-col items-center gap-0.5 py-1"
             >
-              <span className="text-[10px] font-semibold uppercase text-[#64748b]">
+              <span className="text-[9px] font-medium uppercase tracking-wider text-[#94a3b8]">
                 {day.day}
               </span>
               <WeatherIcon condition={day.condition} />
-              <div className="mt-1 text-center">
-                <span className="block text-[11px] font-semibold text-[#17243b]">
+              <div className="text-center">
+                <span className="block text-[10px] font-semibold text-[#17243b]">
                   {day.high}°
                 </span>
-                <span className="block text-[10px] text-[#94a3b8]">{day.low}°</span>
+                <span className="block text-[9px] text-[#94a3b8]">{day.low}°</span>
               </div>
             </div>
           ))}
         </div>
 
-        <p className="mt-2 text-[11px] text-[#64748b]">
+        <p className="mt-2 text-[10px] text-[#94a3b8]">
           Warming up with a chance of rain Saturday.
         </p>
       </div>

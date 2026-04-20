@@ -64,46 +64,40 @@ export function DashboardAppointmentsWidget({
   appointments = DEFAULT_APPOINTMENTS
 }: DashboardAppointmentsWidgetProps) {
   return (
-    <section className="overflow-hidden rounded-[4px] border border-[#dde2ea] bg-[#fcfcfd]">
-      <div className="flex items-center justify-between gap-3 border-b border-[#e7ebf1] px-4 py-3">
-        <h2 className="text-[15px] font-semibold text-[#17243b]">My Appointments</h2>
+    <section className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-black/5">
+      <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+        <h2 className="text-sm font-semibold text-[#17243b]">Appointments</h2>
         <button
           type="button"
           aria-label="Refresh appointments"
-          className="inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-[#56657e] transition hover:bg-[#f2f5f9]"
+          className="inline-flex h-6 w-6 items-center justify-center rounded text-[#94a3b8] transition hover:text-[#64748b]"
         >
           <RefreshIcon />
         </button>
       </div>
 
-      <div className="p-3">
+      <div className="px-3 pb-3">
         {appointments.length === 0 ? (
-          <div className="rounded-[4px] border border-dashed border-[#dde3eb] bg-[#f7f9fb] px-4 py-6 text-center text-sm text-[#64748b]">
+          <div className="py-6 text-center text-sm text-[#94a3b8]">
             No upcoming appointments
           </div>
         ) : (
-          <div className="divide-y divide-[#edf0f4]">
-            <div className="grid grid-cols-[auto_1fr_auto] gap-3 px-1 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#75859f]">
-              <span>Date</span>
-              <span>Subject</span>
-              <span>Time</span>
-            </div>
+          <div className="space-y-2">
             {appointments.map((appointment) => (
               <Link
                 key={appointment.id}
                 href="/schedule"
-                className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[4px] px-1 py-2 transition hover:bg-[#f8fafc]"
+                className="flex items-center gap-3 rounded-md p-2 transition hover:bg-[#fafafa]"
               >
-                <div className="flex h-10 w-10 flex-col items-center justify-center rounded-[4px] bg-[#ea580c] text-white">
-                  <span className="text-[14px] font-bold leading-none">{appointment.date}</span>
-                  <span className="text-[9px] uppercase">{appointment.dateLabel}</span>
+                <div className="flex h-10 w-10 flex-col items-center justify-center rounded-md bg-[#ea580c] text-white">
+                  <span className="text-sm font-bold leading-none">{appointment.date}</span>
+                  <span className="text-[8px] uppercase tracking-wider">{appointment.dateLabel}</span>
                 </div>
-                <span className="truncate text-[13px] font-medium text-[#17243b]">
-                  {appointment.subject}
-                </span>
-                <div className="flex items-center gap-1 text-[12px] text-[#64748b]">
-                  <ClockIcon />
-                  <span>{appointment.time}</span>
+                <div className="min-w-0 flex-1">
+                  <span className="block truncate text-[12px] font-medium text-[#17243b]">
+                    {appointment.subject}
+                  </span>
+                  <span className="text-[11px] text-[#94a3b8]">{appointment.time}</span>
                 </div>
               </Link>
             ))}

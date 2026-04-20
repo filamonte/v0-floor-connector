@@ -72,42 +72,34 @@ export function DashboardUnpaidInvoicesWidget({
   invoices = DEFAULT_INVOICES
 }: DashboardUnpaidInvoicesWidgetProps) {
   return (
-    <section className="overflow-hidden rounded-[4px] border border-[#dde2ea] bg-[#fcfcfd]">
-      <div className="flex items-center justify-between gap-3 border-b border-[#e7ebf1] px-4 py-3">
-        <h2 className="text-[15px] font-semibold text-[#17243b]">Unpaid Invoices</h2>
+    <section className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-black/5">
+      <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+        <h2 className="text-sm font-semibold text-[#17243b]">Unpaid Invoices</h2>
         <button
           type="button"
           aria-label="Refresh unpaid invoices"
-          className="inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-[#56657e] transition hover:bg-[#f2f5f9]"
+          className="inline-flex h-6 w-6 items-center justify-center rounded text-[#94a3b8] transition hover:text-[#64748b]"
         >
           <RefreshIcon />
         </button>
       </div>
 
-      <div className="p-2">
+      <div className="px-4 pb-4">
         {invoices.length === 0 ? (
-          <div className="rounded-[4px] border border-dashed border-[#dde3eb] bg-[#f7f9fb] px-4 py-6 text-center text-sm text-[#64748b]">
+          <div className="py-6 text-center text-sm text-[#94a3b8]">
             No unpaid invoices
           </div>
         ) : (
-          <div className="divide-y divide-[#edf0f4]">
-            <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#75859f]">
-              <span>Customer</span>
-              <span className="w-24 text-center">Due Date</span>
-              <span className="w-24 text-right">Total</span>
-            </div>
-            {invoices.map((invoice) => (
+          <div className="divide-y divide-[#f1f5f9]">
+            {invoices.slice(0, 6).map((invoice) => (
               <Link
                 key={invoice.id}
                 href="/invoices"
-                className="grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-[4px] px-2 py-2 transition hover:bg-[#f8fafc]"
+                className="flex items-center gap-3 py-2 transition first:pt-0 last:pb-0 hover:bg-[#fafafa]"
               >
-                <span className="truncate text-[12px] text-[#17243b]">{invoice.customer}</span>
-                <div className="flex w-24 items-center justify-center gap-1 text-[11px] text-[#64748b]">
-                  <CalendarIcon />
-                  <span>{invoice.dueDate}</span>
-                </div>
-                <span className="w-24 text-right text-[12px] font-semibold text-[#17243b]">
+                <span className="min-w-0 flex-1 truncate text-[12px] text-[#17243b]">{invoice.customer}</span>
+                <span className="text-[11px] text-[#94a3b8]">{invoice.dueDate}</span>
+                <span className="text-[12px] font-semibold text-[#17243b]">
                   {formatCurrency(invoice.total)}
                 </span>
               </Link>

@@ -151,59 +151,39 @@ const DEFAULT_TODOS: TodoItem[] = [
 
 export function DashboardTodosWidget({ todos = DEFAULT_TODOS }: DashboardTodosWidgetProps) {
   return (
-    <section className="overflow-hidden rounded-[4px] border border-[#dde2ea] bg-[#fcfcfd]">
-      <div className="flex items-center justify-between gap-3 border-b border-[#e7ebf1] px-4 py-3">
-        <h2 className="text-[15px] font-semibold text-[#17243b]">To-Do&apos;s</h2>
+    <section className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-black/5">
+      <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+        <h2 className="text-sm font-semibold text-[#17243b]">To-Do&apos;s</h2>
         <button
           type="button"
           aria-label="Refresh todos"
-          className="inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-[#56657e] transition hover:bg-[#f2f5f9]"
+          className="inline-flex h-6 w-6 items-center justify-center rounded text-[#94a3b8] transition hover:text-[#64748b]"
         >
           <RefreshIcon />
         </button>
       </div>
 
-      <div className="p-2">
+      <div className="px-3 pb-3">
         {todos.length === 0 ? (
-          <div className="rounded-[4px] border border-dashed border-[#dde3eb] bg-[#f7f9fb] px-4 py-6 text-center text-sm text-[#64748b]">
+          <div className="py-6 text-center text-sm text-[#94a3b8]">
             No pending to-dos
           </div>
         ) : (
-          <div className="space-y-1">
-            <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#75859f]">
-              <span>Task</span>
-              <span>Assigned</span>
-              <span className="w-20 text-center">Due Date</span>
-              <span className="w-5" />
-              <span className="w-5" />
-            </div>
-            {todos.map((todo) => (
+          <div className="space-y-0.5">
+            {todos.slice(0, 5).map((todo) => (
               <Link
                 key={todo.id}
                 href="/projects"
-                className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 rounded-[4px] px-2 py-2 transition hover:bg-[#f8fafc]"
+                className="flex items-center gap-2 rounded px-2 py-1.5 transition hover:bg-[#fafafa]"
               >
-                <span className="truncate text-[13px] text-[#17243b]">{todo.task}</span>
+                <span className="min-w-0 flex-1 truncate text-[12px] text-[#17243b]">{todo.task}</span>
                 <div className="flex items-center gap-1">
                   {todo.assignedInitials ? (
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#3b82f6] text-[10px] font-semibold text-white">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#3b82f6] text-[9px] font-semibold text-white">
                       {todo.assignedInitials}
                     </span>
                   ) : null}
-                  {todo.assignedCount > 0 ? (
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#10b981] text-[10px] font-semibold text-white">
-                      +{todo.assignedCount}
-                    </span>
-                  ) : null}
-                </div>
-                <div className="flex w-20 items-center gap-1 text-[11px] text-[#64748b]">
-                  <CalendarIcon />
-                  <span>{todo.dueDate}</span>
-                </div>
-                <div className="flex w-5 items-center justify-center">
                   {todo.isPastDue ? <ClockAlertIcon /> : null}
-                </div>
-                <div className="flex w-5 items-center justify-center">
                   {todo.isFlagged ? <FlagIcon /> : null}
                 </div>
               </Link>

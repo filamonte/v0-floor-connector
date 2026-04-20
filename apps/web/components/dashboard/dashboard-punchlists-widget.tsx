@@ -37,55 +37,36 @@ export function DashboardPunchlistsWidget({
   punchlists = DEFAULT_PUNCHLISTS
 }: DashboardPunchlistsWidgetProps) {
   return (
-    <section className="overflow-hidden rounded-[4px] border border-[#dde2ea] bg-[#fcfcfd]">
-      <div className="flex items-center justify-between gap-3 border-b border-[#e7ebf1] px-4 py-3">
-        <h2 className="text-[15px] font-semibold text-[#17243b]">Open Punchlists</h2>
+    <section className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-black/5">
+      <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+        <h2 className="text-sm font-semibold text-[#17243b]">Open Punchlists</h2>
         <button
           type="button"
           aria-label="Refresh punchlists"
-          className="inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-[#56657e] transition hover:bg-[#f2f5f9]"
+          className="inline-flex h-6 w-6 items-center justify-center rounded text-[#94a3b8] transition hover:text-[#64748b]"
         >
           <RefreshIcon />
         </button>
       </div>
 
-      <div className="p-3">
+      <div className="px-4 pb-4">
         {punchlists.length === 0 ? (
-          <div className="space-y-2">
-            <div className="grid grid-cols-3 gap-2 px-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#75859f]">
-              <span>Date</span>
-              <span>Project</span>
-              <span>Title</span>
-            </div>
-            <div className="h-px bg-[#edf0f4]" />
-            <div className="space-y-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="grid grid-cols-3 gap-2 px-1 py-1.5">
-                  <div className="h-4 animate-pulse rounded bg-[#e5e7eb]" />
-                  <div className="h-4 animate-pulse rounded bg-[#e5e7eb]" />
-                  <div className="h-4 animate-pulse rounded bg-[#e5e7eb]" />
-                </div>
-              ))}
-            </div>
+          <div className="py-6 text-center text-sm text-[#94a3b8]">
+            No open punchlists
           </div>
         ) : (
-          <div className="divide-y divide-[#edf0f4]">
-            <div className="grid grid-cols-3 gap-2 px-1 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#75859f]">
-              <span>Date</span>
-              <span>Project</span>
-              <span>Title</span>
-            </div>
+          <div className="divide-y divide-[#f1f5f9]">
             {punchlists.map((item) => (
               <Link
                 key={item.id}
                 href="/projects"
-                className="grid grid-cols-3 items-center gap-2 rounded-[4px] px-1 py-2 transition hover:bg-[#f8fafc]"
+                className="flex items-center gap-3 py-2 transition first:pt-0 last:pb-0 hover:bg-[#fafafa]"
               >
-                <span className="text-[12px] text-[#64748b]">{item.date}</span>
-                <span className="truncate text-[12px] font-medium text-[#17243b]">
+                <span className="text-[11px] text-[#94a3b8]">{item.date}</span>
+                <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-[#17243b]">
                   {item.project}
                 </span>
-                <span className="truncate text-[12px] text-[#334155]">{item.title}</span>
+                <span className="truncate text-[12px] text-[#64748b]">{item.title}</span>
               </Link>
             ))}
           </div>
