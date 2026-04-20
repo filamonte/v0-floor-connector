@@ -495,7 +495,7 @@ export default async function EstimateDetailPage({
                     meta={job.scheduledDate ? `Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}` : "Unscheduled"}
                     badge={
                       <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
-                        {formatStatusLabel(job.status)}
+                        {formatStatusLabel(job.dispatchStatus)}
                       </span>
                     }
                   />

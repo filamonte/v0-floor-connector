@@ -39,7 +39,7 @@ type FieldNoteRow = {
   jobs?:
     | {
         id: string;
-        status: string;
+        dispatch_status: string;
       }
     | null;
   people?:
@@ -68,7 +68,7 @@ export type FieldNoteListItem = FieldNoteRecord & {
   } | null;
   job: {
     id: string;
-    status: string;
+    dispatchStatus: string;
   } | null;
   person: {
     id: string;
@@ -108,7 +108,7 @@ const fieldNoteSelect = `
   ),
   jobs (
     id,
-    status
+    dispatch_status
   ),
   people (
     id,
@@ -185,7 +185,7 @@ function mapFieldNoteListItem(row: FieldNoteRow): FieldNoteListItem {
     job: row.jobs
       ? {
           id: row.jobs.id,
-          status: row.jobs.status
+          dispatchStatus: row.jobs.dispatch_status
         }
       : null,
     person: row.people

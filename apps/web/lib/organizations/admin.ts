@@ -57,6 +57,7 @@ export async function updateOrganizationProfile(input: {
   legalName: string;
   displayName: string;
   slug: string;
+  logoUrl: string | null;
 }) {
   const supabase = getSupabaseAdminClient();
   const response = await supabase
@@ -65,10 +66,11 @@ export async function updateOrganizationProfile(input: {
       legal_name: input.legalName,
       display_name: input.displayName,
       slug: input.slug,
+      logo_url: input.logoUrl,
       updated_by: input.userId
     })
     .eq("id", input.organizationId)
-    .select("id, slug, legal_name, display_name, tenant_status, lifecycle_state, created_at, updated_at")
+    .select("id, slug, legal_name, display_name, logo_url, tenant_status, lifecycle_state, created_at, updated_at")
     .single();
 
   if (response.error) {

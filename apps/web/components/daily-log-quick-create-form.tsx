@@ -15,7 +15,7 @@ type JobOption = {
   id: string;
   projectId: string;
   label: string;
-  status: string;
+  dispatchStatus: string;
 };
 
 type DailyLogQuickCreateFormProps = {
@@ -83,7 +83,7 @@ export function DailyLogQuickCreateForm({
               <option value="">Project-level day</option>
               {filteredJobs.map((job) => (
                 <option key={job.id} value={job.id}>
-                  {job.label} | {job.status.replaceAll("_", " ")}
+                  {job.label} | {job.dispatchStatus.replaceAll("_", " ")}
                 </option>
               ))}
             </select>

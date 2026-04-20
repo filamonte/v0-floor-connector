@@ -103,12 +103,12 @@ export default async function TimePage({ searchParams }: TimePageProps) {
   const nextAction =
     openStates.length > 0
       ? {
-          title: "Track the next punch event",
+          title: "Requires follow-up: track the next punch event",
           description:
             "Open sessions already exist, so the highest-value action is recording the next punch-out or break event cleanly on the canonical log."
         }
       : {
-          title: "Record the next punch in",
+          title: "Ready: record the next punch in",
           description:
             "No sessions are currently open, so the next operational step is starting the next workforce time event with the right person and attribution."
         };
@@ -161,14 +161,14 @@ export default async function TimePage({ searchParams }: TimePageProps) {
     id: job.id,
     projectId: job.projectId,
     label: job.project?.name ?? "Job",
-    status: job.status
+    dispatchStatus: job.dispatchStatus
   }));
 
   return (
     <ContractorWorkspacePage
       eyebrow="Time Tracking"
       title={`Workforce time for ${organizationContext.organization.displayName}`}
-      description="Capture audit-friendly punch events and review derived time cards without stepping into payroll, field logs, or scheduling workflows yet."
+      description="Capture audit-friendly punch events on the same project and job chain that drives scheduling, daily logs, and downstream execution review."
       summary={
         <WorkspaceSummaryBand
           className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,1fr)]"
@@ -218,7 +218,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
       commandBar={{
         supportSlot: (
           <p>
-            Review open punch state, search recent time cards, and open the punch composer only when you are ready to record the next event.
+            Review open punch state, confirm project or job attribution, and record the next event so labor stays connected to the same operational record chain.
           </p>
         ),
         searchSlot: (
@@ -329,7 +329,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                         </p>
                         <p className="mt-1 text-sm leading-6 text-slate-600">
                           {state.project?.name ?? "No project selected"}
-                          {state.job ? ` | Job ${state.job.id.slice(0, 8)}` : ""}
+                          {state.job ? ` | Job ${state.job.id.slice(0, 8)} in the same execution chain` : " | Project-level time continuity"}
                         </p>
                       </div>
                       <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
@@ -397,7 +397,9 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                           {timeCard.project?.name ?? "No project"}
                         </p>
                         <p className="mt-1 text-sm leading-6 text-slate-500">
-                          {timeCard.job ? `Job ${timeCard.job.id.slice(0, 8)}` : "No job"}
+                          {timeCard.job
+                            ? `Job ${timeCard.job.id.slice(0, 8)} · flows into daily logs and job review`
+                            : "Project-level attribution · still tied to the same project history"}
                         </p>
                       </div>
                       <div>

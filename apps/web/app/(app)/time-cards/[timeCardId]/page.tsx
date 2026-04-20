@@ -196,7 +196,7 @@ export default async function TimeCardDetailPage({
                 href={`/jobs/${timeCard.job.id}`}
                 title={`Job ${timeCard.job.id.slice(0, 8)}`}
                 subtitle="Job"
-                meta={timeCard.job.status.replaceAll("_", " ")}
+                meta={timeCard.job.dispatchStatus.replaceAll("_", " ")}
               />
             ) : null}
           </div>

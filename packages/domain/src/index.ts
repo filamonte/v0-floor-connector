@@ -23,6 +23,7 @@ import type {
   InvoiceStatus,
   InvoiceWorkflowRole,
   JobStatus,
+  JobAssignmentRole,
   MembershipRole,
   MembershipStatus,
   PaymentEventActorType,
@@ -150,9 +151,14 @@ export const jobStatuses = [
   "unscheduled",
   "scheduled",
   "in_progress",
-  "completed",
-  "canceled"
+  "completed"
 ] as const satisfies readonly JobStatus[];
+
+export const jobAssignmentRoles = [
+  "lead",
+  "crew",
+  "subcontractor"
+] as const satisfies readonly JobAssignmentRole[];
 
 export const invoiceStatuses = [
   "draft",
@@ -462,8 +468,7 @@ export const jobStatusRank: Record<JobStatus, number> = {
   unscheduled: 0,
   scheduled: 1,
   in_progress: 2,
-  completed: 3,
-  canceled: 4
+  completed: 3
 };
 
 export const invoiceStatusRank: Record<InvoiceStatus, number> = {

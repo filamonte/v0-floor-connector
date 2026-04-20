@@ -5,7 +5,7 @@ import { AuthSubmitButton } from "@/components/auth-submit-button";
 type JobOption = {
   id: string;
   label: string;
-  status: string;
+  dispatchStatus: string;
 };
 
 type PersonOption = {
@@ -103,7 +103,7 @@ export function FieldNoteForm({
             <option value="">Project-level note</option>
             {jobs.map((job) => (
               <option key={job.id} value={job.id}>
-                {job.label} | {job.status.replaceAll("_", " ")}
+                {job.label} | {job.dispatchStatus.replaceAll("_", " ")}
               </option>
             ))}
           </select>

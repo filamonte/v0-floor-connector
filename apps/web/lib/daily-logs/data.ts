@@ -48,7 +48,7 @@ type DailyLogRow = {
   jobs?:
     | {
         id: string;
-        status: string;
+        dispatch_status: string;
       }
     | null;
 };
@@ -60,7 +60,7 @@ export type DailyLogListItem = DailyLogRecord & {
   } | null;
   job: {
     id: string;
-    status: string;
+    dispatchStatus: string;
   } | null;
 };
 
@@ -92,7 +92,7 @@ const dailyLogSelect = `
   ),
   jobs (
     id,
-    status
+    dispatch_status
   )
 `;
 
@@ -154,7 +154,7 @@ function mapDailyLogListItem(row: DailyLogRow): DailyLogListItem {
     job: row.jobs
       ? {
           id: row.jobs.id,
-          status: row.jobs.status
+          dispatchStatus: row.jobs.dispatch_status
         }
       : null
   };

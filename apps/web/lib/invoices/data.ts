@@ -105,7 +105,7 @@ type InvoiceRow = {
   jobs?:
     | {
         id: string;
-        status: string;
+        dispatch_status: string;
       }
     | null;
 };
@@ -206,7 +206,7 @@ export type InvoiceListItem = InvoiceRecord & {
   } | null;
   job: {
     id: string;
-    status: string;
+    dispatchStatus: string;
   } | null;
 };
 
@@ -286,7 +286,7 @@ const invoiceSelect = `
   ),
   jobs (
     id,
-    status
+    dispatch_status
   )
 `;
 
@@ -547,7 +547,7 @@ function mapInvoiceListItem(row: InvoiceRow): InvoiceListItem {
     job: row.jobs
       ? {
           id: row.jobs.id,
-          status: row.jobs.status
+          dispatchStatus: row.jobs.dispatch_status
         }
       : null
   };
@@ -1484,7 +1484,7 @@ export async function getInvoiceById(
     job: invoice.jobs
       ? {
           id: invoice.jobs.id,
-          status: invoice.jobs.status
+          dispatchStatus: invoice.jobs.dispatch_status
         }
       : null,
     lineItems,

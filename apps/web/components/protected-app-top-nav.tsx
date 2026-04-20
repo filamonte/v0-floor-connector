@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 
 import type { MembershipRole } from "@floorconnector/types";
 
+import { OrganizationBrandLink } from "@/components/organization-brand-link";
+import { UniversalCreateMenu } from "@/components/universal-create-menu";
 import {
   getProtectedAppActiveItem,
   getProtectedAppSectionGroups,
@@ -72,9 +74,11 @@ type MenuColumn = {
 type ProtectedAppTopNavProps = {
   currentRole?: MembershipRole;
   organizationName: string;
+  organizationLogoUrl?: string | null;
   organizationStatus: string;
   userEmail: string;
   timestampLabel: string;
+  homeHref: string;
 };
 
 function getItem(items: readonly ProtectedAppNavItem[], href: string, fallbackLabel?: string) {
@@ -96,6 +100,7 @@ function buildMenuColumns(items: readonly ProtectedAppNavItem[]): MenuColumn[] {
       title: "Project Management",
       items: [
         getItem(items, "/projects"),
+        getItem(items, "/schedule"),
         getItem(items, "/jobs"),
         getItem(items, "/daily-logs"),
         getItem(items, "/materials")
@@ -106,7 +111,8 @@ function buildMenuColumns(items: readonly ProtectedAppNavItem[]): MenuColumn[] {
       items: [
         getItem(items, "/estimates"),
         getItem(items, "/contracts"),
-        getItem(items, "/invoices")
+        getItem(items, "/invoices"),
+        getItem(items, "/payments")
       ].filter(Boolean) as MenuColumn["items"]
     },
     {
@@ -138,6 +144,7 @@ function buildMenuColumns(items: readonly ProtectedAppNavItem[]): MenuColumn[] {
 function getShortcutItems(items: readonly ProtectedAppNavItem[]) {
   return [
     getItem(items, "/projects"),
+    getItem(items, "/schedule"),
     getItem(items, "/time", "Time Cards"),
     getItem(items, "/people", "Directory")
   ].filter(Boolean) as Array<{ label: string; href: string }>;
@@ -146,9 +153,11 @@ function getShortcutItems(items: readonly ProtectedAppNavItem[]) {
 export function ProtectedAppTopNav({
   currentRole,
   organizationName,
+  organizationLogoUrl,
   organizationStatus,
   userEmail,
-  timestampLabel
+  timestampLabel,
+  homeHref
 }: ProtectedAppTopNavProps) {
   const pathname = usePathname();
   const activeItem = getProtectedAppActiveItem(pathname);
@@ -163,17 +172,13 @@ export function ProtectedAppTopNav({
     <div className="border-b border-[#d8dee8] bg-white">
       <div className="flex min-h-[78px] items-stretch">
         <div className="flex w-[262px] shrink-0 items-center border-r border-[#d8dee8] px-4">
-          <div className="w-full">
-            <div className="inline-flex bg-[#1a1a1a] text-white">
-              <span className="px-3 py-2 text-[14px] font-bold leading-none">Floor</span>
-              <span className="bg-[#e7832f] px-3 py-2 text-[14px] font-bold leading-none">
-                Connector
-              </span>
-            </div>
-            <p className="mt-2 text-[11px] leading-4 text-[#4b5563]">
-              Specialty contractor operating system
-            </p>
-          </div>
+          <OrganizationBrandLink
+            href={homeHref}
+            organizationName={organizationName}
+            logoUrl={organizationLogoUrl}
+            supportingLabel="Shared contractor workspace"
+            className="w-full"
+          />
         </div>
 
         <Link
@@ -230,6 +235,13 @@ export function ProtectedAppTopNav({
             );
           })}
         </nav>
+
+        <div className="flex shrink-0 items-center border-l border-[#d8dee8] px-4">
+          <UniversalCreateMenu
+            buttonLabel="Create"
+            buttonClassName="h-10 border-[#233a64] bg-[#233a64] px-4 py-2 text-[13px]"
+          />
+        </div>
 
         <div className="hidden shrink-0 items-stretch border-l border-[#d8dee8] xl:flex">
           <div className="flex w-[182px] items-center px-4">

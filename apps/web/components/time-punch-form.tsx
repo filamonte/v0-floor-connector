@@ -17,7 +17,7 @@ type JobOption = {
   id: string;
   projectId: string;
   label: string;
-  status: string;
+  dispatchStatus: string;
 };
 
 type TimePunchFormProps = {
@@ -67,7 +67,8 @@ export function TimePunchForm({
             <option value="">Select workforce person</option>
             {people.map((person) => (
               <option key={person.id} value={person.id}>
-                {person.displayName} · {person.personType === "subcontractor_worker" ? "Subcontractor" : "Employee"}
+                {person.displayName} ·{" "}
+                {person.personType === "subcontractor_worker" ? "Subcontractor" : "Employee"}
               </option>
             ))}
           </select>
@@ -116,7 +117,7 @@ export function TimePunchForm({
             <option value="">No job attribution</option>
             {filteredJobs.map((job) => (
               <option key={job.id} value={job.id}>
-                {job.label} · {job.status.replaceAll("_", " ")}
+                {job.label} · {job.dispatchStatus.replaceAll("_", " ")}
               </option>
             ))}
           </select>

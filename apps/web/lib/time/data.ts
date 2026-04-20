@@ -51,7 +51,7 @@ type TimePunchEventRow = {
   jobs?:
     | {
         id: string;
-        status: string;
+        dispatch_status: string;
       }
     | null;
 };
@@ -89,7 +89,7 @@ type TimeCardRow = {
   jobs?:
     | {
         id: string;
-        status: string;
+        dispatch_status: string;
       }
     | null;
 };
@@ -105,7 +105,7 @@ export type TimePunchEventListItem = TimePunchEventRecord & {
   } | null;
   job: {
     id: string;
-    status: string;
+    dispatchStatus: string;
   } | null;
 };
 
@@ -120,7 +120,7 @@ export type TimeCardListItem = TimeCardRecord & {
   } | null;
   job: {
     id: string;
-    status: string;
+    dispatchStatus: string;
   } | null;
 };
 
@@ -156,7 +156,7 @@ const timePunchEventSelect = `
   ),
   jobs (
     id,
-    status
+    dispatch_status
   )
 `;
 
@@ -188,7 +188,7 @@ const timeCardSelect = `
   ),
   jobs (
     id,
-    status
+    dispatch_status
   )
 `;
 
@@ -305,7 +305,7 @@ function mapTimePunchEventListItem(row: TimePunchEventRow): TimePunchEventListIt
     job: row.jobs
       ? {
           id: row.jobs.id,
-          status: row.jobs.status
+          dispatchStatus: row.jobs.dispatch_status
         }
       : null
   };
@@ -329,7 +329,7 @@ function mapTimeCardListItem(row: TimeCardRow): TimeCardListItem {
     job: row.jobs
       ? {
           id: row.jobs.id,
-          status: row.jobs.status
+          dispatchStatus: row.jobs.dispatch_status
         }
       : null
   };

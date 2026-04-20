@@ -39,8 +39,6 @@ function getStatusClasses(status: string) {
       return "border-violet-200 bg-violet-50 text-violet-900";
     case "completed":
       return "border-emerald-200 bg-emerald-50 text-emerald-900";
-    case "canceled":
-      return "border-rose-200 bg-rose-50 text-rose-900";
     default:
       return "border-slate-200 bg-slate-50 text-slate-700";
   }
@@ -71,12 +69,12 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   const query = resolvedSearchParams.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
   const view = resolvedSearchParams.view ?? "all";
-  const unscheduledCount = jobs.filter((job) => job.status === "unscheduled").length;
-  const scheduledCount = jobs.filter((job) => job.status === "scheduled").length;
-  const inProgressCount = jobs.filter((job) => job.status === "in_progress").length;
-  const completedCount = jobs.filter((job) => job.status === "completed").length;
+  const unscheduledCount = jobs.filter((job) => job.dispatchStatus === "unscheduled").length;
+  const scheduledCount = jobs.filter((job) => job.dispatchStatus === "scheduled").length;
+  const inProgressCount = jobs.filter((job) => job.dispatchStatus === "in_progress").length;
+  const completedCount = jobs.filter((job) => job.dispatchStatus === "completed").length;
   const filteredJobs = jobs.filter((job) => {
-    const matchesView = view === "all" ? true : job.status === view;
+    const matchesView = view === "all" ? true : job.dispatchStatus === view;
     const matchesQuery =
       normalizedQuery.length === 0
         ? true
@@ -84,7 +82,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             job.project?.name ?? "",
             job.customer?.name ?? "",
             job.estimate?.referenceNumber ?? "",
-            job.status
+            job.dispatchStatus
           ]
             .join(" ")
             .toLowerCase()
@@ -104,7 +102,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
     <ContractorWorkspacePage
       eyebrow="Jobs"
       title="Field work with clear operational status"
-      description="Track live tenant-scoped jobs as approved scope turns into scheduled work, in-progress execution, and invoice-ready completion."
+      description="Use jobs as the operational link between project readiness, crew scheduling, time, daily logs, change orders, and invoice-ready completion."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="border border-[#f2d2b3] bg-[#fff7ef] px-4 py-3">
@@ -136,7 +134,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
       commandBar={{
         supportSlot: (
           <p>
-            Review the live execution queue, switch between job states, and jump back to the project hub when broader readiness or setup work matters.
+            Review the live execution queue, confirm what each job came from, and jump back to the project hub when the wider contract, billing, or change-order chain matters.
           </p>
         ),
         searchSlot: (
@@ -196,7 +194,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             href="/projects"
             className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
           >
-            Open project hub
+            Open project spine
           </Link>
         )
       }}
@@ -249,7 +247,14 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                         {job.project?.name ?? "Untitled job"}
                       </p>
                       <p className="mt-1 text-sm leading-6 text-slate-500">
-                        {job.estimate?.referenceNumber ?? "Project-driven job"}
+                        {job.estimate?.referenceNumber
+                          ? `From estimate ${job.estimate.referenceNumber}`
+                          : "Created directly from the project chain"}
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">
+                        {job.crewVendor
+                          ? `Crew vendor ${job.crewVendor.name} · opens into time, daily logs, and downstream billing`
+                          : "Operational record for scheduling, field time, and daily execution"}
                       </p>
                     </div>
 
@@ -268,10 +273,10 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                       </p>
                       <span
                         className={`inline-flex rounded-[4px] border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] ${getStatusClasses(
-                          job.status
+                          job.dispatchStatus
                         )}`}
                       >
-                        {formatStatusLabel(job.status)}
+                        {formatStatusLabel(job.dispatchStatus)}
                       </span>
                     </div>
 

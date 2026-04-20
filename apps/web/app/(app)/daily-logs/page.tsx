@@ -97,12 +97,12 @@ export default async function DailyLogsPage({
   const nextAction =
     draftCount > 0
       ? {
-          title: "Tighten the open draft logs",
+          title: "Requires follow-up: tighten the open draft logs",
           description:
             "Draft daily logs already exist, so the highest-value next step is finishing narrative details and field notes before more project days stack up."
         }
       : {
-          title: "Capture the next project day",
+          title: "Ready: capture the next project day",
           description:
             "No draft execution records are waiting, so the next operational step is creating the next daily log as work moves through the field."
         };
@@ -149,7 +149,7 @@ export default async function DailyLogsPage({
     id: job.id,
     projectId: job.projectId,
     label: job.project?.name ?? "Job",
-    status: job.status
+    dispatchStatus: job.dispatchStatus
   }));
   const defaultProjectId = projects.some(
     (project) => project.id === resolvedSearchParams.projectId
@@ -164,7 +164,7 @@ export default async function DailyLogsPage({
     <ContractorWorkspacePage
       eyebrow="Daily Logs"
       title={`Project-day field logs for ${organizationContext.organization.displayName}`}
-      description="Use daily logs as the canonical execution record for what happened on site, what is blocked, and what labor continuity already exists on the same project day."
+      description="Use daily logs as the canonical project-day record for what happened on site, what is blocked, and how labor and job execution connect back to the same project spine."
       summary={
         <WorkspaceSummaryBand
           className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,1fr)]"
@@ -214,7 +214,7 @@ export default async function DailyLogsPage({
       commandBar={{
         supportSlot: (
           <p>
-            Review active project-day execution records, filter for draft or blocked work, and quick create the next day only when you are ready to open its full workspace.
+            Review project-day execution records, see which project or job each one came from, and open the full workspace when the next field follow-up is ready.
           </p>
         ),
         searchSlot: (
@@ -342,7 +342,9 @@ export default async function DailyLogsPage({
                           {dailyLog.project?.name ?? "No project"}
                         </p>
                         <p className="mt-1 text-sm leading-6 text-slate-500">
-                          {dailyLog.job ? `Job ${dailyLog.job.id.slice(0, 8)}` : "Project-day log"}
+                          {dailyLog.job
+                            ? `Job ${dailyLog.job.id.slice(0, 8)} · execution history stays tied to the same job record`
+                            : "Project-day log · supports the wider project execution chain"}
                         </p>
                       </div>
                       <div>

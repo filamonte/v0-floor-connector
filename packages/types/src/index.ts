@@ -6,6 +6,7 @@ export type CustomerId = string;
 export type ProjectId = string;
 export type EstimateId = string;
 export type JobId = string;
+export type JobAssignmentId = string;
 export type InvoiceId = string;
 export type PaymentId = string;
 export type PaymentEventId = string;
@@ -83,8 +84,8 @@ export type JobStatus =
   | "unscheduled"
   | "scheduled"
   | "in_progress"
-  | "completed"
-  | "canceled";
+  | "completed";
+export type JobAssignmentRole = "lead" | "crew" | "subcontractor";
 export type InvoiceStatus =
   | "draft"
   | "sent"
@@ -218,6 +219,7 @@ export interface Organization {
   slug: string;
   legalName: string;
   displayName: string;
+  logoUrl: string | null;
   tenantStatus: string;
   lifecycleState: string;
   primaryContactUserId: ProfileId | null;
@@ -394,9 +396,26 @@ export interface Job {
   customerId: CustomerId;
   projectId: ProjectId;
   estimateId: EstimateId | null;
-  status: JobStatus;
+  dispatchStatus: JobStatus;
   scheduledDate: string | null;
+  scheduledStartAt: string | null;
+  scheduledEndAt: string | null;
+  scheduleNotes: string | null;
+  crewVendorId: VendorId | null;
   notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JobAssignment {
+  id: JobAssignmentId;
+  organizationId: OrganizationId;
+  jobId: JobId;
+  personId: PersonId | null;
+  vendorId: VendorId | null;
+  role: JobAssignmentRole;
+  assignedStartAt: string | null;
+  assignedEndAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

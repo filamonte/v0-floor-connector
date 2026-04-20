@@ -96,6 +96,15 @@ export const organizationWorkflowSettingsInputSchema = z.object({
 export const organizationProfileInputSchema = z.object({
   legalName: z.string().trim().min(1, "Legal name is required.").max(160),
   displayName: z.string().trim().min(1, "Display name is required.").max(160),
+  logoUrl: z
+    .string()
+    .trim()
+    .max(2000, "Logo URL must be 2000 characters or fewer.")
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .refine((value) => value === null || z.string().url().safeParse(value).success, {
+      message: "Logo URL must be a valid absolute URL."
+    }),
   slug: z
     .string()
     .trim()

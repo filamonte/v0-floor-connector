@@ -101,7 +101,7 @@ export default async function DashboardPage() {
     })
     .slice(0, 5);
   const activeJobs = jobs.filter(
-    (job) => job.status === "scheduled" || job.status === "in_progress"
+    (job) => job.dispatchStatus === "scheduled" || job.dispatchStatus === "in_progress"
   );
   const recentDailyLogs = dailyLogs.slice(0, 4);
   const todayTimeCards = timeCards.filter((card) => card.workDate === today);
@@ -126,25 +126,25 @@ export default async function DashboardPage() {
     },
     overviewCards: [
       {
-        label: "Projects needing attention",
+        label: "Blocked or waiting handoffs",
         value: projectsNeedingAttention.length,
-        detail: `${activeProjects.length} active projects in motion`,
+        detail: `${activeProjects.length} active projects still need continuity across readiness, execution, or billing`,
         href: "/projects"
       },
       {
-        label: "Commercial follow-up",
+        label: "Ready to move forward",
         value: leadsNeedingFollowUp.length,
-        detail: `${approvedEstimateCount} approved estimates ready to move`,
+        detail: `${approvedEstimateCount} approved estimates can keep the same project chain moving`,
         href: "/leads"
       },
       {
-        label: "Contracts and invoices",
+        label: "Requires payment follow-up",
         value: contractsAwaitingAction.length + invoicesAwaitingPayment.length,
         detail: `${new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
           maximumFractionDigits: 0
-        }).format(openInvoiceBalance)} still open across billing`,
+        }).format(openInvoiceBalance)} remains open on the shared billing chain`,
         href: "/invoices"
       }
     ],
@@ -152,7 +152,7 @@ export default async function DashboardPage() {
       id: project.id,
       title: project.name,
       subtitle: project.customer?.name ?? "Unknown customer",
-      meta: labelize(project.status),
+      meta: `${labelize(project.status)} - open the project spine for estimates, contracts, jobs, invoices, and field work`,
       href: `/projects/${project.id}`,
       searchText: [
         project.name,
@@ -166,7 +166,7 @@ export default async function DashboardPage() {
       id: lead.id,
       title: lead.title || lead.prospectName,
       subtitle: lead.customer?.name ?? lead.prospectCompanyName ?? "No customer linked yet",
-      meta: labelize(lead.status),
+      meta: `${labelize(lead.status)} - this is the upstream record that seeds the project handoff`,
       href: `/leads/${lead.id}`,
       searchText: [
         lead.title,
@@ -182,7 +182,7 @@ export default async function DashboardPage() {
       title: contract.title,
       subtitle:
         contract.project?.name ?? contract.customer?.name ?? "Project context pending",
-      meta: labelize(contract.status),
+      meta: `${labelize(contract.status)} - contract state still controls whether this project can move into operations`,
       href: `/contracts/${contract.id}`,
       searchText: [
         contract.title,
@@ -198,7 +198,7 @@ export default async function DashboardPage() {
       title: invoice.referenceNumber,
       subtitle:
         invoice.project?.name ?? invoice.customer?.name ?? "Project context pending",
-      meta: `${labelize(invoice.status)} - due ${formatShortDate(invoice.dueDate)}`,
+      meta: `${labelize(invoice.status)} - due ${formatShortDate(invoice.dueDate)} - payment state feeds the same project record chain`,
       valueLabel: new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "USD",
@@ -220,7 +220,7 @@ export default async function DashboardPage() {
       subtitle: timeCard.project?.name ?? "No project selected",
       meta: `${labelize(timeCard.currentPunchState)} - started ${formatTimestamp(
         timeCard.punchInAt
-      )}`,
+      )} - labor attribution stays tied to the same project and job`,
       href: "/time",
       searchText: [
         timeCard.person?.displayName,
@@ -235,7 +235,7 @@ export default async function DashboardPage() {
       title: dailyLog.project?.name ?? "Project context pending",
       subtitle:
         dailyLog.summary ?? dailyLog.workCompleted ?? "Daily execution log",
-      meta: `${labelize(dailyLog.status)} - ${formatShortDate(dailyLog.logDate)}`,
+      meta: `${labelize(dailyLog.status)} - ${formatShortDate(dailyLog.logDate)} - field history, blockers, and labor stay on the same project chain`,
       href: `/daily-logs/${dailyLog.id}`,
       searchText: [
         dailyLog.project?.name,

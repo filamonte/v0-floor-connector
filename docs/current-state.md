@@ -122,6 +122,7 @@ Current shell behavior:
 - top-level navigation is now the primary contractor app navigation
 - sign out action
 - current organization display
+- tenant-configurable logo support on the shared organization profile, with contractor-shell brand navigation now returning to `/dashboard`
 - organization-aware breadcrumbs
 - role-aware navigation visibility
 - wider main workspace and calmer dashboard-first shell framing
@@ -132,6 +133,7 @@ Current shell behavior:
 - left-side navigation is now reserved for contextual workspace use where needed inside deeper screens
 - the first major contractor workspace UI normalization and polish pass is now complete enough to stop and move on from
 - dashboard, projects, leads, invoices, contracts, customers, estimates, daily logs, time, people, vendors, and jobs now follow the shared contractor manager rhythm closely enough that it should be treated as the active UI baseline
+- a first shared universal-create launcher now exists in the shell and dashboard, routing into the existing module quick-create managers so new canonical records can be started broadly without creating a second creation system
 - shared detail-page/workspace pattern is now implemented across the main contractor record pages:
   - project detail is the reference workflow and readiness hub
   - estimate, contract, invoice, and job detail now broadly follow the same shared page language and point back to the project hub when broader handoff state matters
@@ -144,6 +146,7 @@ Implemented contractor UI direction now includes:
 - one flattened shell/header system with a thin page-context band rather than a permanent left-nav-plus-header stack
 - thinner command/search strips beneath page identity on manager surfaces
 - dashboard as a card-grid overview surface instead of a dense stacked-panel dashboard
+- early module-dashboard direction on top of the same shared manager-page system, with estimates and invoices now reading more like operational entry surfaces than plain lists
 - manager pages built around:
   - page identity
   - command bar
@@ -153,11 +156,13 @@ Implemented contractor UI direction now includes:
   - collect minimum required fields only
   - create the canonical record first
   - route directly into the full record workspace for complete editing
+- the shell and dashboard now expose a shared universal-create launcher that deep-links into those existing quick-create overlays across the canonical workflow
 
 Current contractor UI design notes:
 - the dashboard is now the visual reference point for the contractor app shell and manager-surface language
 - overview pages should read as operational manager screens rather than dense admin tables or stacked forms
 - deeper record pages may still use contextual side navigation where it helps, but overview navigation should remain top-nav-first
+- dashboards should act as entry surfaces into the shared lifecycle, not as separate module worlds
 - the current contractor UI direction should now be treated as implemented truth, not as an experimental branch of the product
 - the contractor UI normalization phase is now complete enough to stop; future contractor UI work should start from this baseline instead of reopening the core shell and manager-page system
 - the contractor-facing app is now coherent enough for broader testing, with remaining issues understood as polish and density work rather than structural UI drift
@@ -171,6 +176,8 @@ Current protected routes include:
 - `/change-orders`
 - `/contracts`
 - `/invoices`
+- `/payments`
+- `/schedule`
 - `/jobs`
 - `/daily-logs`
 - `/people`
@@ -180,7 +187,7 @@ Current protected routes include:
 - `/settings`
 
 Additional protected surfaces beyond the contractor app:
-- `/portal` now has a real customer-facing shell and project-centered workspace foundation on top of canonical customer-anchored access control
+- `/portal` now has a real customer-facing shell and project-centered workspace foundation on top of canonical customer-anchored access control, with branded header navigation returning to `/portal`
 - `/super-admin` now has a real modular configuration foundation
 
 ## Business Objects Implemented
@@ -364,7 +371,7 @@ Current people design notes:
 - employees and subcontractor workers now share one canonical people foundation instead of parallel employee and subcontractor person tables
 - subcontractor workers link to vendor companies through `people.vendor_id`
 - people surfaces now use the same protected CRUD pattern as other canonical admin records, with organization-member linkage and labor-provider vendor selection available in the form flow
-- this is a workforce identity foundation only; crews, time, payroll, and scheduling still remain future work
+- this remains the canonical workforce identity foundation, and it now supports first-pass crew assignment on jobs without introducing a separate crew model
 
 ### Vendors
 
@@ -656,18 +663,33 @@ Implemented:
 - create-job flow from approved estimate
 - create-job enforcement now requires the connected project to be ready to schedule before downstream work can be created
 - job reassignment now applies the same ready-to-schedule gate before an existing job can be moved onto a different project
+- first-pass scheduling fields on the canonical `jobs` record:
+  - `scheduled_date`
+  - optional `scheduled_start_at`
+  - optional `scheduled_end_at`
+  - `schedule_notes`
+  - optional `crew_vendor_id`
+- first-pass crew assignment through canonical `job_assignments`
+- protected server actions for schedule, unschedule, assign crew, unassign crew, list scheduled jobs by date, and list unscheduled jobs
+- job detail scheduling workspace for schedule state, assigned crew, and vendor visibility/editing
 
 Job statuses currently implemented:
 - `unscheduled`
 - `scheduled`
 - `in_progress`
 - `completed`
-- `canceled`
 
 Jobs currently link to:
 - project
 - customer
 - optional approved estimate
+- optional crew vendor
+- optional job assignments to people or vendors
+
+Current job design notes:
+- scheduling now extends the canonical job record instead of creating a second dispatch model
+- crew assignment now extends the same job through `job_assignments` so time, daily logs, and downstream records can continue pointing at one execution record
+- this is intentionally a first scheduling pass only; there is still no calendar board, route optimization, notification engine, or broader dispatch automation
 
 ### Invoices
 
@@ -709,6 +731,20 @@ Current invoice design notes:
 - invoice tax, exemption, and retainage values are snapshotted on the invoice so later customer/org setting changes do not break reporting history
 - contractor-side invoice manager quick create now captures only the minimum project and workflow-role context, creates the canonical draft invoice, and routes into the full invoice workspace for complete editing
 - contractor-side project, customer, lead, contract, and daily-log managers now also use quick create overlays that capture only minimum required fields before handing off to the full record workspace
+- invoice overview now follows the early module-dashboard direction: summary, actionable queues, and continuity back into the shared project and billing chain
+- a dedicated payments manager page now exists as a finance-side module dashboard:
+  - review-first summary of recorded, pending, failed, and open collection activity
+  - continuity back into the same canonical invoice, customer, and project chain
+  - immutable payment-event visibility without replacing invoice detail as billing truth
+- a first contractor-side schedule manager page now exists on top of the canonical job model:
+  - review-first summary of unscheduled, today, in-progress, and upcoming work
+  - explicit schedule-view and crew-filter state normalization on the same `/schedule` surface
+  - next-actions guidance for jobs that need scheduling, crew assignment, or immediate attention
+  - cross-job visibility into crew assignment state using canonical `job_assignments`
+  - clearer distinction between unscheduled work, scheduled work, and scheduled jobs that still need crew
+  - lightweight scheduled-work board grouping near-term dated jobs by day without introducing a separate scheduling model
+  - inline schedule and crew-assignment action panel that reuses the existing job scheduling and assignment server actions
+  - quick links back into the same canonical job and project workspaces instead of a separate dispatch subsystem
 
 Invoice workflow roles currently implemented:
 - `standard`
@@ -900,6 +936,9 @@ The current implemented workflow foundation supports:
 
 These surfaces exist but are still foundational rather than production-complete:
 - dashboard
+- early module-dashboard pattern on overview pages
+- payments manager surface on the same shared manager-page system
+- first universal-create launcher foundation in the shared shell and dashboard
 - materials
 - jobs/work-order execution UX
 - proposal review/share UX
@@ -960,7 +999,9 @@ Current design notes:
 
 Not implemented yet:
 - full scheduling/calendar system
-- crew assignment
+- full scheduling calendar or board UI
+- automated dispatching and notifications
+- broad module-dashboard coverage across the contractor app
 - notifications
 - PDF generation
 - external e-sign provider integration

@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import { startTransition, useDeferredValue, useState } from "react";
 import Link from "next/link";
 
+import { UniversalCreateMenu } from "@/components/universal-create-menu";
+
 export type ContractorDashboardSurfaceItem = {
   id: string;
   title: string;
@@ -323,6 +325,7 @@ function filterItems(items: ContractorDashboardSurfaceItem[], query: string) {
 }
 
 export function ContractorDashboardSurface({
+  header,
   overviewCards,
   projectItems,
   leadItems,
@@ -344,6 +347,36 @@ export function ContractorDashboardSurface({
 
   return (
     <div className="-mx-5 space-y-0 sm:-mx-8">
+      <div className="border-y border-[#d6dbe4] bg-[linear-gradient(180deg,#f6f8fb_0%,#eef2f7_100%)] px-4 py-5 sm:px-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#586b89]">
+              Shared job lifecycle
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#17243b]">
+              {header.organizationName}
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#5f6f85]">
+              Commercial work, operations, billing, and field execution stay on the same record chain instead of splitting across separate modules.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-[4px] border border-[#dde3eb] bg-white px-3.5 py-3">
+              <p className="text-[11px] uppercase tracking-[0.12em] text-[#75859f]">Role</p>
+              <p className="mt-1 text-[15px] font-semibold text-[#1d3157]">{header.roleLabel}</p>
+            </div>
+            <div className="rounded-[4px] border border-[#dde3eb] bg-white px-3.5 py-3">
+              <p className="text-[11px] uppercase tracking-[0.12em] text-[#75859f]">Customers</p>
+              <p className="mt-1 text-[15px] font-semibold text-[#1d3157]">{header.customerCount}</p>
+            </div>
+            <div className="rounded-[4px] border border-[#dde3eb] bg-white px-3.5 py-3">
+              <p className="text-[11px] uppercase tracking-[0.12em] text-[#75859f]">Projects</p>
+              <p className="mt-1 text-[15px] font-semibold text-[#1d3157]">{header.projectCount}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="overflow-hidden border-y border-[#d6dbe4] bg-[#eef1f5]">
         <div className="border-b border-[#d9dee8] bg-[#fbfcfe] px-4 py-3 sm:px-6">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
@@ -377,12 +410,10 @@ export function ContractorDashboardSurface({
               <SmallIconButton label="Filter dashboard">
                 <FilterIcon />
               </SmallIconButton>
-              <Link
-                href="/projects"
-                className="inline-flex h-11 items-center rounded-[4px] border border-[#d7ddea] bg-[#f4f7fb] px-4 text-[15px] font-medium text-[#233a64] transition hover:bg-white"
-              >
-                + Create
-              </Link>
+              <UniversalCreateMenu
+                buttonLabel="Create"
+                buttonClassName="inline-flex h-11 items-center rounded-[4px] border border-[#d7ddea] bg-[#f4f7fb] px-4 text-[15px] font-medium text-[#233a64] transition hover:bg-white"
+              />
             </div>
           </div>
         </div>

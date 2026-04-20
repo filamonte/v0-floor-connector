@@ -375,8 +375,8 @@ function getNextAction(input: {
 
   if (projectEstimatesCount === 0) {
     return {
-      title: "Create the first estimate",
-      description: "Scope and pricing still need to enter the canonical project chain before the commercial handoff can continue.",
+      title: "Blocked: create the first estimate",
+      description: "Scope and pricing still need to enter the canonical project chain before contracts, scheduling, and downstream work can continue.",
       primaryLabel: "Create estimate",
       primaryHref: `/estimates?projectId=${projectId}`
     };
@@ -384,8 +384,8 @@ function getNextAction(input: {
 
   if (readinessSnapshot?.status === "waiting_on_estimate_approval") {
     return {
-      title: "Get estimate approval",
-      description: "Estimate work exists, but approval is still the active gate before contracts or readiness can move forward.",
+      title: "Requires follow-up: get estimate approval",
+      description: "Estimate work exists on the same project chain, but approval is still the active gate before contracts or readiness can move forward.",
       primaryLabel: "Review estimate",
       primaryHref: readinessSnapshot.estimateId
         ? `/estimates/${readinessSnapshot.estimateId}`
@@ -395,8 +395,8 @@ function getNextAction(input: {
 
   if (projectContractsCount === 0 && approvedEstimateId) {
     return {
-      title: "Generate the contract",
-      description: "An approved estimate exists, so the next step is creating the canonical contract from the same commercial context.",
+      title: "Ready: generate the contract",
+      description: "An approved estimate exists, so the next step is creating the canonical contract from the same commercial context instead of branching into a separate workflow.",
       primaryLabel: "Generate contract",
       primaryHref: `/contracts?estimateId=${approvedEstimateId}`,
       secondaryLabel: "Review approved estimate",
@@ -409,7 +409,7 @@ function getNextAction(input: {
     readinessSnapshot?.status === "waiting_on_signature"
   ) {
     return {
-      title: "Complete contract readiness",
+      title: "Blocked: complete contract readiness",
       description:
         readinessSnapshot.status === "waiting_on_internal_approval"
           ? "Internal approval still blocks send readiness on the canonical contract record."
@@ -426,19 +426,19 @@ function getNextAction(input: {
       ? {
           title:
             depositLatestPaymentEventType === "payment_failed"
-              ? "Resolve the failed deposit payment"
+              ? "Requires follow-up: resolve the failed deposit payment"
               : depositLatestPaymentEventType === "checkout_started"
-                ? "Wait for deposit payment completion"
+                ? "Requires follow-up: wait for deposit payment completion"
                 : depositLatestPaymentEventType === "payment_succeeded" &&
                     depositInvoice?.status === "partially_paid"
-                  ? "Close the remaining deposit balance"
+                  ? "Requires follow-up: close the remaining deposit balance"
                 : depositLatestPaymentEventType === "payment_requested"
-                  ? "Monitor the requested deposit payment"
+                  ? "Requires follow-up: monitor the requested deposit payment"
                   : depositLatestPaymentEventType === "payment_voided"
-                    ? "Restart deposit collection after the void"
+                    ? "Blocked: restart deposit collection after the void"
                   : depositInvoice?.status === "partially_paid"
-                    ? "Close the remaining deposit balance"
-                    : "Collect the deposit",
+                    ? "Requires follow-up: close the remaining deposit balance"
+                    : "Blocked: collect the deposit",
           description:
             depositLatestPaymentEventType === "payment_failed"
               ? `A customer payment attempt failed on the deposit invoice, so ${formatMoney(
@@ -466,8 +466,8 @@ function getNextAction(input: {
           primaryHref: `/invoices/${readinessSnapshot.depositInvoiceId}`
         }
       : {
-          title: "Create the deposit request",
-          description: "The organization requires a deposit before operations can schedule this work.",
+          title: "Blocked: create the deposit request",
+          description: "The organization requires a deposit before operations can schedule this work on the same project chain.",
           primaryLabel: "Create deposit invoice",
           primaryHref: `/invoices?projectId=${projectId}&estimateId=${approvedEstimateId ?? ""}&workflowRole=deposit`
         };
@@ -475,7 +475,7 @@ function getNextAction(input: {
 
   if (readinessSnapshot?.status === "waiting_on_financing") {
     return {
-      title: "Resolve financing readiness",
+      title: "Blocked: resolve financing readiness",
       description: "Financing status is still blocking the operations handoff. Update the project financing state once the commercial outcome is known.",
       secondaryLabel: "Edit project financing below"
     };
@@ -483,15 +483,15 @@ function getNextAction(input: {
 
   if (readinessSnapshot?.isReadyToSchedule) {
     return {
-      title: "Commercial handoff complete",
-      description: "This project is ready to schedule. That means operations can take over next, even though actual scheduling UI is intentionally out of scope for this slice.",
+      title: "Ready: commercial handoff complete",
+      description: "This project is ready for operational scheduling. Operations can take over next while staying on the same project, job, time, and billing chain.",
       primaryLabel: "Open jobs workspace",
       primaryHref: "/jobs"
     };
   }
 
   return {
-    title: "Review the commercial chain",
+    title: "Requires follow-up: review the commercial chain",
     description: "Use the blocker list and readiness stages above to clear the next gate in order, rather than jumping ahead into disconnected downstream work."
   };
 }
@@ -532,7 +532,7 @@ export default async function ProjectDetailPage({
   const projectContracts = contracts.filter((contract) => contract.projectId === project.id);
   const latestProjectContract = projectContracts[0] ?? null;
   const projectJobs = jobs.filter((job) => job.projectId === project.id);
-  const completedJob = projectJobs.find((job) => job.status === "completed");
+  const completedJob = projectJobs.find((job) => job.dispatchStatus === "completed");
   const projectOpenTimeStates = openTimeStates.filter(
     (state) => state.projectId === project.id
   );
@@ -905,7 +905,7 @@ export default async function ProjectDetailPage({
                 title={projectJobs[0].project?.name ?? project.name}
                 subtitle="Latest downstream job"
                 meta={projectJobs[0].estimate?.referenceNumber ?? "Project-driven job"}
-                badge={renderStatusBadge(formatStatusLabel(projectJobs[0].status))}
+                badge={renderStatusBadge(formatStatusLabel(projectJobs[0].dispatchStatus))}
               />
             ) : (
               <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-500">
@@ -985,7 +985,7 @@ export default async function ProjectDetailPage({
                       title={job.project?.name ?? project.name}
                       subtitle={job.customer?.name ?? project.customer?.name ?? "Unknown customer"}
                       meta={job.scheduledDate ? `Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}` : "Unscheduled"}
-                      badge={renderStatusBadge(formatStatusLabel(job.status))}
+                      badge={renderStatusBadge(formatStatusLabel(job.dispatchStatus))}
                     />
                   ))
                 ) : (
@@ -1303,7 +1303,7 @@ export default async function ProjectDetailPage({
                 title={projectJobs[0].project?.name ?? project.name}
                 subtitle="Latest job"
                 meta={projectJobs[0].estimate?.referenceNumber ?? "Project-driven job"}
-                badge={renderStatusBadge(formatStatusLabel(projectJobs[0].status))}
+                badge={renderStatusBadge(formatStatusLabel(projectJobs[0].dispatchStatus))}
               />
             ) : null}
             {projectInvoices[0] ? (

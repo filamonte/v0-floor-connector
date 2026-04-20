@@ -61,6 +61,22 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
             />
           </label>
 
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-800">
+              Logo URL
+            </span>
+            <input
+              name="logoUrl"
+              type="url"
+              defaultValue={scope.organization.logoUrl ?? ""}
+              placeholder="https://example.com/logo.png"
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            />
+            <span className="mt-2 block text-xs leading-5 text-slate-500">
+              Use an absolute image URL to show the tenant logo in the shared app header.
+            </span>
+          </label>
+
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
             Platform status is still controlled by super admin. Contractor admins manage only the organization-owned profile layer here.
           </div>

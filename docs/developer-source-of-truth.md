@@ -27,12 +27,19 @@ The current branch already includes a real multi-tenant contractor app with:
 - jobs
 - invoices and payments
 - customer-facing payment foundation on the canonical invoice/payment chain
+- dedicated contractor-side payments manager surface on the shared manager-page system
+- dedicated contractor-side schedule manager surface on the shared manager-page system
+  - review-first summary, next actions, crew-state continuity, and a lightweight near-term scheduled-work board all stay on the same canonical job chain
 - people, vendors, and compliance foundations
 - time tracking foundations
 - daily logs, field notes, and execution attachments
 - customer portal access, review, and contract-signature workflows
 - shared templates
 - reusable catalog foundations
+- quick-create -> canonical record -> full workspace pattern across core contractor manager pages
+- first shared universal-create launcher in the contractor shell and dashboard
+- first-pass job scheduling and crew assignment foundation
+- early module-dashboard pattern on top of the shared manager-page system
 - contractor settings / admin
 - super-admin configuration foundations
 
@@ -68,6 +75,8 @@ Important workflow rules:
 - the first major contractor workspace UI normalization pass is complete enough to stop; remaining issues should be treated as normal iterative polish rather than structural layout-system repair
 - the contractor shell now uses top-level navigation as the primary app navigation, with a wider workspace, shared workspace band, and command-bar-driven manager pages
 - dashboard, projects, leads, invoices, contracts, customers, estimates, daily logs, time, people, vendors, and jobs now follow that newer manager-surface direction; avoid reintroducing a full-time left sidebar as the primary navigation model
+- dashboards are entry surfaces into the same lifecycle, not separate product worlds
+- quick create must create canonical records first and then route into the full workspace
 
 ## Current Contractor UI Guardrails
 
@@ -80,6 +89,7 @@ Do:
 - build manager pages around page identity, command bar, and overview/list workspace
 - use shared composer-sheet or modal patterns for create flows on manager pages
 - prefer quick-create overlays that capture only minimum required fields, create the canonical record, and then route into the full record workspace
+- treat module dashboards as operational entry surfaces with summary, queues, create entry, and continuity links back to shared records
 - keep change orders canonical and workflow-linked: contractor authoring, portal approval, and downstream invoice impact must stay on the same shared record chain
 - reserve left-side rails for contextual deeper-screen navigation only when they materially help
 
@@ -91,6 +101,9 @@ Do not:
 - do not treat dashboard and manager pages as separate visual systems
 - do not try to complete full record authoring inside a manager-page quick-create overlay
 - do not implement change orders as report-only artifacts, detached approvals, or portal-only records
+- do not let module dashboards become separate module apps with their own private worldview
+- do not build module-local queues or summaries that hide the shared project and record chain
+- do not let universal create become a siloed draft system or tool menu disconnected from canonical records
 
 The contractor UI baseline is now established enough that future contractor-page work should start from this system by default rather than reopening normalization decisions page by page.
 The normalization phase is complete enough to stop; further contractor-page work should be treated as baseline-preserving feature work or targeted polish unless a real system-level mismatch appears.
@@ -106,6 +119,7 @@ The normalization phase is complete enough to stop; further contractor-page work
 - prefer small, reviewable changes over broad rewrites
 - when refining contractor UI, prefer the shared workspace pattern over one-off page layouts
 - for contractor overview/list pages, prefer the newer top-nav manager pattern: clear page identity, command bar, wide workspace, overview/list-first composition, and contextual secondary navigation only when it truly helps
+- preserve the shared lifecycle language: continuity over silos, project/record chain over module isolation, and quick create over local-only scaffolding
 
 ## Documentation Update Rules
 

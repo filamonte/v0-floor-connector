@@ -1,6 +1,10 @@
 # FloorConnector
 
-FloorConnector is a production-first, multi-tenant vertical SaaS platform for epoxy flooring, concrete polishing, and specialty surface contractors. The active product is a Supabase-backed contractor app built on one shared canonical data model.
+FloorConnector is a production-first, multi-tenant vertical SaaS platform for epoxy flooring, concrete polishing, and specialty surface contractors. The active product is a Supabase-backed contractor app built on one shared canonical lifecycle and data model:
+
+`opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
+
+Current branch highlights include the normalized contractor shell, shared quick-create to full-workspace flow, contractor and portal continuity on canonical records, and first real contractor-side module dashboards for payments and schedule.
 
 ## Repository Shape
 

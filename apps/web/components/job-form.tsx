@@ -101,11 +101,11 @@ export function JobForm({
 
         <label className="block">
           <span className="mb-2 block text-sm font-medium text-slate-800">
-            Status
+            Dispatch status
           </span>
           <select
-            name="status"
-            defaultValue={job?.status ?? "unscheduled"}
+            name="dispatchStatus"
+            defaultValue={job?.dispatchStatus ?? "unscheduled"}
             className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
             required
           >
@@ -123,7 +123,36 @@ export function JobForm({
           type="date"
           defaultValue={getValue(job?.scheduledDate)}
         />
+
+        <AuthField
+          label="Scheduled start"
+          name="scheduledStartAt"
+          type="datetime-local"
+          defaultValue={getValue(job?.scheduledStartAt ? job.scheduledStartAt.slice(0, 16) : null)}
+        />
+
+        <AuthField
+          label="Scheduled end"
+          name="scheduledEndAt"
+          type="datetime-local"
+          defaultValue={getValue(job?.scheduledEndAt ? job.scheduledEndAt.slice(0, 16) : null)}
+        />
       </div>
+
+      <input type="hidden" name="crewVendorId" value={job?.crewVendorId ?? ""} />
+
+      <label className="block">
+        <span className="mb-2 block text-sm font-medium text-slate-800">
+          Schedule notes
+        </span>
+        <textarea
+          name="scheduleNotes"
+          defaultValue={getValue(job?.scheduleNotes)}
+          rows={3}
+          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+          placeholder="Optional notes for the current planned schedule"
+        />
+      </label>
 
       <label className="block">
         <span className="mb-2 block text-sm font-medium text-slate-800">

@@ -18,6 +18,7 @@ type MembershipRow = {
         slug: string;
         legal_name: string;
         display_name: string;
+        logo_url: string | null;
         tenant_status: string;
         lifecycle_state: string;
         created_at: string;
@@ -42,6 +43,7 @@ export type ActiveOrganizationContext = {
     slug: string;
     legalName: string;
     displayName: string;
+    logoUrl: string | null;
     tenantStatus: string;
     lifecycleState: string;
     createdAt: string;
@@ -81,6 +83,7 @@ function isMembershipRow(value: unknown): value is MembershipRow {
     typeof company.slug === "string" &&
     typeof company.legal_name === "string" &&
     typeof company.display_name === "string" &&
+    (company.logo_url === null || typeof company.logo_url === "string") &&
     typeof company.tenant_status === "string" &&
     typeof company.lifecycle_state === "string" &&
     typeof company.created_at === "string" &&
@@ -106,6 +109,7 @@ export const getActiveOrganizationContext = cache(
             slug,
             legal_name,
             display_name,
+            logo_url,
             tenant_status,
             lifecycle_state,
             created_at,
@@ -151,6 +155,7 @@ export const getActiveOrganizationContext = cache(
         slug: company.slug,
         legalName: company.legal_name,
         displayName: company.display_name,
+        logoUrl: company.logo_url,
         tenantStatus: company.tenant_status,
         lifecycleState: company.lifecycle_state,
         createdAt: company.created_at,

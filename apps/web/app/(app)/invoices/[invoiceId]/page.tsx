@@ -311,7 +311,7 @@ export default async function InvoiceDetailPage({
     id: job.id,
     projectId: job.projectId,
     projectName: job.project?.name ?? null,
-    status: job.status,
+    dispatchStatus: job.dispatchStatus,
     estimateId: job.estimate?.id ?? null
   }));
 
@@ -889,7 +889,7 @@ export default async function InvoiceDetailPage({
                 meta="Execution record linked to this invoice"
                 badge={
                   <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
-                    {formatStatusLabel(invoice.job.status)}
+                    {formatStatusLabel(invoice.job.dispatchStatus)}
                   </span>
                 }
               />

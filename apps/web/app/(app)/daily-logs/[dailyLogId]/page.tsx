@@ -135,7 +135,7 @@ export default async function DailyLogDetailPage({
     .map((job) => ({
       id: job.id,
       label: job.project?.name ?? "Job",
-      status: job.status
+      dispatchStatus: job.dispatchStatus
     }));
   const projectOptions = projects.map((project) => ({
     id: project.id,
@@ -145,7 +145,7 @@ export default async function DailyLogDetailPage({
     id: job.id,
     projectId: job.projectId,
     label: job.project?.name ?? "Job",
-    status: job.status
+    dispatchStatus: job.dispatchStatus
   }));
   const activePeople = people
     .filter((person) => person.isActive)

@@ -38,7 +38,7 @@ type InvoiceJobOption = {
   id: string;
   projectId: string;
   projectName: string | null;
-  status: JobStatus;
+  dispatchStatus: JobStatus;
   estimateId: string | null;
 };
 

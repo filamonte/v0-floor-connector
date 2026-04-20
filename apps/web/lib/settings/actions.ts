@@ -169,6 +169,7 @@ export async function updateOrganizationProfileAction(formData: FormData) {
   const result = organizationProfileInputSchema.safeParse({
     legalName: getFieldValue(formData, "legalName"),
     displayName: getFieldValue(formData, "displayName"),
+    logoUrl: getFieldValue(formData, "logoUrl"),
     slug: getFieldValue(formData, "slug")
   });
 
