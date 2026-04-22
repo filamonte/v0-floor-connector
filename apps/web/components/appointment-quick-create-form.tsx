@@ -1,0 +1,209 @@
+"use client";
+
+import { useMemo, useState } from "react";
+
+import { AuthField } from "@/components/auth-field";
+import { AuthSubmitButton } from "@/components/auth-submit-button";
+import { QuickCreateFormShell } from "@/components/quick-create-form-shell";
+
+type OpportunityOption = {
+  id: string;
+  title: string;
+};
+
+type CustomerOption = {
+  id: string;
+  name: string;
+};
+
+type ProjectOption = {
+  id: string;
+  name: string;
+  customerId: string;
+};
+
+type PersonOption = {
+  id: string;
+  displayName: string;
+};
+
+type AppointmentQuickCreateFormProps = {
+  action: (formData: FormData) => void | Promise<void>;
+  opportunities: OpportunityOption[];
+  customers: CustomerOption[];
+  projects: ProjectOption[];
+  people: PersonOption[];
+  defaultOpportunityId?: string;
+  defaultCustomerId?: string;
+  defaultProjectId?: string;
+};
+
+const appointmentTypeOptions = [
+  { value: "site_visit", label: "Site visit" },
+  { value: "customer_meeting", label: "Customer meeting" },
+  { value: "estimate_appointment", label: "Estimate appointment" },
+  { value: "follow_up", label: "Follow-up visit" },
+  { value: "internal", label: "Internal" }
+] as const;
+
+function formatForDateTimeLocal(date: Date) {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  const hours = `${date.getHours()}`.padStart(2, "0");
+  const minutes = `${date.getMinutes()}`.padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function getInitialStartsAt() {
+  const date = new Date();
+  date.setMinutes(Math.ceil(date.getMinutes() / 30) * 30, 0, 0);
+
+  return formatForDateTimeLocal(date);
+}
+
+export function AppointmentQuickCreateForm({
+  action,
+  opportunities,
+  customers,
+  projects,
+  people,
+  defaultOpportunityId,
+  defaultCustomerId,
+  defaultProjectId
+}: AppointmentQuickCreateFormProps) {
+  const [customerId, setCustomerId] = useState(defaultCustomerId ?? "");
+
+  const filteredProjects = useMemo(
+    () =>
+      customerId
+        ? projects.filter((project) => project.customerId === customerId)
+        : projects,
+    [customerId, projects]
+  );
+
+  return (
+    <form action={action} className="space-y-5">
+      <QuickCreateFormShell
+        eyebrow="Quick create"
+        title="Create appointment"
+        description="Capture the visit or meeting block here, create the canonical appointment first, and then finish the fuller continuity details in the workspace."
+        footer="Appointments stay distinct from jobs: use this for visits, meetings, and planning blocks, then keep execution work on canonical jobs."
+      >
+        <div className="grid gap-4">
+          <AuthField
+            label="Title"
+            name="title"
+            placeholder="Example: Final site visit with owner"
+            required
+          />
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-800">
+              Appointment type
+            </span>
+            <select
+              name="appointmentType"
+              defaultValue="site_visit"
+              className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+            >
+              {appointmentTypeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <AuthField
+            label="Start time"
+            name="startsAt"
+            type="datetime-local"
+            defaultValue={getInitialStartsAt()}
+            required
+          />
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-800">
+              Linked lead
+            </span>
+            <select
+              name="opportunityId"
+              defaultValue={defaultOpportunityId ?? ""}
+              className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+            >
+              <option value="">No linked lead</option>
+              {opportunities.map((opportunity) => (
+                <option key={opportunity.id} value={opportunity.id}>
+                  {opportunity.title}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-800">
+              Linked customer
+            </span>
+            <select
+              name="customerId"
+              value={customerId}
+              onChange={(event) => setCustomerId(event.target.value)}
+              className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+            >
+              <option value="">No linked customer</option>
+              {customers.map((customer) => (
+                <option key={customer.id} value={customer.id}>
+                  {customer.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-800">
+              Linked project
+            </span>
+            <select
+              name="projectId"
+              defaultValue={defaultProjectId ?? ""}
+              className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+            >
+              <option value="">No linked project</option>
+              {filteredProjects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-800">
+              Assigned person
+            </span>
+            <select
+              name="assignedPersonId"
+              defaultValue=""
+              className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+            >
+              <option value="">Unassigned</option>
+              {people.map((person) => (
+                <option key={person.id} value={person.id}>
+                  {person.displayName}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </QuickCreateFormShell>
+
+      <div className="flex flex-col gap-3 pt-1">
+        <AuthSubmitButton pendingLabel="Creating appointment..." className="w-full">
+          <span>Create appointment</span>
+        </AuthSubmitButton>
+      </div>
+    </form>
+  );
+}

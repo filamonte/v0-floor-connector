@@ -44,6 +44,8 @@ Current shared canonical model includes:
 - time punch events
 - time cards
 - daily logs
+- punchlist items
+- appointments
 - opportunities
 - platform financial defaults
 - platform workflow defaults
@@ -127,13 +129,22 @@ Current shell behavior:
 - role-aware navigation visibility
 - wider main workspace and calmer dashboard-first shell framing
 - flattened shell/header chrome with one shared contractor header system instead of competing stacked header layers
-- shared workspace band beneath the top navigation for breadcrumb and page-context continuity
+- shared breadcrumb and page-context continuity now live inside the unified top header structure instead of a separate colored band beneath navigation
+- the contractor shell and shared manager-page wrappers now use the same warmer charcoal/orange/light-neutral theme direction as the dashboard instead of the older blue-heavy overview styling
 - shared contractor manager-page wrapper and command-bar pattern now drive the main overview surfaces
 - the always-on left sidebar is no longer the primary navigation pattern
 - left-side navigation is now reserved for contextual workspace use where needed inside deeper screens
 - the first major contractor workspace UI normalization and polish pass is now complete enough to stop and move on from
-- dashboard, projects, leads, invoices, contracts, customers, estimates, daily logs, time, people, vendors, and jobs now follow the shared contractor manager rhythm closely enough that it should be treated as the active UI baseline
+- dashboard, projects, leads, invoices, contracts, customers, estimates, appointments, daily logs, time, people, vendors, and jobs now follow the shared contractor manager rhythm closely enough that it should be treated as the active UI baseline
 - a first shared universal-create launcher now exists in the shell and dashboard, routing into the existing module quick-create managers so new canonical records can be started broadly without creating a second creation system
+- a first real contractor-side global search now exists in the shared protected header:
+  - one shared search entry point for contractor users
+- tenant-safe search across canonical opportunities, customers, projects, appointments, estimates, contracts, invoices, jobs, punchlist items, payments, people, and vendors
+  - grouped result sets that route straight into the existing record workspaces or linked invoice workspace for payment activity
+- a first real contractor-side in-app notifications / action-awareness layer now exists in the shared shell and dashboard:
+  - derived from canonical jobs, invoices, contracts, appointments, punchlists, and progress-billing workspaces
+  - intentionally lightweight and in-app only
+  - routes into real downstream workspaces instead of introducing stored notification records or a second workflow engine
 - shared detail-page/workspace pattern is now implemented across the main contractor record pages:
   - project detail is the reference workflow and readiness hub
   - estimate, contract, invoice, and job detail now broadly follow the same shared page language and point back to the project hub when broader handoff state matters
@@ -143,9 +154,9 @@ Current shell behavior:
 
 Implemented contractor UI direction now includes:
 - top-nav-first navigation as the default contractor app model
-- one flattened shell/header system with a thin page-context band rather than a permanent left-nav-plus-header stack
+- one flattened shell/header system with breadcrumb and page context folded into the same top header instead of a permanent left-nav-plus-header stack
 - thinner command/search strips beneath page identity on manager surfaces
-- dashboard as a card-grid overview surface instead of a dense stacked-panel dashboard
+- dashboard as a denser and more curated operational command-center surface with modular queue widgets, stronger quick-create entry, and continuity back into shared records instead of a loose summary page
 - early module-dashboard direction on top of the same shared manager-page system, with estimates and invoices now reading more like operational entry surfaces than plain lists
 - manager pages built around:
   - page identity
@@ -160,6 +171,22 @@ Implemented contractor UI direction now includes:
 
 Current contractor UI design notes:
 - the dashboard is now the visual reference point for the contractor app shell and manager-surface language
+- the dashboard now reads more like a contractor home base than a light summary page:
+  - compact priority metrics
+  - modular commercial, operations, and finance queues
+  - local quick-create studio using canonical short-form create flows
+  - stronger black/orange-inspired contractor styling scoped to the dashboard surface
+- that dashboard/header direction is now pushed more broadly through the protected contractor app:
+  - shared manager-page headers and command bars
+  - shared quick-create/composer surfaces
+  - shared settings and linked-record cards
+  - shared overview/detail typography and surface treatment
+- the active contractor-app theme direction is now:
+  - charcoal or dark-neutral framing where framing helps
+  - orange for actions, emphasis, and UI identity
+  - white or light-neutral surfaces for primary reading and work areas
+  - tighter, more practical spacing and typography across manager screens
+- the contractor header is now also the shared home for global record search, so search should be treated as shell-level continuity into canonical records rather than as a dashboard-only or module-local widget
 - overview pages should read as operational manager screens rather than dense admin tables or stacked forms
 - deeper record pages may still use contextual side navigation where it helps, but overview navigation should remain top-nav-first
 - dashboards should act as entry surfaces into the shared lifecycle, not as separate module worlds
@@ -177,8 +204,11 @@ Current protected routes include:
 - `/contracts`
 - `/invoices`
 - `/payments`
+- `/progress-billing`
 - `/schedule`
+- `/appointments`
 - `/jobs`
+- `/punchlists`
 - `/daily-logs`
 - `/people`
 - `/vendors`
@@ -262,6 +292,7 @@ Implemented:
 - estimate, contract, and invoice detail pages now point users back to the project readiness hub when the upstream handoff state matters
 - the contractor app now has a defined reusable record-workspace direction: header, workflow summary, primary workspace, context rail, and lower-priority secondary sections
 - project, estimate, contract, invoice, and job detail now all use that shared workspace pattern closely enough that the first major UI layout-system polish pass is considered complete
+- project detail now surfaces linked appointments so project-facing visits and customer coordination stay visible on the same operational root without becoming a second scheduler
 
 Starter fields include:
 - name
@@ -524,6 +555,7 @@ Current daily log design notes:
 - job linkage is validated against the selected project in the tenant-scoped server data layer
 - labor continuity now reads through canonical time cards for the same project and log date instead of persisting a second daily-log labor-entry model
 - contractor-side daily-log UX now keeps create, review, editing, and note entry on the same protected workflow instead of splitting execution observations into separate modules
+- daily logs remain project-day narrative execution records even now that durable punchlist items exist on the same broader execution chain
 - daily-log execution attachments are now lightweight subject-scoped references for photos or files, not a full document-management system
 
 ### Field Notes
@@ -569,11 +601,11 @@ Starter fields currently include:
 - timestamps
 
 Current field note design notes:
-- field notes are the canonical execution observation model under daily logs and should absorb issue, blocker, and punch-list-ready scaffolding instead of spawning separate tables
+- field notes are the canonical execution observation model under daily logs for project-day issues, blockers, and supporting observations
 - field note project linkage must match the selected daily log, and optional job linkage must belong to the same project
 - optional time card linkage is validated against the same project and log date, and also respects selected person/job linkage when provided
 - optional person and time-card linkage now works as the intended bridge between field observations and canonical labor records when execution notes need that context
-- field notes currently stay inside the daily-log workflow rather than branching into standalone issue, blocker, or punch-list surfaces
+- field notes stay inside the daily-log workflow, while durable corrective and closeout items can now live on canonical punchlist records without overloading the project-day note stream
 - field-note attachments use the same shared execution-attachment foundation as daily-log attachments instead of spawning note-specific file models
 - customer-facing field note visibility and broader execution workflows remain future work
 
@@ -742,9 +774,48 @@ Current invoice design notes:
   - next-actions guidance for jobs that need scheduling, crew assignment, or immediate attention
   - cross-job visibility into crew assignment state using canonical `job_assignments`
   - clearer distinction between unscheduled work, scheduled work, and scheduled jobs that still need crew
-  - lightweight scheduled-work board grouping near-term dated jobs by day without introducing a separate scheduling model
-  - inline schedule and crew-assignment action panel that reuses the existing job scheduling and assignment server actions
-  - quick links back into the same canonical job and project workspaces instead of a separate dispatch subsystem
+  - calendar-oriented planner depth on the same `/schedule` surface:
+    - bounded week planner
+    - day focus view
+    - retained board view for quick date-grouped scanning
+  - scheduled jobs render from the same canonical job scheduling fields without introducing a separate scheduling model
+- inline schedule and crew-assignment action panel that reuses the existing job scheduling and assignment server actions
+- quick links back into the same canonical job and project workspaces instead of a separate dispatch subsystem
+
+### Appointments
+
+Implemented:
+- canonical appointment schema linked to required organization plus optional opportunity, customer, and project continuity
+- optional assigned-person linkage to the shared people model
+- contractor-side appointments manager/list page using the shared manager-page pattern
+- contractor-side quick-create overlay that captures minimum visit or meeting context before routing into the full workspace
+- contractor-side appointment detail/workspace page for timing, linked-record continuity, assignment, notes, and status progression
+- dashboard shortcut and priority visibility replacing the old appointment-management placeholder
+- lead, customer, and project continuity links into the same appointment workflow
+
+Appointment types currently implemented:
+- `site_visit`
+- `customer_meeting`
+- `estimate_appointment`
+- `follow_up`
+- `internal`
+
+Appointment statuses currently implemented:
+- `scheduled`
+- `completed`
+- `canceled`
+- `no_show`
+
+Appointments currently link to:
+- optional opportunity
+- optional customer
+- optional project
+- optional assigned person
+
+Current appointment design notes:
+- appointments are canonical visit, meeting, and planning-block records, not a second execution scheduler
+- jobs remain the execution source of truth for crew scheduling, field delivery, and work-state progression
+- appointments may support the same project/customer/opportunity chain, but they should not replace jobs or create schedule-only records
 
 Invoice workflow roles currently implemented:
 - `standard`
@@ -792,6 +863,34 @@ Payment design notes:
 - provider callback processing now stays server-owned, signature-verified, and idempotent so only canonical completed payment states affect invoice paid totals and downstream readiness
 - recorded payments on deposit-role invoices can now feed project commercial-readiness status through shared readiness utilities
 
+### Punchlists
+
+Implemented:
+- canonical punchlist item schema linked to the shared project record and optional shared job record
+- optional assignee linkage to the shared people model
+- contractor-side punchlist manager/list page using the shared manager-page pattern
+- contractor-side quick-create overlay that captures minimum required closeout context before routing into the full workspace
+- contractor-side punchlist detail/workspace page for details, due date, assignee, and status progression
+- project and job continuity sections now surface linked punchlist items on the same shared execution chain
+
+Punchlist statuses currently implemented:
+- `open`
+- `in_progress`
+- `resolved`
+- `closed`
+
+Punchlists currently link to:
+- project
+- optional job
+- optional assignee person
+
+Current punchlist design notes:
+- punchlists are canonical durable closeout records, not dashboard-only artifacts and not a project copy
+- punchlists coexist with daily logs and field notes instead of replacing them:
+  - daily logs and field notes remain project-day narrative execution records
+  - punchlists carry corrective and closeout items that need to survive beyond a single project day
+- punchlists stay on the same project/job execution chain instead of becoming a separate field module worldview
+
 ### Financial Settings, Tax, And AIA Scaffolding
 
 Implemented:
@@ -801,11 +900,17 @@ Implemented:
 - customer-level retainage default
 - invoice tax reporting view foundation for taxable sales, exempt sales, tax collected, and reporting-period grouping
 - schedule-of-values foundation derived from approved estimate line items
+- contractor-side progress-billing manager and workspace on top of canonical schedule-of-values records
+- contractor-side percent-complete review of schedule-of-values items with derived previously billed, current billing, retainage-held, and balance-to-finish math
+- canonical progress invoice draft creation and update from real schedule-of-values item state, with invoice line items now optionally linked back to their canonical schedule-of-values rows
+- project and invoice continuity links back into the same progress-billing workspace so approved scope, billing review, and invoice continuity stay connected
 
 Current design notes:
 - external tax providers are not integrated yet, but the organization financial settings model includes extension points for them
 - schedule-of-values records stay linked to approved estimate items instead of creating disconnected AIA-only source data
-- percent complete, prior billed, current billed, retainage held, and retainage release are scaffolded in the SOV layer for future pay-application workflows
+- progress billing now uses the existing SOV layer as the contractor-side billing workspace instead of a disconnected pay-app model
+- canonical invoices remain the financial source of truth; progress billing prepares or updates those invoices rather than replacing them
+- percent complete, prior billed, current billed, retainage held, and retainage release still leave room for deeper pay-application and AIA export workflows later
 
 ### Shared Templates
 
@@ -916,6 +1021,7 @@ The current implemented workflow foundation supports:
 - project-detail readiness hub for the upstream commercial chain with blockers, next action, and ready-to-schedule handoff visibility
 - downstream job creation now respects the canonical ready-to-schedule gate instead of relying only on estimate approval
 - downstream job reassignment now respects the same canonical ready-to-schedule gate instead of allowing a later project move to bypass the handoff rule
+- appointment creation and review on the same lead, customer, and project chain for site visits, estimate meetings, and follow-up coordination
 - conversion of approved or project-based work into jobs/work orders
 - job progression through execution states
 - invoice creation and maintenance from connected project, estimate, and job records
@@ -925,6 +1031,7 @@ The current implemented workflow foundation supports:
 - tax-aware invoice calculation using org defaults and customer exemption state
 - retainage-aware invoice balance foundation
 - approved estimate item seeding for future AIA/progress billing
+- approved-estimate schedule-of-values review and progress-billing invoice preparation on the same project, estimate, and invoice chain
 - shared template selection and merge-data preparation for estimate, invoice, and contract document workflows
 - canonical rendered contract records with revision snapshots and signature-lock scaffolding
 - canonical contract signature-state, signer, and immutable signature-event foundation on the shared contract model
@@ -935,10 +1042,11 @@ The current implemented workflow foundation supports:
 ## What Exists But Is Still Minimal
 
 These surfaces exist but are still foundational rather than production-complete:
-- dashboard
+- dashboard command-center surface, including modular queue composition and quick-create studio direction
 - early module-dashboard pattern on overview pages
 - payments manager surface on the same shared manager-page system
 - first universal-create launcher foundation in the shared shell and dashboard
+- broader contractor-app theming consistency is now established through shared shell and manager-page components, but page-level cleanup still remains iterative on some deeper or lower-traffic surfaces
 - materials
 - jobs/work-order execution UX
 - proposal review/share UX
@@ -998,11 +1106,10 @@ Current design notes:
 ## What Is Not Implemented Yet
 
 Not implemented yet:
-- full scheduling/calendar system
-- full scheduling calendar or board UI
-- automated dispatching and notifications
+- full scheduling/dispatch system
+- drag-and-drop rescheduling, dispatch optimization, and deeper crew-calendar coordination
+- automated dispatching and external notifications
 - broad module-dashboard coverage across the contractor app
-- notifications
 - PDF generation
 - external e-sign provider integration
 - deeper gateway-backed reconciliation, retry, and provider-sync workflows
@@ -1010,7 +1117,7 @@ Not implemented yet:
 - deeper gateway-backed customer-facing payment completion and reconciliation workflows
 - advanced permissions UI
 - full change-order credit, negative adjustment, and richer accounting treatment
-- full AIA/progress billing UX
+- deeper AIA/pay-application UX, export/reporting forms, and richer SOV draw management
 - external tax provider integration
 - rich template editing UI
 - e-sign integration workflows on top of the canonical contract record

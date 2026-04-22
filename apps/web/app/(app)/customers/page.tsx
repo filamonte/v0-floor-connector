@@ -3,12 +3,14 @@ import Link from "next/link";
 import { AppEmptyState } from "@/components/app-empty-state";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
 import { CustomerQuickCreateForm } from "@/components/customer-quick-create-form";
+import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { quickCreateCustomerAction } from "@/lib/customers/actions";
 import { listCustomers } from "@/lib/customers/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
+import { listProjects } from "@/lib/projects/data";
 
 type CustomersPageProps = {
   searchParams?: Promise<{
@@ -37,6 +39,10 @@ function buildCustomersHref(input: {
   return query.length > 0 ? `/customers?${query}` : "/customers";
 }
 
+function formatDateLabel(value: string) {
+  return new Date(value).toLocaleDateString();
+}
+
 export default async function CustomersPage({
   searchParams
 }: CustomersPageProps) {
@@ -53,16 +59,16 @@ export default async function CustomersPage({
     );
   }
 
-  const [customers, financialSettings] = await Promise.all([
+  const [customers, projects, financialSettings] = await Promise.all([
     listCustomers(),
+    listProjects(),
     getOrganizationFinancialSettings(organizationContext.organization.id)
   ]);
   const query = resolvedSearchParams.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
   const showComposer =
     resolvedSearchParams.compose === "1" || Boolean(resolvedSearchParams.error);
-  const taxExemptCount = customers.filter((customer) => customer.isTaxExempt).length;
-  const taxableCount = customers.length - taxExemptCount;
+
   const filteredCustomers = customers.filter((customer) =>
     normalizedQuery.length === 0
       ? true
@@ -79,31 +85,76 @@ export default async function CustomersPage({
           .includes(normalizedQuery)
   );
 
+  const taxExemptCustomers = customers.filter((customer) => customer.isTaxExempt);
+  const customersWithDirectContact = customers.filter(
+    (customer) => customer.email || customer.phone
+  );
+  const customersWithSavedAddress = customers.filter(
+    (customer) =>
+      customer.addressLine1 || customer.city || customer.stateRegion || customer.postalCode
+  );
+  const customersMissingContact = customers.filter(
+    (customer) => !customer.email && !customer.phone
+  );
+  const customersMissingAddress = customers.filter(
+    (customer) =>
+      !customer.addressLine1 &&
+      !customer.city &&
+      !customer.stateRegion &&
+      !customer.postalCode
+  );
+  const customersWithProjects = customers.filter((customer) =>
+    projects.some((project) => project.customerId === customer.id)
+  );
+  const recentCustomers = [...filteredCustomers]
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+    .slice(0, 20);
+
   return (
     <ContractorWorkspacePage
       eyebrow="Customers"
       title={`Customer records for ${organizationContext.organization.displayName}`}
-      description="Customers anchor projects, estimates, contracts, invoices, and tax-aware financial defaults on one canonical account record."
+      description="Customers anchor the shared relationship, tax defaults, and downstream project continuity across the contractor operating system."
       summary={
-        <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="border border-[#e2e7ef] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Total</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{customers.length}</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+              {customers.length}
+            </p>
           </div>
           <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Tax exempt</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{taxExemptCount}</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+              Tax exempt
+            </p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+              {taxExemptCustomers.length}
+            </p>
           </div>
           <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Taxable</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{taxableCount}</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+              Direct contact saved
+            </p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+              {customersWithDirectContact.length}
+            </p>
+          </div>
+          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+              Saved address
+            </p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+              {customersWithSavedAddress.length}
+            </p>
           </div>
         </div>
       }
       commandBar={{
         supportSlot: (
           <p>
-            Search the canonical customer list, keep the manager focused on review, and quick create a new account only when you are ready to open its full workspace.
+            Review the canonical customer base, search quickly, and open quick
+            create only when you are ready to route a new account into its full
+            workspace.
           </p>
         ),
         searchSlot: (
@@ -134,7 +185,7 @@ export default async function CustomersPage({
         ),
         actionSlot: (
           <Link
-            href={buildCustomersHref({ q: query, compose: "1" }) + "#customer-create"}
+            href={buildCustomersHref({ q: query, compose: "1" })}
             className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
           >
             New customer
@@ -142,115 +193,196 @@ export default async function CustomersPage({
         )
       }}
     >
-      <div className={showComposer ? "grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_400px]" : "space-y-4"}>
-        <section className="space-y-6">
-          {resolvedSearchParams.error ? (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
-              {resolvedSearchParams.error}
-            </div>
-          ) : null}
+      <div className="space-y-6">
+        {resolvedSearchParams.error ? (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+            {resolvedSearchParams.error}
+          </div>
+        ) : null}
 
-          {resolvedSearchParams.message ? (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
-              {resolvedSearchParams.message}
-            </div>
-          ) : null}
+        {resolvedSearchParams.message ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+            {resolvedSearchParams.message}
+          </div>
+        ) : null}
 
-          <section className="border border-[#dde3eb] bg-white">
-            <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
-              <div className="flex items-end justify-between gap-4">
-                <div className="hidden grid-cols-[minmax(0,1.3fr)_1fr_200px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
-                  <span>Customer</span>
-                  <span>Company / location</span>
-                  <span className="text-right">Financial defaults</span>
-                </div>
-                <div className="md:hidden">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                    Customers list
-                  </p>
-                </div>
-                <p className="text-sm leading-6 text-slate-500">
-                  {filteredCustomers.length} visible
-                </p>
-              </div>
-            </div>
+        <section className="grid gap-4 xl:grid-cols-2 2xl:grid-cols-4">
+          <ManagerDashboardCard
+            eyebrow="Workflow queue"
+            title="Tax exempt"
+            description="Customer accounts carrying tax-exempt treatment on the canonical record."
+            actionHref={buildCustomersHref({ q: query })}
+            actionLabel="Review accounts"
+            items={taxExemptCustomers.slice(0, 4).map((customer) => ({
+              href: `/customers/${customer.id}`,
+              title: customer.name,
+              subtitle: customer.companyName ?? "Individual customer",
+              meta: customer.taxExemptionReference
+                ? `Reference: ${customer.taxExemptionReference}`
+                : customer.taxExemptionReason,
+              trailing: `${customer.retainagePercentageDefault}%`
+            }))}
+            emptyTitle="No tax-exempt customers"
+            emptyDescription="Tax-exempt accounts will appear here once that flag is set on the customer record."
+          />
+          <ManagerDashboardCard
+            eyebrow="Workflow queue"
+            title="Missing direct contact"
+            description="Customer records that still need either an email address or phone number."
+            actionHref={buildCustomersHref({ q: query })}
+            actionLabel="Fill details"
+            items={customersMissingContact.slice(0, 4).map((customer) => ({
+              href: `/customers/${customer.id}`,
+              title: customer.name,
+              subtitle: customer.companyName ?? "Individual customer",
+              meta: customer.city || customer.stateRegion
+                ? [customer.city, customer.stateRegion].filter(Boolean).join(", ")
+                : null,
+              trailing: "No contact"
+            }))}
+            emptyTitle="Direct contact is filled"
+            emptyDescription="All current customer records have either an email or phone saved."
+          />
+          <ManagerDashboardCard
+            eyebrow="Workflow queue"
+            title="Missing saved address"
+            description="Customer records that still need an address for smoother downstream project setup."
+            actionHref={buildCustomersHref({ q: query })}
+            actionLabel="Review records"
+            items={customersMissingAddress.slice(0, 4).map((customer) => ({
+              href: `/customers/${customer.id}`,
+              title: customer.name,
+              subtitle: customer.companyName ?? "Individual customer",
+              meta: customer.email ?? customer.phone ?? null,
+              trailing: "Address needed"
+            }))}
+            emptyTitle="Address coverage looks good"
+            emptyDescription="All current customer records already have address context saved."
+          />
+          <ManagerDashboardCard
+            eyebrow="Workflow queue"
+            title="Linked to projects"
+            description="Customers already tied into the operational project chain."
+            actionHref={buildCustomersHref({ q: query })}
+            actionLabel="Open customers"
+            items={customersWithProjects.slice(0, 4).map((customer) => {
+              const linkedProjectCount = projects.filter(
+                (project) => project.customerId === customer.id
+              ).length;
 
-            <div className="divide-y divide-slate-200">
-              {filteredCustomers.length > 0 ? (
-                filteredCustomers.map((customer) => (
-                  <Link
-                    key={customer.id}
-                    href={`/customers/${customer.id}`}
-                    className="group block px-5 py-4 transition hover:bg-slate-50/70 sm:px-6"
-                  >
-                    <div className="grid gap-4 md:grid-cols-[minmax(0,1.3fr)_1fr_200px] md:items-start">
-                      <div className="min-w-0">
-                        <h3 className="text-base font-semibold text-slate-950 transition group-hover:text-brand-700">
+              return {
+                href: `/customers/${customer.id}`,
+                title: customer.name,
+                subtitle: customer.companyName ?? "Individual customer",
+                meta: customer.email ?? customer.phone ?? null,
+                trailing: `${linkedProjectCount} project${linkedProjectCount === 1 ? "" : "s"}`
+              };
+            })}
+            emptyTitle="No customer-project links yet"
+            emptyDescription="Customers with linked projects will appear here as the workflow expands."
+          />
+        </section>
+
+        <section className="overflow-hidden border border-[#dde3eb] bg-white">
+          <div className="flex items-end justify-between gap-4 border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+                Recent records
+              </p>
+              <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+                Latest customer updates
+              </h3>
+            </div>
+            <p className="text-sm leading-6 text-slate-500">
+              {recentCustomers.length} visible
+            </p>
+          </div>
+
+          {recentCustomers.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200 text-sm">
+                <thead className="bg-[#f8fafc] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  <tr>
+                    <th className="px-5 py-3 sm:px-6">Customer</th>
+                    <th className="px-5 py-3 sm:px-6">Company / location</th>
+                    <th className="px-5 py-3 sm:px-6">Financial defaults</th>
+                    <th className="px-5 py-3 text-right sm:px-6">Updated</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 bg-white">
+                  {recentCustomers.map((customer) => (
+                    <tr key={customer.id} className="hover:bg-slate-50/70">
+                      <td className="px-5 py-4 sm:px-6">
+                        <Link
+                          href={`/customers/${customer.id}`}
+                          className="font-semibold text-slate-950 transition hover:text-brand-700"
+                        >
                           {customer.name}
-                        </h3>
-                        <p className="mt-2 text-sm leading-6 text-slate-500">
-                          {customer.email ?? customer.phone ?? "No direct contact added yet"}
+                        </Link>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {customer.email ?? customer.phone ?? "No direct contact saved"}
                         </p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                          Company
-                        </p>
-                        <p className="text-sm font-medium text-slate-700">
+                      </td>
+                      <td className="px-5 py-4 sm:px-6">
+                        <p className="font-medium text-slate-700">
                           {customer.companyName ?? "Individual customer"}
                         </p>
                         <p className="mt-1 text-sm leading-6 text-slate-500">
                           {[customer.city, customer.stateRegion, customer.postalCode]
                             .filter(Boolean)
-                            .join(", ") || "No location added yet"}
+                            .join(", ") || "No location saved"}
                         </p>
-                      </div>
-                      <div className="md:text-right">
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                          Financial defaults
-                        </p>
+                      </td>
+                      <td className="px-5 py-4 sm:px-6">
                         <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
                           {customer.isTaxExempt ? "Tax exempt" : "Taxable"}
                         </span>
                         <p className="mt-2 text-sm leading-6 text-slate-500">
                           Retainage {customer.retainagePercentageDefault}%
                         </p>
-                      </div>
-                    </div>
-                  </Link>
-                ))
-              ) : (
-                <div className="px-6 py-8 sm:px-8">
-                  <AppEmptyState
-                    eyebrow={customers.length > 0 ? "No matching customers" : "No customers yet"}
-                    title={customers.length > 0 ? "Adjust the customer search" : "Create the first customer"}
-                    description={
-                      customers.length > 0
-                        ? "Try a broader search to find the customer account you need."
-                        : "Customer records need to exist before projects, estimates, and invoices can stay connected to the same canonical account."
-                    }
-                  />
-                </div>
-              )}
+                      </td>
+                      <td className="px-5 py-4 text-right text-slate-500 sm:px-6">
+                        {formatDateLabel(customer.updatedAt)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </section>
+          ) : (
+            <div className="px-6 py-8 sm:px-8">
+              <AppEmptyState
+                eyebrow={customers.length > 0 ? "No matching customers" : "No customers yet"}
+                title={
+                  customers.length > 0
+                    ? "Adjust the customer search"
+                    : "Create the first customer"
+                }
+                description={
+                  customers.length > 0
+                    ? "Try a broader search to find the customer account you need."
+                    : "Customer records need to exist before projects, estimates, and invoices can stay connected to the same canonical account."
+                }
+              />
+            </div>
+          )}
         </section>
-
-        <WorkspaceComposerSheet
-          id="customer-create"
-          title="Quick create customer"
-          description="Capture only the minimum customer context here, create the canonical account, and then finish the rest in the full customer workspace."
-          open={showComposer}
-          openHref={buildCustomersHref({ q: query, compose: "1" }) + "#customer-create"}
-          closeHref={buildCustomersHref({ q: query })}
-          openLabel="Open customer quick create"
-        >
-          <CustomerQuickCreateForm
-            action={quickCreateCustomerAction}
-            defaultRetainagePercentage={financialSettings.defaultRetainagePercentage}
-          />
-        </WorkspaceComposerSheet>
       </div>
+
+      <WorkspaceComposerSheet
+        id="customer-create"
+        title="Quick create customer"
+        description="Capture only the minimum customer context here, create the canonical account, and then finish the rest in the full customer workspace."
+        open={showComposer}
+        openHref={buildCustomersHref({ q: query, compose: "1" })}
+        closeHref={buildCustomersHref({ q: query })}
+        openLabel="Open customer quick create"
+      >
+        <CustomerQuickCreateForm
+          action={quickCreateCustomerAction}
+          defaultRetainagePercentage={financialSettings.defaultRetainagePercentage}
+        />
+      </WorkspaceComposerSheet>
     </ContractorWorkspacePage>
   );
 }

@@ -202,6 +202,42 @@ export default async function PlatformDefaultsPage({ searchParams }: PageProps) 
             />
           </label>
 
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-800">
+                Default estimate start number
+              </span>
+              <input
+                name="defaultEstimateStartNumber"
+                type="number"
+                min="1"
+                step="1"
+                defaultValue={workflowDefaults.defaultEstimateStartNumber}
+                required
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-800">
+                Default invoice start number
+              </span>
+              <input
+                name="defaultInvoiceStartNumber"
+                type="number"
+                min="1"
+                step="1"
+                defaultValue={workflowDefaults.defaultInvoiceStartNumber}
+                required
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              />
+            </label>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+            These numbers stay plain and human-facing. Contractors can override them before first use, and after records exist they can only move the next number upward.
+          </div>
+
           <button
             type="submit"
             className="inline-flex items-center rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"

@@ -17,58 +17,53 @@ export function WorkspaceComposerSheet({
   title,
   description,
   open,
-  openHref,
   closeHref,
   openLabel,
   children
 }: WorkspaceComposerSheetProps) {
   if (!open) {
-    return (
-      <aside
-        id={id}
-        className="border border-[#dde3eb] bg-[#fbfcfe] p-5 sm:p-6 xl:sticky xl:top-28"
-      >
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
-          Composer
-        </p>
-        <h3 className="mt-2 text-xl font-semibold text-[#17243b]">{title}</h3>
-        <p className="mt-2 text-[14px] leading-6 text-slate-600">{description}</p>
-        <div className="mt-5 rounded-[4px] border border-[#e5ebf2] bg-white px-4 py-3 text-[13px] leading-6 text-slate-500">
-          Open the composer when you are ready to create a new record. The manager
-          stays focused on review until then.
-        </div>
-        <Link
-          href={openHref}
-          className="mt-5 inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-[14px] font-medium text-white transition hover:bg-[#1b2d4d]"
-        >
-          {openLabel}
-        </Link>
-      </aside>
-    );
+    return null;
   }
 
   return (
-    <aside
+    <div
       id={id}
-      className="border border-[#d7deea] bg-white p-5 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.35)] sm:p-6 xl:sticky xl:top-28"
+      className="fixed inset-0 z-50 flex justify-end bg-[#122033]/55 backdrop-blur-[2px]"
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
-            Composer
-          </p>
-          <h3 className="mt-2 text-xl font-semibold text-[#17243b]">{title}</h3>
-          <p className="mt-2 text-[14px] leading-6 text-slate-600">{description}</p>
+      <Link
+        href={closeHref}
+        aria-label={`Close ${openLabel}`}
+        className="absolute inset-0"
+      >
+        <span className="sr-only">Close</span>
+      </Link>
+      <aside className="relative z-10 flex h-full w-full max-w-[920px] flex-col overflow-hidden border-l border-[#d6dce6] bg-[#f8fbff] shadow-[-32px_0_80px_-48px_rgba(15,23,42,0.6)]">
+        <div className="flex items-start justify-between gap-4 border-b border-[#dde5ef] bg-white px-5 py-5 sm:px-7 sm:py-6">
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#486180]">
+              Quick create
+            </p>
+            <h3 className="mt-2 text-[1.85rem] font-semibold tracking-[-0.02em] text-[#183153]">
+              {title}
+            </h3>
+            <p className="mt-2 max-w-2xl text-[14px] leading-6 text-[#5c6d83]">
+              {description}
+            </p>
+          </div>
+          <Link
+            href={closeHref}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#d7e0ea] bg-white text-[13px] font-medium text-[#4b5d75] transition hover:border-[#a8b8cc] hover:bg-[#f5f8fc]"
+          >
+            X
+          </Link>
         </div>
-        <Link
-          href={closeHref}
-          className="inline-flex rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-2 text-[12px] font-medium text-[#41536f] transition hover:bg-white"
-        >
-          Close
-        </Link>
-      </div>
 
-      <div className="mt-5">{children}</div>
-    </aside>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
+          <div className="rounded-[1.5rem] border border-[#dde5ef] bg-white p-4 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.55)] sm:p-6">
+            {children}
+          </div>
+        </div>
+      </aside>
+    </div>
   );
 }

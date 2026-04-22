@@ -5,7 +5,12 @@ import { redirect } from "next/navigation";
 import { canTransitionEstimateStatus } from "@floorconnector/domain";
 import type { EstimateStatus } from "@floorconnector/types";
 
-import { createEstimate, updateEstimate, updateEstimateStatus } from "./data";
+import {
+  createEstimate,
+  quickCreateEstimateFromContext,
+  updateEstimate,
+  updateEstimateStatus
+} from "./data";
 import {
   estimateInputSchema,
   estimateQuickCreateInputSchema
@@ -58,6 +63,7 @@ function parseEstimateInput(formData: FormData) {
     );
 
   return estimateInputSchema.safeParse({
+    opportunityId: getFieldValue(formData, "opportunityId"),
     projectId: getFieldValue(formData, "projectId"),
     status: getFieldValue(formData, "status"),
     taxAmount: getFieldValue(formData, "taxAmount"),
@@ -69,7 +75,11 @@ function parseEstimateInput(formData: FormData) {
 
 function parseEstimateQuickCreateInput(formData: FormData) {
   return estimateQuickCreateInputSchema.safeParse({
-    projectId: getFieldValue(formData, "projectId")
+    creationMode: getFieldValue(formData, "creationMode"),
+    opportunityId: getFieldValue(formData, "opportunityId"),
+    customerId: getFieldValue(formData, "customerId"),
+    projectId: getFieldValue(formData, "projectId"),
+    title: getFieldValue(formData, "title")
   });
 }
 
@@ -123,6 +133,9 @@ export async function createEstimateAction(formData: FormData) {
 }
 
 export async function quickCreateEstimateAction(formData: FormData) {
+  const creationMode = getFieldValue(formData, "creationMode");
+  const opportunityId = getFieldValue(formData, "opportunityId");
+  const customerId = getFieldValue(formData, "customerId");
   const projectId = getFieldValue(formData, "projectId");
   const result = parseEstimateQuickCreateInput(formData);
 
@@ -130,6 +143,9 @@ export async function quickCreateEstimateAction(formData: FormData) {
     redirect(
       buildRedirect("/estimates", {
         compose: "1",
+        creationMode,
+        opportunityId,
+        customerId,
         projectId,
         error:
           result.error.issues[0]?.message ?? "Unable to create estimate."
@@ -140,26 +156,14 @@ export async function quickCreateEstimateAction(formData: FormData) {
   let estimate;
 
   try {
-    estimate = await createEstimate({
-      projectId: result.data.projectId,
-      status: "draft",
-      taxAmount: "0.00",
-      discountAmount: "0.00",
-      lineItems: [
-        {
-          name: "New scope item",
-          description: null,
-          quantity: "1.00",
-          unit: "each",
-          unitPrice: "0.00"
-        }
-      ],
-      notes: null
-    });
+    estimate = await quickCreateEstimateFromContext(result.data);
   } catch (error) {
     redirect(
       buildRedirect("/estimates", {
         compose: "1",
+        creationMode,
+        opportunityId,
+        customerId,
         projectId,
         error:
           error instanceof Error ? error.message : "Unable to create estimate."

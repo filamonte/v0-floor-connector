@@ -57,6 +57,20 @@ function optionalUuidField(message: string) {
     .transform((value) => value ?? null);
 }
 
+function positiveIntegerField(label: string) {
+  return z
+    .string()
+    .trim()
+    .min(1, `${label} is required.`)
+    .refine((value) => !Number.isNaN(Number(value)), {
+      message: `${label} must be a valid number.`
+    })
+    .transform((value) => Number(value))
+    .refine((value) => Number.isInteger(value) && value > 0, {
+      message: `${label} must be a whole number greater than zero.`
+    });
+}
+
 export const documentTemplateSettingsInputSchema = z
   .object({
     templateId: z.string().uuid("Template id is required."),
@@ -90,7 +104,9 @@ export const organizationWorkflowSettingsInputSchema = z.object({
   requireContractSignatureBeforeJobScheduling: z.boolean(),
   requireDepositBeforeJobScheduling: z.boolean(),
   requireFinancingApprovalBeforeJobScheduling: z.boolean(),
-  defaultDepositPercentage: percentStringField("Default deposit percentage")
+  defaultDepositPercentage: percentStringField("Default deposit percentage"),
+  nextEstimateNumber: positiveIntegerField("Next estimate number"),
+  nextInvoiceNumber: positiveIntegerField("Next invoice number")
 });
 
 export const organizationProfileInputSchema = z.object({

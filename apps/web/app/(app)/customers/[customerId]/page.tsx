@@ -8,6 +8,7 @@ import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { PortalAccessGrantForm } from "@/components/portal-access-grant-form";
 import { PortalProjectAccessForm } from "@/components/portal-project-access-form";
+import { listAppointmentsByCustomer } from "@/lib/appointments/data";
 import { updateCustomerAction } from "@/lib/customers/actions";
 import { getCustomerById } from "@/lib/customers/data";
 import { listEstimates } from "@/lib/estimates/data";
@@ -63,13 +64,22 @@ export default async function CustomerDetailPage({
 }: CustomerDetailPageProps) {
   const { customerId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
-  const [customer, projects, estimates, jobs, invoices, portalAccessGrants] = await Promise.all([
+  const [
+    customer,
+    projects,
+    estimates,
+    jobs,
+    invoices,
+    portalAccessGrants,
+    customerAppointments
+  ] = await Promise.all([
     getCustomerById(customerId, `/customers/${customerId}`),
     listProjectsByCustomer(customerId, `/customers/${customerId}`),
     listEstimates(),
     listJobs(),
     listInvoices(),
-    listPortalAccessGrantsByCustomer(customerId, `/customers/${customerId}`)
+    listPortalAccessGrantsByCustomer(customerId, `/customers/${customerId}`),
+    listAppointmentsByCustomer(customerId, `/customers/${customerId}`)
   ]);
 
   if (!customer) {
@@ -152,9 +162,9 @@ export default async function CustomerDetailPage({
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4">
-              <p className="text-sm font-medium text-slate-950">Open invoices</p>
+              <p className="text-sm font-medium text-slate-950">Appointments</p>
               <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-                {openInvoices.length}
+                {customerAppointments.length}
               </p>
             </div>
           </div>
@@ -185,6 +195,38 @@ export default async function CustomerDetailPage({
                 eyebrow="No projects"
                 title="Create the first project"
                 description="Projects are the main operational root for this customer. Create one to move the relationship into estimating and delivery work."
+              />
+            )}
+          </div>
+        </DetailPanel>
+
+        <DetailPanel
+          title="Appointments"
+          description="Customer-facing visits and meetings stay connected to the same customer, project, and lead chain instead of becoming a disconnected calendar world."
+        >
+          <div className="grid gap-4">
+            {customerAppointments.length > 0 ? (
+              customerAppointments.slice(0, 5).map((appointment) => (
+                <LinkedRecordCard
+                  key={appointment.id}
+                  href={`/appointments/${appointment.id}`}
+                  title={appointment.title}
+                  subtitle={appointment.project?.name ?? customer.name}
+                  meta={`${appointment.appointmentType.replaceAll("_", " ")} | ${new Date(appointment.startsAt).toLocaleString()}`}
+                  badge={
+                    <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                      {appointment.status.replaceAll("_", " ")}
+                    </span>
+                  }
+                />
+              ))
+            ) : (
+              <AppEmptyState
+                eyebrow="No appointments"
+                title="Schedule the next customer touchpoint"
+                description="Use appointments for customer meetings, site visits, and follow-up blocks without splitting those interactions away from the shared customer and project chain."
+                actionHref={`/appointments?compose=1&customerId=${customer.id}#appointment-create`}
+                actionLabel="Create appointment"
               />
             )}
           </div>
@@ -454,6 +496,7 @@ export default async function CustomerDetailPage({
             <p>Projects: {projects.length}</p>
             <p>Estimates: {customerEstimates.length}</p>
             <p>Jobs: {customerJobs.length}</p>
+            <p>Appointments: {customerAppointments.length}</p>
             <p>Open invoices: {openInvoices.length}</p>
             {openInvoices[0] ? (
               <p>

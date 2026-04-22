@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AppEmptyState } from "@/components/app-empty-state";
+import { LinkedRecordCard } from "@/components/linked-record-card";
 import { OpportunityForm } from "@/components/opportunity-form";
+import { listAppointmentsByOpportunity } from "@/lib/appointments/data";
 import {
   startEstimateFromOpportunityAction,
   updateOpportunityAction
@@ -32,6 +35,11 @@ function formatDate(value: string | null) {
   return value ? new Date(value).toLocaleDateString() : "Not scheduled";
 }
 
+function formatMeasurementValue(value: string, unit: string, quantity: number | null) {
+  const quantityLabel = quantity ? ` x ${quantity}` : "";
+  return `${value} ${unit}${quantityLabel}`.trim();
+}
+
 function getStatusClasses(status: string) {
   switch (status) {
     case "qualified":
@@ -58,7 +66,10 @@ export default async function LeadDetailPage({
 }: LeadDetailPageProps) {
   const { leadId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
-  const opportunity = await getOpportunityById(leadId, `/leads/${leadId}`);
+  const [opportunity, leadAppointments] = await Promise.all([
+    getOpportunityById(leadId, `/leads/${leadId}`),
+    listAppointmentsByOpportunity(leadId, `/leads/${leadId}`)
+  ]);
 
   if (!opportunity) {
     notFound();
@@ -140,29 +151,40 @@ export default async function LeadDetailPage({
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
           <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-              Prospect
+              Primary Contact
             </p>
             <dl className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
               <div>
                 <dt className="font-medium text-slate-950">Name</dt>
-                <dd>{opportunity.prospectName}</dd>
+                <dd>
+                  {opportunity.primaryContact?.displayName ?? opportunity.prospectName}
+                </dd>
               </div>
               <div>
                 <dt className="font-medium text-slate-950">Company</dt>
-                <dd>{opportunity.prospectCompanyName ?? "Not provided"}</dd>
+                <dd>
+                  {opportunity.primaryContact?.companyName ??
+                    opportunity.prospectCompanyName ??
+                    "Not provided"}
+                </dd>
               </div>
               <div>
                 <dt className="font-medium text-slate-950">Email</dt>
-                <dd>{opportunity.email ?? "Not provided"}</dd>
+                <dd>
+                  {opportunity.primaryContact?.email ?? opportunity.email ?? "Not provided"}
+                </dd>
               </div>
               <div>
                 <dt className="font-medium text-slate-950">Phone</dt>
-                <dd>{opportunity.phone ?? "Not provided"}</dd>
+                <dd>
+                  {opportunity.primaryContact?.phone ?? opportunity.phone ?? "Not provided"}
+                </dd>
               </div>
               <div>
-                <dt className="font-medium text-slate-950">Address</dt>
+                <dt className="font-medium text-slate-950">Primary site</dt>
                 <dd>
                   {formatAddress([
+                    opportunity.siteName,
                     opportunity.addressLine1,
                     opportunity.addressLine2,
                     opportunity.city,
@@ -190,7 +212,13 @@ export default async function LeadDetailPage({
               <dl className="space-y-3 text-sm leading-6 text-slate-600">
                 <div>
                   <dt className="font-medium text-slate-950">Lead source</dt>
-                  <dd>{opportunity.source ?? "Not provided"}</dd>
+                  <dd>
+                    {opportunity.source
+                      ? [opportunity.source, opportunity.sourceDetail]
+                          .filter(Boolean)
+                          .join(" / ")
+                      : "Not provided"}
+                  </dd>
                 </div>
                 <div>
                   <dt className="font-medium text-slate-950">Site assessment</dt>
@@ -211,6 +239,10 @@ export default async function LeadDetailPage({
                 <div>
                   <dt className="font-medium text-slate-950">Service type</dt>
                   <dd>{opportunity.serviceType ?? "Not provided"}</dd>
+                </div>
+                <div>
+                  <dt className="font-medium text-slate-950">Job type</dt>
+                  <dd>{opportunity.jobType ?? "Not provided"}</dd>
                 </div>
                 <div>
                   <dt className="font-medium text-slate-950">Linked customer</dt>
@@ -275,6 +307,95 @@ export default async function LeadDetailPage({
             opportunity={opportunity}
           />
         </div>
+
+        <div className="mt-8 grid gap-6 lg:grid-cols-3">
+          <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+              Measurements
+            </p>
+            <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+              {opportunity.measurements.length > 0 ? (
+                opportunity.measurements.map((measurement) => (
+                  <div
+                    key={measurement.id}
+                    className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                  >
+                    <p className="font-medium text-slate-950">
+                      {measurement.areaLabel ?? measurement.measurementType}
+                    </p>
+                    <p className="text-slate-600">
+                      {formatMeasurementValue(
+                        measurement.valueNumeric,
+                        measurement.unit,
+                        measurement.quantity
+                      )}
+                    </p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                      {measurement.measurementType.replaceAll("_", " ")}
+                      {measurement.captureMethod
+                        ? ` • ${measurement.captureMethod.replaceAll("_", " ")}`
+                        : ""}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p>No structured measurements captured yet.</p>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+              Observations
+            </p>
+            <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+              {opportunity.observations.length > 0 ? (
+                opportunity.observations.map((observation) => (
+                  <div
+                    key={observation.id}
+                    className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                  >
+                    <p className="font-medium text-slate-950">{observation.title}</p>
+                    <p>{observation.body ?? "No detail provided."}</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                      {observation.observationType.replaceAll("_", " ")}
+                      {observation.severity
+                        ? ` • ${observation.severity.replaceAll("_", " ")}`
+                        : ""}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p>No structured observations captured yet.</p>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+              Photos & Files
+            </p>
+            <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+              {opportunity.attachments.length > 0 ? (
+                opportunity.attachments.map((attachment) => (
+                  <div
+                    key={attachment.id}
+                    className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                  >
+                    <p className="font-medium text-slate-950">{attachment.fileName}</p>
+                    <p>{attachment.caption ?? attachment.storagePath}</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                      {attachment.attachmentType.replaceAll("_", " ")}
+                      {attachment.tag ? ` • ${attachment.tag.replaceAll("_", " ")}` : ""}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p>No linked intake files captured yet.</p>
+              )}
+            </div>
+          </section>
+        </div>
       </section>
 
       <aside className="rounded-3xl border border-slate-200 bg-white/85 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
@@ -305,9 +426,49 @@ export default async function LeadDetailPage({
         </div>
 
         <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">
-          Notes:
+          Internal summary notes:
           <div className="mt-2 text-slate-500">
             {opportunity.notes ?? "No internal notes have been added yet."}
+          </div>
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-700">
+              Appointments
+            </p>
+            <Link
+              href={`/appointments?compose=1&opportunityId=${opportunity.id}${opportunity.customerId ? `&customerId=${opportunity.customerId}` : ""}${opportunity.projectId ? `&projectId=${opportunity.projectId}` : ""}#appointment-create`}
+              className="text-sm font-medium text-brand-700 transition hover:text-brand-900"
+            >
+              New appointment
+            </Link>
+          </div>
+          <div className="mt-4 space-y-3">
+            {leadAppointments.slice(0, 2).length > 0 ? (
+              leadAppointments.slice(0, 2).map((appointment) => (
+                <LinkedRecordCard
+                  key={appointment.id}
+                  href={`/appointments/${appointment.id}`}
+                  title={appointment.title}
+                  subtitle={appointment.project?.name ?? appointment.customer?.name ?? "Lead-linked appointment"}
+                  meta={`${appointment.appointmentType.replaceAll("_", " ")} | ${new Date(appointment.startsAt).toLocaleString()}`}
+                  badge={
+                    <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                      {appointment.status.replaceAll("_", " ")}
+                    </span>
+                  }
+                />
+              ))
+            ) : (
+              <AppEmptyState
+                eyebrow="No appointments"
+                title="Schedule the next lead visit here"
+                description="Use appointments for assessments, estimate meetings, and follow-up visits while keeping the real workflow on the same lead and downstream project chain."
+                actionHref={`/appointments?compose=1&opportunityId=${opportunity.id}${opportunity.customerId ? `&customerId=${opportunity.customerId}` : ""}${opportunity.projectId ? `&projectId=${opportunity.projectId}` : ""}#appointment-create`}
+                actionLabel="Create appointment"
+              />
+            )}
           </div>
         </div>
       </aside>

@@ -33,7 +33,7 @@ export default async function SettingsWorkflowsPage({ searchParams }: PageProps)
 
       <DetailPanel
         title="Workflow Defaults"
-        description="Set the preferred contract template for approved-estimate generation and store contractor approval, signature, deposit, and financing readiness defaults without breaking the canonical estimate -> contract -> invoice chain."
+        description="Set contract workflow defaults and the next human-facing estimate and invoice numbers without breaking the canonical estimate -> contract -> invoice chain."
       >
         <form action={updateOrganizationWorkflowSettingsAction} className="space-y-5">
           <label className="block">
@@ -143,8 +143,46 @@ export default async function SettingsWorkflowsPage({ searchParams }: PageProps)
             />
           </label>
 
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-800">
+                Next estimate number
+              </span>
+              <input
+                name="nextEstimateNumber"
+                type="number"
+                min="1"
+                step="1"
+                defaultValue={workflowSettings.nextEstimateNumber}
+                required
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              />
+              <span className="mt-2 block text-xs leading-5 text-slate-500">
+                You can set any starting number before estimates exist. After that, this value can only move upward.
+              </span>
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-800">
+                Next invoice number
+              </span>
+              <input
+                name="nextInvoiceNumber"
+                type="number"
+                min="1"
+                step="1"
+                defaultValue={workflowSettings.nextInvoiceNumber}
+                required
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              />
+              <span className="mt-2 block text-xs leading-5 text-slate-500">
+                This stays plain and human-facing, with no EST or INV prefix.
+              </span>
+            </label>
+          </div>
+
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
-            Contracts still generate from approved estimates using canonical project, customer, and estimate context. Draft contracts can be customized before signature activity locks the record, while deposit, financing, and signature expectations remain organization-scoped readiness inputs for the upstream commercial flow.
+            Contracts still generate from approved estimates using canonical project, customer, estimate, and opportunity continuity. Draft contracts can be customized before signature activity locks the record, while numbering, deposit, financing, and signature expectations remain organization-scoped workflow inputs.
           </div>
 
           <button

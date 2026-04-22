@@ -20,6 +20,7 @@ import {
 } from "@/lib/jobs/actions";
 import { getJobById, listJobAssignments } from "@/lib/jobs/data";
 import { listPeople } from "@/lib/people/data";
+import { listPunchlistItemsByJob } from "@/lib/punchlists/data";
 import { listOpenTimeCardStates, listTimeCardsByJob } from "@/lib/time/data";
 import { listVendors } from "@/lib/vendors/data";
 
@@ -217,12 +218,14 @@ export default async function JobDetailPage({
     notFound();
   }
 
-  const [linkedEstimate, invoices, jobAssignments, people, vendors] = await Promise.all([
+  const [linkedEstimate, invoices, jobAssignments, people, vendors, jobPunchlistItems] =
+    await Promise.all([
     job.estimateId ? getEstimateById(job.estimateId, `/jobs/${jobId}`) : Promise.resolve(null),
     listInvoices(),
     listJobAssignments(job.id, `/jobs/${jobId}`),
     listPeople(),
-    listVendors()
+    listVendors(),
+    listPunchlistItemsByJob(job.id, `/jobs/${jobId}`)
   ]);
   const [jobTimeCards, openTimeStates] = await Promise.all([
     listTimeCardsByJob(job.id, `/jobs/${jobId}`),
@@ -235,6 +238,13 @@ export default async function JobDetailPage({
   const jobDailyLogs = projectDailyLogs.filter((dailyLog) => dailyLog.jobId === job.id);
   const assignablePeople = people.filter((person) => person.isActive && person.isAssignable);
   const laborVendors = vendors.filter((vendor) => vendor.isActive && vendor.isLaborProvider);
+  const operationalBlockers = [
+    job.dispatchStatus === "unscheduled" ? "schedule commitment still missing" : null,
+    jobAssignments.length === 0 ? "crew assignments still missing" : null,
+    job.dispatchStatus === "completed" && !linkedInvoice
+      ? "billing handoff has not started"
+      : null
+  ].filter((value): value is string => Boolean(value));
   const primaryAction = getHeaderPrimaryAction(
     job.dispatchStatus,
     job.projectId,
@@ -253,7 +263,7 @@ export default async function JobDetailPage({
           <DetailPageHeader
             eyebrow="Job Workspace"
             title={job.project?.name ?? "Job record"}
-            description="Use this page as the operational workspace for dispatch state, schedule details, crew assignment, and connected workflow context."
+            description="Use this page to run the job day-to-day: confirm dispatch state, schedule timing, crew readiness, and downstream billing handoff on the same canonical project chain."
             backHref="/jobs"
             backLabel="Back to jobs"
             actions={
@@ -301,6 +311,15 @@ export default async function JobDetailPage({
             <WorkspaceSummaryBand
               items={[
                 {
+                  key: "review-purpose",
+                  label: "Workspace role",
+                  content: (
+                    <p>
+                      Jobs are the operational execution workspace. Keep schedule, crew, labor support, and billing handoff clear here, then return to the project hub when broader readiness context matters.
+                    </p>
+                  )
+                },
+                {
                   key: "current-state",
                   label: "Dispatch state",
                   content: (
@@ -337,17 +356,17 @@ export default async function JobDetailPage({
                   )
                 },
                 {
-                  key: "crew",
-                  label: "Crew assignment",
+                  key: "blockers",
+                  label: "Operational blockers",
                   content: (
                     <>
                       <p className="text-sm font-semibold text-slate-950">
-                        {jobAssignments.length} assignment{jobAssignments.length === 1 ? "" : "s"}
+                        {operationalBlockers.length > 0 ? "Needs follow-through" : "No active blockers"}
                       </p>
                       <p className="mt-2 text-sm text-slate-600">
-                        {job.crewVendor?.name
-                          ? `Crew vendor ${job.crewVendor.name}`
-                          : "No crew vendor has been attached yet."}
+                        {operationalBlockers.length > 0
+                          ? operationalBlockers.join(" | ")
+                          : "Schedule, crew, and downstream billing handoff are aligned with the current dispatch state."}
                       </p>
                     </>
                   )
@@ -823,6 +842,34 @@ export default async function JobDetailPage({
             </div>
           </DetailPanel>
         </div>
+
+        <DetailPanel
+          title="Punchlist Continuity"
+          description="Closeout items stay connected to the same job record instead of drifting into a separate punchlist subsystem."
+        >
+          <div className="grid gap-4">
+            {jobPunchlistItems.slice(0, 4).length > 0 ? (
+              jobPunchlistItems.slice(0, 4).map((item) => (
+                <LinkedRecordCard
+                  key={item.id}
+                  href={`/punchlists/${item.id}`}
+                  title={item.title}
+                  subtitle={item.assignee?.displayName ?? "Unassigned"}
+                  meta={item.dueDate ? `Due ${formatDate(item.dueDate)}` : "No due date"}
+                  badge={renderStatusBadge(formatStatusLabel(item.status))}
+                />
+              ))
+            ) : (
+              <AppEmptyState
+                eyebrow="No punchlist items"
+                title="No linked closeout items yet"
+                description="Create punchlist work when this job needs durable corrective or closeout follow-through beyond one project-day note."
+                actionHref={`/punchlists?projectId=${job.projectId}&jobId=${job.id}&compose=1`}
+                actionLabel="Create punchlist item"
+              />
+            )}
+          </div>
+        </DetailPanel>
 
         <DetailPanel
           title="Daily Execution Context"

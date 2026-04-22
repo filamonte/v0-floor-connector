@@ -43,6 +43,8 @@ type PlatformWorkflowDefaultsRow = {
   require_deposit_before_job_scheduling: boolean;
   require_financing_approval_before_job_scheduling: boolean;
   default_deposit_percentage: string | number;
+  default_estimate_start_number: number;
+  default_invoice_start_number: number;
   created_at: string;
   updated_at: string;
 };
@@ -116,6 +118,12 @@ type TenantRow = {
   tenant_status: string;
   lifecycle_state: string;
   created_at: string;
+  organization_workflow_settings:
+    | Array<{
+        next_estimate_number: number | null;
+        next_invoice_number: number | null;
+      }>
+    | null;
   company_subscriptions:
     | Array<{
         id: string;
@@ -348,6 +356,8 @@ export async function getPlatformWorkflowDefaults(): Promise<PlatformWorkflowDef
       requireDepositBeforeJobScheduling: false,
       requireFinancingApprovalBeforeJobScheduling: false,
       defaultDepositPercentage: "0.00",
+      defaultEstimateStartNumber: 3350,
+      defaultInvoiceStartNumber: 3350,
       createdAt: new Date(0).toISOString(),
       updatedAt: new Date(0).toISOString()
     };
@@ -363,6 +373,8 @@ export async function getPlatformWorkflowDefaults(): Promise<PlatformWorkflowDef
     requireFinancingApprovalBeforeJobScheduling:
       row.require_financing_approval_before_job_scheduling,
     defaultDepositPercentage: Number(row.default_deposit_percentage).toFixed(2),
+    defaultEstimateStartNumber: row.default_estimate_start_number,
+    defaultInvoiceStartNumber: row.default_invoice_start_number,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -376,6 +388,8 @@ export async function upsertPlatformWorkflowDefaults(input: {
   requireDepositBeforeJobScheduling: boolean;
   requireFinancingApprovalBeforeJobScheduling: boolean;
   defaultDepositPercentage: string;
+  defaultEstimateStartNumber: number;
+  defaultInvoiceStartNumber: number;
 }) {
   const supabase = getSupabaseAdminClient();
   const response = await supabase
@@ -392,6 +406,8 @@ export async function upsertPlatformWorkflowDefaults(input: {
         require_financing_approval_before_job_scheduling:
           input.requireFinancingApprovalBeforeJobScheduling,
         default_deposit_percentage: input.defaultDepositPercentage,
+        default_estimate_start_number: input.defaultEstimateStartNumber,
+        default_invoice_start_number: input.defaultInvoiceStartNumber,
         created_by: input.userId,
         updated_by: input.userId
       },
@@ -717,6 +733,10 @@ export async function listTenantsForPlatformAdmin() {
         tenant_status,
         lifecycle_state,
         created_at,
+        organization_workflow_settings (
+          next_estimate_number,
+          next_invoice_number
+        ),
         company_subscriptions (
           id,
           status,
@@ -744,6 +764,12 @@ export async function listTenantsForPlatformAdmin() {
       tenant_status: string;
       lifecycle_state: string;
       created_at: string;
+      organization_workflow_settings:
+        | Array<{
+            next_estimate_number: number | null;
+            next_invoice_number: number | null;
+          }>
+        | null;
       company_subscriptions:
         | Array<{
             id: string;
@@ -768,6 +794,9 @@ export async function listTenantsForPlatformAdmin() {
       tenant_status: record.tenant_status,
       lifecycle_state: record.lifecycle_state,
       created_at: record.created_at,
+      organization_workflow_settings: Array.isArray(record.organization_workflow_settings)
+        ? record.organization_workflow_settings
+        : null,
       company_subscriptions: Array.isArray(record.company_subscriptions)
         ? record.company_subscriptions.map((subscription) => ({
             id: subscription.id,
@@ -802,3 +831,92 @@ export async function updateTenantPlatformStatus(input: {
 }
 
 export const updateCompanyTenantStatus = updateTenantPlatformStatus;
+
+export async function upsertTenantWorkflowNumberingByPlatformAdmin(input: {
+  companyId: string;
+  userId: string;
+  nextEstimateNumber: number;
+  nextInvoiceNumber: number;
+}) {
+  const supabase = getSupabaseAdminClient();
+  const [platformDefaults, estimateCountResponse, invoiceCountResponse, currentSettingsResponse] =
+    await Promise.all([
+      getPlatformWorkflowDefaults(),
+      supabase
+        .from("estimates")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", input.companyId),
+      supabase
+        .from("invoices")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", input.companyId),
+      supabase
+        .from("organization_workflow_settings")
+        .select("next_estimate_number, next_invoice_number")
+        .eq("company_id", input.companyId)
+        .maybeSingle()
+    ]);
+
+  if (estimateCountResponse.error) {
+    throw new Error(
+      `Unable to inspect tenant estimate numbering state: ${estimateCountResponse.error.message}`
+    );
+  }
+
+  if (invoiceCountResponse.error) {
+    throw new Error(
+      `Unable to inspect tenant invoice numbering state: ${invoiceCountResponse.error.message}`
+    );
+  }
+
+  const currentSettings = currentSettingsResponse.data as
+    | {
+        next_estimate_number?: number | null;
+        next_invoice_number?: number | null;
+      }
+    | null;
+
+  const currentEstimateNumber =
+    currentSettings?.next_estimate_number ?? platformDefaults.defaultEstimateStartNumber;
+  const currentInvoiceNumber =
+    currentSettings?.next_invoice_number ?? platformDefaults.defaultInvoiceStartNumber;
+
+  if (
+    (estimateCountResponse.count ?? 0) > 0 &&
+    input.nextEstimateNumber < currentEstimateNumber
+  ) {
+    throw new Error(
+      "Estimate numbering can only move upward after the contractor already has estimate records."
+    );
+  }
+
+  if (
+    (invoiceCountResponse.count ?? 0) > 0 &&
+    input.nextInvoiceNumber < currentInvoiceNumber
+  ) {
+    throw new Error(
+      "Invoice numbering can only move upward after the contractor already has invoice records."
+    );
+  }
+
+  const response = await supabase
+    .from("organization_workflow_settings")
+    .upsert(
+      {
+        company_id: input.companyId,
+        next_estimate_number: input.nextEstimateNumber,
+        next_invoice_number: input.nextInvoiceNumber,
+        created_by: input.userId,
+        updated_by: input.userId
+      },
+      { onConflict: "company_id" }
+    )
+    .select("company_id")
+    .single();
+
+  if (response.error) {
+    throw new Error(
+      `Unable to save tenant workflow numbering: ${response.error.message}`
+    );
+  }
+}

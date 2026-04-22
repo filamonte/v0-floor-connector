@@ -17,8 +17,8 @@ type WorkspaceSummaryBandProps = {
 export function WorkspaceSummaryBand({
   items,
   className = "grid gap-4 lg:grid-cols-2 2xl:grid-cols-4",
-  itemClassName = "rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5",
-  labelClassName = "text-xs font-semibold uppercase tracking-[0.24em] text-slate-500"
+  itemClassName = "rounded-2xl border border-[#e3d6c7] bg-[#fbf5ee] px-5 py-5 shadow-[0_14px_30px_-28px_rgba(57,43,30,0.2)]",
+  labelClassName = "text-xs font-semibold uppercase tracking-[0.24em] text-[#a4581a]"
 }: WorkspaceSummaryBandProps) {
   const purposeItems = items.filter((item) =>
     ["purpose", "review-purpose", "what-this-page-is-for"].includes(item.key)
@@ -30,14 +30,14 @@ export function WorkspaceSummaryBand({
     (item) => !purposeItems.includes(item) && !nextActionItems.includes(item)
   );
 
-  const secondaryCardClassName = `${itemClassName} border-slate-200/70 bg-slate-50/40 px-4 py-4`;
+  const secondaryCardClassName = `${itemClassName} border-[#e7dbce] bg-[#fdf8f1] px-4 py-4`;
 
   return (
     <div className="space-y-5">
       {purposeItems.length > 0 ? (
         <div className="max-w-[68ch]">
           {purposeItems.map((item) => (
-            <div key={item.key} className="text-sm leading-6 text-slate-600">
+            <div key={item.key} className="text-sm leading-6 text-[#665446]">
               {item.content}
             </div>
           ))}
@@ -47,9 +47,9 @@ export function WorkspaceSummaryBand({
       {nextActionItems.map((item) => (
         <div
           key={item.key}
-          className="rounded-[1.9rem] border border-brand-200/85 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(255,255,255,1))] px-6 py-6 shadow-[0_24px_70px_-46px_rgba(15,23,42,0.34)]"
+          className="rounded-[1.9rem] border border-[#d8be9f] bg-[linear-gradient(180deg,#fff8ef,#ffffff)] px-6 py-6 shadow-[0_24px_70px_-46px_rgba(57,43,30,0.28)]"
         >
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-brand-700">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#a4581a]">
             {item.label}
           </p>
           <div className="mt-4.5">{item.content}</div>
@@ -68,7 +68,7 @@ export function WorkspaceSummaryBand({
               }
             >
               <p className={labelClassName}>{item.label}</p>
-              <div className="mt-2 text-sm leading-6 text-slate-600">{item.content}</div>
+              <div className="mt-2 text-sm leading-6 text-[#665446]">{item.content}</div>
             </div>
           ))}
         </div>

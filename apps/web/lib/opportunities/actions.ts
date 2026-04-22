@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { quickCreateEstimateFromContext } from "@/lib/estimates/data";
 import {
   createOpportunity,
-  ensureOpportunityEstimateFlow,
   updateOpportunity
 } from "./data";
 import { opportunityInputSchema, opportunityQuickCreateInputSchema } from "./schemas";
@@ -14,6 +14,12 @@ function getFieldValue(formData: FormData, key: string) {
   const value = formData.get(key);
 
   return typeof value === "string" ? value : "";
+}
+
+function getFieldValues(formData: FormData, key: string) {
+  return formData
+    .getAll(key)
+    .map((value) => (typeof value === "string" ? value : ""));
 }
 
 function buildRedirect(
@@ -34,15 +40,79 @@ function buildRedirect(
 }
 
 function parseOpportunityInput(formData: FormData) {
+  const measurementAreaLabels = getFieldValues(formData, "measurementAreaLabel");
+  const measurementTypes = getFieldValues(formData, "measurementType");
+  const measurementValues = getFieldValues(formData, "measurementValue");
+  const measurementUnits = getFieldValues(formData, "measurementUnit");
+  const measurementQuantities = getFieldValues(formData, "measurementQuantity");
+  const measurementCaptureMethods = getFieldValues(
+    formData,
+    "measurementCaptureMethod"
+  );
+  const measurementNotes = getFieldValues(formData, "measurementNotes");
+
+  const observationTypes = getFieldValues(formData, "observationType");
+  const observationTitles = getFieldValues(formData, "observationTitle");
+  const observationBodies = getFieldValues(formData, "observationBody");
+  const observationSeverities = getFieldValues(formData, "observationSeverity");
+
+  const attachmentTypes = getFieldValues(formData, "attachmentType");
+  const attachmentPaths = getFieldValues(formData, "attachmentStoragePath");
+  const attachmentFileNames = getFieldValues(formData, "attachmentFileName");
+  const attachmentMimeTypes = getFieldValues(formData, "attachmentMimeType");
+  const attachmentCaptions = getFieldValues(formData, "attachmentCaption");
+  const attachmentTags = getFieldValues(formData, "attachmentTag");
+
+  const measurements = measurementTypes
+    .map((measurementType, index) => ({
+      areaLabel: measurementAreaLabels[index] ?? "",
+      measurementType,
+      valueNumeric: measurementValues[index] ?? "",
+      unit: measurementUnits[index] ?? "",
+      quantity: measurementQuantities[index] ?? "",
+      captureMethod: measurementCaptureMethods[index] ?? "",
+      notes: measurementNotes[index] ?? ""
+    }))
+    .filter((measurement) =>
+      Object.values(measurement).some((value) => value.trim().length > 0)
+    );
+
+  const observations = observationTitles
+    .map((title, index) => ({
+      observationType: observationTypes[index] ?? "",
+      title,
+      body: observationBodies[index] ?? "",
+      severity: observationSeverities[index] ?? ""
+    }))
+    .filter((observation) =>
+      Object.values(observation).some((value) => value.trim().length > 0)
+    );
+
+  const attachments = attachmentPaths
+    .map((storagePath, index) => ({
+      attachmentType: attachmentTypes[index] ?? "",
+      storagePath,
+      fileName: attachmentFileNames[index] ?? "",
+      mimeType: attachmentMimeTypes[index] ?? "",
+      caption: attachmentCaptions[index] ?? "",
+      tag: attachmentTags[index] ?? ""
+    }))
+    .filter((attachment) =>
+      Object.values(attachment).some((value) => value.trim().length > 0)
+    );
+
   return opportunityInputSchema.safeParse({
     title: getFieldValue(formData, "title"),
     status: getFieldValue(formData, "status"),
     source: getFieldValue(formData, "source"),
+    sourceDetail: getFieldValue(formData, "sourceDetail"),
     serviceType: getFieldValue(formData, "serviceType"),
-    prospectName: getFieldValue(formData, "prospectName"),
-    prospectCompanyName: getFieldValue(formData, "prospectCompanyName"),
+    jobType: getFieldValue(formData, "jobType"),
+    siteName: getFieldValue(formData, "siteName"),
+    contactName: getFieldValue(formData, "contactName"),
+    contactCompanyName: getFieldValue(formData, "contactCompanyName"),
     email: getFieldValue(formData, "email"),
-    phone: getFieldValue(formData, "phone"),
+    contactPhone: getFieldValue(formData, "contactPhone"),
     addressLine1: getFieldValue(formData, "addressLine1"),
     addressLine2: getFieldValue(formData, "addressLine2"),
     city: getFieldValue(formData, "city"),
@@ -52,14 +122,23 @@ function parseOpportunityInput(formData: FormData) {
     siteAssessmentScheduledOn: getFieldValue(formData, "siteAssessmentScheduledOn"),
     siteAssessmentCompletedOn: getFieldValue(formData, "siteAssessmentCompletedOn"),
     requirementsSummary: getFieldValue(formData, "requirementsSummary"),
-    notes: getFieldValue(formData, "notes")
+    notes: getFieldValue(formData, "notes"),
+    measurements,
+    observations,
+    attachments
   });
 }
 
 function parseOpportunityQuickCreateInput(formData: FormData) {
   return opportunityQuickCreateInputSchema.safeParse({
-    title: getFieldValue(formData, "title"),
-    prospectName: getFieldValue(formData, "prospectName")
+    firstName: getFieldValue(formData, "firstName"),
+    lastName: getFieldValue(formData, "lastName"),
+    address: getFieldValue(formData, "address"),
+    phoneNumber: getFieldValue(formData, "phoneNumber"),
+    email: getFieldValue(formData, "email"),
+    cellPhone: getFieldValue(formData, "cellPhone"),
+    leadStage: getFieldValue(formData, "leadStage"),
+    companyName: getFieldValue(formData, "companyName")
   });
 }
 
@@ -97,7 +176,6 @@ export async function createOpportunityAction(formData: FormData) {
 }
 
 export async function quickCreateOpportunityAction(formData: FormData) {
-  const title = getFieldValue(formData, "title");
   const result = parseOpportunityQuickCreateInput(formData);
 
   if (!result.success) {
@@ -112,16 +190,25 @@ export async function quickCreateOpportunityAction(formData: FormData) {
   let opportunity;
 
   try {
+    const contactName = `${result.data.firstName} ${result.data.lastName}`.trim();
+    const phoneSummary =
+      result.data.phoneNumber === result.data.cellPhone
+        ? `Primary phone: ${result.data.cellPhone}`
+        : `Phone: ${result.data.phoneNumber}\nCell: ${result.data.cellPhone}`;
+
     opportunity = await createOpportunity({
-      title: result.data.title,
-      status: "new",
+      title: null,
+      status: result.data.leadStage,
       source: null,
+      sourceDetail: null,
       serviceType: null,
-      prospectName: result.data.prospectName,
-      prospectCompanyName: null,
-      email: null,
-      phone: null,
-      addressLine1: null,
+      jobType: "Lead intake",
+      siteName: result.data.address,
+      contactName,
+      contactCompanyName: result.data.companyName,
+      email: result.data.email,
+      contactPhone: result.data.cellPhone,
+      addressLine1: result.data.address,
       addressLine2: null,
       city: null,
       stateRegion: null,
@@ -130,7 +217,10 @@ export async function quickCreateOpportunityAction(formData: FormData) {
       siteAssessmentScheduledOn: null,
       siteAssessmentCompletedOn: null,
       requirementsSummary: null,
-      notes: null
+      notes: phoneSummary,
+      measurements: [],
+      observations: [],
+      attachments: []
     });
   } catch (error) {
     redirect(
@@ -146,7 +236,7 @@ export async function quickCreateOpportunityAction(formData: FormData) {
 
   redirect(
     buildRedirect(`/leads/${opportunity.id}`, {
-      message: `${title || opportunity.title} was created. Finish qualification and capture in this workspace.`
+      message: `${opportunity.title} was created. Finish qualification and capture in this workspace.`
     })
   );
 }
@@ -204,10 +294,16 @@ export async function startEstimateFromOpportunityAction(formData: FormData) {
     );
   }
 
-  let result;
+  let estimate;
 
   try {
-    result = await ensureOpportunityEstimateFlow(opportunityId);
+    estimate = await quickCreateEstimateFromContext({
+      creationMode: "opportunity",
+      opportunityId,
+      customerId: null,
+      projectId: null,
+      title: ""
+    });
   } catch (error) {
     redirect(
       buildRedirect(`/leads/${opportunityId}`, {
@@ -220,16 +316,14 @@ export async function startEstimateFromOpportunityAction(formData: FormData) {
   }
 
   revalidatePath("/leads");
-  revalidatePath(`/leads/${result.opportunityId}`);
-  revalidatePath("/customers");
-  revalidatePath(`/customers/${result.customerId}`);
-  revalidatePath("/projects");
-  revalidatePath(`/projects/${result.projectId}`);
+  revalidatePath(`/leads/${opportunityId}`);
+  revalidatePath("/estimates");
+  revalidatePath(`/estimates/${estimate.id}`);
+  revalidatePath(`/estimates/${estimate.id}/edit`);
 
   redirect(
-    buildRedirect("/estimates", {
-      projectId: result.projectId,
-      message: "Lead moved into the live estimate flow."
+    buildRedirect(`/estimates/${estimate.id}/edit`, {
+      message: "Estimate created from the opportunity. Finish the scope in the estimate workspace."
     })
   );
 }

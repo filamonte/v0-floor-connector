@@ -22,6 +22,7 @@ type ReadinessProjectRow = {
   financing_status: FinancingStatus;
   commercial_readiness_status: CommercialReadinessStatus;
   ready_to_schedule_at: string | null;
+  operational_activated_at: string | null;
 };
 
 type ReadinessOpportunityRow = {
@@ -39,6 +40,8 @@ type ReadinessContractRow = {
   id: string;
   status: ContractStatus;
   internal_approval_status: ContractInternalApprovalStatus;
+  signed_at: string | null;
+  created_at: string;
   updated_at: string;
 };
 
@@ -53,6 +56,7 @@ export type ProjectFinancialReadinessSnapshot = {
   status: CommercialReadinessStatus;
   blockers: CommercialReadinessBlocker[];
   isReadyToSchedule: boolean;
+  isOperationallyActive: boolean;
   depositRequired: boolean;
   depositSatisfied: boolean;
   financingStatus: FinancingStatus;
@@ -63,6 +67,7 @@ export type ProjectFinancialReadinessSnapshot = {
   contractId: string | null;
   contractStatus: ContractStatus | null;
   contractInternalApprovalStatus: ContractInternalApprovalStatus | null;
+  contractSignedAt: string | null;
   depositInvoiceId: string | null;
   depositInvoiceStatus: InvoiceStatus | null;
 };
@@ -84,7 +89,9 @@ function isReadinessProjectRow(value: unknown): value is ReadinessProjectRow {
     typeof row.id === "string" &&
     typeof row.company_id === "string" &&
     typeof row.financing_status === "string" &&
-    typeof row.commercial_readiness_status === "string"
+    typeof row.commercial_readiness_status === "string" &&
+    (row.operational_activated_at === null ||
+      typeof row.operational_activated_at === "string")
   );
 }
 
@@ -122,6 +129,9 @@ function isReadinessContractRowArray(value: unknown): value is ReadinessContract
         typeof (row as Partial<ReadinessContractRow>).id === "string" &&
         typeof (row as Partial<ReadinessContractRow>).status === "string" &&
         typeof (row as Partial<ReadinessContractRow>).internal_approval_status === "string" &&
+        (typeof (row as Partial<ReadinessContractRow>).signed_at === "string" ||
+          (row as Partial<ReadinessContractRow>).signed_at === null) &&
+        typeof (row as Partial<ReadinessContractRow>).created_at === "string" &&
         typeof (row as Partial<ReadinessContractRow>).updated_at === "string"
     )
   );
@@ -152,7 +162,7 @@ export async function getProjectFinancialReadinessSnapshot(input: {
       supabase
         .from("projects")
         .select(
-          "id, company_id, financing_status, commercial_readiness_status, ready_to_schedule_at"
+          "id, company_id, financing_status, commercial_readiness_status, ready_to_schedule_at, operational_activated_at"
         )
         .eq("company_id", input.organizationId)
         .eq("id", input.projectId)
@@ -173,7 +183,7 @@ export async function getProjectFinancialReadinessSnapshot(input: {
         .order("updated_at", { ascending: false }),
       supabase
         .from("contracts")
-        .select("id, status, internal_approval_status, updated_at")
+        .select("id, status, internal_approval_status, signed_at, created_at, updated_at")
         .eq("company_id", input.organizationId)
         .eq("project_id", input.projectId)
         .order("updated_at", { ascending: false }),
@@ -233,7 +243,8 @@ export async function getProjectFinancialReadinessSnapshot(input: {
 
   const preferredEstimate =
     estimates.find((estimate) => estimate.status === "approved") ?? estimates[0] ?? null;
-  const contract = contracts[0] ?? null;
+  const signedContract = contracts.find((candidate) => candidate.status === "signed") ?? null;
+  const contract = signedContract ?? contracts[0] ?? null;
   const depositInvoices = invoices.filter((invoice) => invoice.workflow_role === "deposit");
   const paidDepositInvoice = depositInvoices.find((invoice) => invoice.status === "paid");
   const latestDepositInvoice = paidDepositInvoice ?? depositInvoices[0] ?? null;
@@ -259,6 +270,8 @@ export async function getProjectFinancialReadinessSnapshot(input: {
     status: readiness.status,
     blockers: readiness.blockers,
     isReadyToSchedule: readiness.isReadyToSchedule,
+    isOperationallyActive:
+      Boolean(projectData.operational_activated_at) || signedContract !== null,
     depositRequired: workflowSettings.requireDepositBeforeJobScheduling,
     depositSatisfied: latestDepositInvoice?.status === "paid",
     financingStatus: projectData.financing_status,
@@ -269,6 +282,8 @@ export async function getProjectFinancialReadinessSnapshot(input: {
     contractId: contract?.id ?? null,
     contractStatus: contract?.status ?? null,
     contractInternalApprovalStatus: contract?.internal_approval_status ?? null,
+    contractSignedAt:
+      signedContract?.signed_at ?? signedContract?.updated_at ?? signedContract?.created_at ?? null,
     depositInvoiceId: latestDepositInvoice?.id ?? null,
     depositInvoiceStatus: latestDepositInvoice?.status ?? null
   };
@@ -289,7 +304,8 @@ export async function syncProjectCommercialReadiness(input: {
     .from("projects")
     .update({
       commercial_readiness_status: snapshot.status,
-      ready_to_schedule_at: snapshot.isReadyToSchedule ? new Date().toISOString() : null
+      ready_to_schedule_at: snapshot.isReadyToSchedule ? new Date().toISOString() : null,
+      operational_activated_at: snapshot.contractSignedAt
     })
     .eq("company_id", input.organizationId)
     .eq("id", input.projectId)
@@ -305,6 +321,37 @@ export async function syncProjectCommercialReadiness(input: {
   }
 
   return snapshot;
+}
+
+export async function assertProjectContractSigned(input: {
+  organizationId: string;
+  projectId: string;
+  errorMessage: string;
+}) {
+  const snapshot = await getProjectFinancialReadinessSnapshot(input);
+
+  if (!snapshot) {
+    throw new Error("Project readiness could not be resolved for this operation.");
+  }
+
+  if (snapshot.contractStatus === "signed") {
+    return snapshot;
+  }
+
+  throw new Error(input.errorMessage);
+}
+
+export async function assertInvoiceCommercialReadiness(
+  input: StandardInvoiceReadinessInput
+) {
+  await assertProjectContractSigned({
+    organizationId: input.organizationId,
+    projectId: input.projectId,
+    errorMessage:
+      "Invoices stay downstream of the signed contract. Generate, send, and sign the contract from the project hub before creating an invoice."
+  });
+
+  await assertStandardInvoiceCommercialReadiness(input);
 }
 
 export async function assertStandardInvoiceCommercialReadiness(

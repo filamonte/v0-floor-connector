@@ -19,7 +19,7 @@ export function AppShellMobileNav({ currentRole }: AppShellMobileNavProps) {
       <button
         type="button"
         onClick={() => setIsOpen((value) => !value)}
-        className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-950"
+        className="inline-flex h-10 items-center rounded-[4px] border border-[#d9cdc2] bg-white px-3.5 text-sm font-medium text-[#5f564d] shadow-sm transition hover:border-[#ef7d32] hover:text-[#221a14]"
         aria-expanded={isOpen}
         aria-controls="mobile-app-navigation"
       >
@@ -29,13 +29,13 @@ export function AppShellMobileNav({ currentRole }: AppShellMobileNavProps) {
       {isOpen ? (
         <div
           id="mobile-app-navigation"
-          className="mt-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)]"
+          className="mt-4 border border-[#d9cdc2] bg-white p-5 shadow-[0_24px_80px_-40px_rgba(34,26,20,0.28)]"
         >
           <div className="mb-4">
             <UniversalCreateMenu
               align="left"
               buttonLabel="Quick create"
-              buttonClassName="w-full justify-center rounded-full border-slate-200 bg-slate-950 px-4 py-2.5 text-sm text-white hover:bg-slate-800"
+              buttonClassName="w-full justify-center rounded-[4px] border-[#ef7d32] bg-[#ef7d32] px-4 py-2.5 text-sm font-semibold text-[#1f140d] hover:bg-[#f08b47]"
               panelClassName="left-0 right-0 w-full"
             />
           </div>

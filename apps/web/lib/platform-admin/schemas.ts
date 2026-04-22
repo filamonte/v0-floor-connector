@@ -54,6 +54,20 @@ function optionalUuidField(message: string) {
     .transform((value) => value ?? null);
 }
 
+function positiveIntegerField(label: string) {
+  return z
+    .string()
+    .trim()
+    .min(1, `${label} is required.`)
+    .refine((value) => !Number.isNaN(Number(value)), {
+      message: `${label} must be a valid number.`
+    })
+    .transform((value) => Number(value))
+    .refine((value) => Number.isInteger(value) && value > 0, {
+      message: `${label} must be a whole number greater than zero.`
+    });
+}
+
 export const platformFinancialDefaultsInputSchema = z.object({
   defaultTaxBehavior: z.enum(["exclusive", "inclusive", "none"] as const),
   defaultTaxRate: taxRatePercentField("Default tax rate"),
@@ -68,7 +82,9 @@ export const platformWorkflowDefaultsInputSchema = z.object({
   requireContractSignatureBeforeJobScheduling: z.boolean(),
   requireDepositBeforeJobScheduling: z.boolean(),
   requireFinancingApprovalBeforeJobScheduling: z.boolean(),
-  defaultDepositPercentage: percentStringField("Default deposit percentage")
+  defaultDepositPercentage: percentStringField("Default deposit percentage"),
+  defaultEstimateStartNumber: positiveIntegerField("Default estimate start number"),
+  defaultInvoiceStartNumber: positiveIntegerField("Default invoice start number")
 });
 
 export const platformTemplateSeedInputSchema = z.object({
@@ -141,4 +157,10 @@ export const platformTenantStatusInputSchema = z.object({
       "restorable"
     ] as const
   )
+});
+
+export const platformTenantWorkflowNumberingInputSchema = z.object({
+  companyId: z.string().uuid("Company id is required."),
+  nextEstimateNumber: positiveIntegerField("Next estimate number"),
+  nextInvoiceNumber: positiveIntegerField("Next invoice number")
 });

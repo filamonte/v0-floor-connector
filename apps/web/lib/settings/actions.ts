@@ -275,7 +275,9 @@ export async function updateOrganizationWorkflowSettingsAction(formData: FormDat
       formData,
       "requireFinancingApprovalBeforeJobScheduling"
     ),
-    defaultDepositPercentage: getFieldValue(formData, "defaultDepositPercentage")
+    defaultDepositPercentage: getFieldValue(formData, "defaultDepositPercentage"),
+    nextEstimateNumber: getFieldValue(formData, "nextEstimateNumber"),
+    nextInvoiceNumber: getFieldValue(formData, "nextInvoiceNumber")
   });
 
   if (!result.success) {

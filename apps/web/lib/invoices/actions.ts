@@ -216,7 +216,7 @@ export async function quickCreateInvoiceAction(formData: FormData) {
   revalidatePath(`/portal/projects/${invoice.projectId}`);
 
   redirect(
-    buildRedirect(`/invoices/${invoice.id}`, {
+    buildRedirect(`/invoices/${invoice.id}/edit`, {
       message: `${invoice.referenceNumber} was created. Finish billing details in this workspace.`
     })
   );
@@ -260,7 +260,7 @@ export async function updateInvoiceAction(formData: FormData) {
   revalidatePath(`/portal/projects/${invoice.projectId}`);
 
   redirect(
-    buildRedirect(`/invoices/${invoice.id}`, {
+    buildRedirect(`/invoices/${invoice.id}/edit`, {
       message: `${invoice.referenceNumber} was updated successfully.`
     })
   );

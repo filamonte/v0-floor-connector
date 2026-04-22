@@ -25,6 +25,7 @@ type ProjectRow = {
   commercial_readiness_status: CommercialReadinessStatus;
   financing_status: FinancingStatus;
   ready_to_schedule_at: string | null;
+  operational_activated_at: string | null;
   description: string | null;
   address_line_1: string | null;
   address_line_2: string | null;
@@ -64,6 +65,7 @@ const projectSelect = `
   commercial_readiness_status,
   financing_status,
   ready_to_schedule_at,
+  operational_activated_at,
   description,
   address_line_1,
   address_line_2,
@@ -102,6 +104,8 @@ function isProjectRow(value: unknown): value is ProjectRow {
     typeof row.status === "string" &&
     typeof row.commercial_readiness_status === "string" &&
     typeof row.financing_status === "string" &&
+    (row.operational_activated_at === null ||
+      typeof row.operational_activated_at === "string") &&
     typeof row.created_at === "string" &&
     typeof row.updated_at === "string"
   );
@@ -109,6 +113,28 @@ function isProjectRow(value: unknown): value is ProjectRow {
 
 function isProjectRowArray(value: unknown): value is ProjectRow[] {
   return Array.isArray(value) && value.every((row) => isProjectRow(row));
+}
+
+function isOperationalProjectStatus(status: ProjectStatus) {
+  return status === "scheduled" || status === "in_progress" || status === "completed";
+}
+
+function assertProjectLifecycleStatus(input: {
+  projectName: string;
+  status: ProjectStatus;
+  operationalActivatedAt: string | null;
+}) {
+  if (!isOperationalProjectStatus(input.status)) {
+    return;
+  }
+
+  if (input.operationalActivatedAt) {
+    return;
+  }
+
+  throw new Error(
+    `${input.projectName} cannot move into scheduling or execution states before its contract is signed. Keep the project in pre-operational commercial stages until the legal handoff is complete.`
+  );
 }
 
 function mapProject(row: ProjectRow): ProjectRecord {
@@ -121,6 +147,7 @@ function mapProject(row: ProjectRow): ProjectRecord {
     commercialReadinessStatus: row.commercial_readiness_status,
     financingStatus: row.financing_status,
     readyToScheduleAt: row.ready_to_schedule_at,
+    operationalActivatedAt: row.operational_activated_at,
     description: row.description,
     addressLine1: row.address_line_1,
     addressLine2: row.address_line_2,
@@ -293,6 +320,11 @@ export async function getProjectById(projectId: string, next = "/projects") {
 
 export async function createProject(input: ProjectInput) {
   const scope = await requireProjectScope("/projects");
+  assertProjectLifecycleStatus({
+    projectName: input.name,
+    status: input.status,
+    operationalActivatedAt: null
+  });
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("projects")
@@ -331,6 +363,17 @@ export async function createProject(input: ProjectInput) {
 
 export async function updateProject(projectId: string, input: ProjectInput) {
   const scope = await requireProjectScope(`/projects/${projectId}`);
+  const currentProject = await getProjectById(projectId, `/projects/${projectId}`);
+
+  if (!currentProject) {
+    throw new Error("Project not found for this organization.");
+  }
+
+  assertProjectLifecycleStatus({
+    projectName: currentProject.name,
+    status: input.status,
+    operationalActivatedAt: currentProject.operationalActivatedAt
+  });
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("projects")

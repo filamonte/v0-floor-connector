@@ -62,6 +62,7 @@ export const estimateLineItemInputSchema = z.object({
 });
 
 export const estimateInputSchema = z.object({
+  opportunityId: z.string().uuid("Estimate continuity requires a valid opportunity."),
   projectId: z.string().uuid("Select a valid project."),
   status: estimateStatusSchema,
   taxAmount: currencyAmountField("Tax"),
@@ -87,7 +88,56 @@ export const estimateInputSchema = z.object({
 });
 
 export const estimateQuickCreateInputSchema = z.object({
-  projectId: z.string().uuid("Select a valid project.")
+  creationMode: z.enum(["opportunity", "customer", "standalone"] as const),
+  opportunityId: z
+    .string()
+    .trim()
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .optional()
+    .refine((value) => value === null || z.string().uuid().safeParse(value).success, {
+      message: "Select a valid opportunity."
+    })
+    .transform((value) => value ?? null),
+  customerId: z
+    .string()
+    .trim()
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .optional()
+    .refine((value) => value === null || z.string().uuid().safeParse(value).success, {
+      message: "Select a valid customer."
+    })
+    .transform((value) => value ?? null),
+  projectId: z
+    .string()
+    .trim()
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .optional()
+    .refine((value) => value === null || z.string().uuid().safeParse(value).success, {
+      message: "Select a valid site or job."
+    })
+    .transform((value) => value ?? null),
+  title: z.string().trim().min(1, "Estimate title is required.").max(160)
+}).superRefine((value, ctx) => {
+  if (value.creationMode === "opportunity" && !value.opportunityId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Select an opportunity to start the estimate.",
+      path: ["opportunityId"]
+    });
+  }
+
+  if ((value.creationMode === "customer" || value.creationMode === "standalone") && !value.opportunityId) {
+    if (!value.customerId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select a customer before creating the estimate.",
+        path: ["customerId"]
+      });
+    }
+  }
 });
 
 export type EstimateInput = z.infer<typeof estimateInputSchema>;

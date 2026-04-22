@@ -3,10 +3,13 @@ import type { User } from "@supabase/supabase-js";
 
 import type { ActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { AppShellMobileNav } from "@/components/app-shell-mobile-nav";
+import { ContractorNotificationsCenter } from "@/components/contractor-notifications-center";
+import { GlobalSearch } from "@/components/global-search";
 import { OrganizationBrandLink } from "@/components/organization-brand-link";
+import { ProtectedAppBreadcrumbs } from "@/components/protected-app-breadcrumbs";
 import { ProtectedAppTopNav } from "@/components/protected-app-top-nav";
-import { ProtectedAppWorkspaceBand } from "@/components/protected-app-workspace-band";
 import { SignOutForm } from "@/components/sign-out-form";
+import { listContractorNotifications } from "@/lib/notifications/data";
 
 type ContractorAppShellProps = {
   children: ReactNode;
@@ -14,7 +17,7 @@ type ContractorAppShellProps = {
   organizationContext: ActiveOrganizationContext | null;
 };
 
-export function ContractorAppShell({
+export async function ContractorAppShell({
   children,
   user,
   organizationContext
@@ -31,14 +34,18 @@ export function ContractorAppShell({
     hour: "numeric",
     minute: "2-digit"
   });
+  const notifications = await (organizationContext
+    ? listContractorNotifications()
+    : Promise.resolve({ totalCount: 0, sections: [], visibleItems: [] }));
 
   return (
-    <div className="min-h-screen bg-[#eef1f5] text-slate-950">
+    <div className="min-h-screen bg-[#f3eee8] text-slate-950">
       <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-30 border-b border-[#d8dee8] bg-white">
+        <header className="sticky top-0 z-30 border-b border-[#d9cdc2] bg-white">
           <div className="hidden lg:block">
             <ProtectedAppTopNav
               currentRole={organizationContext?.membership.role}
+              notifications={notifications}
               organizationName={organizationName}
               organizationLogoUrl={organizationContext?.organization.logoUrl}
               organizationStatus={organizationStatus}
@@ -46,21 +53,35 @@ export function ContractorAppShell({
               timestampLabel={timestampLabel}
               homeHref="/dashboard"
             />
-            <ProtectedAppWorkspaceBand organizationName={organizationName} />
           </div>
 
-          <div className="border-b border-[#d8dee8] bg-white px-5 py-3 lg:hidden">
-            <div className="flex items-center justify-between gap-3">
+          <div className="border-b border-[#d9cdc2] bg-white px-5 py-3 lg:hidden">
+            <div className="flex items-start justify-between gap-3">
               <OrganizationBrandLink
                 href="/dashboard"
                 organizationName={organizationName}
                 logoUrl={organizationContext?.organization.logoUrl}
                 supportingLabel="Shared contractor workspace"
+                navigationLabel="Dashboard home"
                 className="min-w-0 flex-1"
               />
-              <div className="flex items-center gap-2">
+              <div className="flex shrink-0 items-center gap-2 pt-1">
                 <AppShellMobileNav currentRole={organizationContext?.membership.role} />
-                <SignOutForm className="border-[#d7ddea] bg-[#f4f7fb] px-3 py-2 text-[#233a64] hover:border-[#c8d1df] hover:bg-white" />
+                <SignOutForm className="border-[#17120f] bg-[#17120f] px-3 py-2 text-[#ffd7bb] hover:border-[#17120f] hover:bg-[#2a1c13]" />
+              </div>
+            </div>
+            <div className="mt-3 space-y-3 border-t border-[#ebe0d6] pt-3">
+              <ProtectedAppBreadcrumbs organizationName={organizationName} />
+              <div className="flex flex-wrap items-center gap-2">
+                <ContractorNotificationsCenter
+                  notifications={notifications}
+                  compact
+                />
+                <GlobalSearch
+                  compact
+                  buttonLabel="Search"
+                  buttonClassName="inline-flex h-9 items-center gap-2 rounded-[4px] border border-[#e2d4c5] bg-[#fbf5ee] px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6b5442] transition hover:border-[#ef7d32] hover:bg-white hover:text-[#221a14]"
+                />
               </div>
             </div>
           </div>

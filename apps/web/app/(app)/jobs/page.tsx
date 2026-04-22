@@ -2,13 +2,21 @@ import Link from "next/link";
 
 import { AppEmptyState } from "@/components/app-empty-state";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
-import { listEstimates } from "@/lib/estimates/data";
-import { listJobs } from "@/lib/jobs/data";
+import { JobQuickCreateForm } from "@/components/job-quick-create-form";
+import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
+import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
+import { quickCreateJobAction } from "@/lib/jobs/actions";
+import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
+import { listProjects } from "@/lib/projects/data";
+
+type JobView = "all" | "unscheduled" | "scheduled" | "in_progress" | "completed";
 
 type JobsPageProps = {
   searchParams?: Promise<{
     q?: string;
-    view?: "all" | "unscheduled" | "scheduled" | "in_progress" | "completed";
+    view?: JobView;
+    compose?: string;
+    projectId?: string;
     error?: string;
     message?: string;
   }>;
@@ -18,35 +26,19 @@ function formatStatusLabel(status: string) {
   return status.replaceAll("_", " ");
 }
 
-function formatCurrency(value: number | string) {
-  return Number(value).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD"
-  });
-}
-
 function formatDate(value: string | null) {
   return value ? new Date(`${value}T00:00:00`).toLocaleDateString() : "Unscheduled";
 }
 
-function getStatusClasses(status: string) {
-  switch (status) {
-    case "unscheduled":
-      return "border-amber-200 bg-amber-50 text-amber-900";
-    case "scheduled":
-      return "border-sky-200 bg-sky-50 text-sky-900";
-    case "in_progress":
-      return "border-violet-200 bg-violet-50 text-violet-900";
-    case "completed":
-      return "border-emerald-200 bg-emerald-50 text-emerald-900";
-    default:
-      return "border-slate-200 bg-slate-50 text-slate-700";
-  }
+function formatDateTime(value: string) {
+  return new Date(value).toLocaleString();
 }
 
 function buildJobsHref(input: {
   q?: string;
-  view?: string;
+  view?: JobView;
+  compose?: string;
+  projectId?: string;
 }) {
   const searchParams = new URLSearchParams();
 
@@ -58,21 +50,31 @@ function buildJobsHref(input: {
     searchParams.set("view", input.view);
   }
 
+  if (input.compose === "1") {
+    searchParams.set("compose", "1");
+  }
+
+  if (input.projectId) {
+    searchParams.set("projectId", input.projectId);
+  }
+
   const query = searchParams.toString();
   return query.length > 0 ? `/jobs?${query}` : "/jobs";
 }
 
 export default async function JobsPage({ searchParams }: JobsPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
-  const [jobs, estimates] = await Promise.all([listJobs(), listEstimates()]);
-  const estimateTotals = new Map(estimates.map((estimate) => [estimate.id, estimate.totalAmount]));
+  const [jobs, projects] = await Promise.all([listJobs(), listProjects()]);
   const query = resolvedSearchParams.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
   const view = resolvedSearchParams.view ?? "all";
-  const unscheduledCount = jobs.filter((job) => job.dispatchStatus === "unscheduled").length;
-  const scheduledCount = jobs.filter((job) => job.dispatchStatus === "scheduled").length;
-  const inProgressCount = jobs.filter((job) => job.dispatchStatus === "in_progress").length;
-  const completedCount = jobs.filter((job) => job.dispatchStatus === "completed").length;
+  const showComposer =
+    resolvedSearchParams.compose === "1" || Boolean(resolvedSearchParams.error);
+  const assignmentsByJobId = await listJobAssignmentsByJobIds(
+    jobs.map((job) => job.id),
+    "/jobs"
+  );
+
   const filteredJobs = jobs.filter((job) => {
     const matchesView = view === "all" ? true : job.dispatchStatus === view;
     const matchesQuery =
@@ -90,43 +92,74 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 
     return matchesView && matchesQuery;
   });
+
+  const unscheduledJobs = jobs.filter((job) => job.dispatchStatus === "unscheduled");
+  const scheduledJobs = jobs.filter((job) => job.dispatchStatus === "scheduled");
+  const inProgressJobs = jobs.filter((job) => job.dispatchStatus === "in_progress");
+  const completedJobs = jobs.filter((job) => job.dispatchStatus === "completed");
+  const scheduledWithoutCrewVendor = scheduledJobs.filter((job) => job.crewVendorId === null);
+  const scheduledWithoutAssignments = scheduledJobs.filter((job) => {
+    const assignments = assignmentsByJobId.get(job.id) ?? [];
+    return assignments.length === 0;
+  });
+
+  const readyProjectOptions = projects
+    .filter((project) => project.readyToScheduleAt !== null)
+    .map((project) => ({
+      id: project.id,
+      name: project.name,
+      customerName: project.customer?.name ?? null
+    }));
+
   const jobViews = [
     { key: "all", label: "All jobs", count: jobs.length },
-    { key: "unscheduled", label: "Unscheduled", count: unscheduledCount },
-    { key: "scheduled", label: "Scheduled", count: scheduledCount },
-    { key: "in_progress", label: "In progress", count: inProgressCount },
-    { key: "completed", label: "Completed", count: completedCount }
+    { key: "unscheduled", label: "Unscheduled", count: unscheduledJobs.length },
+    { key: "scheduled", label: "Scheduled", count: scheduledJobs.length },
+    { key: "in_progress", label: "In progress", count: inProgressJobs.length },
+    { key: "completed", label: "Completed", count: completedJobs.length }
   ] as const;
+
+  const recentJobs = [...filteredJobs]
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+    .slice(0, 20);
 
   return (
     <ContractorWorkspacePage
       eyebrow="Jobs"
       title="Field work with clear operational status"
-      description="Use jobs as the operational link between project readiness, crew scheduling, time, daily logs, change orders, and invoice-ready completion."
+      description="Use jobs as the operational link between project readiness, crew scheduling, time, daily logs, and invoice-ready completion."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="border border-[#f2d2b3] bg-[#fff7ef] px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#9a6a2c]">Unscheduled</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#7a4d12]">
-              {unscheduledCount}
+          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+              Unscheduled
+            </p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+              {unscheduledJobs.length}
             </p>
           </div>
-          <div className="border border-[#cfe4f6] bg-[#f3f9ff] px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#557ca0]">Scheduled</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#1d4f7a]">
-              {scheduledCount}
+          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+              Scheduled
+            </p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+              {scheduledJobs.length}
             </p>
           </div>
-          <div className="border border-[#ddd3f8] bg-[#f7f4ff] px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#7764a8]">In progress</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#5a3ea0]">
-              {inProgressCount}
+          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+              In progress
+            </p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+              {inProgressJobs.length}
             </p>
           </div>
-          <div className="border border-[#cfe9d5] bg-[#f2fbf4] px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#5a8a66]">Completed</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#23613a]">
-              {completedCount}
+          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+              Completed
+            </p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+              {completedJobs.length}
             </p>
           </div>
         </div>
@@ -134,12 +167,15 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
       commandBar={{
         supportSlot: (
           <p>
-            Review the live execution queue, confirm what each job came from, and jump back to the project hub when the wider contract, billing, or change-order chain matters.
+            Review the live execution queue here, use project-anchored quick create
+            when a ready project needs a job, and keep deeper scheduling work on the
+            dedicated schedule surface.
           </p>
         ),
         searchSlot: (
           <form action="/jobs" className="flex flex-col gap-2 sm:flex-row">
             {view !== "all" ? <input type="hidden" name="view" value={view} /> : null}
+            {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
             <input
               type="search"
               name="q"
@@ -153,7 +189,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             >
               Search
             </button>
-            {query.length > 0 || view !== "all" ? (
+            {query.length > 0 || view !== "all" || showComposer ? (
               <Link
                 href="/jobs"
                 className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
@@ -169,7 +205,11 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           return (
             <Link
               key={jobView.key}
-              href={buildJobsHref({ q: query, view: jobView.key })}
+              href={buildJobsHref({
+                q: query,
+                view: jobView.key,
+                compose: showComposer ? "1" : undefined
+              })}
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
@@ -191,129 +231,205 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
         }),
         actionSlot: (
           <Link
-            href="/projects"
+            href={buildJobsHref({ q: query, view, compose: "1" })}
             className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
           >
-            Open project spine
+            New job
           </Link>
         )
       }}
     >
-      {resolvedSearchParams.error ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
-          {resolvedSearchParams.error}
-        </div>
-      ) : null}
-
-      {resolvedSearchParams.message ? (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
-          {resolvedSearchParams.message}
-        </div>
-      ) : null}
-
-      <section className="border border-[#dde3eb] bg-white">
-        <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
-          <div className="flex items-end justify-between gap-4">
-            <div className="hidden grid-cols-[minmax(0,1.35fr)_1fr_160px_140px_140px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
-              <span>Job</span>
-              <span>Customer</span>
-              <span>Status</span>
-              <span>Date</span>
-              <span className="text-right">Total</span>
-            </div>
-            <div className="md:hidden">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                Jobs list
-              </p>
-            </div>
-            <p className="text-sm leading-6 text-slate-500">{filteredJobs.length} visible</p>
+      <div className="space-y-6">
+        {resolvedSearchParams.error ? (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+            {resolvedSearchParams.error}
           </div>
-        </div>
+        ) : null}
 
-        <div className="divide-y divide-slate-200">
-          {filteredJobs.length > 0 ? (
-            filteredJobs.map((job) => {
-              const estimateTotal = job.estimateId ? estimateTotals.get(job.estimateId) ?? null : null;
+        {resolvedSearchParams.message ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+            {resolvedSearchParams.message}
+          </div>
+        ) : null}
 
-              return (
-                <Link
-                  key={job.id}
-                  href={`/jobs/${job.id}`}
-                  className="group block px-5 py-4 transition hover:bg-slate-50/80 sm:px-6"
-                >
-                  <div className="grid gap-4 md:grid-cols-[minmax(0,1.35fr)_1fr_160px_140px_140px] md:items-center">
-                    <div className="min-w-0">
-                      <p className="text-base font-semibold text-slate-950 transition group-hover:text-brand-700">
-                        {job.project?.name ?? "Untitled job"}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        {job.estimate?.referenceNumber
-                          ? `From estimate ${job.estimate.referenceNumber}`
-                          : "Created directly from the project chain"}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        {job.crewVendor
-                          ? `Crew vendor ${job.crewVendor.name} · opens into time, daily logs, and downstream billing`
-                          : "Operational record for scheduling, field time, and daily execution"}
-                      </p>
-                    </div>
+        <section className="grid gap-4 xl:grid-cols-2 2xl:grid-cols-4">
+          <ManagerDashboardCard
+            eyebrow="Workflow queue"
+            title="Unscheduled"
+            description="Jobs that exist canonically but still need scheduling follow-through."
+            actionHref={buildJobsHref({ q: query, view: "unscheduled" })}
+            actionLabel="Review jobs"
+            items={unscheduledJobs.slice(0, 4).map((job) => ({
+              href: `/jobs/${job.id}`,
+              title: job.project?.name ?? "Untitled job",
+              subtitle: job.customer?.name ?? "Unknown customer",
+              meta: job.estimate?.referenceNumber
+                ? `Estimate ${job.estimate.referenceNumber}`
+                : "Project-created job",
+              trailing: formatDateTime(job.updatedAt)
+            }))}
+            emptyTitle="No unscheduled jobs"
+            emptyDescription="Jobs waiting on their first scheduling step will appear here."
+          />
+          <ManagerDashboardCard
+            eyebrow="Workflow queue"
+            title="Scheduled without crew vendor"
+            description="Scheduled jobs that still do not have a crew vendor attached on the canonical job record."
+            actionHref={buildJobsHref({ q: query, view: "scheduled" })}
+            actionLabel="Open scheduled"
+            items={scheduledWithoutCrewVendor.slice(0, 4).map((job) => ({
+              href: `/jobs/${job.id}`,
+              title: job.project?.name ?? "Untitled job",
+              subtitle: job.customer?.name ?? "Unknown customer",
+              meta: `Scheduled ${formatDate(job.scheduledDate)}`,
+              trailing: "Crew vendor missing"
+            }))}
+            emptyTitle="All scheduled jobs have a crew vendor"
+            emptyDescription="Scheduled jobs without a crew vendor will surface here."
+          />
+          <ManagerDashboardCard
+            eyebrow="Workflow queue"
+            title="Scheduled without assignments"
+            description="Scheduled jobs that do not yet have any crew assignments on the shared job-assignment chain."
+            actionHref={buildJobsHref({ q: query, view: "scheduled" })}
+            actionLabel="Review staffing"
+            items={scheduledWithoutAssignments.slice(0, 4).map((job) => ({
+              href: `/jobs/${job.id}`,
+              title: job.project?.name ?? "Untitled job",
+              subtitle: job.customer?.name ?? "Unknown customer",
+              meta: `Scheduled ${formatDate(job.scheduledDate)}`,
+              trailing: "No assignments"
+            }))}
+            emptyTitle="All scheduled jobs have assignments"
+            emptyDescription="Once scheduled jobs are missing assignment rows, they will appear here."
+          />
+          <ManagerDashboardCard
+            eyebrow="Workflow queue"
+            title="In progress"
+            description="Jobs already in execution and still connected to time, logs, punchlists, and downstream billing."
+            actionHref={buildJobsHref({ q: query, view: "in_progress" })}
+            actionLabel="View active"
+            items={inProgressJobs.slice(0, 4).map((job) => ({
+              href: `/jobs/${job.id}`,
+              title: job.project?.name ?? "Untitled job",
+              subtitle: job.customer?.name ?? "Unknown customer",
+              meta: job.crewVendor?.name ?? "No crew vendor",
+              trailing: formatDate(job.scheduledDate)
+            }))}
+            emptyTitle="No jobs are currently in progress"
+            emptyDescription="Active field work will show here once a job moves into execution."
+          />
+        </section>
 
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                        Customer
-                      </p>
-                      <p className="text-sm font-medium text-slate-700">
-                        {job.customer?.name ?? "Unknown customer"}
-                      </p>
-                    </div>
+        <section className="overflow-hidden border border-[#dde3eb] bg-white">
+          <div className="flex items-end justify-between gap-4 border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+                Recent records
+              </p>
+              <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+                Latest job updates
+              </h3>
+            </div>
+            <p className="text-sm leading-6 text-slate-500">{recentJobs.length} visible</p>
+          </div>
 
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                        Status
-                      </p>
-                      <span
-                        className={`inline-flex rounded-[4px] border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] ${getStatusClasses(
-                          job.dispatchStatus
-                        )}`}
-                      >
-                        {formatStatusLabel(job.dispatchStatus)}
-                      </span>
-                    </div>
-
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                        Date
-                      </p>
-                      <p className="text-sm text-slate-700">{formatDate(job.scheduledDate)}</p>
-                    </div>
-
-                    <div className="md:text-right">
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                        Total
-                      </p>
-                      <p className="text-sm font-semibold text-slate-950">
-                        {estimateTotal ? formatCurrency(estimateTotal) : "-"}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })
+          {recentJobs.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200 text-sm">
+                <thead className="bg-[#f8fafc] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  <tr>
+                    <th className="px-5 py-3 sm:px-6">Job</th>
+                    <th className="px-5 py-3 sm:px-6">Customer</th>
+                    <th className="px-5 py-3 sm:px-6">Status</th>
+                    <th className="px-5 py-3 sm:px-6">Scheduled</th>
+                    <th className="px-5 py-3 text-right sm:px-6">Updated</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 bg-white">
+                  {recentJobs.map((job) => (
+                    <tr key={job.id} className="hover:bg-slate-50/70">
+                      <td className="px-5 py-4 sm:px-6">
+                        <Link
+                          href={`/jobs/${job.id}`}
+                          className="font-semibold text-slate-950 transition hover:text-brand-700"
+                        >
+                          {job.project?.name ?? "Untitled job"}
+                        </Link>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {job.estimate?.referenceNumber
+                            ? `Estimate ${job.estimate.referenceNumber}`
+                            : "Project-created job"}
+                        </p>
+                      </td>
+                      <td className="px-5 py-4 sm:px-6">
+                        <p className="font-medium text-slate-700">
+                          {job.customer?.name ?? "Unknown customer"}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {job.crewVendor?.name ?? "No crew vendor"}
+                        </p>
+                      </td>
+                      <td className="px-5 py-4 sm:px-6">
+                        <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                          {formatStatusLabel(job.dispatchStatus)}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-slate-500 sm:px-6">
+                        {formatDate(job.scheduledDate)}
+                      </td>
+                      <td className="px-5 py-4 text-right text-slate-500 sm:px-6">
+                        {formatDateTime(job.updatedAt)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
             <div className="px-6 py-8 sm:px-8">
               <AppEmptyState
                 eyebrow={jobs.length > 0 ? "No matching jobs" : "No jobs yet"}
-                title={jobs.length > 0 ? "Adjust the jobs filters" : "Create the first job"}
+                title={
+                  jobs.length > 0 ? "Adjust the jobs filters" : "Create the first job"
+                }
                 description={
                   jobs.length > 0
-                    ? "Try a broader search or switch views to find the execution record you need."
-                    : "Jobs move approved work into execution. Once a project or estimate is ready for production, create a job and track it through completion."
+                    ? "Try a broader search or switch to another real job status."
+                    : "Jobs move approved project work into execution. Create them from ready project context and then finish scheduling in the full job workspace."
                 }
               />
             </div>
           )}
-        </div>
-      </section>
+        </section>
+      </div>
+
+      <WorkspaceComposerSheet
+        id="job-create"
+        title="Quick create job"
+        description="Choose a ready project, create the canonical job, and then finish schedule, crew, and execution detail in the full job workspace."
+        open={showComposer}
+        openHref={buildJobsHref({
+          q: query,
+          view,
+          compose: "1",
+          projectId: resolvedSearchParams.projectId
+        })}
+        closeHref={buildJobsHref({ q: query, view })}
+        openLabel="Open job quick create"
+      >
+        {readyProjectOptions.length > 0 ? (
+          <JobQuickCreateForm
+            action={quickCreateJobAction}
+            projects={readyProjectOptions}
+            initialProjectId={resolvedSearchParams.projectId ?? null}
+          />
+        ) : (
+          <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+            A project must be ready to schedule before a job can be created.
+          </div>
+        )}
+      </WorkspaceComposerSheet>
     </ContractorWorkspacePage>
   );
 }

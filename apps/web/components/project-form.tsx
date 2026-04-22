@@ -41,6 +41,12 @@ export function ProjectForm({
   initialCustomerId,
   allowInlineCustomerCreate = !project
 }: ProjectFormProps) {
+  const availableStatuses = projectStatusesList.filter((status) =>
+    project?.operationalActivatedAt
+      ? true
+      : status === "lead" || status === "estimating" || status === "approved"
+  );
+
   return (
     <form action={action} className="space-y-5">
       {project ? <input type="hidden" name="projectId" value={project.id} /> : null}
@@ -72,12 +78,18 @@ export function ProjectForm({
             className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
             required
           >
-            {projectStatusesList.map((status) => (
+            {availableStatuses.map((status) => (
               <option key={status} value={status}>
                 {formatStatusLabel(status)}
               </option>
             ))}
           </select>
+          {!project?.operationalActivatedAt ? (
+            <span className="mt-2 block text-xs leading-5 text-slate-500">
+              Pre-contract projects stay in commercial stages. Scheduling and execution
+              statuses unlock only after the contract is signed.
+            </span>
+          ) : null}
         </label>
 
         <label className="block">

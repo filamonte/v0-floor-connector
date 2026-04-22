@@ -4,7 +4,7 @@ FloorConnector is a production-first, multi-tenant vertical SaaS platform for ep
 
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
-Current branch highlights include the normalized contractor shell, shared quick-create to full-workspace flow, contractor and portal continuity on canonical records, and first real contractor-side module dashboards for payments and schedule.
+Current branch highlights include the normalized contractor shell, shared quick-create to full-workspace flow, contractor and portal continuity on canonical records, first real contractor-side module dashboards for payments and schedule, and a broader shared contractor theme direction across the shell, manager pages, and quick-create surfaces.
 
 ## Repository Shape
 
@@ -45,6 +45,11 @@ The local environment source of truth is `C:\FloorConnector\.env.local`.
 
 Use these docs together:
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth on the current branch
+- [docs/product-brain.md](C:/FloorConnector/docs/product-brain.md): high-signal product memory and anti-drift rules
+- [docs/decisions.md](C:/FloorConnector/docs/decisions.md): current branch decisions worth preserving
+- [docs/build-sequence.md](C:/FloorConnector/docs/build-sequence.md): practical build-order guidance for future work
+- [docs/codex-workflow.md](C:/FloorConnector/docs/codex-workflow.md): planning-first Codex implementation workflow
+- [docs/codex-prompt-templates.md](C:/FloorConnector/docs/codex-prompt-templates.md): short reusable prompt templates
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow
@@ -53,5 +58,17 @@ Use these docs together:
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): short implementation guardrail summary for developers
 
 Start with [docs/current-state.md](C:/FloorConnector/docs/current-state.md) for implemented status. Use the other docs for target design, phased planning, workflow direction, and documentation process.
+
+## Current UI Direction
+
+The current protected contractor app uses:
+- top-nav-first shell architecture
+- unified breadcrumb and page-context header continuity
+- shared manager-page wrapper and command-bar rhythm
+- quick-create -> canonical record -> full workspace flow
+- dashboard as the visual reference point for broader contractor surfaces
+- charcoal or dark-neutral framing, orange accents, and white or light-neutral working surfaces instead of the older blue-heavy contractor styling
+
+Treat [docs/current-state.md](C:/FloorConnector/docs/current-state.md) and [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md) as the source of truth for the active contractor UI baseline.
 
 Older, superseded, exploratory, and historical docs live under [docs/archive/](C:/FloorConnector/docs/archive/). Archived docs are preserved for reference, but they do not override active docs.

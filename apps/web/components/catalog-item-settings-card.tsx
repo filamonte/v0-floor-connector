@@ -247,10 +247,10 @@ export function CatalogItemSettingsCard({
                   <input type="hidden" name="seedId" value={seed.id} />
                   <div>
                     <p className="text-sm font-medium text-slate-950">
-                      {seed.name} <span className="text-slate-500">· {seed.unit}</span>
+                      {seed.name} <span className="text-slate-500">- {seed.unit}</span>
                     </p>
                     <p className="mt-1 text-xs leading-5 text-slate-500">
-                      {seed.description ?? "Platform starter item"} · ${seed.defaultUnitPrice}
+                      {seed.description ?? "Platform starter item"} - ${seed.defaultUnitPrice}
                     </p>
                   </div>
                   <button

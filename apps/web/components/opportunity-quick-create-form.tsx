@@ -8,6 +8,15 @@ type OpportunityQuickCreateFormProps = {
   action: (formData: FormData) => void | Promise<void>;
 };
 
+const leadStageOptions = [
+  { value: "new", label: "New" },
+  { value: "contacted", label: "Contacted" },
+  { value: "qualified", label: "Qualified" },
+  { value: "site_assessment_scheduled", label: "Site Assessment Scheduled" },
+  { value: "site_assessment_complete", label: "Site Assessment Complete" },
+  { value: "estimating", label: "Estimating" }
+] as const;
+
 export function OpportunityQuickCreateForm({
   action
 }: OpportunityQuickCreateFormProps) {
@@ -16,24 +25,73 @@ export function OpportunityQuickCreateForm({
       <QuickCreateFormShell
         eyebrow="Quick create"
         title="Create lead"
-        description="Capture just the lead title and primary prospect to create the canonical opportunity first. Qualification, source, service details, and follow-up notes can be completed in the lead workspace."
-        footer="This creates a real opportunity record and takes you straight into the full lead workspace."
+        description="Capture the same intake fields the sales team expects first. FloorConnector will create the canonical contact and lead continuity behind the scenes, then take you into the lead workspace."
+        footer="This creates a real opportunity record first. Estimate creation still stays downstream of intake continuity."
       >
-        <div className="grid gap-4">
+        <div className="grid gap-4 md:grid-cols-2">
           <AuthField
-            label="Lead title"
-            name="title"
-            placeholder="North warehouse epoxy flooring"
-            hint="Use a short job or opportunity title."
+            label="First Name"
+            name="firstName"
+            placeholder="Jeff"
             required
           />
           <AuthField
-            label="Prospect name"
-            name="prospectName"
-            placeholder="Jeff Filamonte"
-            hint="Primary contact for this opportunity."
+            label="Last Name"
+            name="lastName"
+            placeholder="Filamonte"
             required
           />
+          <div className="md:col-span-2">
+            <AuthField
+              label="Company Name"
+              name="companyName"
+              placeholder="Optional company"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <AuthField
+              label="Address"
+              name="address"
+              placeholder="123 Main Street"
+              required
+            />
+          </div>
+          <AuthField
+            label="Phone Number"
+            name="phoneNumber"
+            placeholder="(555) 555-0100"
+            required
+          />
+          <AuthField
+            label="Cell Phone"
+            name="cellPhone"
+            placeholder="(555) 555-0101"
+            required
+          />
+          <AuthField
+            label="Email"
+            name="email"
+            type="email"
+            placeholder="lead@example.com"
+            required
+          />
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-800">
+              Lead Stage
+            </span>
+            <select
+              name="leadStage"
+              defaultValue="new"
+              required
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            >
+              {leadStageOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
       </QuickCreateFormShell>
 

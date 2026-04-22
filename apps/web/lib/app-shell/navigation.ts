@@ -80,6 +80,12 @@ export const protectedAppNavItems: readonly ProtectedAppNavItem[] = [
     section: "operations"
   },
   {
+    href: "/appointments",
+    label: "Appointments",
+    minRole: "member",
+    section: "operations"
+  },
+  {
     href: "/time",
     label: "Time",
     minRole: "member",
@@ -88,6 +94,12 @@ export const protectedAppNavItems: readonly ProtectedAppNavItem[] = [
   {
     href: "/daily-logs",
     label: "Daily Logs",
+    minRole: "member",
+    section: "operations"
+  },
+  {
+    href: "/punchlists",
+    label: "Punchlists",
     minRole: "member",
     section: "operations"
   },
@@ -112,6 +124,12 @@ export const protectedAppNavItems: readonly ProtectedAppNavItem[] = [
   {
     href: "/payments",
     label: "Payments",
+    minRole: "member",
+    section: "finance"
+  },
+  {
+    href: "/progress-billing",
+    label: "Progress Billing",
     minRole: "member",
     section: "finance"
   },

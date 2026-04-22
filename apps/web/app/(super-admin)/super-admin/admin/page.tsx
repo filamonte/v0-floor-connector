@@ -1,7 +1,12 @@
 import { DetailPanel } from "@/components/detail-panel";
 import { SettingsFeedback } from "@/components/settings-feedback";
-import { assignPlatformAdminAction, updateTenantPlatformStatusAction } from "@/lib/platform-admin/actions";
 import {
+  assignPlatformAdminAction,
+  updateTenantPlatformStatusAction,
+  updateTenantWorkflowNumberingAction
+} from "@/lib/platform-admin/actions";
+import {
+  getPlatformWorkflowDefaults,
   listPlatformAdmins,
   listPlatformRolesAndPermissions,
   listTenantsForPlatformAdmin
@@ -16,10 +21,11 @@ type PageProps = {
 
 export default async function PlatformAdminPage({ searchParams }: PageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
-  const [admins, rolesAndPermissions, tenants] = await Promise.all([
+  const [admins, rolesAndPermissions, tenants, workflowDefaults] = await Promise.all([
     listPlatformAdmins(),
     listPlatformRolesAndPermissions(),
-    listTenantsForPlatformAdmin()
+    listTenantsForPlatformAdmin(),
+    getPlatformWorkflowDefaults()
   ]);
 
   return (
@@ -33,7 +39,10 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
         title="Platform Admin Access"
         description="Super-admin access is managed separately from tenant membership so global controls remain explicit and auditable."
       >
-        <form action={assignPlatformAdminAction} className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+        <form
+          action={assignPlatformAdminAction}
+          className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end"
+        >
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-800">
               User email
@@ -64,7 +73,7 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
                 {admin.users?.full_name ?? admin.users?.email ?? admin.user_id}
               </p>
               <p className="mt-1">
-                {admin.users?.email ?? "No email"} · {admin.roles?.name ?? "Platform admin"}
+                {admin.users?.email ?? "No email"} - {admin.roles?.name ?? "Platform admin"}
               </p>
             </div>
           ))}
@@ -77,64 +86,119 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
       >
         <div className="space-y-4">
           {tenants.map((tenant) => (
-            <form
-              key={tenant.id}
-              action={updateTenantPlatformStatusAction}
-              className="rounded-[1.5rem] border border-slate-200 bg-white p-5"
-            >
-              <input type="hidden" name="companyId" value={tenant.id} />
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <p className="text-base font-semibold text-slate-950">
-                    {tenant.display_name}
-                  </p>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">
-                    {tenant.slug} · {tenant.legal_name}
-                  </p>
+            <div key={tenant.id} className="space-y-3">
+              <form
+                action={updateTenantPlatformStatusAction}
+                className="rounded-[1.5rem] border border-slate-200 bg-white p-5"
+              >
+                <input type="hidden" name="companyId" value={tenant.id} />
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <p className="text-base font-semibold text-slate-950">
+                      {tenant.display_name}
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      {tenant.slug} - {tenant.legal_name}
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <select
+                      name="tenantStatus"
+                      defaultValue={tenant.tenant_status}
+                      className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                    >
+                      <option value="trialing">trialing</option>
+                      <option value="active">active</option>
+                      <option value="suspended">suspended</option>
+                      <option value="locked">locked</option>
+                      <option value="archived">archived</option>
+                      <option value="deleted">deleted</option>
+                    </select>
+                    <select
+                      name="lifecycleState"
+                      defaultValue={tenant.lifecycle_state}
+                      className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                    >
+                      <option value="trial">trial</option>
+                      <option value="active">active</option>
+                      <option value="grace_period">grace_period</option>
+                      <option value="locked">locked</option>
+                      <option value="retained">retained</option>
+                      <option value="scheduled_for_deletion">scheduled_for_deletion</option>
+                      <option value="deleted">deleted</option>
+                      <option value="restorable">restorable</option>
+                    </select>
+                  </div>
                 </div>
 
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <div className="text-xs leading-5 text-slate-500">
+                    Plan: {tenant.company_subscriptions?.[0]?.subscription_plans?.name ?? "No plan"}
+                  </div>
+                  <button
+                    type="submit"
+                    className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
+                  >
+                    Save tenant status
+                  </button>
+                </div>
+              </form>
+
+              <form
+                action={updateTenantWorkflowNumberingAction}
+                className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4"
+              >
+                <input type="hidden" name="companyId" value={tenant.id} />
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <select
-                    name="tenantStatus"
-                    defaultValue={tenant.tenant_status}
-                    className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
-                  >
-                    <option value="trialing">trialing</option>
-                    <option value="active">active</option>
-                    <option value="suspended">suspended</option>
-                    <option value="locked">locked</option>
-                    <option value="archived">archived</option>
-                    <option value="deleted">deleted</option>
-                  </select>
-                  <select
-                    name="lifecycleState"
-                    defaultValue={tenant.lifecycle_state}
-                    className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
-                  >
-                    <option value="trial">trial</option>
-                    <option value="active">active</option>
-                    <option value="grace_period">grace_period</option>
-                    <option value="locked">locked</option>
-                    <option value="retained">retained</option>
-                    <option value="scheduled_for_deletion">scheduled_for_deletion</option>
-                    <option value="deleted">deleted</option>
-                    <option value="restorable">restorable</option>
-                  </select>
+                  <label className="block">
+                    <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Next estimate number
+                    </span>
+                    <input
+                      name="nextEstimateNumber"
+                      type="number"
+                      min="1"
+                      step="1"
+                      defaultValue={
+                        tenant.organization_workflow_settings?.[0]?.next_estimate_number ??
+                        workflowDefaults.defaultEstimateStartNumber
+                      }
+                      required
+                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Next invoice number
+                    </span>
+                    <input
+                      name="nextInvoiceNumber"
+                      type="number"
+                      min="1"
+                      step="1"
+                      defaultValue={
+                        tenant.organization_workflow_settings?.[0]?.next_invoice_number ??
+                        workflowDefaults.defaultInvoiceStartNumber
+                      }
+                      required
+                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                    />
+                  </label>
                 </div>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <div className="text-xs leading-5 text-slate-500">
-                  Plan: {tenant.company_subscriptions?.[0]?.subscription_plans?.name ?? "No plan"}
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <p className="text-xs leading-5 text-slate-500">
+                    Super admin can seed per-contractor numbering before first use. After records exist, the next number can only move upward.
+                  </p>
+                  <button
+                    type="submit"
+                    className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
+                  >
+                    Save numbering
+                  </button>
                 </div>
-                <button
-                  type="submit"
-                  className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
-                >
-                  Save tenant status
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
           ))}
         </div>
       </DetailPanel>
@@ -148,9 +212,14 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
             <p className="text-sm font-semibold text-slate-950">Platform roles</p>
             <div className="mt-4 space-y-3">
               {rolesAndPermissions.roles.map((role) => (
-                <div key={role.id} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <div
+                  key={role.id}
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                >
                   <p className="text-sm font-medium text-slate-950">{role.name}</p>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">{role.description ?? role.key}</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    {role.description ?? role.key}
+                  </p>
                 </div>
               ))}
             </div>
@@ -159,10 +228,13 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
             <p className="text-sm font-semibold text-slate-950">Permission registry</p>
             <div className="mt-4 space-y-3">
               {rolesAndPermissions.permissions.map((permission) => (
-                <div key={permission.id} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <div
+                  key={permission.id}
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                >
                   <p className="text-sm font-medium text-slate-950">{permission.name}</p>
                   <p className="mt-1 text-xs leading-5 text-slate-500">
-                    {permission.module_key} · {permission.key}
+                    {permission.module_key} - {permission.key}
                   </p>
                 </div>
               ))}

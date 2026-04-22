@@ -62,25 +62,6 @@ function buildPaymentsHref(input: {
   return query.length > 0 ? `/payments?${query}` : "/payments";
 }
 
-function getPaymentEventLabel(eventType: string) {
-  switch (eventType) {
-    case "payment_requested":
-      return "Payment requested";
-    case "checkout_started":
-      return "Checkout started";
-    case "payment_succeeded":
-      return "Payment succeeded";
-    case "payment_failed":
-      return "Payment failed";
-    case "payment_voided":
-      return "Payment voided";
-    case "provider_sync":
-      return "Provider sync";
-    default:
-      return formatStatusLabel(eventType);
-  }
-}
-
 export default async function PaymentsPage({ searchParams }: PaymentsPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const user = await requireAuthenticatedUser("/payments");
@@ -108,16 +89,19 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
   const recordedPayments = payments.filter((payment) => payment.status === "recorded");
   const pendingPayments = payments.filter((payment) => payment.status === "pending");
   const voidPayments = payments.filter((payment) => payment.status === "void");
-  const failedEvents = paymentEvents.filter((event) => event.eventType === "payment_failed");
-  const checkoutEvents = paymentEvents.filter(
-    (event) => event.eventType === "checkout_started"
-  );
-  const requestEvents = paymentEvents.filter(
-    (event) => event.eventType === "payment_requested"
+  const failedPaymentEvents = paymentEvents.filter(
+    (event) => event.eventType === "payment_failed"
   );
   const openInvoices = invoices.filter(
     (invoice) => invoice.status !== "paid" && invoice.status !== "void"
   );
+  const overdueInvoices = openInvoices.filter((invoice) => {
+    if (!invoice.dueDate) {
+      return false;
+    }
+
+    return new Date(invoice.dueDate) < new Date();
+  });
 
   const filteredPayments = payments.filter((payment) => {
     const matchesStatus =
@@ -133,7 +117,6 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
             payment.paymentMethod,
             payment.paymentSource,
             payment.status,
-            payment.gatewayProvider ?? "",
             payment.reference ?? ""
           ]
             .join(" ")
@@ -162,36 +145,59 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
     (sum, invoice) => sum + Number(invoice.balanceDueAmount),
     0
   );
+  const recentRecordedPayments = recordedPayments.slice(0, 4);
+  const recentOpenInvoices = openInvoices.slice(0, 4);
+  const recentOverdueInvoices = overdueInvoices.slice(0, 4);
+  const recentFailedPayments = failedPaymentEvents.slice(0, 4);
+  const recentPayments = [...filteredPayments]
+    .sort((left, right) => {
+      const dateComparison = right.paymentDate.localeCompare(left.paymentDate);
+
+      if (dateComparison !== 0) {
+        return dateComparison;
+      }
+
+      return right.createdAt.localeCompare(left.createdAt);
+    })
+    .slice(0, 20);
 
   return (
     <ContractorWorkspacePage
       eyebrow="Payments"
       title={`Payment manager for ${organizationContext.organization.displayName}`}
-      description="Review cash movement, pending checkout signals, and collection exceptions on the same canonical invoice and project chain instead of splitting payments into a separate billing world."
+      description="Review collections pressure, recent payments, and invoice continuity here without turning payments into a separate finance subsystem."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Recorded</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+              Recorded
+            </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
               {formatMoney(recordedTotal)}
             </p>
           </div>
           <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Pending</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+              Pending
+            </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
               {formatMoney(pendingTotal)}
             </p>
           </div>
           <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Failures</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+              Open receivables
+            </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
-              {failedEvents.length}
+              {formatMoney(openReceivables)}
             </p>
           </div>
           <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Open receivables</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+              Overdue invoices
+            </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
-              {formatMoney(openReceivables)}
+              {overdueInvoices.length}
             </p>
           </div>
         </div>
@@ -199,7 +205,9 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
       commandBar={{
         supportSlot: (
           <p>
-            Use this page to watch payment completion, failures, and open receivables, then jump back into the invoice workspace when collections or billing edits need to happen on the canonical record.
+            Use this page to review collections pressure and recent payment activity,
+            then route into the canonical invoice workspace when a payment needs to be
+            recorded or collections follow-through needs action.
           </p>
         ),
         searchSlot: (
@@ -211,7 +219,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
               type="search"
               name="q"
               defaultValue={query}
-              placeholder="Search invoice, customer, project, provider, method, or reference"
+              placeholder="Search invoice, customer, project, method, or reference"
               className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
             />
             <button
@@ -267,85 +275,6 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
       }}
     >
       <div className="space-y-6">
-        <section className="grid gap-4 xl:auto-rows-fr xl:grid-cols-2">
-          <ManagerDashboardCard
-            eyebrow="Cash posted"
-            title="Recently recorded payments"
-            description="Use this queue to confirm money that has already landed on the canonical invoice chain."
-            actionHref={buildPaymentsHref({ q: query, status: "recorded" })}
-            actionLabel="View recorded"
-            items={recordedPayments.slice(0, 3).map((payment) => ({
-              href: `/invoices/${payment.invoiceId}`,
-              title: payment.invoice?.referenceNumber ?? "Invoice payment",
-              subtitle: `${payment.customer?.name ?? "Unknown customer"} · ${payment.project?.name ?? "Unknown project"}`,
-              meta: `${formatDate(payment.paymentDate)} · ${formatStatusLabel(payment.recordedVia)}`,
-              badge: payment.paymentSource === "customer_portal" ? "Portal" : "Manual",
-              trailing: formatMoney(payment.amount)
-            }))}
-            emptyTitle="No recorded payments yet."
-            emptyDescription="Confirmed payment activity will surface here as the billing chain starts settling."
-          />
-
-          <ManagerDashboardCard
-            eyebrow="In motion"
-            title="Pending checkout payments"
-            description="These payment rows exist on the canonical chain already, but still need provider completion or resolution."
-            actionHref={buildPaymentsHref({ q: query, status: "pending" })}
-            actionLabel="View pending"
-            items={pendingPayments.slice(0, 3).map((payment) => ({
-              href: `/invoices/${payment.invoiceId}`,
-              title: payment.invoice?.referenceNumber ?? "Pending payment",
-              subtitle: `${payment.customer?.name ?? "Unknown customer"} · ${payment.project?.name ?? "Unknown project"}`,
-              meta: `${payment.gatewayProvider ?? "Gateway"} checkout · ${payment.gatewayStatus ?? "pending"}`,
-              badge: "Pending",
-              trailing: formatMoney(payment.amount)
-            }))}
-            emptyTitle="No pending checkout payments."
-            emptyDescription="Once customer-facing checkout begins, unfinished payments will show up here for follow-through."
-          />
-
-          <ManagerDashboardCard
-            eyebrow="Exceptions"
-            title="Failed payment attempts"
-            description="Keep failed provider-backed attempts visible so collection follow-through stays attached to the right invoice and customer."
-            actionHref="/invoices?status=open"
-            actionLabel="Open balances"
-            items={failedEvents.slice(0, 3).map((event) => ({
-              href: `/invoices/${event.invoiceId}`,
-              title: event.invoice?.referenceNumber ?? "Failed payment event",
-              subtitle: `${event.customer?.name ?? "Unknown customer"} · ${event.project?.name ?? "Unknown project"}`,
-              meta: `${getPaymentEventLabel(event.eventType)} · ${formatDateTime(event.occurredAt)}`,
-              badge: "Failure",
-              trailing: event.invoice ? formatMoney(event.invoice.balanceDueAmount) : null
-            }))}
-            emptyTitle="No failed payment attempts are waiting right now."
-            emptyDescription="When customer checkout fails, the event will surface here so collections attention stays focused."
-          />
-
-          <ManagerDashboardCard
-            eyebrow="Collections"
-            title="Invoices still waiting on payment"
-            description="Payments stay review-first here, but the underlying collection work still belongs to the canonical invoice workspace."
-            actionHref="/invoices?status=open"
-            actionLabel="Open invoices"
-            items={openInvoices.slice(0, 3).map((invoice) => ({
-              href: `/invoices/${invoice.id}`,
-              title: invoice.referenceNumber,
-              subtitle: `${invoice.customer?.name ?? "Unknown customer"} · ${invoice.project?.name ?? "Unknown project"}`,
-              meta: `${formatStatusLabel(invoice.status)} · ${invoice.workflowRole === "deposit" ? "Deposit" : "Standard"} invoice`,
-              badge:
-                requestEvents.some((event) => event.invoiceId === invoice.id)
-                  ? "Requested"
-                  : checkoutEvents.some((event) => event.invoiceId === invoice.id)
-                    ? "Checkout"
-                    : "Open",
-              trailing: formatMoney(invoice.balanceDueAmount)
-            }))}
-            emptyTitle="No invoices are waiting on payment."
-            emptyDescription="As balances clear, the collections queue will quiet down here."
-          />
-        </section>
-
         {resolvedSearchParams.error ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
             {resolvedSearchParams.error}
@@ -358,149 +287,162 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
           </div>
         ) : null}
 
-        <section className="border border-[#dde3eb] bg-white">
-          <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
-            <div className="flex items-end justify-between gap-4">
-              <div className="hidden grid-cols-[minmax(0,1.25fr)_1fr_150px_140px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
-                <span>Payment</span>
-                <span>Project / invoice</span>
-                <span>Status</span>
-                <span className="text-right">Amount</span>
-              </div>
-              <div className="md:hidden">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                  Payments list
-                </p>
-              </div>
-              <p className="text-sm leading-6 text-slate-500">
-                {filteredPayments.length} visible
-              </p>
-            </div>
-          </div>
-
-          <div className="divide-y divide-slate-200">
-            {filteredPayments.length > 0 ? (
-              filteredPayments.map((payment) => (
-                <Link
-                  key={payment.id}
-                  href={`/invoices/${payment.invoiceId}`}
-                  className="group block px-5 py-4 transition hover:bg-slate-50/70 sm:px-6"
-                >
-                  <div className="grid gap-4 md:grid-cols-[minmax(0,1.25fr)_1fr_150px_140px] md:items-start">
-                    <div className="min-w-0">
-                      <h3 className="text-base font-semibold text-slate-950 transition group-hover:text-brand-700">
-                        {payment.customer?.name ?? payment.invoice?.referenceNumber ?? "Payment"}
-                      </h3>
-                      <p className="mt-2 text-sm leading-6 text-slate-500">
-                        {payment.paymentMethod}
-                        {payment.reference ? ` · Ref ${payment.reference}` : ""}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        {formatDate(payment.paymentDate)} · {formatStatusLabel(payment.paymentSource)} via{" "}
-                        {formatStatusLabel(payment.recordedVia)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                        Continuity
-                      </p>
-                      <p className="text-sm font-medium text-slate-700">
-                        {payment.project?.name ?? "Unknown project"}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        {payment.invoice?.referenceNumber ?? "No invoice"} · balance{" "}
-                        {payment.invoice ? formatMoney(payment.invoice.balanceDueAmount) : "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                        Status
-                      </p>
-                      <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
-                        {formatStatusLabel(payment.status)}
-                      </span>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        {payment.gatewayProvider ?? "Manual"}
-                      </p>
-                    </div>
-                    <div className="md:text-right">
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                        Amount
-                      </p>
-                      <p className="text-sm font-semibold text-slate-950">
-                        {formatMoney(payment.amount)}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="px-6 py-8 sm:px-8">
-                <AppEmptyState
-                  eyebrow={payments.length > 0 ? "No matching payments" : "No payments yet"}
-                  title={payments.length > 0 ? "Adjust the payment filters" : "Payment history will surface here"}
-                  description={
-                    payments.length > 0
-                      ? "Try a broader search or switch status views to find the payment activity you need."
-                      : "Payments remain canonical records tied to invoices, customers, projects, and the wider readiness chain."
-                  }
-                />
-              </div>
-            )}
-          </div>
+        <section className="grid gap-4 xl:grid-cols-2 2xl:grid-cols-4">
+          <ManagerDashboardCard
+            eyebrow="Collections queue"
+            title="Open receivables"
+            description="Invoices that still carry balance due and need follow-through on the canonical billing chain."
+            actionHref="/invoices?status=open"
+            actionLabel="Open invoices"
+            items={recentOpenInvoices.map((invoice) => ({
+              href: `/invoices/${invoice.id}`,
+              title: invoice.referenceNumber,
+              subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "Unknown project"}`,
+              meta: formatStatusLabel(invoice.status),
+              trailing: formatMoney(invoice.balanceDueAmount)
+            }))}
+            emptyTitle="No open receivables"
+            emptyDescription="Invoices with an open balance will appear here."
+          />
+          <ManagerDashboardCard
+            eyebrow="Collections queue"
+            title="Overdue pressure"
+            description="Open invoices that are already past due and need immediate collections attention."
+            actionHref="/invoices?status=open"
+            actionLabel="Review overdue"
+            items={recentOverdueInvoices.map((invoice) => ({
+              href: `/invoices/${invoice.id}`,
+              title: invoice.referenceNumber,
+              subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "Unknown project"}`,
+              meta: invoice.dueDate
+                ? `Due ${formatDate(invoice.dueDate)}`
+                : "No due date",
+              trailing: formatMoney(invoice.balanceDueAmount)
+            }))}
+            emptyTitle="No overdue invoices"
+            emptyDescription="Past-due invoices will show here once collections pressure builds."
+          />
+          <ManagerDashboardCard
+            eyebrow="Payment activity"
+            title="Recent payments"
+            description="Recently recorded payments tied to the same invoice and project continuity chain."
+            actionHref={buildPaymentsHref({ q: query, status: "recorded" })}
+            actionLabel="View recorded"
+            items={recentRecordedPayments.map((payment) => ({
+              href: `/invoices/${payment.invoiceId}`,
+              title: payment.invoice?.referenceNumber ?? "Recorded payment",
+              subtitle: `${payment.customer?.name ?? "Unknown customer"} - ${payment.project?.name ?? "Unknown project"}`,
+              meta: `${formatDate(payment.paymentDate)} - ${payment.paymentMethod}`,
+              trailing: formatMoney(payment.amount)
+            }))}
+            emptyTitle="No recent recorded payments"
+            emptyDescription="Recorded payments will appear here as money lands on invoices."
+          />
+          <ManagerDashboardCard
+            eyebrow="Exception queue"
+            title="Failed payments"
+            description="Recent failed payment attempts that still need collections follow-through in the invoice workspace."
+            actionHref="/invoices?status=open"
+            actionLabel="Review invoices"
+            items={recentFailedPayments.map((event) => ({
+              href: `/invoices/${event.invoiceId}`,
+              title: event.invoice?.referenceNumber ?? "Failed payment",
+              subtitle: `${event.customer?.name ?? "Unknown customer"} - ${event.project?.name ?? "Unknown project"}`,
+              meta: formatDateTime(event.occurredAt),
+              trailing: event.invoice
+                ? formatMoney(event.invoice.balanceDueAmount)
+                : null
+            }))}
+            emptyTitle="No failed payments"
+            emptyDescription="Failed payment attempts will surface here when collections attention is needed."
+          />
         </section>
 
-        <section className="border border-[#dde3eb] bg-white">
-          <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
-                  Payment signals
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Recent immutable payment events keep portal-side checkout, failure, and request signals visible without replacing the invoice as billing truth.
-                </p>
-              </div>
-              <p className="text-sm leading-6 text-slate-500">
-                {paymentEvents.slice(0, 8).length} recent
+        <section className="overflow-hidden border border-[#dde3eb] bg-white">
+          <div className="flex items-end justify-between gap-4 border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+                Recent records
               </p>
+              <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+                Latest payment updates
+              </h3>
             </div>
+            <p className="text-sm leading-6 text-slate-500">
+              {recentPayments.length} visible
+            </p>
           </div>
 
-          <div className="divide-y divide-slate-200">
-            {paymentEvents.slice(0, 8).length > 0 ? (
-              paymentEvents.slice(0, 8).map((event) => (
-                <Link
-                  key={event.id}
-                  href={`/invoices/${event.invoiceId}`}
-                  className="group flex items-start justify-between gap-4 px-5 py-4 transition hover:bg-slate-50/70 sm:px-6"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-950 transition group-hover:text-brand-700">
-                      {event.invoice?.referenceNumber ?? "Payment event"}
-                    </p>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">
-                      {getPaymentEventLabel(event.eventType)} · {event.customer?.name ?? "Unknown customer"}
-                    </p>
-                    <p className="mt-1 text-xs font-medium uppercase tracking-[0.16em] text-[#7a889d]">
-                      {formatDateTime(event.occurredAt)} · {formatStatusLabel(event.actorType)}
-                    </p>
-                  </div>
-                  <p className="shrink-0 text-sm font-medium text-slate-700">
-                    {event.project?.name ?? "No project"}
-                  </p>
-                </Link>
-              ))
-            ) : (
-              <div className="px-6 py-8 sm:px-8">
-                <AppEmptyState
-                  eyebrow="No payment signals yet"
-                  title="Portal and provider payment events will appear here"
-                  description="As customer-facing payment activity starts, immutable request, checkout, success, failure, and void signals will show up here."
-                />
-              </div>
-            )}
-          </div>
+          {recentPayments.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200 text-sm">
+                <thead className="bg-[#f8fafc] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  <tr>
+                    <th className="px-5 py-3 sm:px-6">Payment</th>
+                    <th className="px-5 py-3 sm:px-6">Invoice / project</th>
+                    <th className="px-5 py-3 sm:px-6">Status</th>
+                    <th className="px-5 py-3 sm:px-6">Method</th>
+                    <th className="px-5 py-3 text-right sm:px-6">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 bg-white">
+                  {recentPayments.map((payment) => (
+                    <tr key={payment.id} className="hover:bg-slate-50/70">
+                      <td className="px-5 py-4 sm:px-6">
+                        <Link
+                          href={`/invoices/${payment.invoiceId}`}
+                          className="font-semibold text-slate-950 transition hover:text-brand-700"
+                        >
+                          {payment.customer?.name ??
+                            payment.invoice?.referenceNumber ??
+                            "Payment"}
+                        </Link>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {formatDate(payment.paymentDate)}
+                          {payment.reference ? ` - Ref ${payment.reference}` : ""}
+                        </p>
+                      </td>
+                      <td className="px-5 py-4 sm:px-6">
+                        <p className="font-medium text-slate-700">
+                          {payment.invoice?.referenceNumber ?? "No invoice"}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {payment.project?.name ?? "Unknown project"}
+                        </p>
+                      </td>
+                      <td className="px-5 py-4 sm:px-6">
+                        <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                          {formatStatusLabel(payment.status)}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-slate-500 sm:px-6">
+                        {payment.paymentMethod}
+                      </td>
+                      <td className="px-5 py-4 text-right font-semibold text-slate-950 sm:px-6">
+                        {formatMoney(payment.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="px-6 py-8 sm:px-8">
+              <AppEmptyState
+                eyebrow={payments.length > 0 ? "No matching payments" : "No payments yet"}
+                title={
+                  payments.length > 0
+                    ? "Adjust the payment filters"
+                    : "Payment history will surface here"
+                }
+                description={
+                  payments.length > 0
+                    ? "Try a broader search or switch to another payment status."
+                    : "Payments remain canonical records tied to invoices, customers, projects, and the wider collections chain."
+                }
+              />
+            </div>
+          )}
         </section>
       </div>
     </ContractorWorkspacePage>

@@ -4,16 +4,16 @@
 
 :root {
   color-scheme: light;
-  --background: oklch(0.97 0.012 95);
-  --foreground: oklch(0.24 0.025 210);
-  --surface: oklch(0.987 0.008 90);
-  --surface-strong: oklch(0.93 0.02 92);
-  --line: oklch(0.84 0.018 92);
-  --line-strong: oklch(0.68 0.03 190);
-  --accent: oklch(0.49 0.08 191);
-  --accent-deep: oklch(0.31 0.05 197);
-  --accent-soft: oklch(0.9 0.03 184);
-  --glow: oklch(0.8 0.05 80);
+  --background: oklch(0.97 0.012 85);
+  --foreground: oklch(0.25 0.02 70);
+  --surface: oklch(0.988 0.008 80);
+  --surface-strong: oklch(0.944 0.018 82);
+  --line: oklch(0.84 0.018 82);
+  --line-strong: oklch(0.59 0.045 58);
+  --accent: oklch(0.71 0.16 58);
+  --accent-deep: oklch(0.46 0.11 52);
+  --accent-soft: oklch(0.92 0.04 72);
+  --glow: oklch(0.84 0.07 70);
 }
 
 * {
@@ -33,7 +33,7 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   background-image:
-    radial-gradient(circle at top left, color-mix(in oklab, var(--glow) 30%, transparent), transparent 28%),
+    radial-gradient(circle at top left, color-mix(in oklab, var(--glow) 26%, transparent), transparent 28%),
     radial-gradient(circle at 85% 12%, color-mix(in oklab, var(--accent-soft) 65%, transparent), transparent 22%),
     linear-gradient(180deg, color-mix(in oklab, var(--surface) 88%, white) 0%, var(--background) 46%, color-mix(in oklab, var(--surface-strong) 54%, white) 100%);
 }

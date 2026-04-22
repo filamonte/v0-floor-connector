@@ -14,6 +14,7 @@ import {
 import {
   jobAssignmentInputSchema,
   jobInputSchema,
+  jobQuickCreateInputSchema,
   jobScheduleInputSchema
 } from "./schemas";
 
@@ -72,6 +73,12 @@ function parseJobInput(formData: FormData) {
   });
 }
 
+function parseJobQuickCreateInput(formData: FormData) {
+  return jobQuickCreateInputSchema.safeParse({
+    projectId: getFieldValue(formData, "projectId")
+  });
+}
+
 function parseJobScheduleInput(formData: FormData) {
   return jobScheduleInputSchema.safeParse({
     scheduledDate: getFieldValue(formData, "scheduledDate"),
@@ -125,6 +132,50 @@ export async function createJobAction(formData: FormData) {
   redirect(
     buildRedirect("/jobs", {
       message: "Job was created successfully."
+    })
+  );
+}
+
+export async function quickCreateJobAction(formData: FormData) {
+  const projectId = getFieldValue(formData, "projectId");
+  const result = parseJobQuickCreateInput(formData);
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/dashboard", {
+        error: result.error.issues[0]?.message ?? "Unable to create job."
+      })
+    );
+  }
+
+  let job;
+
+  try {
+    job = await createJob({
+      projectId: result.data.projectId,
+      estimateId: null,
+      dispatchStatus: "unscheduled",
+      crewVendorId: null,
+      scheduledDate: null,
+      scheduledStartAt: null,
+      scheduledEndAt: null,
+      scheduleNotes: null,
+      notes: null
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/dashboard", {
+        error: error instanceof Error ? error.message : "Unable to create job.",
+        projectId
+      })
+    );
+  }
+
+  revalidateJobRoutes(job);
+
+  redirect(
+    buildRedirect(`/jobs/${job.id}`, {
+      message: "Job was created. Finish schedule, crew, and execution details in this workspace."
     })
   );
 }

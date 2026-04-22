@@ -16,6 +16,11 @@ import type { EstimateInput, EstimateLineItemInput } from "./schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { ensureScheduleOfValuesForEstimate } from "@/lib/financial/sov";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import {
+  ensureOpportunityEstimateFlow,
+  ensureOpportunityEstimateFlowFromCustomer,
+  ensureOpportunityEstimateFlowFromStandalone
+} from "@/lib/opportunities/data";
 import { getProjectById } from "@/lib/projects/data";
 import { syncProjectCommercialReadiness } from "@/lib/projects/readiness";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -23,6 +28,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 type EstimateRow = {
   id: string;
   company_id: string;
+  opportunity_id: string;
   customer_id: string;
   project_id: string;
   template_id: string | null;
@@ -48,6 +54,13 @@ type EstimateRow = {
         state_region: string | null;
         postal_code: string | null;
         country_code: string | null;
+      }
+    | null;
+  opportunities?:
+    | {
+        id: string;
+        title: string;
+        status: string;
       }
     | null;
   projects?:
@@ -82,6 +95,11 @@ type EstimateLineItemRow = {
 };
 
 export type EstimateListItem = EstimateRecord & {
+  opportunity: {
+    id: string;
+    title: string;
+    status: string;
+  } | null;
   customer: {
     id: string;
     name: string;
@@ -134,6 +152,7 @@ type IdRow = {
 const estimateSelect = `
   id,
   company_id,
+  opportunity_id,
   customer_id,
   project_id,
   template_id,
@@ -159,6 +178,11 @@ const estimateSelect = `
     postal_code,
     country_code
   ),
+  opportunities (
+    id,
+    title,
+    status
+  ),
   projects (
     id,
     name,
@@ -183,6 +207,7 @@ function isEstimateRow(value: unknown): value is EstimateRow {
   return (
     typeof row.id === "string" &&
     typeof row.company_id === "string" &&
+    typeof row.opportunity_id === "string" &&
     typeof row.customer_id === "string" &&
     typeof row.project_id === "string" &&
     (row.template_id === null || typeof row.template_id === "string") &&
@@ -239,6 +264,7 @@ function mapEstimate(row: EstimateRow): EstimateRecord {
   return {
     id: row.id,
     organizationId: row.company_id,
+    opportunityId: row.opportunity_id,
     customerId: row.customer_id,
     projectId: row.project_id,
     templateId: row.template_id,
@@ -465,6 +491,13 @@ export const listEstimates = cache(async (): Promise<EstimateListItem[]> => {
   return sortEstimates(
     data.map((row) => ({
       ...mapEstimate(row),
+      opportunity: row.opportunities
+        ? {
+            id: row.opportunities.id,
+            title: row.opportunities.title,
+            status: row.opportunities.status
+          }
+        : null,
       customer: row.customers
         ? {
             id: row.customers.id,
@@ -498,6 +531,13 @@ export async function getEstimateById(
 
   return {
     ...mapEstimate(estimate),
+    opportunity: estimate.opportunities
+      ? {
+          id: estimate.opportunities.id,
+          title: estimate.opportunities.title,
+          status: estimate.opportunities.status
+        }
+      : null,
     customer: estimate.customers
       ? {
           id: estimate.customers.id,
@@ -539,6 +579,7 @@ export async function createEstimate(input: EstimateInput) {
     .from("estimates")
     .insert({
       company_id: scope.organizationId,
+      opportunity_id: input.opportunityId,
       customer_id: project.customerId,
       project_id: project.id,
       status: input.status,
@@ -598,6 +639,7 @@ export async function updateEstimate(estimateId: string, input: EstimateInput) {
   const response = await supabase
     .from("estimates")
     .update({
+      opportunity_id: input.opportunityId,
       customer_id: project.customerId,
       project_id: project.id,
       status: input.status,
@@ -694,4 +736,67 @@ export async function updateEstimateStatus(
   await syncEstimateProjectReadiness(scope.organizationId, [currentEstimate.project_id]);
 
   return mapEstimate(updatedEstimate);
+}
+
+export async function quickCreateEstimateFromContext(input: {
+  creationMode: "opportunity" | "customer" | "standalone";
+  opportunityId: string | null;
+  customerId: string | null;
+  projectId: string | null;
+  title: string;
+}) {
+  let flow;
+
+  if (input.opportunityId) {
+    flow = await ensureOpportunityEstimateFlow(input.opportunityId);
+  } else {
+    switch (input.creationMode) {
+      case "opportunity":
+        throw new Error("Select an opportunity to start the estimate.");
+      case "customer":
+        if (!input.customerId) {
+          throw new Error("Customer-started estimates need customer continuity.");
+        }
+
+        flow = await ensureOpportunityEstimateFlowFromCustomer({
+          customerId: input.customerId,
+          projectId: input.projectId,
+          title: input.title
+        });
+        break;
+      case "standalone":
+        if (!input.customerId) {
+          throw new Error(
+            "Standalone estimates still need a customer so the intake layer can create canonical opportunity continuity."
+          );
+        }
+
+        flow = await ensureOpportunityEstimateFlowFromStandalone({
+          customerId: input.customerId,
+          projectId: input.projectId,
+          title: input.title
+        });
+        break;
+      default:
+        throw new Error("Unsupported estimate creation mode.");
+    }
+  }
+
+  return createEstimate({
+    opportunityId: flow.opportunityId,
+    projectId: flow.projectId,
+    status: "draft",
+    taxAmount: "0.00",
+    discountAmount: "0.00",
+    lineItems: [
+      {
+        name: "New scope item",
+        description: null,
+        quantity: "1.00",
+        unit: "each",
+        unitPrice: "0.00"
+      }
+    ],
+    notes: null
+  });
 }

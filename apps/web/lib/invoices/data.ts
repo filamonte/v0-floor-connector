@@ -41,7 +41,7 @@ import { getActiveOrganizationContext } from "@/lib/organizations/active-context
 import { listPortalAccessGrantsForCurrentUser } from "@/lib/portal-access/data";
 import { getProjectById } from "@/lib/projects/data";
 import {
-  assertStandardInvoiceCommercialReadiness,
+  assertInvoiceCommercialReadiness,
   syncProjectCommercialReadiness
 } from "@/lib/projects/readiness";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -114,6 +114,7 @@ type InvoiceLineItemRow = {
   id: string;
   company_id: string;
   invoice_id: string;
+  schedule_of_value_item_id: string | null;
   name: string;
   description: string | null;
   quantity: string | number;
@@ -344,6 +345,8 @@ function isInvoiceLineItemRow(value: unknown): value is InvoiceLineItemRow {
     typeof row.id === "string" &&
     typeof row.company_id === "string" &&
     typeof row.invoice_id === "string" &&
+    (row.schedule_of_value_item_id === null ||
+      typeof row.schedule_of_value_item_id === "string") &&
     typeof row.name === "string" &&
     (typeof row.quantity === "string" || typeof row.quantity === "number") &&
     typeof row.unit === "string" &&
@@ -461,6 +464,7 @@ function mapInvoiceLineItem(row: InvoiceLineItemRow): InvoiceLineItem {
     id: row.id,
     organizationId: row.company_id,
     invoiceId: row.invoice_id,
+    scheduleOfValueItemId: row.schedule_of_value_item_id,
     name: row.name,
     description: row.description,
     quantity: Number(row.quantity).toFixed(2),
@@ -657,6 +661,7 @@ async function getInvoiceLineItems(
         id,
         company_id,
         invoice_id,
+        schedule_of_value_item_id,
         name,
         description,
         quantity,
@@ -1295,11 +1300,15 @@ async function syncInvoiceProjectReadiness(invoice: InvoiceRow) {
   });
 }
 
-async function replaceInvoiceLineItems(
+type PersistedInvoiceLineItemInput = InvoiceLineItemInput & {
+  scheduleOfValueItemId?: string | null;
+};
+
+export async function replaceCanonicalInvoiceLineItems(
   organizationId: string,
   userId: string,
   invoiceId: string,
-  lineItems: InvoiceLineItemInput[]
+  lineItems: PersistedInvoiceLineItemInput[]
 ) {
   const supabase = await getSupabaseServerClient();
   const deleteResponse = await supabase
@@ -1318,6 +1327,7 @@ async function replaceInvoiceLineItems(
     lineItems.map((lineItem, index) => ({
       company_id: organizationId,
       invoice_id: invoiceId,
+      schedule_of_value_item_id: lineItem.scheduleOfValueItemId ?? null,
       name: lineItem.name,
       description: lineItem.description,
       quantity: lineItem.quantity,
@@ -1506,7 +1516,7 @@ export async function createInvoice(input: InvoiceInput) {
   const resolvedEstimateId = estimate?.id ?? job?.estimateId ?? null;
 
   validateConnectedRecords(resolvedEstimateId, job);
-  await assertStandardInvoiceCommercialReadiness({
+  await assertInvoiceCommercialReadiness({
     organizationId: scope.organizationId,
     projectId: project.id,
     jobId: job?.id ?? null,
@@ -1576,8 +1586,34 @@ export async function createInvoice(input: InvoiceInput) {
   return mapInvoice(invoice);
 }
 
+async function replaceInvoiceLineItems(
+  organizationId: string,
+  userId: string,
+  invoiceId: string,
+  lineItems: InvoiceLineItemInput[]
+) {
+  await replaceCanonicalInvoiceLineItems(
+    organizationId,
+    userId,
+    invoiceId,
+    lineItems
+  );
+}
+
 export async function updateInvoice(invoiceId: string, input: InvoiceInput) {
   const scope = await requireInvoiceScope(`/invoices/${invoiceId}`);
+  const currentInvoice = await getInvoiceRecordById(scope.organizationId, invoiceId);
+
+  if (!currentInvoice) {
+    throw new Error("Invoice not found for this organization.");
+  }
+
+  if (currentInvoice.billing_model === "aia_progress") {
+    throw new Error(
+      "Progress-billed invoices must be updated from the schedule-of-values workspace."
+    );
+  }
+
   const project = await resolveScopedProject(input.projectId, `/invoices/${invoiceId}`);
   const estimate = await resolveApprovedEstimate(
     input.estimateId,
@@ -1588,7 +1624,7 @@ export async function updateInvoice(invoiceId: string, input: InvoiceInput) {
   const resolvedEstimateId = estimate?.id ?? job?.estimateId ?? null;
 
   validateConnectedRecords(resolvedEstimateId, job);
-  await assertStandardInvoiceCommercialReadiness({
+  await assertInvoiceCommercialReadiness({
     organizationId: scope.organizationId,
     projectId: project.id,
     jobId: job?.id ?? null,

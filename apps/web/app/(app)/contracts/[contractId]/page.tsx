@@ -102,6 +102,22 @@ function formatEventType(eventType: string) {
   }
 }
 
+function getContractMeaning(status: string) {
+  if (status === "draft") {
+    return "This agreement is still a draft commercial record. Review the scope and signer routing here, then move it into approval and send in the right order.";
+  }
+
+  if (status === "signed") {
+    return "This agreement is now part of the signed commercial chain. Use the project readiness hub for deposit, financial, and downstream operational handoff.";
+  }
+
+  if (status === "void") {
+    return "This agreement is preserved for historical continuity, but active commercial follow-through should happen from the current project and contract chain.";
+  }
+
+  return "This agreement is in signature workflow. Review the document here first, then use signer state and workflow actions to move it forward.";
+}
+
 function getSignatureStateMessage(input: {
   status: string;
   summary: ReturnType<typeof computeContractSignatureWorkflowSummary>;
@@ -310,6 +326,11 @@ export default async function ContractDetailPage({
   const recentSignatureEvents = [...contract.signatureEvents]
     .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt))
     .slice(0, 6);
+  const contractMeaning = getContractMeaning(contract.status);
+  const contractBlockerSummary =
+    contract.status === "draft"
+      ? sendReadinessMessage
+      : financialBlockersLabel;
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 print:max-w-none">
@@ -317,7 +338,7 @@ export default async function ContractDetailPage({
         <DetailPageHeader
           eyebrow="Contract Review"
           title={contract.title}
-          description="Use this page to review the agreement, confirm signature state, and move the contract through the next gate."
+          description={contractMeaning}
           backHref="/contracts"
           backLabel="Back to contracts"
           actions={
@@ -378,7 +399,7 @@ export default async function ContractDetailPage({
           <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
             <section className="rounded-[1.85rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,1))] px-6 py-6">
               <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-brand-700">
-                Signature state
+                Agreement identity
               </p>
               <div className="mt-4 space-y-3">
                 <div className="flex flex-wrap items-center gap-3">
@@ -394,28 +415,26 @@ export default async function ContractDetailPage({
                   </span>
                 </div>
                 <p className="text-lg font-semibold tracking-tight text-slate-950">
-                  {signatureStateMessage}
+                  {contract.status === "draft"
+                    ? "Draft contract ready for review"
+                    : signatureStateMessage}
                 </p>
                 <p className="text-sm leading-6 text-slate-600">
-                  {contract.status === "draft" ? sendReadinessMessage : financialBlockersLabel}
+                  {contractMeaning}
                 </p>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50/85 px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Signer routing
+                    Current blockers
                   </p>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <div>
                       <p className="text-sm font-semibold text-slate-950">
-                        {signatureSummary.customerSignerCount > 0
-                          ? `${signatureSummary.signedCustomerSignerCount}/${signatureSummary.customerSignerCount} customer signer${signatureSummary.customerSignerCount === 1 ? "" : "s"} complete`
-                          : "No customer signer routed yet"}
+                        {contract.status === "draft"
+                          ? "Send readiness"
+                          : "Project and signature follow-through"}
                       </p>
                       <p className="mt-1 text-sm text-slate-600">
-                        {signatureSummary.requiresCountersign
-                          ? signatureSummary.signedContractorSignerCount > 0
-                            ? "Contractor countersign complete"
-                            : "Contractor countersign still required"
-                          : "No contractor countersign required"}
+                        {contractBlockerSummary}
                       </p>
                     </div>
                     <div>
@@ -460,34 +479,42 @@ export default async function ContractDetailPage({
                   label: "Review focus",
                   content: (
                     <p className="text-sm text-slate-600">
-                      Review the agreement body here first, then use the workflow controls and supporting sections to move the contract forward.
+                      Review the agreement body here first, then use the workflow controls and supporting sections to move the contract through approval, signature, and project readiness in order.
                     </p>
                   )
                 },
                 {
-                  key: "financial-context",
-                  label: "Financial context",
+                  key: "continuity",
+                  label: "Connected workflow",
                   content: (
-                    <ContextFactsList
-                      items={[
-                        {
-                          label: "Deposit",
-                          value: readinessSnapshot?.depositRequired
-                            ? readinessSnapshot.depositSatisfied
-                              ? "Satisfied"
-                              : "Required"
-                            : "Not required"
-                        },
-                        {
-                          label: "Financing",
-                          value: (
-                            <span className="capitalize">
-                              {formatStatusLabel(readinessSnapshot?.financingStatus ?? "not_applicable")}
-                            </span>
-                          )
-                        }
-                      ]}
-                    />
+                    <>
+                      <p className="text-sm font-semibold text-slate-950">
+                        {contract.estimate
+                          ? "Estimate, contract, and project continuity is active"
+                          : "Project continuity is active"}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Keep the agreement on the same shared project chain and use the project workspace when deposit, financing, or readiness blockers become the main concern.
+                      </p>
+                    </>
+                  )
+                },
+                {
+                  key: "financial-context",
+                  label: "Readiness context",
+                  content: (
+                    <>
+                      <p className="text-sm font-semibold text-slate-950 capitalize">
+                        {financialReadinessLabel}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {readinessSnapshot?.depositRequired
+                          ? readinessSnapshot.depositSatisfied
+                            ? "Deposit requirement is already satisfied."
+                            : "Deposit is still part of the active readiness chain."
+                          : "Deposit is not the current project readiness gate."}
+                      </p>
+                    </>
                   )
                 }
               ]}
@@ -683,8 +710,8 @@ export default async function ContractDetailPage({
             </DetailPanel>
 
             <DetailPanel
-              title="Connected Records"
-              description="Nearby project, estimate, job, and invoice shortcuts that support the contract workflow without replacing it."
+              title="Connected Workflow"
+              description="Nearby project, estimate, job, and invoice shortcuts that support the contract workflow without replacing the agreement as the main review surface."
             >
               <div className="grid gap-4">
                 {contract.project ? (

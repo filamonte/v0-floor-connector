@@ -6,6 +6,10 @@ Use this file as the short developer-facing summary of what to trust when buildi
 
 Use these docs together:
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth
+- [docs/product-brain.md](C:/FloorConnector/docs/product-brain.md): high-signal product memory and anti-drift rules
+- [docs/decisions.md](C:/FloorConnector/docs/decisions.md): compact log of branch-level product and architecture decisions
+- [docs/build-sequence.md](C:/FloorConnector/docs/build-sequence.md): practical build-order guidance
+- [docs/codex-workflow.md](C:/FloorConnector/docs/codex-workflow.md): reusable planning-first Codex operating mode
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow
@@ -25,19 +29,31 @@ The current branch already includes a real multi-tenant contractor app with:
 - contracts
 - contract-signature foundation and customer-facing contract signing on the canonical contract record
 - jobs
+- appointments linked to the same lead/customer/project chain
 - invoices and payments
+- contractor-side progress billing / schedule-of-values workflow on the canonical estimate and invoice chain
 - customer-facing payment foundation on the canonical invoice/payment chain
 - dedicated contractor-side payments manager surface on the shared manager-page system
 - dedicated contractor-side schedule manager surface on the shared manager-page system
-  - review-first summary, next actions, crew-state continuity, and a lightweight near-term scheduled-work board all stay on the same canonical job chain
+  - review-first summary, next actions, crew-state continuity, week/day planner views, and a retained date-grouped board all stay on the same canonical job chain
+- shared contractor-side global search in the protected header
+  - searches canonical tenant-scoped records including appointments and routes back into real workspaces
+- first real contractor-side in-app notifications / action awareness in the shared shell and dashboard
+  - derives high-signal attention from canonical jobs, invoices, contracts, appointments, punchlists, and progress-billing state
+  - remains lightweight and in-app only
 - people, vendors, and compliance foundations
 - time tracking foundations
 - daily logs, field notes, and execution attachments
+- punchlist items on the shared project/job execution chain
 - customer portal access, review, and contract-signature workflows
 - shared templates
 - reusable catalog foundations
 - quick-create -> canonical record -> full workspace pattern across core contractor manager pages
 - first shared universal-create launcher in the contractor shell and dashboard
+- denser contractor dashboard command-center surface:
+  - compact operational metrics
+  - modular commercial, operations, and finance queue widgets
+  - dashboard-local quick-create studio using canonical short-form create flows
 - first-pass job scheduling and crew assignment foundation
 - early module-dashboard pattern on top of the shared manager-page system
 - contractor settings / admin
@@ -73,10 +89,16 @@ Important workflow rules:
 - estimate, contract, invoice, and job pages should use one shared record-workspace pattern and point back to the project hub when broader workflow state matters
 - invoice detail should be treated as review-first in layout direction, even when edit controls remain available
 - the first major contractor workspace UI normalization pass is complete enough to stop; remaining issues should be treated as normal iterative polish rather than structural layout-system repair
-- the contractor shell now uses top-level navigation as the primary app navigation, with a wider workspace, shared workspace band, and command-bar-driven manager pages
+- the contractor shell now uses top-level navigation as the primary app navigation, with a wider workspace, integrated breadcrumb/page-context header row, and command-bar-driven manager pages
 - dashboard, projects, leads, invoices, contracts, customers, estimates, daily logs, time, people, vendors, and jobs now follow that newer manager-surface direction; avoid reintroducing a full-time left sidebar as the primary navigation model
+- the protected contractor app now shares one warmer charcoal/orange/light-neutral UI direction across the shell, manager pages, quick-create surfaces, and common cards; do not reintroduce blue-heavy overview chrome on new or updated contractor pages
 - dashboards are entry surfaces into the same lifecycle, not separate product worlds
 - quick create must create canonical records first and then route into the full workspace
+- global search should stay shell-level, tenant-safe, and canonical-record-based; do not invent search-only records, search-only summaries, or disconnected module search systems
+- scheduling depth should stay on the canonical job model; add planner or calendar UI on `/schedule`, but do not invent schedule-only records or a disconnected dispatch subsystem
+- appointments should stay as canonical visit and meeting records linked to the same opportunity/customer/project chain; do not turn them into duplicate jobs or a second dispatch model
+- punchlists should stay on the canonical project/job execution chain; do not overload daily-log narrative records with durable closeout work, and do not invent a separate field-quality subsystem
+- progress billing should stay on the canonical approved-estimate -> schedule-of-values -> invoice chain; do not invent a detached pay-app subsystem, spreadsheet shadow model, or invoice-replacement billing record
 
 ## Current Contractor UI Guardrails
 
@@ -84,8 +106,14 @@ Treat the current contractor UI direction as implementation guardrail, not loose
 
 Do:
 - keep top-level navigation as the primary contractor app navigation
-- keep the contractor shell flat and unified: top navigation, thin page band, thin command/search strip, then workspace
+- keep the contractor shell flat and unified: top navigation with integrated breadcrumb/page context, thin command/search strip, then workspace
 - treat the dashboard as the visual reference for contractor manager surfaces
+- use the current contractor theme direction consistently:
+  - charcoal or dark-neutral framing
+  - orange for actions, emphasis, and identity
+  - white or warm light-neutral surfaces for working areas
+  - tighter, practical typography and spacing over roomy marketing-style composition
+- treat the dashboard as an operational command center, not as a light stats page and not as a separate module world
 - build manager pages around page identity, command bar, and overview/list workspace
 - use shared composer-sheet or modal patterns for create flows on manager pages
 - prefer quick-create overlays that capture only minimum required fields, create the canonical record, and then route into the full record workspace
@@ -95,6 +123,7 @@ Do:
 
 Do not:
 - do not return to a full-time left sidebar as the primary contractor navigation
+- do not reintroduce blue page bands, blue-heavy command bars, or blue-accented manager-page chrome on contractor surfaces
 - do not reintroduce dense stacked-panel dashboards as the main contractor dashboard pattern
 - do not leave permanently open create forms on contractor manager pages
 - do not let manager pages drift back into mixed old/new command-bar or chrome patterns

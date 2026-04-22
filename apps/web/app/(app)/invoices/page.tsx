@@ -219,7 +219,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
     <ContractorWorkspacePage
       eyebrow="Invoices"
       title={`Invoice manager for ${organizationContext.organization.displayName}`}
-      description="Review billing that needs attention, collections that need follow-up, and recently settled invoices from one calmer financial workspace."
+      description="Create the invoice, finish billing details, review it, send it, and then manage collections. This manager keeps the billing workflow clearer instead of jumping straight into payment detail."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="border border-[#e2e7ef] bg-white px-4 py-3">
@@ -313,16 +313,16 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       <section className="space-y-6">
         <section className="grid gap-4 xl:auto-rows-fr xl:grid-cols-2">
           <ManagerDashboardCard
-            eyebrow="Collections"
-            title="Invoices awaiting payment activity"
-            description="This queue keeps open customer billing in front of the team before invoices become overdue."
+              eyebrow="Collections"
+            title="Sent invoices awaiting payment"
+            description="Open customer billing that has already been sent and now needs collections attention."
             actionHref={buildInvoicesHref({ q: query, status: "open", compose: showComposer ? "1" : undefined })}
             actionLabel="View open"
             items={awaitingPaymentQueue.map((invoice) => ({
-              href: `/invoices/${invoice.id}`,
+              href: `/invoices/${invoice.id}/edit`,
               title: invoice.referenceNumber,
-              subtitle: `${invoice.customer?.name ?? "Unknown customer"} · ${invoice.project?.name ?? "Unknown project"}`,
-              meta: `${formatStatusLabel(invoice.status)} · due ${invoice.dueDate ? formatDate(invoice.dueDate) : "TBD"}`,
+              subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "Unknown project"}`,
+              meta: `${formatStatusLabel(invoice.status)} - due ${invoice.dueDate ? formatDate(invoice.dueDate) : "TBD"}`,
               badge: invoice.workflowRole === "deposit" ? "Deposit" : "Standard",
               trailing: formatMoney(invoice.balanceDueAmount)
             }))}
@@ -333,13 +333,13 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           <ManagerDashboardCard
             eyebrow="Urgent"
             title="Overdue invoices needing follow-up"
-            description="Keep the past-due queue visible so collections work does not get buried inside the full invoice list."
+            description="Past-due billing that should stay visible without burying the broader invoice workflow."
             actionHref={buildInvoicesHref({ q: query, status: "open", compose: showComposer ? "1" : undefined })}
             actionLabel="Review overdue"
             items={overdueQueue.map((invoice) => ({
-              href: `/invoices/${invoice.id}`,
+              href: `/invoices/${invoice.id}/edit`,
               title: invoice.referenceNumber,
-              subtitle: `${invoice.customer?.name ?? "Unknown customer"} · ${invoice.project?.name ?? "Unknown project"}`,
+              subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "Unknown project"}`,
               meta: `Due ${invoice.dueDate ? formatDate(invoice.dueDate) : "TBD"}`,
               badge: "Overdue",
               trailing: formatMoney(invoice.balanceDueAmount)
@@ -349,16 +349,16 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           />
 
           <ManagerDashboardCard
-            eyebrow="Review"
-            title="Draft billing to finish or send"
-            description="Draft invoice work stays visible here without forcing the whole page back into a draft-first CRUD layout."
+            eyebrow="Build"
+            title="Draft invoices to finish"
+            description="Build or review draft invoice detail here before sending it to the customer."
             actionHref={buildInvoicesHref({ q: query, status: "draft", compose: showComposer ? "1" : undefined })}
             actionLabel="View drafts"
             items={draftQueue.map((invoice) => ({
-              href: `/invoices/${invoice.id}`,
+              href: `/invoices/${invoice.id}/edit`,
               title: invoice.referenceNumber,
-              subtitle: `${invoice.customer?.name ?? "Unknown customer"} · ${invoice.project?.name ?? "Unknown project"}`,
-              meta: `Workflow role ${invoice.workflowRole.replaceAll("_", " ")} · updated ${formatDate(invoice.updatedAt)}`,
+              subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "Unknown project"}`,
+              meta: `Workflow role ${invoice.workflowRole.replaceAll("_", " ")} - updated ${formatDate(invoice.updatedAt)}`,
               badge: "Draft",
               trailing: formatMoney(invoice.totalAmount)
             }))}
@@ -372,10 +372,10 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                 Billing context
               </p>
               <h3 className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">
-                Recent payment and billing posture
+                Billing posture
               </h3>
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Financial defaults and recent settled billing stay visible without turning the page into a settings screen.
+                Recent paid work and financial defaults stay visible without turning the invoice manager into a separate finance app.
               </p>
             </div>
 
@@ -415,7 +415,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                     recentlyPaidQueue.map((invoice) => (
                       <Link
                         key={invoice.id}
-                        href={`/invoices/${invoice.id}`}
+                        href={`/invoices/${invoice.id}/edit`}
                         className="group flex items-start justify-between gap-4 px-4 py-3 transition hover:bg-slate-50/80"
                       >
                         <div className="min-w-0">
@@ -423,10 +423,10 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                             {invoice.referenceNumber}
                           </p>
                           <p className="mt-1 text-sm leading-6 text-slate-600">
-                            {invoice.customer?.name ?? "Unknown customer"} · {invoice.project?.name ?? "Unknown project"}
+                            {invoice.customer?.name ?? "Unknown customer"} - {invoice.project?.name ?? "Unknown project"}
                           </p>
                           <p className="mt-1 text-xs font-medium uppercase tracking-[0.16em] text-[#7a889d]">
-                            Paid · updated {formatDate(invoice.updatedAt)}
+                            Paid - updated {formatDate(invoice.updatedAt)}
                           </p>
                         </div>
                         <p className="shrink-0 text-sm font-semibold text-slate-900">
@@ -493,7 +493,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               filteredInvoices.map((invoice) => (
                 <Link
                   key={invoice.id}
-                  href={`/invoices/${invoice.id}`}
+                  href={`/invoices/${invoice.id}/edit`}
                   className="group block px-5 py-4 transition hover:bg-slate-50/70 sm:px-6"
                 >
                   <div className="grid gap-4 md:grid-cols-[minmax(0,1.35fr)_1fr_160px_140px] md:items-center">
@@ -553,10 +553,10 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           </div>
         </section>
       </section>
-      <WorkspaceComposerSheet
-        id="invoice-create"
-        title="Quick create invoice"
-        description="Capture only the minimum billing context here, create the canonical invoice, and then complete the rest inside the full invoice workspace."
+        <WorkspaceComposerSheet
+          id="invoice-create"
+          title="Quick create invoice"
+          description="Create the canonical invoice first, then finish line items, review, send, and payment readiness inside the invoice workspace."
         open={showComposer}
         openHref={buildInvoicesHref({ q: query, status: statusFilter, compose: "1" }) + "#invoice-create"}
         closeHref={buildInvoicesHref({ q: query, status: statusFilter })}

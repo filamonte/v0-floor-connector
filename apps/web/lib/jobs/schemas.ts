@@ -132,6 +132,10 @@ export const jobInputSchema = z.object({
   notes: optionalTrimmedString(4000)
 });
 
+export const jobQuickCreateInputSchema = z.object({
+  projectId: z.string().uuid("Select a valid project.")
+});
+
 export const jobAssignmentInputSchema = z
   .object({
     personId: optionalUuidField("Select a valid crew member."),
@@ -175,5 +179,6 @@ export const jobAssignmentInputSchema = z
 export type JobInput = z.infer<typeof jobInputSchema>;
 export type JobScheduleInput = z.infer<typeof jobScheduleInputSchema>;
 export type JobAssignmentInput = z.infer<typeof jobAssignmentInputSchema>;
+export type JobQuickCreateInput = z.infer<typeof jobQuickCreateInputSchema>;
 export const jobStatusesList = jobStatuses;
 export const jobAssignmentRolesList = jobAssignmentRoles;

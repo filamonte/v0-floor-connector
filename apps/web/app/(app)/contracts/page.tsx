@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AppEmptyState } from "@/components/app-empty-state";
 import { ContractQuickCreateForm } from "@/components/contract-quick-create-form";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
+import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { quickCreateContractFromEstimateAction } from "@/lib/contracts/actions";
 import {
@@ -13,12 +14,14 @@ import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 
+type ContractView = "all" | "draft" | "sent" | "viewed" | "signed";
+
 type ContractsPageProps = {
   searchParams?: Promise<{
     estimateId?: string;
     compose?: string;
     q?: string;
-    status?: "all" | "draft" | "sent" | "viewed" | "signed";
+    status?: ContractView;
     error?: string;
     message?: string;
   }>;
@@ -29,17 +32,14 @@ function formatStatusLabel(status: string) {
 }
 
 function formatDateTime(value: string | null) {
-  if (!value) {
-    return null;
-  }
-
-  return new Date(value).toLocaleString();
+  return value ? new Date(value).toLocaleString() : "Not recorded";
 }
 
 function buildContractsHref(input: {
   q?: string;
-  status?: string;
+  status?: ContractView;
   compose?: string;
+  estimateId?: string;
 }) {
   const searchParams = new URLSearchParams();
 
@@ -53,6 +53,10 @@ function buildContractsHref(input: {
 
   if (input.compose === "1") {
     searchParams.set("compose", "1");
+  }
+
+  if (input.estimateId) {
+    searchParams.set("estimateId", input.estimateId);
   }
 
   const query = searchParams.toString();
@@ -88,11 +92,6 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
     Boolean(resolvedSearchParams.error) ||
     Boolean(resolvedSearchParams.estimateId);
 
-  const draftCount = contracts.filter((contract) => contract.status === "draft").length;
-  const sentCount = contracts.filter((contract) => contract.status === "sent").length;
-  const viewedCount = contracts.filter((contract) => contract.status === "viewed").length;
-  const signedCount = contracts.filter((contract) => contract.status === "signed").length;
-
   const filteredContracts = contracts.filter((contract) => {
     const matchesStatus = statusFilter === "all" ? true : contract.status === statusFilter;
     const matchesQuery =
@@ -112,48 +111,82 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
     return matchesStatus && matchesQuery;
   });
 
+  const draftContracts = contracts.filter((contract) => contract.status === "draft");
+  const sentContracts = contracts.filter((contract) => contract.status === "sent");
+  const viewedContracts = contracts.filter((contract) => contract.status === "viewed");
+  const signedContracts = contracts.filter((contract) => contract.status === "signed");
+  const pendingApprovalContracts = contracts.filter(
+    (contract) =>
+      contract.status === "draft" && contract.internalApprovalStatus === "pending"
+  );
+  const readyToSendContracts = contracts.filter(
+    (contract) =>
+      contract.status === "draft" &&
+      contract.signatureReadinessStatus === "ready_to_send"
+  );
+
   const contractViews = [
     { key: "all", label: "All contracts", count: contracts.length },
-    { key: "draft", label: "Draft", count: draftCount },
-    { key: "sent", label: "Sent", count: sentCount },
-    { key: "viewed", label: "Viewed", count: viewedCount },
-    { key: "signed", label: "Signed", count: signedCount }
+    { key: "draft", label: "Draft", count: draftContracts.length },
+    { key: "sent", label: "Sent", count: sentContracts.length },
+    { key: "viewed", label: "Viewed", count: viewedContracts.length },
+    { key: "signed", label: "Signed", count: signedContracts.length }
   ] as const;
+
+  const recentContracts = [...filteredContracts]
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+    .slice(0, 20);
 
   return (
     <ContractorWorkspacePage
       eyebrow="Contracts"
       title={`Contracts for ${organizationContext.organization.displayName}`}
-      description="Contract records stay attached to the same estimate, project, and customer chain instead of drifting into a separate signature system."
+      description="Contracts stay attached to the same project, estimate, and customer chain instead of drifting into a separate signature subsystem."
       summary={
-        <div className="grid gap-2 sm:grid-cols-4 xl:grid-cols-4">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="border border-[#e2e7ef] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Draft</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{draftCount}</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+              {draftContracts.length}
+            </p>
           </div>
           <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Sent</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{sentCount}</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+              Pending approval
+            </p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+              {pendingApprovalContracts.length}
+            </p>
           </div>
           <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Viewed</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{viewedCount}</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+              Ready to send
+            </p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+              {readyToSendContracts.length}
+            </p>
           </div>
           <div className="border border-[#e2e7ef] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Signed</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{signedCount}</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+              {signedContracts.length}
+            </p>
           </div>
         </div>
       }
       commandBar={{
         supportSlot: (
           <p>
-            Search contracts, switch status views, and quick create a new contract only when you are ready to open its full workspace.
+            Review signature readiness, follow the contract workflow by its real
+            canonical state, and open quick create only when you are ready to route
+            into the full contract workspace.
           </p>
         ),
         searchSlot: (
           <form action="/contracts" className="flex flex-col gap-2 sm:flex-row">
-            {statusFilter !== "all" ? <input type="hidden" name="status" value={statusFilter} /> : null}
+            {statusFilter !== "all" ? (
+              <input type="hidden" name="status" value={statusFilter} />
+            ) : null}
             {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
             <input
               type="search"
@@ -210,10 +243,12 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
         }),
         actionSlot: (
           <Link
-            href={
-              buildContractsHref({ q: query, status: statusFilter, compose: "1" }) +
-              "#contract-create"
-            }
+            href={buildContractsHref({
+              q: query,
+              status: statusFilter,
+              compose: "1",
+              estimateId: resolvedSearchParams.estimateId
+            })}
             className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
           >
             New contract
@@ -221,138 +256,205 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
         )
       }}
     >
-      <div className={showComposer ? "grid gap-4 xl:grid-cols-[minmax(0,1.12fr)_400px]" : "space-y-4"}>
-        <section className="space-y-4">
-          {resolvedSearchParams.error ? (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
-              {resolvedSearchParams.error}
-            </div>
-          ) : null}
+      <div className="space-y-6">
+        {resolvedSearchParams.error ? (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+            {resolvedSearchParams.error}
+          </div>
+        ) : null}
 
-          {resolvedSearchParams.message ? (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
-              {resolvedSearchParams.message}
-            </div>
-          ) : null}
+        {resolvedSearchParams.message ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+            {resolvedSearchParams.message}
+          </div>
+        ) : null}
 
-          <section className="border border-[#dde3eb] bg-white">
-            <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
-              <div className="flex items-end justify-between gap-4">
-                <div className="hidden grid-cols-[minmax(0,1.35fr)_1fr_160px_190px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
-                  <span>Contract</span>
-                  <span>Project</span>
-                  <span>Status</span>
-                  <span className="text-right">Updated</span>
-                </div>
-                <div className="md:hidden">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    Contracts list
-                  </p>
-                </div>
-                <p className="text-sm leading-6 text-slate-500">
-                  {filteredContracts.length} visible
-                </p>
-              </div>
-            </div>
+        <section className="grid gap-4 xl:grid-cols-2 2xl:grid-cols-4">
+          <ManagerDashboardCard
+            eyebrow="Workflow queue"
+            title="Pending internal approval"
+            description="Draft contracts that still need the required internal approval step before send."
+            actionHref={buildContractsHref({ q: query, status: "draft" })}
+            actionLabel="Review drafts"
+            items={pendingApprovalContracts.slice(0, 4).map((contract) => ({
+              href: `/contracts/${contract.id}`,
+              title: contract.title,
+              subtitle: contract.project?.name ?? "Unknown project",
+              meta: contract.estimate?.referenceNumber
+                ? `Estimate ${contract.estimate.referenceNumber}`
+                : null,
+              trailing: formatDateTime(contract.updatedAt)
+            }))}
+            emptyTitle="No contracts are waiting on approval"
+            emptyDescription="Draft contracts needing internal approval will appear here."
+          />
+          <ManagerDashboardCard
+            eyebrow="Workflow queue"
+            title="Ready to send"
+            description="Draft contracts that are already in a send-ready canonical state."
+            actionHref={buildContractsHref({ q: query, status: "draft" })}
+            actionLabel="Open drafts"
+            items={readyToSendContracts.slice(0, 4).map((contract) => ({
+              href: `/contracts/${contract.id}`,
+              title: contract.title,
+              subtitle: contract.customer?.name ?? "Unknown customer",
+              meta: contract.project?.name ?? null,
+              trailing: formatDateTime(contract.updatedAt)
+            }))}
+            emptyTitle="No contracts are ready to send"
+            emptyDescription="Send-ready drafts will show here once review and approval are complete."
+          />
+          <ManagerDashboardCard
+            eyebrow="Workflow queue"
+            title="Sent for signature"
+            description="Contracts that have already left draft and are currently out for signature."
+            actionHref={buildContractsHref({ q: query, status: "sent" })}
+            actionLabel="View sent"
+            items={sentContracts.slice(0, 4).map((contract) => ({
+              href: `/contracts/${contract.id}`,
+              title: contract.title,
+              subtitle: contract.customer?.name ?? "Unknown customer",
+              meta: contract.project?.name ?? null,
+              trailing: formatDateTime(contract.sentAt ?? contract.updatedAt)
+            }))}
+            emptyTitle="Nothing is currently out for signature"
+            emptyDescription="Sent contracts will appear here after they leave the draft workspace."
+          />
+          <ManagerDashboardCard
+            eyebrow="Workflow queue"
+            title="Viewed awaiting signature"
+            description="Contracts that the customer has already viewed and that are still waiting on signature completion."
+            actionHref={buildContractsHref({ q: query, status: "viewed" })}
+            actionLabel="View viewed"
+            items={viewedContracts.slice(0, 4).map((contract) => ({
+              href: `/contracts/${contract.id}`,
+              title: contract.title,
+              subtitle: contract.customer?.name ?? "Unknown customer",
+              meta: contract.project?.name ?? null,
+              trailing: formatDateTime(contract.customerViewedAt ?? contract.viewedAt)
+            }))}
+            emptyTitle="No viewed contracts are waiting"
+            emptyDescription="Viewed contracts will appear here once customer review has begun."
+          />
+        </section>
 
-            <div className="divide-y divide-slate-200">
-              {filteredContracts.length > 0 ? (
-                filteredContracts.map((contract) => (
-                  <Link
-                    key={contract.id}
-                    href={`/contracts/${contract.id}`}
-                    className="group block px-5 py-4 transition hover:bg-slate-50/70 sm:px-6"
-                  >
-                    <div className="grid gap-4 md:grid-cols-[minmax(0,1.35fr)_1fr_160px_190px] md:items-center">
-                      <div className="min-w-0">
-                        <h3 className="text-base font-semibold text-slate-950 transition group-hover:text-brand-700">
+        <section className="overflow-hidden border border-[#dde3eb] bg-white">
+          <div className="flex items-end justify-between gap-4 border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+                Recent records
+              </p>
+              <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+                Latest contract updates
+              </h3>
+            </div>
+            <p className="text-sm leading-6 text-slate-500">
+              {recentContracts.length} visible
+            </p>
+          </div>
+
+          {recentContracts.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200 text-sm">
+                <thead className="bg-[#f8fafc] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  <tr>
+                    <th className="px-5 py-3 sm:px-6">Contract</th>
+                    <th className="px-5 py-3 sm:px-6">Project / estimate</th>
+                    <th className="px-5 py-3 sm:px-6">Status</th>
+                    <th className="px-5 py-3 sm:px-6">Signature readiness</th>
+                    <th className="px-5 py-3 text-right sm:px-6">Updated</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 bg-white">
+                  {recentContracts.map((contract) => (
+                    <tr key={contract.id} className="hover:bg-slate-50/70">
+                      <td className="px-5 py-4 sm:px-6">
+                        <Link
+                          href={`/contracts/${contract.id}`}
+                          className="font-semibold text-slate-950 transition hover:text-brand-700"
+                        >
                           {contract.title}
-                        </h3>
-                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                        </Link>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
                           {contract.customer?.name ?? "Unknown customer"}
                         </p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                          Project
-                        </p>
-                        <p className="text-sm font-medium text-slate-700">
+                      </td>
+                      <td className="px-5 py-4 sm:px-6">
+                        <p className="font-medium text-slate-700">
                           {contract.project?.name ?? "Unknown project"}
                         </p>
                         <p className="mt-1 text-sm leading-6 text-slate-500">
                           {contract.estimate?.referenceNumber ?? "No estimate"}
                         </p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                          Status
-                        </p>
+                      </td>
+                      <td className="px-5 py-4 sm:px-6">
                         <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
                           {formatStatusLabel(contract.status)}
                         </span>
-                      </div>
-                      <div className="md:text-right">
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                          Updated
-                        </p>
-                        <p className="text-sm font-medium text-slate-700">
-                          {formatDateTime(contract.updatedAt) ?? "No timestamp"}
-                        </p>
-                        <p className="mt-1 text-sm leading-6 text-slate-500">
-                          {contract.template?.name ?? "Default template"}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                ))
-              ) : (
-                <div className="px-6 py-8 sm:px-8">
-                  <AppEmptyState
-                    eyebrow={contracts.length > 0 ? "No matching contracts" : "No contracts yet"}
-                    title={contracts.length > 0 ? "Adjust the contract filters" : "Generate the first contract"}
-                    description={
-                      contracts.length > 0
-                        ? "Try a broader search or switch status views to find the contract record you need."
-                        : "Contracts are generated from approved estimates so the signed commercial record stays connected to the same project and customer chain."
-                    }
-                  />
-                </div>
-              )}
+                      </td>
+                      <td className="px-5 py-4 capitalize text-slate-500 sm:px-6">
+                        {formatStatusLabel(contract.signatureReadinessStatus)}
+                      </td>
+                      <td className="px-5 py-4 text-right text-slate-500 sm:px-6">
+                        {formatDateTime(contract.updatedAt)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </section>
-        </section>
-
-        <WorkspaceComposerSheet
-          id="contract-create"
-          title="Quick create contract"
-          description="Capture only the minimum contract context here, create the canonical record, and then finish review and signature setup in the full contract workspace."
-          open={showComposer}
-          openHref={
-            buildContractsHref({ q: query, status: statusFilter, compose: "1" }) +
-            "#contract-create"
-          }
-          closeHref={buildContractsHref({ q: query, status: statusFilter })}
-          openLabel="Open contract quick create"
-        >
-          {approvedEstimates.length > 0 ? (
-            <ContractQuickCreateForm
-              action={quickCreateContractFromEstimateAction}
-              approvedEstimates={approvedEstimates.map((estimate) => ({
-                id: estimate.id,
-                referenceNumber: estimate.referenceNumber,
-                projectName: estimate.project?.name ?? null
-              }))}
-              initialEstimateId={resolvedSearchParams.estimateId}
-              preferredTemplateId={preferredTemplateId}
-              requireInternalApproval={workflowSettings.requireContractInternalApproval}
-            />
           ) : (
-            <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-              Approve an estimate before generating a contract.
+            <div className="px-6 py-8 sm:px-8">
+              <AppEmptyState
+                eyebrow={contracts.length > 0 ? "No matching contracts" : "No contracts yet"}
+                title={
+                  contracts.length > 0
+                    ? "Adjust the contract filters"
+                    : "Generate the first contract"
+                }
+                description={
+                  contracts.length > 0
+                    ? "Try a broader search or switch to another real contract status."
+                    : "Contracts are generated from approved estimates so the signed commercial record stays connected to the same project and customer chain."
+                }
+              />
             </div>
           )}
-        </WorkspaceComposerSheet>
+        </section>
       </div>
+
+      <WorkspaceComposerSheet
+        id="contract-create"
+        title="Quick create contract"
+        description="Choose the approved estimate, create the canonical contract, and then finish review and signature setup in the full contract workspace."
+        open={showComposer}
+        openHref={buildContractsHref({
+          q: query,
+          status: statusFilter,
+          compose: "1",
+          estimateId: resolvedSearchParams.estimateId
+        })}
+        closeHref={buildContractsHref({ q: query, status: statusFilter })}
+        openLabel="Open contract quick create"
+      >
+        {approvedEstimates.length > 0 ? (
+          <ContractQuickCreateForm
+            action={quickCreateContractFromEstimateAction}
+            approvedEstimates={approvedEstimates.map((estimate) => ({
+              id: estimate.id,
+              referenceNumber: estimate.referenceNumber,
+              projectName: estimate.project?.name ?? null
+            }))}
+            initialEstimateId={resolvedSearchParams.estimateId}
+            preferredTemplateId={preferredTemplateId}
+            requireInternalApproval={workflowSettings.requireContractInternalApproval}
+          />
+        ) : (
+          <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+            Approve an estimate before generating a contract.
+          </div>
+        )}
+      </WorkspaceComposerSheet>
     </ContractorWorkspacePage>
   );
 }

@@ -20,15 +20,15 @@ export function NextActionCard({
   return (
     <div className={`space-y-4 ${className}`}>
       {eyebrow ? (
-        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-brand-700">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#a4581a]">
           {eyebrow}
         </p>
       ) : null}
       <div className="space-y-2.5">
-        <p className="text-xl font-semibold tracking-tight text-slate-950 sm:text-[1.45rem]">
+        <p className="text-xl font-semibold tracking-tight text-[#2b2118] sm:text-[1.45rem]">
           {title}
         </p>
-        <div className="max-w-[62ch] text-sm leading-6 text-slate-600">{description}</div>
+        <div className="max-w-[62ch] text-sm leading-6 text-[#665446]">{description}</div>
       </div>
       {primaryAction || secondaryAction ? (
         <div className="flex flex-wrap gap-2.5 pt-2.5">

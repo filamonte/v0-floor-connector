@@ -1,6 +1,8 @@
 export type ProfileId = string;
 export type OrganizationId = string;
 export type MembershipId = string;
+export type ContactId = string;
+export type CustomerContactId = string;
 export type OpportunityId = string;
 export type CustomerId = string;
 export type ProjectId = string;
@@ -29,11 +31,23 @@ export type TimeCardId = string;
 export type DailyLogId = string;
 export type FieldNoteId = string;
 export type ExecutionAttachmentId = string;
+export type PunchlistItemId = string;
+export type AppointmentId = string;
 export type PortalAccessGrantId = string;
 export type PortalProjectAccessId = string;
 export type PortalRecordViewId = string;
+export type OpportunityMeasurementId = string;
+export type OpportunityAttachmentId = string;
+export type OpportunityObservationId = string;
 
 export type MembershipRole = "owner" | "admin" | "manager" | "member";
+export type ContactKind =
+  | "customer_contact"
+  | "billing_contact"
+  | "portal_contact"
+  | "vendor_contact"
+  | "employee"
+  | "general_inquiry";
 export type ProjectStatus =
   | "lead"
   | "estimating"
@@ -167,6 +181,18 @@ export type TimeCardEntryMode =
   | "manual"
   | "adjusted";
 export type DailyLogStatus = "draft" | "finalized";
+export type PunchlistStatus = "open" | "in_progress" | "resolved" | "closed";
+export type AppointmentType =
+  | "site_visit"
+  | "customer_meeting"
+  | "estimate_appointment"
+  | "follow_up"
+  | "internal";
+export type AppointmentStatus =
+  | "scheduled"
+  | "completed"
+  | "canceled"
+  | "no_show";
 export type FieldNoteType =
   | "general"
   | "labor"
@@ -179,6 +205,7 @@ export type FieldNoteStatus = "open" | "noted" | "resolved";
 export type FieldNoteVisibility = "internal";
 export type ExecutionAttachmentSubjectType = "daily_log" | "field_note";
 export type ExecutionAttachmentType = "photo" | "file";
+export type OpportunityAttachmentType = "photo" | "file";
 export type PortalAccessGrantStatus = "invited" | "active" | "revoked";
 export type PortalProjectAccessStatus = "active" | "revoked";
 export type PortalRecordViewSubjectType =
@@ -202,6 +229,12 @@ export type MembershipStatus =
   | "active"
   | "inactive"
   | "suspended";
+export type MeasurementCaptureMethod =
+  | "manual"
+  | "onsite"
+  | "photo_derived"
+  | "imported";
+export type OpportunityObservationSeverity = "low" | "medium" | "high";
 
 export interface Profile {
   id: ProfileId;
@@ -242,6 +275,19 @@ export interface OrganizationMembership {
   updatedAt: string;
 }
 
+export interface Contact {
+  id: ContactId;
+  organizationId: OrganizationId;
+  displayName: string;
+  companyName: string | null;
+  email: string | null;
+  phone: string | null;
+  contactKind: ContactKind;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Customer {
   id: CustomerId;
   organizationId: OrganizationId;
@@ -265,15 +311,30 @@ export interface Customer {
   updatedAt: string;
 }
 
+export interface CustomerContact {
+  id: CustomerContactId;
+  organizationId: OrganizationId;
+  customerId: CustomerId;
+  contactId: ContactId;
+  relationshipLabel: string | null;
+  isPrimary: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Opportunity {
   id: OpportunityId;
   organizationId: OrganizationId;
+  primaryContactId: ContactId | null;
   customerId: CustomerId | null;
   projectId: ProjectId | null;
   status: OpportunityStatus;
   title: string;
   source: string | null;
+  sourceDetail: string | null;
   serviceType: string | null;
+  jobType: string | null;
+  siteName: string | null;
   prospectName: string;
   prospectCompanyName: string | null;
   email: string | null;
@@ -315,6 +376,8 @@ export interface OrganizationWorkflowSettings {
   requireDepositBeforeJobScheduling: boolean;
   requireFinancingApprovalBeforeJobScheduling: boolean;
   defaultDepositPercentage: string;
+  nextEstimateNumber: number;
+  nextInvoiceNumber: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -334,6 +397,8 @@ export interface PlatformWorkflowDefaults {
   requireDepositBeforeJobScheduling: boolean;
   requireFinancingApprovalBeforeJobScheduling: boolean;
   defaultDepositPercentage: string;
+  defaultEstimateStartNumber: number;
+  defaultInvoiceStartNumber: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -347,6 +412,7 @@ export interface Project {
   description: string | null;
   commercialReadinessStatus: CommercialReadinessStatus;
   financingStatus: FinancingStatus;
+  operationalActivatedAt: string | null;
   readyToScheduleAt: string | null;
   addressLine1: string | null;
   addressLine2: string | null;
@@ -361,6 +427,7 @@ export interface Project {
 export interface Estimate {
   id: EstimateId;
   organizationId: OrganizationId;
+  opportunityId: OpportunityId;
   customerId: CustomerId;
   projectId: ProjectId;
   templateId: TemplateId | null;
@@ -456,6 +523,7 @@ export interface InvoiceLineItem {
   id: string;
   invoiceId: InvoiceId;
   organizationId: OrganizationId;
+  scheduleOfValueItemId: string | null;
   name: string;
   description: string | null;
   quantity: string;
@@ -829,6 +897,87 @@ export interface FieldNote {
   body: string | null;
   status: FieldNoteStatus;
   visibility: FieldNoteVisibility;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PunchlistItem {
+  id: PunchlistItemId;
+  organizationId: OrganizationId;
+  projectId: ProjectId;
+  jobId: JobId | null;
+  assigneePersonId: PersonId | null;
+  title: string;
+  details: string | null;
+  dueDate: string | null;
+  status: PunchlistStatus;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Appointment {
+  id: AppointmentId;
+  organizationId: OrganizationId;
+  opportunityId: OpportunityId | null;
+  customerId: CustomerId | null;
+  projectId: ProjectId | null;
+  assignedPersonId: PersonId | null;
+  title: string;
+  appointmentType: AppointmentType;
+  startsAt: string;
+  endsAt: string | null;
+  location: string | null;
+  notes: string | null;
+  status: AppointmentStatus;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OpportunityMeasurement {
+  id: OpportunityMeasurementId;
+  organizationId: OrganizationId;
+  opportunityId: OpportunityId;
+  areaLabel: string | null;
+  measurementType: string;
+  valueNumeric: string;
+  unit: string;
+  quantity: number | null;
+  captureMethod: MeasurementCaptureMethod | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OpportunityAttachment {
+  id: OpportunityAttachmentId;
+  organizationId: OrganizationId;
+  opportunityId: OpportunityId;
+  attachmentType: OpportunityAttachmentType;
+  storagePath: string;
+  fileName: string;
+  mimeType: string;
+  caption: string | null;
+  tag: string | null;
+  uploadedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OpportunityObservation {
+  id: OpportunityObservationId;
+  organizationId: OrganizationId;
+  opportunityId: OpportunityId;
+  observationType: string;
+  title: string;
+  body: string | null;
+  severity: OpportunityObservationSeverity | null;
+  relatedAttachmentId: OpportunityAttachmentId | null;
   createdByUserId: ProfileId | null;
   updatedByUserId: ProfileId | null;
   createdAt: string;

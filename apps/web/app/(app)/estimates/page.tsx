@@ -6,9 +6,11 @@ import { EstimateQuickCreateForm } from "@/components/estimate-quick-create-form
 import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { listCustomers } from "@/lib/customers/data";
 import { quickCreateEstimateAction } from "@/lib/estimates/actions";
 import { listEstimates } from "@/lib/estimates/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { listOpportunities } from "@/lib/opportunities/data";
 import { listProjects } from "@/lib/projects/data";
 
 type EstimatesPageProps = {
@@ -16,6 +18,9 @@ type EstimatesPageProps = {
     compose?: string;
     q?: string;
     status?: "all" | "draft" | "sent" | "approved" | "rejected";
+    creationMode?: "opportunity" | "customer" | "standalone";
+    opportunityId?: string;
+    customerId?: string;
     projectId?: string;
     error?: string;
     message?: string;
@@ -33,17 +38,13 @@ function formatMoney(amount: string) {
   });
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric"
-  }).format(new Date(value));
-}
-
 function buildEstimatesHref(input: {
   q?: string;
   status?: string;
   compose?: string;
+  opportunityId?: string;
+  customerId?: string;
+  projectId?: string;
 }) {
   const searchParams = new URLSearchParams();
 
@@ -59,8 +60,20 @@ function buildEstimatesHref(input: {
     searchParams.set("compose", "1");
   }
 
+  if (input.opportunityId) {
+    searchParams.set("opportunityId", input.opportunityId);
+  }
+
+  if (input.customerId) {
+    searchParams.set("customerId", input.customerId);
+  }
+
+  if (input.projectId) {
+    searchParams.set("projectId", input.projectId);
+  }
+
   const query = searchParams.toString();
-  return query.length > 0 ? `/estimates?${query}` : "/estimates";
+  return query ? `/estimates?${query}` : "/estimates";
 }
 
 export default async function EstimatesPage({
@@ -79,12 +92,31 @@ export default async function EstimatesPage({
     );
   }
 
-  const [estimates, projects] = await Promise.all([listEstimates(), listProjects()]);
+  const [estimates, opportunities, customers, projects] = await Promise.all([
+    listEstimates(),
+    listOpportunities(),
+    listCustomers(),
+    listProjects()
+  ]);
+  const opportunityOptions = opportunities.map((opportunity) => ({
+    id: opportunity.id,
+    title: opportunity.title,
+    contactName: opportunity.primaryContact?.displayName ?? opportunity.prospectName,
+    customerName: opportunity.customer?.name ?? null,
+    jobType: opportunity.jobType,
+    siteName: opportunity.siteName,
+    status: opportunity.status
+  }));
+  const customerOptions = customers.map((customer) => ({
+    id: customer.id,
+    name: customer.name,
+    companyName: customer.companyName
+  }));
   const projectOptions = projects.map((project) => ({
     id: project.id,
-    name: project.name,
     customerId: project.customerId,
-    customerName: project.customer?.name ?? null
+    name: project.name,
+    status: project.status
   }));
   const query = resolvedSearchParams.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
@@ -92,7 +124,8 @@ export default async function EstimatesPage({
   const showComposer =
     resolvedSearchParams.compose === "1" ||
     Boolean(resolvedSearchParams.error) ||
-    Boolean(resolvedSearchParams.projectId);
+    Boolean(resolvedSearchParams.opportunityId) ||
+    Boolean(resolvedSearchParams.customerId);
   const draftCount = estimates.filter((estimate) => estimate.status === "draft").length;
   const sentCount = estimates.filter((estimate) => estimate.status === "sent").length;
   const approvedCount = estimates.filter((estimate) => estimate.status === "approved").length;
@@ -107,6 +140,7 @@ export default async function EstimatesPage({
         ? true
         : [
             estimate.referenceNumber,
+            estimate.opportunity?.title ?? "",
             estimate.customer?.name ?? "",
             estimate.project?.name ?? "",
             estimate.status
@@ -119,37 +153,33 @@ export default async function EstimatesPage({
   });
   const estimateViews = [
     { key: "all", label: "All estimates", count: estimates.length },
-    { key: "draft", label: "Draft", count: draftCount },
+    { key: "draft", label: "Build", count: draftCount },
     { key: "sent", label: "Sent", count: sentCount },
     { key: "approved", label: "Approved", count: approvedCount },
     {
       key: "rejected",
-      label: "Rejected",
+      label: "Revision",
       count: estimates.filter((estimate) => estimate.status === "rejected").length
     }
   ] as const;
-  const draftQueue = estimates
-    .filter((estimate) => estimate.status === "draft")
-    .slice(0, 3);
-  const followUpQueue = estimates
-    .filter((estimate) => estimate.status === "sent")
-    .slice(0, 3);
+  const draftQueue = estimates.filter((estimate) => estimate.status === "draft").slice(0, 4);
+  const followUpQueue = estimates.filter((estimate) => estimate.status === "sent").slice(0, 4);
   const approvedQueue = estimates
     .filter((estimate) => estimate.status === "approved")
-    .slice(0, 3);
+    .slice(0, 4);
   const revisionQueue = estimates
     .filter((estimate) => estimate.status === "rejected")
-    .slice(0, 3);
+    .slice(0, 4);
 
   return (
     <ContractorWorkspacePage
       eyebrow="Estimates"
       title={`Estimate manager for ${organizationContext.organization.displayName}`}
-      description="Track draft scope, customer follow-up, and contract-ready approvals from one commercial workspace instead of dropping straight into a long estimates list."
+      description="Create the estimate first, build scope and pricing in the workspace, then review and send. This manager keeps the estimating workflow clear instead of forcing project selection or proposal review too early."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Draft</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Build</p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{draftCount}</p>
           </div>
           <div className="border border-[#e2e7ef] bg-white px-4 py-3">
@@ -171,7 +201,7 @@ export default async function EstimatesPage({
       commandBar={{
         supportSlot: (
           <p>
-            Review the commercial queue first, then use quick create to open a real estimate record before finishing the full scope inside the estimate workspace.
+            Start from an opportunity, a customer, or standalone intake. FloorConnector will always keep the estimate tied to a canonical opportunity before opening the estimate workspace.
           </p>
         ),
         searchSlot: (
@@ -182,7 +212,7 @@ export default async function EstimatesPage({
               type="search"
               name="q"
               defaultValue={query}
-              placeholder="Search estimate, project, customer, or status"
+              placeholder="Search estimate, opportunity, customer, project, or status"
               className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
             />
             <button
@@ -207,7 +237,14 @@ export default async function EstimatesPage({
           return (
             <Link
               key={view.key}
-              href={buildEstimatesHref({ q: query, status: view.key, compose: showComposer ? "1" : undefined })}
+              href={buildEstimatesHref({
+                q: query,
+                status: view.key,
+                compose: showComposer ? "1" : undefined,
+                opportunityId: resolvedSearchParams.opportunityId,
+                customerId: resolvedSearchParams.customerId,
+                projectId: resolvedSearchParams.projectId
+              })}
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
@@ -229,7 +266,16 @@ export default async function EstimatesPage({
         }),
         actionSlot: (
           <Link
-            href={buildEstimatesHref({ q: query, status: statusFilter, compose: "1" }) + "#estimate-create"}
+            href={
+              buildEstimatesHref({
+                q: query,
+                status: statusFilter,
+                compose: "1",
+                opportunityId: resolvedSearchParams.opportunityId,
+                customerId: resolvedSearchParams.customerId,
+                projectId: resolvedSearchParams.projectId
+              }) + "#estimate-create"
+            }
             className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
           >
             New estimate
@@ -241,75 +287,103 @@ export default async function EstimatesPage({
         <section className="space-y-6">
           <section className="grid gap-4 xl:auto-rows-fr xl:grid-cols-2">
             <ManagerDashboardCard
-              eyebrow="Action now"
-              title="Drafts needing scope review"
-              description="The estimate work still in progress before anything should be sent to the customer."
-              actionHref={buildEstimatesHref({ q: query, status: "draft", compose: showComposer ? "1" : undefined })}
-              actionLabel="View drafts"
+              eyebrow="Build"
+              title="Draft estimates to finish"
+              description="Estimate work still being built before review or customer send."
+              actionHref={buildEstimatesHref({
+                q: query,
+                status: "draft",
+                compose: showComposer ? "1" : undefined,
+                opportunityId: resolvedSearchParams.opportunityId,
+                customerId: resolvedSearchParams.customerId,
+                projectId: resolvedSearchParams.projectId
+              })}
+              actionLabel="View build queue"
               items={draftQueue.map((estimate) => ({
-                href: `/estimates/${estimate.id}`,
+                href: `/estimates/${estimate.id}/edit`,
                 title: estimate.referenceNumber,
-                subtitle: `${estimate.customer?.name ?? "Unknown customer"} · ${estimate.project?.name ?? "Unknown project"}`,
-                meta: `Updated ${formatDate(estimate.updatedAt)}`,
+                subtitle: `${estimate.customer?.name ?? "Unknown customer"} - ${estimate.project?.name ?? "Unknown project"}`,
+                meta: estimate.opportunity?.title ?? "Opportunity linked",
                 badge: "Draft",
                 trailing: formatMoney(estimate.totalAmount)
               }))}
-              emptyTitle="No draft estimates need attention."
-              emptyDescription="New drafts will show up here when the commercial team is actively shaping scope."
+              emptyTitle="No draft estimates need build work."
+              emptyDescription="New estimate drafts will surface here as soon as they are created."
             />
 
             <ManagerDashboardCard
-              eyebrow="Follow-up"
-              title="Sent estimates waiting on customer response"
-              description="Use this queue to chase customer decisions before the commercial chain stalls."
-              actionHref={buildEstimatesHref({ q: query, status: "sent", compose: showComposer ? "1" : undefined })}
-              actionLabel="View sent"
+              eyebrow="Send"
+              title="Sent estimates awaiting response"
+              description="Customer-facing estimates that are out for decision and need follow-up."
+              actionHref={buildEstimatesHref({
+                q: query,
+                status: "sent",
+                compose: showComposer ? "1" : undefined,
+                opportunityId: resolvedSearchParams.opportunityId,
+                customerId: resolvedSearchParams.customerId,
+                projectId: resolvedSearchParams.projectId
+              })}
+              actionLabel="View sent queue"
               items={followUpQueue.map((estimate) => ({
                 href: `/estimates/${estimate.id}`,
                 title: estimate.referenceNumber,
-                subtitle: `${estimate.customer?.name ?? "Unknown customer"} · ${estimate.project?.name ?? "Unknown project"}`,
-                meta: `Sent estimate · updated ${formatDate(estimate.updatedAt)}`,
+                subtitle: `${estimate.customer?.name ?? "Unknown customer"} - ${estimate.project?.name ?? "Unknown project"}`,
+                meta: `Sent - ${estimate.opportunity?.title ?? "Opportunity linked"}`,
                 badge: "Sent",
                 trailing: formatMoney(estimate.totalAmount)
               }))}
-              emptyTitle="No sent estimates are waiting on follow-up."
-              emptyDescription="When a customer-facing estimate needs a response, it will surface here."
+              emptyTitle="No sent estimates are waiting right now."
+              emptyDescription="Sent estimates will appear here when customer follow-up is needed."
             />
 
             <ManagerDashboardCard
-              eyebrow="Ready next"
-              title="Approved estimates ready for contract work"
-              description="These approved estimates are the cleanest candidates to move into contract generation and the next readiness step."
-              actionHref={buildEstimatesHref({ q: query, status: "approved", compose: showComposer ? "1" : undefined })}
+              eyebrow="Approved"
+              title="Approved estimates ready for contract"
+              description="Commercial scope that is cleared and ready to move into legal contract work."
+              actionHref={buildEstimatesHref({
+                q: query,
+                status: "approved",
+                compose: showComposer ? "1" : undefined,
+                opportunityId: resolvedSearchParams.opportunityId,
+                customerId: resolvedSearchParams.customerId,
+                projectId: resolvedSearchParams.projectId
+              })}
               actionLabel="View approved"
               items={approvedQueue.map((estimate) => ({
                 href: `/estimates/${estimate.id}`,
                 title: estimate.referenceNumber,
-                subtitle: `${estimate.customer?.name ?? "Unknown customer"} · ${estimate.project?.name ?? "Unknown project"}`,
-                meta: `Approved estimate · updated ${formatDate(estimate.updatedAt)}`,
+                subtitle: `${estimate.customer?.name ?? "Unknown customer"} - ${estimate.project?.name ?? "Unknown project"}`,
+                meta: estimate.opportunity?.title ?? "Opportunity linked",
                 badge: "Approved",
                 trailing: formatMoney(estimate.totalAmount)
               }))}
               emptyTitle="No approved estimates are waiting right now."
-              emptyDescription="Approved estimates that are ready to move deeper into the workflow will appear here."
+              emptyDescription="Approved estimates that are ready for contract handoff will appear here."
             />
 
             <ManagerDashboardCard
               eyebrow="Revision"
               title="Rejected estimates needing rework"
-              description="Keep the revise-and-resend queue visible without letting it drown the broader estimate manager."
-              actionHref={buildEstimatesHref({ q: query, status: "rejected", compose: showComposer ? "1" : undefined })}
-              actionLabel="View rejected"
+              description="Keep revision work visible without burying the rest of the estimate pipeline."
+              actionHref={buildEstimatesHref({
+                q: query,
+                status: "rejected",
+                compose: showComposer ? "1" : undefined,
+                opportunityId: resolvedSearchParams.opportunityId,
+                customerId: resolvedSearchParams.customerId,
+                projectId: resolvedSearchParams.projectId
+              })}
+              actionLabel="View revision queue"
               items={revisionQueue.map((estimate) => ({
-                href: `/estimates/${estimate.id}`,
+                href: `/estimates/${estimate.id}/edit`,
                 title: estimate.referenceNumber,
-                subtitle: `${estimate.customer?.name ?? "Unknown customer"} · ${estimate.project?.name ?? "Unknown project"}`,
-                meta: `Needs revision · updated ${formatDate(estimate.updatedAt)}`,
+                subtitle: `${estimate.customer?.name ?? "Unknown customer"} - ${estimate.project?.name ?? "Unknown project"}`,
+                meta: estimate.opportunity?.title ?? "Opportunity linked",
                 badge: "Rejected",
                 trailing: formatMoney(estimate.totalAmount)
               }))}
               emptyTitle="No rejected estimates need revision."
-              emptyDescription="Rejected estimates will surface here when the team needs to rework pricing or scope."
+              emptyDescription="Rejected estimates will surface here when the team needs to rework scope or pricing."
             />
           </section>
 
@@ -333,7 +407,7 @@ export default async function EstimatesPage({
                     Estimate records
                   </p>
                   <p className="mt-2 text-sm leading-6 text-slate-500">
-                    The full commercial record list stays available below the action queues so deeper review never leaves the module manager.
+                    The full commercial register stays below the manager queues so the build, review, and send workflow never loses access to the underlying records.
                   </p>
                 </div>
                 <div className="hidden grid-cols-[minmax(0,1.5fr)_1fr_160px_140px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
@@ -369,6 +443,9 @@ export default async function EstimatesPage({
                         <p className="mt-2 text-sm leading-6 text-slate-500">
                           {estimate.customer?.name ?? "Unknown customer"}
                         </p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-400">
+                          {estimate.opportunity?.title ?? "Opportunity linked"}
+                        </p>
                       </div>
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
@@ -399,14 +476,14 @@ export default async function EstimatesPage({
                 ))
               ) : (
                 <div className="px-6 py-8 sm:px-8">
-              <AppEmptyState
-                  eyebrow={estimates.length > 0 ? "No matching estimates" : "No estimates yet"}
-                  title={estimates.length > 0 ? "Adjust the estimate filters" : "Create the first estimate"}
-                  description={
-                    estimates.length > 0
-                      ? "Try a broader search or switch estimate views to find the commercial record you need."
-                      : "Estimates define the proposed scope and commercial value that later flows into contracts, jobs, and invoicing."
-                  }
+                  <AppEmptyState
+                    eyebrow={estimates.length > 0 ? "No matching estimates" : "No estimates yet"}
+                    title={estimates.length > 0 ? "Adjust the estimate filters" : "Create the first estimate"}
+                    description={
+                      estimates.length > 0
+                        ? "Try a broader search or switch estimate views to find the commercial record you need."
+                        : "Estimates define the priced commercial scope that later flows into contracts, jobs, and invoicing."
+                    }
                   />
                 </div>
               )}
@@ -417,23 +494,37 @@ export default async function EstimatesPage({
         <WorkspaceComposerSheet
           id="estimate-create"
           title="Quick create estimate"
-          description="Capture only the minimum project context here, create the canonical estimate, and then finish the full scope in the estimate workspace."
+          description="Start from an opportunity, a customer, or standalone intake. FloorConnector will always attach the estimate to a canonical opportunity before opening the build workspace."
           open={showComposer}
-          openHref={buildEstimatesHref({ q: query, status: statusFilter, compose: "1" }) + "#estimate-create"}
+          openHref={
+            buildEstimatesHref({
+              q: query,
+              status: statusFilter,
+              compose: "1",
+              opportunityId: resolvedSearchParams.opportunityId,
+              customerId: resolvedSearchParams.customerId,
+              projectId: resolvedSearchParams.projectId
+            }) + "#estimate-create"
+          }
           closeHref={buildEstimatesHref({ q: query, status: statusFilter })}
           openLabel="Open estimate quick create"
         >
-          {projectOptions.length > 0 ? (
-            <EstimateQuickCreateForm
-              action={quickCreateEstimateAction}
-              projects={projectOptions}
-              initialProjectId={resolvedSearchParams.projectId}
-            />
-          ) : (
-            <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-              Add at least one project before creating an estimate.
-            </div>
-          )}
+          <EstimateQuickCreateForm
+            action={quickCreateEstimateAction}
+            opportunities={opportunityOptions}
+            customers={customerOptions}
+            projects={projectOptions}
+            estimatorLabel={user.email ?? user.id}
+            estimateDateLabel={new Intl.DateTimeFormat("en-US", {
+              month: "2-digit",
+              day: "2-digit",
+              year: "numeric"
+            }).format(new Date())}
+            initialCreationMode={resolvedSearchParams.creationMode ?? null}
+            initialOpportunityId={resolvedSearchParams.opportunityId}
+            initialCustomerId={resolvedSearchParams.customerId}
+            initialProjectId={resolvedSearchParams.projectId}
+          />
         </WorkspaceComposerSheet>
       </div>
     </ContractorWorkspacePage>

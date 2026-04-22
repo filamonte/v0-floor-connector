@@ -8,6 +8,7 @@ import {
   assignPlatformAdminByEmail,
   updateCompanyTenantStatus,
   updatePlatformTemplateSeed,
+  upsertTenantWorkflowNumberingByPlatformAdmin,
   upsertPlatformCatalogItemSeed,
   upsertPlatformFeaturePolicy,
   upsertPlatformFinancialDefaults,
@@ -20,6 +21,7 @@ import {
   platformFeaturePolicyInputSchema,
   platformFinancialDefaultsInputSchema,
   platformTemplateSeedInputSchema,
+  platformTenantWorkflowNumberingInputSchema,
   platformTenantStatusInputSchema,
   platformWorkflowDefaultsInputSchema
 } from "./schemas";
@@ -123,7 +125,9 @@ export async function updatePlatformWorkflowDefaultsAction(formData: FormData) {
       formData,
       "requireFinancingApprovalBeforeJobScheduling"
     ),
-    defaultDepositPercentage: getFieldValue(formData, "defaultDepositPercentage")
+    defaultDepositPercentage: getFieldValue(formData, "defaultDepositPercentage"),
+    defaultEstimateStartNumber: getFieldValue(formData, "defaultEstimateStartNumber"),
+    defaultInvoiceStartNumber: getFieldValue(formData, "defaultInvoiceStartNumber")
   });
 
   if (!result.success) {
@@ -371,6 +375,49 @@ export async function updateTenantPlatformStatusAction(formData: FormData) {
   redirect(
     buildRedirect("/super-admin/admin", {
       message: "Tenant lifecycle was updated."
+    })
+  );
+}
+
+export async function updateTenantWorkflowNumberingAction(formData: FormData) {
+  const scope = await requirePlatformAdminUser("/super-admin/admin");
+  const result = platformTenantWorkflowNumberingInputSchema.safeParse({
+    companyId: getFieldValue(formData, "companyId"),
+    nextEstimateNumber: getFieldValue(formData, "nextEstimateNumber"),
+    nextInvoiceNumber: getFieldValue(formData, "nextInvoiceNumber")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/super-admin/admin", {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to update tenant workflow numbering."
+      })
+    );
+  }
+
+  try {
+    await upsertTenantWorkflowNumberingByPlatformAdmin({
+      userId: scope.userId,
+      ...result.data
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/super-admin/admin", {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to update tenant workflow numbering."
+      })
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    buildRedirect("/super-admin/admin", {
+      message: "Tenant numbering defaults were updated."
     })
   );
 }

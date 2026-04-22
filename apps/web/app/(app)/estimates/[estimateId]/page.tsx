@@ -97,6 +97,22 @@ function getEstimateNextAction(input: {
   };
 }
 
+function getEstimateMeaning(status: string) {
+  if (status === "approved") {
+    return "This proposal has been approved and now anchors the downstream contract, readiness, and billing chain.";
+  }
+
+  if (status === "sent") {
+    return "This proposal is out for customer review. Keep the estimate body primary here while watching for the approval handoff into contract and project readiness.";
+  }
+
+  if (status === "rejected") {
+    return "This proposal was rejected. Review the scope and terms here, then decide whether a revised estimate should re-enter the same project chain.";
+  }
+
+  return "This proposal is still being prepared. Review the scope and pricing here before moving it into customer-facing approval.";
+}
+
 type EstimateDetailPageProps = {
   params: Promise<{
     estimateId: string;
@@ -168,6 +184,7 @@ export default async function EstimateDetailPage({
     readinessSnapshot && readinessSnapshot.blockers.length > 0
       ? readinessSnapshot.blockers.map((blocker) => blocker.replaceAll("_", " ")).join(", ")
       : "No active project-level commercial blockers recorded.";
+  const estimateMeaning = getEstimateMeaning(estimate.status);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 print:max-w-none">
@@ -175,7 +192,7 @@ export default async function EstimateDetailPage({
         <DetailPageHeader
           eyebrow="Estimate Review"
           title={estimate.referenceNumber}
-          description="Review the estimate as a customer-facing proposal while keeping the project, contract, job, and invoice context visible in the same workflow chain."
+          description={estimateMeaning}
           backHref="/estimates"
           backLabel="Back to estimates"
           actions={
@@ -234,10 +251,7 @@ export default async function EstimateDetailPage({
                     <p className="text-base font-semibold text-slate-950 capitalize">
                       {formatStatusLabel(estimate.status)} estimate
                     </p>
-                    <p>
-                      Keep the proposal itself front and center here, then use the project hub to
-                      clear downstream contract, signature, deposit, and scheduling-readiness work.
-                    </p>
+                    <p>{estimateMeaning}</p>
                   </div>
                 )
               },
@@ -287,6 +301,20 @@ export default async function EstimateDetailPage({
                       }
                     ]}
                   />
+                )
+              },
+              {
+                key: "continuity",
+                label: "Connected workflow",
+                content: (
+                  <>
+                    <p className="text-sm font-semibold text-slate-950">
+                      Proposal continuity stays on the shared project chain
+                    </p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Use this page to review scope and pricing, then hand off to the project and contract workspaces instead of recreating downstream records.
+                    </p>
+                  </>
                 )
               }
             ]}
@@ -453,7 +481,10 @@ export default async function EstimateDetailPage({
           </div>
 
           <aside className="space-y-6">
-            <DetailPanel title="Connected Records">
+            <DetailPanel
+              title="Connected Workflow"
+              description="Project, contract, job, and invoice continuity stays visible here without displacing the proposal as the main review surface."
+            >
               <div className="grid gap-4">
                 {estimate.project ? (
                   <LinkedRecordCard
@@ -522,7 +553,10 @@ export default async function EstimateDetailPage({
               </div>
             </DetailPanel>
 
-            <DetailPanel title="Totals">
+            <DetailPanel
+              title="Pricing Snapshot"
+              description="Keep the commercial total easy to scan while the proposal body above remains the primary review surface."
+            >
               <dl className="space-y-3 text-sm leading-6 text-slate-600">
                 <div className="flex items-center justify-between gap-4">
                   <dt>Subtotal</dt>
