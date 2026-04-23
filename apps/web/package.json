@@ -10,13 +10,14 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@floorconnector/config": "workspace:*",
+    "@floorconnector/db": "workspace:*",
     "@floorconnector/domain": "workspace:*",
     "@floorconnector/integrations": "workspace:*",
     "@floorconnector/types": "workspace:*",
-    "@supabase/ssr": "^0.5.2",
-    "@floorconnector/config": "workspace:*",
-    "@floorconnector/db": "workspace:*",
     "@floorconnector/ui": "workspace:*",
+    "@supabase/ssr": "^0.5.2",
+    "lucide-react": "^1.8.0",
     "next": "^15.2.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

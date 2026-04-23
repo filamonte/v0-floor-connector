@@ -18,6 +18,21 @@ import { ReviewSendModal } from "./review-send-modal";
 
 type EditableEstimate = Estimate & {
   lineItems?: EstimateLineItem[];
+  project?: {
+    id: string;
+    name: string;
+    status?: string;
+    description?: string | null;
+  } | null;
+  customer?: {
+    id: string;
+    name: string;
+    email?: string | null;
+  } | null;
+  opportunity?: {
+    id: string;
+    title: string;
+  } | null;
 };
 
 type EstimateWorkspaceProps = {
@@ -260,7 +275,7 @@ export function EstimateWorkspace({
         onClose={() => setReviewModalOpen(false)}
         estimateId={estimate.referenceNumber}
         estimateTitle={estimate.project?.name ?? `Estimate ${estimate.referenceNumber}`}
-        customerEmail=""
+        customerEmail={estimate.customer?.email ?? ""}
       />
     </>
   );
