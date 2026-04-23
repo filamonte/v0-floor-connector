@@ -3,15 +3,9 @@
 import { useState } from "react";
 import { FileSpreadsheet, Info } from "lucide-react";
 
-type CoverSheetProps = {
-  includeCoverSheet?: boolean;
-  onToggle?: (value: boolean) => void;
-};
+type CoverSheetProps = { includeCoverSheet?: boolean; onToggle?: (value: boolean) => void };
 
-export function CoverSheet({
-  includeCoverSheet = false,
-  onToggle
-}: CoverSheetProps) {
+export function CoverSheet({ includeCoverSheet = false, onToggle }: CoverSheetProps) {
   const [enabled, setEnabled] = useState(includeCoverSheet);
 
   const handleToggle = () => {
@@ -21,43 +15,26 @@ export function CoverSheet({
   };
 
   return (
-    <section id="cover-sheet">
-      <div className="bg-white border border-[#e5e7eb] rounded-lg px-4 h-16 flex items-center justify-between">
-        {/* Left - Label */}
+    <div className="h-full flex flex-col bg-white">
+      <div className="h-9 bg-[#f8f9fa] border-b border-[#dfe1e6] px-3 flex items-center gap-2 shrink-0">
+        <FileSpreadsheet className="w-4 h-4 text-[#5e6c84]" />
+        <span className="text-[12px] font-semibold text-[#172b4d]">Cover Sheet</span>
+      </div>
+      <div className="flex-1 p-4">
         <div className="flex items-center gap-3">
-          <FileSpreadsheet className="w-[18px] h-[18px] text-gray-600" />
-          <span className="text-[14px] font-semibold text-gray-900">
-            Cover Sheet
-          </span>
-        </div>
-
-        {/* Right - Toggle */}
-        <div className="flex items-center gap-3">
-          <span className="text-[13px] text-gray-600">Include Cover Sheet?</span>
-          <button
-            type="button"
-            className="text-gray-400 hover:text-gray-600 transition"
-            title="The cover sheet includes company branding, project details, and contact information at the beginning of your estimate PDF."
-          >
-            <Info className="w-4 h-4" />
+          <span className="text-[12px] text-[#5e6c84]">Include Cover Sheet?</span>
+          <button type="button" className="text-[#b3bac5] hover:text-[#5e6c84]" title="The cover sheet includes company branding and project details.">
+            <Info className="w-3.5 h-3.5" />
           </button>
-
-          {/* Toggle Switch */}
           <button
             type="button"
             onClick={handleToggle}
-            className={`relative w-11 h-6 rounded-full transition-colors ${
-              enabled ? "bg-[#ef7d32]" : "bg-gray-200"
-            }`}
+            className={`relative w-9 h-5 rounded-full transition-colors ${enabled ? "bg-[#ef7d32]" : "bg-[#dfe1e6]"}`}
           >
-            <span
-              className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                enabled ? "translate-x-5" : "translate-x-0"
-              }`}
-            />
+            <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${enabled ? "translate-x-4" : "translate-x-0"}`} />
           </button>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
