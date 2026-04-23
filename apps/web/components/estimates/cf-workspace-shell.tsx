@@ -98,25 +98,24 @@ export function CFWorkspaceShell({
   return (
     <div className="flex h-screen overflow-hidden bg-[#f8f9fa]">
       {/* LEFT SIDEBAR - EXACT CF CLONE */}
-      {/* Dark navy #1e3a5f, 200px width, flush edges */}
-      <aside className="w-[200px] bg-[#1e3a5f] text-white flex flex-col shrink-0">
-        {/* Back Link Row */}
-        <div className="h-[44px] flex items-center px-4 border-b border-[#2d4a6f]">
+      {/* Dark navy #1e3a5f, 180px width (CF is narrower), flush edges */}
+      <aside className="w-[180px] bg-[#1e3a5f] text-white flex flex-col shrink-0">
+        {/* Back Link Row - CF has < Back with grid icon */}
+        <div className="h-[42px] flex items-center px-3 border-b border-[#2d4a6f]">
           <Link
             href={backHref}
-            className="flex items-center gap-2 text-[13px] text-[#a3bbd9] hover:text-white transition-colors"
+            className="flex items-center gap-1.5 text-[12px] text-[#a3bbd9] hover:text-white transition-colors"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-3.5 h-3.5" />
             <span>{backLabel}</span>
           </Link>
-          {/* Grid icon on right - CF has this */}
-          <button className="ml-auto w-7 h-7 flex items-center justify-center text-[#a3bbd9] hover:text-white">
-            <LayoutGrid className="w-4 h-4" />
+          <button className="ml-auto w-6 h-6 flex items-center justify-center text-[#a3bbd9] hover:text-white">
+            <LayoutGrid className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* Section Nav - CF style with orange active highlight */}
-        <nav className="flex-1 py-1 overflow-y-auto">
+        {/* Section Nav - CF style: tight 36px rows, small icons, orange active */}
+        <nav className="flex-1 py-0.5 overflow-y-auto">
           {sections.map((section) => {
             const Icon = sectionIcons[section.id] ?? List;
             const isActive = activeSection === section.id;
@@ -127,28 +126,28 @@ export function CFWorkspaceShell({
                 type="button"
                 onClick={() => onSectionChange?.(section.id)}
                 className={`
-                  w-full flex items-center gap-3 px-4 h-[40px] text-[13px] font-medium transition-colors
+                  w-full flex items-center gap-2.5 px-3 h-[36px] text-[12px] font-medium transition-colors
                   ${isActive 
                     ? "bg-[#ef7d32] text-white" 
                     : "text-[#a3bbd9] hover:bg-[#2d4a6f] hover:text-white"
                   }
                 `}
               >
-                <Icon className="w-[18px] h-[18px] shrink-0" />
+                <Icon className="w-4 h-4 shrink-0" />
                 <span className="truncate">{section.label}</span>
               </button>
             );
           })}
         </nav>
 
-        {/* Review and Submit Button - CF Orange */}
-        <div className="p-3 border-t border-[#2d4a6f]">
+        {/* Review and Submit Button - CF Orange with send icon */}
+        <div className="p-2 border-t border-[#2d4a6f]">
           <button
             type="button"
             onClick={onReviewSubmit}
-            className="w-full h-[44px] bg-[#ef7d32] hover:bg-[#e06a1f] text-white text-[14px] font-semibold rounded flex items-center justify-center gap-2 transition-colors"
+            className="w-full h-[40px] bg-[#ef7d32] hover:bg-[#e06a1f] text-white text-[13px] font-semibold rounded flex items-center justify-center gap-2 transition-colors"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-3.5 h-3.5" />
             Review and Submit
           </button>
         </div>
