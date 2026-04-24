@@ -71,7 +71,7 @@ export default async function SuperAdminHomePage() {
         ctaLabel="Manage starter catalogs"
       >
         <div className="grid gap-3 sm:grid-cols-3">
-          {(["material", "service", "system"] as const).map((itemType) => {
+          {(["material", "labor", "service", "equipment", "system"] as const).map((itemType) => {
             const count = catalogSeeds.filter((seed) => seed.itemType === itemType).length;
 
             return (

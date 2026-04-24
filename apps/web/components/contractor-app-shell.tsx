@@ -77,11 +77,6 @@ export async function ContractorAppShell({
                   notifications={notifications}
                   compact
                 />
-                <GlobalSearch
-                  compact
-                  buttonLabel="Search"
-                  buttonClassName="inline-flex h-9 items-center gap-2 rounded-[4px] border border-[#e2d4c5] bg-[#fbf5ee] px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6b5442] transition hover:border-[#ef7d32] hover:bg-white hover:text-[#221a14]"
-                />
               </div>
             </div>
           </div>
@@ -100,6 +95,16 @@ export async function ContractorAppShell({
             {children}
           </div>
         </main>
+
+        <footer className="border-t border-[#d9cdc2] bg-white px-5 py-3 sm:px-8">
+          <div className="mx-auto flex w-full max-w-[1500px] justify-end">
+            <GlobalSearch
+              compact
+              buttonLabel="Global Search"
+              buttonClassName="inline-flex h-10 min-w-[220px] max-w-full items-center justify-between rounded-[4px] border border-[#dbcfc4] bg-[#fbf7f2] px-3.5 text-[13px] font-medium text-[#55473b] transition hover:border-[#ef7d32] hover:bg-white hover:text-[#221a14] xl:min-w-[280px]"
+            />
+          </div>
+        </footer>
       </div>
     </div>
   );

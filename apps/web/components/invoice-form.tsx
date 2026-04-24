@@ -20,6 +20,7 @@ import {
   editableInvoiceStatusesList,
   invoiceWorkflowRolesList
 } from "@/lib/invoices/schemas";
+import { calculateSharedUnitPricing, formatMoneyValue } from "@/lib/catalogs/pricing";
 
 type InvoiceProjectOption = Pick<Project, "id" | "name" | "customerId"> & {
   customerName?: string | null;
@@ -78,10 +79,19 @@ type InvoiceFormProps = {
 
 type LineItemDraft = {
   key: string;
+  catalogItemId: string | null;
   name: string;
   description: string;
   quantity: string;
   unit: string;
+  taxable: boolean;
+  baseUnitCost: string;
+  baseUnitPrice: string;
+  markupPercent: string;
+  hiddenMarkupPercent: string;
+  unitPriceBeforeHiddenMarkup: string;
+  visibleMarkupAmount: string;
+  hiddenMarkupAmount: string;
   unitPrice: string;
 };
 
@@ -140,10 +150,19 @@ function formatRate(value: number) {
 function createBlankLineItem(key: string): LineItemDraft {
   return {
     key,
+    catalogItemId: null,
     name: "",
     description: "",
     quantity: "1.00",
     unit: "each",
+    taxable: true,
+    baseUnitCost: "0.00",
+    baseUnitPrice: "",
+    markupPercent: "0.00",
+    hiddenMarkupPercent: "0.00",
+    unitPriceBeforeHiddenMarkup: "0.00",
+    visibleMarkupAmount: "0.00",
+    hiddenMarkupAmount: "0.00",
     unitPrice: "0.00"
   };
 }
@@ -155,10 +174,19 @@ function createInitialLineItems(
   if (invoice?.lineItems && invoice.lineItems.length > 0) {
     return invoice.lineItems.map((lineItem, index) => ({
       key: lineItem.id || `existing-${index}`,
+      catalogItemId: lineItem.catalogItemId,
       name: lineItem.name,
       description: getValue(lineItem.description),
       quantity: lineItem.quantity,
       unit: lineItem.unit,
+      taxable: lineItem.taxable,
+      baseUnitCost: getValue(lineItem.baseUnitCost) || "0.00",
+      baseUnitPrice: getValue(lineItem.baseUnitPrice),
+      markupPercent: getValue(lineItem.markupPercent) || "0.00",
+      hiddenMarkupPercent: getValue(lineItem.hiddenMarkupPercent) || "0.00",
+      unitPriceBeforeHiddenMarkup: getValue(lineItem.unitPriceBeforeHiddenMarkup) || "0.00",
+      visibleMarkupAmount: getValue(lineItem.visibleMarkupAmount) || "0.00",
+      hiddenMarkupAmount: getValue(lineItem.hiddenMarkupAmount) || "0.00",
       unitPrice: lineItem.unitPrice
     }));
   }
@@ -166,10 +194,19 @@ function createInitialLineItems(
   if (initialLineItems && initialLineItems.length > 0) {
     return initialLineItems.map((lineItem, index) => ({
       key: `initial-${index}`,
+      catalogItemId: null,
       name: lineItem.name,
       description: getValue(lineItem.description),
       quantity: lineItem.quantity,
       unit: lineItem.unit,
+      taxable: true,
+      baseUnitCost: "0.00",
+      baseUnitPrice: "",
+      markupPercent: "0.00",
+      hiddenMarkupPercent: "0.00",
+      unitPriceBeforeHiddenMarkup: "0.00",
+      visibleMarkupAmount: "0.00",
+      hiddenMarkupAmount: "0.00",
       unitPrice: lineItem.unitPrice
     }));
   }
@@ -200,7 +237,7 @@ function isDerivedStatus(status: InvoiceStatus) {
 }
 
 function calculateFinancialPreview({
-  subtotal,
+  lineItems,
   discountAmount,
   taxBehavior,
   taxRate,
@@ -209,7 +246,7 @@ function calculateFinancialPreview({
   recordedPayments,
   invoiceStatus
 }: {
-  subtotal: number;
+  lineItems: LineItemDraft[];
   discountAmount: number;
   taxBehavior: TaxBehavior;
   taxRate: number;
@@ -218,6 +255,19 @@ function calculateFinancialPreview({
   recordedPayments: number;
   invoiceStatus: InvoiceStatus;
 }): FinancialPreview {
+  const subtotal = lineItems.reduce(
+    (sum, lineItem) => sum + parseAmount(lineItem.quantity) * parseAmount(lineItem.unitPrice),
+    0
+  );
+  const taxableSubtotal = customerTaxExempt
+    ? 0
+    : lineItems.reduce((sum, lineItem) => {
+        if (!lineItem.taxable) {
+          return sum;
+        }
+
+        return sum + parseAmount(lineItem.quantity) * parseAmount(lineItem.unitPrice);
+      }, 0);
   const discountedSubtotal = Math.max(0, subtotal - discountAmount);
   const retainageHeld = Number(
     Math.max(0, discountedSubtotal * (retainagePercentage / 100)).toFixed(2)
@@ -241,9 +291,21 @@ function calculateFinancialPreview({
     };
   }
 
+  const taxableRatio = subtotal > 0 ? taxableSubtotal / subtotal : 0;
+  const discountedTaxableSubtotal = Number(
+    (discountedSubtotal * taxableRatio).toFixed(2)
+  );
+  const discountedExemptSubtotal = Number(
+    (discountedSubtotal - discountedTaxableSubtotal).toFixed(2)
+  );
+
   if (taxBehavior === "inclusive") {
-    const taxableSales = Number((discountedSubtotal / (1 + taxRate)).toFixed(2));
-    const taxAmount = Number((discountedSubtotal - taxableSales).toFixed(2));
+    const taxableSales = Number(
+      (discountedTaxableSubtotal / (1 + taxRate)).toFixed(2)
+    );
+    const taxAmount = Number(
+      (discountedTaxableSubtotal - taxableSales).toFixed(2)
+    );
     const total = Number(discountedSubtotal.toFixed(2));
     const balanceDue =
       invoiceStatus === "void"
@@ -253,7 +315,7 @@ function calculateFinancialPreview({
     return {
       discountedSubtotal: total,
       taxableSales,
-      exemptSales: 0,
+      exemptSales: discountedExemptSubtotal,
       taxAmount,
       retainageHeld,
       total,
@@ -261,18 +323,18 @@ function calculateFinancialPreview({
     };
   }
 
-  const taxableSales = Number(discountedSubtotal.toFixed(2));
+  const taxableSales = discountedTaxableSubtotal;
   const taxAmount = Number((taxableSales * taxRate).toFixed(2));
-  const total = Number((taxableSales + taxAmount).toFixed(2));
+  const total = Number((discountedSubtotal + taxAmount).toFixed(2));
   const balanceDue =
     invoiceStatus === "void"
       ? 0
       : Number(Math.max(0, total - retainageHeld - recordedPayments).toFixed(2));
 
   return {
-    discountedSubtotal: taxableSales,
+    discountedSubtotal: Number(discountedSubtotal.toFixed(2)),
     taxableSales,
-    exemptSales: 0,
+    exemptSales: discountedExemptSubtotal,
     taxAmount,
     retainageHeld,
     total,
@@ -345,7 +407,7 @@ export function InvoiceForm({
   );
   const normalizedItemSearch = itemSearch.trim().toLowerCase();
   const visibleCatalogItems = catalogItems
-    .filter((item) => item.status === "active")
+    .filter((item) => item.status === "active" && item.itemType !== "system")
     .filter((item) =>
       normalizedItemSearch.length === 0
         ? true
@@ -391,7 +453,7 @@ export function InvoiceForm({
     0
   );
   const preview = calculateFinancialPreview({
-    subtotal,
+    lineItems,
     discountAmount: parseAmount(discountAmount),
     taxBehavior: resolvedTaxBehavior,
     taxRate: resolvedTaxRate,
@@ -459,17 +521,32 @@ export function InvoiceForm({
 
   function addCatalogItem(item: CatalogItem) {
     const nextKey = `catalog-${nextLineItemId.current}`;
+    const pricing = calculateSharedUnitPricing({
+      baseUnitCost: item.defaultUnitCost,
+      baseUnitPrice: item.defaultUnitPrice,
+      markupPercent: item.markupPercent,
+      hiddenMarkupPercent: item.hiddenMarkupPercent
+    });
 
     nextLineItemId.current += 1;
     setLineItems((current) => [
       ...current,
       {
         key: nextKey,
+        catalogItemId: item.id,
         name: item.name,
         description: getValue(item.description),
         quantity: "1.00",
         unit: item.unit,
-        unitPrice: item.defaultUnitPrice
+        taxable: item.taxable,
+        baseUnitCost: item.defaultUnitCost,
+        baseUnitPrice: item.defaultUnitPrice ?? "",
+        markupPercent: item.markupPercent,
+        hiddenMarkupPercent: item.hiddenMarkupPercent,
+        unitPriceBeforeHiddenMarkup: formatMoneyValue(pricing.unitPriceBeforeHiddenMarkup),
+        visibleMarkupAmount: formatMoneyValue(pricing.visibleMarkupAmount),
+        hiddenMarkupAmount: formatMoneyValue(pricing.hiddenMarkupAmount),
+        unitPrice: formatMoneyValue(pricing.finalUnitPrice)
       }
     ]);
   }
@@ -781,6 +858,33 @@ export function InvoiceForm({
                       <label className="block md:col-span-2">
                         <span className="mb-2 block text-sm font-medium text-slate-800">Name</span>
                         <input
+                          type="hidden"
+                          name="lineItemCatalogItemId"
+                          value={lineItem.catalogItemId ?? ""}
+                        />
+                        <input type="hidden" name="lineItemBaseUnitPrice" value={lineItem.baseUnitPrice} />
+                        <input type="hidden" name="lineItemMarkupPercent" value={lineItem.markupPercent} />
+                        <input
+                          type="hidden"
+                          name="lineItemHiddenMarkupPercent"
+                          value={lineItem.hiddenMarkupPercent}
+                        />
+                        <input
+                          type="hidden"
+                          name="lineItemUnitPriceBeforeHiddenMarkup"
+                          value={lineItem.unitPriceBeforeHiddenMarkup}
+                        />
+                        <input
+                          type="hidden"
+                          name="lineItemVisibleMarkupAmount"
+                          value={lineItem.visibleMarkupAmount}
+                        />
+                        <input
+                          type="hidden"
+                          name="lineItemHiddenMarkupAmount"
+                          value={lineItem.hiddenMarkupAmount}
+                        />
+                        <input
                           name="lineItemName"
                           type="text"
                           value={lineItem.name}
@@ -847,6 +951,44 @@ export function InvoiceForm({
                         }
                         required
                       />
+                      <AuthField
+                        label="Base unit cost"
+                        id={`${lineItem.key}-base-unit-cost`}
+                        name="lineItemBaseUnitCost"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={lineItem.baseUnitCost}
+                        onChange={(event) =>
+                          updateLineItem(lineItem.key, "baseUnitCost", event.target.value)
+                        }
+                        required
+                      />
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-medium text-slate-800">
+                          Taxable
+                        </span>
+                        <select
+                          name="lineItemTaxable"
+                          value={lineItem.taxable ? "true" : "false"}
+                          onChange={(event) =>
+                            setLineItems((current) =>
+                              current.map((entry) =>
+                                entry.key === lineItem.key
+                                  ? {
+                                      ...entry,
+                                      taxable: event.target.value !== "false"
+                                    }
+                                  : entry
+                              )
+                            )
+                          }
+                          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                        >
+                          <option value="true">Taxable</option>
+                          <option value="false">Non-taxable</option>
+                        </select>
+                      </label>
                       <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                         <span className="block text-sm font-medium text-slate-800">
                           Line total

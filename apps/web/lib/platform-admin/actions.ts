@@ -126,8 +126,26 @@ export async function updatePlatformWorkflowDefaultsAction(formData: FormData) {
       "requireFinancingApprovalBeforeJobScheduling"
     ),
     defaultDepositPercentage: getFieldValue(formData, "defaultDepositPercentage"),
+    defaultEstimateTermsHtml: getFieldValue(formData, "defaultEstimateTermsHtml"),
+    defaultEstimateInclusionsHtml: getFieldValue(
+      formData,
+      "defaultEstimateInclusionsHtml"
+    ),
+    defaultEstimateExclusionsHtml: getFieldValue(
+      formData,
+      "defaultEstimateExclusionsHtml"
+    ),
+    defaultEstimateScopeSummaryHtml: getFieldValue(
+      formData,
+      "defaultEstimateScopeSummaryHtml"
+    ),
     defaultEstimateStartNumber: getFieldValue(formData, "defaultEstimateStartNumber"),
-    defaultInvoiceStartNumber: getFieldValue(formData, "defaultInvoiceStartNumber")
+    defaultInvoiceStartNumber: getFieldValue(formData, "defaultInvoiceStartNumber"),
+    defaultChangeOrderStartNumber: getFieldValue(
+      formData,
+      "defaultChangeOrderStartNumber"
+    ),
+    defaultContractStartNumber: getFieldValue(formData, "defaultContractStartNumber")
   });
 
   if (!result.success) {
@@ -217,8 +235,17 @@ export async function upsertPlatformCatalogSeedAction(formData: FormData) {
     seedKey: getFieldValue(formData, "seedKey"),
     name: getFieldValue(formData, "name"),
     description: getFieldValue(formData, "description"),
+    internalNotes: getFieldValue(formData, "internalNotes"),
     unit: getFieldValue(formData, "unit"),
+    defaultUnitCost: getFieldValue(formData, "defaultUnitCost"),
     defaultUnitPrice: getFieldValue(formData, "defaultUnitPrice"),
+    markupPercent: getFieldValue(formData, "markupPercent"),
+    hiddenMarkupPercent: getFieldValue(formData, "hiddenMarkupPercent"),
+    taxable: getCheckboxValue(formData, "taxable"),
+    vendorId: getFieldValue(formData, "vendorId"),
+    category: getFieldValue(formData, "category"),
+    sku: getFieldValue(formData, "sku"),
+    photoStoragePath: getFieldValue(formData, "photoStoragePath"),
     isDefault: getCheckboxValue(formData, "isDefault"),
     isActive: getCheckboxValue(formData, "isActive")
   });
@@ -384,7 +411,9 @@ export async function updateTenantWorkflowNumberingAction(formData: FormData) {
   const result = platformTenantWorkflowNumberingInputSchema.safeParse({
     companyId: getFieldValue(formData, "companyId"),
     nextEstimateNumber: getFieldValue(formData, "nextEstimateNumber"),
-    nextInvoiceNumber: getFieldValue(formData, "nextInvoiceNumber")
+    nextInvoiceNumber: getFieldValue(formData, "nextInvoiceNumber"),
+    nextChangeOrderNumber: getFieldValue(formData, "nextChangeOrderNumber"),
+    nextContractNumber: getFieldValue(formData, "nextContractNumber")
   });
 
   if (!result.success) {

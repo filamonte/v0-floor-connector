@@ -83,8 +83,16 @@ export const platformWorkflowDefaultsInputSchema = z.object({
   requireDepositBeforeJobScheduling: z.boolean(),
   requireFinancingApprovalBeforeJobScheduling: z.boolean(),
   defaultDepositPercentage: percentStringField("Default deposit percentage"),
+  defaultEstimateTermsHtml: trimmedNullableString(50000),
+  defaultEstimateInclusionsHtml: trimmedNullableString(50000),
+  defaultEstimateExclusionsHtml: trimmedNullableString(50000),
+  defaultEstimateScopeSummaryHtml: trimmedNullableString(50000),
   defaultEstimateStartNumber: positiveIntegerField("Default estimate start number"),
-  defaultInvoiceStartNumber: positiveIntegerField("Default invoice start number")
+  defaultInvoiceStartNumber: positiveIntegerField("Default invoice start number"),
+  defaultChangeOrderStartNumber: positiveIntegerField(
+    "Default change order start number"
+  ),
+  defaultContractStartNumber: positiveIntegerField("Default contract start number")
 });
 
 export const platformTemplateSeedInputSchema = z.object({
@@ -99,7 +107,17 @@ export const platformTemplateSeedInputSchema = z.object({
 
 export const platformCatalogSeedInputSchema = z.object({
   seedId: optionalUuidField("Select a valid catalog seed."),
-  itemType: z.enum(["material", "service", "system"] as const),
+  itemType: z.enum(
+    [
+      "material",
+      "labor",
+      "service",
+      "equipment",
+      "subcontractor",
+      "other",
+      "system"
+    ] as const
+  ),
   seedKey: z
     .string()
     .trim()
@@ -111,18 +129,36 @@ export const platformCatalogSeedInputSchema = z.object({
   name: z.string().trim().min(1, "Catalog seed name is required.").max(120),
   description: trimmedNullableString(255),
   unit: z.string().trim().min(1, "Unit is required.").max(40),
-  defaultUnitPrice: z
+  defaultUnitCost: z
     .string()
     .trim()
-    .min(1, "Default unit price is required.")
+    .min(1, "Default unit cost is required.")
     .refine((value) => !Number.isNaN(Number(value)), {
-      message: "Default unit price must be a valid number."
+      message: "Default unit cost must be a valid number."
     })
     .transform((value) => Number(value))
     .refine((value) => value >= 0, {
-      message: "Default unit price must be zero or greater."
+      message: "Default unit cost must be zero or greater."
     })
     .transform((value) => value.toFixed(2)),
+  defaultUnitPrice: z
+    .string()
+    .trim()
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .optional()
+    .refine((value) => value == null || (!Number.isNaN(Number(value)) && Number(value) >= 0), {
+      message: "Default unit price must be a valid non-negative number."
+    })
+    .transform((value) => (value == null ? null : Number(value).toFixed(2))),
+  markupPercent: percentStringField("Markup percentage"),
+  hiddenMarkupPercent: percentStringField("Hidden markup percentage"),
+  taxable: z.boolean(),
+  vendorId: optionalUuidField("Select a valid vendor."),
+  category: trimmedNullableString(120),
+  sku: trimmedNullableString(120),
+  internalNotes: trimmedNullableString(2000),
+  photoStoragePath: trimmedNullableString(2000),
   isDefault: z.boolean(),
   isActive: z.boolean()
 });
@@ -162,5 +198,7 @@ export const platformTenantStatusInputSchema = z.object({
 export const platformTenantWorkflowNumberingInputSchema = z.object({
   companyId: z.string().uuid("Company id is required."),
   nextEstimateNumber: positiveIntegerField("Next estimate number"),
-  nextInvoiceNumber: positiveIntegerField("Next invoice number")
+  nextInvoiceNumber: positiveIntegerField("Next invoice number"),
+  nextChangeOrderNumber: positiveIntegerField("Next change order number"),
+  nextContractNumber: positiveIntegerField("Next contract number")
 });

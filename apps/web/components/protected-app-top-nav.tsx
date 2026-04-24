@@ -8,7 +8,6 @@ import { usePathname } from "next/navigation";
 import type { MembershipRole } from "@floorconnector/types";
 
 import { OrganizationBrandLink } from "@/components/organization-brand-link";
-import { GlobalSearch } from "@/components/global-search";
 import { ProtectedAppBreadcrumbs } from "@/components/protected-app-breadcrumbs";
 import { ContractorNotificationsCenter } from "@/components/contractor-notifications-center";
 import { UniversalCreateMenu } from "@/components/universal-create-menu";
@@ -305,9 +304,6 @@ export function ProtectedAppTopNav({
                 buttonClassName="inline-flex h-10 items-center rounded-[4px] border border-[#ef7d32] bg-[#ef7d32] px-4 py-2 text-[13px] font-semibold text-[#1f140d] transition hover:bg-[#f08b47]"
               />
               <ContractorNotificationsCenter notifications={notifications} />
-              <GlobalSearch
-                buttonClassName="inline-flex h-10 min-w-[220px] max-w-full items-center justify-between rounded-[4px] border border-[#dbcfc4] bg-[#fbf7f2] px-3.5 text-[13px] font-medium text-[#55473b] transition hover:border-[#ef7d32] hover:bg-white hover:text-[#221a14] xl:min-w-[250px]"
-              />
             </div>
 
             <div className="flex items-center gap-3 border-l border-[#ebe0d6] pl-3">

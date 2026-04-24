@@ -10,6 +10,7 @@ import {
   computeContractWorkflowGate,
   compareContractStatuses
 } from "@floorconnector/domain";
+import { STORAGE_BUCKET_NAMES } from "@floorconnector/config";
 import type {
   Contract as ContractRecord,
   ContractInternalApprovalStatus,
@@ -34,7 +35,12 @@ import type {
   UpdateContractDraftInput
 } from "./schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import {
+  buildContractRenderedHtml,
+  createAndUploadContractPdf
+} from "@/lib/contracts/document-rendering";
 import { getEstimateById, listEstimates } from "@/lib/estimates/data";
+import { sanitizeHtml } from "@/lib/html/sanitize";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { listOrganizationMembers } from "@/lib/organizations/admin";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
@@ -52,11 +58,16 @@ type ContractRow = {
   project_id: string;
   estimate_id: string | null;
   template_id: string | null;
+  reference_number: string;
   status: ContractStatus;
   title: string;
   rendered_subject: string | null;
   rendered_content: string;
   generated_from_estimate_reference: string | null;
+  sent_pdf_storage_path: string | null;
+  sent_pdf_file_name: string | null;
+  sent_pdf_mime_type: string | null;
+  sent_pdf_generated_at: string | null;
   signature_provider: string | null;
   signature_provider_reference: string | null;
   signature_started_at: string | null;
@@ -219,6 +230,7 @@ export type ContractListItem = ContractRecord & {
     id: string;
     name: string;
   } | null;
+  sentPdfDownloadUrl: string | null;
 };
 
 export type ContractDetail = ContractListItem & {
@@ -264,6 +276,10 @@ const contractSelect = `
   rendered_subject,
   rendered_content,
   generated_from_estimate_reference,
+  sent_pdf_storage_path,
+  sent_pdf_file_name,
+  sent_pdf_mime_type,
+  sent_pdf_generated_at,
   signature_provider,
   signature_provider_reference,
   signature_started_at,
@@ -320,12 +336,19 @@ function isContractRow(value: unknown): value is ContractRow {
     typeof row.project_id === "string" &&
     (row.estimate_id === null || typeof row.estimate_id === "string") &&
     (row.template_id === null || typeof row.template_id === "string") &&
+    typeof row.reference_number === "string" &&
     typeof row.status === "string" &&
     typeof row.title === "string" &&
     (row.rendered_subject === null || typeof row.rendered_subject === "string") &&
     typeof row.rendered_content === "string" &&
     (row.generated_from_estimate_reference === null ||
       typeof row.generated_from_estimate_reference === "string") &&
+    (row.sent_pdf_storage_path === null ||
+      typeof row.sent_pdf_storage_path === "string") &&
+    (row.sent_pdf_file_name === null || typeof row.sent_pdf_file_name === "string") &&
+    (row.sent_pdf_mime_type === null || typeof row.sent_pdf_mime_type === "string") &&
+    (row.sent_pdf_generated_at === null ||
+      typeof row.sent_pdf_generated_at === "string") &&
     (row.signature_provider === null || typeof row.signature_provider === "string") &&
     (row.signature_provider_reference === null ||
       typeof row.signature_provider_reference === "string") &&
@@ -491,11 +514,16 @@ function mapContract(row: ContractRow): ContractRecord {
     projectId: row.project_id,
     estimateId: row.estimate_id,
     templateId: row.template_id,
+    referenceNumber: row.reference_number,
     status: row.status,
     title: row.title,
     renderedSubject: row.rendered_subject,
     renderedContent: row.rendered_content,
     generatedFromEstimateReference: row.generated_from_estimate_reference,
+    sentPdfStoragePath: row.sent_pdf_storage_path,
+    sentPdfFileName: row.sent_pdf_file_name,
+    sentPdfMimeType: row.sent_pdf_mime_type,
+    sentPdfGeneratedAt: row.sent_pdf_generated_at,
     signatureProvider: row.signature_provider,
     signatureProviderReference: row.signature_provider_reference,
     signatureStartedAt: row.signature_started_at,
@@ -601,8 +629,26 @@ function mapContractListItem(row: ContractRow): ContractListItem {
           id: row.document_templates.id,
           name: row.document_templates.name
         }
-      : null
+      : null,
+    sentPdfDownloadUrl: null
   };
+}
+
+async function resolveContractPdfDownloadUrl(contract: ContractRow) {
+  if (!contract.sent_pdf_storage_path) {
+    return null;
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase.storage
+    .from(STORAGE_BUCKET_NAMES.documents)
+    .createSignedUrl(contract.sent_pdf_storage_path, 60 * 60);
+
+  if (response.error) {
+    return null;
+  }
+
+  return response.data.signedUrl ?? null;
 }
 
 function isContractEditable(contract: ContractRecord) {
@@ -1265,8 +1311,14 @@ export const listContracts = cache(async (): Promise<ContractListItem[]> => {
     return [];
   }
 
-  return data
-    .map((row) => mapContractListItem(row))
+  const contracts = await Promise.all(
+    data.map(async (row) => ({
+      ...mapContractListItem(row),
+      sentPdfDownloadUrl: await resolveContractPdfDownloadUrl(row)
+    }))
+  );
+
+  return contracts
     .sort((left, right) => {
       const statusComparison = compareContractStatuses(left.status, right.status);
 
@@ -1294,8 +1346,11 @@ export async function getContractById(
     return null;
   }
 
+  const sentPdfDownloadUrl = await resolveContractPdfDownloadUrl(contract);
+
   return {
     ...mapContractListItem(contract),
+    sentPdfDownloadUrl,
     customer: contract.customers
       ? {
           id: contract.customers.id,
@@ -1476,7 +1531,10 @@ export async function createContractFromEstimate(
         templateContext.renderedSubject ??
         `Contract for ${estimate.project?.name ?? estimate.referenceNumber}`,
       rendered_subject: templateContext.renderedSubject,
-      rendered_content: templateContext.renderedBody,
+      rendered_content: buildContractRenderedHtml({
+        templateBody: templateContext.renderedBody,
+        estimate
+      }),
       internal_approval_status: workflowSettings.requireContractInternalApproval
         ? "pending"
         : "not_required",
@@ -1542,7 +1600,7 @@ export async function updateContractDraft(input: UpdateContractDraftInput) {
     .update({
       title: input.title,
       rendered_subject: input.renderedSubject,
-      rendered_content: input.renderedContent,
+      rendered_content: sanitizeHtml(input.renderedContent),
       internal_approval_status: workflowSettings.requireContractInternalApproval
         ? "pending"
         : "not_required",
@@ -1624,6 +1682,14 @@ export async function sendContractForSignature(input: SendContractForSignatureIn
   );
   const nowIso = new Date().toISOString();
   const admin = getSupabaseAdminClient();
+  const pdfSnapshot = await createAndUploadContractPdf({
+    contract: {
+      id: currentContract.id,
+      organizationId: currentContract.company_id,
+      title: currentContract.title,
+      renderedContent: currentContract.rendered_content
+    }
+  });
   const signerInsertResponse = await admin
     .from("contract_signers")
     .insert(
@@ -1677,6 +1743,10 @@ export async function sendContractForSignature(input: SendContractForSignatureIn
     .from("contracts")
     .update({
       status: "sent",
+      sent_pdf_storage_path: pdfSnapshot.storagePath,
+      sent_pdf_file_name: pdfSnapshot.fileName,
+      sent_pdf_mime_type: pdfSnapshot.mimeType,
+      sent_pdf_generated_at: pdfSnapshot.generatedAt,
       signature_started_at: currentContract.signature_started_at ?? nowIso,
       sent_at: currentContract.sent_at ?? nowIso,
       signature_readiness_status: "out_for_signature",

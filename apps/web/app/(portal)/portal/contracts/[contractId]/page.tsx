@@ -11,6 +11,7 @@ import {
   customerSignContractAction
 } from "@/lib/contracts/actions";
 import { recordCustomerViewedContract } from "@/lib/contracts/data";
+import { sanitizeHtml } from "@/lib/html/sanitize";
 import { getPortalContractReviewData } from "@/lib/portal/data";
 
 type PortalContractReviewPageProps = {
@@ -267,9 +268,10 @@ export default async function PortalContractReviewPage({
               </div>
             ) : null}
 
-            <article className="rounded-3xl border border-slate-200 bg-slate-50/50 px-6 py-6 whitespace-pre-wrap text-sm leading-7 text-slate-700">
-              {contract.renderedContent}
-            </article>
+            <article
+              className="rounded-3xl border border-slate-200 bg-slate-50/50 px-6 py-6 text-sm leading-7 text-slate-700 [&_a]:text-brand-700 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-slate-200 [&_blockquote]:pl-4 [&_h1]:text-2xl [&_h1]:font-semibold [&_h2]:mt-6 [&_h2]:text-xl [&_h2]:font-semibold [&_h3]:mt-5 [&_h3]:text-lg [&_h3]:font-semibold [&_li]:ml-5 [&_ol]:list-decimal [&_p]:my-3 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-200 [&_td]:px-3 [&_td]:py-2 [&_th]:border [&_th]:border-slate-200 [&_th]:bg-slate-100 [&_th]:px-3 [&_th]:py-2 [&_ul]:list-disc"
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(contract.renderedContent) }}
+            />
           </div>
         </DetailPanel>
       </section>

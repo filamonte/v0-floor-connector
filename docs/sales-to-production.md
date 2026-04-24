@@ -110,6 +110,11 @@ Estimate creation may eventually support:
 
 Current product direction keeps the estimate as the canonical commercial scope record.
 
+Current implementation note:
+- the live estimate workspace is inventory-first, using shared `catalog_items` plus reusable systems/components instead of disconnected manual estimate rows
+- canonical pricing truth lives in `estimate_line_items`
+- defaults hydrate only when estimate content is initially empty, then stop reapplying automatically after user edits
+
 ### 5. Estimate Review
 
 The estimate stage should support:

@@ -6,6 +6,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { getEstimateById } from "@/lib/estimates/data";
+import { getJobById } from "@/lib/jobs/data";
 
 import {
   createInvoice,
@@ -71,22 +73,61 @@ function buildAbsoluteAppUrl(
 }
 
 function parseInvoiceInput(formData: FormData) {
+  const lineItemCatalogItemIds = getFieldValues(formData, "lineItemCatalogItemId");
   const lineItemNames = getFieldValues(formData, "lineItemName");
   const lineItemDescriptions = getFieldValues(formData, "lineItemDescription");
   const lineItemQuantities = getFieldValues(formData, "lineItemQuantity");
   const lineItemUnits = getFieldValues(formData, "lineItemUnit");
   const lineItemUnitPrices = getFieldValues(formData, "lineItemUnitPrice");
+  const lineItemTaxables = getFieldValues(formData, "lineItemTaxable");
+  const lineItemBaseUnitCosts = getFieldValues(formData, "lineItemBaseUnitCost");
+  const lineItemBaseUnitPrices = getFieldValues(formData, "lineItemBaseUnitPrice");
+  const lineItemMarkupPercents = getFieldValues(formData, "lineItemMarkupPercent");
+  const lineItemHiddenMarkupPercents = getFieldValues(
+    formData,
+    "lineItemHiddenMarkupPercent"
+  );
+  const lineItemUnitPricesBeforeHiddenMarkup = getFieldValues(
+    formData,
+    "lineItemUnitPriceBeforeHiddenMarkup"
+  );
+  const lineItemVisibleMarkupAmounts = getFieldValues(
+    formData,
+    "lineItemVisibleMarkupAmount"
+  );
+  const lineItemHiddenMarkupAmounts = getFieldValues(
+    formData,
+    "lineItemHiddenMarkupAmount"
+  );
 
   const lineItems = lineItemNames
     .map((name, index) => ({
+      catalogItemId: lineItemCatalogItemIds[index] ?? "",
       name,
       description: lineItemDescriptions[index] ?? "",
       quantity: lineItemQuantities[index] ?? "",
       unit: lineItemUnits[index] ?? "",
-      unitPrice: lineItemUnitPrices[index] ?? ""
+      unitPrice: lineItemUnitPrices[index] ?? "",
+      taxable: lineItemTaxables[index] !== "false",
+      baseUnitCost: lineItemBaseUnitCosts[index] ?? "0.00",
+      baseUnitPrice: lineItemBaseUnitPrices[index] ?? "",
+      markupPercent: lineItemMarkupPercents[index] ?? "0.00",
+      hiddenMarkupPercent: lineItemHiddenMarkupPercents[index] ?? "0.00",
+      unitPriceBeforeHiddenMarkup:
+        lineItemUnitPricesBeforeHiddenMarkup[index] ?? lineItemUnitPrices[index] ?? "0.00",
+      visibleMarkupAmount: lineItemVisibleMarkupAmounts[index] ?? "0.00",
+      hiddenMarkupAmount: lineItemHiddenMarkupAmounts[index] ?? "0.00"
     }))
     .filter((lineItem) =>
-      Object.values(lineItem).some((value) => value.trim().length > 0)
+      [
+        lineItem.catalogItemId ?? "",
+        lineItem.name,
+        lineItem.description ?? "",
+        lineItem.quantity,
+        lineItem.unit,
+        lineItem.unitPrice,
+        lineItem.baseUnitCost
+      ].some((value) => value.trim().length > 0)
     );
 
   return invoiceInputSchema.safeParse({
@@ -170,6 +211,41 @@ export async function quickCreateInvoiceAction(formData: FormData) {
   const issueDate = new Date();
   const dueDate = new Date(issueDate);
   dueDate.setDate(dueDate.getDate() + 30);
+  const estimate =
+    result.success && result.data.estimateId
+      ? await getEstimateById(result.data.estimateId, "/invoices")
+      : null;
+  const job =
+    result.success && result.data.jobId
+      ? await getJobById(result.data.jobId, "/invoices")
+      : null;
+  const jobEstimate =
+    !estimate && job?.estimateId
+      ? await getEstimateById(job.estimateId, "/invoices")
+      : null;
+  const seedEstimate = estimate ?? jobEstimate;
+  const seededLineItems =
+    result.success &&
+    result.data.workflowRole === "standard" &&
+    seedEstimate?.status === "approved" &&
+    seedEstimate.lineItems.length > 0
+      ? seedEstimate.lineItems.map((lineItem) => ({
+          catalogItemId: lineItem.catalogItemId,
+          name: lineItem.name,
+          description: lineItem.description ?? null,
+          quantity: lineItem.quantity,
+          unit: lineItem.unit,
+          unitPrice: lineItem.unitPrice,
+          taxable: lineItem.taxable,
+          baseUnitCost: lineItem.baseUnitCost ?? "0.00",
+          baseUnitPrice: lineItem.baseUnitPrice,
+          markupPercent: lineItem.markupPercent,
+          hiddenMarkupPercent: lineItem.hiddenMarkupPercent,
+          unitPriceBeforeHiddenMarkup: lineItem.unitPriceBeforeHiddenMarkup,
+          visibleMarkupAmount: lineItem.visibleMarkupAmount,
+          hiddenMarkupAmount: lineItem.hiddenMarkupAmount
+        }))
+      : null;
 
   let invoice;
 
@@ -182,19 +258,31 @@ export async function quickCreateInvoiceAction(formData: FormData) {
       status: "draft",
       issueDate: issueDate.toISOString().slice(0, 10),
       dueDate: dueDate.toISOString().slice(0, 10),
-      discountAmount: "0.00",
-      lineItems: [
-        {
-          name:
-            result.data.workflowRole === "deposit"
-              ? "Deposit line item"
-              : "New invoice item",
-          description: null,
-          quantity: "1.00",
-          unit: "each",
-          unitPrice: "0.00"
-        }
-      ],
+      discountAmount:
+        seededLineItems && seedEstimate ? seedEstimate.discountAmount : "0.00",
+      lineItems:
+        seededLineItems ??
+        [
+          {
+            catalogItemId: null,
+            name:
+              result.data.workflowRole === "deposit"
+                ? "Deposit line item"
+                : "New invoice item",
+            description: null,
+            quantity: "1.00",
+            unit: "each",
+            unitPrice: "0.00",
+            taxable: true,
+            baseUnitCost: "0.00",
+            baseUnitPrice: null,
+            markupPercent: "0.00",
+            hiddenMarkupPercent: "0.00",
+            unitPriceBeforeHiddenMarkup: "0.00",
+            visibleMarkupAmount: "0.00",
+            hiddenMarkupAmount: "0.00"
+          }
+        ],
       notes: null
     });
   } catch (error) {

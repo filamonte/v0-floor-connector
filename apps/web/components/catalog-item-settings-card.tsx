@@ -15,8 +15,12 @@ function getLabel(itemType: CatalogItem["itemType"]) {
   switch (itemType) {
     case "material":
       return "Materials";
+    case "labor":
+      return "Labor";
     case "service":
       return "Services";
+    case "equipment":
+      return "Equipment";
     case "system":
       return "Systems";
     default:
@@ -28,8 +32,12 @@ function getDescription(itemType: CatalogItem["itemType"]) {
   switch (itemType) {
     case "material":
       return "Reusable consumables and stock-based defaults for estimating and invoicing.";
+    case "labor":
+      return "Reusable labor cost and sell-rate defaults for estimating and job costing.";
     case "service":
       return "Labor, prep, mobilization, and other repeatable service line defaults.";
+    case "equipment":
+      return "Reusable equipment and machine-rate defaults that can be priced into estimates.";
     case "system":
       return "Whole flooring systems or bundled scope defaults that organizations reuse.";
     default:
@@ -116,6 +124,20 @@ export function CatalogItemSettingsCard({
               </label>
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-slate-800">
+                  Default unit cost
+                </span>
+                <input
+                  name="defaultUnitCost"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={item.defaultUnitCost}
+                  required
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-800">
                   Default unit price
                 </span>
                 <input
@@ -123,10 +145,38 @@ export function CatalogItemSettingsCard({
                   type="number"
                   min="0"
                   step="0.01"
-                  defaultValue={item.defaultUnitPrice}
-                  required
+                  defaultValue={item.defaultUnitPrice ?? ""}
                   className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
                 />
+              </label>
+            </div>
+
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-800">
+                  Category
+                </span>
+                <input
+                  name="category"
+                  defaultValue={item.category ?? ""}
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                />
+              </label>
+              <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                <input
+                  type="checkbox"
+                  name="taxable"
+                  defaultChecked={item.taxable}
+                  className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-slate-900">
+                    Taxable by default
+                  </span>
+                  <span className="mt-1 block text-xs leading-5 text-slate-500">
+                    Estimates and invoices derive tax from this flag together with org defaults and customer exemption.
+                  </span>
+                </span>
               </label>
             </div>
 
@@ -201,6 +251,15 @@ export function CatalogItemSettingsCard({
               required
               className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
             />
+            <input
+              name="defaultUnitCost"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              required
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            />
             <select
               name="status"
               defaultValue="active"
@@ -216,6 +275,22 @@ export function CatalogItemSettingsCard({
             placeholder="Description"
             className="mt-4 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
           />
+          <input
+            name="category"
+            placeholder="Category"
+            className="mt-4 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+          />
+          <label className="mt-4 flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <input
+              type="checkbox"
+              name="taxable"
+              defaultChecked
+              className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
+            />
+            <span className="text-sm text-slate-700">
+              Taxable by default
+            </span>
+          </label>
           <label className="mt-4 flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
             <input
               type="checkbox"

@@ -115,10 +115,19 @@ type InvoiceLineItemRow = {
   company_id: string;
   invoice_id: string;
   schedule_of_value_item_id: string | null;
+  catalog_item_id: string | null;
   name: string;
   description: string | null;
   quantity: string | number;
   unit: string;
+  taxable: boolean;
+  base_unit_cost: string | number | null;
+  base_unit_price: string | number | null;
+  markup_percent: string | number;
+  hidden_markup_percent: string | number;
+  unit_price_before_hidden_markup: string | number;
+  visible_markup_amount: string | number;
+  hidden_markup_amount: string | number;
   unit_price: string | number;
   line_total: string | number;
   sort_order: number;
@@ -347,9 +356,26 @@ function isInvoiceLineItemRow(value: unknown): value is InvoiceLineItemRow {
     typeof row.invoice_id === "string" &&
     (row.schedule_of_value_item_id === null ||
       typeof row.schedule_of_value_item_id === "string") &&
+    (row.catalog_item_id === null || typeof row.catalog_item_id === "string") &&
     typeof row.name === "string" &&
     (typeof row.quantity === "string" || typeof row.quantity === "number") &&
     typeof row.unit === "string" &&
+    typeof row.taxable === "boolean" &&
+    (row.base_unit_cost === null ||
+      typeof row.base_unit_cost === "string" ||
+      typeof row.base_unit_cost === "number") &&
+    (row.base_unit_price === null ||
+      typeof row.base_unit_price === "string" ||
+      typeof row.base_unit_price === "number") &&
+    (typeof row.markup_percent === "string" || typeof row.markup_percent === "number") &&
+    (typeof row.hidden_markup_percent === "string" ||
+      typeof row.hidden_markup_percent === "number") &&
+    (typeof row.unit_price_before_hidden_markup === "string" ||
+      typeof row.unit_price_before_hidden_markup === "number") &&
+    (typeof row.visible_markup_amount === "string" ||
+      typeof row.visible_markup_amount === "number") &&
+    (typeof row.hidden_markup_amount === "string" ||
+      typeof row.hidden_markup_amount === "number") &&
     (typeof row.unit_price === "string" || typeof row.unit_price === "number") &&
     (typeof row.line_total === "string" || typeof row.line_total === "number") &&
     typeof row.sort_order === "number" &&
@@ -465,10 +491,21 @@ function mapInvoiceLineItem(row: InvoiceLineItemRow): InvoiceLineItem {
     organizationId: row.company_id,
     invoiceId: row.invoice_id,
     scheduleOfValueItemId: row.schedule_of_value_item_id,
+    catalogItemId: row.catalog_item_id,
     name: row.name,
     description: row.description,
     quantity: Number(row.quantity).toFixed(2),
     unit: row.unit,
+    taxable: row.taxable,
+    baseUnitCost:
+      row.base_unit_cost == null ? null : Number(row.base_unit_cost).toFixed(2),
+    baseUnitPrice:
+      row.base_unit_price == null ? null : Number(row.base_unit_price).toFixed(2),
+    markupPercent: Number(row.markup_percent).toFixed(2),
+    hiddenMarkupPercent: Number(row.hidden_markup_percent).toFixed(2),
+    unitPriceBeforeHiddenMarkup: Number(row.unit_price_before_hidden_markup).toFixed(2),
+    visibleMarkupAmount: Number(row.visible_markup_amount).toFixed(2),
+    hiddenMarkupAmount: Number(row.hidden_markup_amount).toFixed(2),
     unitPrice: Number(row.unit_price).toFixed(2),
     lineTotal: Number(row.line_total).toFixed(2),
     sortOrder: row.sort_order,
@@ -662,10 +699,19 @@ async function getInvoiceLineItems(
         company_id,
         invoice_id,
         schedule_of_value_item_id,
+        catalog_item_id,
         name,
         description,
         quantity,
         unit,
+        taxable,
+        base_unit_cost,
+        base_unit_price,
+        markup_percent,
+        hidden_markup_percent,
+        unit_price_before_hidden_markup,
+        visible_markup_amount,
+        hidden_markup_amount,
         unit_price,
         line_total,
         sort_order,
@@ -1328,10 +1374,19 @@ export async function replaceCanonicalInvoiceLineItems(
       company_id: organizationId,
       invoice_id: invoiceId,
       schedule_of_value_item_id: lineItem.scheduleOfValueItemId ?? null,
+      catalog_item_id: lineItem.catalogItemId,
       name: lineItem.name,
       description: lineItem.description,
       quantity: lineItem.quantity,
       unit: lineItem.unit,
+      taxable: lineItem.taxable,
+      base_unit_cost: lineItem.baseUnitCost,
+      base_unit_price: lineItem.baseUnitPrice,
+      markup_percent: lineItem.markupPercent,
+      hidden_markup_percent: lineItem.hiddenMarkupPercent,
+      unit_price_before_hidden_markup: lineItem.unitPriceBeforeHiddenMarkup,
+      visible_markup_amount: lineItem.visibleMarkupAmount,
+      hidden_markup_amount: lineItem.hiddenMarkupAmount,
       unit_price: lineItem.unitPrice,
       sort_order: index,
       created_by: userId,

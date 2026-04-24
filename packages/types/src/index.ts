@@ -31,6 +31,7 @@ export type TimeCardId = string;
 export type DailyLogId = string;
 export type FieldNoteId = string;
 export type ExecutionAttachmentId = string;
+export type EstimateAttachmentId = string;
 export type PunchlistItemId = string;
 export type AppointmentId = string;
 export type PortalAccessGrantId = string;
@@ -147,7 +148,14 @@ export type PaymentEventActorType =
 export type TaxBehavior = "exclusive" | "inclusive" | "none";
 export type TemplateType = "estimate" | "invoice" | "contract";
 export type DocumentTemplateStatus = "active" | "archived";
-export type CatalogItemType = "material" | "service" | "system";
+export type CatalogItemType =
+  | "material"
+  | "labor"
+  | "service"
+  | "equipment"
+  | "subcontractor"
+  | "other"
+  | "system";
 export type InvoiceWorkflowRole = "standard" | "deposit";
 export type WorkforcePersonType = "employee" | "subcontractor_worker";
 export type VendorType = "subcontractor" | "supplier" | "other";
@@ -376,8 +384,14 @@ export interface OrganizationWorkflowSettings {
   requireDepositBeforeJobScheduling: boolean;
   requireFinancingApprovalBeforeJobScheduling: boolean;
   defaultDepositPercentage: string;
+  defaultEstimateTermsHtml: string | null;
+  defaultEstimateInclusionsHtml: string | null;
+  defaultEstimateExclusionsHtml: string | null;
+  defaultEstimateScopeSummaryHtml: string | null;
   nextEstimateNumber: number;
   nextInvoiceNumber: number;
+  nextChangeOrderNumber: number;
+  nextContractNumber: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -397,8 +411,14 @@ export interface PlatformWorkflowDefaults {
   requireDepositBeforeJobScheduling: boolean;
   requireFinancingApprovalBeforeJobScheduling: boolean;
   defaultDepositPercentage: string;
+  defaultEstimateTermsHtml: string | null;
+  defaultEstimateInclusionsHtml: string | null;
+  defaultEstimateExclusionsHtml: string | null;
+  defaultEstimateScopeSummaryHtml: string | null;
   defaultEstimateStartNumber: number;
   defaultInvoiceStartNumber: number;
+  defaultChangeOrderStartNumber: number;
+  defaultContractStartNumber: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -432,25 +452,84 @@ export interface Estimate {
   projectId: ProjectId;
   templateId: TemplateId | null;
   referenceNumber: string;
+  title: string | null;
   status: EstimateStatus;
+  estimateDate: string | null;
+  expirationDate: string | null;
+  projectType: string | null;
+  sector: string | null;
   subtotalAmount: string;
+  taxableSalesAmount: string;
+  exemptSalesAmount: string;
+  taxRateApplied: string;
+  taxBehaviorApplied: TaxBehavior;
+  customerTaxExemptSnapshot: boolean;
   taxAmount: string;
   discountAmount: string;
   totalAmount: string;
   notes: string | null;
+  content: EstimateWorkspaceContent;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface EstimateScopeItem {
+  id: string;
+  text: string;
+  includeInOutput: boolean;
+  sortOrder: number;
+}
+
+export interface EstimateItemGroup {
+  id: string;
+  label: string;
+  sortOrder: number;
+}
+
+export interface EstimateWorkspaceItemRow {
+  rowKey: string;
+  groupId: string | null;
+  baseUnitPrice: string;
+  markupPercent: string;
+  taxCode: "taxable" | "non-taxable";
+  assignedTo: string | null;
+}
+
+export interface EstimateWorkspaceContent {
+  termsHtml: string | null;
+  inclusionsHtml: string | null;
+  exclusionsHtml: string | null;
+  notesHtml: string | null;
+  scopeSummaryHtml: string | null;
+  scopeItems: EstimateScopeItem[];
+  itemGroups: EstimateItemGroup[];
+  itemRows: EstimateWorkspaceItemRow[];
 }
 
 export interface EstimateLineItem {
   id: string;
   estimateId: EstimateId;
   organizationId: OrganizationId;
+  catalogItemId: CatalogItemId | null;
+  sourceType: "manual" | "catalog_item" | "system_component";
+  sourceSystemId: CatalogItemId | null;
+  sourceComponentId: string | null;
+  itemType: CatalogItemType | null;
   name: string;
   description: string | null;
   quantity: string;
   unit: string;
+  baseUnitCost: string;
+  baseUnitPrice: string | null;
+  markupPercent: string;
+  hiddenMarkupPercent: string;
+  unitPriceBeforeHiddenMarkup: string;
+  visibleMarkupAmount: string;
+  hiddenMarkupAmount: string;
   unitPrice: string;
+  taxable: boolean;
+  groupName: string | null;
+  assignedTo: string | null;
   lineTotal: string;
   sortOrder: number;
   createdAt: string;
@@ -472,6 +551,28 @@ export interface Job {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface EstimateAttachment {
+  id: EstimateAttachmentId;
+  organizationId: OrganizationId;
+  estimateId: EstimateId;
+  attachmentType: string;
+  storagePath: string;
+  fileName: string;
+  mimeType: string;
+  fileSizeBytes: number | null;
+  caption: string | null;
+  uploadedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EstimateWorkspaceDefaults {
+  termsHtml: string | null;
+  inclusionsHtml: string | null;
+  exclusionsHtml: string | null;
+  scopeSummaryHtml: string | null;
 }
 
 export interface JobAssignment {
@@ -524,10 +625,19 @@ export interface InvoiceLineItem {
   invoiceId: InvoiceId;
   organizationId: OrganizationId;
   scheduleOfValueItemId: string | null;
+  catalogItemId: CatalogItemId | null;
   name: string;
   description: string | null;
   quantity: string;
   unit: string;
+  taxable: boolean;
+  baseUnitCost: string | null;
+  baseUnitPrice: string | null;
+  markupPercent: string;
+  hiddenMarkupPercent: string;
+  unitPriceBeforeHiddenMarkup: string;
+  visibleMarkupAmount: string;
+  hiddenMarkupAmount: string;
   unitPrice: string;
   lineTotal: string;
   sortOrder: number;
@@ -542,6 +652,7 @@ export interface Contract {
   projectId: ProjectId;
   estimateId: EstimateId | null;
   templateId: TemplateId | null;
+  referenceNumber: string;
   status: ContractStatus;
   internalApprovalStatus: ContractInternalApprovalStatus;
   signatureReadinessStatus: SignatureReadinessStatus;
@@ -549,6 +660,10 @@ export interface Contract {
   renderedSubject: string | null;
   renderedContent: string;
   generatedFromEstimateReference: string | null;
+  sentPdfStoragePath: string | null;
+  sentPdfFileName: string | null;
+  sentPdfMimeType: string | null;
+  sentPdfGeneratedAt: string | null;
   signatureProvider: string | null;
   signatureProviderReference: string | null;
   signatureStartedAt: string | null;
@@ -622,6 +737,7 @@ export interface ChangeOrder {
   contractId: ContractId | null;
   invoiceId: InvoiceId | null;
   appliedInvoiceLineItemId: string | null;
+  referenceNumber: string;
   status: ChangeOrderStatus;
   title: string;
   description: string | null;
@@ -751,8 +867,17 @@ export interface PlatformCatalogItemSeed {
   seedKey: string;
   name: string;
   description: string | null;
+  internalNotes: string | null;
   unit: string;
-  defaultUnitPrice: string;
+  defaultUnitCost: string;
+  defaultUnitPrice: string | null;
+  markupPercent: string;
+  hiddenMarkupPercent: string;
+  taxable: boolean;
+  vendorId: VendorId | null;
+  category: string | null;
+  sku: string | null;
+  photoStoragePath: string | null;
   isActive: boolean;
   isDefault: boolean;
   metadata: Record<string, unknown>;
@@ -1063,11 +1188,48 @@ export interface CatalogItem {
   itemType: CatalogItemType;
   name: string;
   description: string | null;
+  internalNotes: string | null;
   unit: string;
-  defaultUnitPrice: string;
+  defaultUnitCost: string;
+  defaultUnitPrice: string | null;
+  markupPercent: string;
+  hiddenMarkupPercent: string;
+  taxable: boolean;
+  vendorId: VendorId | null;
+  category: string | null;
+  sku: string | null;
+  photoStoragePath: string | null;
   status: DocumentTemplateStatus;
   isDefault: boolean;
   metadata: Record<string, unknown>;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CatalogSystemComponent {
+  id: string;
+  organizationId: OrganizationId;
+  systemCatalogItemId: CatalogItemId;
+  componentCatalogItemId: CatalogItemId;
+  componentItemType: CatalogItemType | null;
+  componentName: string;
+  componentDescription: string | null;
+  unit: string;
+  quantityPerUnit: string;
+  basisUnit: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EstimateContentBlock {
+  id: string;
+  organizationId: OrganizationId;
+  blockType: "scope" | "inclusion" | "exclusion" | "terms";
+  title: string;
+  contentHtml: string;
+  status: DocumentTemplateStatus;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;

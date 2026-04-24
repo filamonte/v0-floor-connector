@@ -111,12 +111,12 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
         <SettingsOverviewCard
           title="Catalogs and reusable items"
-          description="Own reusable materials, services, and system defaults inside the organization boundary."
+          description="Own reusable materials, labor, services, equipment, and system defaults inside the organization boundary."
           href="/settings/catalogs"
           ctaLabel="Manage catalogs"
         >
-          <div className="grid gap-3 sm:grid-cols-3">
-            {(["material", "service", "system"] as const).map((itemType) => {
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            {(["material", "labor", "service", "equipment", "system"] as const).map((itemType) => {
               const count = catalogItems.filter((item) => item.itemType === itemType).length;
 
               return (

@@ -150,7 +150,7 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
                 className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4"
               >
                 <input type="hidden" name="companyId" value={tenant.id} />
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <label className="block">
                     <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                       Next estimate number
@@ -180,6 +180,40 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
                       defaultValue={
                         tenant.organization_workflow_settings?.[0]?.next_invoice_number ??
                         workflowDefaults.defaultInvoiceStartNumber
+                      }
+                      required
+                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Next change order number
+                    </span>
+                    <input
+                      name="nextChangeOrderNumber"
+                      type="number"
+                      min="1"
+                      step="1"
+                      defaultValue={
+                        tenant.organization_workflow_settings?.[0]?.next_change_order_number ??
+                        workflowDefaults.defaultChangeOrderStartNumber
+                      }
+                      required
+                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Next contract number
+                    </span>
+                    <input
+                      name="nextContractNumber"
+                      type="number"
+                      min="1"
+                      step="1"
+                      defaultValue={
+                        tenant.organization_workflow_settings?.[0]?.next_contract_number ??
+                        workflowDefaults.defaultContractStartNumber
                       }
                       required
                       className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"

@@ -137,8 +137,9 @@ Current shell behavior:
 - the first major contractor workspace UI normalization and polish pass is now complete enough to stop and move on from
 - dashboard, projects, leads, invoices, contracts, customers, estimates, appointments, daily logs, time, people, vendors, and jobs now follow the shared contractor manager rhythm closely enough that it should be treated as the active UI baseline
 - a first shared universal-create launcher now exists in the shell and dashboard, routing into the existing module quick-create managers so new canonical records can be started broadly without creating a second creation system
-- a first real contractor-side global search now exists in the shared protected header:
+- a first real contractor-side global search now exists at the shared shell level:
   - one shared search entry point for contractor users
+  - rendered in the shared contractor shell footer instead of the top header
 - tenant-safe search across canonical opportunities, customers, projects, appointments, estimates, contracts, invoices, jobs, punchlist items, payments, people, and vendors
   - grouped result sets that route straight into the existing record workspaces or linked invoice workspace for payment activity
 - a first real contractor-side in-app notifications / action-awareness layer now exists in the shared shell and dashboard:
@@ -669,6 +670,19 @@ Estimate statuses currently implemented:
 - `approved`
 - `rejected`
 
+#### Estimate System (Current Behavior)
+
+Quick reference:
+- inventory-first only; new user-facing manual estimate rows are intentionally disabled
+- `catalog_items` is the source for reusable estimate items
+- `catalog_system_components` drives reusable systems on top of `catalog_items`
+- `estimate_line_items` is the only authoritative pricing truth; `estimates.content.itemRows` is legacy-only
+- systems expand by sqft using shared logic before becoming canonical estimate line items
+- defaults apply only on initial load when estimate content is effectively empty
+- autosave validates before persisting and includes conflict protection against stale overwrites
+- estimate attachments use one shared `documents` bucket with organization-first pathing
+- global search is shell-level and rendered at the bottom only
+
 ### Estimate Line Items
 
 Implemented:
@@ -907,6 +921,7 @@ Implemented:
 
 Current design notes:
 - external tax providers are not integrated yet, but the organization financial settings model includes extension points for them
+- estimate tax is now derived from organization defaults, customer tax-exempt state, and line-item taxable flags; there is no manual estimate tax override path
 - schedule-of-values records stay linked to approved estimate items instead of creating disconnected AIA-only source data
 - progress billing now uses the existing SOV layer as the contractor-side billing workspace instead of a disconnected pay-app model
 - canonical invoices remain the financial source of truth; progress billing prepares or updates those invoices rather than replacing them
@@ -929,15 +944,21 @@ Current design notes:
 ### Catalogs And Reusable Items
 
 Implemented:
-- platform-scoped starter catalog item seeds for materials, services, and systems
+- platform-scoped starter catalog item seeds for materials, labor, services, equipment, and systems
 - organization-scoped reusable catalog item records
 - contractor-side adoption of platform starter items into organization-owned copies
 - organization-side editing, defaulting, and archiving of reusable catalog items
+- reusable catalog item commercial fields for cost, price, taxable flag, vendor, category, and item status
+- canonical `catalog_system_components` foundation for system / assembly rows attached to `catalog_items`
+- estimate line items can now source directly from shared catalog items and sqft-expanded systems
+- organization-scoped reusable `estimate_content_blocks` foundation for scope, inclusion, exclusion, and terms snippets
 
 Current design notes:
 - organizations do not depend on one mutable global starter item after adoption
 - reusable items stay on the same canonical foundation instead of spawning module-specific catalog silos
-- current catalog management is foundation-first and intended to support later estimate, invoice, and execution reuse
+- `catalog_items` is the shared commercial master across estimating and downstream reuse; there is no second item model
+- `system` remains the canonical reusable assembly concept, with component rows designed to scale immediately by sqft in estimates
+- current catalog management is still foundation-first, but estimate sourcing now runs on the same shared catalog and line-item chain instead of a parallel item-row payload
 
 ### Contracts
 
@@ -1011,6 +1032,10 @@ The current implemented workflow foundation supports:
 - customer management
 - project management
 - estimate authoring with line items and totals
+- estimate line items are now the authoritative estimate item-row source of truth; `estimates.content.itemRows` remains legacy read/migration-only
+- estimate workspace item sourcing is now inventory-first, using active catalog items and sqft-scaled system expansion into canonical estimate line items
+- estimate workspace edits now use autosave with validation, dirty/error state handling, and stale-write conflict protection
+- estimate defaults now hydrate only when the estimate content is initially empty, using platform defaults first and organization overrides second
 - estimate proposal review and status progression
 - estimate create, update, and status transitions now refresh the linked project's stored commercial-readiness fields, including project reassignment during estimate updates
 - approved-estimate-to-contract generation and pre-sign contract editing
@@ -1038,6 +1063,7 @@ The current implemented workflow foundation supports:
 - canonical contract signature workflow helpers that keep send, customer signature progression, optional countersign, and readiness sync on the same contract record
 - shared commercial-readiness foundation fields across opportunities, projects, contracts, invoices, and organization workflow settings
 - project commercial-readiness sync from signed-contract, deposit-readiness, financing-status, and recorded-payment state
+- shared plain-numeric customer-facing numbering across estimates, invoices, change orders, and contracts using the existing organization and platform workflow settings tables
 
 ## What Exists But Is Still Minimal
 

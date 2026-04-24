@@ -1,7 +1,11 @@
 import "server-only";
 
 import { cache } from "react";
-import type { CatalogItem, PlatformCatalogItemSeed } from "@floorconnector/types";
+import type {
+  CatalogItem,
+  CatalogSystemComponent,
+  PlatformCatalogItemSeed
+} from "@floorconnector/types";
 
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
@@ -17,11 +21,27 @@ type CatalogItemRow = {
   company_id: string;
   source_seed_id: string | null;
   source_seed_key: string | null;
-  item_type: "material" | "service" | "system";
+  item_type:
+    | "material"
+    | "labor"
+    | "service"
+    | "equipment"
+    | "subcontractor"
+    | "other"
+    | "system";
   name: string;
   description: string | null;
+  internal_notes: string | null;
   unit: string;
-  default_unit_price: string | number;
+  default_unit_cost: string | number;
+  default_unit_price: string | number | null;
+  markup_percent: string | number;
+  hidden_markup_percent: string | number;
+  taxable: boolean;
+  vendor_id: string | null;
+  category: string | null;
+  sku: string | null;
+  photo_storage_path: string | null;
   status: "active" | "archived";
   is_default: boolean;
   metadata: Record<string, unknown> | null;
@@ -32,12 +52,28 @@ type CatalogItemRow = {
 
 type PlatformCatalogItemSeedRow = {
   id: string;
-  item_type: "material" | "service" | "system";
+  item_type:
+    | "material"
+    | "labor"
+    | "service"
+    | "equipment"
+    | "subcontractor"
+    | "other"
+    | "system";
   seed_key: string;
   name: string;
   description: string | null;
+  internal_notes: string | null;
   unit: string;
-  default_unit_price: string | number;
+  default_unit_cost: string | number;
+  default_unit_price: string | number | null;
+  markup_percent: string | number;
+  hidden_markup_percent: string | number;
+  taxable: boolean;
+  vendor_id: string | null;
+  category: string | null;
+  sku: string | null;
+  photo_storage_path: string | null;
   is_active: boolean;
   is_default: boolean;
   metadata: Record<string, unknown> | null;
@@ -46,7 +82,38 @@ type PlatformCatalogItemSeedRow = {
   updated_at: string;
 };
 
-function mapCatalogItem(row: CatalogItemRow): CatalogItem {
+type CatalogSystemComponentRow = {
+  id: string;
+  company_id: string;
+  system_catalog_item_id: string;
+  component_catalog_item_id: string;
+  quantity_per_unit: string | number;
+  basis_unit: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  component_items?:
+    | Array<{
+        id: string;
+        item_type: CatalogItem["itemType"];
+        name: string;
+        description: string | null;
+        unit: string;
+      }>
+    | {
+        id: string;
+        item_type: CatalogItem["itemType"];
+        name: string;
+        description: string | null;
+        unit: string;
+      }
+    | null;
+};
+
+function mapCatalogItem(
+  row: CatalogItemRow,
+  systemComponents: CatalogSystemComponent[] = []
+): CatalogItem {
   return {
     id: row.id,
     organizationId: row.company_id,
@@ -55,11 +122,24 @@ function mapCatalogItem(row: CatalogItemRow): CatalogItem {
     itemType: row.item_type,
     name: row.name,
     description: row.description,
+    internalNotes: row.internal_notes,
     unit: row.unit,
-    defaultUnitPrice: Number(row.default_unit_price).toFixed(2),
+    defaultUnitCost: Number(row.default_unit_cost).toFixed(2),
+    defaultUnitPrice:
+      row.default_unit_price == null ? null : Number(row.default_unit_price).toFixed(2),
+    markupPercent: Number(row.markup_percent).toFixed(2),
+    hiddenMarkupPercent: Number(row.hidden_markup_percent).toFixed(2),
+    taxable: row.taxable,
+    vendorId: row.vendor_id,
+    category: row.category,
+    sku: row.sku,
+    photoStoragePath: row.photo_storage_path,
     status: row.status,
     isDefault: row.is_default,
-    metadata: row.metadata ?? {},
+    metadata: {
+      ...(row.metadata ?? {}),
+      ...(systemComponents.length > 0 ? { systemComponents } : {})
+    },
     sortOrder: row.sort_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at
@@ -75,11 +155,49 @@ function mapPlatformCatalogItemSeed(
     seedKey: row.seed_key,
     name: row.name,
     description: row.description,
+    internalNotes: row.internal_notes,
     unit: row.unit,
-    defaultUnitPrice: Number(row.default_unit_price).toFixed(2),
+    defaultUnitCost: Number(row.default_unit_cost).toFixed(2),
+    defaultUnitPrice:
+      row.default_unit_price == null ? null : Number(row.default_unit_price).toFixed(2),
+    markupPercent: Number(row.markup_percent).toFixed(2),
+    hiddenMarkupPercent: Number(row.hidden_markup_percent).toFixed(2),
+    taxable: row.taxable,
+    vendorId: row.vendor_id,
+    category: row.category,
+    sku: row.sku,
+    photoStoragePath: row.photo_storage_path,
     isActive: row.is_active,
     isDefault: row.is_default,
     metadata: row.metadata ?? {},
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function mapCatalogSystemComponent(
+  row: CatalogSystemComponentRow
+): CatalogSystemComponent | null {
+  const componentItem = Array.isArray(row.component_items)
+    ? row.component_items[0]
+    : row.component_items;
+
+  if (!componentItem) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    organizationId: row.company_id,
+    systemCatalogItemId: row.system_catalog_item_id,
+    componentCatalogItemId: row.component_catalog_item_id,
+    componentItemType: componentItem.item_type,
+    componentName: componentItem.name,
+    componentDescription: componentItem.description,
+    unit: componentItem.unit,
+    quantityPerUnit: Number(row.quantity_per_unit).toFixed(4),
+    basisUnit: row.basis_unit,
     sortOrder: row.sort_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at
@@ -113,20 +231,74 @@ export async function requireCatalogScope(next = "/settings/catalogs") {
 export const listCatalogItems = cache(async (): Promise<CatalogItem[]> => {
   const scope = await requireCatalogScope();
   const supabase = await getSupabaseServerClient();
-  const response = await supabase
-    .from("catalog_items")
-    .select("*")
-    .eq("company_id", scope.organizationId)
-    .order("item_type", { ascending: true })
-    .order("sort_order", { ascending: true })
-    .order("name", { ascending: true });
+  const [itemsResponse, componentsResponse] = await Promise.all([
+    supabase
+      .from("catalog_items")
+      .select("*")
+      .eq("company_id", scope.organizationId)
+      .order("item_type", { ascending: true })
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true }),
+    supabase
+      .from("catalog_system_components")
+      .select(
+        `
+          id,
+          company_id,
+          system_catalog_item_id,
+          component_catalog_item_id,
+          quantity_per_unit,
+          basis_unit,
+          sort_order,
+          created_at,
+          updated_at,
+          component_items:catalog_items!catalog_system_components_component_company_fkey (
+            id,
+            item_type,
+            name,
+            description,
+            unit
+          )
+        `
+      )
+      .eq("company_id", scope.organizationId)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true })
+  ]);
 
-  if (response.error) {
-    throw new Error(`Unable to load catalog items: ${response.error.message}`);
+  if (itemsResponse.error) {
+    throw new Error(`Unable to load catalog items: ${itemsResponse.error.message}`);
   }
 
-  const rows = Array.isArray(response.data) ? (response.data as CatalogItemRow[]) : [];
-  return rows.map(mapCatalogItem);
+  if (componentsResponse.error) {
+    throw new Error(
+      `Unable to load catalog system components: ${componentsResponse.error.message}`
+    );
+  }
+
+  const rows = Array.isArray(itemsResponse.data)
+    ? (itemsResponse.data as CatalogItemRow[])
+    : [];
+  const componentRows = Array.isArray(componentsResponse.data)
+    ? (componentsResponse.data as CatalogSystemComponentRow[])
+    : [];
+  const componentsBySystemId = new Map<string, CatalogSystemComponent[]>();
+
+  for (const componentRow of componentRows) {
+    const component = mapCatalogSystemComponent(componentRow);
+
+    if (!component) {
+      continue;
+    }
+
+    const existing = componentsBySystemId.get(component.systemCatalogItemId) ?? [];
+    existing.push(component);
+    componentsBySystemId.set(component.systemCatalogItemId, existing);
+  }
+
+  return rows.map((row) =>
+    mapCatalogItem(row, componentsBySystemId.get(row.id) ?? [])
+  );
 });
 
 export const listPlatformCatalogItemSeedsForOrganization = cache(
@@ -187,11 +359,27 @@ export async function adoptPlatformCatalogItemSeedForOrganization(seedId: string
 
 export async function upsertOrganizationCatalogItem(input: {
   itemId?: string | null;
-  itemType: "material" | "service" | "system";
+  itemType:
+    | "material"
+    | "labor"
+    | "service"
+    | "equipment"
+    | "subcontractor"
+    | "other"
+    | "system";
   name: string;
   description: string | null;
+  internalNotes: string | null;
   unit: string;
-  defaultUnitPrice: string;
+  defaultUnitCost: string;
+  defaultUnitPrice: string | null;
+  markupPercent: string;
+  hiddenMarkupPercent: string;
+  taxable: boolean;
+  vendorId: string | null;
+  category: string | null;
+  sku: string | null;
+  photoStoragePath: string | null;
   status: "active" | "archived";
   isDefault: boolean;
 }) {
@@ -219,8 +407,17 @@ export async function upsertOrganizationCatalogItem(input: {
     item_type: input.itemType,
     name: input.name,
     description: input.description,
+    internal_notes: input.internalNotes,
     unit: input.unit,
+    default_unit_cost: input.defaultUnitCost,
     default_unit_price: input.defaultUnitPrice,
+    markup_percent: input.markupPercent,
+    hidden_markup_percent: input.hiddenMarkupPercent,
+    taxable: input.taxable,
+    vendor_id: input.vendorId,
+    category: input.category,
+    sku: input.sku,
+    photo_storage_path: input.photoStoragePath,
     status: input.status,
     is_default: input.isDefault,
     updated_by: scope.userId,
@@ -244,4 +441,84 @@ export async function upsertOrganizationCatalogItem(input: {
   }
 
   return mapCatalogItem(response.data as CatalogItemRow);
+}
+
+export async function replaceOrganizationCatalogSystemComponents(input: {
+  systemCatalogItemId: string;
+  components: Array<{
+    id?: string | null;
+    componentCatalogItemId: string;
+    quantityPerUnit: string;
+    basisUnit: string;
+    sortOrder: number;
+  }>;
+}) {
+  const scope = await requireCatalogScope();
+  const supabase = await getSupabaseServerClient();
+  const deleteResponse = await supabase
+    .from("catalog_system_components")
+    .delete()
+    .eq("company_id", scope.organizationId)
+    .eq("system_catalog_item_id", input.systemCatalogItemId);
+
+  if (deleteResponse.error) {
+    throw new Error(
+      `Unable to clear system components: ${deleteResponse.error.message}`
+    );
+  }
+
+  if (input.components.length === 0) {
+    return [];
+  }
+
+  const insertResponse = await supabase
+    .from("catalog_system_components")
+    .insert(
+      input.components.map((component, index) => ({
+        company_id: scope.organizationId,
+        system_catalog_item_id: input.systemCatalogItemId,
+        component_catalog_item_id: component.componentCatalogItemId,
+        quantity_per_unit: component.quantityPerUnit,
+        basis_unit: component.basisUnit,
+        sort_order: component.sortOrder ?? index,
+        created_by: scope.userId,
+        updated_by: scope.userId
+      }))
+    )
+    .select(
+      `
+        id,
+        company_id,
+        system_catalog_item_id,
+        component_catalog_item_id,
+        quantity_per_unit,
+        basis_unit,
+        sort_order,
+        created_at,
+        updated_at,
+        component_items:catalog_items!catalog_system_components_component_company_fkey (
+          id,
+          item_type,
+          name,
+          description,
+          unit
+        )
+      `
+    )
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (insertResponse.error) {
+    throw new Error(
+      `Unable to save system components: ${insertResponse.error.message}`
+    );
+  }
+
+  const rows = Array.isArray(insertResponse.data)
+    ? (insertResponse.data as CatalogSystemComponentRow[])
+    : [];
+
+  return rows
+    .map((row) => mapCatalogSystemComponent(row))
+    .filter((component): component is CatalogSystemComponent => Boolean(component));
 }

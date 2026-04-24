@@ -4,7 +4,7 @@ FloorConnector is a production-first, multi-tenant vertical SaaS platform for ep
 
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
-Current branch highlights include the normalized contractor shell, shared quick-create to full-workspace flow, contractor and portal continuity on canonical records, first real contractor-side module dashboards for payments and schedule, and a broader shared contractor theme direction across the shell, manager pages, and quick-create surfaces.
+Current branch highlights include the normalized contractor shell, shared quick-create to full-workspace flow, inventory-first estimating on canonical records, contractor and portal continuity on canonical records, first real contractor-side module dashboards for payments and schedule, and a broader shared contractor theme direction across the shell, manager pages, and quick-create surfaces.
 
 ## Repository Shape
 
@@ -58,6 +58,13 @@ Use these docs together:
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): short implementation guardrail summary for developers
 
 Start with [docs/current-state.md](C:/FloorConnector/docs/current-state.md) for implemented status. Use the other docs for target design, phased planning, workflow direction, and documentation process.
+
+Current estimate-system reality is documented in [docs/current-state.md](C:/FloorConnector/docs/current-state.md):
+- inventory-first estimate authoring only
+- shared `catalog_items` and `catalog_system_components`
+- canonical `estimate_line_items` pricing rows
+- autosave with validation and conflict protection
+- one `documents` bucket with organization-first storage paths
 
 ## Current UI Direction
 

@@ -8,6 +8,7 @@ import type {
   ContractSignerRole,
   ContractSignerStatus,
   ContractStatus,
+  EstimateWorkspaceContent,
   EstimateStatus,
   InvoiceStatus,
   PaymentEventActorType,
@@ -17,6 +18,7 @@ import type {
 } from "@floorconnector/types";
 
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { normalizeEstimateWorkspaceContent } from "@/lib/estimates/workspace";
 import { listPortalAccessGrantsForCurrentUser } from "@/lib/portal-access/data";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -52,12 +54,14 @@ type PortalEstimateRow = {
   customer_id: string;
   project_id: string;
   reference_number: string;
+  title: string | null;
   status: EstimateStatus;
   subtotal_amount: string | number;
   tax_amount: string | number;
   discount_amount: string | number;
   total_amount: string | number;
   notes: string | null;
+  content: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
   customers?:
@@ -436,12 +440,14 @@ export type PortalEstimateReviewDetail = {
   customerId: string;
   projectId: string;
   referenceNumber: string;
+  title: string | null;
   status: EstimateStatus;
   subtotalAmount: string;
   taxAmount: string;
   discountAmount: string;
   totalAmount: string;
   notes: string | null;
+  content: EstimateWorkspaceContent;
   customer: {
     id: string;
     name: string;
@@ -684,12 +690,14 @@ const portalEstimateSelect = `
   customer_id,
   project_id,
   reference_number,
+  title,
   status,
   subtotal_amount,
   tax_amount,
   discount_amount,
   total_amount,
   notes,
+  content,
   created_at,
   updated_at,
   customers (
@@ -1532,12 +1540,14 @@ export async function getPortalEstimateReviewData(
     customerId: row.customer_id,
     projectId: row.project_id,
     referenceNumber: row.reference_number,
+    title: row.title,
     status: row.status,
     subtotalAmount: formatMoney(row.subtotal_amount),
     taxAmount: formatMoney(row.tax_amount),
     discountAmount: formatMoney(row.discount_amount),
     totalAmount: formatMoney(row.total_amount),
     notes: row.notes,
+    content: normalizeEstimateWorkspaceContent(row.content, row.notes),
     customer: row.customers
       ? {
           id: row.customers.id,

@@ -24,7 +24,7 @@ export default async function PlatformCatalogsPage({ searchParams }: PageProps) 
       <SettingsSectionCard
         eyebrow="Starter Catalogs"
         title="Manage platform reusable item seeds"
-        description="Platform catalog seeds define reusable materials, services, and systems tenants can adopt into organization-owned master data."
+        description="Platform catalog seeds define reusable materials, labor, services, equipment, and systems tenants can adopt into organization-owned master data."
       >
         <div className="space-y-4">
           {seeds.map((seed) => (
@@ -79,6 +79,20 @@ export default async function PlatformCatalogsPage({ searchParams }: PageProps) 
                 </label>
                 <label className="block">
                   <span className="mb-2 block text-sm font-medium text-slate-800">
+                    Default unit cost
+                  </span>
+                  <input
+                    name="defaultUnitCost"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue={seed.defaultUnitCost}
+                    required
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">
                     Default unit price
                   </span>
                   <input
@@ -86,8 +100,7 @@ export default async function PlatformCatalogsPage({ searchParams }: PageProps) 
                     type="number"
                     min="0"
                     step="0.01"
-                    defaultValue={seed.defaultUnitPrice}
-                    required
+                    defaultValue={seed.defaultUnitPrice ?? ""}
                     className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
                   />
                 </label>
@@ -99,6 +112,24 @@ export default async function PlatformCatalogsPage({ searchParams }: PageProps) 
                 rows={3}
                 className="mt-4 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
               />
+
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <input
+                  name="category"
+                  defaultValue={seed.category ?? ""}
+                  placeholder="Category"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                />
+                <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  <input
+                    type="checkbox"
+                    name="taxable"
+                    defaultChecked={seed.taxable}
+                    className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
+                  />
+                  <span className="text-sm text-slate-700">Taxable by default</span>
+                </label>
+              </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
@@ -142,7 +173,9 @@ export default async function PlatformCatalogsPage({ searchParams }: PageProps) 
                 className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
               >
                 <option value="material">Material</option>
+                <option value="labor">Labor</option>
                 <option value="service">Service</option>
+                <option value="equipment">Equipment</option>
                 <option value="system">System</option>
               </select>
               <input
@@ -164,6 +197,15 @@ export default async function PlatformCatalogsPage({ searchParams }: PageProps) 
                 className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
               />
               <input
+                name="defaultUnitCost"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                required
+                className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              />
+              <input
                 name="defaultUnitPrice"
                 type="number"
                 min="0"
@@ -179,7 +221,21 @@ export default async function PlatformCatalogsPage({ searchParams }: PageProps) 
               placeholder="Description"
               className="mt-4 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
             />
+            <input
+              name="category"
+              placeholder="Category"
+              className="mt-4 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            />
             <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                <input
+                  type="checkbox"
+                  name="taxable"
+                  defaultChecked
+                  className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
+                />
+                <span className="text-sm text-slate-700">Taxable by default</span>
+              </label>
               <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
                 <input
                   type="checkbox"

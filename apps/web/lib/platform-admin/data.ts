@@ -43,20 +43,42 @@ type PlatformWorkflowDefaultsRow = {
   require_deposit_before_job_scheduling: boolean;
   require_financing_approval_before_job_scheduling: boolean;
   default_deposit_percentage: string | number;
+  default_estimate_terms_html: string | null;
+  default_estimate_inclusions_html: string | null;
+  default_estimate_exclusions_html: string | null;
+  default_estimate_scope_summary_html: string | null;
   default_estimate_start_number: number;
   default_invoice_start_number: number;
+  default_change_order_start_number: number;
+  default_contract_start_number: number;
   created_at: string;
   updated_at: string;
 };
 
 type PlatformCatalogItemSeedRow = {
   id: string;
-  item_type: "material" | "service" | "system";
+  item_type:
+    | "material"
+    | "labor"
+    | "service"
+    | "equipment"
+    | "subcontractor"
+    | "other"
+    | "system";
   seed_key: string;
   name: string;
   description: string | null;
+  internal_notes: string | null;
   unit: string;
-  default_unit_price: string | number;
+  default_unit_cost: string | number;
+  default_unit_price: string | number | null;
+  markup_percent: string | number;
+  hidden_markup_percent: string | number;
+  taxable: boolean;
+  vendor_id: string | null;
+  category: string | null;
+  sku: string | null;
+  photo_storage_path: string | null;
   is_active: boolean;
   is_default: boolean;
   metadata: Record<string, unknown> | null;
@@ -122,6 +144,8 @@ type TenantRow = {
     | Array<{
         next_estimate_number: number | null;
         next_invoice_number: number | null;
+        next_change_order_number: number | null;
+        next_contract_number: number | null;
       }>
     | null;
   company_subscriptions:
@@ -174,8 +198,18 @@ function mapPlatformCatalogItemSeed(
     seedKey: row.seed_key,
     name: row.name,
     description: row.description,
+    internalNotes: row.internal_notes,
     unit: row.unit,
-    defaultUnitPrice: Number(row.default_unit_price).toFixed(2),
+    defaultUnitCost: Number(row.default_unit_cost).toFixed(2),
+    defaultUnitPrice:
+      row.default_unit_price == null ? null : Number(row.default_unit_price).toFixed(2),
+    markupPercent: Number(row.markup_percent).toFixed(2),
+    hiddenMarkupPercent: Number(row.hidden_markup_percent).toFixed(2),
+    taxable: row.taxable,
+    vendorId: row.vendor_id,
+    category: row.category,
+    sku: row.sku,
+    photoStoragePath: row.photo_storage_path,
     isActive: row.is_active,
     isDefault: row.is_default,
     metadata: row.metadata ?? {},
@@ -356,8 +390,14 @@ export async function getPlatformWorkflowDefaults(): Promise<PlatformWorkflowDef
       requireDepositBeforeJobScheduling: false,
       requireFinancingApprovalBeforeJobScheduling: false,
       defaultDepositPercentage: "0.00",
+      defaultEstimateTermsHtml: null,
+      defaultEstimateInclusionsHtml: null,
+      defaultEstimateExclusionsHtml: null,
+      defaultEstimateScopeSummaryHtml: null,
       defaultEstimateStartNumber: 3350,
       defaultInvoiceStartNumber: 3350,
+      defaultChangeOrderStartNumber: 3350,
+      defaultContractStartNumber: 3350,
       createdAt: new Date(0).toISOString(),
       updatedAt: new Date(0).toISOString()
     };
@@ -373,8 +413,14 @@ export async function getPlatformWorkflowDefaults(): Promise<PlatformWorkflowDef
     requireFinancingApprovalBeforeJobScheduling:
       row.require_financing_approval_before_job_scheduling,
     defaultDepositPercentage: Number(row.default_deposit_percentage).toFixed(2),
+    defaultEstimateTermsHtml: row.default_estimate_terms_html,
+    defaultEstimateInclusionsHtml: row.default_estimate_inclusions_html,
+    defaultEstimateExclusionsHtml: row.default_estimate_exclusions_html,
+    defaultEstimateScopeSummaryHtml: row.default_estimate_scope_summary_html,
     defaultEstimateStartNumber: row.default_estimate_start_number,
     defaultInvoiceStartNumber: row.default_invoice_start_number,
+    defaultChangeOrderStartNumber: row.default_change_order_start_number,
+    defaultContractStartNumber: row.default_contract_start_number,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -388,8 +434,14 @@ export async function upsertPlatformWorkflowDefaults(input: {
   requireDepositBeforeJobScheduling: boolean;
   requireFinancingApprovalBeforeJobScheduling: boolean;
   defaultDepositPercentage: string;
+  defaultEstimateTermsHtml: string | null;
+  defaultEstimateInclusionsHtml: string | null;
+  defaultEstimateExclusionsHtml: string | null;
+  defaultEstimateScopeSummaryHtml: string | null;
   defaultEstimateStartNumber: number;
   defaultInvoiceStartNumber: number;
+  defaultChangeOrderStartNumber: number;
+  defaultContractStartNumber: number;
 }) {
   const supabase = getSupabaseAdminClient();
   const response = await supabase
@@ -406,8 +458,14 @@ export async function upsertPlatformWorkflowDefaults(input: {
         require_financing_approval_before_job_scheduling:
           input.requireFinancingApprovalBeforeJobScheduling,
         default_deposit_percentage: input.defaultDepositPercentage,
+        default_estimate_terms_html: input.defaultEstimateTermsHtml,
+        default_estimate_inclusions_html: input.defaultEstimateInclusionsHtml,
+        default_estimate_exclusions_html: input.defaultEstimateExclusionsHtml,
+        default_estimate_scope_summary_html: input.defaultEstimateScopeSummaryHtml,
         default_estimate_start_number: input.defaultEstimateStartNumber,
         default_invoice_start_number: input.defaultInvoiceStartNumber,
+        default_change_order_start_number: input.defaultChangeOrderStartNumber,
+        default_contract_start_number: input.defaultContractStartNumber,
         created_by: input.userId,
         updated_by: input.userId
       },
@@ -448,12 +506,28 @@ export async function listPlatformCatalogItemSeeds() {
 
 export async function upsertPlatformCatalogItemSeed(input: {
   seedId?: string | null;
-  itemType: "material" | "service" | "system";
+  itemType:
+    | "material"
+    | "labor"
+    | "service"
+    | "equipment"
+    | "subcontractor"
+    | "other"
+    | "system";
   seedKey: string;
   name: string;
   description: string | null;
+  internalNotes: string | null;
   unit: string;
-  defaultUnitPrice: string;
+  defaultUnitCost: string;
+  defaultUnitPrice: string | null;
+  markupPercent: string;
+  hiddenMarkupPercent: string;
+  taxable: boolean;
+  vendorId: string | null;
+  category: string | null;
+  sku: string | null;
+  photoStoragePath: string | null;
   isActive: boolean;
   isDefault: boolean;
 }) {
@@ -478,8 +552,17 @@ export async function upsertPlatformCatalogItemSeed(input: {
     seed_key: input.seedKey,
     name: input.name,
     description: input.description,
+    internal_notes: input.internalNotes,
     unit: input.unit,
+    default_unit_cost: input.defaultUnitCost,
     default_unit_price: input.defaultUnitPrice,
+    markup_percent: input.markupPercent,
+    hidden_markup_percent: input.hiddenMarkupPercent,
+    taxable: input.taxable,
+    vendor_id: input.vendorId,
+    category: input.category,
+    sku: input.sku,
+    photo_storage_path: input.photoStoragePath,
     is_active: input.isActive,
     is_default: input.isDefault
   };
@@ -735,7 +818,9 @@ export async function listTenantsForPlatformAdmin() {
         created_at,
         organization_workflow_settings (
           next_estimate_number,
-          next_invoice_number
+          next_invoice_number,
+          next_change_order_number,
+          next_contract_number
         ),
         company_subscriptions (
           id,
@@ -768,6 +853,8 @@ export async function listTenantsForPlatformAdmin() {
         | Array<{
             next_estimate_number: number | null;
             next_invoice_number: number | null;
+            next_change_order_number: number | null;
+            next_contract_number: number | null;
           }>
         | null;
       company_subscriptions:
@@ -837,9 +924,18 @@ export async function upsertTenantWorkflowNumberingByPlatformAdmin(input: {
   userId: string;
   nextEstimateNumber: number;
   nextInvoiceNumber: number;
+  nextChangeOrderNumber: number;
+  nextContractNumber: number;
 }) {
   const supabase = getSupabaseAdminClient();
-  const [platformDefaults, estimateCountResponse, invoiceCountResponse, currentSettingsResponse] =
+  const [
+    platformDefaults,
+    estimateCountResponse,
+    invoiceCountResponse,
+    changeOrderCountResponse,
+    contractCountResponse,
+    currentSettingsResponse
+  ] =
     await Promise.all([
       getPlatformWorkflowDefaults(),
       supabase
@@ -851,8 +947,18 @@ export async function upsertTenantWorkflowNumberingByPlatformAdmin(input: {
         .select("id", { count: "exact", head: true })
         .eq("company_id", input.companyId),
       supabase
+        .from("change_orders")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", input.companyId),
+      supabase
+        .from("contracts")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", input.companyId),
+      supabase
         .from("organization_workflow_settings")
-        .select("next_estimate_number, next_invoice_number")
+        .select(
+          "next_estimate_number, next_invoice_number, next_change_order_number, next_contract_number"
+        )
         .eq("company_id", input.companyId)
         .maybeSingle()
     ]);
@@ -869,10 +975,24 @@ export async function upsertTenantWorkflowNumberingByPlatformAdmin(input: {
     );
   }
 
+  if (changeOrderCountResponse.error) {
+    throw new Error(
+      `Unable to inspect tenant change order numbering state: ${changeOrderCountResponse.error.message}`
+    );
+  }
+
+  if (contractCountResponse.error) {
+    throw new Error(
+      `Unable to inspect tenant contract numbering state: ${contractCountResponse.error.message}`
+    );
+  }
+
   const currentSettings = currentSettingsResponse.data as
     | {
         next_estimate_number?: number | null;
         next_invoice_number?: number | null;
+        next_change_order_number?: number | null;
+        next_contract_number?: number | null;
       }
     | null;
 
@@ -880,6 +1000,12 @@ export async function upsertTenantWorkflowNumberingByPlatformAdmin(input: {
     currentSettings?.next_estimate_number ?? platformDefaults.defaultEstimateStartNumber;
   const currentInvoiceNumber =
     currentSettings?.next_invoice_number ?? platformDefaults.defaultInvoiceStartNumber;
+  const currentChangeOrderNumber =
+    currentSettings?.next_change_order_number ??
+    platformDefaults.defaultChangeOrderStartNumber;
+  const currentContractNumber =
+    currentSettings?.next_contract_number ??
+    platformDefaults.defaultContractStartNumber;
 
   if (
     (estimateCountResponse.count ?? 0) > 0 &&
@@ -899,6 +1025,24 @@ export async function upsertTenantWorkflowNumberingByPlatformAdmin(input: {
     );
   }
 
+  if (
+    (changeOrderCountResponse.count ?? 0) > 0 &&
+    input.nextChangeOrderNumber < currentChangeOrderNumber
+  ) {
+    throw new Error(
+      "Change order numbering can only move upward after the contractor already has change order records."
+    );
+  }
+
+  if (
+    (contractCountResponse.count ?? 0) > 0 &&
+    input.nextContractNumber < currentContractNumber
+  ) {
+    throw new Error(
+      "Contract numbering can only move upward after the contractor already has contract records."
+    );
+  }
+
   const response = await supabase
     .from("organization_workflow_settings")
     .upsert(
@@ -906,6 +1050,8 @@ export async function upsertTenantWorkflowNumberingByPlatformAdmin(input: {
         company_id: input.companyId,
         next_estimate_number: input.nextEstimateNumber,
         next_invoice_number: input.nextInvoiceNumber,
+        next_change_order_number: input.nextChangeOrderNumber,
+        next_contract_number: input.nextContractNumber,
         created_by: input.userId,
         updated_by: input.userId
       },

@@ -15,6 +15,7 @@ import { listInvoices } from "@/lib/invoices/data";
 import { listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
+import { getIncludedEstimateScopeItems } from "@/lib/estimates/workspace";
 
 function formatStatusLabel(status: string) {
   return status.replaceAll("_", " ");
@@ -113,6 +114,62 @@ function getEstimateMeaning(status: string) {
   return "This proposal is still being prepared. Review the scope and pricing here before moving it into customer-facing approval.";
 }
 
+function hasHtmlContent(value: string | null | undefined) {
+  return Boolean(value && value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().length > 0);
+}
+
+function renderHtmlContent(value: string | null | undefined) {
+  if (!hasHtmlContent(value)) {
+    return null;
+  }
+
+  return <div dangerouslySetInnerHTML={{ __html: value ?? "" }} />;
+}
+
+function buildGroupedLineItems(
+  estimate: NonNullable<Awaited<ReturnType<typeof getEstimateById>>>
+) {
+  const groups = estimate.content.itemGroups.map((group) => ({
+    id: group.id,
+    label: group.label,
+    items: [] as typeof estimate.lineItems
+  }));
+  const groupMap = new Map(
+    groups.map((group) => [group.label.trim().toLowerCase(), group] as const)
+  );
+  const ungrouped = {
+    id: null,
+    label: "Manual Items",
+    items: [] as typeof estimate.lineItems
+  };
+
+  estimate.lineItems.forEach((lineItem) => {
+    if (lineItem.groupName) {
+      const normalizedGroupName = lineItem.groupName.trim().toLowerCase();
+
+      if (normalizedGroupName.length > 0 && !groupMap.has(normalizedGroupName)) {
+        const nextGroup = {
+          id: `group-${groups.length + 1}`,
+          label: lineItem.groupName,
+          items: [] as typeof estimate.lineItems
+        };
+
+        groups.push(nextGroup);
+        groupMap.set(normalizedGroupName, nextGroup);
+      }
+    }
+
+    const targetGroup =
+      (lineItem.groupName
+        ? groupMap.get(lineItem.groupName.trim().toLowerCase())
+        : null) ?? ungrouped;
+
+    targetGroup.items.push(lineItem);
+  });
+
+  return [ungrouped, ...groups].filter((group) => group.items.length > 0);
+}
+
 type EstimateDetailPageProps = {
   params: Promise<{
     estimateId: string;
@@ -191,7 +248,7 @@ export default async function EstimateDetailPage({
       <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10 print:hidden">
         <DetailPageHeader
           eyebrow="Estimate Review"
-          title={estimate.referenceNumber}
+          title={estimate.title ?? estimate.referenceNumber}
           description={estimateMeaning}
           backHref="/estimates"
           backLabel="Back to estimates"
@@ -342,8 +399,9 @@ export default async function EstimateDetailPage({
               Estimate
             </p>
             <p className="mt-3 text-2xl font-semibold text-slate-950">
-              {estimate.referenceNumber}
+              {estimate.title ?? estimate.referenceNumber}
             </p>
+            <p className="mt-2 text-sm text-slate-500">Estimate #{estimate.referenceNumber}</p>
             <div
               className={`mt-3 inline-flex rounded-full border px-3 py-1 text-sm font-medium capitalize ${getStatusBadgeClassName(
                 estimate.status
@@ -399,68 +457,134 @@ export default async function EstimateDetailPage({
               above and to the side so this estimate remains the main review surface.
             </p>
           </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-separate border-spacing-y-3">
-              <thead>
-                <tr className="text-left text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                  <th className="pb-2 pr-4">Description</th>
-                  <th className="pb-2 pr-4">Qty</th>
-                  <th className="pb-2 pr-4">Unit</th>
-                  <th className="pb-2 pr-4 text-right">Unit Price</th>
-                  <th className="pb-2 text-right">Line Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {estimate.lineItems.map((lineItem) => (
-                  <tr key={lineItem.id} className="align-top text-sm leading-6 text-slate-700">
-                    <td className="rounded-l-2xl border-y border-l border-slate-200 bg-slate-50/60 px-4 py-4">
-                      <p className="font-medium text-slate-950">{lineItem.name}</p>
-                      {lineItem.description ? (
-                        <p className="mt-1 text-sm leading-6 text-slate-500">
-                          {lineItem.description}
-                        </p>
-                      ) : null}
-                    </td>
-                    <td className="border-y border-slate-200 bg-slate-50/60 px-4 py-4">
-                      {lineItem.quantity}
-                    </td>
-                    <td className="border-y border-slate-200 bg-slate-50/60 px-4 py-4">
-                      {lineItem.unit}
-                    </td>
-                    <td className="border-y border-slate-200 bg-slate-50/60 px-4 py-4 text-right">
-                      {formatMoney(lineItem.unitPrice)}
-                    </td>
-                    <td className="rounded-r-2xl border-y border-r border-slate-200 bg-slate-50/60 px-4 py-4 text-right font-medium text-slate-950">
-                      {formatMoney(lineItem.lineTotal)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="space-y-6">
+            {buildGroupedLineItems(estimate).map((group) => (
+              <div key={group.id ?? "ungrouped"} className="rounded-3xl border border-slate-200 bg-slate-50/40 p-4">
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">
+                    {group.label}
+                  </p>
+                  <p className="text-sm font-medium text-slate-700">
+                    {group.items.length} item{group.items.length === 1 ? "" : "s"}
+                  </p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full border-separate border-spacing-y-3">
+                    <thead>
+                      <tr className="text-left text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                        <th className="pb-2 pr-4">Description</th>
+                        <th className="pb-2 pr-4">Qty</th>
+                        <th className="pb-2 pr-4">Unit</th>
+                        <th className="pb-2 pr-4 text-right">Unit Price</th>
+                        <th className="pb-2 text-right">Line Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.items.map((lineItem) => (
+                        <tr key={lineItem.id} className="align-top text-sm leading-6 text-slate-700">
+                          <td className="rounded-l-2xl border-y border-l border-slate-200 bg-white px-4 py-4">
+                            <p className="font-medium text-slate-950">{lineItem.name}</p>
+                            {lineItem.description ? (
+                              <p className="mt-1 text-sm leading-6 text-slate-500">
+                                {lineItem.description}
+                              </p>
+                            ) : null}
+                          </td>
+                          <td className="border-y border-slate-200 bg-white px-4 py-4">
+                            {lineItem.quantity}
+                          </td>
+                          <td className="border-y border-slate-200 bg-white px-4 py-4">
+                            {lineItem.unit}
+                          </td>
+                          <td className="border-y border-slate-200 bg-white px-4 py-4 text-right">
+                            {formatMoney(lineItem.unitPrice)}
+                          </td>
+                          <td className="rounded-r-2xl border-y border-r border-slate-200 bg-white px-4 py-4 text-right font-medium text-slate-950">
+                            {formatMoney(lineItem.lineTotal)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
         <div className="grid gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-6">
-            {estimate.notes ? (
+            {hasHtmlContent(estimate.content.scopeSummaryHtml) ||
+            getIncludedEstimateScopeItems(estimate.content).length > 0 ? (
               <section>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-                  Notes and Terms
+                  Scope of Work Output
                 </p>
-                <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4 text-sm leading-7 text-slate-700">
-                  {estimate.notes}
+                <div className="mt-3 space-y-4 rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4 text-sm leading-7 text-slate-700">
+                  {renderHtmlContent(estimate.content.scopeSummaryHtml)}
+                  {getIncludedEstimateScopeItems(estimate.content).length > 0 ? (
+                    <ul className="space-y-2 pl-5">
+                      {getIncludedEstimateScopeItems(estimate.content).map((item) => (
+                        <li key={item.id}>{item.text}</li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </div>
               </section>
             ) : (
               <section>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-                  Notes and Terms
+                  Scope of Work Output
                 </p>
                 <div className="mt-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-500">
-                  No additional notes or terms have been added to this estimate yet.
+                  No output scope has been prepared for this estimate yet.
                 </div>
               </section>
             )}
+
+            {hasHtmlContent(estimate.content.termsHtml) ? (
+              <section>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  Terms
+                </p>
+                <div className="prose prose-slate mt-3 max-w-none rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4 text-sm leading-7 text-slate-700">
+                  {renderHtmlContent(estimate.content.termsHtml)}
+                </div>
+              </section>
+            ) : null}
+
+            {hasHtmlContent(estimate.content.inclusionsHtml) ? (
+              <section>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  Inclusions
+                </p>
+                <div className="prose prose-slate mt-3 max-w-none rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4 text-sm leading-7 text-slate-700">
+                  {renderHtmlContent(estimate.content.inclusionsHtml)}
+                </div>
+              </section>
+            ) : null}
+
+            {hasHtmlContent(estimate.content.exclusionsHtml) ? (
+              <section>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  Exclusions
+                </p>
+                <div className="prose prose-slate mt-3 max-w-none rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4 text-sm leading-7 text-slate-700">
+                  {renderHtmlContent(estimate.content.exclusionsHtml)}
+                </div>
+              </section>
+            ) : null}
+
+            {hasHtmlContent(estimate.content.notesHtml) ? (
+              <section>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  Notes
+                </p>
+                <div className="prose prose-slate mt-3 max-w-none rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4 text-sm leading-7 text-slate-700">
+                  {renderHtmlContent(estimate.content.notesHtml)}
+                </div>
+              </section>
+            ) : null}
 
             <DetailPanel
               title="Workflow Actions"

@@ -105,7 +105,14 @@ Current canonical records involved:
 
 Implemented flow:
 - estimates are created from project context
+- estimate authoring is inventory-first:
+  - active `catalog_items` can be added directly
+  - reusable systems expand by sqft through shared system logic
+  - quick create from the estimate workspace saves a minimal new `catalog_items` record first, then adds it to the estimate
 - estimate line items, totals, tax, and discount handling are live
+- `estimate_line_items` is the authoritative pricing-row source; legacy `estimates.content.itemRows` should not be used for new behavior
+- estimate edits autosave with validation and stale-write conflict protection
+- estimate defaults apply only when the estimate content is initially empty, resolving platform defaults first and contractor overrides second
 - estimates move through status progression such as `draft`, `sent`, `approved`, and `rejected`
 
 Current canonical records involved:
@@ -113,6 +120,8 @@ Current canonical records involved:
 - customer context derived through project
 - estimate
 - estimate line items
+- catalog items
+- catalog system components
 
 ### Approved Estimate To Contract
 

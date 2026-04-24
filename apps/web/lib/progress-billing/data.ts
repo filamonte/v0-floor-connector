@@ -818,6 +818,7 @@ export async function buildProgressBillingInvoice(
     invoiceId,
     billableItems.map((item) => ({
       scheduleOfValueItemId: item.id,
+      catalogItemId: null,
       name: item.name,
       description:
         [
@@ -830,7 +831,15 @@ export async function buildProgressBillingInvoice(
           .join(" "),
       quantity: "1.00",
       unit: "billing draw",
-      unitPrice: item.currentToBillAmount
+      unitPrice: item.currentToBillAmount,
+      taxable: true,
+      baseUnitCost: "0.00",
+      baseUnitPrice: null,
+      markupPercent: "0.00",
+      hiddenMarkupPercent: "0.00",
+      unitPriceBeforeHiddenMarkup: item.currentToBillAmount,
+      visibleMarkupAmount: "0.00",
+      hiddenMarkupAmount: "0.00"
     }))
   );
 

@@ -29,6 +29,23 @@ function percentStringField(label: string) {
     .transform((value) => value.toFixed(2));
 }
 
+function optionalCurrencyField(label: string) {
+  return z
+    .string()
+    .trim()
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .optional()
+    .refine((value) => value == null || !Number.isNaN(Number(value)), {
+      message: `${label} must be a valid number.`
+    })
+    .transform((value) => (value == null ? null : Number(value)))
+    .refine((value) => value == null || value >= 0, {
+      message: `${label} must be zero or greater.`
+    })
+    .transform((value) => (value == null ? null : value.toFixed(2)));
+}
+
 function taxRatePercentField(label: string) {
   return z
     .string()
@@ -105,8 +122,14 @@ export const organizationWorkflowSettingsInputSchema = z.object({
   requireDepositBeforeJobScheduling: z.boolean(),
   requireFinancingApprovalBeforeJobScheduling: z.boolean(),
   defaultDepositPercentage: percentStringField("Default deposit percentage"),
+  defaultEstimateTermsHtml: trimmedNullableString(50000),
+  defaultEstimateInclusionsHtml: trimmedNullableString(50000),
+  defaultEstimateExclusionsHtml: trimmedNullableString(50000),
+  defaultEstimateScopeSummaryHtml: trimmedNullableString(50000),
   nextEstimateNumber: positiveIntegerField("Next estimate number"),
-  nextInvoiceNumber: positiveIntegerField("Next invoice number")
+  nextInvoiceNumber: positiveIntegerField("Next invoice number"),
+  nextChangeOrderNumber: positiveIntegerField("Next change order number"),
+  nextContractNumber: positiveIntegerField("Next contract number")
 });
 
 export const organizationProfileInputSchema = z.object({
@@ -134,22 +157,41 @@ export const organizationProfileInputSchema = z.object({
 export const catalogItemSettingsInputSchema = z
   .object({
     itemId: optionalUuidField("Select a valid catalog item."),
-    itemType: z.enum(["material", "service", "system"] as const),
+    itemType: z.enum(
+      [
+        "material",
+        "labor",
+        "service",
+        "equipment",
+        "subcontractor",
+        "other",
+        "system"
+      ] as const
+    ),
     name: z.string().trim().min(1, "Catalog item name is required.").max(120),
     description: trimmedNullableString(255),
+    internalNotes: trimmedNullableString(2000),
     unit: z.string().trim().min(1, "Unit is required.").max(40),
-    defaultUnitPrice: z
+    defaultUnitCost: z
       .string()
       .trim()
-      .min(1, "Default unit price is required.")
+      .min(1, "Default unit cost is required.")
       .refine((value) => !Number.isNaN(Number(value)), {
-        message: "Default unit price must be a valid number."
+        message: "Default unit cost must be a valid number."
       })
       .transform((value) => Number(value))
       .refine((value) => value >= 0, {
-        message: "Default unit price must be zero or greater."
+        message: "Default unit cost must be zero or greater."
       })
       .transform((value) => value.toFixed(2)),
+    defaultUnitPrice: optionalCurrencyField("Default unit price"),
+    markupPercent: percentStringField("Markup percentage"),
+    hiddenMarkupPercent: percentStringField("Hidden markup percentage"),
+    taxable: z.boolean(),
+    vendorId: optionalUuidField("Select a valid vendor."),
+    category: trimmedNullableString(120),
+    sku: trimmedNullableString(120),
+    photoStoragePath: trimmedNullableString(2000),
     status: z.enum(templateStatuses),
     isDefault: z.boolean()
   })

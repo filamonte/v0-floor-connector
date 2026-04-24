@@ -1,9 +1,17 @@
-import { CatalogItemSettingsCard } from "@/components/catalog-item-settings-card";
+import { InventoryManager } from "@/components/catalog-manager/inventory-manager";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
 import {
   listCatalogItems,
   listPlatformCatalogItemSeedsForOrganization
 } from "@/lib/catalogs/data";
+import { upsertEstimateContentBlockAction } from "@/lib/estimate-content-blocks/actions";
+import { listEstimateContentBlocks } from "@/lib/estimate-content-blocks/data";
+import {
+  adoptPlatformCatalogItemSeedAction,
+  updateOrganizationCatalogItemAction,
+  updateOrganizationCatalogSystemComponentsAction
+} from "@/lib/settings/actions";
+import { listVendors } from "@/lib/vendors/data";
 
 type MaterialsPageProps = {
   searchParams?: Promise<{
@@ -16,31 +24,18 @@ export default async function MaterialsPage({
   searchParams
 }: MaterialsPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
-  const [items, platformSeeds] = await Promise.all([
+  const [items, platformSeeds, vendors, contentBlocks] = await Promise.all([
     listCatalogItems(),
-    listPlatformCatalogItemSeedsForOrganization()
+    listPlatformCatalogItemSeedsForOrganization(),
+    listVendors(),
+    listEstimateContentBlocks()
   ]);
 
   const materialItems = items.filter((item) => item.itemType === "material");
-  const serviceItems = items.filter((item) => item.itemType === "service");
+  const laborItems = items.filter((item) => item.itemType === "labor");
+  const equipmentItems = items.filter((item) => item.itemType === "equipment");
   const systemItems = items.filter((item) => item.itemType === "system");
   const activeItems = items.filter((item) => item.status === "active");
-
-  const materialSeeds = platformSeeds.filter(
-    (seed) =>
-      seed.itemType === "material" &&
-      !materialItems.some((item) => item.sourceSeedId === seed.id)
-  );
-  const serviceSeeds = platformSeeds.filter(
-    (seed) =>
-      seed.itemType === "service" &&
-      !serviceItems.some((item) => item.sourceSeedId === seed.id)
-  );
-  const systemSeeds = platformSeeds.filter(
-    (seed) =>
-      seed.itemType === "system" &&
-      !systemItems.some((item) => item.sourceSeedId === seed.id)
-  );
 
   return (
     <ContractorWorkspacePage
@@ -60,6 +55,14 @@ export default async function MaterialsPage({
           <div className="border border-[#e2e7ef] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Materials</p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{materialItems.length}</p>
+          </div>
+          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Labor</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{laborItems.length}</p>
+          </div>
+          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Equipment</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{equipmentItems.length}</p>
           </div>
           <div className="border border-[#e2e7ef] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Systems</p>
@@ -87,23 +90,17 @@ export default async function MaterialsPage({
         </div>
       ) : null}
 
-      <div className="space-y-6">
-        <CatalogItemSettingsCard
-          itemType="material"
-          items={materialItems}
-          availableSeeds={materialSeeds}
-        />
-        <CatalogItemSettingsCard
-          itemType="service"
-          items={serviceItems}
-          availableSeeds={serviceSeeds}
-        />
-        <CatalogItemSettingsCard
-          itemType="system"
-          items={systemItems}
-          availableSeeds={systemSeeds}
-        />
-      </div>
+      <InventoryManager
+        returnTo="/materials"
+        items={items}
+        platformSeeds={platformSeeds}
+        vendors={vendors}
+        contentBlocks={contentBlocks}
+        saveItemAction={updateOrganizationCatalogItemAction}
+        adoptSeedAction={adoptPlatformCatalogItemSeedAction}
+        saveSystemComponentsAction={updateOrganizationCatalogSystemComponentsAction}
+        saveContentBlockAction={upsertEstimateContentBlockAction}
+      />
     </ContractorWorkspacePage>
   );
 }

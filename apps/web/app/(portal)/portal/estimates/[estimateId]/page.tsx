@@ -6,6 +6,7 @@ import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { NextActionCard } from "@/components/next-action-card";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
+import { getIncludedEstimateScopeItems } from "@/lib/estimates/workspace";
 import { getPortalEstimateReviewData } from "@/lib/portal/data";
 
 type PortalEstimateReviewPageProps = {
@@ -59,6 +60,18 @@ function getNextAction(status: string, projectId: string) {
   };
 }
 
+function hasHtmlContent(value: string | null | undefined) {
+  return Boolean(value && value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().length > 0);
+}
+
+function renderHtmlContent(value: string | null | undefined) {
+  if (!hasHtmlContent(value)) {
+    return null;
+  }
+
+  return <div dangerouslySetInnerHTML={{ __html: value ?? "" }} />;
+}
+
 export default async function PortalEstimateReviewPage({
   params
 }: PortalEstimateReviewPageProps) {
@@ -80,7 +93,7 @@ export default async function PortalEstimateReviewPage({
         <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
           <DetailPageHeader
             eyebrow="Estimate Review"
-            title={estimate.referenceNumber}
+            title={estimate.title ?? estimate.referenceNumber}
             description="Review the scope, pricing, and shared notes for this proposal. This page stays focused on the customer-facing estimate itself, not contractor-side workflow controls."
             backHref={`/portal/projects/${estimate.projectId}`}
             backLabel="Back to project workspace"
@@ -127,6 +140,7 @@ export default async function PortalEstimateReviewPage({
                       <p className="font-semibold capitalize text-slate-950">
                         {formatStatusLabel(estimate.status)}
                       </p>
+                      <p>Estimate #{estimate.referenceNumber}</p>
                       <p>Project: {estimate.project?.name ?? "Unknown project"}</p>
                     </div>
                   )
@@ -194,10 +208,53 @@ export default async function PortalEstimateReviewPage({
 
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
               <div className="space-y-3">
-                <p className="text-sm font-medium text-slate-950">Proposal notes</p>
+                <p className="text-sm font-medium text-slate-950">Scope of work output</p>
                 <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600">
-                  {estimate.notes ?? "No additional proposal notes are currently shared."}
+                  {hasHtmlContent(estimate.content.scopeSummaryHtml) ? (
+                    <div className="space-y-4">
+                      {renderHtmlContent(estimate.content.scopeSummaryHtml)}
+                      {getIncludedEstimateScopeItems(estimate.content).length > 0 ? (
+                        <ul className="space-y-2 pl-5">
+                          {getIncludedEstimateScopeItems(estimate.content).map((item) => (
+                            <li key={item.id}>{item.text}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
+                  ) : getIncludedEstimateScopeItems(estimate.content).length > 0 ? (
+                    <ul className="space-y-2 pl-5">
+                      {getIncludedEstimateScopeItems(estimate.content).map((item) => (
+                        <li key={item.id}>{item.text}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    "No additional scope output is currently shared."
+                  )}
                 </div>
+                {hasHtmlContent(estimate.content.termsHtml) ? (
+                  <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600">
+                    <p className="mb-3 text-sm font-medium text-slate-950">Terms</p>
+                    {renderHtmlContent(estimate.content.termsHtml)}
+                  </div>
+                ) : null}
+                {hasHtmlContent(estimate.content.inclusionsHtml) ? (
+                  <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600">
+                    <p className="mb-3 text-sm font-medium text-slate-950">Inclusions</p>
+                    {renderHtmlContent(estimate.content.inclusionsHtml)}
+                  </div>
+                ) : null}
+                {hasHtmlContent(estimate.content.exclusionsHtml) ? (
+                  <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600">
+                    <p className="mb-3 text-sm font-medium text-slate-950">Exclusions</p>
+                    {renderHtmlContent(estimate.content.exclusionsHtml)}
+                  </div>
+                ) : null}
+                {hasHtmlContent(estimate.content.notesHtml) ? (
+                  <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600">
+                    <p className="mb-3 text-sm font-medium text-slate-950">Notes</p>
+                    {renderHtmlContent(estimate.content.notesHtml)}
+                  </div>
+                ) : null}
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">

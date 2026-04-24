@@ -13,7 +13,7 @@ import { ProjectForm } from "@/components/project-form";
 import { listContracts } from "@/lib/contracts/data";
 import { listDailyLogsByProject } from "@/lib/daily-logs/data";
 import { listCustomers } from "@/lib/customers/data";
-import { listEstimates } from "@/lib/estimates/data";
+import { listEstimates, listProjectEstimateAttachments } from "@/lib/estimates/data";
 import { getInvoiceById, listInvoices } from "@/lib/invoices/data";
 import { listJobs } from "@/lib/jobs/data";
 import { getOpportunityByProjectId } from "@/lib/opportunities/data";
@@ -753,15 +753,19 @@ export default async function ProjectDetailPage({
     organizationId: project.organizationId,
     projectId: project.id
   });
-  const [projectTimeCards, openTimeStates] = await Promise.all([
+  const [projectTimeCards, openTimeStates, projectEstimateAttachments] = await Promise.all([
     listTimeCardsByProject(project.id, `/projects/${projectId}`),
-    listOpenTimeCardStates()
+    listOpenTimeCardStates(),
+    listProjectEstimateAttachments(project.id, `/projects/${projectId}`)
   ]);
   const projectDailyLogs = await listDailyLogsByProject(project.id, `/projects/${projectId}`);
 
   const projectEstimates = estimates.filter((estimate) => estimate.projectId === project.id);
   const approvedEstimate = projectEstimates.find((estimate) => estimate.status === "approved");
   const projectContracts = contracts.filter((contract) => contract.projectId === project.id);
+  const projectContractDocuments = projectContracts.filter(
+    (contract) => contract.sentPdfDownloadUrl && contract.sentPdfFileName
+  );
   const projectJobs = jobs.filter((job) => job.projectId === project.id);
   const completedJob = projectJobs.find((job) => job.dispatchStatus === "completed");
   const projectOpenTimeStates = openTimeStates.filter(
@@ -1372,6 +1376,69 @@ export default async function ProjectDetailPage({
               </div>
             </section>
           </div>
+          </div>
+        </DetailPanel>
+
+        <DetailPanel
+          title="Documents"
+          description="Estimate attachments and sent contract PDFs stay linked to the same project chain here without duplicating file records."
+        >
+          <div className="grid gap-8 xl:grid-cols-2">
+            <section className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-slate-950">Estimate attachments</p>
+              </div>
+              <div className="grid gap-4">
+                {projectEstimateAttachments.length > 0 ? (
+                  projectEstimateAttachments.slice(0, 4).map((attachment) => (
+                    <LinkedRecordCard
+                      key={attachment.id}
+                      href={attachment.downloadUrl ?? `/estimates/${attachment.estimateId}`}
+                      title={attachment.fileName}
+                      subtitle={attachment.estimateReferenceNumber}
+                      meta={new Date(attachment.createdAt).toLocaleString()}
+                      badge={renderStatusBadge("Estimate file")}
+                    />
+                  ))
+                ) : (
+                  <AppEmptyState
+                    eyebrow="No estimate files"
+                    title="Estimate documents will show up here"
+                    description="Files attached in the estimate workspace remain linked to the same project so sales and operations can reference one shared document chain."
+                  />
+                )}
+              </div>
+            </section>
+
+            <section className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-slate-950">Contract PDFs</p>
+              </div>
+              <div className="grid gap-4">
+                {projectContractDocuments.length > 0 ? (
+                  projectContractDocuments.slice(0, 4).map((contract) => (
+                    <LinkedRecordCard
+                      key={contract.id}
+                      href={contract.sentPdfDownloadUrl ?? `/contracts/${contract.id}`}
+                      title={contract.sentPdfFileName ?? `${contract.title}.pdf`}
+                      subtitle={contract.title}
+                      meta={
+                        contract.sentPdfGeneratedAt
+                          ? `Generated ${new Date(contract.sentPdfGeneratedAt).toLocaleString()}`
+                          : "Sent contract PDF"
+                      }
+                      badge={renderStatusBadge("Sent PDF")}
+                    />
+                  ))
+                ) : (
+                  <AppEmptyState
+                    eyebrow="No sent PDFs"
+                    title="Sent contract files will show up here"
+                    description="Once a contract is sent for signature, its official PDF snapshot stays linked to the same contract and project context."
+                  />
+                )}
+              </div>
+            </section>
           </div>
         </DetailPanel>
 

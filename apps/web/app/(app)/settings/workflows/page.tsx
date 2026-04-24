@@ -1,5 +1,6 @@
 import { DetailPanel } from "@/components/detail-panel";
 import { SettingsFeedback } from "@/components/settings-feedback";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { requireOrganizationAdminScope } from "@/lib/organizations/admin";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { updateOrganizationWorkflowSettingsAction } from "@/lib/settings/actions";
@@ -33,7 +34,7 @@ export default async function SettingsWorkflowsPage({ searchParams }: PageProps)
 
       <DetailPanel
         title="Workflow Defaults"
-        description="Set contract workflow defaults and the next human-facing estimate and invoice numbers without breaking the canonical estimate -> contract -> invoice chain."
+        description="Set contract workflow defaults and the next human-facing estimate, invoice, change order, and contract numbers without breaking the canonical commercial chain."
       >
         <form action={updateOrganizationWorkflowSettingsAction} className="space-y-5">
           <label className="block">
@@ -143,6 +144,31 @@ export default async function SettingsWorkflowsPage({ searchParams }: PageProps)
             />
           </label>
 
+          <RichTextEditor
+            label="Default estimate terms"
+            name="defaultEstimateTermsHtml"
+            value={workflowSettings.defaultEstimateTermsHtml}
+            mode="standard"
+          />
+          <RichTextEditor
+            label="Default inclusions"
+            name="defaultEstimateInclusionsHtml"
+            value={workflowSettings.defaultEstimateInclusionsHtml}
+            mode="standard"
+          />
+          <RichTextEditor
+            label="Default exclusions"
+            name="defaultEstimateExclusionsHtml"
+            value={workflowSettings.defaultEstimateExclusionsHtml}
+            mode="standard"
+          />
+          <RichTextEditor
+            label="Default scope summary"
+            name="defaultEstimateScopeSummaryHtml"
+            value={workflowSettings.defaultEstimateScopeSummaryHtml}
+            mode="standard"
+          />
+
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-800">
@@ -178,6 +204,34 @@ export default async function SettingsWorkflowsPage({ searchParams }: PageProps)
               <span className="mt-2 block text-xs leading-5 text-slate-500">
                 This stays plain and human-facing, with no EST or INV prefix.
               </span>
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-800">
+                Next change order number
+              </span>
+              <input
+                name="nextChangeOrderNumber"
+                type="number"
+                min="1"
+                step="1"
+                defaultValue={workflowSettings.nextChangeOrderNumber}
+                required
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-800">
+                Next contract number
+              </span>
+              <input
+                name="nextContractNumber"
+                type="number"
+                min="1"
+                step="1"
+                defaultValue={workflowSettings.nextContractNumber}
+                required
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              />
             </label>
           </div>
 

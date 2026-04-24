@@ -1,6 +1,7 @@
 import { DetailPanel } from "@/components/detail-panel";
 import { SettingsFeedback } from "@/components/settings-feedback";
 import { SettingsSectionCard } from "@/components/settings-section-card";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { updatePlatformFinancialDefaultsAction, updatePlatformWorkflowDefaultsAction } from "@/lib/platform-admin/actions";
 import { getPlatformFinancialDefaults, getPlatformWorkflowDefaults, listPlatformTemplateSeedsAdmin } from "@/lib/platform-admin/data";
 
@@ -202,6 +203,31 @@ export default async function PlatformDefaultsPage({ searchParams }: PageProps) 
             />
           </label>
 
+          <RichTextEditor
+            label="Platform default estimate terms"
+            name="defaultEstimateTermsHtml"
+            value={workflowDefaults.defaultEstimateTermsHtml}
+            mode="standard"
+          />
+          <RichTextEditor
+            label="Platform default inclusions"
+            name="defaultEstimateInclusionsHtml"
+            value={workflowDefaults.defaultEstimateInclusionsHtml}
+            mode="standard"
+          />
+          <RichTextEditor
+            label="Platform default exclusions"
+            name="defaultEstimateExclusionsHtml"
+            value={workflowDefaults.defaultEstimateExclusionsHtml}
+            mode="standard"
+          />
+          <RichTextEditor
+            label="Platform default scope summary"
+            name="defaultEstimateScopeSummaryHtml"
+            value={workflowDefaults.defaultEstimateScopeSummaryHtml}
+            mode="standard"
+          />
+
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-800">
@@ -228,6 +254,35 @@ export default async function PlatformDefaultsPage({ searchParams }: PageProps) 
                 min="1"
                 step="1"
                 defaultValue={workflowDefaults.defaultInvoiceStartNumber}
+                required
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-800">
+                Default change order start number
+              </span>
+              <input
+                name="defaultChangeOrderStartNumber"
+                type="number"
+                min="1"
+                step="1"
+                defaultValue={workflowDefaults.defaultChangeOrderStartNumber}
+                required
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-800">
+                Default contract start number
+              </span>
+              <input
+                name="defaultContractStartNumber"
+                type="number"
+                min="1"
+                step="1"
+                defaultValue={workflowDefaults.defaultContractStartNumber}
                 required
                 className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
               />

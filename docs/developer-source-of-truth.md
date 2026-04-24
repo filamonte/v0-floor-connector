@@ -36,8 +36,8 @@ The current branch already includes a real multi-tenant contractor app with:
 - dedicated contractor-side payments manager surface on the shared manager-page system
 - dedicated contractor-side schedule manager surface on the shared manager-page system
   - review-first summary, next actions, crew-state continuity, week/day planner views, and a retained date-grouped board all stay on the same canonical job chain
-- shared contractor-side global search in the protected header
-  - searches canonical tenant-scoped records including appointments and routes back into real workspaces
+- shared contractor-side global search at the shell level
+  - searches canonical tenant-scoped records including appointments, routes back into real workspaces, and is rendered in the shared shell footer rather than the top header
 - first real contractor-side in-app notifications / action awareness in the shared shell and dashboard
   - derives high-signal attention from canonical jobs, invoices, contracts, appointments, punchlists, and progress-billing state
   - remains lightweight and in-app only
@@ -48,6 +48,7 @@ The current branch already includes a real multi-tenant contractor app with:
 - customer portal access, review, and contract-signature workflows
 - shared templates
 - reusable catalog foundations
+- shared commercial numbering through the existing workflow settings model
 - quick-create -> canonical record -> full workspace pattern across core contractor manager pages
 - first shared universal-create launcher in the contractor shell and dashboard
 - denser contractor dashboard command-center surface:
@@ -99,6 +100,14 @@ Important workflow rules:
 - appointments should stay as canonical visit and meeting records linked to the same opportunity/customer/project chain; do not turn them into duplicate jobs or a second dispatch model
 - punchlists should stay on the canonical project/job execution chain; do not overload daily-log narrative records with durable closeout work, and do not invent a separate field-quality subsystem
 - progress billing should stay on the canonical approved-estimate -> schedule-of-values -> invoice chain; do not invent a detached pay-app subsystem, spreadsheet shadow model, or invoice-replacement billing record
+- estimate line items are the only authoritative estimate item-row source; do not write new behavior against `estimates.content.itemRows`
+- estimate authoring is inventory-first; do not reintroduce user-facing manual estimate rows or manual save-back-to-catalog flows
+- estimate defaults should hydrate only when estimate content is initially empty, resolving platform defaults before contractor overrides and never silently reapplying after user edits
+- estimate autosave should validate before persist and use conflict protection against stale overwrites
+- estimate tax must stay derived from organization defaults, customer exemption state, and item-level taxable flags; do not add manual estimate tax overrides
+- `catalog_items` remains the one shared item master across material, labor, service, equipment, and system records; do not introduce a second inventory or labor model
+- systems remain canonical reusable assemblies on top of `catalog_items`, with component rows designed to scale by sqft into estimate line items
+- estimate attachments should stay on the shared `documents` bucket using organization-first storage paths
 
 ## Current Contractor UI Guardrails
 

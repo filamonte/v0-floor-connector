@@ -31,7 +31,10 @@ What users can do now:
 - create and manage opportunities and leads
 - create and manage customers
 - create and manage projects
-- build estimates with line items, totals, tax, discount, and retainage scaffolding
+- build estimates through an inventory-first workspace backed by shared `catalog_items`, reusable systems, and canonical `estimate_line_items`
+- expand reusable systems by sqft into estimate pricing rows through shared logic
+- use derived estimate tax behavior driven by organization defaults, customer exemption state, and item-level taxability
+- use autosave, inline estimate-title editing, and persisted status progression in the estimate workspace
 - move approved commercial scope into downstream contract, job, and invoice workflows
 
 In practical terms, the commercial path is already live. Contractors can start with lead intake, move into project and estimate work, and carry that scope forward without recreating records in each stage.
@@ -75,6 +78,8 @@ What contractor teams can do now:
 - use super-admin configuration foundations at the platform layer
 
 The contractor app is no longer just a data shell. It supports connected operating workflows across commercial, billing, and execution contexts.
+
+Shared estimate attachments and related documents now live in one tenant-safe `documents` storage bucket using organization-first paths rather than module-specific buckets.
 
 ### Customer Portal
 

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import {
   adoptPlatformCatalogItemSeedForOrganization,
+  replaceOrganizationCatalogSystemComponents,
   upsertOrganizationCatalogItem
 } from "@/lib/catalogs/data";
 import {
@@ -48,6 +49,10 @@ function getCheckboxValue(formData: FormData, key: string) {
   return formData.get(key) === "on";
 }
 
+function getFieldValues(formData: FormData, key: string) {
+  return formData.getAll(key).map((value) => (typeof value === "string" ? value : ""));
+}
+
 function buildRedirect(pathname: string, params: Record<string, string | undefined>) {
   const search = new URLSearchParams();
 
@@ -71,6 +76,7 @@ function revalidateSettingsSlice() {
   revalidatePath("/settings/organization");
   revalidatePath("/settings/templates");
   revalidatePath("/settings/catalogs");
+  revalidatePath("/materials");
   revalidatePath("/settings/financial");
   revalidatePath("/settings/workflows");
   revalidatePath("/settings/admin");
@@ -276,8 +282,23 @@ export async function updateOrganizationWorkflowSettingsAction(formData: FormDat
       "requireFinancingApprovalBeforeJobScheduling"
     ),
     defaultDepositPercentage: getFieldValue(formData, "defaultDepositPercentage"),
+    defaultEstimateTermsHtml: getFieldValue(formData, "defaultEstimateTermsHtml"),
+    defaultEstimateInclusionsHtml: getFieldValue(
+      formData,
+      "defaultEstimateInclusionsHtml"
+    ),
+    defaultEstimateExclusionsHtml: getFieldValue(
+      formData,
+      "defaultEstimateExclusionsHtml"
+    ),
+    defaultEstimateScopeSummaryHtml: getFieldValue(
+      formData,
+      "defaultEstimateScopeSummaryHtml"
+    ),
     nextEstimateNumber: getFieldValue(formData, "nextEstimateNumber"),
-    nextInvoiceNumber: getFieldValue(formData, "nextInvoiceNumber")
+    nextInvoiceNumber: getFieldValue(formData, "nextInvoiceNumber"),
+    nextChangeOrderNumber: getFieldValue(formData, "nextChangeOrderNumber"),
+    nextContractNumber: getFieldValue(formData, "nextContractNumber")
   });
 
   if (!result.success) {
@@ -333,20 +354,30 @@ export async function updateOrganizationWorkflowSettingsAction(formData: FormDat
 
 export async function updateOrganizationCatalogItemAction(formData: FormData) {
   await requireSettingsScope();
+  const returnTo = getFieldValue(formData, "returnTo") || "/settings/catalogs";
   const result = catalogItemSettingsInputSchema.safeParse({
     itemId: getFieldValue(formData, "itemId"),
     itemType: getFieldValue(formData, "itemType"),
     name: getFieldValue(formData, "name"),
     description: getFieldValue(formData, "description"),
+    internalNotes: getFieldValue(formData, "internalNotes"),
     unit: getFieldValue(formData, "unit"),
+    defaultUnitCost: getFieldValue(formData, "defaultUnitCost"),
     defaultUnitPrice: getFieldValue(formData, "defaultUnitPrice"),
+    markupPercent: getFieldValue(formData, "markupPercent"),
+    hiddenMarkupPercent: getFieldValue(formData, "hiddenMarkupPercent"),
+    taxable: getCheckboxValue(formData, "taxable"),
+    vendorId: getFieldValue(formData, "vendorId"),
+    category: getFieldValue(formData, "category"),
+    sku: getFieldValue(formData, "sku"),
+    photoStoragePath: getFieldValue(formData, "photoStoragePath"),
     status: getFieldValue(formData, "status"),
     isDefault: getCheckboxValue(formData, "isDefault")
   });
 
   if (!result.success) {
     redirect(
-      buildRedirect("/settings/catalogs", {
+      buildRedirect(returnTo, {
         error:
           result.error.issues[0]?.message ?? "Unable to update reusable catalog item."
       })
@@ -359,7 +390,7 @@ export async function updateOrganizationCatalogItemAction(formData: FormData) {
     item = await upsertOrganizationCatalogItem(result.data);
   } catch (error) {
     redirect(
-      buildRedirect("/settings/catalogs", {
+      buildRedirect(returnTo, {
         error:
           error instanceof Error
             ? error.message
@@ -371,7 +402,7 @@ export async function updateOrganizationCatalogItemAction(formData: FormData) {
   revalidateSettingsSlice();
 
   redirect(
-    buildRedirect("/settings/catalogs", {
+    buildRedirect(returnTo, {
       message: `${item.name} was saved successfully.`
     })
   );
@@ -379,11 +410,12 @@ export async function updateOrganizationCatalogItemAction(formData: FormData) {
 
 export async function adoptPlatformCatalogItemSeedAction(formData: FormData) {
   await requireSettingsScope();
+  const returnTo = getFieldValue(formData, "returnTo") || "/settings/catalogs";
   const seedId = getFieldValue(formData, "seedId");
 
   if (!seedId) {
     redirect(
-      buildRedirect("/settings/catalogs", {
+      buildRedirect(returnTo, {
         error: "Platform catalog seed id is required."
       })
     );
@@ -395,7 +427,7 @@ export async function adoptPlatformCatalogItemSeedAction(formData: FormData) {
     item = await adoptPlatformCatalogItemSeedForOrganization(seedId);
   } catch (error) {
     redirect(
-      buildRedirect("/settings/catalogs", {
+      buildRedirect(returnTo, {
         error:
           error instanceof Error
             ? error.message
@@ -407,8 +439,82 @@ export async function adoptPlatformCatalogItemSeedAction(formData: FormData) {
   revalidateSettingsSlice();
 
   redirect(
-    buildRedirect("/settings/catalogs", {
+    buildRedirect(returnTo, {
       message: `${item.name} was adopted for this organization.`
+    })
+  );
+}
+
+export async function updateOrganizationCatalogSystemComponentsAction(
+  formData: FormData
+) {
+  await requireSettingsScope();
+  const returnTo = getFieldValue(formData, "returnTo") || "/materials";
+  const systemCatalogItemId = getFieldValue(formData, "systemCatalogItemId");
+  const componentCatalogItemIds = getFieldValues(formData, "componentCatalogItemId");
+  const quantitiesPerUnit = getFieldValues(formData, "componentQuantityPerUnit");
+  const basisUnits = getFieldValues(formData, "componentBasisUnit");
+  const sortOrders = getFieldValues(formData, "componentSortOrder");
+
+  if (!systemCatalogItemId) {
+    redirect(
+      buildRedirect(returnTo, {
+        error: "A system item is required before components can be saved."
+      })
+    );
+  }
+
+  const components = componentCatalogItemIds
+    .map((componentCatalogItemId, index) => ({
+      componentCatalogItemId,
+      quantityPerUnit: quantitiesPerUnit[index] ?? "0",
+      basisUnit: basisUnits[index] ?? "sqft",
+      sortOrder: Number(sortOrders[index] ?? index)
+    }))
+    .filter((component) => component.componentCatalogItemId.trim().length > 0);
+
+  const invalidComponent = components.find(
+    (component) =>
+      Number.isNaN(Number(component.quantityPerUnit)) ||
+      Number(component.quantityPerUnit) <= 0 ||
+      component.basisUnit.trim().length === 0
+  );
+
+  if (invalidComponent) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          "System components need a real component item, a positive quantity per unit, and a basis unit."
+      })
+    );
+  }
+
+  try {
+    await replaceOrganizationCatalogSystemComponents({
+      systemCatalogItemId,
+      components: components.map((component) => ({
+        componentCatalogItemId: component.componentCatalogItemId,
+        quantityPerUnit: Number(component.quantityPerUnit).toFixed(4),
+        basisUnit: component.basisUnit.trim(),
+        sortOrder: component.sortOrder
+      }))
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to save system components."
+      })
+    );
+  }
+
+  revalidateSettingsSlice();
+
+  redirect(
+    buildRedirect(returnTo, {
+      message: "System components were saved successfully."
     })
   );
 }

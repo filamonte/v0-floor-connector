@@ -27,6 +27,7 @@ type ChangeOrderRow = {
   contract_id: string | null;
   invoice_id: string | null;
   applied_invoice_line_item_id: string | null;
+  reference_number: string;
   status: ChangeOrderStatus;
   title: string;
   description: string | null;
@@ -101,6 +102,7 @@ type ChangeOrderRecord = {
   contractId: string | null;
   invoiceId: string | null;
   appliedInvoiceLineItemId: string | null;
+  referenceNumber: string;
   status: ChangeOrderStatus;
   title: string;
   description: string | null;
@@ -161,6 +163,7 @@ const changeOrderSelect = `
   contract_id,
   invoice_id,
   applied_invoice_line_item_id,
+  reference_number,
   status,
   title,
   description,
@@ -224,6 +227,7 @@ function mapChangeOrder(row: ChangeOrderRow): ChangeOrderRecord {
     contractId: row.contract_id,
     invoiceId: row.invoice_id,
     appliedInvoiceLineItemId: row.applied_invoice_line_item_id,
+    referenceNumber: row.reference_number,
     status: row.status,
     title: row.title,
     description: row.description,

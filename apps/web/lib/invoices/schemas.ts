@@ -49,6 +49,23 @@ function currencyAmountField(label: string) {
     .transform((value) => value.toFixed(2));
 }
 
+function optionalCurrencyAmountField(label: string) {
+  return z
+    .string()
+    .trim()
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .optional()
+    .refine((value) => value == null || !Number.isNaN(Number(value)), {
+      message: `${label} must be a valid number.`
+    })
+    .transform((value) => (value == null ? null : Number(value)))
+    .refine((value) => value == null || value >= 0, {
+      message: `${label} cannot be negative.`
+    })
+    .transform((value) => (value == null ? null : value.toFixed(2)));
+}
+
 function positiveCurrencyAmountField(label: string) {
   return z
     .string()
@@ -143,11 +160,20 @@ export const paymentStatusSchema = z.enum(paymentStatuses);
 export const paymentEventActorTypeSchema = z.enum(paymentEventActorTypes);
 
 export const invoiceLineItemInputSchema = z.object({
+  catalogItemId: optionalUuidField("Select a valid catalog item."),
   name: lineItemNameField(),
   description: optionalTrimmedString(1000),
   quantity: positiveQuantityField(),
   unit: unitField(),
-  unitPrice: currencyAmountField("Unit price")
+  unitPrice: currencyAmountField("Unit price"),
+  taxable: z.boolean().default(true),
+  baseUnitCost: currencyAmountField("Base unit cost"),
+  baseUnitPrice: optionalCurrencyAmountField("Base unit price"),
+  markupPercent: currencyAmountField("Markup percentage"),
+  hiddenMarkupPercent: currencyAmountField("Hidden markup percentage"),
+  unitPriceBeforeHiddenMarkup: currencyAmountField("Pre-hidden-markup unit price"),
+  visibleMarkupAmount: currencyAmountField("Visible markup amount"),
+  hiddenMarkupAmount: currencyAmountField("Hidden markup amount")
 });
 
 export const invoiceInputSchema = z

@@ -45,6 +45,14 @@ function buildEstimateLineItemSummary(estimate: EstimateDetail) {
     .join("\n");
 }
 
+function buildEstimateScopeItemsSummary(estimate: EstimateDetail) {
+  return estimate.content.scopeItems
+    .map((item) => item.text.trim())
+    .filter((item) => item.length > 0)
+    .map((item, index) => `${index + 1}. ${item}`)
+    .join("\n");
+}
+
 function buildInvoiceLineItemSummary(invoice: InvoiceDetail) {
   return invoice.lineItems
     .map(
@@ -179,11 +187,18 @@ export async function prepareEstimateTemplateMergeData(
       referenceNumber: estimate.referenceNumber,
       status: estimate.status,
       subtotalAmount: formatCurrency(estimate.subtotalAmount),
+      taxableSalesAmount: formatCurrency(estimate.taxableSalesAmount),
+      exemptSalesAmount: formatCurrency(estimate.exemptSalesAmount),
       taxAmount: formatCurrency(estimate.taxAmount),
       discountAmount: formatCurrency(estimate.discountAmount),
       totalAmount: formatCurrency(estimate.totalAmount),
       notes: estimate.notes,
-      lineItemsSummary: buildEstimateLineItemSummary(estimate)
+      lineItemsSummary: buildEstimateLineItemSummary(estimate),
+      scopeSummaryHtml: estimate.content.scopeSummaryHtml,
+      scopeItemsSummary: buildEstimateScopeItemsSummary(estimate),
+      inclusionsHtml: estimate.content.inclusionsHtml,
+      exclusionsHtml: estimate.content.exclusionsHtml,
+      termsHtml: estimate.content.termsHtml
     },
     contract: null,
     invoice: null
