@@ -4,6 +4,40 @@ import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  Home,
+  Calendar,
+  ClipboardList,
+  FileText,
+  Briefcase,
+  Clock,
+  Users,
+  Settings,
+  DollarSign,
+  FileCheck,
+  Receipt,
+  CreditCard,
+  Building,
+  HardHat,
+  Package,
+  FolderOpen,
+  FileImage,
+  BarChart3,
+  CheckSquare,
+  AlertCircle,
+  Car,
+  Wrench,
+  StickyNote,
+  Mail,
+  Pencil,
+  Lightbulb,
+  Bug,
+  HelpCircle,
+  Gift,
+  ChevronDown,
+  Star,
+  MessageSquare
+} from "lucide-react";
 
 import type { MembershipRole } from "@floorconnector/types";
 
@@ -22,98 +56,9 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function Chevron({ open }: { open: boolean }) {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 20 20"
-      className={["h-4 w-4 transition", open ? "rotate-180" : ""].join(" ")}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m5 7 5 5 5-5" />
-    </svg>
-  );
-}
-
-function UtilityIcon({
-  children,
-  href,
-  label
-}: {
-  children: ReactNode;
-  href: string;
-  label: string;
-}) {
-  return (
-    <Link
-      href={href}
-      aria-label={label}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-[4px] border border-white/14 bg-white/8 text-[#f7e8db] transition hover:border-[#ef7d32] hover:bg-white/12 hover:text-white"
-    >
-      {children}
-    </Link>
-  );
-}
-
-function HomeIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3.5 8.5 10 3l6.5 5.5" />
-      <path d="M5.5 7.5V17h9V7.5" />
-    </svg>
-  );
-}
-
-function GridIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="5" height="5" rx="1" />
-      <rect x="12" y="3" width="5" height="5" rx="1" />
-      <rect x="3" y="12" width="5" height="5" rx="1" />
-      <rect x="12" y="12" width="5" height="5" rx="1" />
-    </svg>
-  );
-}
-
-function ClockIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="10" cy="10" r="6" />
-      <path d="M10 6v4l2.5 1.5" />
-    </svg>
-  );
-}
-
-function PersonIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="10" cy="6" r="3" />
-      <path d="M4 17a6 6 0 0 1 12 0" />
-    </svg>
-  );
-}
-
-function GearIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="10" cy="10" r="3" />
-      <path d="M10 2v2M10 16v2M18 10h-2M4 10H2M15.7 4.3l-1.4 1.4M5.7 14.3l-1.4 1.4M15.7 15.7l-1.4-1.4M5.7 5.7 4.3 4.3" />
-    </svg>
-  );
-}
-
 type MenuColumn = {
   title: string;
-  items: Array<{ label: string; href: string }>;
-};
-
-type MenuFooterAction = {
-  label: string;
-  href: string;
+  items: Array<{ label: string; href: string; icon?: ReactNode; starred?: boolean }>;
 };
 
 type ProtectedAppTopNavProps = {
@@ -145,54 +90,71 @@ function buildMenuColumns(items: readonly ProtectedAppNavItem[]): MenuColumn[] {
     {
       title: "Project Management",
       items: [
-        getItem(items, "/projects"),
-        getItem(items, "/daily-logs"),
-        getItem(items, "/schedule"),
-        getItem(items, "/jobs", "Work Orders"),
-        getItem(items, "/change-orders", "Change Orders")
-      ].filter(Boolean) as MenuColumn["items"]
+        { label: "Projects", href: "/projects", icon: <Home className="h-4 w-4" />, starred: true },
+        { label: "Daily Logs", href: "/daily-logs", icon: <ClipboardList className="h-4 w-4" /> },
+        { label: "Schedule", href: "/schedule", icon: <Calendar className="h-4 w-4" /> },
+        { label: "To-Do's", href: "/jobs", icon: <CheckSquare className="h-4 w-4" /> },
+        { label: "Work Orders", href: "/jobs", icon: <Briefcase className="h-4 w-4" /> },
+        { label: "Inspections", href: "/projects", icon: <FileCheck className="h-4 w-4" /> },
+        { label: "Punchlists", href: "/punchlists", icon: <CheckSquare className="h-4 w-4" /> },
+        { label: "Service Tickets", href: "/jobs", icon: <Wrench className="h-4 w-4" /> },
+        { label: "Permits", href: "/projects", icon: <FileText className="h-4 w-4" /> },
+      ]
     },
     {
       title: "Financials",
       items: [
-        getItem(items, "/estimates"),
-        getItem(items, "/contracts"),
-        getItem(items, "/invoices"),
-        getItem(items, "/payments")
-      ].filter(Boolean) as MenuColumn["items"]
+        { label: "Estimates", href: "/estimates", icon: <FileText className="h-4 w-4" /> },
+        { label: "Bid Manager", href: "/estimates", icon: <Briefcase className="h-4 w-4" /> },
+        { label: "Change Orders", href: "/change-orders", icon: <FileText className="h-4 w-4" /> },
+        { label: "Invoices", href: "/invoices", icon: <Receipt className="h-4 w-4" /> },
+        { label: "Payments", href: "/payments", icon: <CreditCard className="h-4 w-4" /> },
+        { label: "Expenses", href: "/payments", icon: <DollarSign className="h-4 w-4" /> },
+        { label: "Purchase Orders", href: "/vendors", icon: <Package className="h-4 w-4" /> },
+        { label: "Sub-Contracts", href: "/contracts", icon: <FileCheck className="h-4 w-4" /> },
+        { label: "Bills", href: "/invoices", icon: <Receipt className="h-4 w-4" /> },
+        { label: "Transaction Log", href: "/payments", icon: <ClipboardList className="h-4 w-4" /> },
+        { label: "Takeoffs (Preview)", href: "/estimates", icon: <Pencil className="h-4 w-4" /> },
+      ]
     },
     {
       title: "People",
       items: [
-        getItem(items, "/people", "Directory"),
-        getItem(items, "/leads", "Opportunities"),
-        getItem(items, "/time", "Time Cards"),
-        getItem(items, "/vendors"),
-        getItem(items, "/customers", "Customers")
-      ].filter(Boolean) as MenuColumn["items"]
+        { label: "Directory", href: "/people", icon: <Users className="h-4 w-4" />, starred: true },
+        { label: "Opportunities", href: "/leads", icon: <Lightbulb className="h-4 w-4" /> },
+        { label: "Time Cards", href: "/time", icon: <Clock className="h-4 w-4" />, starred: true },
+        { label: "Calendar", href: "/schedule", icon: <Calendar className="h-4 w-4" /> },
+        { label: "Crew Schedule", href: "/schedule", icon: <Users className="h-4 w-4" /> },
+        { label: "Incidents", href: "/people", icon: <AlertCircle className="h-4 w-4" /> },
+        { label: "Safety Meetings", href: "/people", icon: <HardHat className="h-4 w-4" /> },
+      ]
     },
     {
       title: "Documents",
       items: [
-        getItem(items, "/materials", "Materials"),
-        getItem(items, "/projects", "Project Files")
-      ].filter(Boolean) as MenuColumn["items"]
+        { label: "Files & Photos", href: "/projects", icon: <FileImage className="h-4 w-4" /> },
+        { label: "Reports", href: "/projects", icon: <BarChart3 className="h-4 w-4" /> },
+        { label: "Forms & Checklists", href: "/projects", icon: <CheckSquare className="h-4 w-4" /> },
+        { label: "RFI & Notices", href: "/projects", icon: <FileText className="h-4 w-4" /> },
+        { label: "Submittals", href: "/projects", icon: <FolderOpen className="h-4 w-4" /> },
+        { label: "Vehicle Logs", href: "/projects", icon: <Car className="h-4 w-4" /> },
+        { label: "Equipment Logs", href: "/projects", icon: <Wrench className="h-4 w-4" /> },
+        { label: "Notes", href: "/projects", icon: <StickyNote className="h-4 w-4" /> },
+        { label: "Send Email", href: "/projects", icon: <Mail className="h-4 w-4" /> },
+        { label: "Document Writer", href: "/projects", icon: <Pencil className="h-4 w-4" /> },
+      ]
     },
     {
       title: "Settings & Support",
-      items: [getItem(items, "/settings", "Settings")].filter(Boolean) as MenuColumn["items"]
+      items: [
+        { label: "Enable/Disable Features", href: "/settings/modules", icon: <Settings className="h-4 w-4" /> },
+        { label: "Settings", href: "/settings", icon: <Settings className="h-4 w-4" /> },
+        { label: "Cost Items Database", href: "/materials", icon: <Package className="h-4 w-4" /> },
+        { label: "Trainings", href: "/settings", icon: <HardHat className="h-4 w-4" /> },
+        { label: "Support", href: "/settings", icon: <HelpCircle className="h-4 w-4" /> },
+      ]
     }
-  ].filter((column) => column.items.length > 0);
-}
-
-function getMenuFooterActions(items: readonly ProtectedAppNavItem[]): MenuFooterAction[] {
-  return [
-    getItem(items, "/dashboard", "Dashboard home"),
-    getItem(items, "/projects", "Project board"),
-    getItem(items, "/schedule", "Schedule board"),
-    getItem(items, "/payments", "Payments manager"),
-    getItem(items, "/settings", "Settings")
-  ].filter(Boolean) as MenuFooterAction[];
+  ];
 }
 
 export function ProtectedAppTopNav({
@@ -212,163 +174,190 @@ export function ProtectedAppTopNav({
 
   const allItems = useMemo(() => groups.flatMap((group) => group.items), [groups]);
   const menuColumns = useMemo(() => buildMenuColumns(allItems), [allItems]);
-  const menuFooterActions = useMemo(() => getMenuFooterActions(allItems), [allItems]);
 
   return (
-    <div className="border-b border-[#d9cdc2] bg-white">
-      <div className="grid items-center gap-4 bg-[#2f3d33] px-5 py-1.5 text-white xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
-        <div className="min-w-0 text-[12px] font-medium text-[#f3e7dc]">
-          <ProtectedAppBreadcrumbs organizationName={organizationName} variant="dark" />
-        </div>
-
-        <div className="hidden min-w-0 justify-center xl:flex">
-          <p className="truncate text-[13px] font-semibold tracking-[0.03em] text-white">
-            {organizationName}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-1.5 xl:justify-end">
-          <UtilityIcon href={homeHref} label="Open dashboard home">
-            <HomeIcon />
-          </UtilityIcon>
-          <UtilityIcon href="/schedule" label="Open schedule">
-            <GridIcon />
-          </UtilityIcon>
-          <UtilityIcon href="/time" label="Open time cards">
-            <ClockIcon />
-          </UtilityIcon>
-          <UtilityIcon href="/people" label="Open people">
-            <PersonIcon />
-          </UtilityIcon>
-          <UtilityIcon href="/settings" label="Open settings">
-            <GearIcon />
-          </UtilityIcon>
-        </div>
-      </div>
-
-      <div className="flex border-t border-white/5 border-b border-[#ebe0d6] 2xl:items-stretch">
-        <div className="flex min-w-0 flex-1 items-center px-6 py-3 2xl:py-0">
+    <div className="bg-white">
+      {/* CF-style dark navy header bar */}
+      <div className="flex items-center justify-between bg-[#28456f] px-3 py-1.5">
+        {/* Logo */}
+        <div className="flex items-center gap-4">
           <OrganizationBrandLink
             href={homeHref}
             organizationName={organizationName}
             logoUrl={organizationLogoUrl}
             navigationLabel="Dashboard home"
-            className="w-full max-w-[360px] 2xl:max-w-[400px]"
+            className="max-w-[180px]"
+            variant="light"
           />
-        </div>
+          
+          {/* Project Selector */}
+          <button
+            type="button"
+            className="flex items-center gap-2 rounded border border-white/20 bg-white/10 px-3 py-1.5 text-[13px] text-white hover:bg-white/20"
+          >
+            <span>Select a Project</span>
+            <ChevronDown className="h-4 w-4" />
+          </button>
 
-        <div className="flex shrink-0 flex-col border-l border-[#ebe0d6] 2xl:min-w-[920px]">
-          <div className="flex flex-wrap items-stretch">
-            <Link
-              href="/projects"
-              className="flex min-h-[64px] min-w-[220px] flex-1 items-center justify-between px-4 text-[#221a14] transition hover:bg-[#fff7f0] 2xl:min-w-[198px] 2xl:flex-none"
-            >
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a65b25]">
-                  Select a Project
-                </p>
-                <p className="mt-1 text-[13px] font-medium">Open project queue</p>
-              </div>
-              <Chevron open={false} />
-            </Link>
-
+          {/* Menu Dropdown */}
+          <div className="relative">
             <button
               type="button"
               onClick={() => setMenuOpen((open) => !open)}
               className={[
-                "flex min-h-[64px] min-w-[186px] flex-1 items-center justify-between border-l border-[#ebe0d6] px-4 text-left transition 2xl:min-w-[166px] 2xl:flex-none",
-                menuOpen ? "bg-[#f2ebe4] text-[#221a14]" : "text-[#221a14] hover:bg-[#fff7f0]"
+                "flex items-center gap-2 rounded border px-3 py-1.5 text-[13px]",
+                menuOpen
+                  ? "border-[#f97316] bg-[#f97316] text-white"
+                  : "border-white/20 bg-white/10 text-white hover:bg-white/20"
               ].join(" ")}
             >
-              <div>
-                <p
-                  className={[
-                    "text-[10px] font-semibold uppercase tracking-[0.18em]",
-                    menuOpen ? "text-[#8f5b32]" : "text-[#a65b25]"
-                  ].join(" ")}
-                >
-                  Menu
-                </p>
-                <p className="mt-1 text-[13px] font-medium">
-                  {activeItem?.label ?? "Dashboard"}
-                </p>
-              </div>
-              <Chevron open={menuOpen} />
+              <span className="text-[10px] uppercase tracking-wider opacity-70">MENU</span>
+              <span className="font-medium">{activeItem?.label ?? "Dashboard"}</span>
+              <ChevronDown className={`h-4 w-4 transition ${menuOpen ? "rotate-180" : ""}`} />
             </button>
           </div>
+        </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-[#ebe0d6] px-4 py-2.5">
-            <div className="flex min-w-0 flex-wrap items-center gap-3">
-              <UniversalCreateMenu
-                buttonLabel="Quick create"
-                buttonClassName="inline-flex h-10 items-center rounded-[4px] border border-[#ef7d32] bg-[#ef7d32] px-4 py-2 text-[13px] font-semibold text-[#1f140d] transition hover:bg-[#f08b47]"
-              />
-              <ContractorNotificationsCenter notifications={notifications} />
+        {/* Quick Links */}
+        <div className="flex items-center gap-1">
+          <Link
+            href="/projects"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] text-white hover:text-[#f97316]"
+          >
+            <Star className="h-3.5 w-3.5 fill-[#f97316] text-[#f97316]" />
+            <span>Projects</span>
+          </Link>
+          <Link
+            href="/time"
+            className="px-3 py-1.5 text-[13px] text-white hover:text-[#f97316]"
+          >
+            Time Cards
+          </Link>
+          <Link
+            href="/people"
+            className="px-3 py-1.5 text-[13px] text-white hover:text-[#f97316]"
+          >
+            Directory
+          </Link>
+        </div>
+
+        {/* Right Side - Training, Live Chat, User */}
+        <div className="flex items-center gap-4">
+          <div className="text-right text-[11px] text-white/80">
+            <div className="text-[#4db8ff] hover:underline cursor-pointer">Free Online Training</div>
+            <div className="text-[#4db8ff] hover:underline cursor-pointer">Daily Webinars</div>
+            <div className="text-[#4db8ff] hover:underline cursor-pointer">Contractor University</div>
+          </div>
+          
+          <button className="flex items-center gap-1.5 text-white hover:text-[#f97316]">
+            <MessageSquare className="h-5 w-5" />
+            <span className="text-[12px]">Live Chat</span>
+          </button>
+
+          <div className="flex items-center gap-2 border-l border-white/20 pl-4">
+            <div className="text-right">
+              <div className="text-[13px] font-medium text-white">{userEmail.split('@')[0]}</div>
+              <div className="text-[11px] text-white/60">{timestampLabel}</div>
             </div>
-
-            <div className="flex items-center gap-3 border-l border-[#ebe0d6] pl-3">
-              <div className="min-w-0 text-right">
-                <p className="truncate text-[13px] font-semibold text-[#221a14]">{userEmail}</p>
-                <p className="mt-1 text-[11px] text-[#9a8b80]">{timestampLabel}</p>
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#17120f] text-[15px] font-semibold text-[#ffd7bb]">
-                {organizationStatus.charAt(0).toUpperCase()}
-              </div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-[#1a365d] text-[14px] font-bold text-white">
+              {userEmail.charAt(0).toUpperCase()}{userEmail.split('@')[0].slice(-1).toUpperCase()}
             </div>
           </div>
         </div>
       </div>
 
-      {menuOpen ? (
-        <div className="border-t border-[#d9cdc2] bg-white text-[#221a14] shadow-[0_30px_60px_-40px_rgba(34,26,20,0.28)]">
-          <div className="grid gap-0 xl:grid-cols-5">
-            {menuColumns.map((column) => (
-              <section
-                key={column.title}
-                className="border-b border-[#eee2d7] px-6 py-6 xl:min-h-[250px] xl:border-b-0 xl:border-r xl:border-[#eee2d7]"
-              >
-                <h3 className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[#8f5b32]">
-                  {column.title}
-                </h3>
-                <div className="mt-4 space-y-2">
-                  {column.items.map((item) => {
-                    const isActive = isActivePath(pathname, item.href);
+      {/* Secondary breadcrumb bar - CF style */}
+      <div className="flex items-center justify-between border-b border-[#e5e7eb] bg-[#f8fafc] px-3 py-1.5">
+        <div className="flex items-center gap-2 text-[13px]">
+          <Link href="/dashboard" className="flex items-center gap-1 text-[#28456f] hover:text-[#f97316]">
+            <Home className="h-4 w-4" />
+          </Link>
+          <span className="text-[#9ca3af]">/</span>
+          <span className="font-medium text-[#28456f]">{activeItem?.label ?? "Dashboard"}</span>
+        </div>
+        <div className="flex items-center gap-2 text-[13px] font-medium text-[#28456f]">
+          {organizationName}
+        </div>
+        <div className="flex items-center gap-2">
+          <ContractorNotificationsCenter notifications={notifications} />
+        </div>
+      </div>
 
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMenuOpen(false)}
-                        aria-current={isActive ? "page" : undefined}
-                        className={[
-                          "block rounded-[4px] px-3 py-2 text-[13px] transition",
-                          isActive
-                            ? "bg-[#fff4e8] font-semibold text-[#221a14]"
-                            : "text-[#3d342d] hover:bg-[#fff8f2] hover:text-[#221a14]"
-                        ].join(" ")}
-                      >
-                        {item.label}
-                      </Link>
-                    );
-                  })}
+      {/* Mega Menu - CF style */}
+      {menuOpen ? (
+        <div className="absolute left-0 right-0 top-full z-50 border-b border-[#e5e7eb] bg-white shadow-lg">
+          <div className="mx-auto max-w-[1400px] px-4">
+            <div className="grid grid-cols-5 gap-0 divide-x divide-[#e5e7eb] py-4">
+              {menuColumns.map((column) => (
+                <div key={column.title} className="px-4">
+                  <h3 className="mb-3 text-[13px] font-semibold text-[#1f2937]">
+                    {column.title}
+                  </h3>
+                  <div className="space-y-0.5">
+                    {column.items.map((item, idx) => {
+                      const isActive = isActivePath(pathname, item.href);
+
+                      return (
+                        <Link
+                          key={`${item.href}-${idx}`}
+                          href={item.href}
+                          onClick={() => setMenuOpen(false)}
+                          className={[
+                            "flex items-center gap-2 rounded px-2 py-1.5 text-[13px]",
+                            isActive
+                              ? "bg-[#f97316]/10 font-medium text-[#f97316]"
+                              : "text-[#374151] hover:bg-[#f3f4f6] hover:text-[#28456f]"
+                          ].join(" ")}
+                        >
+                          {item.icon}
+                          <span>{item.label}</span>
+                          {item.starred && (
+                            <Star className="ml-auto h-3 w-3 fill-[#f97316] text-[#f97316]" />
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
-              </section>
-            ))}
-          </div>
-          {menuFooterActions.length > 0 ? (
-            <div className="grid gap-px border-t border-[#eee2d7] bg-[#eee2d7] xl:grid-cols-4">
-              {menuFooterActions.map((action) => (
-                <Link
-                  key={action.href}
-                  href={action.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="bg-[#f8f4ef] px-6 py-4 text-sm font-semibold text-[#221a14] transition hover:bg-[#fff8f2] hover:text-[#8e4515]"
-                >
-                  {action.label}
-                </Link>
               ))}
             </div>
-          ) : null}
+
+            {/* Footer actions - CF style */}
+            <div className="grid grid-cols-4 gap-0 border-t border-[#e5e7eb] bg-[#fafafa]">
+              <Link
+                href="/referral"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 border-r border-[#e5e7eb] px-4 py-3 text-[13px] font-medium text-[#28456f] hover:bg-[#f3f4f6] hover:text-[#f97316]"
+              >
+                <Gift className="h-4 w-4 text-[#f97316]" />
+                Refer Us (Earn $$$)
+              </Link>
+              <Link
+                href="/support"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 border-r border-[#e5e7eb] px-4 py-3 text-[13px] font-medium text-[#28456f] hover:bg-[#f3f4f6] hover:text-[#f97316]"
+              >
+                <Bug className="h-4 w-4 text-[#ef4444]" />
+                Submit an Issue
+              </Link>
+              <Link
+                href="/whats-new"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 border-r border-[#e5e7eb] px-4 py-3 text-[13px] font-medium text-[#28456f] hover:bg-[#f3f4f6] hover:text-[#f97316]"
+              >
+                <HelpCircle className="h-4 w-4 text-[#8b5cf6]" />
+                {"What's New"}
+              </Link>
+              <Link
+                href="/suggestion"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 px-4 py-3 text-[13px] font-medium text-[#28456f] hover:bg-[#f3f4f6] hover:text-[#f97316]"
+              >
+                <Lightbulb className="h-4 w-4 text-[#f59e0b]" />
+                Make a Suggestion
+              </Link>
+            </div>
+          </div>
         </div>
       ) : null}
     </div>

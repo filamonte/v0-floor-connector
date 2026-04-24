@@ -1,6 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  ChevronDown,
+  MoreVertical,
+  Plus,
+  Search,
+  Package,
+  Users,
+  Wrench,
+  HardHat,
+  FileText,
+  Layers,
+  Grid3X3,
+  Image
+} from "lucide-react";
 import type { CatalogItem, EstimateContentBlock, PlatformCatalogItemSeed, Vendor } from "@floorconnector/types";
 
 import { ContentBlockManager } from "@/components/catalog-manager/content-block-manager";
@@ -24,6 +38,16 @@ type DrawerState = {
   itemType: CatalogItem["itemType"];
 };
 
+const typeIcons: Record<CatalogItem["itemType"], React.ReactNode> = {
+  material: <Package className="h-4 w-4 text-[#28456f]" />,
+  labor: <Users className="h-4 w-4 text-[#28456f]" />,
+  service: <Wrench className="h-4 w-4 text-[#28456f]" />,
+  equipment: <Wrench className="h-4 w-4 text-[#f97316]" />,
+  subcontractor: <HardHat className="h-4 w-4 text-[#28456f]" />,
+  other: <FileText className="h-4 w-4 text-[#28456f]" />,
+  system: <Layers className="h-4 w-4 text-[#28456f]" />
+};
+
 export function InventoryManager({
   returnTo,
   items,
@@ -36,19 +60,18 @@ export function InventoryManager({
   saveContentBlockAction
 }: InventoryManagerProps) {
   const [search, setSearch] = useState("");
+  const [skuSearch, setSkuSearch] = useState("");
+  const [nameSearch, setNameSearch] = useState("");
+  const [unitSearch, setUnitSearch] = useState("");
+  const [muSearch, setMuSearch] = useState("");
+  const [costCodeFilter, setCostCodeFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState<"all" | CatalogItem["itemType"]>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "archived">("active");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [vendorFilter, setVendorFilter] = useState("all");
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const [itemMenuOpen, setItemMenuOpen] = useState(false);
   const [drawerState, setDrawerState] = useState<DrawerState | null>(null);
-  const categories = useMemo(
-    () =>
-      [...new Set(items.map((item) => item.category).filter((value): value is string => Boolean(value)))].sort(),
-    [items]
-  );
-  const filteredItems = useMemo(() => {
-    const query = search.trim().toLowerCase();
 
+  const filteredItems = useMemo(() => {
     return items.filter((item) => {
       if (typeFilter !== "all" && item.itemType !== typeFilter) {
         return false;
@@ -58,24 +81,34 @@ export function InventoryManager({
         return false;
       }
 
-      if (categoryFilter !== "all" && item.category !== categoryFilter) {
+      if (skuSearch && !(item.sku ?? "").toLowerCase().includes(skuSearch.toLowerCase())) {
         return false;
       }
 
-      if (vendorFilter !== "all" && item.vendorId !== vendorFilter) {
+      if (nameSearch && !item.name.toLowerCase().includes(nameSearch.toLowerCase())) {
         return false;
       }
 
-      if (!query) {
-        return true;
+      if (unitSearch && !item.unit.toLowerCase().includes(unitSearch.toLowerCase())) {
+        return false;
       }
 
-      return [item.name, item.description ?? "", item.itemType, item.unit, item.category ?? ""]
-        .join(" ")
-        .toLowerCase()
-        .includes(query);
+      if (muSearch && !item.markupPercent.toString().includes(muSearch)) {
+        return false;
+      }
+
+      if (search) {
+        const query = search.toLowerCase();
+        return [item.name, item.description ?? "", item.sku ?? "", item.unit]
+          .join(" ")
+          .toLowerCase()
+          .includes(query);
+      }
+
+      return true;
     });
-  }, [categoryFilter, items, search, statusFilter, typeFilter, vendorFilter]);
+  }, [items, typeFilter, statusFilter, skuSearch, nameSearch, unitSearch, muSearch, search]);
+
   const availableSeeds = useMemo(() => {
     return platformSeeds.filter(
       (seed) => !items.some((item) => item.sourceSeedId === seed.id)
@@ -91,217 +124,308 @@ export function InventoryManager({
   }
 
   return (
-    <div className="space-y-6">
-      <section className="space-y-4 rounded-[22px] border border-[#d8e0eb] bg-white p-5 shadow-[0_18px_50px_-45px_rgba(15,23,42,0.35)]">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#607492]">
-              Inventory Grid
-            </p>
-            <h3 className="mt-2 text-[1.5rem] font-semibold tracking-tight text-[#17243b]">
-              Materials, labor, services, equipment, subcontractors, other items, and systems
-            </h3>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#5f7190]">
-              This is the working contractor item master. Estimates pull from active rows only, systems expand from the same shared data, and archive/reactivate stays inline.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {([
-              "material",
-              "labor",
-              "service",
-              "equipment",
-              "subcontractor",
-              "other",
-              "system"
-            ] as const).map((itemType) => (
-              <button
-                key={itemType}
-                type="button"
-                onClick={() => openDrawer(null, itemType)}
-                className="rounded-full border border-[#d7deea] bg-white px-4 py-2 text-sm font-medium text-[#28456f]"
-              >
-                New {itemType}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_160px_160px_180px_180px]">
+    <div className="space-y-0">
+      {/* CF-style toolbar */}
+      <div className="flex items-center justify-between border-b border-[#e5e7eb] bg-white px-4 py-2">
+        {/* Search */}
+        <div className="relative w-72">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9ca3af]" />
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search item master"
-            className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+            placeholder="Search for All Items"
+            className="h-9 w-full rounded border border-[#d1d5db] bg-white pl-9 pr-3 text-[13px] text-[#374151] outline-none focus:border-[#28456f] focus:ring-1 focus:ring-[#28456f]"
           />
-          <select
-            value={typeFilter}
-            onChange={(event) =>
-              setTypeFilter(event.target.value as "all" | CatalogItem["itemType"])
-            }
-            className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-          >
-            <option value="all">All types</option>
-            <option value="material">Material</option>
-            <option value="labor">Labor</option>
-            <option value="service">Service</option>
-            <option value="equipment">Equipment</option>
-            <option value="subcontractor">Subcontractor</option>
-            <option value="other">Other</option>
-            <option value="system">System</option>
-          </select>
+        </div>
+
+        {/* Status filter */}
+        <div className="flex items-center gap-2">
           <select
             value={statusFilter}
-            onChange={(event) =>
-              setStatusFilter(event.target.value as "all" | "active" | "archived")
-            }
-            className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+            onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
+            className="h-9 rounded border border-[#d1d5db] bg-[#22c55e] px-3 text-[13px] font-medium text-white"
           >
-            <option value="all">All statuses</option>
             <option value="active">Active</option>
             <option value="archived">Archived</option>
-          </select>
-          <select
-            value={categoryFilter}
-            onChange={(event) => setCategoryFilter(event.target.value)}
-            className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-          >
-            <option value="all">All categories</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-          <select
-            value={vendorFilter}
-            onChange={(event) => setVendorFilter(event.target.value)}
-            className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-          >
-            <option value="all">All vendors</option>
-            {vendors.map((vendor) => (
-              <option key={vendor.id} value={vendor.id}>
-                {vendor.name}
-              </option>
-            ))}
+            <option value="all">All</option>
           </select>
         </div>
 
-        <div className="overflow-hidden rounded-[18px] border border-[#d8e0eb]">
-          <table className="min-w-full border-collapse">
-            <thead>
-              <tr className="bg-[#f6f8fc] text-left text-[11px] uppercase tracking-[0.12em] text-[#7c8ba3]">
-                <th className="px-3 py-3">Item</th>
-                <th className="px-3 py-3">Type</th>
-                <th className="px-3 py-3">Vendor / Category</th>
-                <th className="px-3 py-3 text-right">Cost</th>
-                <th className="px-3 py-3 text-right">MU%</th>
-                <th className="px-3 py-3 text-right">Hidden%</th>
-                <th className="px-3 py-3 text-right">Final Price</th>
-                <th className="px-3 py-3 text-center">Tax</th>
-                <th className="px-3 py-3">Status</th>
-                <th className="px-3 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredItems.map((item) => (
-                <tr key={item.id} className="border-t border-[#edf1f6] text-sm text-[#334a70]">
-                  <td className="px-3 py-3">
-                    <div className="font-medium">{item.name}</div>
-                    <div className="text-xs text-[#6f8098]">
-                      {item.unit}
-                      {item.description ? ` • ${item.description}` : ""}
+        {/* Actions dropdown */}
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setActionsOpen(!actionsOpen)}
+              className="flex h-9 items-center gap-1 rounded border border-[#28456f] bg-[#28456f] px-4 text-[13px] font-medium text-white"
+            >
+              Actions
+              <ChevronDown className="h-4 w-4" />
+            </button>
+            {actionsOpen && (
+              <div className="absolute right-0 top-full z-10 mt-1 w-56 rounded border border-[#e5e7eb] bg-white py-1 shadow-lg">
+                <button className="flex w-full items-center gap-2 px-4 py-2 text-left text-[13px] text-[#374151] hover:bg-[#f3f4f6]">
+                  Video: Cost Codes vs Cost Items
+                </button>
+                <button className="flex w-full items-center gap-2 px-4 py-2 text-left text-[13px] text-[#374151] hover:bg-[#f3f4f6]">
+                  Import from 1build.com Items Database
+                </button>
+                <button className="flex w-full items-center gap-2 px-4 py-2 text-left text-[13px] text-[#374151] hover:bg-[#f3f4f6]">
+                  Import/Export to CSV
+                </button>
+                <button className="flex w-full items-center gap-2 px-4 py-2 text-left text-[13px] text-[#374151] hover:bg-[#f3f4f6]">
+                  Apply/Bulk Markup
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Add Item dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setItemMenuOpen(!itemMenuOpen)}
+              className="flex h-9 items-center gap-1 rounded border border-[#22c55e] bg-[#22c55e] px-4 text-[13px] font-medium text-white"
+            >
+              <Plus className="h-4 w-4" />
+              Item
+              <ChevronDown className="h-4 w-4" />
+            </button>
+            {itemMenuOpen && (
+              <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded border border-[#e5e7eb] bg-white py-1 shadow-lg">
+                <button
+                  type="button"
+                  onClick={() => { openDrawer(null, "material"); setItemMenuOpen(false); }}
+                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-[13px] text-[#374151] hover:bg-[#f3f4f6]"
+                >
+                  <Plus className="h-4 w-4 text-[#22c55e]" />
+                  Material Item
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { openDrawer(null, "labor"); setItemMenuOpen(false); }}
+                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-[13px] text-[#374151] hover:bg-[#f3f4f6]"
+                >
+                  <Plus className="h-4 w-4 text-[#22c55e]" />
+                  Labor Item
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { openDrawer(null, "equipment"); setItemMenuOpen(false); }}
+                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-[13px] text-[#374151] hover:bg-[#f3f4f6]"
+                >
+                  <Plus className="h-4 w-4 text-[#22c55e]" />
+                  Equipment Item
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { openDrawer(null, "subcontractor"); setItemMenuOpen(false); }}
+                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-[13px] text-[#374151] hover:bg-[#f3f4f6]"
+                >
+                  <Plus className="h-4 w-4 text-[#22c55e]" />
+                  Subcontractor Item
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { openDrawer(null, "other"); setItemMenuOpen(false); }}
+                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-[13px] text-[#374151] hover:bg-[#f3f4f6]"
+                >
+                  <Plus className="h-4 w-4 text-[#22c55e]" />
+                  Other Item
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { openDrawer(null, "system"); setItemMenuOpen(false); }}
+                  className="flex w-full items-center gap-2 px-4 py-2 text-left text-[13px] text-[#374151] hover:bg-[#f3f4f6]"
+                >
+                  <Plus className="h-4 w-4 text-[#22c55e]" />
+                  Item Group
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* CF-style dense data grid */}
+      <div className="overflow-x-auto bg-white">
+        <table className="w-full min-w-[1000px] border-collapse text-[13px]">
+          <thead>
+            {/* Header row */}
+            <tr className="border-b border-[#e5e7eb] bg-[#f9fafb]">
+              <th className="w-8 border-r border-[#e5e7eb] px-2 py-2">
+                <input type="checkbox" className="h-4 w-4 rounded border-[#d1d5db]" />
+              </th>
+              <th className="w-16 border-r border-[#e5e7eb] px-2 py-2 text-left font-medium text-[#374151]">
+                Type
+              </th>
+              <th className="w-24 border-r border-[#e5e7eb] px-2 py-2 text-left font-medium text-[#374151]">
+                SKU
+              </th>
+              <th className="min-w-[200px] border-r border-[#e5e7eb] px-2 py-2 text-left font-medium text-[#374151]">
+                <div className="flex items-center gap-1">
+                  Name
+                  <ChevronDown className="h-3 w-3" />
+                </div>
+              </th>
+              <th className="w-24 border-r border-[#e5e7eb] px-2 py-2 text-right font-medium text-[#374151]">
+                Unit Cost
+              </th>
+              <th className="w-24 border-r border-[#e5e7eb] px-2 py-2 text-left font-medium text-[#374151]">
+                Unit
+              </th>
+              <th className="w-20 border-r border-[#e5e7eb] px-2 py-2 text-right font-medium text-[#374151]">
+                MU %
+              </th>
+              <th className="w-24 border-r border-[#e5e7eb] px-2 py-2 text-right font-medium text-[#374151]">
+                Total
+              </th>
+              <th className="min-w-[150px] border-r border-[#e5e7eb] px-2 py-2 text-left font-medium text-[#374151]">
+                Cost Code
+              </th>
+              <th className="w-10 px-2 py-2"></th>
+            </tr>
+            {/* Filter row */}
+            <tr className="border-b border-[#e5e7eb] bg-white">
+              <th className="border-r border-[#e5e7eb] px-2 py-1.5"></th>
+              <th className="border-r border-[#e5e7eb] px-2 py-1.5"></th>
+              <th className="border-r border-[#e5e7eb] px-1 py-1.5">
+                <input
+                  value={skuSearch}
+                  onChange={(e) => setSkuSearch(e.target.value)}
+                  placeholder="Search SKU"
+                  className="h-7 w-full rounded border border-[#d1d5db] px-2 text-[12px] font-normal text-[#374151] outline-none focus:border-[#28456f]"
+                />
+              </th>
+              <th className="border-r border-[#e5e7eb] px-1 py-1.5">
+                <input
+                  value={nameSearch}
+                  onChange={(e) => setNameSearch(e.target.value)}
+                  placeholder="Search Name"
+                  className="h-7 w-full rounded border border-[#d1d5db] px-2 text-[12px] font-normal text-[#374151] outline-none focus:border-[#28456f]"
+                />
+              </th>
+              <th className="border-r border-[#e5e7eb] px-1 py-1.5"></th>
+              <th className="border-r border-[#e5e7eb] px-1 py-1.5">
+                <input
+                  value={unitSearch}
+                  onChange={(e) => setUnitSearch(e.target.value)}
+                  placeholder="Search Unit"
+                  className="h-7 w-full rounded border border-[#d1d5db] px-2 text-[12px] font-normal text-[#374151] outline-none focus:border-[#28456f]"
+                />
+              </th>
+              <th className="border-r border-[#e5e7eb] px-1 py-1.5">
+                <input
+                  value={muSearch}
+                  onChange={(e) => setMuSearch(e.target.value)}
+                  placeholder="Search MU %"
+                  className="h-7 w-full rounded border border-[#d1d5db] px-2 text-[12px] font-normal text-[#374151] outline-none focus:border-[#28456f]"
+                />
+              </th>
+              <th className="border-r border-[#e5e7eb] px-1 py-1.5"></th>
+              <th className="border-r border-[#e5e7eb] px-1 py-1.5">
+                <select
+                  value={costCodeFilter}
+                  onChange={(e) => setCostCodeFilter(e.target.value)}
+                  className="h-7 w-full rounded border border-[#d1d5db] px-1 text-[12px] font-normal text-[#9ca3af] outline-none focus:border-[#28456f]"
+                >
+                  <option value="all">Select Cost Code</option>
+                </select>
+              </th>
+              <th className="px-1 py-1.5"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredItems.map((item) => {
+              const pricing = calculateSharedUnitPricing({
+                baseUnitCost: item.defaultUnitCost,
+                baseUnitPrice: item.defaultUnitPrice,
+                markupPercent: item.markupPercent,
+                hiddenMarkupPercent: item.hiddenMarkupPercent
+              });
+
+              return (
+                <tr
+                  key={item.id}
+                  onClick={() => openDrawer(item, item.itemType)}
+                  className="cursor-pointer border-b border-[#e5e7eb] hover:bg-[#f9fafb]"
+                >
+                  <td className="border-r border-[#e5e7eb] px-2 py-2 text-center">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-[#d1d5db]"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </td>
+                  <td className="border-r border-[#e5e7eb] px-2 py-2">
+                    <div className="flex items-center justify-center">
+                      {typeIcons[item.itemType]}
                     </div>
                   </td>
-                  <td className="px-3 py-3 capitalize">{item.itemType}</td>
-                  <td className="px-3 py-3 text-[#6f8098]">
-                    <div>{vendors.find((vendor) => vendor.id === item.vendorId)?.name ?? "No vendor"}</div>
-                    <div className="text-xs">{item.category ?? "No category"}</div>
+                  <td className="border-r border-[#e5e7eb] px-2 py-2 text-[#374151]">
+                    {item.sku || "-"}
                   </td>
-                  <td className="px-3 py-3 text-right">${item.defaultUnitCost}</td>
-                  <td className="px-3 py-3 text-right">{item.markupPercent}%</td>
-                  <td className="px-3 py-3 text-right">{item.hiddenMarkupPercent}%</td>
-                  <td className="px-3 py-3 text-right">
-                    ${formatMoneyValue(
-                      calculateSharedUnitPricing({
-                        baseUnitCost: item.defaultUnitCost,
-                        baseUnitPrice: item.defaultUnitPrice,
-                        markupPercent: item.markupPercent,
-                        hiddenMarkupPercent: item.hiddenMarkupPercent
-                      }).finalUnitPrice
-                    )}
-                  </td>
-                  <td className="px-3 py-3 text-center">{item.taxable ? "T" : "E"}</td>
-                  <td className="px-3 py-3 capitalize">{item.status}</td>
-                  <td className="px-3 py-3">
-                    <div className="flex justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openDrawer(item, item.itemType)}
-                        className="rounded-full border border-[#d7deea] bg-white px-3 py-2 text-xs font-medium text-[#28456f]"
-                      >
-                        Edit
-                      </button>
-                      <form action={saveItemAction}>
-                        <input type="hidden" name="returnTo" value={returnTo} />
-                        <input type="hidden" name="itemId" value={item.id} />
-                        <input type="hidden" name="itemType" value={item.itemType} />
-                        <input type="hidden" name="name" value={item.name} />
-                        <input type="hidden" name="description" value={item.description ?? ""} />
-                        <input type="hidden" name="internalNotes" value={item.internalNotes ?? ""} />
-                        <input type="hidden" name="unit" value={item.unit} />
-                        <input type="hidden" name="defaultUnitCost" value={item.defaultUnitCost} />
-                        <input type="hidden" name="defaultUnitPrice" value={item.defaultUnitPrice ?? ""} />
-                        <input type="hidden" name="markupPercent" value={item.markupPercent} />
-                        <input type="hidden" name="hiddenMarkupPercent" value={item.hiddenMarkupPercent} />
-                        <input type="hidden" name="vendorId" value={item.vendorId ?? ""} />
-                        <input type="hidden" name="category" value={item.category ?? ""} />
-                        <input type="hidden" name="sku" value={item.sku ?? ""} />
-                        <input type="hidden" name="photoStoragePath" value={item.photoStoragePath ?? ""} />
-                        <input
-                          type="hidden"
-                          name="status"
-                          value={item.status === "active" ? "archived" : "active"}
-                        />
-                        <input type="hidden" name="isDefault" value={item.isDefault ? "on" : ""} />
-                        {item.taxable ? <input type="hidden" name="taxable" value="on" /> : null}
-                        <button
-                          type="submit"
-                          className="rounded-full border border-[#d7deea] bg-white px-3 py-2 text-xs font-medium text-[#28456f]"
-                        >
-                          {item.status === "active" ? "Archive" : "Reactivate"}
-                        </button>
-                      </form>
+                  <td className="border-r border-[#e5e7eb] px-2 py-2">
+                    <div className="flex items-center gap-2">
+                      {item.photoStoragePath && (
+                        <Image className="h-4 w-4 text-[#9ca3af]" />
+                      )}
+                      <span className="text-[#374151]">{item.name}</span>
                     </div>
+                  </td>
+                  <td className="border-r border-[#e5e7eb] px-2 py-2 text-right text-[#374151]">
+                    ${formatMoneyValue(item.defaultUnitCost)}
+                  </td>
+                  <td className="border-r border-[#e5e7eb] px-2 py-2 text-[#374151]">
+                    {item.unit}
+                  </td>
+                  <td className="border-r border-[#e5e7eb] px-2 py-2 text-right text-[#374151]">
+                    {item.markupPercent}
+                  </td>
+                  <td className="border-r border-[#e5e7eb] px-2 py-2 text-right text-[#374151]">
+                    ${formatMoneyValue(pricing.finalUnitPrice)}
+                  </td>
+                  <td className="border-r border-[#e5e7eb] px-2 py-2 text-[#6b7280]">
+                    {item.category || "-"}
+                  </td>
+                  <td className="px-2 py-2 text-center">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); openDrawer(item, item.itemType); }}
+                      className="rounded p-1 hover:bg-[#f3f4f6]"
+                    >
+                      <FileText className="h-4 w-4 text-[#6b7280]" />
+                    </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
-        {availableSeeds.length > 0 ? (
-          <div className="rounded-[18px] border border-[#d8e0eb] bg-[#fbfcfe] p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#607492]">
-              Platform starter items ready to adopt
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {availableSeeds.slice(0, 12).map((seed) => (
-                <form key={seed.id} action={adoptSeedAction}>
-                  <input type="hidden" name="returnTo" value={returnTo} />
-                  <input type="hidden" name="seedId" value={seed.id} />
-                  <button
-                    type="submit"
-                    className="rounded-full border border-[#d7deea] bg-white px-3 py-2 text-xs font-medium text-[#28456f]"
-                  >
-                    Adopt {seed.name}
-                  </button>
-                </form>
-              ))}
-            </div>
+      {/* Platform seeds section */}
+      {availableSeeds.length > 0 ? (
+        <div className="border-t border-[#e5e7eb] bg-[#fafafa] px-4 py-4">
+          <p className="text-[12px] font-semibold uppercase tracking-wider text-[#6b7280]">
+            Platform starter items ready to adopt
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {availableSeeds.slice(0, 12).map((seed) => (
+              <form key={seed.id} action={adoptSeedAction}>
+                <input type="hidden" name="returnTo" value={returnTo} />
+                <input type="hidden" name="seedId" value={seed.id} />
+                <button
+                  type="submit"
+                  className="rounded border border-[#d1d5db] bg-white px-3 py-1.5 text-[12px] font-medium text-[#374151] hover:border-[#28456f] hover:bg-[#f9fafb]"
+                >
+                  Adopt {seed.name}
+                </button>
+              </form>
+            ))}
           </div>
-        ) : null}
-      </section>
+        </div>
+      ) : null}
 
       <ContentBlockManager
         returnTo={returnTo}
