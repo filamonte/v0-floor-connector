@@ -149,7 +149,7 @@ function buildMenuColumns(items: readonly ProtectedAppNavItem[]): MenuColumn[] {
       items: [
         { label: "Enable/Disable Features", href: "/settings/modules", icon: <Settings className="h-4 w-4" /> },
         { label: "Settings", href: "/settings", icon: <Settings className="h-4 w-4" /> },
-        { label: "Cost Items Database", href: "/materials", icon: <Package className="h-4 w-4" /> },
+        { label: "Cost Items Database", href: "/cost-items-database", icon: <Package className="h-4 w-4" /> },
         { label: "Trainings", href: "/settings", icon: <HardHat className="h-4 w-4" /> },
         { label: "Support", href: "/settings", icon: <HelpCircle className="h-4 w-4" /> },
       ]

@@ -140,6 +140,12 @@ export const protectedAppNavItems: readonly ProtectedAppNavItem[] = [
     section: "operations"
   },
   {
+    href: "/cost-items-database",
+    label: "Cost Items Database",
+    minRole: "member",
+    section: "admin"
+  },
+  {
     href: "/settings",
     label: "Settings",
     minRole: "admin",
