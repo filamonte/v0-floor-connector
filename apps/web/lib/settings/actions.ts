@@ -5,7 +5,17 @@ import { redirect } from "next/navigation";
 
 import {
   adoptPlatformCatalogItemSeedForOrganization,
+  recordCatalogItemInventoryAdjustment,
+  syncCatalogItemInventoryTracking,
+  deleteInventoryItem,
+  deleteInventoryTransaction,
+  deleteCatalogItemFile,
+  upsertInventoryItem,
+  upsertInventoryTransaction,
+  upsertTaxCode,
+  replaceCatalogItemFiles,
   replaceOrganizationCatalogSystemComponents,
+  uploadCatalogItemFiles,
   upsertOrganizationCatalogItem
 } from "@/lib/catalogs/data";
 import {
@@ -32,10 +42,13 @@ import {
 import {
   catalogItemSettingsInputSchema,
   documentTemplateSettingsInputSchema,
+  inventoryItemSettingsInputSchema,
+  inventoryTransactionSettingsInputSchema,
   organizationFeatureOverrideInputSchema,
   organizationFinancialSettingsInputSchema,
   organizationMembershipRoleInputSchema,
   organizationProfileInputSchema,
+  taxCodeSettingsInputSchema,
   organizationWorkflowSettingsInputSchema
 } from "./schemas";
 
@@ -76,6 +89,11 @@ function revalidateSettingsSlice() {
   revalidatePath("/settings/organization");
   revalidatePath("/settings/templates");
   revalidatePath("/settings/catalogs");
+  revalidatePath("/cost-items-database");
+  revalidatePath("/cost-items-database/items");
+  revalidatePath("/cost-items-database/systems");
+  revalidatePath("/cost-items-database/inventory");
+  revalidatePath("/cost-items-database/settings");
   revalidatePath("/materials");
   revalidatePath("/settings/financial");
   revalidatePath("/settings/workflows");
@@ -216,6 +234,7 @@ export async function updateOrganizationProfileAction(formData: FormData) {
 
 export async function updateOrganizationFinancialSettingsAction(formData: FormData) {
   const scope = await requireSettingsScope();
+  const returnTo = getFieldValue(formData, "returnTo") || "/settings/financial";
   const result = organizationFinancialSettingsInputSchema.safeParse({
     defaultTaxBehavior: getFieldValue(formData, "defaultTaxBehavior"),
     defaultTaxRate: getFieldValue(formData, "defaultTaxRate"),
@@ -224,7 +243,7 @@ export async function updateOrganizationFinancialSettingsAction(formData: FormDa
 
   if (!result.success) {
     redirect(
-      buildRedirect("/settings/financial", {
+      buildRedirect(returnTo, {
         error:
           result.error.issues[0]?.message ??
           "Unable to update organization financial settings."
@@ -240,7 +259,7 @@ export async function updateOrganizationFinancialSettingsAction(formData: FormDa
     });
   } catch (error) {
     redirect(
-      buildRedirect("/settings/financial", {
+      buildRedirect(returnTo, {
         error:
           error instanceof Error
             ? error.message
@@ -252,7 +271,7 @@ export async function updateOrganizationFinancialSettingsAction(formData: FormDa
   revalidateSettingsSlice();
 
   redirect(
-    buildRedirect("/settings/financial", {
+    buildRedirect(returnTo, {
       message: `Financial defaults for this organization were updated.`
     })
   );
@@ -355,8 +374,17 @@ export async function updateOrganizationWorkflowSettingsAction(formData: FormDat
 export async function updateOrganizationCatalogItemAction(formData: FormData) {
   await requireSettingsScope();
   const returnTo = getFieldValue(formData, "returnTo") || "/settings/catalogs";
+  const attachmentFiles = formData
+    .getAll("catalogItemFiles")
+    .filter((value): value is File => value instanceof File && value.size > 0);
+  const photoFile = formData.get("catalogItemPhoto");
+  const uploadFiles = [
+    ...(photoFile instanceof File && photoFile.size > 0 ? [photoFile] : []),
+    ...attachmentFiles
+  ];
   const result = catalogItemSettingsInputSchema.safeParse({
     itemId: getFieldValue(formData, "itemId"),
+    inventoryItemId: getFieldValue(formData, "inventoryItemId"),
     itemType: getFieldValue(formData, "itemType"),
     name: getFieldValue(formData, "name"),
     description: getFieldValue(formData, "description"),
@@ -367,12 +395,20 @@ export async function updateOrganizationCatalogItemAction(formData: FormData) {
     markupPercent: getFieldValue(formData, "markupPercent"),
     hiddenMarkupPercent: getFieldValue(formData, "hiddenMarkupPercent"),
     taxable: getCheckboxValue(formData, "taxable"),
+    taxCodeId: getFieldValue(formData, "taxCodeId"),
     vendorId: getFieldValue(formData, "vendorId"),
     category: getFieldValue(formData, "category"),
+    costCode: getFieldValue(formData, "costCode"),
     sku: getFieldValue(formData, "sku"),
     photoStoragePath: getFieldValue(formData, "photoStoragePath"),
     status: getFieldValue(formData, "status"),
-    isDefault: getCheckboxValue(formData, "isDefault")
+    isDefault: getCheckboxValue(formData, "isDefault"),
+    trackInventory: getCheckboxValue(formData, "trackInventory"),
+    inventoryLocation: getFieldValue(formData, "inventoryLocation"),
+    inventoryReorderPoint: getFieldValue(formData, "inventoryReorderPoint"),
+    inventoryAdjustmentQuantity: getFieldValue(formData, "inventoryAdjustmentQuantity"),
+    inventoryAdjustmentNote: getFieldValue(formData, "inventoryAdjustmentNote"),
+    submitMode: getFieldValue(formData, "submitMode") || "save"
   });
 
   if (!result.success) {
@@ -385,14 +421,69 @@ export async function updateOrganizationCatalogItemAction(formData: FormData) {
   }
 
   let item;
+  let linkedInventoryItem = null;
 
   try {
     item = await upsertOrganizationCatalogItem(result.data);
+
+    if (uploadFiles.length > 0) {
+      const uploaded =
+        photoFile instanceof File && photoFile.size > 0
+          ? await replaceCatalogItemFiles({
+              catalogItemId: item.id,
+              files: uploadFiles,
+              replacedPaths: item.photoStoragePath ? [item.photoStoragePath] : [],
+              photoFileName: photoFile.name,
+              next: returnTo
+            })
+          : await uploadCatalogItemFiles({
+              catalogItemId: item.id,
+              files: uploadFiles,
+              photoFileName: null,
+              next: returnTo
+            });
+
+      if (uploaded.photoStoragePath && uploaded.photoStoragePath !== item.photoStoragePath) {
+        item = await upsertOrganizationCatalogItem({
+          ...result.data,
+          itemId: item.id,
+          photoStoragePath: uploaded.photoStoragePath
+        });
+      }
+    }
+
+    linkedInventoryItem = await syncCatalogItemInventoryTracking({
+      catalogItemId: item.id,
+      inventoryItemId: result.data.inventoryItemId,
+      name: item.name,
+      sku: item.sku,
+      description: item.description,
+      category: item.category,
+      unitOfMeasure: item.unit,
+      defaultUnitCost: item.defaultUnitCost,
+      taxable: item.taxable,
+      trackInventory: result.data.trackInventory,
+      reorderPoint: result.data.inventoryReorderPoint,
+      location: result.data.inventoryLocation,
+      itemStatus: item.status
+    });
+
+    if (result.data.inventoryAdjustmentQuantity) {
+      if (!result.data.trackInventory || !linkedInventoryItem) {
+        throw new Error("Enable inventory tracking before recording a manual inventory adjustment.");
+      }
+
+      await recordCatalogItemInventoryAdjustment({
+        inventoryItemId: linkedInventoryItem.id,
+        quantityChange: result.data.inventoryAdjustmentQuantity,
+        note: result.data.inventoryAdjustmentNote
+      });
+    }
   } catch (error) {
     redirect(
       buildRedirect(returnTo, {
-        error:
-          error instanceof Error
+          error:
+            error instanceof Error
             ? error.message
             : "Unable to update reusable catalog item."
       })
@@ -403,7 +494,241 @@ export async function updateOrganizationCatalogItemAction(formData: FormData) {
 
   redirect(
     buildRedirect(returnTo, {
-      message: `${item.name} was saved successfully.`
+      message:
+        result.data.inventoryAdjustmentQuantity && linkedInventoryItem
+          ? `${item.name} was saved and the inventory adjustment was recorded.`
+          : `${item.name} was saved successfully.`
+    })
+  );
+}
+
+export async function updateTaxCodeAction(formData: FormData) {
+  await requireSettingsScope();
+  const returnTo = getFieldValue(formData, "returnTo") || "/cost-items-database";
+  const result = taxCodeSettingsInputSchema.safeParse({
+    taxCodeId: getFieldValue(formData, "taxCodeId"),
+    name: getFieldValue(formData, "name"),
+    rate: getFieldValue(formData, "rate"),
+    jurisdiction: getFieldValue(formData, "jurisdiction"),
+    active: getCheckboxValue(formData, "active")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(returnTo, {
+        error: result.error.issues[0]?.message ?? "Unable to save tax code."
+      })
+    );
+  }
+
+  try {
+    await upsertTaxCode(result.data);
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error: error instanceof Error ? error.message : "Unable to save tax code."
+      })
+    );
+  }
+
+  revalidateSettingsSlice();
+
+  redirect(
+    buildRedirect(returnTo, {
+      message: "Tax code was saved successfully."
+    })
+  );
+}
+
+export async function updateInventoryItemAction(formData: FormData) {
+  await requireSettingsScope();
+  const returnTo = getFieldValue(formData, "returnTo") || "/cost-items-database";
+  const result = inventoryItemSettingsInputSchema.safeParse({
+    inventoryItemId: getFieldValue(formData, "inventoryItemId"),
+    name: getFieldValue(formData, "name"),
+    sku: getFieldValue(formData, "sku"),
+    description: getFieldValue(formData, "description"),
+    category: getFieldValue(formData, "category"),
+    unitOfMeasure: getFieldValue(formData, "unitOfMeasure"),
+    reorderPoint: getFieldValue(formData, "reorderPoint"),
+    defaultUnitCost: getFieldValue(formData, "defaultUnitCost"),
+    taxable: getCheckboxValue(formData, "taxable"),
+    status: getFieldValue(formData, "status")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(returnTo, {
+        error: result.error.issues[0]?.message ?? "Unable to save inventory item."
+      })
+    );
+  }
+
+  try {
+    await upsertInventoryItem(result.data);
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error: error instanceof Error ? error.message : "Unable to save inventory item."
+      })
+    );
+  }
+
+  revalidateSettingsSlice();
+
+  redirect(
+    buildRedirect(returnTo, {
+      message: "Inventory item was saved successfully."
+    })
+  );
+}
+
+export async function deleteInventoryItemAction(formData: FormData) {
+  await requireSettingsScope();
+  const returnTo = getFieldValue(formData, "returnTo") || "/cost-items-database";
+  const inventoryItemId = getFieldValue(formData, "inventoryItemId");
+
+  if (!inventoryItemId) {
+    redirect(
+      buildRedirect(returnTo, {
+        error: "Inventory item id is required."
+      })
+    );
+  }
+
+  try {
+    await deleteInventoryItem(inventoryItemId);
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error: error instanceof Error ? error.message : "Unable to delete inventory item."
+      })
+    );
+  }
+
+  revalidateSettingsSlice();
+
+  redirect(
+    buildRedirect(returnTo, {
+      message: "Inventory item was deleted."
+    })
+  );
+}
+
+export async function updateInventoryTransactionAction(formData: FormData) {
+  await requireSettingsScope();
+  const returnTo = getFieldValue(formData, "returnTo") || "/cost-items-database";
+  const result = inventoryTransactionSettingsInputSchema.safeParse({
+    transactionId: getFieldValue(formData, "transactionId"),
+    inventoryItemId: getFieldValue(formData, "inventoryItemId"),
+    transactionType: getFieldValue(formData, "transactionType"),
+    quantityChange: getFieldValue(formData, "quantityChange"),
+    unitCost: getFieldValue(formData, "unitCost"),
+    referenceType: getFieldValue(formData, "referenceType"),
+    referenceId: getFieldValue(formData, "referenceId"),
+    notes: getFieldValue(formData, "notes")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          result.error.issues[0]?.message ?? "Unable to save inventory transaction."
+      })
+    );
+  }
+
+  try {
+    await upsertInventoryTransaction(result.data);
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to save inventory transaction."
+      })
+    );
+  }
+
+  revalidateSettingsSlice();
+
+  redirect(
+    buildRedirect(returnTo, {
+      message: "Inventory transaction was saved successfully."
+    })
+  );
+}
+
+export async function deleteInventoryTransactionAction(formData: FormData) {
+  await requireSettingsScope();
+  const returnTo = getFieldValue(formData, "returnTo") || "/cost-items-database";
+  const transactionId = getFieldValue(formData, "transactionId");
+
+  if (!transactionId) {
+    redirect(
+      buildRedirect(returnTo, {
+        error: "Inventory transaction id is required."
+      })
+    );
+  }
+
+  try {
+    await deleteInventoryTransaction(transactionId);
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to delete inventory transaction."
+      })
+    );
+  }
+
+  revalidateSettingsSlice();
+
+  redirect(
+    buildRedirect(returnTo, {
+      message: "Inventory transaction was deleted."
+    })
+  );
+}
+
+export async function deleteOrganizationCatalogItemFileAction(formData: FormData) {
+  await requireSettingsScope();
+  const returnTo = getFieldValue(formData, "returnTo") || "/cost-items-database";
+  const catalogItemId = getFieldValue(formData, "catalogItemId");
+  const filePath = getFieldValue(formData, "filePath");
+
+  if (!catalogItemId || !filePath) {
+    redirect(
+      buildRedirect(returnTo, {
+        error: "Catalog item file details are required."
+      })
+    );
+  }
+
+  try {
+    await deleteCatalogItemFile({
+      catalogItemId,
+      filePath,
+      next: returnTo
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error: error instanceof Error ? error.message : "Unable to delete catalog item file."
+      })
+    );
+  }
+
+  revalidateSettingsSlice();
+  revalidatePath("/cost-items-database");
+
+  redirect(
+    buildRedirect(returnTo, {
+      message: "Catalog item file was removed."
     })
   );
 }
@@ -449,7 +774,8 @@ export async function updateOrganizationCatalogSystemComponentsAction(
   formData: FormData
 ) {
   await requireSettingsScope();
-  const returnTo = getFieldValue(formData, "returnTo") || "/materials";
+  const returnTo =
+    getFieldValue(formData, "returnTo") || "/cost-items-database/systems";
   const systemCatalogItemId = getFieldValue(formData, "systemCatalogItemId");
   const componentCatalogItemIds = getFieldValues(formData, "componentCatalogItemId");
   const quantitiesPerUnit = getFieldValues(formData, "componentQuantityPerUnit");
@@ -521,6 +847,7 @@ export async function updateOrganizationCatalogSystemComponentsAction(
 
 export async function updateOrganizationFeatureOverrideAction(formData: FormData) {
   const scope = await requireSettingsScope();
+  const returnTo = getFieldValue(formData, "returnTo") || "/settings/modules";
   const result = organizationFeatureOverrideInputSchema.safeParse({
     key: getFieldValue(formData, "key"),
     name: getFieldValue(formData, "name"),
@@ -532,7 +859,7 @@ export async function updateOrganizationFeatureOverrideAction(formData: FormData
 
   if (!result.success) {
     redirect(
-      buildRedirect("/settings/modules", {
+      buildRedirect(returnTo, {
         error:
           result.error.issues[0]?.message ?? "Unable to update module override."
       })
@@ -547,7 +874,7 @@ export async function updateOrganizationFeatureOverrideAction(formData: FormData
     });
   } catch (error) {
     redirect(
-      buildRedirect("/settings/modules", {
+      buildRedirect(returnTo, {
         error:
           error instanceof Error ? error.message : "Unable to update module override."
       })
@@ -557,7 +884,7 @@ export async function updateOrganizationFeatureOverrideAction(formData: FormData
   revalidateSettingsSlice();
 
   redirect(
-    buildRedirect("/settings/modules", {
+    buildRedirect(returnTo, {
       message: "Organization module override was updated."
     })
   );

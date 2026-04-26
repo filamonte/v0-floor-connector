@@ -5,6 +5,14 @@ export type IntegrationName =
   | "stripe";
 
 export {
+  isPostmarkEmailConfigured,
+  sendPostmarkEmail
+} from "./communications/postmark";
+export type {
+  PostmarkEmailInput,
+  PostmarkEmailResult
+} from "./communications/postmark";
+export {
   createPaymentGatewayCheckoutSession,
   getPaymentGatewayAdapter,
   verifyAndNormalizePaymentGatewayWebhookEvent

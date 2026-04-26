@@ -4,22 +4,39 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { canTransitionEstimateStatus } from "@floorconnector/domain";
-import type { CatalogItem, EstimateStatus } from "@floorconnector/types";
+import type { CatalogItem, EstimateLineItem, EstimateStatus } from "@floorconnector/types";
 
-import { upsertOrganizationCatalogItem } from "@/lib/catalogs/data";
+import { listCatalogItems, upsertOrganizationCatalogItem } from "@/lib/catalogs/data";
 import {
+  buildExpandedSystemPreview,
+  type ExpandedSystemPreview
+} from "@/lib/catalogs/system-expansion";
+import {
+  addEstimatePortalComment,
+  approveEstimateFromPortal,
   EstimateVersionConflictError,
   createEstimate,
   deleteEstimateAttachmentFiles,
+  insertCatalogItemToEstimate,
+  insertSystemToEstimate,
   quickCreateEstimateFromContext,
+  rejectEstimateFromPortal,
+  sendEstimateToCustomer,
   syncEstimateAttachments,
   updateEstimate,
   updateEstimateStatus,
   uploadEstimateAttachmentFiles
 } from "./data";
+import type { EstimateApprovalOrchestrationState } from "./approval-orchestration";
+import { resolveEstimateApprovalOrchestration } from "./approval-orchestration";
 import {
+  estimateCatalogInsertInputSchema,
   estimateInputSchema,
-  estimateQuickCreateInputSchema
+  estimatePortalCommentInputSchema,
+  estimatePortalDecisionInputSchema,
+  estimateQuickCreateInputSchema,
+  estimateSendToCustomerInputSchema,
+  estimateSystemInsertInputSchema
 } from "./schemas";
 
 function getFieldValue(formData: FormData, key: string) {
@@ -34,6 +51,27 @@ function getFieldValues(formData: FormData, key: string) {
 
 function getCheckboxValue(formData: FormData, key: string) {
   return formData.get(key) === "on";
+}
+
+const forbiddenEstimatePricingFields = [
+  "lineItemItemType",
+  "lineItemName",
+  "lineItemDescription",
+  "lineItemUnit",
+  "lineItemUnitPrice",
+  "lineItemBaseUnitCost",
+  "lineItemBaseUnitPrice",
+  "lineItemMarkupPercent",
+  "lineItemHiddenMarkupPercent",
+  "lineItemUnitPriceBeforeHiddenMarkup",
+  "lineItemVisibleMarkupAmount",
+  "lineItemHiddenMarkupAmount",
+  "lineItemCostCode",
+  "lineItemTaxCode"
+] as const;
+
+function hasForbiddenEstimatePricingFields(formData: FormData) {
+  return forbiddenEstimatePricingFields.some((key) => formData.has(key));
 }
 
 function buildRedirect(
@@ -54,6 +92,20 @@ function buildRedirect(
 }
 
 function parseEstimateInput(formData: FormData) {
+  if (hasForbiddenEstimatePricingFields(formData)) {
+    return {
+      success: false as const,
+      error: {
+        issues: [
+          {
+            message:
+              "Estimate pricing must be derived on the server. Client pricing fields are not accepted."
+          }
+        ]
+      }
+    };
+  }
+
   const lineItemRowKeys = getFieldValues(formData, "lineItemRowKey");
   const lineItemCatalogItemIds = getFieldValues(formData, "lineItemCatalogItemId");
   const lineItemSourceTypes = getFieldValues(formData, "lineItemSourceType");
@@ -62,32 +114,7 @@ function parseEstimateInput(formData: FormData) {
     formData,
     "lineItemSourceComponentId"
   );
-  const lineItemItemTypes = getFieldValues(formData, "lineItemItemType");
-  const lineItemNames = getFieldValues(formData, "lineItemName");
-  const lineItemDescriptions = getFieldValues(formData, "lineItemDescription");
   const lineItemQuantities = getFieldValues(formData, "lineItemQuantity");
-  const lineItemUnits = getFieldValues(formData, "lineItemUnit");
-  const lineItemUnitPrices = getFieldValues(formData, "lineItemUnitPrice");
-  const lineItemBaseUnitCosts = getFieldValues(formData, "lineItemBaseUnitCost");
-  const lineItemBaseUnitPrices = getFieldValues(formData, "lineItemBaseUnitPrice");
-  const lineItemMarkupPercents = getFieldValues(formData, "lineItemMarkupPercent");
-  const lineItemHiddenMarkupPercents = getFieldValues(
-    formData,
-    "lineItemHiddenMarkupPercent"
-  );
-  const lineItemUnitPricesBeforeHiddenMarkup = getFieldValues(
-    formData,
-    "lineItemUnitPriceBeforeHiddenMarkup"
-  );
-  const lineItemVisibleMarkupAmounts = getFieldValues(
-    formData,
-    "lineItemVisibleMarkupAmount"
-  );
-  const lineItemHiddenMarkupAmounts = getFieldValues(
-    formData,
-    "lineItemHiddenMarkupAmount"
-  );
-  const lineItemTaxCodes = getFieldValues(formData, "lineItemTaxCode");
   const lineItemAssignedToValues = getFieldValues(formData, "lineItemAssignedTo");
   const lineItemGroupNames = getFieldValues(formData, "lineItemGroupName");
   const itemGroupIds = getFieldValues(formData, "itemGroupId");
@@ -96,8 +123,8 @@ function parseEstimateInput(formData: FormData) {
   const scopeItemTexts = getFieldValues(formData, "scopeItemText");
   const scopeItemInclusionFlags = getFieldValues(formData, "scopeItemIncludeInOutput");
 
-  const lineItems = lineItemNames
-    .map((name, index) => ({
+  const lineItems = lineItemRowKeys
+    .map((rowKey, index) => ({
       rowKey: lineItemRowKeys[index] ?? `row-${index + 1}`,
       catalogItemId: lineItemCatalogItemIds[index] ?? "",
       sourceType:
@@ -107,25 +134,11 @@ function parseEstimateInput(formData: FormData) {
           : "catalog_item",
       sourceSystemId: lineItemSourceSystemIds[index] ?? "",
       sourceComponentId: lineItemSourceComponentIds[index] ?? "",
-      itemType: lineItemItemTypes[index] ?? "service",
-      name,
-      description: lineItemDescriptions[index] ?? "",
       quantity: lineItemQuantities[index] ?? "",
-      unit: lineItemUnits[index] ?? "",
-      unitPrice: lineItemUnitPrices[index] ?? "",
-      baseUnitCost: lineItemBaseUnitCosts[index] ?? "0.00",
-      baseUnitPrice: lineItemBaseUnitPrices[index] ?? "",
-      markupPercent: lineItemMarkupPercents[index] ?? "0",
-      hiddenMarkupPercent: lineItemHiddenMarkupPercents[index] ?? "0",
-      unitPriceBeforeHiddenMarkup:
-        lineItemUnitPricesBeforeHiddenMarkup[index] ?? lineItemUnitPrices[index] ?? "",
-      visibleMarkupAmount: lineItemVisibleMarkupAmounts[index] ?? "0.00",
-      hiddenMarkupAmount: lineItemHiddenMarkupAmounts[index] ?? "0.00",
-      taxCode: lineItemTaxCodes[index] === "non-taxable" ? "non-taxable" : "taxable",
       assignedTo: lineItemAssignedToValues[index] ?? "",
       groupName: lineItemGroupNames[index] ?? ""
     }))
-    .filter((lineItem) => lineItem.name.trim().length > 0);
+    .filter((lineItem) => lineItem.rowKey.trim().length > 0);
 
   const itemGroups = itemGroupIds
     .map((id, index) => ({
@@ -254,11 +267,41 @@ const quickEstimateCatalogItemInputSchema = z.object({
   taxable: z.boolean()
 });
 
+const expandedSystemPreviewInputSchema = z.object({
+  systemCatalogItemId: z.string().uuid("Select a valid system."),
+  squareFootage: z
+    .string()
+    .trim()
+    .min(1, "Square footage is required.")
+    .refine((value) => !Number.isNaN(Number(value)) && Number(value) > 0, {
+      message: "Square footage must be greater than zero."
+    })
+});
+
 export type EstimateAutosaveResult =
   | { ok: true; estimateId: string; updatedAt: string; referenceNumber: string }
   | { ok: false; type: "validation"; message: string }
   | { ok: false; type: "conflict"; message: string }
   | { ok: false; type: "error"; message: string };
+
+export type ExpandedSystemPreviewResult =
+  | {
+      ok: true;
+      preview: ExpandedSystemPreview;
+      systemCatalogItemId: string;
+      squareFootage: string;
+      systemName: string;
+    }
+  | { ok: false; message: string };
+
+export type EstimateInsertResult =
+  | {
+      ok: true;
+      estimateId: string;
+      updatedAt: string;
+      lineItems: EstimateLineItem[];
+    }
+  | { ok: false; message: string };
 
 export async function autosaveEstimateAction(
   formData: FormData
@@ -361,10 +404,28 @@ export async function updateEstimateStatusAutosaveAction(formData: FormData) {
     } as const;
   }
 
+  if (nextStatus !== currentStatus) {
+    return {
+      ok: false,
+      type: "error",
+      message:
+        nextStatus === "sent"
+          ? "Use Send to customer so FloorConnector can record the portal delivery event and email tracking."
+          : "Customer approval decisions now flow through the authenticated portal only."
+    } as const;
+  }
+
   try {
     const estimate = await updateEstimateStatus(estimateId, nextStatus as EstimateStatus, {
       expectedUpdatedAt: expectedUpdatedAt || null
     });
+    const orchestration =
+      estimate.status === "approved"
+        ? await resolveEstimateApprovalOrchestration(
+            estimate.id,
+            `/estimates/${estimate.id}/edit`
+          )
+        : null;
 
     revalidatePath("/estimates");
     revalidatePath(`/estimates/${estimate.id}`);
@@ -376,7 +437,8 @@ export async function updateEstimateStatusAutosaveAction(formData: FormData) {
       estimateId: estimate.id,
       updatedAt: estimate.updatedAt,
       referenceNumber: estimate.referenceNumber,
-      status: estimate.status
+      status: estimate.status,
+      orchestration
     } as const;
   } catch (error) {
     if (error instanceof EstimateVersionConflictError) {
@@ -389,6 +451,18 @@ export async function updateEstimateStatusAutosaveAction(formData: FormData) {
       message: error instanceof Error ? error.message : "Unable to update estimate status."
     } as const;
   }
+}
+
+function revalidateEstimatePaths(estimate: {
+  id: string;
+  projectId: string;
+}) {
+  revalidatePath("/estimates");
+  revalidatePath(`/estimates/${estimate.id}`);
+  revalidatePath(`/estimates/${estimate.id}/edit`);
+  revalidatePath(`/projects/${estimate.projectId}`);
+  revalidatePath(`/portal/projects/${estimate.projectId}`);
+  revalidatePath(`/portal/estimates/${estimate.id}`);
 }
 
 export async function quickCreateEstimateCatalogItemAction(
@@ -415,6 +489,8 @@ export async function quickCreateEstimateCatalogItemAction(
 
   try {
     const item = await upsertOrganizationCatalogItem({
+      itemId: null,
+      inventoryItemId: null,
       itemType: result.data.itemType,
       name: result.data.name,
       description: null,
@@ -425,15 +501,25 @@ export async function quickCreateEstimateCatalogItemAction(
       markupPercent: "0.00",
       hiddenMarkupPercent: "0.00",
       taxable: result.data.taxable,
+      taxCodeId: null,
       vendorId: null,
       category: null,
+      costCode: null,
       sku: null,
       photoStoragePath: null,
       status: "active",
-      isDefault: false
+      isDefault: false,
+      trackInventory: false,
+      inventoryLocation: "default",
+      inventoryReorderPoint: "0",
+      inventoryAdjustmentQuantity: null,
+      inventoryAdjustmentNote: null,
+      submitMode: "save"
     });
 
     revalidatePath("/settings/catalogs");
+    revalidatePath("/cost-items-database");
+    revalidatePath("/cost-items-database/items");
     revalidatePath("/materials");
 
     return { ok: true, item };
@@ -441,6 +527,139 @@ export async function quickCreateEstimateCatalogItemAction(
     return {
       ok: false,
       message: error instanceof Error ? error.message : "Unable to create inventory item."
+    };
+  }
+}
+
+export async function previewExpandedSystemAction(input: {
+  systemCatalogItemId: string;
+  squareFootage: string;
+}): Promise<ExpandedSystemPreviewResult> {
+  const result = expandedSystemPreviewInputSchema.safeParse(input);
+
+  if (!result.success) {
+    return {
+      ok: false,
+      message:
+        result.error.issues[0]?.message ?? "Unable to build the system preview."
+    };
+  }
+
+  try {
+    const catalogItems = await listCatalogItems();
+    const systemCatalogItem = catalogItems.find(
+      (item) =>
+        item.id === result.data.systemCatalogItemId && item.itemType === "system"
+    );
+
+    if (!systemCatalogItem) {
+      return {
+        ok: false,
+        message: "The selected system could not be found in active inventory."
+      };
+    }
+
+    const preview = buildExpandedSystemPreview({
+      systemCatalogItem,
+      catalogItems,
+      squareFootage: Number(result.data.squareFootage)
+    });
+
+    if (preview.rows.length === 0) {
+      return {
+        ok: false,
+        message: "This system has no active components available to preview."
+      };
+    }
+
+    return {
+      ok: true,
+      preview,
+      systemCatalogItemId: systemCatalogItem.id,
+      squareFootage: Number(result.data.squareFootage).toFixed(2),
+      systemName: systemCatalogItem.name
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to build the system preview."
+    };
+  }
+}
+
+export async function insertCatalogItemToEstimateAction(
+  input: unknown
+): Promise<EstimateInsertResult> {
+  const result = estimateCatalogInsertInputSchema.safeParse(input);
+
+  if (!result.success) {
+    return {
+      ok: false,
+      message:
+        result.error.issues[0]?.message ??
+        "Unable to insert the catalog item into this estimate."
+    };
+  }
+
+  try {
+    const estimate = await insertCatalogItemToEstimate(result.data);
+    revalidatePath("/estimates");
+    revalidatePath(`/estimates/${estimate.id}`);
+    revalidatePath(`/estimates/${estimate.id}/edit`);
+
+    return {
+      ok: true,
+      estimateId: estimate.id,
+      updatedAt: estimate.updatedAt,
+      lineItems: estimate.lineItems
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to insert the catalog item into this estimate."
+    };
+  }
+}
+
+export async function insertSystemToEstimateAction(
+  input: unknown
+): Promise<EstimateInsertResult> {
+  const result = estimateSystemInsertInputSchema.safeParse(input);
+
+  if (!result.success) {
+    return {
+      ok: false,
+      message:
+        result.error.issues[0]?.message ??
+        "Unable to insert the expanded system into this estimate."
+    };
+  }
+
+  try {
+    const estimate = await insertSystemToEstimate(result.data);
+    revalidatePath("/estimates");
+    revalidatePath(`/estimates/${estimate.id}`);
+    revalidatePath(`/estimates/${estimate.id}/edit`);
+
+    return {
+      ok: true,
+      estimateId: estimate.id,
+      updatedAt: estimate.updatedAt,
+      lineItems: estimate.lineItems
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to insert the expanded system into this estimate."
     };
   }
 }
@@ -597,6 +816,17 @@ export async function updateEstimateStatusAction(formData: FormData) {
     );
   }
 
+  if (nextStatus !== currentStatus) {
+    redirect(
+      buildRedirect(`/estimates/${estimateId}`, {
+        error:
+          nextStatus === "sent"
+            ? "Use Send to customer so FloorConnector can record the portal delivery event and email tracking."
+            : "Customer approval decisions now flow through the authenticated portal only."
+      })
+    );
+  }
+
   let estimate;
 
   try {
@@ -612,15 +842,231 @@ export async function updateEstimateStatusAction(formData: FormData) {
     );
   }
 
-  revalidatePath("/estimates");
-  revalidatePath(`/estimates/${estimate.id}`);
-  revalidatePath(`/estimates/${estimate.id}/edit`);
+  revalidateEstimatePaths(estimate);
 
   redirect(
     buildRedirect(`/estimates/${estimate.id}`, {
+      showNextSteps: estimate.status === "approved" ? "1" : undefined,
       message: `${estimate.referenceNumber} was ${getStatusActionLabel(
         estimate.status
       )}.`
     })
   );
 }
+
+export async function sendEstimateToCustomerAction(formData: FormData) {
+  const estimateId = getFieldValue(formData, "estimateId");
+  const result = estimateSendToCustomerInputSchema.safeParse({
+    estimateId
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/estimates", {
+        error: result.error.issues[0]?.message ?? "Unable to send the estimate."
+      })
+    );
+  }
+
+  let estimate;
+
+  try {
+    estimate = await sendEstimateToCustomer(result.data);
+  } catch (error) {
+    redirect(
+      buildRedirect(`/estimates/${result.data.estimateId}`, {
+        error: error instanceof Error ? error.message : "Unable to send the estimate."
+      })
+    );
+  }
+
+  revalidateEstimatePaths(estimate);
+
+  redirect(
+    buildRedirect(`/estimates/${estimate.id}`, {
+      message: "Estimate sent for customer portal review."
+    })
+  );
+}
+
+export async function customerApproveEstimateAction(formData: FormData) {
+  const estimateId = getFieldValue(formData, "estimateId");
+  const result = estimatePortalDecisionInputSchema.safeParse({
+    estimateId,
+    decisionNote: getFieldValue(formData, "decisionNote")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(`/portal/estimates/${estimateId}`, {
+        error: result.error.issues[0]?.message ?? "Unable to approve the estimate."
+      })
+    );
+  }
+
+  let estimate;
+
+  try {
+    estimate = await approveEstimateFromPortal(
+      result.data,
+      `/portal/estimates/${result.data.estimateId}`
+    );
+  } catch (error) {
+    redirect(
+      buildRedirect(`/portal/estimates/${result.data.estimateId}`, {
+        error: error instanceof Error ? error.message : "Unable to approve the estimate."
+      })
+    );
+  }
+
+  revalidateEstimatePaths(estimate);
+
+  redirect(
+    buildRedirect(`/portal/estimates/${estimate.id}`, {
+      message: "Estimate approved. Your contractor has been notified."
+    })
+  );
+}
+
+export async function customerRejectEstimateAction(formData: FormData) {
+  const estimateId = getFieldValue(formData, "estimateId");
+  const result = estimatePortalDecisionInputSchema.safeParse({
+    estimateId,
+    decisionNote: getFieldValue(formData, "decisionNote")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(`/portal/estimates/${estimateId}`, {
+        error: result.error.issues[0]?.message ?? "Unable to reject the estimate."
+      })
+    );
+  }
+
+  let estimate;
+
+  try {
+    estimate = await rejectEstimateFromPortal(
+      result.data,
+      `/portal/estimates/${result.data.estimateId}`
+    );
+  } catch (error) {
+    redirect(
+      buildRedirect(`/portal/estimates/${result.data.estimateId}`, {
+        error: error instanceof Error ? error.message : "Unable to reject the estimate."
+      })
+    );
+  }
+
+  revalidateEstimatePaths(estimate);
+
+  redirect(
+    buildRedirect(`/portal/estimates/${estimate.id}`, {
+      message: "Estimate feedback sent to your contractor."
+    })
+  );
+}
+
+export async function customerAddEstimateCommentAction(formData: FormData) {
+  const estimateId = getFieldValue(formData, "estimateId");
+  const result = estimatePortalCommentInputSchema.safeParse({
+    estimateId,
+    comment: getFieldValue(formData, "comment")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(`/portal/estimates/${estimateId}`, {
+        error: result.error.issues[0]?.message ?? "Unable to save the estimate comment."
+      })
+    );
+  }
+
+  let estimate;
+
+  try {
+    estimate = await addEstimatePortalComment(
+      result.data,
+      `/portal/estimates/${result.data.estimateId}`
+    );
+  } catch (error) {
+    redirect(
+      buildRedirect(`/portal/estimates/${result.data.estimateId}`, {
+        error:
+          error instanceof Error ? error.message : "Unable to save the estimate comment."
+      })
+    );
+  }
+
+  revalidateEstimatePaths(estimate);
+
+  redirect(
+    buildRedirect(`/portal/estimates/${estimate.id}`, {
+      message: "Comment saved for your contractor."
+    })
+  );
+}
+
+export async function openOrCreateScheduleOfValuesAction(formData: FormData) {
+  const estimateId = getFieldValue(formData, "estimateId");
+
+  if (!estimateId) {
+    redirect(
+      buildRedirect("/estimates", {
+        error: "Estimate id is required to open the schedule of values."
+      })
+    );
+  }
+
+  let scheduleOfValuesId: string | null;
+
+  try {
+    const estimate = await resolveEstimateApprovalOrchestration(
+      estimateId,
+      `/estimates/${estimateId}`
+    );
+
+    if (!estimate) {
+      throw new Error("Estimate not found for this organization.");
+    }
+
+    if (estimate.scheduleOfValues.exists && estimate.scheduleOfValues.scheduleOfValuesId) {
+      scheduleOfValuesId = estimate.scheduleOfValues.scheduleOfValuesId;
+    } else {
+      const { ensureScheduleOfValuesForEstimate } = await import("@/lib/financial/sov");
+      scheduleOfValuesId = await ensureScheduleOfValuesForEstimate(estimateId);
+    }
+  } catch (error) {
+    redirect(
+      buildRedirect(`/estimates/${estimateId}`, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to open the schedule of values."
+      })
+    );
+  }
+
+  if (!scheduleOfValuesId) {
+    redirect(
+      buildRedirect(`/estimates/${estimateId}`, {
+        error: "Schedule of values could not be located for this approved estimate."
+      })
+    );
+  }
+
+  revalidatePath("/progress-billing");
+  revalidatePath(`/progress-billing/${scheduleOfValuesId}`);
+  redirect(`/progress-billing/${scheduleOfValuesId}`);
+}
+
+export type EstimateStatusTransitionResult =
+  | {
+      ok: true;
+      estimateId: string;
+      updatedAt: string;
+      referenceNumber: string;
+      status: EstimateStatus;
+      orchestration: EstimateApprovalOrchestrationState | null;
+    }
+  | { ok: false; type: "conflict" | "error"; message: string };

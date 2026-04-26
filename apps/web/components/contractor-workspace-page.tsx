@@ -25,22 +25,22 @@ export function ContractorWorkspacePage({
   children
 }: ContractorWorkspacePageProps) {
   return (
-    <div className="space-y-4">
-      <section className="rounded-[1.4rem] border border-[#e4d7c9] bg-[linear-gradient(180deg,#fffdf9,#f8f1e8)] px-5 py-4 shadow-[0_18px_40px_-34px_rgba(57,43,30,0.22)] sm:px-6">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+    <div className="space-y-3">
+      <section className="border border-[#d7c7b4] bg-[#fbf7f1] px-4 py-3 sm:px-5">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
           <div className="min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#a4581a]">
               {eyebrow}
             </p>
-            <h2 className="mt-2 text-[26px] font-semibold tracking-tight text-[#2b2118] sm:text-[30px]">
+            <h2 className="mt-1 text-[22px] font-semibold tracking-tight text-[#2b2118] sm:text-[24px]">
               {title}
             </h2>
-            <p className="mt-2 max-w-3xl text-[14px] leading-6 text-[#665446]">
+            <p className="mt-1 max-w-3xl text-[13px] leading-5 text-[#665446]">
               {description}
             </p>
           </div>
           {summary ? (
-            <div className="xl:max-w-[420px] xl:flex-shrink-0">{summary}</div>
+            <div className="xl:max-w-[520px] xl:flex-shrink-0">{summary}</div>
           ) : null}
         </div>
       </section>

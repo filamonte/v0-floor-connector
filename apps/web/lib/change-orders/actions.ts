@@ -6,9 +6,11 @@ import { canTransitionChangeOrderStatus } from "@floorconnector/domain";
 import type { ChangeOrderStatus } from "@floorconnector/types";
 
 import {
+  addApprovedChangeOrderToScheduleOfValues,
   approveChangeOrderFromPortal,
   createChangeOrder,
   getChangeOrderById,
+  invoiceApprovedChangeOrderDirectly,
   recordPortalViewedChangeOrder,
   rejectChangeOrderFromPortal,
   updateChangeOrder,
@@ -335,6 +337,78 @@ export async function customerRejectChangeOrderAction(formData: FormData) {
   redirect(
     buildRedirect(`/portal/change-orders/${changeOrder.id}`, {
       message: "Change order rejected."
+    })
+  );
+}
+
+export async function invoiceApprovedChangeOrderDirectlyAction(formData: FormData) {
+  const changeOrderId = getFieldValue(formData, "changeOrderId");
+
+  if (!changeOrderId) {
+    redirect(buildRedirect("/change-orders", { error: "Change order id is required." }));
+  }
+
+  let changeOrder;
+
+  try {
+    changeOrder = await invoiceApprovedChangeOrderDirectly(changeOrderId);
+  } catch (error) {
+    redirect(
+      buildRedirect(`/change-orders/${changeOrderId}`, {
+        showNextSteps: "1",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to invoice the approved change order directly."
+      })
+    );
+  }
+
+  revalidateChangeOrderPaths(changeOrder);
+  revalidatePath(`/invoices/${changeOrder.invoiceId}`);
+  revalidatePath(`/invoices/${changeOrder.invoiceId}/edit`);
+
+  redirect(
+    buildRedirect(`/change-orders/${changeOrder.id}`, {
+      message: "Approved change order billed directly on the canonical invoice chain."
+    })
+  );
+}
+
+export async function addApprovedChangeOrderToSovAction(formData: FormData) {
+  const changeOrderId = getFieldValue(formData, "changeOrderId");
+  const scheduleOfValuesId = getFieldValue(formData, "scheduleOfValuesId");
+
+  if (!changeOrderId) {
+    redirect(buildRedirect("/change-orders", { error: "Change order id is required." }));
+  }
+
+  let result;
+
+  try {
+    result = await addApprovedChangeOrderToScheduleOfValues({
+      changeOrderId,
+      scheduleOfValuesId: scheduleOfValuesId || null
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect(`/change-orders/${changeOrderId}`, {
+        showNextSteps: "1",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to append the approved change order to the schedule of values."
+      })
+    );
+  }
+
+  revalidateChangeOrderPaths(result.changeOrder);
+  revalidatePath("/progress-billing");
+  revalidatePath(`/progress-billing/${result.scheduleOfValuesId}`);
+
+  redirect(
+    buildRedirect(`/change-orders/${result.changeOrder.id}`, {
+      message: "Approved change order appended to the schedule of values as additive snapshot-backed rows."
     })
   );
 }

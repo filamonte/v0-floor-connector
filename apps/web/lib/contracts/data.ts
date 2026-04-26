@@ -37,6 +37,8 @@ import type {
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import {
   buildContractRenderedHtml,
+  type ContractEstimateSnapshotItemRenderInput,
+  type ContractEstimateSnapshotRenderInput,
   createAndUploadContractPdf
 } from "@/lib/contracts/document-rendering";
 import { getEstimateById, listEstimates } from "@/lib/estimates/data";
@@ -45,6 +47,7 @@ import { getActiveOrganizationContext } from "@/lib/organizations/active-context
 import { listOrganizationMembers } from "@/lib/organizations/admin";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { listPortalAccessGrantsForCurrentUser } from "@/lib/portal-access/data";
+import { recordContractNotificationEvent } from "@/lib/notifications/system";
 import { syncProjectCommercialReadiness } from "@/lib/projects/readiness";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -208,6 +211,66 @@ type ContractSignatureEventInsert = {
 type ContractScope = {
   userId: string;
   organizationId: string;
+};
+
+type EstimateCommercialSnapshotRow = {
+  id: string;
+  company_id: string;
+  estimate_id: string;
+  customer_id: string;
+  project_id: string;
+  snapshot_version: number;
+  estimate_reference_number: string;
+  subtotal_amount: string;
+  taxable_sales_amount: string;
+  exempt_sales_amount: string;
+  tax_amount: string;
+  discount_amount: string;
+  total_amount: string;
+  scope_summary_html: string | null;
+  inclusions_html: string | null;
+  exclusions_html: string | null;
+  terms_html: string | null;
+  content_snapshot: Record<string, unknown> | null;
+  customer_name_snapshot: string;
+  customer_company_name_snapshot: string | null;
+  customer_email_snapshot: string | null;
+  customer_phone_snapshot: string | null;
+  customer_address_line_1_snapshot: string | null;
+  customer_address_line_2_snapshot: string | null;
+  customer_city_snapshot: string | null;
+  customer_state_region_snapshot: string | null;
+  customer_postal_code_snapshot: string | null;
+  customer_country_code_snapshot: string | null;
+  service_address_line_1_snapshot: string | null;
+  service_address_line_2_snapshot: string | null;
+  service_city_snapshot: string | null;
+  service_state_region_snapshot: string | null;
+  service_postal_code_snapshot: string | null;
+  service_country_code_snapshot: string | null;
+  project_name_snapshot: string;
+  created_at: string;
+};
+
+type EstimateCommercialSnapshotItemRow = {
+  id: string;
+  company_id: string;
+  estimate_commercial_snapshot_id: string;
+  name: string;
+  description: string | null;
+  quantity: string;
+  unit: string;
+  line_total: string;
+  sort_order: number;
+  created_at: string;
+};
+
+type ContractEstimateSnapshotBundle = {
+  snapshot: ContractEstimateSnapshotRenderInput & {
+    customerId: string;
+    projectId: string;
+  };
+  snapshotItems: ContractEstimateSnapshotItemRenderInput[];
 };
 
 export type ContractListItem = ContractRecord & {
@@ -504,6 +567,245 @@ function isContractPortalProjectAccessRowArray(
   value: unknown
 ): value is ContractPortalProjectAccessRow[] {
   return Array.isArray(value) && value.every((row) => isContractPortalProjectAccessRow(row));
+}
+
+function isEstimateCommercialSnapshotRow(
+  value: unknown
+): value is EstimateCommercialSnapshotRow {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const row = value as Partial<EstimateCommercialSnapshotRow>;
+
+  return (
+    typeof row.id === "string" &&
+    typeof row.company_id === "string" &&
+    typeof row.estimate_id === "string" &&
+    typeof row.customer_id === "string" &&
+    typeof row.project_id === "string" &&
+    typeof row.snapshot_version === "number" &&
+    typeof row.estimate_reference_number === "string" &&
+    typeof row.subtotal_amount === "string" &&
+    typeof row.taxable_sales_amount === "string" &&
+    typeof row.exempt_sales_amount === "string" &&
+    typeof row.tax_amount === "string" &&
+    typeof row.discount_amount === "string" &&
+    typeof row.total_amount === "string" &&
+    (row.scope_summary_html === null || typeof row.scope_summary_html === "string") &&
+    (row.inclusions_html === null || typeof row.inclusions_html === "string") &&
+    (row.exclusions_html === null || typeof row.exclusions_html === "string") &&
+    (row.terms_html === null || typeof row.terms_html === "string") &&
+    (row.content_snapshot === null ||
+      (typeof row.content_snapshot === "object" && !Array.isArray(row.content_snapshot))) &&
+    typeof row.customer_name_snapshot === "string" &&
+    (row.customer_company_name_snapshot === null ||
+      typeof row.customer_company_name_snapshot === "string") &&
+    (row.customer_email_snapshot === null ||
+      typeof row.customer_email_snapshot === "string") &&
+    (row.customer_phone_snapshot === null ||
+      typeof row.customer_phone_snapshot === "string") &&
+    (row.customer_address_line_1_snapshot === null ||
+      typeof row.customer_address_line_1_snapshot === "string") &&
+    (row.customer_address_line_2_snapshot === null ||
+      typeof row.customer_address_line_2_snapshot === "string") &&
+    (row.customer_city_snapshot === null ||
+      typeof row.customer_city_snapshot === "string") &&
+    (row.customer_state_region_snapshot === null ||
+      typeof row.customer_state_region_snapshot === "string") &&
+    (row.customer_postal_code_snapshot === null ||
+      typeof row.customer_postal_code_snapshot === "string") &&
+    (row.customer_country_code_snapshot === null ||
+      typeof row.customer_country_code_snapshot === "string") &&
+    (row.service_address_line_1_snapshot === null ||
+      typeof row.service_address_line_1_snapshot === "string") &&
+    (row.service_address_line_2_snapshot === null ||
+      typeof row.service_address_line_2_snapshot === "string") &&
+    (row.service_city_snapshot === null || typeof row.service_city_snapshot === "string") &&
+    (row.service_state_region_snapshot === null ||
+      typeof row.service_state_region_snapshot === "string") &&
+    (row.service_postal_code_snapshot === null ||
+      typeof row.service_postal_code_snapshot === "string") &&
+    (row.service_country_code_snapshot === null ||
+      typeof row.service_country_code_snapshot === "string") &&
+    typeof row.project_name_snapshot === "string" &&
+    typeof row.created_at === "string"
+  );
+}
+
+function isEstimateCommercialSnapshotItemRow(
+  value: unknown
+): value is EstimateCommercialSnapshotItemRow {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const row = value as Partial<EstimateCommercialSnapshotItemRow>;
+
+  return (
+    typeof row.id === "string" &&
+    typeof row.company_id === "string" &&
+    typeof row.estimate_commercial_snapshot_id === "string" &&
+    typeof row.name === "string" &&
+    (row.description === null || typeof row.description === "string") &&
+    typeof row.quantity === "string" &&
+    typeof row.unit === "string" &&
+    typeof row.line_total === "string" &&
+    typeof row.sort_order === "number" &&
+    typeof row.created_at === "string"
+  );
+}
+
+function isEstimateCommercialSnapshotItemRowArray(
+  value: unknown
+): value is EstimateCommercialSnapshotItemRow[] {
+  return Array.isArray(value) && value.every((row) => isEstimateCommercialSnapshotItemRow(row));
+}
+
+async function getLatestApprovedEstimateCommercialSnapshotForContract(
+  organizationId: string,
+  estimateId: string
+): Promise<ContractEstimateSnapshotBundle> {
+  const supabase = await getSupabaseServerClient();
+  const snapshotResponse = await supabase
+    .from("estimate_commercial_snapshots")
+    .select(
+      `
+        id,
+        company_id,
+        estimate_id,
+        customer_id,
+        project_id,
+        snapshot_version,
+        estimate_reference_number,
+        subtotal_amount,
+        taxable_sales_amount,
+        exempt_sales_amount,
+        tax_amount,
+        discount_amount,
+        total_amount,
+        scope_summary_html,
+        inclusions_html,
+        exclusions_html,
+        terms_html,
+        content_snapshot,
+        customer_name_snapshot,
+        customer_company_name_snapshot,
+        customer_email_snapshot,
+        customer_phone_snapshot,
+        customer_address_line_1_snapshot,
+        customer_address_line_2_snapshot,
+        customer_city_snapshot,
+        customer_state_region_snapshot,
+        customer_postal_code_snapshot,
+        customer_country_code_snapshot,
+        service_address_line_1_snapshot,
+        service_address_line_2_snapshot,
+        service_city_snapshot,
+        service_state_region_snapshot,
+        service_postal_code_snapshot,
+        service_country_code_snapshot,
+        project_name_snapshot,
+        created_at
+      `
+    )
+    .eq("company_id", organizationId)
+    .eq("estimate_id", estimateId)
+    .order("snapshot_version", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const snapshotData: unknown = snapshotResponse.data;
+
+  if (snapshotResponse.error) {
+    throw new Error(
+      `Unable to load approved estimate snapshot for contract generation: ${snapshotResponse.error.message}`
+    );
+  }
+
+  if (!isEstimateCommercialSnapshotRow(snapshotData)) {
+    throw new Error(
+      "Approved estimate snapshot is missing. Re-approve the estimate before generating a contract."
+    );
+  }
+
+  const snapshotItemsResponse = await supabase
+    .from("estimate_commercial_snapshot_items")
+    .select(
+      `
+        id,
+        company_id,
+        estimate_commercial_snapshot_id,
+        name,
+        description,
+        quantity,
+        unit,
+        line_total,
+        sort_order,
+        created_at
+      `
+    )
+    .eq("company_id", organizationId)
+    .eq("estimate_commercial_snapshot_id", snapshotData.id)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+  const snapshotItemsData: unknown = snapshotItemsResponse.data;
+
+  if (snapshotItemsResponse.error) {
+    throw new Error(
+      `Unable to load approved estimate snapshot items for contract generation: ${snapshotItemsResponse.error.message}`
+    );
+  }
+
+  if (!isEstimateCommercialSnapshotItemRowArray(snapshotItemsData)) {
+    throw new Error(
+      "Approved estimate snapshot items are missing. Re-approve the estimate before generating a contract."
+    );
+  }
+
+  return {
+    snapshot: {
+      customerId: snapshotData.customer_id,
+      projectId: snapshotData.project_id,
+      estimateReferenceNumber: snapshotData.estimate_reference_number,
+      projectNameSnapshot: snapshotData.project_name_snapshot,
+      customerNameSnapshot: snapshotData.customer_name_snapshot,
+      customerCompanyNameSnapshot: snapshotData.customer_company_name_snapshot,
+      customerEmailSnapshot: snapshotData.customer_email_snapshot,
+      customerPhoneSnapshot: snapshotData.customer_phone_snapshot,
+      customerAddressLine1Snapshot: snapshotData.customer_address_line_1_snapshot,
+      customerAddressLine2Snapshot: snapshotData.customer_address_line_2_snapshot,
+      customerCitySnapshot: snapshotData.customer_city_snapshot,
+      customerStateRegionSnapshot: snapshotData.customer_state_region_snapshot,
+      customerPostalCodeSnapshot: snapshotData.customer_postal_code_snapshot,
+      customerCountryCodeSnapshot: snapshotData.customer_country_code_snapshot,
+      serviceAddressLine1Snapshot: snapshotData.service_address_line_1_snapshot,
+      serviceAddressLine2Snapshot: snapshotData.service_address_line_2_snapshot,
+      serviceCitySnapshot: snapshotData.service_city_snapshot,
+      serviceStateRegionSnapshot: snapshotData.service_state_region_snapshot,
+      servicePostalCodeSnapshot: snapshotData.service_postal_code_snapshot,
+      serviceCountryCodeSnapshot: snapshotData.service_country_code_snapshot,
+      subtotalAmount: snapshotData.subtotal_amount,
+      taxableSalesAmount: snapshotData.taxable_sales_amount,
+      exemptSalesAmount: snapshotData.exempt_sales_amount,
+      taxAmount: snapshotData.tax_amount,
+      discountAmount: snapshotData.discount_amount,
+      totalAmount: snapshotData.total_amount,
+      scopeSummaryHtml: snapshotData.scope_summary_html,
+      inclusionsHtml: snapshotData.inclusions_html,
+      exclusionsHtml: snapshotData.exclusions_html,
+      termsHtml: snapshotData.terms_html,
+      contentSnapshot: snapshotData.content_snapshot
+    },
+    snapshotItems: snapshotItemsData.map((item) => ({
+      name: item.name,
+      description: item.description,
+      quantity: item.quantity,
+      unit: item.unit,
+      lineTotal: item.line_total,
+      sortOrder: item.sort_order
+    }))
+  };
 }
 
 function mapContract(row: ContractRow): ContractRecord {
@@ -1508,6 +1810,10 @@ export async function createContractFromEstimate(
 ) {
   const scope = await requireContractScope("/contracts");
   const estimate = await resolveApprovedEstimateForContract(input.estimateId);
+  const snapshotBundle = await getLatestApprovedEstimateCommercialSnapshotForContract(
+    scope.organizationId,
+    input.estimateId
+  );
   const workflowSettings = await getOrganizationWorkflowSettings(scope.organizationId);
   const preferredTemplateId =
     input.templateId ?? workflowSettings.approvedEstimateContractTemplateId ?? null;
@@ -1522,18 +1828,21 @@ export async function createContractFromEstimate(
     .from("contracts")
     .insert({
       company_id: scope.organizationId,
-      customer_id: estimate.customerId,
-      project_id: estimate.projectId,
+      customer_id: snapshotBundle.snapshot.customerId,
+      project_id: snapshotBundle.snapshot.projectId,
       estimate_id: estimate.id,
       template_id: templateContext.template.id,
       status: "draft",
       title:
         templateContext.renderedSubject ??
-        `Contract for ${estimate.project?.name ?? estimate.referenceNumber}`,
+        `Contract for ${
+          snapshotBundle.snapshot.projectNameSnapshot || estimate.project?.name || estimate.referenceNumber
+        }`,
       rendered_subject: templateContext.renderedSubject,
       rendered_content: buildContractRenderedHtml({
         templateBody: templateContext.renderedBody,
-        estimate
+        snapshot: snapshotBundle.snapshot,
+        snapshotItems: snapshotBundle.snapshotItems
       }),
       internal_approval_status: workflowSettings.requireContractInternalApproval
         ? "pending"
@@ -1541,7 +1850,7 @@ export async function createContractFromEstimate(
       signature_readiness_status: workflowSettings.requireContractInternalApproval
         ? "draft"
         : "ready_to_send",
-      generated_from_estimate_reference: estimate.referenceNumber,
+      generated_from_estimate_reference: snapshotBundle.snapshot.estimateReferenceNumber,
       created_by: scope.userId,
       updated_by: scope.userId
     })
@@ -1776,8 +2085,22 @@ export async function sendContractForSignature(input: SendContractForSignatureIn
         )
       },
       occurredAt: nowIso
+      }
+    ]);
+  await recordContractNotificationEvent({
+    organizationId: scope.organizationId,
+    contractId: input.contractId,
+    customerId: currentContract.customer_id,
+    projectId: currentContract.project_id,
+    contractTitle: currentContract.title,
+    eventType: "sent",
+    actorType: "organization_user",
+    actorUserId: scope.userId,
+    occurredAt: nowIso,
+    payload: {
+      signerCount: insertedSignerData.length
     }
-  ]);
+  });
 
   const updated = await getContractRecordById(scope.organizationId, input.contractId);
 
@@ -1846,8 +2169,19 @@ export async function recordCustomerViewedContract(contractId: string, next = "/
           signerOrder: signer.signer_order
         },
         occurredAt: nowIso
-      }))
-    );
+        }))
+      );
+    await recordContractNotificationEvent({
+      organizationId: portalScope.contract.company_id,
+      contractId: portalScope.contract.id,
+      customerId: portalScope.contract.customer_id,
+      projectId: portalScope.contract.project_id,
+      contractTitle: portalScope.contract.title,
+      eventType: "viewed",
+      actorType: "portal_user",
+      portalUserId: portalScope.userId,
+      occurredAt: nowIso
+    });
   }
 
   const refreshedSigners = await listContractSignerRowsAdmin(
@@ -1960,8 +2294,25 @@ export async function recordCustomerSignedContract(
             }
           ]
         : [])
-    ]
-  );
+      ]
+    );
+  if (refreshedSummary.allRequiredSignersSigned) {
+    await recordContractNotificationEvent({
+      organizationId: portalScope.contract.company_id,
+      contractId: portalScope.contract.id,
+      customerId: portalScope.contract.customer_id,
+      projectId: portalScope.contract.project_id,
+      contractTitle: portalScope.contract.title,
+      eventType: "signed",
+      actorType: "system",
+      occurredAt: nowIso,
+      payload: {
+        completionMode: refreshedSummary.requiresCountersign
+          ? "customer_and_contractor"
+          : "customer_only"
+      }
+    });
+  }
 
   const contractState = buildContractStateFromSigners({
     contract: portalScope.contract,
@@ -2051,9 +2402,23 @@ export async function recordCustomerDeclinedContract(
         signerOrder: signer.signer_order,
         declineReason: input.declineReason ?? null
       },
-      occurredAt: nowIso
-    }))
-  );
+        occurredAt: nowIso
+      }))
+    );
+  await recordContractNotificationEvent({
+    organizationId: portalScope.contract.company_id,
+    contractId: portalScope.contract.id,
+    customerId: portalScope.contract.customer_id,
+    projectId: portalScope.contract.project_id,
+    contractTitle: portalScope.contract.title,
+    eventType: "declined",
+    actorType: "portal_user",
+    portalUserId: portalScope.userId,
+    occurredAt: nowIso,
+    payload: {
+      declineReason: input.declineReason ?? null
+    }
+  });
 
   const contractUpdateResponse = await admin
     .from("contracts")
@@ -2170,6 +2535,21 @@ export async function countersignContract(contractId: string) {
         ]
       : [])
   ]);
+  if (refreshedSummary.allRequiredSignersSigned) {
+    await recordContractNotificationEvent({
+      organizationId: scope.organizationId,
+      contractId,
+      customerId: contract.customer_id,
+      projectId: contract.project_id,
+      contractTitle: contract.title,
+      eventType: "signed",
+      actorType: "system",
+      occurredAt: nowIso,
+      payload: {
+        completionMode: "customer_and_contractor"
+      }
+    });
+  }
 
   const contractState = buildContractStateFromSigners({
     contract,

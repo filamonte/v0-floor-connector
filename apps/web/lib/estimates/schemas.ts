@@ -60,14 +60,6 @@ function positiveQuantityField() {
     .transform((value) => value.toFixed(2));
 }
 
-function lineItemNameField() {
-  return z.string().trim().min(1, "Line item name is required.").max(160);
-}
-
-function unitField() {
-  return z.string().trim().min(1, "Unit is required.").max(40);
-}
-
 function percentageField(label: string) {
   return z
     .string()
@@ -82,21 +74,6 @@ function percentageField(label: string) {
       message: `${label} cannot be negative.`
     })
     .transform((value) => value.toFixed(2));
-}
-
-function optionalCurrencyAmountField(label: string) {
-  return z
-    .string()
-    .trim()
-    .transform((value) => (value.length > 0 ? normalizeNumericInput(value) : ""))
-    .refine((value) => value.length === 0 || !Number.isNaN(Number(value)), {
-      message: `${label} must be a valid number.`
-    })
-    .transform((value) => (value.length === 0 ? null : Number(value)))
-    .refine((value) => value === null || value >= 0, {
-      message: `${label} cannot be negative.`
-    })
-    .transform((value) => (value == null ? null : value.toFixed(2)));
 }
 
 function optionalDateField(label: string) {
@@ -174,32 +151,37 @@ export const estimateLineItemInputSchema = z.object({
   sourceType: z.enum(["catalog_item", "system_component"] as const),
   sourceSystemId: optionalUuidishString(120),
   sourceComponentId: optionalUuidishString(120),
-  itemType: z.enum(
-    [
-      "material",
-      "labor",
-      "service",
-      "equipment",
-      "subcontractor",
-      "other",
-      "system"
-    ] as const
-  ),
-  name: lineItemNameField(),
-  description: optionalTrimmedString(1000),
   quantity: positiveQuantityField(),
-  unit: unitField(),
-  unitPrice: currencyAmountField("Unit price"),
-  baseUnitCost: currencyAmountField("Base unit cost"),
-  baseUnitPrice: optionalCurrencyAmountField("Base unit price"),
-  markupPercent: percentageField("Markup"),
-  hiddenMarkupPercent: percentageField("Hidden markup"),
-  unitPriceBeforeHiddenMarkup: currencyAmountField("Pre-hidden-markup unit price"),
-  visibleMarkupAmount: currencyAmountField("Visible markup amount"),
-  hiddenMarkupAmount: currencyAmountField("Hidden markup amount"),
-  taxCode: z.enum(["taxable", "non-taxable"] as const).default("taxable"),
   assignedTo: optionalTrimmedString(120),
   groupName: optionalTrimmedString(120)
+}).superRefine((value, ctx) => {
+  if (!value.catalogItemId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Estimate rows must reference a catalog item.",
+      path: ["catalogItemId"]
+    });
+  }
+
+  if (value.sourceType === "catalog_item") {
+    if (value.sourceSystemId || value.sourceComponentId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Catalog-item rows cannot include system lineage.",
+        path: ["sourceType"]
+      });
+    }
+
+    return;
+  }
+
+  if (!value.sourceSystemId || !value.sourceComponentId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "System component rows must include system lineage.",
+      path: ["sourceComponentId"]
+    });
+  }
 });
 
 export const estimateInputSchema = z.object({
@@ -216,20 +198,6 @@ export const estimateInputSchema = z.object({
   notes: optionalTrimmedString(4000),
   content: estimateWorkspaceContentInputSchema
 }).superRefine((value, ctx) => {
-  const subtotal = value.lineItems.reduce(
-    (sum, lineItem) => sum + Number(lineItem.quantity) * Number(lineItem.unitPrice),
-    0
-  );
-  const total = subtotal - Number(value.discountAmount);
-
-  if (total < 0) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Discount cannot reduce the estimate below zero.",
-      path: ["discountAmount"]
-    });
-  }
-
   if (
     value.estimateDate &&
     value.expirationDate &&
@@ -297,7 +265,82 @@ export const estimateQuickCreateInputSchema = z.object({
   }
 });
 
+export const estimateSendToCustomerInputSchema = z.object({
+  estimateId: z.string().uuid("Estimate id is required.")
+});
+
+export const estimatePortalDecisionInputSchema = z.object({
+  estimateId: z.string().uuid("Estimate id is required."),
+  decisionNote: optionalTrimmedString(1000)
+});
+
+export const estimatePortalCommentInputSchema = z.object({
+  estimateId: z.string().uuid("Estimate id is required."),
+  comment: z.string().trim().min(1, "Enter a note for the contractor.").max(1000)
+});
+
+const estimateInsertPayloadGuardKeys = [
+  "lineItems",
+  "rows",
+  "componentRows",
+  "unitPrice",
+  "unit_price",
+  "markup",
+  "markupPercent",
+  "markup_percent",
+  "baseUnitPrice",
+  "base_unit_price",
+  "baseUnitCost",
+  "base_unit_cost",
+  "costOverride",
+  "cost_override"
+] as const;
+
+function rejectClientOwnedEstimateInsertPayload(
+  value: Record<string, unknown>,
+  ctx: z.RefinementCtx
+) {
+  const forbiddenKey = estimateInsertPayloadGuardKeys.find((key) => key in value);
+
+  if (forbiddenKey) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Estimate insert actions only accept canonical source identifiers. Client pricing, overrides, and row arrays are not allowed.",
+      path: [forbiddenKey]
+    });
+  }
+}
+
+export const estimateCatalogInsertInputSchema = z
+  .object({
+    estimateId: z.string().uuid("Estimate id is required."),
+    catalogItemId: z.string().uuid("Select a valid catalog item.")
+  })
+  .strict()
+  .superRefine(rejectClientOwnedEstimateInsertPayload);
+
+export const estimateSystemInsertInputSchema = z
+  .object({
+    estimateId: z.string().uuid("Estimate id is required."),
+    systemCatalogItemId: z.string().uuid("Select a valid system."),
+    squareFootage: positiveQuantityField()
+  })
+  .strict()
+  .superRefine(rejectClientOwnedEstimateInsertPayload);
+
 export type EstimateInput = z.infer<typeof estimateInputSchema>;
 export type EstimateLineItemInput = z.infer<typeof estimateLineItemInputSchema>;
 export type EstimateQuickCreateInput = z.infer<typeof estimateQuickCreateInputSchema>;
+export type EstimateSendToCustomerInput = z.infer<
+  typeof estimateSendToCustomerInputSchema
+>;
+export type EstimatePortalDecisionInput = z.infer<
+  typeof estimatePortalDecisionInputSchema
+>;
+export type EstimatePortalCommentInput = z.infer<
+  typeof estimatePortalCommentInputSchema
+>;
+export type EstimateCatalogInsertInput = z.infer<typeof estimateCatalogInsertInputSchema>;
+export type EstimateSystemInsertInput = z.infer<typeof estimateSystemInsertInputSchema>;
 export const estimateStatusesList = estimateStatuses;

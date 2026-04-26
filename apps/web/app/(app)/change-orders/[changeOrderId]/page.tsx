@@ -2,12 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ContextFactsList } from "@/components/context-facts-list";
+import { ChangeOrderApprovalNextStepsPanel } from "@/components/change-orders/approval-next-steps-panel";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NextActionCard } from "@/components/next-action-card";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import {
+  addApprovedChangeOrderToSovAction,
+  invoiceApprovedChangeOrderDirectlyAction,
   resetRejectedChangeOrderAction,
   sendChangeOrderAction,
   updateChangeOrderAction
@@ -15,6 +18,7 @@ import {
 import { getChangeOrderById } from "@/lib/change-orders/data";
 import { listContracts } from "@/lib/contracts/data";
 import { listInvoices } from "@/lib/invoices/data";
+import { listProgressBillingByProject } from "@/lib/progress-billing/data";
 import { listProjects } from "@/lib/projects/data";
 
 type ChangeOrderDetailPageProps = {
@@ -24,6 +28,7 @@ type ChangeOrderDetailPageProps = {
   searchParams?: Promise<{
     error?: string;
     message?: string;
+    showNextSteps?: string;
   }>;
 };
 
@@ -89,13 +94,13 @@ function getNextAction(input: {
         input.invoiceId && Number(input.priceAdjustment) > 0
           ? input.appliedInvoiceLineItemId
             ? "Invoice continuity has been applied"
-            : "Linked invoice is waiting on application review"
+            : "Choose the billing next step"
           : "Scope approval is complete",
       description:
         input.invoiceId && Number(input.priceAdjustment) > 0
           ? input.appliedInvoiceLineItemId
             ? "This approved change order has already written a real line into the linked invoice record."
-            : "This approved change order was linked to billing, but invoice application still needs review."
+            : "The approved change order is ready for explicit downstream billing from the new next-step panel below."
           : "The scope decision is complete. Use the project hub and connected records to continue downstream execution or billing follow-through.",
       primaryLabel: input.invoiceId ? "Open linked invoice" : "Open project hub",
       primaryHref: input.invoiceId ? `/invoices/${input.invoiceId}` : `/projects/${input.projectId}`
@@ -144,6 +149,10 @@ export default async function ChangeOrderDetailPage({
   const visibleInvoices = invoices.filter(
     (invoice) =>
       invoice.projectId === changeOrder.projectId || invoice.id === changeOrder.invoiceId
+  );
+  const scheduleOfValuesOptions = await listProgressBillingByProject(
+    changeOrder.projectId,
+    `/change-orders/${changeOrderId}`
   );
 
   return (
@@ -301,6 +310,27 @@ export default async function ChangeOrderDetailPage({
               />
             </div>
           </div>
+
+          {changeOrder.status === "approved" ? (
+            <div className="mt-8">
+              <ChangeOrderApprovalNextStepsPanel
+                changeOrder={changeOrder}
+                addToSovAction={addApprovedChangeOrderToSovAction}
+                invoiceDirectlyAction={invoiceApprovedChangeOrderDirectlyAction}
+                scheduleOfValuesOptions={scheduleOfValuesOptions.map((workspace) => ({
+                  id: workspace.id,
+                  estimateReferenceNumber: workspace.estimate?.referenceNumber ?? "Unnumbered estimate",
+                  estimateStatus: workspace.estimate?.status ?? "approved",
+                  scheduledValueTotal: workspace.scheduledValueTotal
+                }))}
+                initialOpen={
+                  resolvedSearchParams.showNextSteps === "1" ||
+                  (!changeOrder.appliedInvoiceLineItemId &&
+                    changeOrder.latestCommercialSnapshotItemIds.length > 0)
+                }
+              />
+            </div>
+          ) : null}
         </div>
 
         <DetailPanel

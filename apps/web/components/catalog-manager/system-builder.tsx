@@ -143,15 +143,37 @@ export function SystemBuilder({
     );
   }
 
+  function moveRow(key: string, direction: -1 | 1) {
+    setRows((currentRows) => {
+      const index = currentRows.findIndex((row) => row.key === key);
+
+      if (index < 0) {
+        return currentRows;
+      }
+
+      const nextIndex = index + direction;
+
+      if (nextIndex < 0 || nextIndex >= currentRows.length) {
+        return currentRows;
+      }
+
+      const reordered = [...currentRows];
+      const [moved] = reordered.splice(index, 1);
+      reordered.splice(nextIndex, 0, moved);
+
+      return reordered.map((row, rowIndex) => ({ ...row, sortOrder: rowIndex }));
+    });
+  }
+
   return (
     <div className="space-y-4 rounded-[20px] border border-[#d8e0eb] bg-[#fbfcfe] p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#607492]">
-            System Builder
+            Systems / Packages Builder
           </p>
           <p className="mt-2 text-sm leading-6 text-[#5f7190]">
-            Component quantities, cost, price, and taxable mix are previewed from the same expansion logic used by estimates.
+            Component quantities, reorder, cost, final price, and taxable mix are previewed from the same expansion logic used by estimates.
           </p>
         </div>
         <button
@@ -174,6 +196,7 @@ export function SystemBuilder({
                 <th className="px-3 py-3">Component</th>
                 <th className="px-3 py-3">Qty / Unit</th>
                 <th className="px-3 py-3">Basis</th>
+                <th className="px-3 py-3">Order</th>
                 <th className="px-3 py-3">Actions</th>
               </tr>
             </thead>
@@ -217,6 +240,24 @@ export function SystemBuilder({
                       }
                       className="w-full rounded-[10px] border border-[#d7deea] bg-white px-3 py-2 text-sm text-[#334a70] outline-none"
                     />
+                  </td>
+                  <td className="px-3 py-3">
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => moveRow(row.key, -1)}
+                        className="rounded-full border border-[#d7deea] px-3 py-2 text-xs font-medium text-[#28456f]"
+                      >
+                        Up
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveRow(row.key, 1)}
+                        className="rounded-full border border-[#d7deea] px-3 py-2 text-xs font-medium text-[#28456f]"
+                      >
+                        Down
+                      </button>
+                    </div>
                   </td>
                   <td className="px-3 py-3">
                     <button

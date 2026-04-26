@@ -8,6 +8,17 @@ import { usePathname } from "next/navigation";
 import { ProtectedAppBreadcrumbs } from "@/components/protected-app-breadcrumbs";
 import { UniversalCreateMenu } from "@/components/universal-create-menu";
 
+const workspaceUtilityIconStyle = {
+  width: "24px",
+  height: "24px"
+} as const;
+
+const workspaceBandIconStyle = {
+  width: "14px",
+  height: "14px",
+  flexShrink: 0
+} as const;
+
 type ProtectedAppWorkspaceBandProps = {
   organizationName: string;
 };
@@ -23,6 +34,7 @@ function UtilityIcon({
     <Link
       href={href}
       className="inline-flex h-6 w-6 items-center justify-center rounded-[4px] text-white/80 transition hover:bg-white/10 hover:text-white"
+      style={workspaceUtilityIconStyle}
     >
       {children}
     </Link>
@@ -31,7 +43,7 @@ function UtilityIcon({
 
 function ArrowIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg aria-hidden="true" viewBox="0 0 20 20" width="14" height="14" className="h-3.5 w-3.5" style={workspaceBandIconStyle} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M5 15 15 5" />
       <path d="M8 5h7v7" />
     </svg>
@@ -40,7 +52,7 @@ function ArrowIcon() {
 
 function GridIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg aria-hidden="true" viewBox="0 0 20 20" width="14" height="14" className="h-3.5 w-3.5" style={workspaceBandIconStyle} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="3" width="5" height="5" rx="1" />
       <rect x="12" y="3" width="5" height="5" rx="1" />
       <rect x="3" y="12" width="5" height="5" rx="1" />
@@ -51,7 +63,7 @@ function GridIcon() {
 
 function PersonIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg aria-hidden="true" viewBox="0 0 20 20" width="14" height="14" className="h-3.5 w-3.5" style={workspaceBandIconStyle} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="10" cy="6" r="3" />
       <path d="M4 17a6 6 0 0 1 12 0" />
     </svg>
@@ -60,7 +72,7 @@ function PersonIcon() {
 
 function GearIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg aria-hidden="true" viewBox="0 0 20 20" width="14" height="14" className="h-3.5 w-3.5" style={workspaceBandIconStyle} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="10" cy="10" r="3" />
       <path d="M10 2v2M10 16v2M18 10h-2M4 10H2M15.7 4.3l-1.4 1.4M5.7 14.3l-1.4 1.4M15.7 15.7l-1.4-1.4M5.7 5.7 4.3 4.3" />
     </svg>
@@ -69,7 +81,7 @@ function GearIcon() {
 
 function ClockIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg aria-hidden="true" viewBox="0 0 20 20" width="14" height="14" className="h-3.5 w-3.5" style={workspaceBandIconStyle} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="10" cy="10" r="6" />
       <path d="M10 6v4l2.5 1.5" />
     </svg>

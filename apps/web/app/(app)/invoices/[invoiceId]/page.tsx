@@ -11,12 +11,13 @@ import { InvoicePaymentForm } from "@/components/invoice-payment-form";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NextActionCard } from "@/components/next-action-card";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
+import { listCatalogItems } from "@/lib/catalogs/data";
 import { listInvoiceChangeOrders } from "@/lib/change-orders/data";
 import {
   recordInvoicePaymentAction,
   updateInvoiceAction
 } from "@/lib/invoices/actions";
-import { getInvoiceById } from "@/lib/invoices/data";
+import { getInvoiceById, listInvoiceSourceOptions } from "@/lib/invoices/data";
 import { listEstimates } from "@/lib/estimates/data";
 import { listJobs } from "@/lib/jobs/data";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
@@ -67,6 +68,26 @@ function formatReadinessLabel(status: string | null) {
 
 function formatDateTime(value: string | null) {
   return value ? new Date(value).toLocaleString() : "Not recorded";
+}
+
+function getInvoiceLineageBadge(input: {
+  lineageType?: string | null;
+  invoiceOnlyAdjustmentKind?: string | null;
+}) {
+  switch (input.lineageType) {
+    case "estimate_snapshot_item":
+      return "Estimate snapshot";
+    case "sov_item":
+      return "SOV item";
+    case "change_order_snapshot_item":
+      return "Change order snapshot";
+    case "invoice_only_adjustment":
+      return input.invoiceOnlyAdjustmentKind === "manual_catalog_item"
+        ? "Manual catalog item"
+        : "Invoice-only adjustment";
+    default:
+      return "Legacy row";
+  }
 }
 
 function getPaymentEventLabel(eventType: PaymentEvent["eventType"]) {
@@ -246,12 +267,14 @@ export default async function InvoiceDetailPage({
 }: InvoiceDetailPageProps) {
   const { invoiceId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
-  const [invoice, projects, estimates, jobs, changeOrders] = await Promise.all([
+  const [invoice, projects, estimates, jobs, changeOrders, sourceOptions, catalogItems] = await Promise.all([
     getInvoiceById(invoiceId, `/invoices/${invoiceId}`),
     listProjects(),
     listEstimates(),
     listJobs(),
-    listInvoiceChangeOrders(invoiceId, `/invoices/${invoiceId}`)
+    listInvoiceChangeOrders(invoiceId, `/invoices/${invoiceId}`),
+    listInvoiceSourceOptions(),
+    listCatalogItems()
   ]);
 
   if (!invoice) {
@@ -771,12 +794,12 @@ export default async function InvoiceDetailPage({
                               {Number(lineItem.quantity).toLocaleString("en-US")} {lineItem.unit} at{" "}
                               {formatMoney(lineItem.unitPrice)}
                             </p>
-                            {invoice.billingModel === "aia_progress" &&
-                            lineItem.scheduleOfValueItemId ? (
-                              <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand-700">
-                                Linked SOV item
-                              </p>
-                            ) : null}
+                            <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand-700">
+                              {getInvoiceLineageBadge({
+                                lineageType: lineItem.lineageType,
+                                invoiceOnlyAdjustmentKind: lineItem.invoiceOnlyAdjustmentKind
+                              })}
+                            </p>
                           </div>
                           <p className="text-sm font-semibold text-slate-950">
                             {formatMoney(lineItem.lineTotal)}
@@ -1119,6 +1142,14 @@ export default async function InvoiceDetailPage({
                   paidAmount: invoice.paidAmount
                 }}
                 paidAmount={invoice.paidAmount}
+                sourceOptions={sourceOptions}
+                catalogItems={catalogItems.map((item) => ({
+                  id: item.id,
+                  name: item.name,
+                  unit: item.unit,
+                  defaultUnitPrice: item.defaultUnitPrice,
+                  status: item.status
+                }))}
               />
             )}
           </DetailPanel>

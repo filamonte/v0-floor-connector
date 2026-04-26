@@ -5,12 +5,21 @@ import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { EstimateStatusActions } from "@/components/estimate-status-actions";
+import { EstimateApprovalNextStepsPanel } from "@/components/estimates/approval-next-steps-panel";
+import { EstimateCustomerTimeline } from "@/components/estimates/estimate-customer-timeline";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NextActionCard } from "@/components/next-action-card";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { quickCreateContractFromEstimateAction } from "@/lib/contracts/actions";
 import { listContracts } from "@/lib/contracts/data";
-import { getEstimateById } from "@/lib/estimates/data";
+import {
+  openOrCreateScheduleOfValuesAction,
+  sendEstimateToCustomerAction
+} from "@/lib/estimates/actions";
+import { resolveEstimateApprovalOrchestration } from "@/lib/estimates/approval-orchestration";
+import { getEstimateById, listEstimateCustomerEvents } from "@/lib/estimates/data";
+import { quickCreateInvoiceAction } from "@/lib/invoices/actions";
 import { listInvoices } from "@/lib/invoices/data";
 import { listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
@@ -177,6 +186,7 @@ type EstimateDetailPageProps = {
   searchParams?: Promise<{
     error?: string;
     message?: string;
+    showNextSteps?: string;
   }>;
 };
 
@@ -187,12 +197,14 @@ export default async function EstimateDetailPage({
   const { estimateId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
   const user = await requireAuthenticatedUser(`/estimates/${estimateId}`);
-  const [estimate, organizationContext, contracts, jobs, invoices] = await Promise.all([
+  const [estimate, organizationContext, contracts, jobs, invoices, customerEvents] =
+    await Promise.all([
     getEstimateById(estimateId, `/estimates/${estimateId}`),
     getActiveOrganizationContext(user.id),
     listContracts(),
     listJobs(),
-    listInvoices()
+    listInvoices(),
+    listEstimateCustomerEvents(estimateId, `/estimates/${estimateId}`)
   ]);
 
   if (!estimate) {
@@ -202,6 +214,13 @@ export default async function EstimateDetailPage({
   const estimateContracts = contracts.filter((contract) => contract.estimateId === estimate.id);
   const estimateJobs = jobs.filter((job) => job.estimateId === estimate.id);
   const estimateInvoices = invoices.filter((invoice) => invoice.estimateId === estimate.id);
+  const approvalOrchestration =
+    estimate.status === "approved"
+      ? await resolveEstimateApprovalOrchestration(
+          estimate.id,
+          `/estimates/${estimate.id}`
+        )
+      : null;
   const readinessSnapshot = await getProjectFinancialReadinessSnapshot({
     organizationId: estimate.organizationId,
     projectId: estimate.projectId
@@ -377,6 +396,18 @@ export default async function EstimateDetailPage({
             ]}
           />
         </div>
+
+        {estimate.status === "approved" && approvalOrchestration ? (
+          <div className="mt-8 print:hidden">
+            <EstimateApprovalNextStepsPanel
+              orchestration={approvalOrchestration}
+              contractAction={quickCreateContractFromEstimateAction}
+              invoiceAction={quickCreateInvoiceAction}
+              scheduleOfValuesAction={openOrCreateScheduleOfValuesAction}
+              initialOpen={resolvedSearchParams.showNextSteps === "1"}
+            />
+          </div>
+        ) : null}
       </div>
 
       <section className="rounded-[2rem] border border-slate-200 bg-white px-6 py-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] sm:px-8 sm:py-10 print:rounded-none print:border-none print:px-0 print:py-0 print:shadow-none">
@@ -590,10 +621,28 @@ export default async function EstimateDetailPage({
               title="Workflow Actions"
               description="Move the estimate through the commercial workflow while keeping downstream actions in the right order."
             >
+              {estimate.status === "draft" || estimate.status === "rejected" ? (
+                <form action={sendEstimateToCustomerAction} className="space-y-4">
+                  <input type="hidden" name="estimateId" value={estimate.id} />
+                  <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+                    {estimate.status === "draft"
+                      ? "Send this estimate through the customer portal so FloorConnector can record delivery, email tracking, and the customer approval audit trail."
+                      : "This estimate was rejected or returned for revision. After you finish updates, resend it through the customer portal from here."}
+                  </div>
+                  <button
+                    type="submit"
+                    className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                  >
+                    {estimate.status === "draft" ? "Send to customer" : "Resend to customer"}
+                  </button>
+                </form>
+              ) : null}
               <EstimateStatusActions estimateId={estimate.id} currentStatus={estimate.status} />
               {estimate.status !== "approved" ? (
                 <p className="mt-4 text-sm leading-6 text-slate-500">
-                  Jobs and contracts should be created after this estimate reaches the approved state.
+                  {estimate.status === "sent"
+                    ? "Customer approval now happens in the portal. This workspace stays read-only on the decision itself while tracking delivery and response history."
+                    : "Jobs and contracts should be created after this estimate reaches the approved state."}
                 </p>
               ) : (
                 <p className="mt-4 text-sm leading-6 text-slate-500">
@@ -601,6 +650,13 @@ export default async function EstimateDetailPage({
                   signature, and financial handoff before downstream jobs or standard invoices.
                 </p>
               )}
+            </DetailPanel>
+
+            <DetailPanel
+              title="Customer Timeline"
+              description="Track when the estimate was sent, opened, reviewed, commented on, and approved or rejected."
+            >
+              <EstimateCustomerTimeline events={customerEvents} />
             </DetailPanel>
           </div>
 

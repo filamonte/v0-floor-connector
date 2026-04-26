@@ -10,12 +10,21 @@ type ContractorNotificationsCenterProps = {
   compact?: boolean;
 };
 
+const notificationIconStyle = {
+  width: "16px",
+  height: "16px",
+  flexShrink: 0
+} as const;
+
 function BellIcon() {
   return (
     <svg
       aria-hidden="true"
       viewBox="0 0 20 20"
+      width="16"
+      height="16"
       className="h-4 w-4"
+      style={notificationIconStyle}
       fill="none"
       stroke="currentColor"
       strokeWidth="1.8"

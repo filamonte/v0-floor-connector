@@ -156,6 +156,7 @@ export const platformCatalogSeedInputSchema = z.object({
   taxable: z.boolean(),
   vendorId: optionalUuidField("Select a valid vendor."),
   category: trimmedNullableString(120),
+  costCode: trimmedNullableString(120),
   sku: trimmedNullableString(120),
   internalNotes: trimmedNullableString(2000),
   photoStoragePath: trimmedNullableString(2000),

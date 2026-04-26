@@ -1,49 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { compareMembershipRoles } from "@floorconnector/domain";
 import type { MembershipRole } from "@floorconnector/types";
 
-import { protectedAppNavItems } from "@/lib/app-shell/navigation";
-
-function isActivePath(pathname: string, href: string) {
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
+import { useProtectedNavigationState } from "@/lib/navigation/navigation-client";
 
 type ProtectedAppNavProps = {
   currentRole?: MembershipRole;
   variant?: "sidebar" | "mobile" | "drawer";
 };
 
-const sectionLabels = {
-  overview: "Overview",
-  pipeline: "Revenue workflow",
-  operations: "Operations",
-  finance: "Finance",
-  admin: "Administration"
-} as const;
-
 export function ProtectedAppNav({
   currentRole,
   variant = "sidebar"
 }: ProtectedAppNavProps) {
-  const pathname = usePathname();
-  const visibleItems = protectedAppNavItems.filter((item) => {
-    if (!currentRole) {
-      return item.minRole === "member";
-    }
-
-    return compareMembershipRoles(currentRole, item.minRole) <= 0;
-  });
-
-  const groupedItems = Object.entries(sectionLabels)
-    .map(([section, label]) => ({
-      section,
-      label,
-      items: visibleItems.filter((item) => item.section === section)
-    }))
-    .filter((group) => group.items.length > 0);
+  const { sections, isItemActive } = useProtectedNavigationState(currentRole);
+  const visibleItems = sections.flatMap((group) => group.items);
 
   return (
     <nav
@@ -58,7 +30,7 @@ export function ProtectedAppNav({
     >
       {variant === "mobile"
         ? visibleItems.map((item) => {
-            const isActive = isActivePath(pathname, item.href);
+            const isActive = isItemActive(item);
 
             return (
               <Link
@@ -76,14 +48,14 @@ export function ProtectedAppNav({
               </Link>
             );
           })
-        : groupedItems.map((group) => (
-            <div key={group.section}>
+        : sections.map((group) => (
+            <div key={group.id}>
               <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
                 {group.label}
               </p>
               <div className="mt-2 flex flex-col gap-1">
                 {group.items.map((item) => {
-                  const isActive = isActivePath(pathname, item.href);
+                  const isActive = isItemActive(item);
 
                   return (
                     <Link

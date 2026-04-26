@@ -1,6 +1,15 @@
 "use client";
 
-import type { CatalogItem, Vendor } from "@floorconnector/types";
+import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
+import type {
+  CatalogItem,
+  CatalogItemFile,
+  InventoryItem,
+  InventoryTransaction,
+  TaxCode,
+  Vendor
+} from "@floorconnector/types";
 
 import { SystemBuilder } from "@/components/catalog-manager/system-builder";
 
@@ -8,13 +17,22 @@ type InventoryItemDrawerProps = {
   open: boolean;
   item: CatalogItem | null;
   initialItemType: CatalogItem["itemType"];
+  defaultTab?: DrawerTab;
+  inventoryEnabled: boolean;
   returnTo: string;
   vendors: Vendor[];
   catalogItems: CatalogItem[];
+  taxCodes: TaxCode[];
+  inventoryItem: InventoryItem | null;
+  inventoryTransactions: InventoryTransaction[];
+  existingFiles: CatalogItemFile[];
   onClose: () => void;
   saveItemAction: (formData: FormData) => void | Promise<void>;
   saveSystemComponentsAction: (formData: FormData) => void | Promise<void>;
+  deleteCatalogItemFileAction: (formData: FormData) => void | Promise<void>;
 };
+
+type DrawerTab = "details" | "notes" | "inventory" | "files";
 
 function createEmptyItem(itemType: CatalogItem["itemType"]): CatalogItem {
   return {
@@ -26,7 +44,7 @@ function createEmptyItem(itemType: CatalogItem["itemType"]): CatalogItem {
     name: "",
     description: null,
     internalNotes: null,
-    unit: itemType === "service" ? "each" : itemType === "material" ? "sqft" : "each",
+    unit: itemType === "material" ? "sqft" : "each",
     defaultUnitCost: "0.00",
     defaultUnitPrice: null,
     markupPercent: "0.00",
@@ -34,6 +52,7 @@ function createEmptyItem(itemType: CatalogItem["itemType"]): CatalogItem {
     taxable: true,
     vendorId: null,
     category: null,
+    costCode: null,
     sku: null,
     photoStoragePath: null,
     status: "active",
@@ -45,258 +64,656 @@ function createEmptyItem(itemType: CatalogItem["itemType"]): CatalogItem {
   };
 }
 
+function formatInventoryQuantity(value: string) {
+  return Number(value).toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 4
+  });
+}
+
 export function InventoryItemDrawer({
   open,
   item,
   initialItemType,
+  defaultTab = "details",
+  inventoryEnabled,
   returnTo,
   vendors,
   catalogItems,
+  taxCodes,
+  inventoryItem,
+  inventoryTransactions,
+  existingFiles,
   onClose,
   saveItemAction,
-  saveSystemComponentsAction
+  saveSystemComponentsAction,
+  deleteCatalogItemFileAction
 }: InventoryItemDrawerProps) {
+  const [activeTab, setActiveTab] = useState<DrawerTab>(defaultTab);
+  const [draftName, setDraftName] = useState(item?.name ?? "");
+  const [draftSku, setDraftSku] = useState(item?.sku ?? "");
+  const [trackInventory, setTrackInventory] = useState(Boolean(inventoryItem && inventoryItem.status === "active"));
+
+  const editableItem = useMemo(
+    () => item ?? createEmptyItem(initialItemType),
+    [initialItemType, item]
+  );
+
+  useEffect(() => {
+    setActiveTab(defaultTab);
+    setDraftName(item?.name ?? "");
+    setDraftSku(item?.sku ?? "");
+    setTrackInventory(
+      inventoryEnabled && Boolean(inventoryItem && inventoryItem.status === "active")
+    );
+  }, [defaultTab, initialItemType, inventoryEnabled, inventoryItem, item?.id, item?.name, item?.sku]);
+
+  const duplicateFeedback = useMemo(() => {
+    const normalizedName = draftName.trim().toLowerCase().replace(/\s+/g, " ");
+    const normalizedSku = draftSku.trim().toLowerCase().replace(/\s+/g, " ");
+
+    const duplicateByName =
+      normalizedName.length > 0
+        ? catalogItems.find(
+            (catalogItem) =>
+              catalogItem.id !== editableItem.id &&
+              catalogItem.name.trim().toLowerCase().replace(/\s+/g, " ") === normalizedName
+          )
+        : null;
+    const duplicateBySku =
+      normalizedSku.length > 0
+        ? catalogItems.find(
+            (catalogItem) =>
+              catalogItem.id !== editableItem.id &&
+              (catalogItem.sku ?? "").trim().toLowerCase().replace(/\s+/g, " ") ===
+                normalizedSku
+          )
+        : null;
+
+    if (duplicateByName) {
+      return `Name already used by ${duplicateByName.name}.`;
+    }
+
+    if (duplicateBySku) {
+      return `SKU already used by ${duplicateBySku.name}.`;
+    }
+
+    return null;
+  }, [catalogItems, draftName, draftSku, editableItem.id]);
+
   if (!open) {
     return null;
   }
 
-  const editableItem = item ?? createEmptyItem(initialItemType);
-
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-[#122033]/55">
+      <div className="fixed inset-0 z-50 flex justify-end bg-[#08111f]/45">
       <button
         type="button"
         onClick={onClose}
         className="absolute inset-0"
-        aria-label="Close inventory item drawer"
+        aria-label="Close cost item drawer"
       />
-      <aside className="relative z-10 flex h-full w-full max-w-[960px] flex-col overflow-y-auto border-l border-[#d6dce6] bg-[#f8fbff] shadow-[-32px_0_80px_-48px_rgba(15,23,42,0.6)]">
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-[#dde5ef] bg-white px-6 py-5">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#486180]">
-              Inventory Item
-            </p>
-            <h3 className="mt-2 text-[1.85rem] font-semibold tracking-[-0.02em] text-[#183153]">
-              {item ? `Edit ${item.name}` : `Create ${initialItemType}`}
-            </h3>
-            <p className="mt-2 max-w-2xl text-[14px] leading-6 text-[#5c6d83]">
-              Keep commercial inventory dense and operational: cost, price, taxable behavior, vendor continuity, and system assembly all stay on the shared catalog.
-            </p>
+
+        <aside className="relative z-10 flex h-full w-full max-w-[780px] flex-col overflow-hidden border-l border-[#d5dce7] bg-white shadow-[-32px_0_90px_-44px_rgba(7,16,30,0.75)]">
+          <div className="border-b border-[#dce3ee] bg-[#fbfcfe] px-4 py-3">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6a7f9d]">
+                Cost Item
+              </div>
+                <h3 className="mt-1 text-[1.25rem] font-semibold tracking-tight text-[#17243b]">
+                {item ? `Edit ${item.name}` : `Add ${initialItemType}`}
+              </h3>
+              <p className="mt-1 max-w-2xl text-sm leading-5 text-[#60738f]">
+                This drawer writes to the shared cost item master. Inventory tracking is optional and stays attached to this same item record.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-[4px] border border-[#d6deea] bg-white px-3 py-1.5 text-sm font-medium text-[#36527a]"
+            >
+              Close
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#d7e0ea] bg-white text-[13px] font-medium text-[#4b5d75]"
-          >
-            X
-          </button>
+
+            <div className="mt-3 flex flex-wrap gap-1.5">
+            {(["details", "notes", "inventory", "files"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={[
+                    "rounded-[4px] px-2.5 py-1.5 text-sm font-medium capitalize transition",
+                  activeTab === tab
+                    ? "bg-[#264a7a] text-white"
+                    : "border border-[#d6deea] bg-white text-[#36527a]"
+                ].join(" ")}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="space-y-5 p-5">
-          <form action={saveItemAction} className="rounded-[22px] border border-[#dde5ef] bg-white p-5">
+        <div className="flex-1 overflow-y-auto px-4 py-3">
+          <form action={saveItemAction} className="space-y-3">
             <input type="hidden" name="returnTo" value={returnTo} />
             <input type="hidden" name="itemId" value={editableItem.id} />
+            <input type="hidden" name="inventoryItemId" value={inventoryItem?.id ?? ""} />
+            <input type="hidden" name="photoStoragePath" value={editableItem.photoStoragePath ?? ""} />
+            {editableItem.id ? <input type="hidden" name="catalogItemId" value={editableItem.id} /> : null}
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-800">Type</span>
-                <select
-                  name="itemType"
-                  defaultValue={editableItem.itemType}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                >
-                  {([
-                    "material",
-                    "labor",
-                    "service",
-                    "equipment",
-                    "subcontractor",
-                    "other",
-                    "system"
-                  ] as const).map(
-                    (itemType) => (
+            <div
+              className={[
+                "space-y-3",
+                activeTab === "details" ? "block" : "hidden"
+              ].join(" ")}
+            >
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Item name</span>
+                  <input
+                    name="name"
+                    defaultValue={editableItem.name}
+                    onChange={(event) => setDraftName(event.target.value)}
+                    required
+                    className="h-10 w-full rounded-[4px] border border-slate-300 px-3 text-sm outline-none"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Type</span>
+                  <select
+                    name="itemType"
+                    defaultValue={editableItem.itemType}
+                    className="h-10 w-full rounded-[4px] border border-slate-300 px-3 text-sm outline-none"
+                  >
+                    {(
+                      [
+                        "material",
+                        "labor",
+                        "equipment",
+                        "service",
+                        "system",
+                        "subcontractor",
+                        "other"
+                      ] as const
+                    ).map((itemType) => (
                       <option key={itemType} value={itemType}>
                         {itemType}
                       </option>
-                    )
-                  )}
-                </select>
-              </label>
+                    ))}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">SKU</span>
+                  <input
+                    name="sku"
+                    defaultValue={editableItem.sku ?? ""}
+                    onChange={(event) => setDraftSku(event.target.value)}
+                    className="h-10 w-full rounded-[4px] border border-slate-300 px-3 text-sm outline-none"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Unit</span>
+                  <input
+                    name="unit"
+                    defaultValue={editableItem.unit}
+                    required
+                    className="h-10 w-full rounded-[4px] border border-slate-300 px-3 text-sm outline-none"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Unit cost</span>
+                  <input
+                    name="defaultUnitCost"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue={editableItem.defaultUnitCost}
+                    required
+                    className="h-10 w-full rounded-[4px] border border-slate-300 px-3 text-sm outline-none"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Base price override</span>
+                  <input
+                    name="defaultUnitPrice"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue={editableItem.defaultUnitPrice ?? ""}
+                    className="h-10 w-full rounded-[4px] border border-slate-300 px-3 text-sm outline-none"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Visible markup %</span>
+                  <input
+                    name="markupPercent"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue={editableItem.markupPercent}
+                    required
+                    className="h-10 w-full rounded-[4px] border border-slate-300 px-3 text-sm outline-none"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Hidden markup %</span>
+                  <input
+                    name="hiddenMarkupPercent"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue={editableItem.hiddenMarkupPercent}
+                    required
+                    className="h-10 w-full rounded-[4px] border border-slate-300 px-3 text-sm outline-none"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Vendor</span>
+                  <select
+                    name="vendorId"
+                    defaultValue={editableItem.vendorId ?? ""}
+                    className="h-10 w-full rounded-[4px] border border-slate-300 px-3 text-sm outline-none"
+                  >
+                    <option value="">No vendor</option>
+                    {vendors.map((vendor) => (
+                      <option key={vendor.id} value={vendor.id}>
+                        {vendor.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Category / Group</span>
+                  <input
+                    name="category"
+                    defaultValue={editableItem.category ?? ""}
+                    className="h-10 w-full rounded-[4px] border border-slate-300 px-3 text-sm outline-none"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Cost code</span>
+                  <input
+                    name="costCode"
+                    defaultValue={editableItem.costCode ?? ""}
+                    className="h-10 w-full rounded-[4px] border border-slate-300 px-3 text-sm outline-none"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Status</span>
+                  <select
+                    name="status"
+                    defaultValue={editableItem.status}
+                    className="h-10 w-full rounded-[4px] border border-slate-300 px-3 text-sm outline-none"
+                  >
+                    <option value="active">Active</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </label>
+                <label className="block md:col-span-2">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Customer-facing description</span>
+                  <textarea
+                    name="description"
+                    defaultValue={editableItem.description ?? ""}
+                    rows={4}
+                    className="w-full rounded-[4px] border border-slate-300 px-3 py-2.5 text-sm outline-none"
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="flex items-center gap-3 rounded-[4px] border border-[#e2e8f0] bg-[#f8fafc] px-3 py-2.5 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    name="taxable"
+                    defaultChecked={editableItem.taxable}
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                  Taxable
+                </label>
+                <label className="flex items-center gap-3 rounded-[4px] border border-[#e2e8f0] bg-[#f8fafc] px-3 py-2.5 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    name="isDefault"
+                    defaultChecked={editableItem.isDefault}
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                  Default starter for this type
+                </label>
+              </div>
+
+              <details className="rounded-[4px] border border-[#e2e8f0] bg-[#f8fafc] px-3 py-3">
+                <summary className="cursor-pointer text-sm font-medium text-[#22344d]">
+                  Advanced tax override
+                </summary>
+                <div className="mt-4 space-y-3">
+                  <p className="text-sm leading-6 text-[#60738f]">
+                    Keep item tax simple with the taxable checkbox above. Use an optional tax code only when the organization needs an advanced saved default.
+                  </p>
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-medium text-slate-800">Tax code</span>
+                    <select
+                      name="taxCodeId"
+                      defaultValue={editableItem.taxCodeId ?? ""}
+                      className="h-10 w-full rounded-[4px] border border-slate-300 px-3 text-sm outline-none"
+                    >
+                      <option value="">Use organization tax defaults</option>
+                      {taxCodes.map((taxCode) => (
+                        <option key={taxCode.id} value={taxCode.id}>
+                          {taxCode.name} ({(Number(taxCode.rate) * 100).toFixed(2)}%)
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </details>
+
+              {duplicateFeedback ? (
+                <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+                  Duplicate pre-check: {duplicateFeedback} Server-side duplicate protection is also enforced on save.
+                </div>
+              ) : null}
+            </div>
+
+            <div
+              className={[
+                "space-y-3",
+                activeTab === "notes" ? "block" : "hidden"
+              ].join(" ")}
+            >
               <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-800">Status</span>
-                <select
-                  name="status"
-                  defaultValue={editableItem.status}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                >
-                  <option value="active">Active</option>
-                  <option value="archived">Archived</option>
-                </select>
-              </label>
-              <label className="block md:col-span-2">
-                <span className="mb-2 block text-sm font-medium text-slate-800">Name</span>
-                <input
-                  name="name"
-                  defaultValue={editableItem.name}
-                  required
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                />
-              </label>
-              <label className="block md:col-span-2">
-                <span className="mb-2 block text-sm font-medium text-slate-800">Description</span>
-                <textarea
-                  name="description"
-                  defaultValue={editableItem.description ?? ""}
-                  rows={3}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-800">SKU</span>
-                <input
-                  name="sku"
-                  defaultValue={editableItem.sku ?? ""}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-800">Unit</span>
-                <input
-                  name="unit"
-                  defaultValue={editableItem.unit}
-                  required
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-800">Category</span>
-                <input
-                  name="category"
-                  defaultValue={editableItem.category ?? ""}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-800">Vendor</span>
-                <select
-                  name="vendorId"
-                  defaultValue={editableItem.vendorId ?? ""}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                >
-                  <option value="">No vendor</option>
-                  {vendors.map((vendor) => (
-                    <option key={vendor.id} value={vendor.id}>
-                      {vendor.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-800">Default unit cost</span>
-                <input
-                  name="defaultUnitCost"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  defaultValue={editableItem.defaultUnitCost}
-                  required
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-800">Base price override</span>
-                <input
-                  name="defaultUnitPrice"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  defaultValue={editableItem.defaultUnitPrice ?? ""}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-800">Markup %</span>
-                <input
-                  name="markupPercent"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  defaultValue={editableItem.markupPercent}
-                  required
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-800">Hidden markup %</span>
-                <input
-                  name="hiddenMarkupPercent"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  defaultValue={editableItem.hiddenMarkupPercent}
-                  required
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
-                />
-              </label>
-              <label className="block md:col-span-2">
                 <span className="mb-2 block text-sm font-medium text-slate-800">Internal notes</span>
                 <textarea
                   name="internalNotes"
                   defaultValue={editableItem.internalNotes ?? ""}
-                  rows={3}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                  rows={10}
+                  className="w-full rounded-[4px] border border-slate-300 px-3 py-2.5 text-sm outline-none"
                 />
               </label>
             </div>
 
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                <input
-                  type="checkbox"
-                  name="taxable"
-                  defaultChecked={editableItem.taxable}
-                  className="mt-1 h-4 w-4 rounded border-slate-300"
-                />
-                <span className="text-sm text-slate-700">Taxable by default</span>
-              </label>
-              <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                <input
-                  type="checkbox"
-                  name="isDefault"
-                  defaultChecked={editableItem.isDefault}
-                  className="mt-1 h-4 w-4 rounded border-slate-300"
-                />
-                <span className="text-sm text-slate-700">Set as default starter for this type</span>
-              </label>
+            <div
+              className={[
+                "space-y-3",
+                activeTab === "inventory" ? "block" : "hidden"
+              ].join(" ")}
+            >
+              <div className="flex items-center justify-between gap-3 rounded-[4px] border border-[#e2e8f0] bg-[#f8fafc] px-3 py-3">
+                <div>
+                  <div className="text-sm font-medium text-[#22344d]">Inventory tracking</div>
+                  <p className="mt-1 text-sm leading-6 text-[#60738f]">
+                    {inventoryEnabled
+                      ? "Inventory is optional for this cost item. Quantity on hand is read-only here and only changes through inventory transactions."
+                      : "Inventory tracking is currently disabled for this organization. Existing linked inventory data is preserved, but new inventory controls stay hidden until the module setting is turned back on."}
+                  </p>
+                </div>
+                <label className="flex items-center gap-3 text-sm font-medium text-[#36527a]">
+                  <input
+                    type="checkbox"
+                    name="trackInventory"
+                    checked={trackInventory}
+                    onChange={(event) => setTrackInventory(event.target.checked)}
+                    disabled={!inventoryEnabled}
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                  Track inventory
+                </label>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Quantity on hand</span>
+                  <input
+                    value={
+                      inventoryItem ? formatInventoryQuantity(inventoryItem.currentQuantity) : "0"
+                    }
+                    readOnly
+                    className="h-10 w-full rounded-[4px] border border-slate-300 bg-slate-50 px-3 text-sm outline-none"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Reorder point</span>
+                  <input
+                    name="inventoryReorderPoint"
+                    type="number"
+                    min="0"
+                    step="0.0001"
+                    defaultValue={inventoryItem?.reorderPoint ?? "0"}
+                    disabled={!inventoryEnabled || !trackInventory}
+                    className="h-10 w-full rounded-[4px] border border-slate-300 px-3 text-sm outline-none disabled:bg-slate-50"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Location</span>
+                  <input
+                    name="inventoryLocation"
+                    defaultValue={inventoryItem?.location ?? "default"}
+                    disabled={!inventoryEnabled || !trackInventory}
+                    className="h-10 w-full rounded-[4px] border border-slate-300 px-3 text-sm outline-none disabled:bg-slate-50"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Manual adjustment</span>
+                  <input
+                    name="inventoryAdjustmentQuantity"
+                    type="number"
+                    step="0.0001"
+                    placeholder="Enter + or - quantity"
+                    disabled={!inventoryEnabled || !trackInventory || !editableItem.id}
+                    className="h-10 w-full rounded-[4px] border border-slate-300 px-3 text-sm outline-none disabled:bg-slate-50"
+                  />
+                </label>
+                <label className="block md:col-span-2">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Adjustment note</span>
+                  <textarea
+                    name="inventoryAdjustmentNote"
+                    rows={3}
+                    placeholder="Reason for the stock adjustment"
+                    disabled={!inventoryEnabled || !trackInventory || !editableItem.id}
+                    className="w-full rounded-[4px] border border-slate-300 px-3 py-2.5 text-sm outline-none disabled:bg-slate-50"
+                  />
+                </label>
+              </div>
+
+              {!inventoryEnabled ? (
+                <div className="rounded-[4px] border border-[#d8dfe9] bg-[#fbfcfe] px-3 py-3 text-sm text-[#60738f]">
+                  Inventory controls are disabled in Cost Items settings. Existing inventory records remain attached to their cost items and can be reactivated later without data loss.
+                </div>
+              ) : null}
+
+              {!editableItem.id && trackInventory ? (
+                <div className="rounded-[4px] border border-[#d8dfe9] bg-[#fbfcfe] px-3 py-3 text-sm text-[#60738f]">
+                  Save the cost item first. That will create the linked inventory record at the default location, then you can reopen the drawer to record stock adjustments.
+                </div>
+              ) : null}
+
+              <div className="rounded-[4px] border border-[#e2e8f0] bg-[#fbfcfe] px-3 py-3">
+                <div className="font-medium text-[#22344d]">Recent transactions</div>
+                <div className="mt-3 space-y-3">
+                  {inventoryTransactions.slice(0, 8).map((transaction) => (
+                    <div
+                      key={transaction.id}
+                      className="flex items-center justify-between gap-3 rounded-[4px] border border-[#eef2f7] bg-white px-3 py-2.5 text-sm text-[#60738f]"
+                    >
+                      <div>
+                        <div className="font-medium text-[#22344d]">{transaction.transactionType}</div>
+                        <div className="text-xs text-[#8b96a8]">{transaction.notes ?? "No note"}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium text-[#22344d]">
+                          {Number(transaction.quantityChange) > 0 ? "+" : ""}
+                          {formatInventoryQuantity(transaction.quantityChange)}
+                        </div>
+                        <div className="text-xs text-[#8b96a8]">
+                          {new Date(transaction.createdAt).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {inventoryTransactions.length === 0 ? (
+                    <div className="rounded-[4px] border border-dashed border-[#d8dfe9] px-3 py-3 text-sm text-[#7d8aa0]">
+                      No inventory transactions yet for this item.
+                    </div>
+                  ) : null}
+                </div>
+              </div>
             </div>
 
-            <div className="mt-5 flex items-center justify-end gap-3">
+            <div
+              className={[
+                "space-y-3",
+                activeTab === "files" ? "block" : "hidden"
+              ].join(" ")}
+            >
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Photo upload</span>
+                  <input
+                    type="file"
+                    name="catalogItemPhoto"
+                    accept="image/*"
+                    className="block w-full text-sm text-slate-700"
+                  />
+                  <p className="mt-2 text-xs leading-5 text-[#6b7d97]">
+                    Uses the existing documents bucket and stores files under
+                    `{editableItem.id ? ` ${editableItem.organizationId || "{organizationId}"}/catalog-items/${editableItem.id}/...` : " {organizationId}/catalog-items/{catalogItemId}/..."}`.
+                  </p>
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-800">Additional files</span>
+                  <input
+                    type="file"
+                    name="catalogItemFiles"
+                    multiple
+                    className="block w-full text-sm text-slate-700"
+                  />
+                </label>
+              </div>
+
+              <div className="rounded-[4px] border border-[#e2e8f0] bg-[#f8fafc] px-3 py-3 text-sm text-[#60738f]">
+                <div className="font-medium text-[#22344d]">Current photo path</div>
+                <div className="mt-1 break-all">
+                  {editableItem.photoStoragePath ?? "No photo uploaded yet."}
+                </div>
+              </div>
+
+              {existingFiles.length > 0 ? (
+                <div className="space-y-3 rounded-[4px] border border-[#e2e8f0] bg-[#fbfcfe] px-3 py-3">
+                  <div className="font-medium text-[#22344d]">Stored files</div>
+                  <div className="space-y-3">
+                    {existingFiles.map((file) => (
+                      <div
+                        key={file.path}
+                        className="rounded-[4px] border border-[#eef2f7] bg-white px-3 py-2.5 text-sm text-[#60738f]"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <div className="font-medium text-[#22344d]">{file.name}</div>
+                            <div className="text-xs text-[#8b96a8]">{file.path}</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {file.downloadUrl ? (
+                              <a
+                                href={file.downloadUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="rounded-[4px] border border-[#d6deea] px-3 py-1.5 text-sm text-[#36527a]"
+                              >
+                                Preview
+                              </a>
+                            ) : null}
+                            <button
+                              type="submit"
+                              formAction={deleteCatalogItemFileAction}
+                              name="filePath"
+                              value={file.path}
+                              className="rounded-[4px] border border-[#d6deea] px-3 py-1.5 text-sm text-[#36527a]"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                        {file.downloadUrl && file.mimeType?.startsWith("image/") ? (
+                          <Image
+                            src={file.downloadUrl}
+                            alt={file.name}
+                            width={320}
+                            height={160}
+                            unoptimized
+                            className="mt-3 max-h-40 rounded-[4px] border border-[#eef2f7] object-cover"
+                          />
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {editableItem.id && editableItem.photoStoragePath ? (
+                <div className="rounded-[4px] border border-[#f1d7d7] bg-[#fff7f7] p-3">
+                  <input type="hidden" name="catalogItemId" value={editableItem.id} />
+                  <input type="hidden" name="filePath" value={editableItem.photoStoragePath} />
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="text-sm text-[#7a4d4d]">
+                      Remove the current photo from the documents bucket.
+                    </div>
+                    <button
+                      type="submit"
+                      formAction={deleteCatalogItemFileAction}
+                      className="rounded-[4px] border border-[#e3b1b1] bg-white px-3 py-1.5 text-sm font-medium text-[#8a4d4d]"
+                    >
+                      Delete current photo
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-full border border-[#d7deea] bg-white px-4 py-2 text-sm font-medium text-[#28456f]"
+                className="rounded-[4px] border border-[#d6deea] bg-white px-3 py-2 text-sm font-medium text-[#36527a]"
               >
-                Close
+                Cancel
               </button>
+              {inventoryEnabled && trackInventory && editableItem.id ? (
+                <button
+                  type="submit"
+                  name="submitMode"
+                  value="adjust"
+                className="rounded-[4px] border border-[#264a7a] bg-white px-3 py-2 text-sm font-medium text-[#264a7a]"
+                >
+                  Record Adjustment
+                </button>
+              ) : null}
               <button
                 type="submit"
-                className="rounded-full bg-[#1f5fd6] px-4 py-2 text-sm font-medium text-white"
+                name="submitMode"
+                value="save"
+                className="rounded-[4px] bg-[#264a7a] px-3 py-2 text-sm font-medium text-white"
               >
                 Save Item
               </button>
             </div>
           </form>
 
-          {item && item.itemType === "system" ? (
-            <SystemBuilder
-              returnTo={returnTo}
-              systemItem={item}
-              catalogItems={catalogItems}
-              saveAction={saveSystemComponentsAction}
-            />
-          ) : item == null && initialItemType === "system" ? (
-            <div className="rounded-[22px] border border-dashed border-[#d8e0eb] bg-white px-5 py-6 text-sm leading-6 text-[#5f7190]">
-              Save the system item once first, then reopen it to manage component rows and preview sqft expansion.
+          {editableItem.itemType === "system" && editableItem.id ? (
+            <div className="mt-6">
+              <SystemBuilder
+                returnTo={returnTo}
+                systemItem={editableItem}
+                catalogItems={catalogItems}
+                saveAction={saveSystemComponentsAction}
+              />
+            </div>
+          ) : null}
+
+          {editableItem.itemType === "system" && !editableItem.id ? (
+            <div className="mt-4 rounded-[4px] border border-dashed border-[#d6deea] bg-[#fbfcfe] px-4 py-4 text-sm leading-6 text-[#60738f]">
+              Save the system/package item first, then reopen it to add, reorder, and preview real component rows by square footage.
             </div>
           ) : null}
         </div>

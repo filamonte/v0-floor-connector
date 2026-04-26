@@ -8,7 +8,6 @@ import {
   FilePlus2,
   MoreVertical,
 } from "lucide-react";
-import { estimateStatusTransitions } from "@floorconnector/domain";
 import type {
   CatalogItem,
   Estimate,
@@ -22,6 +21,7 @@ import type {
 } from "@floorconnector/types";
 
 import { CoverSheet } from "@/components/estimates/cover-sheet";
+import { EstimateApprovalNextStepsPanel } from "@/components/estimates/approval-next-steps-panel";
 import {
   EstimateWorkspaceShell,
   type EstimateWorkspaceSectionId
@@ -31,7 +31,6 @@ import { ItemsSection, type EstimateItemsDraft } from "@/components/estimates/it
 import { NotesSection } from "@/components/estimates/notes-section";
 import { ScopeOfWork } from "@/components/estimates/scope-of-work";
 import { TermsEditor } from "@/components/estimates/terms-editor";
-import { buildExpandedSystemPreview } from "@/lib/catalogs/system-expansion";
 import {
   calculateDiscountedTaxableSales,
   calculateLineTotal,
@@ -39,8 +38,12 @@ import {
   formatMoneyValue
 } from "@/lib/catalogs/pricing";
 import type {
-  EstimateAutosaveResult
+  EstimateInsertResult,
+  EstimateAutosaveResult,
+  ExpandedSystemPreviewResult,
+  EstimateStatusTransitionResult
 } from "@/lib/estimates/actions";
+import type { EstimateApprovalOrchestrationState } from "@/lib/estimates/approval-orchestration";
 import { stripHtmlToPlainText } from "@/lib/estimates/workspace";
 
 type EditableEstimate = Estimate & {
@@ -67,14 +70,28 @@ type EstimateFormProps = {
   >;
   contentBlocks?: EstimateContentBlock[];
   autosaveAction: (formData: FormData) => Promise<EstimateAutosaveResult>;
-  updateStatusAction: (formData: FormData) => Promise<
-    | { ok: true; estimateId: string; updatedAt: string; referenceNumber: string; status: EstimateStatus }
-    | { ok: false; type: "conflict" | "error"; message: string }
-  >;
+  updateStatusAction: (formData: FormData) => Promise<EstimateStatusTransitionResult>;
+  previewExpandedSystemAction: (input: {
+    systemCatalogItemId: string;
+    squareFootage: string;
+  }) => Promise<ExpandedSystemPreviewResult>;
+  insertCatalogItemAction: (input: {
+    estimateId: string;
+    catalogItemId: string;
+  }) => Promise<EstimateInsertResult>;
+  insertSystemAction: (input: {
+    estimateId: string;
+    systemCatalogItemId: string;
+    squareFootage: string;
+  }) => Promise<EstimateInsertResult>;
   quickCreateCatalogItemAction: (formData: FormData) => Promise<
     | { ok: true; item: CatalogItem }
     | { ok: false; message: string }
   >;
+  approvalOrchestration?: EstimateApprovalOrchestrationState | null;
+  contractAction: (formData: FormData) => void | Promise<void>;
+  invoiceAction: (formData: FormData) => void | Promise<void>;
+  scheduleOfValuesAction: (formData: FormData) => void | Promise<void>;
 };
 
 type SaveState = "saved" | "saving" | "error" | "conflict" | "dirty";
@@ -187,6 +204,33 @@ function buildItemGroups(estimate?: EditableEstimate | null): EstimateItemGroup[
   return existingGroups;
 }
 
+function mergeItemGroupsWithLineItems(
+  existingGroups: EstimateItemGroup[],
+  lineItems: EstimateLineItem[]
+) {
+  const nextGroups = [...existingGroups];
+  const labels = new Set(
+    nextGroups.map((group) => group.label.trim().toLowerCase()).filter(Boolean)
+  );
+
+  for (const lineItem of lineItems) {
+    const label = lineItem.groupName?.trim();
+
+    if (!label || labels.has(label.toLowerCase())) {
+      continue;
+    }
+
+    nextGroups.push({
+      id: createRowKey("group", nextGroups.length + 1),
+      label,
+      sortOrder: nextGroups.length
+    });
+    labels.add(label.toLowerCase());
+  }
+
+  return nextGroups;
+}
+
 function buildLineItemDrafts(
   estimate: EditableEstimate | null | undefined,
   itemGroups: EstimateItemGroup[]
@@ -233,6 +277,7 @@ function buildLineItemDrafts(
         visibleMarkupAmount: Number(lineItem.visibleMarkupAmount ?? "0").toFixed(2),
         hiddenMarkupAmount: Number(lineItem.hiddenMarkupAmount ?? "0").toFixed(2),
         unitPrice: formatMoney(parseNumericInput(lineItem.unitPrice)),
+        costCode: lineItem.costCode ?? "",
         taxCode: lineItem.taxable ? "taxable" : "non-taxable",
         assignedTo: lineItem.assignedTo ?? legacyRow?.assignedTo ?? "",
         lineTotal: formatMoney(parseNumericInput(lineItem.lineTotal))
@@ -533,7 +578,14 @@ export function EstimateForm({
   contentBlocks = [],
   autosaveAction,
   updateStatusAction,
-  quickCreateCatalogItemAction
+  previewExpandedSystemAction,
+  insertCatalogItemAction,
+  insertSystemAction,
+  quickCreateCatalogItemAction,
+  approvalOrchestration = null,
+  contractAction,
+  invoiceAction,
+  scheduleOfValuesAction
 }: EstimateFormProps) {
   const initialItemGroups = buildItemGroups(estimate);
   const [activeSection, setActiveSection] =
@@ -585,6 +637,9 @@ export function EstimateForm({
   const [selectedCatalogItemId, setSelectedCatalogItemId] = useState("");
   const [selectedSystemId, setSelectedSystemId] = useState("");
   const [systemSquareFootage, setSystemSquareFootage] = useState("0");
+  const [systemPreviewResult, setSystemPreviewResult] =
+    useState<ExpandedSystemPreviewResult | null>(null);
+  const [systemPreviewMessage, setSystemPreviewMessage] = useState<string | null>(null);
   const [expectedUpdatedAt, setExpectedUpdatedAt] = useState(estimate?.updatedAt ?? "");
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [saveMessage, setSaveMessage] = useState(
@@ -595,7 +650,12 @@ export function EstimateForm({
   const [titleEditing, setTitleEditing] = useState(false);
   const [inventoryCreateError, setInventoryCreateError] = useState<string | null>(null);
   const [catalogInventoryItems, setCatalogInventoryItems] = useState<CatalogItem[]>(catalogItems);
+  const [approvalPanelInitialOpen, setApprovalPanelInitialOpen] = useState(false);
+  const [approvalState, setApprovalState] = useState<EstimateApprovalOrchestrationState | null>(
+    approvalOrchestration
+  );
   const [isPending, startSaveTransition] = useTransition();
+  const [isPreviewPending, startPreviewTransition] = useTransition();
 
   const filteredCatalogItems = catalogInventoryItems.filter(
     (item) => item.status === "active"
@@ -626,7 +686,7 @@ export function EstimateForm({
   const discountLabel = formatMoney(parseNumericInput(discountAmount));
   const totalAmountLabel = formatMoney(preview.total);
   const totalLabel = `Total w/Tax: ${totalAmountLabel}`;
-  const allowedTransitions = estimateStatusTransitions[status];
+  const allowedTransitions: readonly EstimateStatus[] = [];
   const taxBehaviorLabel = formatTaxBehaviorLabel(taxBehavior);
   const taxRateLabel = `${(taxRate * 100).toFixed(2)}%`;
   const scopeBlocks = useMemo(
@@ -645,22 +705,12 @@ export function EstimateForm({
     () => activeContentBlocks.filter((block) => block.blockType === "exclusion"),
     [activeContentBlocks]
   );
-  const selectedSystemPreview = useMemo(() => {
-    const systemCatalogItem = filteredCatalogItems.find((item) => item.id === selectedSystemId);
-    const squareFootage = parseNumericInput(systemSquareFootage);
-
-    if (!systemCatalogItem || squareFootage <= 0) {
-      return null;
-    }
-
-    const preview = buildExpandedSystemPreview({
-      systemCatalogItem,
-      catalogItems: filteredCatalogItems,
-      squareFootage
-    });
-
-    return preview.rows.length > 0 ? preview : null;
-  }, [filteredCatalogItems, selectedSystemId, systemSquareFootage]);
+  const selectedSystemPreview =
+    systemPreviewResult?.ok &&
+    systemPreviewResult.systemCatalogItemId === selectedSystemId &&
+    systemPreviewResult.squareFootage === Number(systemSquareFootage || 0).toFixed(2)
+      ? systemPreviewResult.preview
+      : null;
 
   function markDirty() {
     setSaveState("dirty");
@@ -690,7 +740,7 @@ export function EstimateForm({
     const formData = buildEstimateFormData();
 
     if (!formData) {
-      return;
+      return null;
     }
 
     setSaveState("saving");
@@ -700,7 +750,7 @@ export function EstimateForm({
     if (!result.ok) {
       setSaveState(result.type === "conflict" ? "conflict" : "error");
       setSaveMessage(result.message);
-      return;
+      return result;
     }
 
     setExpectedUpdatedAt(result.updatedAt);
@@ -728,6 +778,39 @@ export function EstimateForm({
     setSaveMessage(
       reason === "manual" ? "Saved." : `Saved ${new Date(result.updatedAt).toLocaleTimeString()}`
     );
+    return result;
+  }
+
+  function syncServerInsertedLineItems(nextLineItems: EstimateLineItem[], updatedAt: string) {
+    const nextGroups = mergeItemGroupsWithLineItems(itemGroups, nextLineItems);
+    const nextDrafts = buildLineItemDrafts(
+      {
+        ...(estimate ?? ({} as EditableEstimate)),
+        content: {
+          ...(estimate?.content ?? {
+            termsHtml: null,
+            inclusionsHtml: null,
+            exclusionsHtml: null,
+            notesHtml: null,
+            scopeSummaryHtml: null,
+            scopeItems: [],
+            itemRows: [],
+            itemGroups: []
+          }),
+          itemGroups: nextGroups,
+          itemRows: []
+        },
+        lineItems: nextLineItems
+      },
+      nextGroups
+    );
+
+    lastSavedSnapshotRef.current = "";
+    setItemGroups(nextGroups);
+    setLineItems(nextDrafts);
+    setExpectedUpdatedAt(updatedAt);
+    setSaveState("saved");
+    setSaveMessage(`Saved ${new Date(updatedAt).toLocaleTimeString()}`);
   }
 
   function handleLineItemChange(
@@ -735,6 +818,10 @@ export function EstimateForm({
     field: keyof EstimateItemsDraft,
     value: string
   ) {
+    if (!["quantity", "groupId", "assignedTo"].includes(field)) {
+      return;
+    }
+
     markDirty();
     setLineItems((currentLineItems) =>
       currentLineItems.map((lineItem) => {
@@ -754,35 +841,32 @@ export function EstimateForm({
     );
   }
 
-  function insertCatalogItem(catalogItem: CatalogItem) {
-    setLineItems((currentLineItems) => [
-      ...currentLineItems,
-      applyDraftPricing({
-        rowKey: createRowKey("row", currentLineItems.length + 1),
-        catalogItemId: catalogItem.id,
-        sourceType: "catalog_item",
-        sourceSystemId: null,
-        sourceComponentId: null,
-        itemType: catalogItem.itemType,
-        groupId: null,
-        name: catalogItem.name,
-        description: catalogItem.description ?? "",
-        quantity: "1.00",
-        unit: catalogItem.unit,
-        baseUnitCost: catalogItem.defaultUnitCost,
-        baseUnitPrice: catalogItem.defaultUnitPrice ?? "",
-        markupPercent: catalogItem.markupPercent,
-        hiddenMarkupPercent: catalogItem.hiddenMarkupPercent,
-        unitPriceBeforeHiddenMarkup: "0.00",
-        visibleMarkupAmount: "0.00",
-        hiddenMarkupAmount: "0.00",
-        unitPrice: "$0.00",
-        taxCode: catalogItem.taxable ? "taxable" : "non-taxable",
-        assignedTo: "",
-        lineTotal: "$0.00"
-      })
-    ]);
-    markDirty();
+  async function insertCatalogItem(catalogItem: CatalogItem) {
+    if (!estimate?.id) {
+      return;
+    }
+
+    const saveResult =
+      saveState === "dirty" || saveState === "error" || saveState === "conflict"
+        ? await persistEstimate("manual")
+        : null;
+
+    if (saveResult && !saveResult.ok) {
+      return;
+    }
+
+    const result = await insertCatalogItemAction({
+      estimateId: estimate.id,
+      catalogItemId: catalogItem.id
+    });
+
+    if (!result.ok) {
+      setSaveState("error");
+      setSaveMessage(result.message);
+      return;
+    }
+
+    syncServerInsertedLineItems(result.lineItems, result.updatedAt);
   }
 
   function handleAddCatalogItem() {
@@ -792,7 +876,23 @@ export function EstimateForm({
       return;
     }
 
-    insertCatalogItem(catalogItem);
+    startSaveTransition(async () => {
+      await insertCatalogItem(catalogItem);
+      setSelectedCatalogItemId("");
+    });
+  }
+
+  function handleQuickAddCatalogItem(catalogItemId: string) {
+    const catalogItem = filteredCatalogItems.find((item) => item.id === catalogItemId);
+
+    if (!catalogItem) {
+      return;
+    }
+
+    startSaveTransition(async () => {
+      await insertCatalogItem(catalogItem);
+      setSelectedCatalogItemId("");
+    });
   }
 
   async function handleQuickCreateCatalogItem(input: {
@@ -801,7 +901,6 @@ export function EstimateForm({
     unit: string;
     defaultUnitCost: string;
     defaultUnitPrice: string | null;
-    taxable: boolean;
   }) {
     const formData = new FormData();
     formData.set("name", input.name);
@@ -811,83 +910,108 @@ export function EstimateForm({
     if (input.defaultUnitPrice) {
       formData.set("defaultUnitPrice", input.defaultUnitPrice);
     }
-    if (input.taxable) {
-      formData.set("taxable", "on");
-    }
+    formData.set("taxable", "on");
 
     const result = await quickCreateCatalogItemAction(formData);
 
     if (!result.ok) {
       setInventoryCreateError(result.message);
-      return;
+      return false;
     }
 
     setInventoryCreateError(null);
     setCatalogInventoryItems((currentItems) => [result.item, ...currentItems]);
     setSelectedCatalogItemId(result.item.id);
-    insertCatalogItem(result.item);
+    startSaveTransition(async () => {
+      await insertCatalogItem(result.item);
+    });
+    return true;
+  }
+
+  function resetSystemPreview() {
+    setSystemPreviewResult(null);
+    setSystemPreviewMessage(null);
+  }
+
+  function handleSelectedSystemIdChange(value: string) {
+    setSelectedSystemId(value);
+    resetSystemPreview();
+  }
+
+  function handleSystemSquareFootageChange(value: string) {
+    setSystemSquareFootage(value);
+    resetSystemPreview();
+  }
+
+  function handlePreviewSystem() {
+    const squareFootage = parseNumericInput(systemSquareFootage);
+
+    if (!selectedSystemId || squareFootage <= 0) {
+      setSystemPreviewMessage("Select a system and enter square footage to preview.");
+      setSystemPreviewResult(null);
+      return;
+    }
+
+    setSystemPreviewMessage(null);
+    startPreviewTransition(async () => {
+      const result = await previewExpandedSystemAction({
+        systemCatalogItemId: selectedSystemId,
+        squareFootage: squareFootage.toFixed(2)
+      });
+
+      if (!result.ok) {
+        setSystemPreviewResult(null);
+        setSystemPreviewMessage(result.message);
+        return;
+      }
+
+      setSystemPreviewResult(result);
+      setSystemPreviewMessage(
+        `${result.systemName} previewed from the server at ${formatQuantity(squareFootage)} sqft.`
+      );
+    });
   }
 
   function handleExpandSystem() {
-    const systemCatalogItem = filteredCatalogItems.find((item) => item.id === selectedSystemId);
-    const squareFootage = parseNumericInput(systemSquareFootage);
+    const squareFootage = Number(systemPreviewResult?.ok ? systemPreviewResult.squareFootage : 0);
 
-    if (!systemCatalogItem || squareFootage <= 0) {
+    if (!estimate?.id || !systemPreviewResult?.ok) {
       return;
     }
 
-    const expandedSystem = buildExpandedSystemPreview({
-      systemCatalogItem,
-      catalogItems: filteredCatalogItems,
-      squareFootage
-    });
-
-    if (expandedSystem.rows.length === 0) {
+    if (
+      systemPreviewResult.systemCatalogItemId !== selectedSystemId ||
+      systemPreviewResult.squareFootage !== squareFootage.toFixed(2)
+    ) {
       return;
     }
 
-    markDirty();
+    startSaveTransition(async () => {
+      const saveResult =
+        saveState === "dirty" || saveState === "error" || saveState === "conflict"
+          ? await persistEstimate("manual")
+          : null;
 
-    const nextGroupId = createRowKey("group", nextGroupIndex);
-    const nextGroupLabel = `${systemCatalogItem.name} (${formatQuantity(squareFootage)} sqft)`;
-
-    setItemGroups((currentGroups) => [
-      ...currentGroups,
-      {
-        id: nextGroupId,
-        label: nextGroupLabel,
-        sortOrder: currentGroups.length
+      if (saveResult && !saveResult.ok) {
+        return;
       }
-    ]);
-    setLineItems((currentLineItems) => {
-      const generatedRows = expandedSystem.rows.map((component, index) => {
-        return applyDraftPricing({
-          rowKey: createRowKey("row", currentLineItems.length + index + 1),
-          catalogItemId: component.catalogItemId,
-          sourceType: "system_component" as const,
-          sourceSystemId: systemCatalogItem.id,
-          sourceComponentId: component.componentId,
-          itemType: component.itemType,
-          groupId: nextGroupId,
-          name: component.name,
-          description: component.description,
-          quantity: component.quantity,
-          unit: component.unit,
-          baseUnitCost: component.baseUnitCost,
-          baseUnitPrice: component.baseUnitPrice ?? "",
-          markupPercent: component.markupPercent,
-          hiddenMarkupPercent: component.hiddenMarkupPercent,
-          unitPriceBeforeHiddenMarkup: component.unitPriceBeforeHiddenMarkup,
-          visibleMarkupAmount: component.visibleMarkupAmount,
-          hiddenMarkupAmount: component.hiddenMarkupAmount,
-          unitPrice: formatMoney(parseNumericInput(component.unitPrice)),
-          taxCode: component.taxable ? "taxable" : "non-taxable",
-          assignedTo: "",
-          lineTotal: formatMoney(parseNumericInput(component.linePrice))
-        } satisfies EstimateItemsDraft);
+
+      const result = await insertSystemAction({
+        estimateId: estimate.id,
+        systemCatalogItemId: selectedSystemId,
+        squareFootage: squareFootage.toFixed(2)
       });
 
-      return [...currentLineItems, ...generatedRows];
+      if (!result.ok) {
+        setSaveState("error");
+        setSaveMessage(result.message);
+        return;
+      }
+
+      syncServerInsertedLineItems(result.lineItems, result.updatedAt);
+      setSelectedSystemId("");
+      setSystemSquareFootage("0");
+      resetSystemPreview();
     });
   }
 
@@ -1093,8 +1217,7 @@ export function EstimateForm({
     <div className="flex items-start gap-4">
       {(["draft", "sent", "approved", "rejected"] as const).map((candidateStatus, index, statuses) => {
         const isCurrent = status === candidateStatus;
-        const canSelect =
-          candidateStatus === status || allowedTransitions.includes(candidateStatus);
+        const canSelect = allowedTransitions.includes(candidateStatus);
         const label = statusDisplayLabels[candidateStatus];
 
         return (
@@ -1125,6 +1248,10 @@ export function EstimateForm({
                     }
 
                     setExpectedUpdatedAt(result.updatedAt);
+                    setApprovalState(result.orchestration);
+                    if (result.status === "approved") {
+                      setApprovalPanelInitialOpen(true);
+                    }
                     setSaveState("saved");
                     setSaveMessage(`Saved ${new Date(result.updatedAt).toLocaleTimeString()}`);
                   }
@@ -1140,26 +1267,26 @@ export function EstimateForm({
             >
               <div
                 className={[
-                  "flex h-[48px] w-[48px] items-center justify-center rounded-full border-[2px]",
+                  "flex h-9 w-9 items-center justify-center border",
                   isCurrent
-                    ? "border-[#f4812a] bg-[#f4812a] text-white"
+                    ? "border-[#d8731f] bg-[#d8731f] text-white"
                     : canSelect
-                      ? "border-[#d9dee8] bg-white text-[#f4812a]"
+                      ? "border-[#cfd6e0] bg-white text-[#d8731f]"
                       : "border-[#d9dee8] bg-white text-[#d9dee8]"
                 ].join(" ")}
               >
                 {isCurrent ? (
-                  <CheckCircle2 className="h-5 w-5" />
+                  <CheckCircle2 className="h-4 w-4" />
                 ) : (
                   <Circle className="h-3 w-3 fill-current" />
                 )}
               </div>
-              <span className="max-w-[110px] truncate text-center text-[13px] text-[#71829c]">
+              <span className="max-w-[92px] truncate text-center text-[12px] text-[#71829c]">
                 {label}
               </span>
             </button>
             {index < statuses.length - 1 ? (
-              <div className="mt-[-18px] h-[2px] w-[42px] bg-[#d9dee8]" />
+              <div className="mt-[-14px] h-px w-[34px] bg-[#d9dee8]" />
             ) : null}
           </div>
         );
@@ -1172,23 +1299,23 @@ export function EstimateForm({
       <button
         type="button"
         onClick={() => setMenuOpen((current) => !current)}
-        className="rounded-[6px] border border-[#e3e7ee] p-2.5 hover:bg-[#f7f8fb]"
+        className="flex h-8 w-8 items-center justify-center border border-[#cfd6e0] hover:bg-[#f0f3f7]"
       >
-        <MoreVertical className="h-5 w-5" />
+        <MoreVertical className="h-4 w-4" />
       </button>
 
       {menuOpen ? (
-        <div className="absolute right-0 top-[52px] z-20 min-w-[220px] rounded-[10px] border border-[#e3e7ee] bg-white p-2 shadow-[0_20px_45px_-28px_rgba(15,23,42,0.4)]">
+        <div className="absolute right-0 top-[36px] z-20 min-w-[220px] border border-[#cfd6e0] bg-white p-1">
           <Link
             href={`/estimates/${estimate?.id ?? ""}`}
-            className="block rounded-[8px] px-3 py-2 text-[14px] text-[#334a70] hover:bg-[#f7f8fb]"
+            className="block px-3 py-1.5 text-[13px] text-[#334a70] hover:bg-[#f0f3f7]"
           >
             Open Review Page
           </Link>
           {status === "approved" ? (
             <Link
               href={`/contracts?estimateId=${estimate?.id ?? ""}`}
-              className="block rounded-[8px] px-3 py-2 text-[14px] text-[#334a70] hover:bg-[#f7f8fb]"
+              className="block px-3 py-1.5 text-[13px] text-[#334a70] hover:bg-[#f0f3f7]"
             >
               Generate Contract
             </Link>
@@ -1196,7 +1323,7 @@ export function EstimateForm({
             <button
               type="button"
               disabled
-              className="block w-full rounded-[8px] px-3 py-2 text-left text-[14px] text-[#a7b2c4]"
+              className="block w-full px-3 py-1.5 text-left text-[13px] text-[#a7b2c4]"
               title="Contract generation becomes real after estimate approval."
             >
               Generate Contract
@@ -1204,14 +1331,14 @@ export function EstimateForm({
           )}
           <Link
             href={`/projects/${estimate?.projectId ?? ""}`}
-            className="block rounded-[8px] px-3 py-2 text-[14px] text-[#334a70] hover:bg-[#f7f8fb]"
+            className="block px-3 py-1.5 text-[13px] text-[#334a70] hover:bg-[#f0f3f7]"
           >
             Open Project
           </Link>
           <button
             type="button"
             disabled
-            className="flex w-full items-center gap-2 rounded-[8px] px-3 py-2 text-left text-[14px] text-[#a7b2c4]"
+            className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#a7b2c4]"
             title="Copy/export actions still need backend continuity and remain out of scope for this run."
           >
             <FilePlus2 className="h-4 w-4" />
@@ -1223,15 +1350,26 @@ export function EstimateForm({
   );
 
   return (
-    <form
-      ref={formRef}
-      onSubmit={(event) => {
-        event.preventDefault();
-        startSaveTransition(() => {
-          void persistEstimate("manual");
-        });
-      }}
-    >
+    <div className="space-y-4">
+      {status === "approved" && approvalState ? (
+        <EstimateApprovalNextStepsPanel
+          orchestration={approvalState}
+          contractAction={contractAction}
+          invoiceAction={invoiceAction}
+          scheduleOfValuesAction={scheduleOfValuesAction}
+          initialOpen={approvalPanelInitialOpen}
+        />
+      ) : null}
+
+      <form
+        ref={formRef}
+        onSubmit={(event) => {
+          event.preventDefault();
+          startSaveTransition(() => {
+            void persistEstimate("manual");
+          });
+        }}
+      >
       <input type="hidden" name="estimateId" value={estimate?.id ?? ""} />
       <input type="hidden" name="expectedUpdatedAt" value={expectedUpdatedAt} />
       <input type="hidden" name="opportunityId" value={estimate?.opportunityId ?? ""} />
@@ -1272,56 +1410,7 @@ export function EstimateForm({
               name="lineItemSourceComponentId"
               value={lineItem.sourceComponentId ?? ""}
             />
-            <input type="hidden" name="lineItemItemType" value={lineItem.itemType} />
-            <input type="hidden" name="lineItemName" value={lineItem.name} />
-            <input type="hidden" name="lineItemDescription" value={lineItem.description} />
             <input type="hidden" name="lineItemQuantity" value={lineItem.quantity} />
-            <input type="hidden" name="lineItemUnit" value={lineItem.unit} />
-            <input
-              type="hidden"
-              name="lineItemUnitPrice"
-              value={parseNumericInput(lineItem.unitPrice).toFixed(2)}
-            />
-            <input
-              type="hidden"
-              name="lineItemBaseUnitCost"
-              value={parseNumericInput(lineItem.baseUnitCost).toFixed(2)}
-            />
-            <input
-              type="hidden"
-              name="lineItemBaseUnitPrice"
-              value={
-                lineItem.baseUnitPrice.trim().length > 0
-                  ? parseNumericInput(lineItem.baseUnitPrice).toFixed(2)
-                  : ""
-              }
-            />
-            <input
-              type="hidden"
-              name="lineItemMarkupPercent"
-              value={parseNumericInput(lineItem.markupPercent).toFixed(2)}
-            />
-            <input
-              type="hidden"
-              name="lineItemHiddenMarkupPercent"
-              value={parseNumericInput(lineItem.hiddenMarkupPercent).toFixed(2)}
-            />
-            <input
-              type="hidden"
-              name="lineItemUnitPriceBeforeHiddenMarkup"
-              value={parseNumericInput(lineItem.unitPriceBeforeHiddenMarkup).toFixed(2)}
-            />
-            <input
-              type="hidden"
-              name="lineItemVisibleMarkupAmount"
-              value={parseNumericInput(lineItem.visibleMarkupAmount).toFixed(2)}
-            />
-            <input
-              type="hidden"
-              name="lineItemHiddenMarkupAmount"
-              value={parseNumericInput(lineItem.hiddenMarkupAmount).toFixed(2)}
-            />
-            <input type="hidden" name="lineItemTaxCode" value={lineItem.taxCode} />
             <input type="hidden" name="lineItemAssignedTo" value={lineItem.assignedTo} />
             <input type="hidden" name="lineItemGroupName" value={groupName} />
           </div>
@@ -1351,19 +1440,18 @@ export function EstimateForm({
         />
       ))}
 
-      <EstimateWorkspaceShell
+        <EstimateWorkspaceShell
         title={title}
         subtitle={opportunityTitle ?? "Project/Opportunity"}
         estimateNumber={estimate?.referenceNumber ?? null}
         statusLabel={statusDisplayLabels[status]}
         activeSection={activeSection}
         onSectionChange={(section) => {
-          setActiveSection(section);
-          if (saveState === "dirty") {
-            startSaveTransition(() => {
-              void persistEstimate("manual");
-            });
+          if (section === activeSection) {
+            return;
           }
+
+          setActiveSection(section);
         }}
         statusStrip={statusStrip}
         headerActions={headerActions}
@@ -1405,10 +1493,14 @@ export function EstimateForm({
             selectedSystemId={selectedSystemId}
             systemSquareFootage={systemSquareFootage}
             systemPreview={selectedSystemPreview}
+            systemPreviewMessage={systemPreviewMessage}
+            isPreviewPending={isPreviewPending}
             onSelectedCatalogItemIdChange={setSelectedCatalogItemId}
-            onSelectedSystemIdChange={setSelectedSystemId}
-            onSystemSquareFootageChange={setSystemSquareFootage}
+            onSelectedSystemIdChange={handleSelectedSystemIdChange}
+            onSystemSquareFootageChange={handleSystemSquareFootageChange}
             onAddCatalogItem={handleAddCatalogItem}
+            onQuickAddCatalogItem={handleQuickAddCatalogItem}
+            onPreviewSystem={handlePreviewSystem}
             onExpandSystem={handleExpandSystem}
             onToggleMarkup={setShowMarkup}
             onToggleShowOnlyZeroItems={setShowOnlyZeroItems}
@@ -1470,19 +1562,19 @@ export function EstimateForm({
 
         <div className={activeSection === "terms" ? "block" : "hidden"}>
           {(termsBlocks.length > 0 || inclusionBlocks.length > 0 || exclusionBlocks.length > 0) ? (
-            <div className="border-t border-[#e6e9ef] bg-[#fbfcfe] px-5 py-4">
+            <div className="border-t border-[#e6e9ef] bg-[#fbfcfe] px-4 py-3">
               <div className="grid gap-4 lg:grid-cols-3">
                 <div>
                   <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
                     Reusable Terms
                   </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     {termsBlocks.map((block) => (
                       <button
                         key={block.id}
                         type="button"
                         onClick={() => applyTermsBlock(block.contentHtml)}
-                        className="rounded-full border border-[#d7deea] bg-white px-3 py-2 text-[13px] font-medium text-[#28456f]"
+                        className="h-8 border border-[#cfd6e0] bg-white px-3 text-[12px] font-medium text-[#28456f]"
                       >
                         {block.title}
                       </button>
@@ -1493,13 +1585,13 @@ export function EstimateForm({
                   <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
                     Reusable Inclusions
                   </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     {inclusionBlocks.map((block) => (
                       <button
                         key={block.id}
                         type="button"
                         onClick={() => applyInclusionBlock(block.contentHtml)}
-                        className="rounded-full border border-[#d7deea] bg-white px-3 py-2 text-[13px] font-medium text-[#28456f]"
+                        className="h-8 border border-[#cfd6e0] bg-white px-3 text-[12px] font-medium text-[#28456f]"
                       >
                         {block.title}
                       </button>
@@ -1510,13 +1602,13 @@ export function EstimateForm({
                   <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
                     Reusable Exclusions
                   </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     {exclusionBlocks.map((block) => (
                       <button
                         key={block.id}
                         type="button"
                         onClick={() => applyExclusionBlock(block.contentHtml)}
-                        className="rounded-full border border-[#d7deea] bg-white px-3 py-2 text-[13px] font-medium text-[#28456f]"
+                        className="h-8 border border-[#cfd6e0] bg-white px-3 text-[12px] font-medium text-[#28456f]"
                       >
                         {block.title}
                       </button>
@@ -1547,17 +1639,17 @@ export function EstimateForm({
 
         <div className={activeSection === "scope" ? "block" : "hidden"}>
           {scopeBlocks.length > 0 ? (
-            <div className="border-t border-[#e6e9ef] bg-[#fbfcfe] px-5 py-4">
+            <div className="border-t border-[#e6e9ef] bg-[#fbfcfe] px-4 py-3">
               <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
                 Reusable Scope Blocks
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-2 flex flex-wrap gap-2">
                 {scopeBlocks.map((block) => (
                   <button
                     key={block.id}
                     type="button"
                     onClick={() => applyScopeBlock(block.contentHtml)}
-                    className="rounded-full border border-[#d7deea] bg-white px-3 py-2 text-[13px] font-medium text-[#28456f]"
+                    className="h-8 border border-[#cfd6e0] bg-white px-3 text-[12px] font-medium text-[#28456f]"
                   >
                     {block.title}
                   </button>
@@ -1619,7 +1711,28 @@ export function EstimateForm({
             }}
           />
         </div>
-      </EstimateWorkspaceShell>
-    </form>
+
+        <div className={activeSection === "review-submit" ? "block" : "hidden"}>
+          <div className="border-t border-[#e6e9ef] bg-white px-4 py-4">
+            <div className="border border-[#d7dce4] bg-[#f7f8fa] px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Review and Submit
+              </p>
+              <div className="mt-3 space-y-3 text-sm leading-5 text-slate-600">
+                <p>
+                  Review the estimate content, confirm pricing and terms, then use the existing
+                  header controls or footer save action to continue the estimate workflow.
+                </p>
+                <div className="border border-slate-200 bg-white px-3 py-2.5">
+                  <p className="font-medium text-slate-900">Current save state</p>
+                  <p className="mt-1">{isPending || saveState === "saving" ? "Saving..." : saveMessage}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        </EstimateWorkspaceShell>
+      </form>
+    </div>
   );
 }

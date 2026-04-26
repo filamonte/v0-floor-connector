@@ -25,22 +25,25 @@ The current branch already includes a real multi-tenant contractor app with:
 - customers
 - projects
 - estimates and line items
+- approved estimate snapshot and customer approval flow
 - change orders
 - contracts
 - contract-signature foundation and customer-facing contract signing on the canonical contract record
 - jobs
 - appointments linked to the same lead/customer/project chain
 - invoices and payments
+- snapshot-based invoice lineage across estimate, SOV, change-order, and invoice-only sources
 - contractor-side progress billing / schedule-of-values workflow on the canonical estimate and invoice chain
+- notifications, notification deliveries, and communication thread/message foundations
 - customer-facing payment foundation on the canonical invoice/payment chain
 - dedicated contractor-side payments manager surface on the shared manager-page system
 - dedicated contractor-side schedule manager surface on the shared manager-page system
   - review-first summary, next actions, crew-state continuity, week/day planner views, and a retained date-grouped board all stay on the same canonical job chain
 - shared contractor-side global search at the shell level
   - searches canonical tenant-scoped records including appointments, routes back into real workspaces, and is rendered in the shared shell footer rather than the top header
-- first real contractor-side in-app notifications / action awareness in the shared shell and dashboard
-  - derives high-signal attention from canonical jobs, invoices, contracts, appointments, punchlists, and progress-billing state
-  - remains lightweight and in-app only
+- first real contractor-side notifications in the shared shell and dashboard
+  - derive high-signal attention from canonical jobs, invoices, contracts, appointments, punchlists, progress-billing state, estimate customer activity, and communication activity
+  - are backed by stored canonical notification records and delivery tracking
 - people, vendors, and compliance foundations
 - time tracking foundations
 - daily logs, field notes, and execution attachments
@@ -81,7 +84,11 @@ Important workflow rules:
 - projects should become the operational hub over time
 - the current contractor app may still use parallel top-level routes during that transition
 - contracts, invoices, and estimates must stay connected through the shared canonical model
+- all downstream financial systems must use immutable approved snapshots as their billing source of truth
+- do not use live `estimate_line_items` as a billing source
 - change orders must extend the same shared project, contract, and invoice chain rather than introducing a separate scope-change model
+- change orders are append-only commercial scope changes; they do not mutate prior approved snapshot lineage
+- customer estimate approval is canonical portal behavior, not a contractor-side override shortcut
 - customer-facing signature actions now attach to the same canonical contract record used in the contractor app
 - customer-facing payment workflow foundations now attach to the same canonical invoice/payment chain used in the contractor app
 - templates are shared infrastructure across estimates, contracts, and invoices
@@ -101,6 +108,8 @@ Important workflow rules:
 - punchlists should stay on the canonical project/job execution chain; do not overload daily-log narrative records with durable closeout work, and do not invent a separate field-quality subsystem
 - progress billing should stay on the canonical approved-estimate -> schedule-of-values -> invoice chain; do not invent a detached pay-app subsystem, spreadsheet shadow model, or invoice-replacement billing record
 - estimate line items are the only authoritative estimate item-row source; do not write new behavior against `estimates.content.itemRows`
+- every `invoice_line_items` row must use one `lineage_type`
+- every `schedule_of_value_items` row must use one `lineage_type`
 - estimate authoring is inventory-first; do not reintroduce user-facing manual estimate rows or manual save-back-to-catalog flows
 - estimate defaults should hydrate only when estimate content is initially empty, resolving platform defaults before contractor overrides and never silently reapplying after user edits
 - estimate autosave should validate before persist and use conflict protection against stale overwrites
@@ -153,6 +162,7 @@ The normalization phase is complete enough to stop; further contractor-page work
 - keep business logic in shared packages or server-side utilities where practical
 - preserve tenant isolation everywhere
 - use real Supabase-backed persistence for canonical workflows
+- preserve snapshot lineage in financial flows; do not bypass approved estimate snapshots, SOV lineage, or approved change-order snapshots when adding downstream billing behavior
 - keep current route architecture unless the task explicitly calls for route changes
 - prefer small, reviewable changes over broad rewrites
 - when refining contractor UI, prefer the shared workspace pattern over one-off page layouts

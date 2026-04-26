@@ -1,21 +1,22 @@
-export type ContractorNotificationCategory =
-  | "jobs"
-  | "collections"
-  | "contracts"
-  | "appointments"
-  | "punchlists"
-  | "progress-billing";
+import type {
+  NotificationEventCategory,
+  NotificationEventSeverity
+} from "@floorconnector/types";
 
-export type ContractorNotificationTone = "critical" | "warning" | "neutral";
+export type ContractorNotificationCategory = NotificationEventCategory;
+export type ContractorNotificationTone = NotificationEventSeverity;
 
 export type ContractorNotificationItem = {
   id: string;
+  notificationId: string;
   category: ContractorNotificationCategory;
   tone: ContractorNotificationTone;
   title: string;
   description: string;
   href: string;
   badge: string;
+  occurredAt: string;
+  isRead: boolean;
   contextHref?: string | null;
   contextLabel?: string | null;
 };

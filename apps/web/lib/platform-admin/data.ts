@@ -7,6 +7,7 @@ import type {
   PlatformWorkflowDefaults
 } from "@floorconnector/types";
 
+import { INVENTORY_ENABLED_FEATURE_POLICY } from "@/lib/organizations/module-settings";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type PlatformTemplateSeedRow = {
@@ -77,6 +78,7 @@ type PlatformCatalogItemSeedRow = {
   taxable: boolean;
   vendor_id: string | null;
   category: string | null;
+  cost_code: string | null;
   sku: string | null;
   photo_storage_path: string | null;
   is_active: boolean;
@@ -208,6 +210,7 @@ function mapPlatformCatalogItemSeed(
     taxable: row.taxable,
     vendorId: row.vendor_id,
     category: row.category,
+    costCode: row.cost_code,
     sku: row.sku,
     photoStoragePath: row.photo_storage_path,
     isActive: row.is_active,
@@ -526,6 +529,7 @@ export async function upsertPlatformCatalogItemSeed(input: {
   taxable: boolean;
   vendorId: string | null;
   category: string | null;
+  costCode: string | null;
   sku: string | null;
   photoStoragePath: string | null;
   isActive: boolean;
@@ -561,6 +565,7 @@ export async function upsertPlatformCatalogItemSeed(input: {
     taxable: input.taxable,
     vendor_id: input.vendorId,
     category: input.category,
+    cost_code: input.costCode,
     sku: input.sku,
     photo_storage_path: input.photoStoragePath,
     is_active: input.isActive,
@@ -604,7 +609,23 @@ export async function listPlatformFeaturePolicies() {
     );
   }
 
-  return (Array.isArray(response.data) ? response.data : []) as FeatureFlagRow[];
+  const policies = (Array.isArray(response.data) ? response.data : []) as FeatureFlagRow[];
+
+  if (!policies.some((policy) => policy.key === INVENTORY_ENABLED_FEATURE_POLICY.key)) {
+    policies.push({
+      id: INVENTORY_ENABLED_FEATURE_POLICY.key,
+      company_id: null,
+      key: INVENTORY_ENABLED_FEATURE_POLICY.key,
+      name: INVENTORY_ENABLED_FEATURE_POLICY.name,
+      description: INVENTORY_ENABLED_FEATURE_POLICY.description,
+      module_key: INVENTORY_ENABLED_FEATURE_POLICY.moduleKey,
+      surface: INVENTORY_ENABLED_FEATURE_POLICY.surface,
+      enabled: false,
+      updated_at: new Date(0).toISOString()
+    });
+  }
+
+  return policies;
 }
 
 export async function upsertPlatformFeaturePolicy(input: {

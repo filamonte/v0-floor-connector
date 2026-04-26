@@ -7,9 +7,16 @@ export type OpportunityId = string;
 export type CustomerId = string;
 export type ProjectId = string;
 export type EstimateId = string;
+export type EstimateCustomerEventId = string;
+export type NotificationEventId = string;
+export type NotificationId = string;
+export type NotificationDeliveryId = string;
+export type EstimateCommercialSnapshotId = string;
+export type EstimateCommercialSnapshotItemId = string;
 export type JobId = string;
 export type JobAssignmentId = string;
 export type InvoiceId = string;
+export type InvoiceEventId = string;
 export type PaymentId = string;
 export type PaymentEventId = string;
 export type ScheduleOfValuesId = string;
@@ -20,7 +27,14 @@ export type ContractRevisionId = string;
 export type ContractSignerId = string;
 export type ContractSignatureEventId = string;
 export type ChangeOrderId = string;
+export type ChangeOrderEventId = string;
+export type CommunicationThreadId = string;
+export type CommunicationMessageId = string;
 export type CatalogItemId = string;
+export type InventoryItemId = string;
+export type InventoryTransactionId = string;
+export type CostItemComponentId = string;
+export type TaxCodeId = string;
 export type PlatformCatalogItemSeedId = string;
 export type PlatformUserRoleId = string;
 export type VendorId = string;
@@ -57,6 +71,46 @@ export type ProjectStatus =
   | "in_progress"
   | "completed";
 export type EstimateStatus = "draft" | "sent" | "approved" | "rejected";
+export type EstimateCustomerEventType =
+  | "sent"
+  | "viewed"
+  | "comment_added"
+  | "approved"
+  | "rejected";
+export type EstimateCustomerEventActorType =
+  | "organization_user"
+  | "portal_user"
+  | "system";
+export type NotificationEventCategory =
+  | "estimates"
+  | "contracts"
+  | "invoices"
+  | "change_orders"
+  | "payments"
+  | "communication"
+  | "system";
+export type NotificationEventSeverity = "critical" | "warning" | "neutral";
+export type NotificationActorType =
+  | "organization_user"
+  | "portal_user"
+  | "provider"
+  | "system";
+export type NotificationChannel = "in_app" | "email" | "sms";
+export type NotificationDeliveryStatus =
+  | "pending"
+  | "sent"
+  | "delivered"
+  | "opened"
+  | "clicked"
+  | "failed";
+export type CanonicalRecordSubjectType =
+  | "customer"
+  | "project"
+  | "estimate"
+  | "contract"
+  | "invoice"
+  | "change_order"
+  | "payment";
 export type SiteAssessmentStatus = "pending" | "scheduled" | "completed";
 export type CommercialReadinessStatus =
   | "not_ready"
@@ -145,7 +199,37 @@ export type PaymentEventActorType =
   | "organization_user"
   | "provider"
   | "system";
+export type InvoiceEventType =
+  | "sent"
+  | "viewed"
+  | "payment_requested"
+  | "paid"
+  | "failed"
+  | "voided";
+export type ChangeOrderEventType =
+  | "sent"
+  | "viewed"
+  | "approved"
+  | "rejected";
+export type CommunicationMessageSenderType =
+  | "organization_user"
+  | "portal_user"
+  | "system";
 export type TaxBehavior = "exclusive" | "inclusive" | "none";
+export type InventoryTransactionType =
+  | "purchase"
+  | "adjustment"
+  | "job_usage"
+  | "return"
+  | "waste"
+  | "transfer";
+export type CostItemComponentType =
+  | "inventory"
+  | "labor"
+  | "equipment"
+  | "subcontractor"
+  | "fee"
+  | "other";
 export type TemplateType = "estimate" | "invoice" | "contract";
 export type DocumentTemplateStatus = "active" | "archived";
 export type CatalogItemType =
@@ -469,8 +553,182 @@ export interface Estimate {
   totalAmount: string;
   notes: string | null;
   content: EstimateWorkspaceContent;
+  sentAt: string | null;
+  sentByUserId: ProfileId | null;
+  customerViewedAt: string | null;
+  approvedAt: string | null;
+  approvedByPortalUserId: ProfileId | null;
+  rejectedAt: string | null;
+  rejectedByPortalUserId: ProfileId | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface EstimateCustomerEvent {
+  id: EstimateCustomerEventId;
+  organizationId: OrganizationId;
+  estimateId: EstimateId;
+  customerId: CustomerId;
+  projectId: ProjectId;
+  eventType: EstimateCustomerEventType;
+  actorType: EstimateCustomerEventActorType;
+  organizationUserId: ProfileId | null;
+  portalUserId: ProfileId | null;
+  eventNote: string | null;
+  emailRecipient: string | null;
+  emailTrackingToken: string | null;
+  emailOpenedAt: string | null;
+  emailClickedAt: string | null;
+  payload: Record<string, unknown> | null;
+  occurredAt: string;
+  createdAt: string;
+}
+
+export interface NotificationEvent {
+  id: NotificationEventId;
+  organizationId: OrganizationId;
+  category: NotificationEventCategory;
+  severity: NotificationEventSeverity;
+  eventType: string;
+  subjectType: CanonicalRecordSubjectType;
+  subjectId: string;
+  customerId: CustomerId | null;
+  projectId: ProjectId | null;
+  actorType: NotificationActorType;
+  actorUserId: ProfileId | null;
+  portalUserId: ProfileId | null;
+  title: string;
+  message: string;
+  linkPath: string;
+  groupKey: string | null;
+  payload: Record<string, unknown> | null;
+  occurredAt: string;
+  createdAt: string;
+}
+
+export interface Notification {
+  id: NotificationId;
+  organizationId: OrganizationId;
+  notificationEventId: NotificationEventId;
+  userId: ProfileId;
+  isRead: boolean;
+  readAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NotificationDelivery {
+  id: NotificationDeliveryId;
+  organizationId: OrganizationId;
+  notificationEventId: NotificationEventId;
+  channel: NotificationChannel;
+  provider: string | null;
+  status: NotificationDeliveryStatus;
+  recipientUserId: ProfileId | null;
+  recipientEmail: string | null;
+  recipientPhone: string | null;
+  trackingToken: string | null;
+  providerMessageId: string | null;
+  errorMessage: string | null;
+  payload: Record<string, unknown> | null;
+  sentAt: string | null;
+  deliveredAt: string | null;
+  openedAt: string | null;
+  clickedAt: string | null;
+  failedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EstimateCommercialSnapshot {
+  id: EstimateCommercialSnapshotId;
+  organizationId: OrganizationId;
+  estimateId: EstimateId;
+  customerId: CustomerId;
+  projectId: ProjectId;
+  snapshotVersion: number;
+  templateId: TemplateId | null;
+  estimateReferenceNumber: string;
+  estimateTitle: string | null;
+  estimateStatus: EstimateStatus;
+  estimateDate: string | null;
+  expirationDate: string | null;
+  projectType: string | null;
+  sector: string | null;
+  subtotalAmount: string;
+  taxableSalesAmount: string;
+  exemptSalesAmount: string;
+  taxRateApplied: string;
+  taxBehaviorApplied: TaxBehavior;
+  customerTaxExemptSnapshot: boolean;
+  taxAmount: string;
+  discountAmount: string;
+  totalAmount: string;
+  notes: string | null;
+  termsHtml: string | null;
+  inclusionsHtml: string | null;
+  exclusionsHtml: string | null;
+  scopeSummaryHtml: string | null;
+  notesHtml: string | null;
+  contentSnapshot: Record<string, unknown> | null;
+  customerNameSnapshot: string;
+  customerCompanyNameSnapshot: string | null;
+  customerPhoneSnapshot: string | null;
+  customerEmailSnapshot: string | null;
+  customerAddressLine1Snapshot: string | null;
+  customerAddressLine2Snapshot: string | null;
+  customerCitySnapshot: string | null;
+  customerStateRegionSnapshot: string | null;
+  customerPostalCodeSnapshot: string | null;
+  customerCountryCodeSnapshot: string | null;
+  serviceAddressLine1Snapshot: string | null;
+  serviceAddressLine2Snapshot: string | null;
+  serviceCitySnapshot: string | null;
+  serviceStateRegionSnapshot: string | null;
+  servicePostalCodeSnapshot: string | null;
+  serviceCountryCodeSnapshot: string | null;
+  projectNameSnapshot: string;
+  approvedAt: string;
+  approvedByUserId: ProfileId | null;
+  sourceEstimateUpdatedAt: string;
+  createdAt: string;
+}
+
+export interface EstimateCommercialSnapshotItem {
+  id: EstimateCommercialSnapshotItemId;
+  estimateCommercialSnapshotId: EstimateCommercialSnapshotId;
+  organizationId: OrganizationId;
+  estimateId: EstimateId;
+  estimateLineItemId: string;
+  catalogItemId: CatalogItemId | null;
+  taxCodeId: TaxCodeId | null;
+  sourceType: "manual" | "catalog_item" | "system_component";
+  sourceSystemId: CatalogItemId | null;
+  sourceComponentId: string | null;
+  itemType: CatalogItemType | null;
+  name: string;
+  description: string | null;
+  quantity: string;
+  unit: string;
+  baseUnitCost: string;
+  baseUnitPrice: string | null;
+  markupPercent: string;
+  hiddenMarkupPercent: string;
+  unitPriceBeforeHiddenMarkup: string;
+  visibleMarkupAmount: string;
+  hiddenMarkupAmount: string;
+  unitPrice: string;
+  taxable: boolean;
+  taxRateSnapshot: string;
+  discountAmount: string;
+  lineSubtotal: string;
+  taxAmount: string;
+  costCode: string | null;
+  groupName: string | null;
+  assignedTo: string | null;
+  lineTotal: string;
+  sortOrder: number;
+  createdAt: string;
 }
 
 export interface EstimateScopeItem {
@@ -511,6 +769,7 @@ export interface EstimateLineItem {
   estimateId: EstimateId;
   organizationId: OrganizationId;
   catalogItemId: CatalogItemId | null;
+  taxCodeId?: TaxCodeId | null;
   sourceType: "manual" | "catalog_item" | "system_component";
   sourceSystemId: CatalogItemId | null;
   sourceComponentId: string | null;
@@ -528,6 +787,11 @@ export interface EstimateLineItem {
   hiddenMarkupAmount: string;
   unitPrice: string;
   taxable: boolean;
+  taxRateSnapshot?: string;
+  discountAmount?: string;
+  lineSubtotal?: string;
+  taxAmount?: string;
+  costCode: string | null;
   groupName: string | null;
   assignedTo: string | null;
   lineTotal: string;
@@ -624,8 +888,19 @@ export interface InvoiceLineItem {
   id: string;
   invoiceId: InvoiceId;
   organizationId: OrganizationId;
+  estimateLineItemId?: string | null;
+  lineageType?:
+    | "estimate_snapshot_item"
+    | "sov_item"
+    | "change_order_snapshot_item"
+    | "invoice_only_adjustment"
+    | null;
+  estimateSnapshotItemId?: string | null;
   scheduleOfValueItemId: string | null;
+  changeOrderSnapshotItemId?: string | null;
+  invoiceOnlyAdjustmentKind?: "manual_catalog_item" | "explicit_adjustment" | null;
   catalogItemId: CatalogItemId | null;
+  taxCodeId?: TaxCodeId | null;
   name: string;
   description: string | null;
   quantity: string;
@@ -639,6 +914,11 @@ export interface InvoiceLineItem {
   visibleMarkupAmount: string;
   hiddenMarkupAmount: string;
   unitPrice: string;
+  taxRateSnapshot?: string;
+  discountAmount?: string;
+  lineSubtotal?: string;
+  taxAmount?: string;
+  costCode: string | null;
   lineTotal: string;
   sortOrder: number;
   createdAt: string;
@@ -754,6 +1034,21 @@ export interface ChangeOrder {
   updatedAt: string;
 }
 
+export interface ChangeOrderEvent {
+  id: ChangeOrderEventId;
+  organizationId: OrganizationId;
+  changeOrderId: ChangeOrderId;
+  customerId: CustomerId;
+  projectId: ProjectId;
+  eventType: ChangeOrderEventType;
+  actorType: NotificationActorType;
+  actorUserId: ProfileId | null;
+  portalUserId: ProfileId | null;
+  payload: Record<string, unknown> | null;
+  occurredAt: string;
+  createdAt: string;
+}
+
 export interface Payment {
   id: PaymentId;
   organizationId: OrganizationId;
@@ -793,6 +1088,48 @@ export interface PaymentEvent {
   createdAt: string;
 }
 
+export interface InvoiceEvent {
+  id: InvoiceEventId;
+  organizationId: OrganizationId;
+  invoiceId: InvoiceId;
+  customerId: CustomerId;
+  projectId: ProjectId;
+  eventType: InvoiceEventType;
+  actorType: NotificationActorType;
+  actorUserId: ProfileId | null;
+  portalUserId: ProfileId | null;
+  payload: Record<string, unknown> | null;
+  occurredAt: string;
+  createdAt: string;
+}
+
+export interface CommunicationThread {
+  id: CommunicationThreadId;
+  organizationId: OrganizationId;
+  customerId: CustomerId;
+  projectId: ProjectId;
+  subjectType: CanonicalRecordSubjectType;
+  subjectId: string;
+  createdByUserId: ProfileId | null;
+  lastMessageAt: string | null;
+  lastMessagePreview: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CommunicationMessage {
+  id: CommunicationMessageId;
+  organizationId: OrganizationId;
+  threadId: CommunicationThreadId;
+  customerId: CustomerId;
+  projectId: ProjectId;
+  senderType: CommunicationMessageSenderType;
+  senderUserId: ProfileId | null;
+  body: string;
+  payload: Record<string, unknown> | null;
+  createdAt: string;
+}
+
 export interface ScheduleOfValues {
   id: ScheduleOfValuesId;
   organizationId: OrganizationId;
@@ -810,6 +1147,7 @@ export interface ScheduleOfValueItem {
   id: string;
   scheduleOfValuesId: ScheduleOfValuesId;
   organizationId: OrganizationId;
+  estimateCommercialSnapshotItemId: EstimateCommercialSnapshotItemId | null;
   estimateLineItemId: string;
   name: string;
   description: string | null;
@@ -876,6 +1214,7 @@ export interface PlatformCatalogItemSeed {
   taxable: boolean;
   vendorId: VendorId | null;
   category: string | null;
+  costCode: string | null;
   sku: string | null;
   photoStoragePath: string | null;
   isActive: boolean;
@@ -1195,9 +1534,13 @@ export interface CatalogItem {
   markupPercent: string;
   hiddenMarkupPercent: string;
   taxable: boolean;
+  taxCodeId?: TaxCodeId | null;
   vendorId: VendorId | null;
   category: string | null;
+  costCode: string | null;
   sku: string | null;
+  normalizedName?: string;
+  normalizedSku?: string | null;
   photoStoragePath: string | null;
   status: DocumentTemplateStatus;
   isDefault: boolean;
@@ -1205,6 +1548,17 @@ export interface CatalogItem {
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CatalogItemFile {
+  name: string;
+  path: string;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  downloadUrl: string | null;
+  isPhoto: boolean;
 }
 
 export interface CatalogSystemComponent {
@@ -1218,6 +1572,67 @@ export interface CatalogSystemComponent {
   unit: string;
   quantityPerUnit: string;
   basisUnit: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TaxCode {
+  id: TaxCodeId;
+  organizationId: OrganizationId;
+  name: string;
+  rate: string;
+  jurisdiction: string | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InventoryItem {
+  id: InventoryItemId;
+  organizationId: OrganizationId;
+  catalogItemId: CatalogItemId | null;
+  location: string;
+  name: string;
+  sku: string | null;
+  description: string | null;
+  category: string | null;
+  unitOfMeasure: string;
+  currentQuantity: string;
+  reorderPoint: string;
+  defaultUnitCost: string;
+  taxable: boolean;
+  status: DocumentTemplateStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InventoryTransaction {
+  id: InventoryTransactionId;
+  organizationId: OrganizationId;
+  inventoryItemId: InventoryItemId;
+  transactionType: InventoryTransactionType;
+  quantityChange: string;
+  unitCost: string | null;
+  referenceType: string | null;
+  referenceId: string | null;
+  notes: string | null;
+  createdByUserId?: ProfileId | null;
+  updatedByUserId?: ProfileId | null;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface CostItemComponent {
+  id: CostItemComponentId;
+  organizationId: OrganizationId;
+  costItemId: CatalogItemId;
+  componentType: CostItemComponentType;
+  inventoryItemId: InventoryItemId | null;
+  laborRateId: string | null;
+  equipmentItemId: string | null;
+  quantityPerUnit: string;
+  unitCost: string;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;

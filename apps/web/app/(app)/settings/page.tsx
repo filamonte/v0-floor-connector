@@ -110,10 +110,10 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
         </SettingsOverviewCard>
 
         <SettingsOverviewCard
-          title="Catalogs and reusable items"
-          description="Own reusable materials, labor, services, equipment, and system defaults inside the organization boundary."
+          title="Catalog configuration"
+          description="Adjust the settings that support Cost Items Database and inventory behavior without moving the module out of Financials."
           href="/settings/catalogs"
-          ctaLabel="Manage catalogs"
+          ctaLabel="Open catalog configuration"
         >
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             {(["material", "labor", "service", "equipment", "system"] as const).map((itemType) => {

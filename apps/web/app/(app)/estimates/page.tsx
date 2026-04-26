@@ -1,9 +1,10 @@
 import Link from "next/link";
 
-import { AppEmptyState } from "@/components/app-empty-state";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
+import { EstimateRecordsPanel } from "@/components/estimates/estimate-records-panel";
 import { EstimateQuickCreateForm } from "@/components/estimate-quick-create-form";
 import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
+import { RowsPerViewControl } from "@/components/rows-per-view-control";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { listCustomers } from "@/lib/customers/data";
@@ -27,9 +28,7 @@ type EstimatesPageProps = {
   }>;
 };
 
-function formatStatusLabel(status: string) {
-  return status.replaceAll("_", " ");
-}
+const ESTIMATES_ROWS_PER_VIEW_STORAGE_KEY = "fc.grid.rows.estimates";
 
 function formatMoney(amount: string) {
   return Number(amount).toLocaleString("en-US", {
@@ -177,22 +176,22 @@ export default async function EstimatesPage({
       title={`Estimate manager for ${organizationContext.organization.displayName}`}
       description="Create the estimate first, build scope and pricing in the workspace, then review and send. This manager keeps the estimating workflow clear instead of forcing project selection or proposal review too early."
       summary={
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+        <div className="grid gap-px border border-[#d7dce4] bg-[#d7dce4] sm:grid-cols-2 xl:grid-cols-4">
+          <div className="bg-white px-3 py-2.5">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Build</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{draftCount}</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">{draftCount}</p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+          <div className="bg-white px-3 py-2.5">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Sent</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{sentCount}</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">{sentCount}</p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+          <div className="bg-white px-3 py-2.5">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Approved</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{approvedCount}</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">{approvedCount}</p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+          <div className="bg-white px-3 py-2.5">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Pipeline value</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">
               {formatMoney(totalPipelineValue)}
             </p>
           </div>
@@ -265,27 +264,30 @@ export default async function EstimatesPage({
           );
         }),
         actionSlot: (
-          <Link
-            href={
-              buildEstimatesHref({
-                q: query,
-                status: statusFilter,
-                compose: "1",
-                opportunityId: resolvedSearchParams.opportunityId,
-                customerId: resolvedSearchParams.customerId,
-                projectId: resolvedSearchParams.projectId
-              }) + "#estimate-create"
-            }
-            className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
-          >
-            New estimate
-          </Link>
+          <>
+            <RowsPerViewControl storageKey={ESTIMATES_ROWS_PER_VIEW_STORAGE_KEY} />
+            <Link
+              href={
+                buildEstimatesHref({
+                  q: query,
+                  status: statusFilter,
+                  compose: "1",
+                  opportunityId: resolvedSearchParams.opportunityId,
+                  customerId: resolvedSearchParams.customerId,
+                  projectId: resolvedSearchParams.projectId
+                }) + "#estimate-create"
+              }
+              className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
+            >
+              New estimate
+            </Link>
+          </>
         )
       }}
     >
-      <div className={showComposer ? "grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_420px]" : "space-y-4"}>
+      <div className={showComposer ? "grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px]" : "space-y-3"}>
         <section className="space-y-6">
-          <section className="grid gap-4 xl:auto-rows-fr xl:grid-cols-2">
+          <section className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)_minmax(0,0.85fr)]">
             <ManagerDashboardCard
               eyebrow="Build"
               title="Draft estimates to finish"
@@ -312,7 +314,7 @@ export default async function EstimatesPage({
             />
 
             <ManagerDashboardCard
-              eyebrow="Send"
+              eyebrow="Follow-up"
               title="Sent estimates awaiting response"
               description="Customer-facing estimates that are out for decision and need follow-up."
               actionHref={buildEstimatesHref({
@@ -399,96 +401,11 @@ export default async function EstimatesPage({
             </div>
           ) : null}
 
-          <section className="border border-[#dde3eb] bg-white">
-            <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
-              <div className="flex items-end justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
-                    Estimate records
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
-                    The full commercial register stays below the manager queues so the build, review, and send workflow never loses access to the underlying records.
-                  </p>
-                </div>
-                <div className="hidden grid-cols-[minmax(0,1.5fr)_1fr_160px_140px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
-                  <span>Estimate</span>
-                  <span>Project</span>
-                  <span>Status</span>
-                  <span className="text-right">Total</span>
-                </div>
-                <div className="md:hidden">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                    Estimates list
-                  </p>
-                </div>
-                <p className="text-sm leading-6 text-slate-500">
-                  {filteredEstimates.length} visible
-                </p>
-              </div>
-            </div>
-
-            <div className="divide-y divide-slate-200">
-              {filteredEstimates.length > 0 ? (
-                filteredEstimates.map((estimate) => (
-                  <Link
-                    key={estimate.id}
-                    href={`/estimates/${estimate.id}`}
-                    className="group block px-5 py-4 transition hover:bg-slate-50/70 sm:px-6"
-                  >
-                    <div className="grid gap-4 md:grid-cols-[minmax(0,1.5fr)_1fr_160px_140px] md:items-center">
-                      <div className="min-w-0">
-                        <h3 className="text-base font-semibold text-slate-950 transition group-hover:text-brand-700">
-                          {estimate.referenceNumber}
-                        </h3>
-                        <p className="mt-2 text-sm leading-6 text-slate-500">
-                          {estimate.customer?.name ?? "Unknown customer"}
-                        </p>
-                        <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-400">
-                          {estimate.opportunity?.title ?? "Opportunity linked"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                          Project
-                        </p>
-                        <p className="text-sm font-medium text-slate-700">
-                          {estimate.project?.name ?? "Unknown project"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                          Status
-                        </p>
-                        <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
-                          {formatStatusLabel(estimate.status)}
-                        </span>
-                      </div>
-                      <div className="md:text-right">
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                          Total
-                        </p>
-                        <p className="text-sm font-semibold text-slate-950">
-                          {formatMoney(estimate.totalAmount)}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                ))
-              ) : (
-                <div className="px-6 py-8 sm:px-8">
-                  <AppEmptyState
-                    eyebrow={estimates.length > 0 ? "No matching estimates" : "No estimates yet"}
-                    title={estimates.length > 0 ? "Adjust the estimate filters" : "Create the first estimate"}
-                    description={
-                      estimates.length > 0
-                        ? "Try a broader search or switch estimate views to find the commercial record you need."
-                        : "Estimates define the priced commercial scope that later flows into contracts, jobs, and invoicing."
-                    }
-                  />
-                </div>
-              )}
-            </div>
-          </section>
+          <EstimateRecordsPanel
+            estimates={filteredEstimates}
+            totalEstimateCount={estimates.length}
+            storageKey={ESTIMATES_ROWS_PER_VIEW_STORAGE_KEY}
+          />
         </section>
 
         <WorkspaceComposerSheet

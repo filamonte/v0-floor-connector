@@ -6,12 +6,22 @@ import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { NextActionCard } from "@/components/next-action-card";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
+import {
+  customerAddEstimateCommentAction,
+  customerApproveEstimateAction,
+  customerRejectEstimateAction
+} from "@/lib/estimates/actions";
 import { getIncludedEstimateScopeItems } from "@/lib/estimates/workspace";
+import { recordPortalViewedEstimate } from "@/lib/estimates/data";
 import { getPortalEstimateReviewData } from "@/lib/portal/data";
 
 type PortalEstimateReviewPageProps = {
   params: Promise<{
     estimateId: string;
+  }>;
+  searchParams?: Promise<{
+    error?: string;
+    message?: string;
   }>;
 };
 
@@ -51,6 +61,16 @@ function getNextAction(status: string, projectId: string) {
     };
   }
 
+  if (status === "rejected") {
+    return {
+      title: "Revision feedback is complete",
+      description:
+        "Your contractor can revise this same estimate and resend it through the portal if the shared scope needs another pass.",
+      label: "Return to project workspace",
+      href: `/portal/projects/${projectId}`
+    };
+  }
+
   return {
     title: "Review the shared scope",
     description:
@@ -73,13 +93,31 @@ function renderHtmlContent(value: string | null | undefined) {
 }
 
 export default async function PortalEstimateReviewPage({
-  params
+  params,
+  searchParams
 }: PortalEstimateReviewPageProps) {
   const { estimateId } = await params;
-  const estimate = await getPortalEstimateReviewData(
+  const resolvedSearchParams = (await searchParams) ?? {};
+  let estimate = await getPortalEstimateReviewData(
     estimateId,
     `/portal/estimates/${estimateId}`
   );
+
+  if (!estimate) {
+    notFound();
+  }
+
+  if (estimate.status === "sent" && !estimate.customerViewedAt) {
+    try {
+      await recordPortalViewedEstimate(estimateId, `/portal/estimates/${estimateId}`);
+      estimate = await getPortalEstimateReviewData(
+        estimateId,
+        `/portal/estimates/${estimateId}`
+      );
+    } catch {
+      // Keep the page usable even if the first-view event cannot be captured here.
+    }
+  }
 
   if (!estimate) {
     notFound();
@@ -103,6 +141,18 @@ export default async function PortalEstimateReviewPage({
               </span>
             }
           />
+
+          {resolvedSearchParams.error ? (
+            <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+              {resolvedSearchParams.error}
+            </div>
+          ) : null}
+
+          {resolvedSearchParams.message ? (
+            <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+              {resolvedSearchParams.message}
+            </div>
+          ) : null}
 
           <div className="mt-8">
             <WorkspaceSummaryBand
@@ -142,6 +192,13 @@ export default async function PortalEstimateReviewPage({
                       </p>
                       <p>Estimate #{estimate.referenceNumber}</p>
                       <p>Project: {estimate.project?.name ?? "Unknown project"}</p>
+                      <p>Sent: {estimate.sentAt ? formatDateTime(estimate.sentAt) : "Not yet"}</p>
+                      <p>
+                        Viewed:{" "}
+                        {estimate.customerViewedAt
+                          ? formatDateTime(estimate.customerViewedAt)
+                          : "Not yet"}
+                      </p>
                     </div>
                   )
                 },
@@ -255,6 +312,41 @@ export default async function PortalEstimateReviewPage({
                     {renderHtmlContent(estimate.content.notesHtml)}
                   </div>
                 ) : null}
+                <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600">
+                  <p className="mb-3 text-sm font-medium text-slate-950">Files and images</p>
+                  {estimate.attachments.length > 0 ? (
+                    <div className="space-y-3">
+                      {estimate.attachments.map((attachment) => (
+                        <div
+                          key={attachment.id}
+                          className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate font-medium text-slate-950">
+                              {attachment.fileName}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {attachment.caption?.trim() || attachment.mimeType}
+                            </p>
+                          </div>
+                          {attachment.downloadUrl ? (
+                            <Link
+                              href={attachment.downloadUrl}
+                              target="_blank"
+                              className="inline-flex items-center rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                            >
+                              Open
+                            </Link>
+                          ) : (
+                            <span className="text-xs text-slate-400">Unavailable</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    "No files or images are currently shared with this estimate."
+                  )}
+                </div>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
@@ -293,6 +385,91 @@ export default async function PortalEstimateReviewPage({
 
       <aside className="space-y-6">
         <DetailPanel
+          title="Decision Actions"
+          description="Approve, reject, or comment on this same shared estimate record."
+        >
+          <div className="space-y-4 text-sm leading-6 text-slate-600">
+            {estimate.status === "sent" ? (
+              <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
+                <form action={customerApproveEstimateAction} className="space-y-3">
+                  <input type="hidden" name="estimateId" value={estimate.id} />
+                  <label className="block space-y-2">
+                    <span className="text-sm font-medium text-slate-950">
+                      Optional approval note
+                    </span>
+                    <textarea
+                      name="decisionNote"
+                      rows={3}
+                      maxLength={1000}
+                      className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                      placeholder="Share a short note if you want the contractor to see approval context."
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="inline-flex w-full items-center justify-center rounded-full bg-brand-700 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-900"
+                  >
+                    Approve estimate
+                  </button>
+                </form>
+
+                <form action={customerRejectEstimateAction} className="space-y-3">
+                  <input type="hidden" name="estimateId" value={estimate.id} />
+                  <label className="block space-y-2">
+                    <span className="text-sm font-medium text-slate-950">
+                      Rejection or revision note
+                    </span>
+                    <textarea
+                      name="decisionNote"
+                      rows={3}
+                      maxLength={1000}
+                      className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                      placeholder="Let the contractor know what needs to change."
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="inline-flex w-full items-center justify-center rounded-full border border-rose-300 bg-white px-4 py-2.5 text-sm font-medium text-rose-900 transition hover:border-rose-400 hover:bg-rose-50"
+                  >
+                    Reject or request changes
+                  </button>
+                </form>
+
+                <form action={customerAddEstimateCommentAction} className="space-y-3">
+                  <input type="hidden" name="estimateId" value={estimate.id} />
+                  <label className="block space-y-2">
+                    <span className="text-sm font-medium text-slate-950">
+                      Add a note
+                    </span>
+                    <textarea
+                      name="comment"
+                      rows={3}
+                      maxLength={1000}
+                      className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                      placeholder="Send a note without making a final approval decision yet."
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="inline-flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                  >
+                    Save comment
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                {estimate.status === "approved"
+                  ? "This estimate is already approved on the shared project chain."
+                  : estimate.status === "rejected"
+                    ? "This estimate is already marked as needing contractor revision."
+                    : "This page remains available for review even when no customer decision is currently open."}
+              </div>
+            )}
+          </div>
+        </DetailPanel>
+
+        <DetailPanel
           title="Proposal Context"
           description="Compact record context that keeps the estimate tied to its project without exposing contractor-only controls."
         >
@@ -315,6 +492,16 @@ export default async function PortalEstimateReviewPage({
               {
                 label: "Status",
                 value: <span className="capitalize">{formatStatusLabel(estimate.status)}</span>
+              },
+              {
+                label: "Sent",
+                value: estimate.sentAt ? formatDateTime(estimate.sentAt) : "Not yet"
+              },
+              {
+                label: "Viewed",
+                value: estimate.customerViewedAt
+                  ? formatDateTime(estimate.customerViewedAt)
+                  : "Not yet"
               },
               {
                 label: "Prepared",

@@ -230,6 +230,7 @@ export default async function DashboardPage() {
       header={{
         organizationName:
           organizationContext?.organization.displayName ?? "Organization setup pending",
+        currentRole: organizationContext?.membership.role ?? "member",
         roleLabel: organizationContext?.membership.role ?? "member",
         activeProjectCount: activeProjects.length,
         openReceivablesLabel: formatCurrency(openReceivables)
@@ -241,7 +242,7 @@ export default async function DashboardPage() {
           value: String(leadsNeedingFollowUp.length),
           detail:
             "Upstream opportunity work still waiting on qualification, assessment, or commercial follow-through.",
-          href: "/leads"
+          href: "/opportunities"
         },
         {
           key: "estimates-awaiting-action",
@@ -265,7 +266,7 @@ export default async function DashboardPage() {
           value: String(appointmentsToday.length),
           detail:
             "Site visits, estimate meetings, and follow-up blocks stay visible without becoming a second job scheduler.",
-          href: "/appointments"
+          href: "/calendar"
         },
         {
           key: "jobs-today",
@@ -284,7 +285,7 @@ export default async function DashboardPage() {
           title: "Leads / opportunities needing follow-up",
           description:
             "Keep the early revenue queue visible so qualification and estimating work move before projects stall.",
-          href: "/leads",
+          href: "/opportunities",
           actionLabel: "Open leads",
           emptyTitle: "No leads are waiting on follow-up.",
           emptyDescription:
@@ -550,11 +551,19 @@ export default async function DashboardPage() {
       ]}
       shortcuts={[
         {
+          key: "cost-items-database",
+          label: "Cost items database",
+          description:
+            "Open the canonical catalog, systems, and optional inventory workspace that feeds estimates without changing pricing logic.",
+          href: "/cost-items-database",
+          metric: "Module"
+        },
+        {
           key: "appointments",
           label: "Appointments",
           description:
             "Run commercial and customer-facing visits from the same canonical lead, customer, and project chain.",
-          href: "/appointments",
+          href: "/calendar",
           metric: `${scheduledAppointments.length} scheduled`
         },
         {

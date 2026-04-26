@@ -3,16 +3,8 @@
 import type { ReactNode } from "react";
 import { startTransition, useDeferredValue, useMemo, useState } from "react";
 import Link from "next/link";
-import type { Customer } from "@floorconnector/types";
+import type { Customer, MembershipRole } from "@floorconnector/types";
 
-import { ChangeOrderQuickCreateForm } from "@/components/change-order-quick-create-form";
-import { ContractQuickCreateForm } from "@/components/contract-quick-create-form";
-import { CustomerQuickCreateForm } from "@/components/customer-quick-create-form";
-import { EstimateQuickCreateForm } from "@/components/estimate-quick-create-form";
-import { InvoiceQuickCreateForm } from "@/components/invoice-quick-create-form";
-import { JobQuickCreateForm } from "@/components/job-quick-create-form";
-import { OpportunityQuickCreateForm } from "@/components/opportunity-quick-create-form";
-import { ProjectQuickCreateForm } from "@/components/project-quick-create-form";
 import { UniversalCreateMenu } from "@/components/universal-create-menu";
 
 type QuickCreateAction = (formData: FormData) => void | Promise<void>;
@@ -107,6 +99,7 @@ type InvoiceOption = {
 export type ContractorDashboardSurfaceProps = {
   header: {
     organizationName: string;
+    currentRole?: MembershipRole;
     roleLabel: string;
     activeProjectCount: number;
     openReceivablesLabel: string;
@@ -141,33 +134,21 @@ export type ContractorDashboardSurfaceProps = {
   };
 };
 
-type ComposerKey =
-  | "lead"
-  | "customer"
-  | "project"
-  | "estimate"
-  | "contract"
-  | "job"
-  | "invoice"
-  | "change-order";
-
-const composerOrder: ComposerKey[] = [
-  "lead",
-  "customer",
-  "project",
-  "estimate",
-  "contract",
-  "job",
-  "invoice",
-  "change-order"
-];
+const dashboardIconStyle = {
+  width: "16px",
+  height: "16px",
+  flexShrink: 0
+} as const;
 
 function SearchIcon() {
   return (
     <svg
       aria-hidden="true"
       viewBox="0 0 24 24"
-      className="h-5 w-5 text-[#9f9387]"
+      width="16"
+      height="16"
+      className="h-4 w-4 text-[#8391a7]"
+      style={dashboardIconStyle}
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
@@ -180,24 +161,6 @@ function SearchIcon() {
   );
 }
 
-function ArrowIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 20 20"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M4 10h12" />
-      <path d="m11 5 5 5-5 5" />
-    </svg>
-  );
-}
-
 function filterItems(items: DashboardQueueItem[], query: string) {
   if (!query) {
     return items;
@@ -206,7 +169,7 @@ function filterItems(items: DashboardQueueItem[], query: string) {
   return items.filter((item) => item.searchText.toLowerCase().includes(query));
 }
 
-function UtilityChip({
+function TopLink({
   href,
   label,
   metric
@@ -218,10 +181,10 @@ function UtilityChip({
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-2 rounded-[4px] border border-[#d9cdc2] bg-white px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6e4424] transition hover:border-[#ef7d32] hover:bg-[#fff8f2]"
+      className="inline-flex h-8 items-center gap-2 border border-[#cfd6e0] bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4d5f79] transition hover:bg-[#f8fafc]"
     >
       <span>{label}</span>
-      {metric ? <span className="text-[#a65b25]">{metric}</span> : null}
+      {metric ? <span className="text-[#7a889d]">{metric}</span> : null}
     </Link>
   );
 }
@@ -231,50 +194,26 @@ function BoardPanel({
   title,
   description,
   action,
-  children,
-  dark = false
+  children
 }: {
   eyebrow: string;
   title: string;
   description?: string;
   action?: ReactNode;
   children: ReactNode;
-  dark?: boolean;
 }) {
   return (
-    <section
-      className={[
-        "border",
-        dark
-          ? "border-[#d5c6b9] bg-[#f7f1ea] text-[#1f1813]"
-          : "border-[#ddd1c6] bg-white text-[#1f1813]"
-      ].join(" ")}
-    >
-      <div
-        className={[
-          "flex items-start justify-between gap-4 border-b px-4 py-3",
-          dark ? "border-[#e4d7cd]" : "border-[#efe5dc]"
-        ].join(" ")}
-      >
+    <section className="border border-[#d7dce4] bg-white">
+      <div className="flex items-start justify-between gap-3 border-b border-[#dfe4ec] px-4 py-3">
         <div className="min-w-0">
-          <p
-            className={[
-              "text-[10px] font-semibold uppercase tracking-[0.2em]",
-              dark ? "text-[#a65b25]" : "text-[#a65b25]"
-            ].join(" ")}
-          >
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
             {eyebrow}
           </p>
-          <h3 className="mt-1 text-[15px] font-semibold">{title}</h3>
+          <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#17243b]">
+            {title}
+          </h3>
           {description ? (
-            <p
-              className={[
-                "mt-1 text-xs leading-5",
-                dark ? "text-[#6d6157]" : "text-[#6d6157]"
-              ].join(" ")}
-            >
-              {description}
-            </p>
+            <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
           ) : null}
         </div>
         {action}
@@ -286,48 +225,36 @@ function BoardPanel({
 
 function PriorityGrid({ metrics }: { metrics: DashboardMetric[] }) {
   return (
-    <BoardPanel
-      eyebrow="Priority board"
-      title="Current pressure"
-      description="Fast scan metrics for the queues that usually drive the next action."
-      dark
-    >
-      <div className="grid gap-px bg-[#e4d7cd] md:grid-cols-2">
+    <section className="border border-[#d7dce4] bg-white">
+      <div className="grid gap-px bg-[#dfe4ec] md:grid-cols-5">
         {metrics.map((metric) => (
           <Link
             key={metric.key}
             href={metric.href}
-            className="group bg-[#f7f1ea] px-4 py-4 transition hover:bg-[#fff8f2]"
+            className="bg-white px-3 py-2.5 transition hover:bg-[#f8fafc]"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9f6740]">
-                  {metric.label}
-                </p>
-                <p className="mt-2 text-3xl font-semibold tracking-tight text-[#1f1813]">
-                  {metric.value}
-                </p>
-              </div>
-              <span className="mt-1 text-[#d97e3e] transition group-hover:translate-x-0.5">
-                <ArrowIcon />
-              </span>
-            </div>
-            <p className="mt-2 text-xs leading-5 text-[#6d6157]">{metric.detail}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7a889d]">
+              {metric.label}
+            </p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">
+              {metric.value}
+            </p>
+            <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-500">
+              {metric.detail}
+            </p>
           </Link>
         ))}
       </div>
-    </BoardPanel>
+    </section>
   );
 }
 
 function QueueRows({
   widget,
-  items,
-  compact = true
+  items
 }: {
   widget: DashboardWidget;
   items: DashboardQueueItem[];
-  compact?: boolean;
 }) {
   return (
     <BoardPanel
@@ -337,65 +264,48 @@ function QueueRows({
       action={
         <Link
           href={widget.href}
-          className="inline-flex shrink-0 items-center rounded-[4px] border border-[#dec9b7] bg-[#fff8f2] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7b4a26] transition hover:border-[#ef7d32] hover:text-[#b45417]"
+          className="inline-flex items-center border border-[#cfd6e0] bg-[#f7f8fa] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4d5f79] transition hover:bg-white"
         >
           {widget.actionLabel}
         </Link>
       }
     >
-      <div className="divide-y divide-[#efe5dc]">
+      <div className="divide-y divide-[#e7ebf1]">
         {items.length > 0 ? (
           items.map((item) => (
-            <article key={item.id} className={compact ? "px-4 py-3" : "px-4 py-4"}>
+            <article key={item.id} className="px-4 py-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <Link
                       href={item.href}
-                      className="truncate text-sm font-semibold text-[#1f1813] transition hover:text-[#b45417]"
+                      className="truncate text-sm font-semibold text-[#17243b] transition hover:text-brand-700"
                     >
                       {item.title}
                     </Link>
                     {item.badge ? (
-                      <span className="rounded-full bg-[#fff1e7] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9f531f]">
+                      <span className="border border-[#dde3eb] bg-[#f8fafc] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
                         {item.badge}
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-1 text-xs leading-5 text-[#514840]">{item.subtitle}</p>
-                  <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-[#8b7768]">
+                  <p className="mt-1 text-sm leading-5 text-slate-600">{item.subtitle}</p>
+                  <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-[#7a889d]">
                     {item.meta}
                   </p>
                 </div>
                 {item.trailing ? (
-                  <p className="shrink-0 text-sm font-semibold text-[#1f1813]">
+                  <p className="shrink-0 text-sm font-semibold text-slate-900">
                     {item.trailing}
                   </p>
-                ) : null}
-              </div>
-
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Link
-                  href={item.href}
-                  className="inline-flex items-center rounded-[4px] border border-[#e0d4c9] bg-[#fbf7f3] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6e4424] transition hover:border-[#ef7d32] hover:text-[#b45417]"
-                >
-                  {item.actionLabel}
-                </Link>
-                {item.contextHref && item.contextLabel ? (
-                  <Link
-                    href={item.contextHref}
-                    className="inline-flex items-center rounded-[4px] px-2 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7d7168] transition hover:text-[#1f1813]"
-                  >
-                    {item.contextLabel}
-                  </Link>
                 ) : null}
               </div>
             </article>
           ))
         ) : (
           <div className="px-4 py-5">
-            <p className="text-sm font-semibold text-[#1f1813]">{widget.emptyTitle}</p>
-            <p className="mt-2 text-sm leading-6 text-[#6d6157]">{widget.emptyDescription}</p>
+            <p className="text-sm font-semibold text-[#17243b]">{widget.emptyTitle}</p>
+            <p className="mt-2 text-sm leading-5 text-slate-500">{widget.emptyDescription}</p>
           </div>
         )}
       </div>
@@ -418,7 +328,7 @@ function FinanceTable({
       action={
         <Link
           href={widget.href}
-          className="inline-flex shrink-0 items-center rounded-[4px] border border-[#dec9b7] bg-[#fff8f2] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7b4a26] transition hover:border-[#ef7d32] hover:text-[#b45417]"
+          className="inline-flex items-center border border-[#cfd6e0] bg-[#f7f8fa] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4d5f79] transition hover:bg-white"
         >
           {widget.actionLabel}
         </Link>
@@ -426,42 +336,34 @@ function FinanceTable({
     >
       {items.length > 0 ? (
         <div>
-          <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,0.95fr)_auto] gap-3 border-b border-[#efe5dc] bg-[#fbf7f3] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8b7768]">
+          <div className="grid grid-cols-[minmax(0,1.45fr)_minmax(0,0.9fr)_auto] gap-3 border-b border-[#dfe4ec] bg-[#f7f8fa] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7a889d]">
             <span>Record</span>
             <span>Status</span>
             <span>Amount</span>
           </div>
-          <div className="divide-y divide-[#efe5dc]">
+          <div className="divide-y divide-[#e7ebf1]">
             {items.map((item) => (
               <article key={item.id} className="px-4 py-3">
-                <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,0.95fr)_auto] gap-3">
+                <div className="grid grid-cols-[minmax(0,1.45fr)_minmax(0,0.9fr)_auto] gap-3">
                   <div className="min-w-0">
                     <Link
                       href={item.href}
-                      className="truncate text-sm font-semibold text-[#1f1813] transition hover:text-[#b45417]"
+                      className="truncate text-sm font-semibold text-[#17243b] transition hover:text-brand-700"
                     >
                       {item.title}
                     </Link>
-                    <p className="mt-1 truncate text-xs text-[#5b5048]">{item.subtitle}</p>
+                    <p className="mt-1 truncate text-xs text-slate-500">{item.subtitle}</p>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8b7768]">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7a889d]">
                       {item.badge ?? item.meta}
                     </p>
-                    <p className="mt-1 text-xs text-[#75695f]">{item.meta}</p>
+                    <p className="mt-1 text-xs text-slate-500">{item.meta}</p>
                   </div>
                   <div className="text-right">
                     {item.trailing ? (
-                      <p className="text-sm font-semibold text-[#1f1813]">{item.trailing}</p>
+                      <p className="text-sm font-semibold text-slate-900">{item.trailing}</p>
                     ) : null}
-                    <div className="mt-1 flex justify-end gap-2">
-                      <Link
-                        href={item.href}
-                        className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7b4a26] transition hover:text-[#b45417]"
-                      >
-                        {item.actionLabel}
-                      </Link>
-                    </div>
                   </div>
                 </div>
               </article>
@@ -470,297 +372,11 @@ function FinanceTable({
         </div>
       ) : (
         <div className="px-4 py-5">
-          <p className="text-sm font-semibold text-[#1f1813]">{widget.emptyTitle}</p>
-          <p className="mt-2 text-sm leading-6 text-[#6d6157]">{widget.emptyDescription}</p>
+          <p className="text-sm font-semibold text-[#17243b]">{widget.emptyTitle}</p>
+          <p className="mt-2 text-sm leading-5 text-slate-500">{widget.emptyDescription}</p>
         </div>
       )}
     </BoardPanel>
-  );
-}
-
-function ShortcutModule({ shortcuts }: { shortcuts: DashboardShortcut[] }) {
-  return (
-    <BoardPanel
-      eyebrow="Utility"
-      title="Module shortcuts"
-      description="Jump into the most-used manager surfaces without leaving the board."
-    >
-      <div className="grid gap-px bg-[#efe5dc] sm:grid-cols-2">
-        {shortcuts.map((shortcut) => (
-          <Link
-            key={shortcut.key}
-            href={shortcut.href}
-            className="group bg-white px-4 py-3 transition hover:bg-[#fff8f2]"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-[#1f1813]">{shortcut.label}</p>
-                <p className="mt-1 text-xs leading-5 text-[#6d6157]">
-                  {shortcut.description}
-                </p>
-              </div>
-              {shortcut.metric ? (
-                <span className="shrink-0 rounded-full bg-[#fff1e7] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9f531f]">
-                  {shortcut.metric}
-                </span>
-              ) : null}
-            </div>
-          </Link>
-        ))}
-      </div>
-    </BoardPanel>
-  );
-}
-
-function PlaceholderZone({
-  placeholders
-}: {
-  placeholders: DashboardPlaceholder[];
-}) {
-  return (
-    <BoardPanel
-      eyebrow="Still growing"
-      title="Operational gaps still in view"
-      description="Visible on purpose. These are honest next-layer capabilities that are only partially implemented today, so the home board can stay truthful about what still needs depth."
-    >
-      <div className="grid gap-px bg-[#eadfd4] lg:grid-cols-3">
-        {placeholders.map((placeholder) => (
-          <section key={placeholder.key} className="bg-[#fff8f2] px-4 py-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a65b25]">
-                  Still Missing
-                </p>
-                <h4 className="mt-1 text-sm font-semibold text-[#1f1813]">
-                  {placeholder.title}
-                </h4>
-              </div>
-              <span className="rounded-full bg-[#17120f] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#ffd7bb]">
-                {placeholder.priority}
-              </span>
-            </div>
-            <p className="mt-3 text-sm leading-6 text-[#6d6157]">
-              {placeholder.description}
-            </p>
-          </section>
-        ))}
-      </div>
-    </BoardPanel>
-  );
-}
-
-function QuickCreateStudio({
-  quickCreate
-}: {
-  quickCreate: ContractorDashboardSurfaceProps["quickCreate"];
-}) {
-  const [selectedComposer, setSelectedComposer] = useState<ComposerKey>("lead");
-  const composerOptions = [
-    {
-      key: "lead" as const,
-      label: "Lead",
-      description: "Opportunity intake",
-      disabled: false
-    },
-    {
-      key: "customer" as const,
-      label: "Customer",
-      description: "Create account",
-      disabled: false
-    },
-    {
-      key: "project" as const,
-      label: "Project",
-      description: "Open chain",
-      disabled: false
-    },
-    {
-      key: "estimate" as const,
-      label: "Estimate",
-      description: "Draft scope",
-      disabled:
-        quickCreate.opportunityOptions.length === 0 &&
-        quickCreate.customerOptions.length === 0
-    },
-    {
-      key: "contract" as const,
-      label: "Contract",
-      description: "Send-ready record",
-      disabled: quickCreate.approvedEstimateOptions.length === 0
-    },
-    {
-      key: "job" as const,
-      label: "Job",
-      description: "Execution record",
-      disabled: quickCreate.projectOptions.length === 0
-    },
-    {
-      key: "invoice" as const,
-      label: "Invoice",
-      description: "Billing record",
-      disabled: quickCreate.projectOptions.length === 0
-    },
-    {
-      key: "change-order" as const,
-      label: "Change order",
-      description: "Scope change",
-      disabled: quickCreate.projectOptions.length === 0
-    }
-  ];
-
-  const selectedOption =
-    composerOptions.find((option) => option.key === selectedComposer) ?? composerOptions[0];
-
-  return (
-    <BoardPanel
-      eyebrow="Workflow launcher"
-      title="Quick create"
-      description="Short-form contractor utility. Start the record here, then move into the full workspace."
-      dark
-    >
-      <div className="grid gap-px bg-[#e2d5ca] sm:grid-cols-2">
-        {composerOrder.map((key) => {
-          const option = composerOptions.find((entry) => entry.key === key);
-
-          if (!option) {
-            return null;
-          }
-
-          const isActive = selectedComposer === option.key;
-
-          return (
-            <button
-              key={option.key}
-              type="button"
-              onClick={() => !option.disabled && setSelectedComposer(option.key)}
-              disabled={option.disabled}
-              className={[
-                "px-4 py-3 text-left transition",
-                option.disabled
-                  ? "cursor-not-allowed bg-[#f7f1ea] text-[#9d8f84]"
-                  : isActive
-                    ? "bg-[#fff4e8] text-[#1f1813]"
-                    : "bg-[#f7f1ea] text-[#6d6157] hover:bg-[#fff8f2]"
-              ].join(" ")}
-            >
-              <p className="text-sm font-semibold">{option.label}</p>
-              <p className="mt-1 text-[11px] leading-5">{option.description}</p>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="border-t border-[#e4d7cd] px-4 py-4">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a65b25]">
-          {selectedOption.label}
-        </p>
-        <div className="mt-3 rounded-[4px] border border-[#ddd1c6] bg-white p-4 text-slate-900 [&_button[type='submit']]:bg-[#ef7d32] [&_button[type='submit']]:text-[#1f140d] [&_button[type='submit']]:hover:bg-[#f08b47] [&_input:focus]:border-[#ef7d32] [&_select:focus]:border-[#ef7d32] [&_.text-brand-700]:text-[#a65b25]">
-          {selectedComposer === "lead" ? (
-            <OpportunityQuickCreateForm action={quickCreate.actions.lead} />
-          ) : null}
-
-          {selectedComposer === "customer" ? (
-            <CustomerQuickCreateForm
-              action={quickCreate.actions.customer}
-              defaultRetainagePercentage={quickCreate.defaultRetainagePercentage}
-            />
-          ) : null}
-
-          {selectedComposer === "project" ? (
-            <ProjectQuickCreateForm
-              action={quickCreate.actions.project}
-              customers={quickCreate.customerOptions}
-            />
-          ) : null}
-
-          {selectedComposer === "estimate" ? (
-            quickCreate.opportunityOptions.length > 0 ||
-            quickCreate.customerOptions.length > 0 ? (
-              <EstimateQuickCreateForm
-                action={quickCreate.actions.estimate}
-                opportunities={quickCreate.opportunityOptions}
-                customers={quickCreate.customerOptions.map((customer) => ({
-                  id: customer.id,
-                  name: customer.name,
-                  companyName: customer.companyName ?? null
-                }))}
-                projects={quickCreate.projectOptions.map((project) => ({
-                  id: project.id,
-                  name: project.name,
-                  customerId:
-                    project.customerId ??
-                    quickCreate.customerOptions.find(
-                      (customer) => customer.name === project.customerName
-                    )?.id ??
-                    "",
-                  status: project.status ?? "estimating"
-                }))}
-                estimatorLabel="Current estimator"
-                estimateDateLabel={new Date().toISOString().slice(0, 10)}
-              />
-            ) : (
-              <UnavailableQuickCreate message="Add an opportunity or customer before creating an estimate from the dashboard." />
-            )
-          ) : null}
-
-          {selectedComposer === "contract" ? (
-            quickCreate.approvedEstimateOptions.length > 0 ? (
-              <ContractQuickCreateForm
-                action={quickCreate.actions.contract}
-                approvedEstimates={quickCreate.approvedEstimateOptions}
-                preferredTemplateId={quickCreate.preferredContractTemplateId}
-                requireInternalApproval={quickCreate.requireContractInternalApproval}
-              />
-            ) : (
-              <UnavailableQuickCreate message="Approve at least one estimate before generating a contract from the dashboard." />
-            )
-          ) : null}
-
-          {selectedComposer === "job" ? (
-            quickCreate.projectOptions.length > 0 ? (
-              <JobQuickCreateForm
-                action={quickCreate.actions.job}
-                projects={quickCreate.projectOptions}
-              />
-            ) : (
-              <UnavailableQuickCreate message="Add a project before creating a job from the dashboard." />
-            )
-          ) : null}
-
-          {selectedComposer === "invoice" ? (
-            quickCreate.projectOptions.length > 0 ? (
-              <InvoiceQuickCreateForm
-                action={quickCreate.actions.invoice}
-                projects={quickCreate.projectOptions}
-              />
-            ) : (
-              <UnavailableQuickCreate message="Add a project before starting invoice creation from the dashboard." />
-            )
-          ) : null}
-
-          {selectedComposer === "change-order" ? (
-            quickCreate.projectOptions.length > 0 ? (
-              <ChangeOrderQuickCreateForm
-                action={quickCreate.actions.changeOrder}
-                projects={quickCreate.projectOptions}
-                contracts={quickCreate.contractOptions}
-                invoices={quickCreate.invoiceOptions}
-              />
-            ) : (
-              <UnavailableQuickCreate message="Add a project before creating a change order from the dashboard." />
-            )
-          ) : null}
-        </div>
-      </div>
-    </BoardPanel>
-  );
-}
-
-function UnavailableQuickCreate({ message }: { message: string }) {
-  return (
-    <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-      {message}
-    </div>
   );
 }
 
@@ -771,9 +387,7 @@ export function ContractorDashboardSurface({
   commercialWidgets,
   operationsWidgets,
   financeWidgets,
-  shortcuts,
-  placeholders,
-  quickCreate
+  shortcuts
 }: ContractorDashboardSurfaceProps) {
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
@@ -805,57 +419,61 @@ export function ContractorDashboardSurface({
     [financeWidgets, deferredQuery]
   );
 
+  const topLinks = [
+    shortcuts.find((item) => item.key === "projects"),
+    shortcuts.find((item) => item.key === "schedule"),
+    shortcuts.find((item) => item.key === "payments"),
+    shortcuts.find((item) => item.key === "cost-items-database")
+  ].filter(Boolean) as DashboardShortcut[];
+
   return (
     <div className="-mx-5 bg-[#f3eee8] sm:-mx-8">
-      <section className="border-b border-[#d8ccc1] bg-[#f6f2ed] px-4 py-3 sm:px-6">
+      <section className="border-b border-[#d7c7b4] bg-[#fbf7f1] px-4 py-3 sm:px-6">
         <div className="space-y-3">
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
-            <div className="min-w-0 border border-[#ddd1c6] bg-white px-4 py-3">
-              <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#a65b25]">
-                    Contractor dashboard
-                  </p>
-                  <h2 className="mt-1 text-[22px] font-semibold tracking-tight text-[#1f1813]">
-                    {header.organizationName}
-                  </h2>
-                  <p className="mt-1 text-xs leading-5 text-[#6b6058]">
-                    Active queues, scheduling pressure, collections pressure, and quick
-                    record creation in one board.
-                  </p>
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-3">
-                  <div className="border border-[#eee2d7] bg-[#fbf7f3] px-3 py-2.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8f5b32]">
-                      Role
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-[#1f1813]">
-                      {header.roleLabel}
-                    </p>
-                  </div>
-                  <div className="border border-[#eee2d7] bg-[#fbf7f3] px-3 py-2.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8f5b32]">
-                      Active projects
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-[#1f1813]">
-                      {header.activeProjectCount}
-                    </p>
-                  </div>
-                  <div className="border border-[#eee2d7] bg-[#fbf7f3] px-3 py-2.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8f5b32]">
-                      Open receivables
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-[#1f1813]">
-                      {header.openReceivablesLabel}
-                    </p>
-                  </div>
-                </div>
-              </div>
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+                Contractor dashboard
+              </p>
+              <h2 className="mt-1 text-[22px] font-semibold tracking-tight text-[#2b2118]">
+                {header.organizationName}
+              </h2>
+              <p className="mt-1 text-[13px] leading-5 text-[#665446]">
+                Operational queues and recent records in one working surface.
+              </p>
             </div>
 
-            <label className="relative min-w-0">
-              <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
+            <div className="grid gap-px border border-[#d7dce4] bg-[#d7dce4] sm:grid-cols-3">
+              <div className="bg-white px-3 py-2.5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7a889d]">
+                  Role
+                </p>
+                <p className="mt-1 text-sm font-semibold text-[#17243b]">
+                  {header.roleLabel}
+                </p>
+              </div>
+              <div className="bg-white px-3 py-2.5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7a889d]">
+                  Active projects
+                </p>
+                <p className="mt-1 text-sm font-semibold text-[#17243b]">
+                  {header.activeProjectCount}
+                </p>
+              </div>
+              <div className="bg-white px-3 py-2.5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7a889d]">
+                  Open receivables
+                </p>
+                <p className="mt-1 text-sm font-semibold text-[#17243b]">
+                  {header.openReceivablesLabel}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
+            <label className="relative min-w-0 flex-1">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
                 <SearchIcon />
               </span>
               <input
@@ -868,56 +486,58 @@ export function ContractorDashboardSurface({
                   });
                 }}
                 placeholder="Search dashboard queues by project, customer, record, status, or priority"
-                className="h-11 w-full border border-[#d9cdc2] bg-white pl-12 pr-4 text-[15px] text-[#1f1813] outline-none placeholder:text-[#8e8178] focus:border-[#ef7d32]"
+                className="h-10 w-full border border-[#cfd6e0] bg-white pl-9 pr-3 text-sm text-[#22344d] outline-none placeholder:text-[#8b96a8] focus:border-[#d8731f]"
               />
             </label>
-          </div>
 
-          <div className="flex flex-wrap gap-2">
-            <UniversalCreateMenu
-              buttonLabel="Universal create"
-              buttonClassName="inline-flex h-11 items-center rounded-[4px] border border-[#ef7d32] bg-[#ef7d32] px-4 text-[13px] font-semibold text-[#1f140d] transition hover:bg-[#f08b47]"
-              panelClassName="border-[#dccfc2]"
-            />
-            <UtilityChip
-              href="/projects"
-              label="Projects"
-              metric={String(header.activeProjectCount)}
-            />
-            <UtilityChip href="/schedule" label="Schedule" />
-            <UtilityChip href="/payments" label="Payments" />
-            <UtilityChip href="/time" label="Time cards" />
+            <div className="flex flex-wrap gap-1.5">
+              <UniversalCreateMenu
+                buttonLabel="Universal create"
+                buttonClassName="inline-flex h-10 items-center border border-[#d8731f] bg-[#d8731f] px-4 text-[12px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[#bf6519]"
+                panelClassName="border-[#cfd6e0]"
+              />
+              {topLinks.map((link) => (
+                <TopLink
+                  key={link.key}
+                  href={link.href}
+                  label={link.label}
+                  metric={link.metric}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      <div className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">
-        <div className="grid gap-4 xl:grid-cols-[340px_minmax(0,1.1fr)_minmax(0,1fr)_360px]">
-          <div className="space-y-4">
-            <QuickCreateStudio quickCreate={quickCreate} />
-            <ShortcutModule shortcuts={shortcuts} />
-          </div>
+      <div className="space-y-3 px-4 py-3 sm:px-6">
+        <PriorityGrid metrics={metrics} />
 
-          <div className="space-y-4">
-            <PriorityGrid metrics={metrics} />
-            {attentionWidget ? (
-              <QueueRows widget={attentionWidget} items={attentionWidget.items} compact={false} />
-            ) : null}
-            {filteredCommercialWidgets[0] ? (
-              <QueueRows
-                widget={filteredCommercialWidgets[0]}
-                items={filteredCommercialWidgets[0].items}
-              />
-            ) : null}
-            {filteredOperationsWidgets[0] ? (
-              <QueueRows
-                widget={filteredOperationsWidgets[0]}
-                items={filteredOperationsWidgets[0].items}
-              />
-            ) : null}
-          </div>
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)_minmax(0,0.85fr)]">
+          {attentionWidget ? (
+            <QueueRows widget={attentionWidget} items={attentionWidget.items} />
+          ) : null}
+          {filteredCommercialWidgets[0] ? (
+            <QueueRows
+              widget={filteredCommercialWidgets[0]}
+              items={filteredCommercialWidgets[0].items}
+            />
+          ) : null}
+          {filteredOperationsWidgets[2] ? (
+            <QueueRows
+              widget={filteredOperationsWidgets[2]}
+              items={filteredOperationsWidgets[2].items}
+            />
+          ) : null}
+          {filteredOperationsWidgets[0] ? (
+            <QueueRows
+              widget={filteredOperationsWidgets[0]}
+              items={filteredOperationsWidgets[0].items}
+            />
+          ) : null}
+        </div>
 
-          <div className="space-y-4">
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+          <div className="space-y-3">
             {filteredCommercialWidgets[1] ? (
               <QueueRows
                 widget={filteredCommercialWidgets[1]}
@@ -930,27 +550,9 @@ export function ContractorDashboardSurface({
                 items={filteredCommercialWidgets[2].items}
               />
             ) : null}
-            {filteredOperationsWidgets[1] ? (
-              <QueueRows
-                widget={filteredOperationsWidgets[1]}
-                items={filteredOperationsWidgets[1].items}
-              />
-            ) : null}
           </div>
 
-          <div className="space-y-4">
-            {filteredOperationsWidgets[2] ? (
-              <QueueRows
-                widget={filteredOperationsWidgets[2]}
-                items={filteredOperationsWidgets[2].items}
-              />
-            ) : null}
-            {filteredFinanceWidgets[0] ? (
-              <FinanceTable
-                widget={filteredFinanceWidgets[0]}
-                items={filteredFinanceWidgets[0].items}
-              />
-            ) : null}
+          <div className="space-y-3">
             {filteredFinanceWidgets[1] ? (
               <FinanceTable
                 widget={filteredFinanceWidgets[1]}
@@ -960,9 +562,21 @@ export function ContractorDashboardSurface({
           </div>
         </div>
 
-        <PlaceholderZone placeholders={placeholders} />
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1.28fr)_minmax(0,0.72fr)]">
+          {filteredFinanceWidgets[0] ? (
+            <FinanceTable
+              widget={filteredFinanceWidgets[0]}
+              items={filteredFinanceWidgets[0].items}
+            />
+          ) : null}
+          {filteredOperationsWidgets[1] ? (
+            <QueueRows
+              widget={filteredOperationsWidgets[1]}
+              items={filteredOperationsWidgets[1].items}
+            />
+          ) : null}
+        </div>
       </div>
     </div>
   );
 }
-

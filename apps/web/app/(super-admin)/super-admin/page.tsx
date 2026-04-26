@@ -65,10 +65,10 @@ export default async function SuperAdminHomePage() {
       </SettingsOverviewCard>
 
       <SettingsOverviewCard
-        title="Starter catalogs"
-        description="Reusable starter materials, services, and systems available for tenant adoption."
+        title="Starter cost items"
+        description="Reusable starter cost items, systems, and package defaults available for tenant adoption."
         href="/super-admin/catalogs"
-        ctaLabel="Manage starter catalogs"
+        ctaLabel="Manage starter cost items"
       >
         <div className="grid gap-3 sm:grid-cols-3">
           {(["material", "labor", "service", "equipment", "system"] as const).map((itemType) => {

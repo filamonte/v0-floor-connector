@@ -244,6 +244,7 @@ export async function upsertPlatformCatalogSeedAction(formData: FormData) {
     taxable: getCheckboxValue(formData, "taxable"),
     vendorId: getFieldValue(formData, "vendorId"),
     category: getFieldValue(formData, "category"),
+    costCode: getFieldValue(formData, "costCode"),
     sku: getFieldValue(formData, "sku"),
     photoStoragePath: getFieldValue(formData, "photoStoragePath"),
     isDefault: getCheckboxValue(formData, "isDefault"),

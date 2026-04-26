@@ -1,6 +1,12 @@
 import { z } from "zod";
 
 const invoiceWorkflowRoles = ["standard", "deposit"] as const;
+const invoiceBaseSourceTypes = [
+  "none",
+  "estimate_snapshot",
+  "sov_items",
+  "change_order_snapshot_items"
+] as const;
 const invoiceStatuses = [
   "draft",
   "sent",
@@ -77,6 +83,32 @@ function positiveCurrencyAmountField(label: string) {
     .transform((value) => Number(value))
     .refine((value) => value > 0, {
       message: `${label} must be greater than zero.`
+    })
+    .transform((value) => value.toFixed(2));
+}
+
+function signedCurrencyAmountField(label: string) {
+  return z
+    .string()
+    .trim()
+    .min(1, `${label} is required.`)
+    .refine((value) => !Number.isNaN(Number(value)), {
+      message: `${label} must be a valid number.`
+    })
+    .transform((value) => Number(value).toFixed(2));
+}
+
+function nonnegativeQuantityField(label: string) {
+  return z
+    .string()
+    .trim()
+    .min(1, `${label} is required.`)
+    .refine((value) => !Number.isNaN(Number(value)), {
+      message: `${label} must be a valid number.`
+    })
+    .transform((value) => Number(value))
+    .refine((value) => value >= 0, {
+      message: `${label} cannot be negative.`
     })
     .transform((value) => value.toFixed(2));
 }
@@ -173,37 +205,71 @@ export const invoiceLineItemInputSchema = z.object({
   hiddenMarkupPercent: currencyAmountField("Hidden markup percentage"),
   unitPriceBeforeHiddenMarkup: currencyAmountField("Pre-hidden-markup unit price"),
   visibleMarkupAmount: currencyAmountField("Visible markup amount"),
-  hiddenMarkupAmount: currencyAmountField("Hidden markup amount")
+  hiddenMarkupAmount: currencyAmountField("Hidden markup amount"),
+  costCode: optionalTrimmedString(120)
 });
+
+const invoiceManualCatalogItemInputSchema = z.object({
+  catalogItemId: z.string().uuid("Select a valid catalog item."),
+  quantity: nonnegativeQuantityField("Manual item quantity")
+});
+
+const invoiceExplicitAdjustmentInputSchema = z.object({
+  name: lineItemNameField(),
+  description: optionalTrimmedString(1000),
+  amount: signedCurrencyAmountField("Adjustment amount")
+});
+
+export const invoiceSourceConfigurationSchema = z
+  .object({
+    baseSourceType: z.enum(invoiceBaseSourceTypes),
+    selectedSovItemIds: z
+      .array(z.string().uuid("Select a valid schedule-of-values item."))
+      .default([]),
+    selectedChangeOrderSnapshotItemIds: z
+      .array(z.string().uuid("Select a valid change-order snapshot item."))
+      .default([]),
+    manualCatalogItems: z.array(invoiceManualCatalogItemInputSchema).default([]),
+    explicitAdjustments: z.array(invoiceExplicitAdjustmentInputSchema).default([])
+  })
+  .superRefine((value, ctx) => {
+    if (value.baseSourceType === "sov_items" && value.selectedSovItemIds.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select at least one SOV item.",
+        path: ["selectedSovItemIds"]
+      });
+    }
+
+    if (
+      value.baseSourceType === "change_order_snapshot_items" &&
+      value.selectedChangeOrderSnapshotItemIds.length === 0
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select at least one approved change-order item.",
+        path: ["selectedChangeOrderSnapshotItemIds"]
+      });
+    }
+  });
 
 export const invoiceInputSchema = z
   .object({
     projectId: z.string().uuid("Select a valid project."),
-    estimateId: optionalUuidField("Select a valid estimate."),
+    estimateId: optionalUuidField("Select a valid approved estimate."),
     jobId: optionalUuidField("Select a valid job."),
     workflowRole: invoiceWorkflowRoleSchema,
     status: invoiceStatusSchema,
     issueDate: dateField,
     dueDate: optionalDateField,
     discountAmount: currencyAmountField("Discount"),
-    lineItems: z.array(invoiceLineItemInputSchema).min(1, "Add at least one line item."),
-    notes: optionalTrimmedString(4000)
+    notes: optionalTrimmedString(4000),
+    sourceConfiguration: invoiceSourceConfigurationSchema
+      .nullable()
+      .optional()
+      .transform((value) => value ?? null)
   })
   .superRefine((value, ctx) => {
-    const subtotal = value.lineItems.reduce(
-      (sum, lineItem) => sum + Number(lineItem.quantity) * Number(lineItem.unitPrice),
-      0
-    );
-    const total = subtotal - Number(value.discountAmount);
-
-    if (total < 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Discount cannot reduce the invoice below zero.",
-        path: ["discountAmount"]
-      });
-    }
-
     if (value.dueDate && value.dueDate < value.issueDate) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -219,12 +285,23 @@ export const invoiceInputSchema = z
         path: ["jobId"]
       });
     }
+
+    if (
+      value.sourceConfiguration?.baseSourceType === "estimate_snapshot" &&
+      !value.estimateId
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select an approved estimate before building a full snapshot invoice.",
+        path: ["estimateId"]
+      });
+    }
   });
 
 export const invoiceQuickCreateInputSchema = z
   .object({
     projectId: z.string().uuid("Select a valid project."),
-    estimateId: optionalUuidField("Select a valid estimate."),
+    estimateId: optionalUuidField("Select a valid approved estimate."),
     jobId: optionalUuidField("Select a valid job."),
     workflowRole: invoiceWorkflowRoleSchema
   })
@@ -361,6 +438,9 @@ export const invoicePaymentVoidInputSchema = withPaymentActorContextValidation(
 
 export type InvoiceInput = z.infer<typeof invoiceInputSchema>;
 export type InvoiceLineItemInput = z.infer<typeof invoiceLineItemInputSchema>;
+export type InvoiceSourceConfiguration = z.infer<
+  typeof invoiceSourceConfigurationSchema
+>;
 export type InvoiceQuickCreateInput = z.infer<typeof invoiceQuickCreateInputSchema>;
 export type InvoicePaymentInput = z.infer<typeof invoicePaymentInputSchema>;
 export type InvoiceCustomerPaymentRequestInput = z.infer<
@@ -374,3 +454,4 @@ export const invoiceStatusesList = invoiceStatuses;
 export const editableInvoiceStatusesList = editableInvoiceStatuses;
 export const paymentStatusesList = paymentStatuses;
 export const invoiceWorkflowRolesList = invoiceWorkflowRoles;
+export const invoiceBaseSourceTypesList = invoiceBaseSourceTypes;

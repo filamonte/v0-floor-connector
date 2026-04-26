@@ -5,8 +5,10 @@ import type {
 } from "@floorconnector/types";
 
 import {
+  buildCatalogItemPricingSnapshot,
   calculateLineTotal,
   calculateSharedUnitPricing,
+  type CommercialLineItemSnapshot,
   formatMoneyValue,
   formatQuantityValue,
   parseNumericValue
@@ -29,6 +31,7 @@ export type ExpandedSystemRow = {
   visibleMarkupAmount: string;
   hiddenMarkupAmount: string;
   unitPrice: string;
+  costCode: string | null;
   taxable: boolean;
   lineCost: string;
   linePrice: string;
@@ -40,6 +43,11 @@ export type ExpandedSystemPreview = {
   totalPrice: string;
   taxablePrice: string;
   exemptPrice: string;
+};
+
+export type ExpandedSystemSnapshot = CommercialLineItemSnapshot & {
+  sourceSystemId: string;
+  sourceComponentId: string;
 };
 
 export function normalizeCatalogSystemComponents(
@@ -118,6 +126,7 @@ export function buildExpandedSystemPreview(input: {
       visibleMarkupAmount: formatMoneyValue(pricing.visibleMarkupAmount),
       hiddenMarkupAmount: formatMoneyValue(pricing.hiddenMarkupAmount),
       unitPrice: formatMoneyValue(pricing.finalUnitPrice),
+      costCode: componentCatalogItem?.costCode ?? null,
       taxable: componentCatalogItem?.taxable !== false,
       lineCost: formatMoneyValue(lineCost),
       linePrice: formatMoneyValue(linePrice)
@@ -155,4 +164,53 @@ export function buildExpandedSystemPreview(input: {
     taxablePrice: formatMoneyValue(totals.taxablePrice),
     exemptPrice: formatMoneyValue(totals.exemptPrice)
   };
+}
+
+export function buildExpandedSystemLineItemSnapshots(input: {
+  systemCatalogItem: CatalogItem;
+  catalogItems: CatalogItem[];
+  squareFootage: number;
+  groupName?: string | null;
+  assignedTo?: string | null;
+}): ExpandedSystemSnapshot[] {
+  const systemComponents = normalizeCatalogSystemComponents(input.systemCatalogItem);
+  const catalogItemsById = new Map(input.catalogItems.map((item) => [item.id, item] as const));
+
+  return systemComponents.flatMap((component) => {
+    const componentCatalogItem =
+      catalogItemsById.get(component.componentCatalogItemId) ?? null;
+
+    if (!componentCatalogItem) {
+      return [];
+    }
+
+    const quantityPerUnit = parseNumericValue(component.quantityPerUnit);
+    const quantity =
+      component.basisUnit === "sqft"
+        ? quantityPerUnit * input.squareFootage
+        : quantityPerUnit;
+
+    return [
+      {
+        ...buildCatalogItemPricingSnapshot({
+          catalogItem: componentCatalogItem,
+          quantity,
+          sourceType: "system_component",
+          sourceSystemId: input.systemCatalogItem.id,
+          sourceComponentId: component.id,
+          groupName: input.groupName,
+          assignedTo: input.assignedTo,
+          name: component.componentName,
+          description:
+            component.componentDescription ??
+            `Generated from ${input.systemCatalogItem.name} at ${formatQuantityValue(
+              input.squareFootage
+            )} sqft.`,
+          unit: component.unit
+        }),
+        sourceSystemId: input.systemCatalogItem.id,
+        sourceComponentId: component.id
+      }
+    ];
+  });
 }

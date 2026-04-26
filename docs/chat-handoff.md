@@ -19,22 +19,27 @@ FloorConnector is a production-first specialty-contractor operating system built
 Current stage:
 - contractor UI system is stabilized and normalized
 - contractor app and portal both run on shared canonical records
-- the product is moving from foundational workflow coverage into denser operational entry surfaces
+- the product now has its implemented financial engine and notification foundation in place
+- the next phase is operational depth, scheduling, communication UI, and automation
 
 ## Built Now
 
 Implemented on the current branch:
 - auth, tenant bootstrap, organization-aware access control
 - leads, customers, projects, estimates
+- customer estimate send, portal review, approval, rejection, and estimate email tracking
+- approved estimate commercial snapshots as the downstream commercial baseline
 - canonical contracts with signer routing and portal signature actions
-- canonical change orders with contractor + portal workflow and first-pass positive invoice impact
+- canonical change orders with contractor + portal workflow, immutable approved snapshots, and SOV or invoice integration
 - canonical jobs with first-pass scheduling fields and crew assignment foundation
 - canonical appointments for site visits, estimate meetings, follow-up visits, and internal coordination on the same lead/customer/project chain
 - invoices, payments, immutable payment events, and portal payment initiation
-- first real contractor-side progress billing / schedule-of-values workflow on the canonical approved-estimate and invoice chain
+- snapshot-based invoice lineage across approved estimate snapshots, SOV rows, approved change-order snapshots, and invoice-only adjustments
+- real contractor-side progress billing / schedule-of-values workflow on the canonical approved-estimate snapshot and invoice chain
+- notification events, notifications, notification deliveries, and canonical communication threads/messages
 - first shared universal-create launcher in the contractor shell and dashboard, routed through canonical quick-create flows
 - first real contractor-side global search in the protected header, grouped across canonical records and routing into the existing workspaces
-- first real contractor-side in-app notifications / action-awareness layer in the shared shell and dashboard, derived from canonical workflow pressure and routing into real downstream workspaces
+- first real contractor-side notifications layer in the shared shell and dashboard, backed by stored canonical notification records and routing into real downstream workspaces
 - contractor dashboard now works as a denser command-center surface with operational metrics, modular queues, dashboard-local quick create, and shortcuts back into shared manager pages
 - contractor shell/header now carry breadcrumb and page-context continuity inside the unified top header instead of a separate blue-style page band
 - shared contractor shell, manager-page wrappers, quick-create surfaces, and common overview cards now broadly follow the newer charcoal/orange/light-neutral contractor theme instead of the older blue-heavy manager styling
@@ -74,21 +79,22 @@ Direction now locked in:
 Still intentionally not implemented:
 - full dispatch-grade scheduling system
 - deeper dispatch automation
-- broad module-dashboard coverage across the app
 - a fully finished page-by-page contractor reskin on every lower-traffic surface
 - deeper AIA/pay-app export and reporting workflows beyond the current canonical progress-billing surface
+- broader communication UI on top of the new thread/message foundation
+- broader automation workflows on top of the new notification and communication foundations
 - broader reporting / analytics
 - broad redesign work
 
 ## Next Build Phase
 
 Primary focus for the next phase:
-- broader module-dashboard coverage
-- expand universal create coverage and context handoff
 - scheduling polish beyond the first shared calendar planner layer
+- communication UI on top of the canonical threads/messages and notification system
+- automation on top of the canonical notification and workflow event foundations
 
 Goal:
-- add operational depth and create access without drifting into Contractor Foreman-style module silos
+- add operational depth without drifting into Contractor Foreman-style module silos
 
 ## System Rules
 

@@ -1,4 +1,4 @@
-import type { TaxBehavior } from "@floorconnector/types";
+import type { CatalogItem, CatalogItemType, TaxBehavior } from "@floorconnector/types";
 
 type NumericLike = string | number | null | undefined;
 
@@ -19,6 +19,48 @@ export type SharedPricingBreakdown = {
   visibleMarkupAmount: number;
   hiddenMarkupAmount: number;
   finalUnitPrice: number;
+};
+
+export type PricingCatalogItemLike = Pick<
+  CatalogItem,
+  | "id"
+  | "itemType"
+  | "name"
+  | "description"
+  | "unit"
+  | "defaultUnitCost"
+  | "defaultUnitPrice"
+  | "markupPercent"
+  | "hiddenMarkupPercent"
+  | "taxable"
+  | "taxCodeId"
+  | "costCode"
+>;
+
+export type CommercialLineItemSnapshot = {
+  catalogItemId: string | null;
+  taxCodeId: string | null;
+  sourceType: "catalog_item" | "system_component";
+  sourceSystemId: string | null;
+  sourceComponentId: string | null;
+  itemType: CatalogItemType;
+  name: string;
+  description: string | null;
+  quantity: string;
+  unit: string;
+  baseUnitCost: string;
+  baseUnitPrice: string | null;
+  markupPercent: string;
+  hiddenMarkupPercent: string;
+  unitPriceBeforeHiddenMarkup: string;
+  visibleMarkupAmount: string;
+  hiddenMarkupAmount: string;
+  unitPrice: string;
+  lineTotal: string;
+  taxable: boolean;
+  costCode: string | null;
+  groupName: string | null;
+  assignedTo: string | null;
 };
 
 export function parseNumericValue(value: NumericLike) {
@@ -60,6 +102,11 @@ export function formatQuantityValue(value: number) {
   return value.toFixed(4);
 }
 
+export function normalizeNullableText(value: string | null | undefined) {
+  const normalized = value?.trim() ?? "";
+  return normalized.length > 0 ? normalized : null;
+}
+
 export function calculateSharedUnitPricing(
   input: SharedPricingInput
 ): SharedPricingBreakdown {
@@ -92,6 +139,56 @@ export function calculateSharedUnitPricing(
 
 export function calculateLineTotal(quantity: NumericLike, unitPrice: NumericLike) {
   return roundMoney(parseNumericValue(quantity) * parseNumericValue(unitPrice));
+}
+
+export function buildCatalogItemPricingSnapshot(input: {
+  catalogItem: PricingCatalogItemLike;
+  quantity: NumericLike;
+  sourceType?: "catalog_item" | "system_component";
+  sourceSystemId?: string | null;
+  sourceComponentId?: string | null;
+  groupName?: string | null;
+  assignedTo?: string | null;
+  name?: string | null;
+  description?: string | null;
+  unit?: string | null;
+}): CommercialLineItemSnapshot {
+  const pricing = calculateSharedUnitPricing({
+    baseUnitCost: input.catalogItem.defaultUnitCost,
+    baseUnitPrice: input.catalogItem.defaultUnitPrice,
+    markupPercent: input.catalogItem.markupPercent,
+    hiddenMarkupPercent: input.catalogItem.hiddenMarkupPercent
+  });
+  const quantity = formatQuantityValue(parseNumericValue(input.quantity));
+  const lineTotal = calculateLineTotal(quantity, pricing.finalUnitPrice);
+
+  return {
+    catalogItemId: input.catalogItem.id,
+    taxCodeId: input.catalogItem.taxCodeId ?? null,
+    sourceType: input.sourceType ?? "catalog_item",
+    sourceSystemId: input.sourceSystemId ?? null,
+    sourceComponentId: input.sourceComponentId ?? null,
+    itemType: input.catalogItem.itemType,
+    name: normalizeNullableText(input.name) ?? input.catalogItem.name,
+    description:
+      normalizeNullableText(input.description) ?? normalizeNullableText(input.catalogItem.description),
+    quantity,
+    unit: normalizeNullableText(input.unit) ?? input.catalogItem.unit,
+    baseUnitCost: formatMoneyValue(pricing.baseUnitCost),
+    baseUnitPrice:
+      pricing.baseUnitPrice == null ? null : formatMoneyValue(pricing.baseUnitPrice),
+    markupPercent: formatMoneyValue(pricing.markupPercent),
+    hiddenMarkupPercent: formatMoneyValue(pricing.hiddenMarkupPercent),
+    unitPriceBeforeHiddenMarkup: formatMoneyValue(pricing.unitPriceBeforeHiddenMarkup),
+    visibleMarkupAmount: formatMoneyValue(pricing.visibleMarkupAmount),
+    hiddenMarkupAmount: formatMoneyValue(pricing.hiddenMarkupAmount),
+    unitPrice: formatMoneyValue(pricing.finalUnitPrice),
+    lineTotal: formatMoneyValue(lineTotal),
+    taxable: input.catalogItem.taxable !== false,
+    costCode: normalizeNullableText(input.catalogItem.costCode),
+    groupName: normalizeNullableText(input.groupName),
+    assignedTo: normalizeNullableText(input.assignedTo)
+  };
 }
 
 export function calculateDiscountedTaxableSales(input: {

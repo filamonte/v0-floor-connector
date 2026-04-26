@@ -27,7 +27,8 @@ function buildRedirect(pathname: string, params: Record<string, string | undefin
 }
 
 export async function upsertEstimateContentBlockAction(formData: FormData) {
-  const returnTo = getFieldValue(formData, "returnTo") || "/materials";
+  const returnTo =
+    getFieldValue(formData, "returnTo") || "/cost-items-database/items";
   const result = estimateContentBlockInputSchema.safeParse({
     blockId: getFieldValue(formData, "blockId"),
     blockType: getFieldValue(formData, "blockType"),
@@ -61,6 +62,8 @@ export async function upsertEstimateContentBlockAction(formData: FormData) {
     );
   }
 
+  revalidatePath("/cost-items-database");
+  revalidatePath("/cost-items-database/items");
   revalidatePath("/materials");
   revalidatePath("/settings/catalogs");
   revalidatePath("/estimates");

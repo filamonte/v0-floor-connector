@@ -5,9 +5,16 @@ import { listCatalogItems } from "@/lib/catalogs/data";
 import { listEstimateContentBlocks } from "@/lib/estimate-content-blocks/data";
 import {
   autosaveEstimateAction,
+  insertCatalogItemToEstimateAction,
+  openOrCreateScheduleOfValuesAction,
+  insertSystemToEstimateAction,
+  previewExpandedSystemAction,
   quickCreateEstimateCatalogItemAction,
   updateEstimateStatusAutosaveAction
 } from "@/lib/estimates/actions";
+import { resolveEstimateApprovalOrchestration } from "@/lib/estimates/approval-orchestration";
+import { quickCreateContractFromEstimateAction } from "@/lib/contracts/actions";
+import { quickCreateInvoiceAction } from "@/lib/invoices/actions";
 import { getEstimateById } from "@/lib/estimates/data";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 
@@ -38,6 +45,13 @@ export default async function EstimateEditPage({
     listEstimateContentBlocks(),
     getOrganizationFinancialSettings(estimate.organizationId)
   ]);
+  const approvalOrchestration =
+    estimate.status === "approved"
+      ? await resolveEstimateApprovalOrchestration(
+          estimate.id,
+          `/estimates/${estimate.id}/edit`
+        )
+      : null;
 
   return (
     <div className="space-y-4">
@@ -64,7 +78,14 @@ export default async function EstimateEditPage({
         organizationFinancialSettings={organizationFinancialSettings}
         autosaveAction={autosaveEstimateAction}
         updateStatusAction={updateEstimateStatusAutosaveAction}
+        previewExpandedSystemAction={previewExpandedSystemAction}
+        insertCatalogItemAction={insertCatalogItemToEstimateAction}
+        insertSystemAction={insertSystemToEstimateAction}
         quickCreateCatalogItemAction={quickCreateEstimateCatalogItemAction}
+        approvalOrchestration={approvalOrchestration}
+        contractAction={quickCreateContractFromEstimateAction}
+        invoiceAction={quickCreateInvoiceAction}
+        scheduleOfValuesAction={openOrCreateScheduleOfValuesAction}
       />
     </div>
   );

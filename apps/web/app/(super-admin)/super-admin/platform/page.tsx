@@ -107,6 +107,7 @@ export default async function PlatformDefaultsPage({ searchParams }: PageProps) 
             <p>Tax behavior: {financialDefaults.defaultTaxBehavior}</p>
             <p>Tax rate: {formatPercentFromRate(financialDefaults.defaultTaxRate)}%</p>
             <p>Retainage baseline: {financialDefaults.defaultRetainagePercentage}%</p>
+            <p>Inventory default state is managed in Module Controls through the shared `inventory_enabled` policy.</p>
           </div>
         </SettingsSectionCard>
       </div>

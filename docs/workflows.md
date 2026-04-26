@@ -8,6 +8,7 @@ Cross-references:
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): system design
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): next-phase build order
+- [docs/inventory-cost-architecture.md](C:/FloorConnector/docs/inventory-cost-architecture.md): inventory, cost-item, and tax model
 
 This workflow document assumes the supporting configuration model now has two layers:
 - super admin defines platform defaults and starter records
@@ -23,6 +24,7 @@ This workflow document assumes the supporting configuration model now has two la
 In practical terms:
 - a lead should not become a second disconnected customer-like record later
 - an approved estimate should feed downstream contract, job, and invoice workflows instead of being re-entered
+- downstream financial records should always inherit from immutable approved snapshots rather than live estimate editing rows
 - canonical records should stay linked so teams can follow the same job from intake through payment
 - the app should guide users toward the next best action instead of presenting every downstream action as equally primary
 
@@ -30,7 +32,7 @@ In practical terms:
 
 The current canonical business chain is:
 
-`Auth -> Organization Bootstrap -> Dashboard -> Lead / Opportunity -> Customer + Project -> Estimate -> Contract -> Job -> Invoice -> Payment`
+`Auth -> Organization Bootstrap -> Dashboard -> Lead / Opportunity -> Customer -> Project -> Estimate -> Contract -> Change Order -> Job -> Invoice -> Payment`
 
 This chain is already real in the current system, even though the user experience is still distributed across multiple module pages instead of being fully project-centered.
 
@@ -105,10 +107,16 @@ Current canonical records involved:
 
 Implemented flow:
 - estimates are created from project context
-- estimate authoring is inventory-first:
+- estimate authoring is cost-item-first:
   - active `catalog_items` can be added directly
   - reusable systems expand by sqft through shared system logic
   - quick create from the estimate workspace saves a minimal new `catalog_items` record first, then adds it to the estimate
+- `catalog_items` are the canonical reusable sellable cost item database; physical stock now belongs in `inventory_items`
+- inventory remains optional per organization and never blocks cost item selection in estimates
+- item-level tax stays simple:
+  - customer tax exemption overrides everything
+  - non-taxable cost items produce zero tax
+  - otherwise organization or platform financial defaults determine the rate
 - estimate line items, totals, tax, and discount handling are live
 - `estimate_line_items` is the authoritative pricing-row source; legacy `estimates.content.itemRows` should not be used for new behavior
 - estimate edits autosave with validation and stale-write conflict protection
@@ -123,10 +131,19 @@ Current canonical records involved:
 - catalog items
 - catalog system components
 
+Implemented approval rules:
+- customer-facing estimate approval happens through the portal on the same canonical estimate record
+- approval does not execute downstream financial actions automatically
+- approval creates an immutable commercial snapshot used for downstream contract, SOV, and invoice lineage
+
+Supporting audit and delivery records involved:
+- estimate customer events
+
 ### Approved Estimate To Contract
 
 Implemented flow:
 - approved estimates can generate canonical contracts
+- contract generation reads from approved estimate snapshot data only
 - contracts use the shared template foundation
 - draft contracts may be lightly edited
 - unrestricted editing locks once signature activity begins
@@ -140,6 +157,20 @@ Current canonical records involved:
 - contract signature events
 - shared template reference
 - project and customer context carried forward
+
+### Estimate To Change Order
+
+Implemented flow:
+- approved estimates establish the first immutable commercial baseline for downstream billing
+- later scope changes are captured as canonical change orders on the same project and contract chain
+- approved change orders create immutable commercial snapshots of the approved scope adjustment
+- approved change-order snapshots can append into SOV or invoice workflows without mutating the approved estimate snapshot
+
+Current canonical records involved:
+- estimate commercial snapshots
+- change order
+- change order commercial snapshots
+- change order commercial snapshot items
 
 ### Approved Estimate To Job
 
@@ -157,9 +188,15 @@ Current canonical records involved:
 ### Completed Job To Invoice
 
 Implemented flow:
-- invoices can be created from project, approved estimate, or job context
+- invoices can be created from project, approved estimate snapshot, selected SOV rows, approved change-order snapshot rows, or job context
 - the preferred operational direction is to invoice from completed work where appropriate
 - invoice line items, totals, tax, exemption snapshots, retainage, and balance due are live
+- each invoice line uses one explicit lineage path only:
+  - approved estimate snapshot item
+  - selected SOV item
+  - approved change-order snapshot item
+  - invoice-only adjustment
+- direct billing from live `estimate_line_items` is not canonical
 
 Current canonical records involved:
 - project
@@ -168,6 +205,8 @@ Current canonical records involved:
 - optional job
 - invoice
 - invoice line items
+- schedule of values
+- schedule of value items
 
 ### Invoice To Payment Recording
 
@@ -183,6 +222,39 @@ Current canonical records involved:
 - invoice
 - payment
 - payment events
+
+### Notifications And Communications
+
+Implemented flow:
+- workflow activity now writes immutable notification events on the shared canonical chain
+- per-user notifications track in-app read state from those events
+- notification deliveries track channel outcomes such as sent, delivered, opened, clicked, and failed
+- canonical communication threads and immutable messages now keep record-attached conversation history on the same customer and project chain
+
+Current canonical records involved:
+- notification events
+- notifications
+- notification deliveries
+- communication threads
+- communication messages
+
+### Financials Module Home
+
+Implemented flow:
+- `Financials Home` at `/financials` is now the section entry point for cross-project financial work
+- it summarizes the live canonical invoice and payment chain instead of introducing a duplicate dashboard
+- it routes users into the existing `Invoices`, `Payments`, and `Progress Billing` managers for the actual work
+
+Current implemented visibility on Financials Home:
+- overdue invoices needing follow-up
+- recent recorded payments
+- open receivables from canonical invoice balances
+- purpose-defined quick links to the existing financial workspaces
+
+Defined but not implemented yet:
+- `Accounts Receivable` is reserved for deeper receivable management such as aging, collector workflow, and collection-specific queues
+- `Accounts Payable` is reserved for payable-side workflow such as bills due, outgoing payments, and vendor obligation management
+- these routes currently document intended purpose only and do not add a new data system
 
 ### Workforce And Field Execution Support
 
@@ -208,13 +280,15 @@ The best current product direction for the contractor revenue workflow is:
 1. Lead / Opportunity
 2. Contact / customer qualification
 3. Site assessment / inspection or customer-provided measurements and requirements
-4. Estimate
-5. Estimate approval
-6. Contract
-7. Contract approval / signature readiness
-8. Invoice / deposit or financial readiness where applicable
-9. Job execution / scheduling
-10. Payment and closeout
+4. Customer
+5. Project
+6. Estimate
+7. Portal estimate approval and approved snapshot creation
+8. Contract
+9. Change order when scope changes
+10. Job execution / scheduling
+11. Invoice
+12. Payment and closeout
 
 How this should be interpreted today:
 - some of these steps already map cleanly to canonical records in the app
@@ -229,7 +303,7 @@ The intended near-term direction is not to invent a new business model. It is to
 
 The preferred contractor journey is:
 
-`Opportunity -> Customer / Project -> Estimate -> Contract -> Job -> Invoice -> Payment`
+`Opportunity -> Customer -> Project -> Estimate -> Contract -> Change Order -> Job -> Invoice -> Payment`
 
 With supporting readiness stages between those records:
 - qualification
@@ -263,10 +337,20 @@ Today, the app should be understood this way:
 - opportunities start the commercial path before a full project exists
 - customers and projects anchor the operational path
 - estimates define proposed commercial scope
-- approved estimates feed downstream contract and job creation
+- customer estimate approval is portal-based and writes to the same canonical estimate record
+- estimate approval creates an immutable commercial snapshot and does not auto-run contract, SOV, invoice, or payment actions
+- Cost Items Database is the reusable item master module behind estimate authoring, systems, and optional inventory
+- approved estimate snapshots feed downstream contract generation, SOV provisioning, and direct estimate-based invoice lineage
+- change orders append approved scope changes through immutable change-order snapshots rather than mutating prior approved scope
 - contracts now carry the live customer-facing signature workflow on the same canonical contract record across contractor and portal surfaces
 - jobs represent execution
 - workforce time and field execution now support the same project-centered operating chain through shared people, vendor, time-card, and daily-log records
-- invoices and payments complete the financial path, with customer-facing online payment workflow foundations now attached to the same canonical invoice and payment records
+- invoices and payments complete the financial path, with invoice rows sourced from approved estimate snapshot items, SOV items, approved change-order snapshot items, or invoice-only adjustments
+- notifications and communications now have stored canonical foundations rather than shell-only placeholder behavior
+- Financials is now starting to read as one sectioned system:
+  - `/financials` is the cross-project control panel
+  - `/invoices` remains the billing-record manager
+  - `/payments` remains the collections and posted-payment manager
+  - `/financials/accounts-receivable` and `/financials/accounts-payable` are present only as structure/spec placeholders in this pass
 
 That means FloorConnector is already operating on one shared business chain, even though some screens still expose the workflow in a more module-driven way than the intended product direction.

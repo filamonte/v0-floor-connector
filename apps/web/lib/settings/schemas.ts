@@ -157,6 +157,7 @@ export const organizationProfileInputSchema = z.object({
 export const catalogItemSettingsInputSchema = z
   .object({
     itemId: optionalUuidField("Select a valid catalog item."),
+    inventoryItemId: optionalUuidField("Select a valid inventory record."),
     itemType: z.enum(
       [
         "material",
@@ -188,17 +189,119 @@ export const catalogItemSettingsInputSchema = z
     markupPercent: percentStringField("Markup percentage"),
     hiddenMarkupPercent: percentStringField("Hidden markup percentage"),
     taxable: z.boolean(),
+    taxCodeId: optionalUuidField("Select a valid tax code."),
     vendorId: optionalUuidField("Select a valid vendor."),
     category: trimmedNullableString(120),
+    costCode: trimmedNullableString(120),
     sku: trimmedNullableString(120),
     photoStoragePath: trimmedNullableString(2000),
     status: z.enum(templateStatuses),
-    isDefault: z.boolean()
+    isDefault: z.boolean(),
+    trackInventory: z.boolean(),
+    inventoryLocation: z
+      .string()
+      .trim()
+      .max(120)
+      .transform((value) => (value.length > 0 ? value : "default")),
+    inventoryReorderPoint: z
+      .string()
+      .trim()
+      .transform((value) => (value.length > 0 ? value : "0"))
+      .refine((value) => !Number.isNaN(Number(value)), {
+        message: "Inventory reorder point must be a valid number."
+      })
+      .transform((value) => Number(value))
+      .refine((value) => value >= 0, {
+        message: "Inventory reorder point must be zero or greater."
+      })
+      .transform((value) => value.toFixed(4)),
+    inventoryAdjustmentQuantity: z
+      .string()
+      .trim()
+      .transform((value) => (value.length > 0 ? value : null))
+      .nullable()
+      .refine((value) => value == null || !Number.isNaN(Number(value)), {
+        message: "Inventory adjustment must be a valid number."
+      })
+      .transform((value) => (value == null ? null : Number(value)))
+      .refine((value) => value == null || value !== 0, {
+        message: "Inventory adjustment cannot be zero."
+      })
+      .transform((value) => (value == null ? null : value.toFixed(4))),
+    inventoryAdjustmentNote: trimmedNullableString(500),
+    submitMode: z.enum(["save", "adjust"]).default("save")
   })
   .refine((value) => !(value.status === "archived" && value.isDefault), {
     message: "Archived catalog items cannot be the default.",
     path: ["status"]
   });
+
+export const taxCodeSettingsInputSchema = z.object({
+  taxCodeId: optionalUuidField("Select a valid tax code."),
+  name: z.string().trim().min(1, "Tax code name is required.").max(120),
+  rate: taxRatePercentField("Tax rate"),
+  jurisdiction: trimmedNullableString(120),
+  active: z.boolean()
+});
+
+export const inventoryItemSettingsInputSchema = z.object({
+  inventoryItemId: optionalUuidField("Select a valid inventory item."),
+  name: z.string().trim().min(1, "Inventory item name is required.").max(120),
+  sku: trimmedNullableString(120),
+  description: trimmedNullableString(255),
+  category: trimmedNullableString(120),
+  unitOfMeasure: z.string().trim().min(1, "Unit of measure is required.").max(40),
+  reorderPoint: z
+    .string()
+    .trim()
+    .min(1, "Reorder point is required.")
+    .refine((value) => !Number.isNaN(Number(value)), {
+      message: "Reorder point must be a valid number."
+    })
+    .transform((value) => Number(value))
+    .refine((value) => value >= 0, {
+      message: "Reorder point must be zero or greater."
+    })
+    .transform((value) => value.toFixed(4)),
+  defaultUnitCost: z
+    .string()
+    .trim()
+    .min(1, "Default unit cost is required.")
+    .refine((value) => !Number.isNaN(Number(value)), {
+      message: "Default unit cost must be a valid number."
+    })
+    .transform((value) => Number(value))
+    .refine((value) => value >= 0, {
+      message: "Default unit cost must be zero or greater."
+    })
+    .transform((value) => value.toFixed(2)),
+  taxable: z.boolean(),
+  status: z.enum(templateStatuses)
+});
+
+export const inventoryTransactionSettingsInputSchema = z.object({
+  transactionId: optionalUuidField("Select a valid inventory transaction."),
+  inventoryItemId: z.string().uuid("Select a valid inventory item."),
+  transactionType: z.enum(
+    ["purchase", "adjustment", "job_usage", "return", "waste", "transfer"] as const
+  ),
+  quantityChange: z
+    .string()
+    .trim()
+    .min(1, "Quantity change is required.")
+    .refine((value) => !Number.isNaN(Number(value)), {
+      message: "Quantity change must be a valid number."
+    })
+    .transform((value) => Number(value))
+    .refine((value) => value !== 0, {
+      message: "Quantity change cannot be zero."
+    })
+    .transform((value) => value.toFixed(4)),
+  unitCost: optionalCurrencyField("Unit cost"),
+  referenceType: trimmedNullableString(120),
+  referenceId: trimmedNullableString(120),
+  notes: trimmedNullableString(500)
+});
 
 export const organizationFeatureOverrideInputSchema = z.object({
   key: z.string().trim().min(1, "Feature key is required.").max(120),

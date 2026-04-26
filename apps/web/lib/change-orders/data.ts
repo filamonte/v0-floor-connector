@@ -13,11 +13,18 @@ import type {
   ChangeOrderQuickCreateInput
 } from "./schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { recordChangeOrderNotificationEvent } from "@/lib/notifications/system";
 import { listPortalAccessGrantsForCurrentUser } from "@/lib/portal-access/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getProjectById, listProjects } from "@/lib/projects/data";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { appendChangeOrderSnapshotItemsToScheduleOfValues } from "@/lib/financial/sov";
+import {
+  appendChangeOrderSnapshotItemsToInvoice,
+  createInvoice,
+  getInvoiceById
+} from "@/lib/invoices/data";
 
 type ChangeOrderRow = {
   id: string;
@@ -146,6 +153,9 @@ type ChangeOrderRecord = {
         balanceDueAmount: string;
       }
     | null;
+  latestCommercialSnapshotId: string | null;
+  latestCommercialSnapshotCreatedAt: string | null;
+  latestCommercialSnapshotItemIds: string[];
 };
 
 type ChangeOrderListItem = ChangeOrderRecord;
@@ -200,6 +210,18 @@ const changeOrderSelect = `
     balance_due_amount
   )
 `;
+
+type ChangeOrderCommercialSnapshotRow = {
+  id: string;
+  change_order_id: string;
+  created_at: string;
+  snapshot_version: number;
+};
+
+type ChangeOrderCommercialSnapshotItemRow = {
+  id: string;
+  change_order_commercial_snapshot_id: string;
+};
 
 function formatMoney(value: string | number) {
   return Number(value).toFixed(2);
@@ -270,7 +292,59 @@ function mapChangeOrder(row: ChangeOrderRow): ChangeOrderRecord {
           status: invoice.status,
           balanceDueAmount: formatMoney(invoice.balance_due_amount)
         }
-      : null
+      : null,
+    latestCommercialSnapshotId: null,
+    latestCommercialSnapshotCreatedAt: null,
+    latestCommercialSnapshotItemIds: []
+  };
+}
+
+async function attachLatestCommercialSnapshot(changeOrder: ChangeOrderRecord) {
+  const supabase = await getSupabaseServerClient();
+  const snapshotResponse = await supabase
+    .from("change_order_commercial_snapshots")
+    .select("id, change_order_id, created_at, snapshot_version")
+    .eq("company_id", changeOrder.organizationId)
+    .eq("change_order_id", changeOrder.id)
+    .order("snapshot_version", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (snapshotResponse.error) {
+    throw new Error(
+      `Unable to load the latest change-order commercial snapshot: ${snapshotResponse.error.message}`
+    );
+  }
+
+  const snapshot = snapshotResponse.data as ChangeOrderCommercialSnapshotRow | null;
+
+  if (!snapshot?.id) {
+    return changeOrder;
+  }
+
+  const snapshotItemsResponse = await supabase
+    .from("change_order_commercial_snapshot_items")
+    .select("id, change_order_commercial_snapshot_id")
+    .eq("company_id", changeOrder.organizationId)
+    .eq("change_order_commercial_snapshot_id", snapshot.id)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (snapshotItemsResponse.error) {
+    throw new Error(
+      `Unable to load the latest change-order snapshot items: ${snapshotItemsResponse.error.message}`
+    );
+  }
+
+  const snapshotItems =
+    (snapshotItemsResponse.data as ChangeOrderCommercialSnapshotItemRow[] | null) ?? [];
+
+  return {
+    ...changeOrder,
+    latestCommercialSnapshotId: snapshot.id,
+    latestCommercialSnapshotCreatedAt: snapshot.created_at,
+    latestCommercialSnapshotItemIds: snapshotItems.map((item) => item.id)
   };
 }
 
@@ -366,7 +440,7 @@ async function resolveLinkedRecordScope(input: {
   return project;
 }
 
-async function maybeApplyApprovedChangeOrderToInvoice(changeOrder: ChangeOrderRow) {
+function maybeApplyApprovedChangeOrderToInvoice(changeOrder: ChangeOrderRow) {
   if (!changeOrder.invoice_id || changeOrder.applied_invoice_line_item_id) {
     return;
   }
@@ -377,63 +451,7 @@ async function maybeApplyApprovedChangeOrderToInvoice(changeOrder: ChangeOrderRo
     return;
   }
 
-  const supabase = await getSupabaseServerClient();
-  const sortResponse = await supabase
-    .from("invoice_line_items")
-    .select("sort_order")
-    .eq("company_id", changeOrder.company_id)
-    .eq("invoice_id", changeOrder.invoice_id)
-    .order("sort_order", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (sortResponse.error) {
-    throw new Error(
-      `Unable to determine invoice line item order for change order application: ${sortResponse.error.message}`
-    );
-  }
-
-  const nextSortOrder =
-    typeof sortResponse.data?.sort_order === "number" ? sortResponse.data.sort_order + 1 : 0;
-
-  const lineItemResponse = await supabase
-    .from("invoice_line_items")
-    .insert({
-      company_id: changeOrder.company_id,
-      invoice_id: changeOrder.invoice_id,
-      name: `Change Order: ${changeOrder.title}`,
-      description:
-        changeOrder.scope_change_notes ??
-        changeOrder.description ??
-        "Approved change order adjustment",
-      quantity: 1,
-      unit: "each",
-      unit_price: priceAdjustment.toFixed(2),
-      line_total: priceAdjustment.toFixed(2),
-      sort_order: nextSortOrder
-    })
-    .select("id")
-    .maybeSingle();
-
-  if (lineItemResponse.error || !lineItemResponse.data?.id) {
-    throw new Error(
-      `Unable to apply the approved change order to the linked invoice: ${lineItemResponse.error?.message ?? "Invoice line item insert failed."}`
-    );
-  }
-
-  const updateResponse = await supabase
-    .from("change_orders")
-    .update({
-      applied_invoice_line_item_id: lineItemResponse.data.id
-    })
-    .eq("company_id", changeOrder.company_id)
-    .eq("id", changeOrder.id);
-
-  if (updateResponse.error) {
-    throw new Error(
-      `Unable to persist the linked invoice line item reference on the change order: ${updateResponse.error.message}`
-    );
-  }
+  throw new Error("Change order cannot create invoice rows without estimate lineage");
 }
 
 async function recordPortalChangeOrderView(changeOrder: ChangeOrderRow, next: string) {
@@ -573,7 +591,144 @@ export async function listInvoiceChangeOrders(
 
 export async function getChangeOrderById(changeOrderId: string, next: string) {
   const row = await getChangeOrderRecordByIdInCurrentScope(changeOrderId, next);
-  return row ? mapChangeOrder(row) : null;
+  return row ? attachLatestCommercialSnapshot(mapChangeOrder(row)) : null;
+}
+
+export async function invoiceApprovedChangeOrderDirectly(changeOrderId: string) {
+  const scope = await requireChangeOrderScope(`/change-orders/${changeOrderId}`);
+  const changeOrder = await getChangeOrderById(changeOrderId, `/change-orders/${changeOrderId}`);
+
+  if (!changeOrder) {
+    throw new Error("Change order not found for this organization.");
+  }
+
+  if (changeOrder.status !== "approved") {
+    throw new Error("Only approved change orders can be billed from commercial snapshots.");
+  }
+
+  if (!changeOrder.latestCommercialSnapshotId || changeOrder.latestCommercialSnapshotItemIds.length === 0) {
+    throw new Error(
+      "Approved change-order snapshot data is missing. Re-approve the change order before billing it."
+    );
+  }
+
+  let invoiceId = changeOrder.invoiceId;
+  let targetInvoice = invoiceId ? await getInvoiceById(invoiceId, `/change-orders/${changeOrderId}`) : null;
+
+  if (targetInvoice && targetInvoice.billingModel === "aia_progress") {
+    throw new Error(
+      "Progress-billed invoices must stay on the SOV chain. Link this change order to a draft standard invoice to bill it directly."
+    );
+  }
+
+  if (targetInvoice && targetInvoice.status !== "draft") {
+    throw new Error(
+      "Only draft invoices can accept direct approved change-order billing."
+    );
+  }
+
+  if (!targetInvoice) {
+    const issueDate = new Date();
+    const dueDate = new Date(issueDate);
+    dueDate.setDate(dueDate.getDate() + 30);
+
+    const createdInvoice = await createInvoice({
+      projectId: changeOrder.projectId,
+      estimateId: null,
+      jobId: null,
+      workflowRole: "standard",
+      status: "draft",
+      issueDate: issueDate.toISOString().slice(0, 10),
+      dueDate: dueDate.toISOString().slice(0, 10),
+      discountAmount: "0.00",
+      notes: `Approved change order ${changeOrder.referenceNumber}`,
+      sourceConfiguration: null
+    });
+
+    invoiceId = createdInvoice.id;
+    targetInvoice = await getInvoiceById(createdInvoice.id, `/change-orders/${changeOrderId}`);
+  }
+
+  if (!invoiceId || !targetInvoice) {
+    throw new Error("The target invoice could not be prepared for direct change-order billing.");
+  }
+
+  const appliedLineItems = await appendChangeOrderSnapshotItemsToInvoice({
+    organizationId: scope.organizationId,
+    userId: scope.userId,
+    invoiceId,
+    changeOrderSnapshotItemIds: changeOrder.latestCommercialSnapshotItemIds
+  });
+
+  const appliedInvoiceLineItemId =
+    appliedLineItems.length === 1 ? appliedLineItems[0]?.id ?? null : null;
+
+  const supabase = await getSupabaseServerClient();
+  const updateResponse = await supabase
+    .from("change_orders")
+    .update({
+      invoice_id: invoiceId,
+      applied_invoice_line_item_id: appliedInvoiceLineItemId,
+      updated_by: scope.userId
+    })
+    .eq("company_id", scope.organizationId)
+    .eq("id", changeOrder.id)
+    .select(changeOrderSelect)
+    .maybeSingle();
+
+  if (updateResponse.error || !updateResponse.data) {
+    throw new Error(
+      `Unable to save the approved change-order invoice linkage: ${updateResponse.error?.message ?? "Update failed."}`
+    );
+  }
+
+  return attachLatestCommercialSnapshot(mapChangeOrder(updateResponse.data as ChangeOrderRow));
+}
+
+export async function addApprovedChangeOrderToScheduleOfValues(input: {
+  changeOrderId: string;
+  scheduleOfValuesId?: string | null;
+}) {
+  const scope = await requireChangeOrderScope(`/change-orders/${input.changeOrderId}`);
+  const changeOrder = await getChangeOrderById(
+    input.changeOrderId,
+    `/change-orders/${input.changeOrderId}`
+  );
+
+  if (!changeOrder) {
+    throw new Error("Change order not found for this organization.");
+  }
+
+  if (changeOrder.status !== "approved") {
+    throw new Error("Only approved change orders can be added to the schedule of values.");
+  }
+
+  if (!changeOrder.latestCommercialSnapshotId || changeOrder.latestCommercialSnapshotItemIds.length === 0) {
+    throw new Error(
+      "Approved change-order snapshot data is missing. Re-approve the change order before adding it to the schedule of values."
+    );
+  }
+
+  if (!(Number(changeOrder.priceAdjustment) > 0)) {
+    throw new Error(
+      "Negative or zero-value change orders cannot be added to the schedule of values. Invoice them directly instead."
+    );
+  }
+
+  const scheduleOfValuesId = await appendChangeOrderSnapshotItemsToScheduleOfValues({
+    changeOrderId: changeOrder.id,
+    scheduleOfValuesId: input.scheduleOfValuesId ?? null,
+    actingUserId: scope.userId
+  });
+
+  if (!scheduleOfValuesId) {
+    throw new Error("The target schedule of values could not be resolved.");
+  }
+
+  return {
+    changeOrder,
+    scheduleOfValuesId
+  };
 }
 
 export async function createChangeOrder(input: ChangeOrderQuickCreateInput) {
@@ -704,7 +859,21 @@ export async function updateChangeOrderStatus(
   const row = response.data as ChangeOrderRow;
 
   if (nextStatus === "approved") {
-    await maybeApplyApprovedChangeOrderToInvoice(row);
+    maybeApplyApprovedChangeOrderToInvoice(row);
+  }
+
+  if (nextStatus === "sent" || nextStatus === "approved" || nextStatus === "rejected") {
+    await recordChangeOrderNotificationEvent({
+      organizationId: row.company_id,
+      changeOrderId: row.id,
+      customerId: row.customer_id,
+      projectId: row.project_id,
+      changeOrderReferenceNumber: row.reference_number,
+      eventType: nextStatus,
+      actorType: "organization_user",
+      actorUserId: scope.userId,
+      occurredAt: row.updated_at
+    });
   }
 
   const refreshed = await getChangeOrderRecordByIdInCurrentScope(changeOrderId);
@@ -721,10 +890,11 @@ export async function recordPortalViewedChangeOrder(changeOrderId: string, next 
   const admin = getSupabaseAdminClient();
 
   if (!scope.changeOrder.customer_viewed_at) {
+    const nowIso = new Date().toISOString();
     const response = await admin
       .from("change_orders")
       .update({
-        customer_viewed_at: new Date().toISOString()
+        customer_viewed_at: nowIso
       })
       .eq("company_id", scope.changeOrder.company_id)
       .eq("id", scope.changeOrder.id);
@@ -732,6 +902,18 @@ export async function recordPortalViewedChangeOrder(changeOrderId: string, next 
     if (response.error) {
       throw new Error(`Unable to record the portal review: ${response.error.message}`);
     }
+
+    await recordChangeOrderNotificationEvent({
+      organizationId: scope.changeOrder.company_id,
+      changeOrderId: scope.changeOrder.id,
+      customerId: scope.changeOrder.customer_id,
+      projectId: scope.changeOrder.project_id,
+      changeOrderReferenceNumber: scope.changeOrder.reference_number,
+      eventType: "viewed",
+      actorType: "portal_user",
+      portalUserId: scope.userId,
+      occurredAt: nowIso
+    });
   }
 
   const refreshed = await getScopedPortalChangeOrder(changeOrderId, next);
@@ -771,7 +953,21 @@ export async function approveChangeOrderFromPortal(
   }
 
   await recordPortalChangeOrderView(response.data as ChangeOrderRow, next);
-  await maybeApplyApprovedChangeOrderToInvoice(response.data as ChangeOrderRow);
+  maybeApplyApprovedChangeOrderToInvoice(response.data as ChangeOrderRow);
+  await recordChangeOrderNotificationEvent({
+    organizationId: scope.changeOrder.company_id,
+    changeOrderId: scope.changeOrder.id,
+    customerId: scope.changeOrder.customer_id,
+    projectId: scope.changeOrder.project_id,
+    changeOrderReferenceNumber: scope.changeOrder.reference_number,
+    eventType: "approved",
+    actorType: "portal_user",
+    portalUserId: scope.userId,
+    occurredAt: nowIso,
+    payload: {
+      decisionNote: input.decisionNote ?? null
+    }
+  });
 
   const refreshed = await getScopedPortalChangeOrder(input.changeOrderId, next);
   return mapChangeOrder(refreshed.changeOrder);
@@ -810,6 +1006,20 @@ export async function rejectChangeOrderFromPortal(
   }
 
   await recordPortalChangeOrderView(response.data as ChangeOrderRow, next);
+  await recordChangeOrderNotificationEvent({
+    organizationId: scope.changeOrder.company_id,
+    changeOrderId: scope.changeOrder.id,
+    customerId: scope.changeOrder.customer_id,
+    projectId: scope.changeOrder.project_id,
+    changeOrderReferenceNumber: scope.changeOrder.reference_number,
+    eventType: "rejected",
+    actorType: "portal_user",
+    portalUserId: scope.userId,
+    occurredAt: nowIso,
+    payload: {
+      decisionNote: input.decisionNote ?? null
+    }
+  });
 
   const refreshed = await getScopedPortalChangeOrder(input.changeOrderId, next);
   return mapChangeOrder(refreshed.changeOrder);

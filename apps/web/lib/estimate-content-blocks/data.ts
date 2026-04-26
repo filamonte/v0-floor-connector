@@ -41,7 +41,7 @@ function mapEstimateContentBlock(
 }
 
 async function getEstimateContentBlockScope(
-  next = "/materials"
+  next = "/cost-items-database/items"
 ): Promise<EstimateContentBlockScope | null> {
   const user = await requireAuthenticatedUser(next);
   const organizationContext = await getActiveOrganizationContext(user.id);
@@ -56,7 +56,9 @@ async function getEstimateContentBlockScope(
   };
 }
 
-export async function requireEstimateContentBlockScope(next = "/materials") {
+export async function requireEstimateContentBlockScope(
+  next = "/cost-items-database/items"
+) {
   const scope = await getEstimateContentBlockScope(next);
 
   if (!scope) {

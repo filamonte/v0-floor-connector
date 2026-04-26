@@ -8,6 +8,7 @@ import {
   EyeOff,
   FolderTree,
   GripVertical,
+  Lock,
   Package,
   Plus,
   Search,
@@ -39,6 +40,7 @@ export type EstimateItemsDraft = {
   hiddenMarkupAmount: string;
   unitPrice: string;
   markupPercent: string;
+  costCode: string;
   taxCode: "taxable" | "non-taxable";
   assignedTo: string;
   lineTotal: string;
@@ -65,10 +67,14 @@ type ItemsSectionProps = {
   selectedSystemId: string;
   systemSquareFootage: string;
   systemPreview: ExpandedSystemPreview | null;
+  systemPreviewMessage?: string | null;
+  isPreviewPending?: boolean;
   onSelectedCatalogItemIdChange: (value: string) => void;
   onSelectedSystemIdChange: (value: string) => void;
   onSystemSquareFootageChange: (value: string) => void;
   onAddCatalogItem: () => void;
+  onQuickAddCatalogItem: (catalogItemId: string) => void;
+  onPreviewSystem: () => void;
   onExpandSystem: () => void;
   onToggleMarkup: (value: boolean) => void;
   onToggleShowOnlyZeroItems: (value: boolean) => void;
@@ -88,8 +94,7 @@ type ItemsSectionProps = {
     unit: string;
     defaultUnitCost: string;
     defaultUnitPrice: string | null;
-    taxable: boolean;
-  }) => Promise<void>;
+  }) => Promise<boolean>;
   inventoryCreateError?: string | null;
 };
 
@@ -197,10 +202,14 @@ export function ItemsSection({
   selectedSystemId,
   systemSquareFootage,
   systemPreview,
+  systemPreviewMessage,
+  isPreviewPending = false,
   onSelectedCatalogItemIdChange,
   onSelectedSystemIdChange,
   onSystemSquareFootageChange,
   onAddCatalogItem,
+  onQuickAddCatalogItem,
+  onPreviewSystem,
   onExpandSystem,
   onToggleMarkup,
   onToggleShowOnlyZeroItems,
@@ -220,7 +229,6 @@ export function ItemsSection({
   const [quickItemUnit, setQuickItemUnit] = useState("each");
   const [quickItemCost, setQuickItemCost] = useState("");
   const [quickItemPrice, setQuickItemPrice] = useState("");
-  const [quickItemTaxable, setQuickItemTaxable] = useState(true);
   const visibleGroups = getVisibleRowGroups(lineItems, itemGroups, showOnlyZeroItems);
   const visibleItemCount = visibleGroups.reduce((sum, group) => sum + group.rows.length, 0);
   const filteredPickerItems = visibleCatalogItems.filter((item) =>
@@ -228,6 +236,12 @@ export function ItemsSection({
   );
   const directCatalogItems = filteredPickerItems.filter((item) => item.itemType !== "system");
   const systemCatalogItems = filteredPickerItems.filter((item) => item.itemType === "system");
+  const quickAddItems = directCatalogItems.slice(0, 6);
+  const firstQuickAddItem = quickAddItems[0] ?? directCatalogItems[0] ?? null;
+  const canSubmitQuickCreate =
+    quickItemName.trim().length > 0 &&
+    quickItemUnit.trim().length > 0 &&
+    quickItemCost.trim().length > 0;
 
   return (
     <section className="border-t border-[#e6e9ef] bg-white">
@@ -257,12 +271,25 @@ export function ItemsSection({
                 <input
                   value={itemSearch}
                   onChange={(event) => setItemSearch(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter" || !firstQuickAddItem) {
+                      return;
+                    }
+
+                    event.preventDefault();
+                    onQuickAddCatalogItem(firstQuickAddItem.id);
+                  }}
                   placeholder="Search active items and systems"
                   className="h-full w-full border-0 bg-transparent px-3 text-[14px] text-[#334a70] outline-none"
                 />
               </div>
             </label>
           </div>
+          {firstQuickAddItem ? (
+            <div className="mb-3 text-[12px] text-[#6b7c96]">
+              Press Enter to add <span className="font-medium text-[#334a70]">{firstQuickAddItem.name}</span>.
+            </div>
+          ) : null}
           <div className="flex flex-wrap items-end gap-3">
             <label className="min-w-[260px] flex-1 text-[12px] font-medium text-[#5d6f8a]">
               Inventory item
@@ -297,8 +324,31 @@ export function ItemsSection({
               <span>Create New Item</span>
             </button>
           </div>
+          {quickAddItems.length > 0 ? (
+            <div className="mt-3">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7a8aa3]">
+                Quick Matches
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {quickAddItems.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => onQuickAddCatalogItem(item.id)}
+                    className="inline-flex items-center gap-2 rounded-full border border-[#d7deea] bg-white px-3 py-1.5 text-[13px] font-medium text-[#28456f]"
+                  >
+                    <Package className="h-3.5 w-3.5" />
+                    <span>{item.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
           {showCreateItemForm ? (
-            <div className="mt-4 rounded-[10px] border border-[#d7deea] bg-white p-4">
+            <div className="mt-3 rounded-[10px] border border-[#d7deea] bg-white p-3">
+              <div className="mb-2 text-[12px] leading-5 text-[#6b7c96]">
+                Create a small inventory item and add it to this estimate immediately.
+              </div>
               <div className="grid gap-3 md:grid-cols-3">
                 <label className="text-[12px] font-medium text-[#5d6f8a]">
                   Name
@@ -340,21 +390,12 @@ export function ItemsSection({
                   />
                 </label>
                 <label className="text-[12px] font-medium text-[#5d6f8a]">
-                  Price
+                  Price (optional)
                   <input
                     value={quickItemPrice}
                     onChange={(event) => setQuickItemPrice(event.target.value)}
                     className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] px-3 text-[14px] text-[#334a70] outline-none"
                   />
-                </label>
-                <label className="flex items-center gap-3 pt-7 text-[13px] font-medium text-[#334a70]">
-                  <input
-                    type="checkbox"
-                    checked={quickItemTaxable}
-                    onChange={(event) => setQuickItemTaxable(event.target.checked)}
-                    className="h-4 w-4 rounded-[3px] border-[#a9b5c8]"
-                  />
-                  <span>Taxable</span>
                 </label>
               </div>
               {inventoryCreateError ? (
@@ -372,25 +413,24 @@ export function ItemsSection({
                   type="button"
                   onClick={() => {
                     void (async () => {
-                      await onQuickCreateCatalogItem({
+                      const didCreate = await onQuickCreateCatalogItem({
                         name: quickItemName,
                         itemType: quickItemType,
                         unit: quickItemUnit,
                         defaultUnitCost: quickItemCost,
-                        defaultUnitPrice: quickItemPrice.trim().length > 0 ? quickItemPrice : null,
-                        taxable: quickItemTaxable
+                        defaultUnitPrice: quickItemPrice.trim().length > 0 ? quickItemPrice : null
                       });
-                      if (!inventoryCreateError) {
+                      if (didCreate) {
                         setQuickItemName("");
                         setQuickItemUnit("each");
                         setQuickItemCost("");
                         setQuickItemPrice("");
-                        setQuickItemTaxable(true);
                         setShowCreateItemForm(false);
                       }
                     })();
                   }}
-                  className="rounded-[8px] bg-[#1f5fd6] px-4 py-2 text-[14px] font-medium text-white"
+                  disabled={!canSubmitQuickCreate}
+                  className="rounded-[8px] bg-[#1f5fd6] px-4 py-2 text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:bg-[#9fb7ea]"
                 >
                   Create and Add
                 </button>
@@ -429,14 +469,31 @@ export function ItemsSection({
             </label>
             <button
               type="button"
-              onClick={onExpandSystem}
+              onClick={onPreviewSystem}
               disabled={!selectedSystemId || getNumericValue(systemSquareFootage) <= 0}
               className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-[#23395d] px-4 text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:bg-[#a9b6c8]"
             >
+              <Search className="h-4 w-4" />
+              <span>{isPreviewPending ? "Previewing..." : "Preview System"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={onExpandSystem}
+              disabled={!systemPreview || isPreviewPending}
+              className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-[#1f5fd6] px-4 text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:bg-[#9fb7ea]"
+            >
               <Plus className="h-4 w-4" />
-              <span>Add System by Sqft</span>
+              <span>Add Preview to Estimate</span>
             </button>
           </div>
+          <div className="mt-3 text-[13px] leading-5 text-[#6b7c96]">
+            Choose a catalog system, enter sqft, then preview. The preview comes from the server and uses the same expansion logic as estimate persistence.
+          </div>
+          {systemPreviewMessage ? (
+            <div className="mt-3 rounded-[8px] border border-[#d7deea] bg-white px-3 py-2 text-[13px] text-[#48617f]">
+              {systemPreviewMessage}
+            </div>
+          ) : null}
           {systemPreview ? (
             <div className="mt-4 rounded-[10px] border border-[#d7deea] bg-white">
               <div className="grid gap-3 border-b border-[#e6e9ef] px-3 py-3 text-[12px] text-[#607492] sm:grid-cols-4">
@@ -578,7 +635,7 @@ export function ItemsSection({
       </div>
 
       <div className="border-b border-[#e6e9ef] bg-[#fbfcfe] px-4 py-3 text-[12px] leading-6 text-[#7c8ba3]">
-        `estimate_line_items` stays authoritative for pricing rows, but every saved row now comes from active inventory or system expansion. New estimate-only manual rows are intentionally disabled.
+        Pricing is a locked commercial snapshot from inventory or server-expanded systems. Only quantity, grouping, and assignment remain editable in this workspace.
       </div>
 
       <div className="min-h-[720px] bg-[#f8f9fc] p-4">
@@ -632,16 +689,16 @@ export function ItemsSection({
                       <th className="w-[140px] px-2 py-3 text-left">Group</th>
                       <th className="w-[84px] px-2 py-3 text-right">Qty</th>
                       <th className="w-[88px] px-2 py-3 text-left">Unit</th>
-                      <th className="w-[120px] px-2 py-3 text-right">Cost</th>
+                      <th className="w-[120px] px-2 py-3 text-right">Snapshot Cost</th>
                       {showMarkup ? (
-                        <th className="w-[86px] px-2 py-3 text-right">MU%</th>
+                        <th className="w-[96px] px-2 py-3 text-right">Snapshot MU%</th>
                       ) : null}
-                      <th className="w-[86px] px-2 py-3 text-right">Hidden%</th>
-                      <th className="w-[120px] px-2 py-3 text-right">
-                        {showMarkup ? "Sell Price" : "Price"}
+                      <th className="w-[96px] px-2 py-3 text-right">Hidden%</th>
+                      <th className="w-[136px] px-2 py-3 text-right">
+                        {showMarkup ? "Locked Sell Price" : "Locked Price"}
                       </th>
                       <th className="w-[120px] px-2 py-3 text-right">Total</th>
-                      <th className="w-[60px] px-2 py-3 text-center">Tax</th>
+                      <th className="w-[72px] px-2 py-3 text-center">Tax</th>
                       <th className="w-[118px] px-2 py-3 text-left">Assigned To</th>
                     </tr>
                   </thead>
@@ -655,23 +712,31 @@ export function ItemsSection({
                         ].join(" ")}
                       >
                         <td className="px-2 py-3 text-[#a5b1c4]">
-                          <div className="flex flex-col items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => onMoveLineItem(lineItem.rowKey, -1)}
-                              className="text-[#7e8ca3]"
-                            >
-                              <ArrowUp className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onMoveLineItem(lineItem.rowKey, 1)}
-                              className="text-[#7e8ca3]"
-                            >
-                              <ArrowDown className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => onMoveLineItem(lineItem.rowKey, -1)}
+                  className="text-[#7e8ca3]"
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onMoveLineItem(lineItem.rowKey, 1)}
+                  className="text-[#7e8ca3]"
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onRemoveLineItem(lineItem.rowKey)}
+                  className="text-rose-700"
+                  title="Remove item"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </td>
                         <td className="px-2 py-3">
                           <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#e8f0ff] text-[#2f66d7]">
                             <Package className="h-4 w-4" />
@@ -682,22 +747,16 @@ export function ItemsSection({
                         </td>
                         <td className="px-2 py-2">
                           <div className="flex flex-col gap-1">
-                            <input
-                              value={lineItem.name}
-                              onChange={(event) =>
-                                onLineItemChange(lineItem.rowKey, "name", event.target.value)
-                              }
-                              placeholder="Item name"
-                              className="h-8 border-0 bg-transparent px-0 text-[15px] font-medium text-[#334a70] outline-none placeholder:text-[#a9b5c8]"
-                            />
-                            <input
-                              value={lineItem.description}
-                              onChange={(event) =>
-                                onLineItemChange(lineItem.rowKey, "description", event.target.value)
-                              }
-                              placeholder="Description"
-                              className="h-7 border-0 bg-transparent px-0 text-[12px] text-[#8694ab] outline-none placeholder:text-[#b6bfce]"
-                            />
+                            <div className="min-h-8 px-0 text-[15px] font-medium text-[#334a70]">
+                              {lineItem.name}
+                            </div>
+                            <div className="min-h-7 px-0 text-[12px] text-[#8694ab]">
+                              {lineItem.description || "Catalog snapshot"}
+                            </div>
+                            <div className="inline-flex w-fit items-center gap-1 rounded-full bg-[#eef3fb] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
+                              <Lock className="h-3 w-3" />
+                              <span>Locked Snapshot</span>
+                            </div>
                           </div>
                         </td>
                         <td className="px-2 py-3">
@@ -722,77 +781,54 @@ export function ItemsSection({
                             onChange={(event) =>
                               onLineItemChange(lineItem.rowKey, "quantity", event.target.value)
                             }
-                            className="w-full border-0 bg-transparent px-0 text-right text-[15px] text-[#334a70] outline-none"
+                            className="h-9 w-full rounded-[6px] border border-[#d7deea] bg-white px-2 text-right text-[15px] text-[#334a70] outline-none"
                           />
                         </td>
                         <td className="px-2 py-3">
-                          <input
-                            value={lineItem.unit}
-                            onChange={(event) =>
-                              onLineItemChange(lineItem.rowKey, "unit", event.target.value)
-                            }
-                            className="w-full border-0 bg-transparent px-0 text-[15px] text-[#6f8098] outline-none"
-                          />
+                          <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2 text-[15px] text-[#6f8098]">
+                            {lineItem.unit}
+                          </div>
                         </td>
                         <td className="px-2 py-3">
-                          <input
-                            value={lineItem.baseUnitCost}
-                            onChange={(event) =>
-                              onLineItemChange(lineItem.rowKey, "baseUnitCost", event.target.value)
-                            }
-                            className="w-full border-0 bg-transparent px-0 text-right text-[15px] text-[#334a70] outline-none"
-                          />
+                          <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2 text-right text-[15px] text-[#334a70]">
+                            {lineItem.baseUnitCost}
+                          </div>
                         </td>
                         {showMarkup ? (
                           <td className="px-2 py-3">
-                            <input
-                              value={lineItem.markupPercent}
-                              onChange={(event) =>
-                                onLineItemChange(
-                                  lineItem.rowKey,
-                                  "markupPercent",
-                                  event.target.value
-                                )
-                              }
-                              className="w-full border-0 bg-transparent px-0 text-right text-[15px] text-[#334a70] outline-none"
-                            />
+                            <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2 text-right text-[15px] text-[#334a70]">
+                              {lineItem.markupPercent}%
+                            </div>
                           </td>
                         ) : null}
                         <td className="px-2 py-3 text-right">
-                          <div className="text-[15px] text-[#8694ab]">
+                          <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2 text-[15px] text-[#8694ab]">
                             {lineItem.hiddenMarkupPercent}%
-                          </div>
-                          <div className="mt-1 text-[11px] text-[#a2aec0]">
-                            +${getNumericValue(lineItem.hiddenMarkupAmount).toFixed(2)}
+                            <div className="mt-1 text-[11px] text-[#a2aec0]">
+                              +${getNumericValue(lineItem.hiddenMarkupAmount).toFixed(2)}
+                            </div>
                           </div>
                         </td>
                         <td className="px-2 py-3 text-right">
-                          <div className="text-[15px] text-[#334a70]">
-                            ${getNumericValue(lineItem.baseUnitPrice).toFixed(2)}
-                          </div>
-                          <div className="mt-1 text-[12px] text-[#8694ab]">
-                            Pre-hidden ${getNumericValue(lineItem.unitPriceBeforeHiddenMarkup).toFixed(2)}
-                          </div>
-                          <div className="mt-1 text-[12px] font-medium text-[#334a70]">
-                            {lineItem.unitPrice}
+                          <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2">
+                            <div className="text-[15px] text-[#334a70]">
+                              ${getNumericValue(lineItem.baseUnitPrice).toFixed(2)}
+                            </div>
+                            <div className="mt-1 text-[12px] text-[#8694ab]">
+                              Pre-hidden ${getNumericValue(lineItem.unitPriceBeforeHiddenMarkup).toFixed(2)}
+                            </div>
+                            <div className="mt-1 text-[12px] font-medium text-[#334a70]">
+                              {lineItem.unitPrice}
+                            </div>
                           </div>
                         </td>
                         <td className="px-2 py-3 text-right text-[15px] font-semibold text-[#334a70]">
                           {lineItem.lineTotal}
                         </td>
                         <td className="px-2 py-3 text-center">
-                          <input
-                            type="checkbox"
-                            checked={lineItem.taxCode === "taxable"}
-                            onChange={(event) =>
-                              onLineItemChange(
-                                lineItem.rowKey,
-                                "taxCode",
-                                event.target.checked ? "taxable" : "non-taxable"
-                              )
-                            }
-                            className="h-4 w-4 rounded-[3px] border-[#a9b5c8] text-[#28456f]"
-                          />
+                          <span className="inline-flex rounded-full bg-[#eef3fb] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
+                            {lineItem.taxCode === "taxable" ? "Tax" : "Exempt"}
+                          </span>
                         </td>
                         <td className="px-2 py-3 text-[#8694ab]">
                           <div className="flex items-center gap-2">
@@ -809,17 +845,9 @@ export function ItemsSection({
                                 )
                               }
                               placeholder="Assign"
-                              className="w-full border-0 bg-transparent px-0 text-[14px] text-[#6f8098] outline-none placeholder:text-[#a9b5c8]"
+                              className="h-9 w-full rounded-[6px] border border-[#d7deea] bg-white px-2 text-[14px] text-[#6f8098] outline-none placeholder:text-[#a9b5c8]"
                             />
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => onRemoveLineItem(lineItem.rowKey)}
-                            className="mt-2 inline-flex items-center gap-1 text-[12px] font-medium text-rose-700"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            <span>Remove</span>
-                          </button>
                         </td>
                       </tr>
                     ))}

@@ -67,7 +67,10 @@ type ScheduleOfValueItemRow = {
   id: string;
   company_id: string;
   schedule_of_values_id: string;
-  source_estimate_line_item_id: string;
+  lineage_type: "estimate_snapshot_item" | "change_order_snapshot_item";
+  source_estimate_snapshot_item_id: string | null;
+  source_estimate_line_item_id: string | null;
+  change_order_snapshot_item_id: string | null;
   name: string;
   description: string | null;
   scheduled_value_amount: string | number;
@@ -106,6 +109,46 @@ type ProgressInvoiceLineItemRow = {
   invoice_id: string;
   schedule_of_value_item_id: string | null;
   line_total: string | number;
+};
+
+type SourceEstimateSnapshotItemRow = {
+  id: string;
+  estimate_line_item_id: string;
+  catalog_item_id: string | null;
+  name: string;
+  description: string | null;
+  quantity: string | number;
+  unit: string;
+  taxable: boolean;
+  base_unit_cost: string | number;
+  base_unit_price: string | number | null;
+  markup_percent: string | number;
+  hidden_markup_percent: string | number;
+  unit_price_before_hidden_markup: string | number;
+  visible_markup_amount: string | number;
+  hidden_markup_amount: string | number;
+  unit_price: string | number;
+  cost_code: string | null;
+};
+
+type SourceChangeOrderSnapshotItemRow = {
+  id: string;
+  catalog_item_id: string | null;
+  tax_code_id: string | null;
+  name: string;
+  description: string | null;
+  quantity: string | number;
+  unit: string;
+  taxable: boolean;
+  base_unit_cost: string | number;
+  base_unit_price: string | number | null;
+  markup_percent: string | number;
+  hidden_markup_percent: string | number;
+  unit_price_before_hidden_markup: string | number;
+  visible_markup_amount: string | number;
+  hidden_markup_amount: string | number;
+  unit_price: string | number;
+  cost_code: string | null;
 };
 
 type ProgressBillingItemView = {
@@ -204,6 +247,102 @@ function formatMoney(value: number) {
 
 function formatPercent(value: number) {
   return Number(value.toFixed(2)).toFixed(2);
+}
+
+async function loadSourceEstimateSnapshotItems(
+  organizationId: string,
+  snapshotItemIds: string[]
+) {
+  if (snapshotItemIds.length === 0) {
+    return new Map<string, SourceEstimateSnapshotItemRow>();
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("estimate_commercial_snapshot_items")
+    .select(
+      `
+        id,
+        estimate_line_item_id,
+        catalog_item_id,
+        name,
+        description,
+        quantity,
+        unit,
+        taxable,
+        base_unit_cost,
+        base_unit_price,
+        markup_percent,
+        hidden_markup_percent,
+        unit_price_before_hidden_markup,
+        visible_markup_amount,
+        hidden_markup_amount,
+        unit_price,
+        cost_code
+      `
+    )
+    .eq("company_id", organizationId)
+    .in("id", snapshotItemIds);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load source estimate snapshot items for progress billing: ${response.error.message}`
+    );
+  }
+
+  const rows = Array.isArray(response.data)
+    ? (response.data as SourceEstimateSnapshotItemRow[])
+    : [];
+
+  return new Map(rows.map((row) => [row.id, row] as const));
+}
+
+async function loadSourceChangeOrderSnapshotItems(
+  organizationId: string,
+  snapshotItemIds: string[]
+) {
+  if (snapshotItemIds.length === 0) {
+    return new Map<string, SourceChangeOrderSnapshotItemRow>();
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("change_order_commercial_snapshot_items")
+    .select(
+      `
+        id,
+        catalog_item_id,
+        tax_code_id,
+        name,
+        description,
+        quantity,
+        unit,
+        taxable,
+        base_unit_cost,
+        base_unit_price,
+        markup_percent,
+        hidden_markup_percent,
+        unit_price_before_hidden_markup,
+        visible_markup_amount,
+        hidden_markup_amount,
+        unit_price,
+        cost_code
+      `
+    )
+    .eq("company_id", organizationId)
+    .in("id", snapshotItemIds);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load change-order snapshot items for progress billing: ${response.error.message}`
+    );
+  }
+
+  const rows = Array.isArray(response.data)
+    ? (response.data as SourceChangeOrderSnapshotItemRow[])
+    : [];
+
+  return new Map(rows.map((row) => [row.id, row] as const));
 }
 
 function buildRedirect(pathname: string, params: Record<string, string | undefined>) {
@@ -316,7 +455,10 @@ async function loadScheduleOfValueItemRows(
         id,
         company_id,
         schedule_of_values_id,
+        lineage_type,
+        source_estimate_snapshot_item_id,
         source_estimate_line_item_id,
+        change_order_snapshot_item_id,
         name,
         description,
         scheduled_value_amount,
@@ -681,6 +823,13 @@ export async function buildProgressBillingInvoice(
     workflowRole: "standard"
   });
 
+  const scheduleOfValueRows = await loadScheduleOfValueItemRows(scope.organizationId, [
+    workspace.id
+  ]);
+  const scheduleOfValueRowsById = new Map(
+    scheduleOfValueRows.map((row) => [row.id, row] as const)
+  );
+
   const itemPercentById = new Map(input.items.map((item) => [item.id, item.percentComplete]));
   const nextItemRows = workspace.items.map((item) => {
     const rawPercentComplete = itemPercentById.get(item.id) ?? item.percentComplete;
@@ -812,35 +961,169 @@ export async function buildProgressBillingInvoice(
     invoiceId = insertResponse.data.id as string;
   }
 
+  const sourceEstimateSnapshotItemsById = await loadSourceEstimateSnapshotItems(
+    scope.organizationId,
+    billableItems.map((item) => {
+      const sourceItem = scheduleOfValueRowsById.get(item.id);
+      return sourceItem?.lineage_type === "estimate_snapshot_item"
+        ? sourceItem.source_estimate_snapshot_item_id ?? ""
+        : "";
+    }).filter(Boolean)
+  );
+  const sourceChangeOrderSnapshotItemsById = await loadSourceChangeOrderSnapshotItems(
+    scope.organizationId,
+    billableItems.map((item) => {
+      const sourceItem = scheduleOfValueRowsById.get(item.id);
+      return sourceItem?.lineage_type === "change_order_snapshot_item"
+        ? sourceItem.change_order_snapshot_item_id ?? ""
+        : "";
+    }).filter(Boolean)
+  );
+
   await replaceCanonicalInvoiceLineItems(
     scope.organizationId,
     scope.userId,
     invoiceId,
-    billableItems.map((item) => ({
-      scheduleOfValueItemId: item.id,
-      catalogItemId: null,
-      name: item.name,
-      description:
-        [
-          item.description,
-          `Progress billing to ${item.percentComplete}% complete.`,
-          `Previously billed ${item.previousBilledAmount}.`,
-          `Current billing ${item.currentToBillAmount}.`
-        ]
-          .filter(Boolean)
-          .join(" "),
-      quantity: "1.00",
-      unit: "billing draw",
-      unitPrice: item.currentToBillAmount,
-      taxable: true,
-      baseUnitCost: "0.00",
-      baseUnitPrice: null,
-      markupPercent: "0.00",
-      hiddenMarkupPercent: "0.00",
-      unitPriceBeforeHiddenMarkup: item.currentToBillAmount,
-      visibleMarkupAmount: "0.00",
-      hiddenMarkupAmount: "0.00"
-    }))
+    billableItems.map((item) => {
+      const sourceSovItem = scheduleOfValueRowsById.get(item.id);
+      if (!sourceSovItem) {
+        throw new Error("Progress billing source row is missing.");
+      }
+
+      const currentToBillAmount = parseMoney(item.currentToBillAmount);
+
+      if (sourceSovItem.lineage_type === "estimate_snapshot_item") {
+        const sourceEstimateSnapshotItem = sourceSovItem.source_estimate_snapshot_item_id
+          ? sourceEstimateSnapshotItemsById.get(sourceSovItem.source_estimate_snapshot_item_id)
+          : null;
+
+        if (!sourceEstimateSnapshotItem) {
+          throw new Error("Progress billing requires source estimate snapshot lineage.");
+        }
+
+        const sourceUnitPrice = parseMoney(sourceEstimateSnapshotItem.unit_price);
+
+        if (sourceUnitPrice <= 0 && currentToBillAmount > 0) {
+          throw new Error(
+            `${item.name} cannot create a progress billing line because the source unit price is zero.`
+          );
+        }
+
+        const billedQuantity =
+          sourceUnitPrice > 0 ? Number((currentToBillAmount / sourceUnitPrice).toFixed(2)) : 0;
+
+        return {
+          estimateLineItemId: sourceEstimateSnapshotItem.estimate_line_item_id,
+          lineageType: "sov_item",
+          estimateSnapshotItemId: null,
+          scheduleOfValueItemId: item.id,
+          changeOrderSnapshotItemId: null,
+          invoiceOnlyAdjustmentKind: null,
+          catalogItemId: sourceEstimateSnapshotItem.catalog_item_id,
+          taxCodeId: null,
+          name: sourceEstimateSnapshotItem.name,
+          description:
+            [
+              sourceEstimateSnapshotItem.description,
+              `Progress billing to ${item.percentComplete}% complete.`,
+              `Previously billed ${item.previousBilledAmount}.`,
+              `Current billing ${item.currentToBillAmount}.`
+            ]
+              .filter(Boolean)
+              .join(" "),
+          quantity: billedQuantity.toFixed(2),
+          unit: sourceEstimateSnapshotItem.unit,
+          unitPrice: Number(sourceEstimateSnapshotItem.unit_price).toFixed(2),
+          taxable: sourceEstimateSnapshotItem.taxable,
+          baseUnitCost: Number(sourceEstimateSnapshotItem.base_unit_cost).toFixed(2),
+          baseUnitPrice:
+            sourceEstimateSnapshotItem.base_unit_price == null
+              ? null
+              : Number(sourceEstimateSnapshotItem.base_unit_price).toFixed(2),
+          markupPercent: Number(sourceEstimateSnapshotItem.markup_percent).toFixed(2),
+          hiddenMarkupPercent: Number(
+            sourceEstimateSnapshotItem.hidden_markup_percent
+          ).toFixed(2),
+          unitPriceBeforeHiddenMarkup: Number(
+            sourceEstimateSnapshotItem.unit_price_before_hidden_markup
+          ).toFixed(2),
+          visibleMarkupAmount: Number(
+            sourceEstimateSnapshotItem.visible_markup_amount
+          ).toFixed(2),
+          hiddenMarkupAmount: Number(
+            sourceEstimateSnapshotItem.hidden_markup_amount
+          ).toFixed(2),
+          costCode: sourceEstimateSnapshotItem.cost_code
+        };
+      }
+
+      if (sourceSovItem.lineage_type === "change_order_snapshot_item") {
+        const sourceChangeOrderSnapshotItem = sourceSovItem.change_order_snapshot_item_id
+          ? sourceChangeOrderSnapshotItemsById.get(sourceSovItem.change_order_snapshot_item_id)
+          : null;
+
+        if (!sourceChangeOrderSnapshotItem) {
+          throw new Error("Progress billing requires source change-order snapshot lineage.");
+        }
+
+        const sourceUnitPrice = parseMoney(sourceChangeOrderSnapshotItem.unit_price);
+
+        if (sourceUnitPrice <= 0 && currentToBillAmount > 0) {
+          throw new Error(
+            `${item.name} cannot create a progress billing line because the source unit price is zero.`
+          );
+        }
+
+        const billedQuantity =
+          sourceUnitPrice > 0 ? Number((currentToBillAmount / sourceUnitPrice).toFixed(2)) : 0;
+
+        return {
+          estimateLineItemId: null,
+          lineageType: "sov_item",
+          estimateSnapshotItemId: null,
+          scheduleOfValueItemId: item.id,
+          changeOrderSnapshotItemId: null,
+          invoiceOnlyAdjustmentKind: null,
+          catalogItemId: sourceChangeOrderSnapshotItem.catalog_item_id,
+          taxCodeId: sourceChangeOrderSnapshotItem.tax_code_id,
+          name: sourceChangeOrderSnapshotItem.name,
+          description:
+            [
+              sourceChangeOrderSnapshotItem.description,
+              `Progress billing to ${item.percentComplete}% complete.`,
+              `Previously billed ${item.previousBilledAmount}.`,
+              `Current billing ${item.currentToBillAmount}.`
+            ]
+              .filter(Boolean)
+              .join(" "),
+          quantity: billedQuantity.toFixed(2),
+          unit: sourceChangeOrderSnapshotItem.unit,
+          unitPrice: Number(sourceChangeOrderSnapshotItem.unit_price).toFixed(2),
+          taxable: sourceChangeOrderSnapshotItem.taxable,
+          baseUnitCost: Number(sourceChangeOrderSnapshotItem.base_unit_cost).toFixed(2),
+          baseUnitPrice:
+            sourceChangeOrderSnapshotItem.base_unit_price == null
+              ? null
+              : Number(sourceChangeOrderSnapshotItem.base_unit_price).toFixed(2),
+          markupPercent: Number(sourceChangeOrderSnapshotItem.markup_percent).toFixed(2),
+          hiddenMarkupPercent: Number(
+            sourceChangeOrderSnapshotItem.hidden_markup_percent
+          ).toFixed(2),
+          unitPriceBeforeHiddenMarkup: Number(
+            sourceChangeOrderSnapshotItem.unit_price_before_hidden_markup
+          ).toFixed(2),
+          visibleMarkupAmount: Number(
+            sourceChangeOrderSnapshotItem.visible_markup_amount
+          ).toFixed(2),
+          hiddenMarkupAmount: Number(
+            sourceChangeOrderSnapshotItem.hidden_markup_amount
+          ).toFixed(2),
+          costCode: sourceChangeOrderSnapshotItem.cost_code
+        };
+      }
+
+      throw new Error("Progress billing requires explicit SOV lineage.");
+    })
   );
 
   return {

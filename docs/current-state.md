@@ -11,6 +11,10 @@ Use these docs together:
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow direction
 - [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
+- [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md): mandatory UI and module implementation rules
+
+All future UI and module work must follow `docs/floorconnector-ui-build-rules.md` before implementation.
+That includes all future module workspace standardization work, which should align to the shared `StandardWorkspaceLayout` and the documented workspace/sidebar rules there.
 
 If this document conflicts with a planning, target-design, or historical document, trust this document for implemented status.
 
@@ -66,6 +70,12 @@ Current shared canonical model includes:
 - contracts
 - invoices
 - invoice line items
+- estimate customer events
+- notification events
+- notifications
+- notification deliveries
+- communication threads
+- communication messages
 - payments
 
 ## Authentication
@@ -142,10 +152,10 @@ Current shell behavior:
   - rendered in the shared contractor shell footer instead of the top header
 - tenant-safe search across canonical opportunities, customers, projects, appointments, estimates, contracts, invoices, jobs, punchlist items, payments, people, and vendors
   - grouped result sets that route straight into the existing record workspaces or linked invoice workspace for payment activity
-- a first real contractor-side in-app notifications / action-awareness layer now exists in the shared shell and dashboard:
-  - derived from canonical jobs, invoices, contracts, appointments, punchlists, and progress-billing workspaces
-  - intentionally lightweight and in-app only
-  - routes into real downstream workspaces instead of introducing stored notification records or a second workflow engine
+- a first real contractor-side notifications layer now exists in the shared shell and dashboard:
+  - derived from canonical jobs, invoices, contracts, appointments, punchlists, progress billing, estimate customer activity, and communication activity
+  - backed by stored `notification_events`, per-user `notifications`, and channel-aware `notification_deliveries`
+  - routes into real downstream workspaces instead of introducing duplicate business records
 - shared detail-page/workspace pattern is now implemented across the main contractor record pages:
   - project detail is the reference workflow and readiness hub
   - estimate, contract, invoice, and job detail now broadly follow the same shared page language and point back to the project hub when broader handoff state matters
@@ -197,6 +207,7 @@ Current contractor UI design notes:
 
 Current protected routes include:
 - `/dashboard`
+- `/financials`
 - `/leads`
 - `/customers`
 - `/projects`
@@ -216,6 +227,26 @@ Current protected routes include:
 - `/time`
 - `/materials`
 - `/settings`
+
+### Module Home Standard
+
+Implemented now:
+- major sections can introduce a canonical Module Home route that acts as the control-panel entry point for the domain without creating a second app shell
+- `/financials` is now the implemented Financials Home route
+- Financials Home is intentionally summary-first and routing-first:
+  - overdue invoices
+  - recent payments
+  - open receivables
+  - quick links into invoices, payments, and adjacent financial workspaces
+- the route reuses the existing canonical invoice and payment data loaders and does not introduce a new finance data model
+
+Defined but still foundation-only:
+- `/financials/accounts-receivable` exists as a purpose-defined placeholder for future collections, follow-up, aging, and receivable management work
+- `/financials/accounts-payable` exists as a purpose-defined placeholder for future vendor-bill and outgoing-payment workflows
+- AR and AP are structure/spec routes only in this pass:
+  - no new schema
+  - no new aging engine
+  - no payable-side ledger or reporting engine
 
 Additional protected surfaces beyond the contractor app:
 - `/portal` now has a real customer-facing shell and project-centered workspace foundation on top of canonical customer-anchored access control, with branded header navigation returning to `/portal`
@@ -344,9 +375,11 @@ Implemented:
 - contractor-side quick-create overlay that captures minimum required fields before routing into the full workspace
 - contractor-side change-order detail/workspace page for draft editing, send-for-review, and review-state visibility
 - customer-facing portal review page for viewing, approving, and rejecting sent change orders
+- immutable approved change-order commercial snapshot creation on approval
+- append into schedule-of-values or invoice workflows from approved change-order snapshot lineage
 - portal-view audit foundation on the shared `portal_record_views` model using `change_order` as a canonical subject type
 - project, invoice, and portal-project continuity sections now surface linked change orders on the same shared workflow chain
-- approved positive change orders linked to an invoice now create a real canonical invoice line item on that invoice
+- approved change-order snapshots can now create canonical invoice line items or append into canonical SOV rows on the same billing chain
 
 Change order statuses currently implemented:
 - `draft`
@@ -366,9 +399,8 @@ Current change-order design notes:
 - change orders extend the existing project, contract, and invoice chain instead of creating a separate scope-change subsystem
 - contractor-side quick create captures only the minimum project, title, price-adjustment, and optional linked-record context before handing off to the full change-order workspace
 - customer approval and rejection now happen against the same canonical change-order record through the scoped portal surface
-- this first version keeps financial impact intentionally narrow:
-  - approved positive change orders linked to an invoice can create one canonical invoice line item
-  - negative adjustments, richer credit logic, and broader accounting reconciliation are not implemented yet
+- approved change orders create immutable downstream billing lineage instead of mutating prior approved estimate scope
+- approved change-order snapshots are append-only and can extend SOV or invoice workflows from the same canonical record chain
 - this first version keeps project impact intentionally continuity-based:
   - approved change orders are surfaced through project continuity and downstream billing context
   - deeper schedule, production, and messaging propagation is not implemented yet
@@ -663,6 +695,11 @@ Implemented:
 - dedicated estimate edit page
 - status transition actions
 - estimate detail now surfaces project-level readiness context and a clearer preferred next action instead of implying older parallel downstream shortcuts
+- contractor-side customer send flow for estimates
+- customer-facing portal estimate review and approval or rejection
+- immutable approved estimate commercial snapshot creation on approval
+- canonical `estimate_customer_events` audit trail for send, view, comment, approval, and rejection activity
+- estimate email tracking for sent, opened, clicked, and viewed states tied to portal review links
 
 Estimate statuses currently implemented:
 - `draft`
@@ -677,6 +714,8 @@ Quick reference:
 - `catalog_items` is the source for reusable estimate items
 - `catalog_system_components` drives reusable systems on top of `catalog_items`
 - `estimate_line_items` is the only authoritative pricing truth; `estimates.content.itemRows` is legacy-only
+- approved estimates create immutable commercial snapshots for downstream contract, SOV, and invoice lineage
+- customer approval is canonical portal behavior, not a contractor-side override path
 - systems expand by sqft using shared logic before becoming canonical estimate line items
 - defaults apply only on initial load when estimate content is effectively empty
 - autosave validates before persisting and includes conflict protection against stale overwrites
@@ -691,7 +730,7 @@ Implemented:
 - add/edit/remove line items
 - database-calculated subtotal and total logic
 - tax and discount support
-- approved-estimate-triggered schedule-of-values seeding foundation
+- approved-estimate-triggered commercial snapshot and schedule-of-values seeding foundation
 
 Estimate totals are currently derived from:
 - line item totals
@@ -735,7 +774,7 @@ Jobs currently link to:
 Current job design notes:
 - scheduling now extends the canonical job record instead of creating a second dispatch model
 - crew assignment now extends the same job through `job_assignments` so time, daily logs, and downstream records can continue pointing at one execution record
-- this is intentionally a first scheduling pass only; there is still no calendar board, route optimization, notification engine, or broader dispatch automation
+- this is intentionally a first scheduling pass only; there is still no route optimization or broader dispatch automation
 
 ### Invoices
 
@@ -753,6 +792,8 @@ Implemented:
 - reporting-ready taxable/exempt/tax-collected foundations
 - shared template reference foundation
 - canonical invoice workflow roles for standard billing and upstream deposit-readiness requests
+- snapshot-based invoice source system with explicit lineage per invoice line
+- invoice creation from approved estimate snapshots, selected SOV rows, approved change-order snapshot rows, or invoice-only adjustments
 
 Invoice statuses currently implemented:
 - `draft`
@@ -775,6 +816,8 @@ Current invoice design notes:
 - deposit requests stay on the same canonical invoice and payment chain rather than becoming a separate deposit model
 - standard invoices without downstream job context are now blocked until the project completes contract, signature, and deposit or financing readiness through the commercial handoff
 - invoice tax, exemption, and retainage values are snapshotted on the invoice so later customer/org setting changes do not break reporting history
+- downstream invoice rows now use one explicit lineage path only: approved estimate snapshot item, selected SOV item, approved change-order snapshot item, or invoice-only adjustment
+- downstream billing must not read directly from `estimate_line_items`; those rows remain estimate authoring state only
 - contractor-side invoice manager quick create now captures only the minimum project and workflow-role context, creates the canonical draft invoice, and routes into the full invoice workspace for complete editing
 - contractor-side project, customer, lead, contract, and daily-log managers now also use quick create overlays that capture only minimum required fields before handing off to the full record workspace
 - invoice overview now follows the early module-dashboard direction: summary, actionable queues, and continuity back into the shared project and billing chain
@@ -841,6 +884,7 @@ Implemented:
 - invoice line item schema
 - add/edit/remove line item UI inside invoice create and detail flows
 - database-calculated invoice subtotal and total logic
+- explicit `lineage_type` support for `estimate_snapshot_item`, `sov_item`, `change_order_snapshot_item`, and `invoice_only_adjustment`
 
 Invoice totals are currently derived from:
 - line item totals
@@ -913,19 +957,44 @@ Implemented:
 - customer-level tax exemption and exemption metadata
 - customer-level retainage default
 - invoice tax reporting view foundation for taxable sales, exempt sales, tax collected, and reporting-period grouping
-- schedule-of-values foundation derived from approved estimate line items
+- schedule-of-values foundation derived from approved estimate commercial snapshots
 - contractor-side progress-billing manager and workspace on top of canonical schedule-of-values records
 - contractor-side percent-complete review of schedule-of-values items with derived previously billed, current billing, retainage-held, and balance-to-finish math
 - canonical progress invoice draft creation and update from real schedule-of-values item state, with invoice line items now optionally linked back to their canonical schedule-of-values rows
+- `schedule_of_value_items` lineage support for `estimate_snapshot_item` and `change_order_snapshot_item`
+- append-only change-order commercial snapshots that can extend SOV and invoice billing without mutating prior approved scope
 - project and invoice continuity links back into the same progress-billing workspace so approved scope, billing review, and invoice continuity stay connected
+- Financials Home at `/financials` now serves as the section control panel for cross-project billing visibility without replacing the invoice, payment, or progress-billing managers
+- Accounts Receivable and Accounts Payable route definitions now exist as module-home placeholders only
 
 Current design notes:
 - external tax providers are not integrated yet, but the organization financial settings model includes extension points for them
 - estimate tax is now derived from organization defaults, customer tax-exempt state, and line-item taxable flags; there is no manual estimate tax override path
-- schedule-of-values records stay linked to approved estimate items instead of creating disconnected AIA-only source data
+- estimate and invoice commercial pricing is now server-owned:
+  - `catalog_items` is the enforced pricing source of truth
+  - stored estimate and invoice line items act as immutable commercial snapshots
+  - browser-sent pricing, hidden markup, taxability, and cost code inputs are rejected on save
+- approved estimate snapshots are now the canonical downstream financial source for contracts, SOV, and direct estimate-based invoicing
+- schedule-of-values records stay linked to approved estimate or approved change-order snapshot items instead of creating disconnected AIA-only source data
 - progress billing now uses the existing SOV layer as the contractor-side billing workspace instead of a disconnected pay-app model
 - canonical invoices remain the financial source of truth; progress billing prepares or updates those invoices rather than replacing them
+- approved change orders append new immutable snapshot lineage; they do not rewrite the approved estimate snapshot or previously billed rows
 - percent complete, prior billed, current billed, retainage held, and retainage release still leave room for deeper pay-application and AIA export workflows later
+
+### Notifications And Communications
+
+Implemented:
+- immutable `notification_events` stream for cross-module workflow activity
+- per-user `notifications` records for in-app unread and read state
+- channel-aware `notification_deliveries` ledger for in-app and email delivery tracking, with future SMS support reserved in the same model
+- canonical `communication_threads` attached to shared customer, project, and subject records
+- immutable `communication_messages` inside canonical threads
+
+Current design notes:
+- notifications are now implemented as stored canonical workflow signals rather than ephemeral shell-only state
+- notification deliveries track sent, delivered, opened, clicked, and failed channel outcomes without creating duplicate estimate, invoice, or change-order records
+- communication threads stay attached to the same canonical customer/project chain instead of creating module-specific inboxes
+- communication messages are immutable and extend shared workflow continuity rather than replacing estimate, contract, invoice, or change-order records
 
 ### Shared Templates
 
@@ -946,9 +1015,13 @@ Current design notes:
 Implemented:
 - platform-scoped starter catalog item seeds for materials, labor, services, equipment, and systems
 - organization-scoped reusable catalog item records
+- catalog items now act as the canonical cost item master for commercial pricing and optional inventory tracking
+- Cost Items Database now exists as a first-class contractor module with routes for dashboard, items, systems, inventory, and settings
 - contractor-side adoption of platform starter items into organization-owned copies
 - organization-side editing, defaulting, and archiving of reusable catalog items
 - reusable catalog item commercial fields for cost, price, taxable flag, vendor, category, and item status
+- optional linked inventory tracking on catalog items through `inventory_items`
+- linked inventory tracking now exposes quantity on hand, reorder point, default location, manual adjustments, and recent transaction history from the same cost item workflow
 - canonical `catalog_system_components` foundation for system / assembly rows attached to `catalog_items`
 - estimate line items can now source directly from shared catalog items and sqft-expanded systems
 - organization-scoped reusable `estimate_content_blocks` foundation for scope, inclusion, exclusion, and terms snippets
@@ -956,7 +1029,12 @@ Implemented:
 Current design notes:
 - organizations do not depend on one mutable global starter item after adoption
 - reusable items stay on the same canonical foundation instead of spawning module-specific catalog silos
-- `catalog_items` is the shared commercial master across estimating and downstream reuse; there is no second item model
+- `catalog_items` is the shared commercial and item-master foundation; there is no second cost item model
+- inventory is now an optional operational extension of the same catalog item instead of a separate primary inventory workflow
+- inventory availability is now controlled through the shared platform / organization feature policy key `inventory_enabled`
+- linked inventory rows currently use the default location in the contractor UI, while the schema allows additional locations later without splitting the item master
+- item-level tax UX is intentionally simplified to a taxable on or off checkbox, with tax rates remaining in organization and platform financial settings and optional `tax_code_id` retained as advanced infrastructure
+- estimate and invoice pricing still snapshot from `catalog_items`; inventory quantity is operational context only and does not drive pricing
 - `system` remains the canonical reusable assembly concept, with component rows designed to scale immediately by sqft in estimates
 - current catalog management is still foundation-first, but estimate sourcing now runs on the same shared catalog and line-item chain instead of a parallel item-row payload
 
@@ -1036,13 +1114,14 @@ The current implemented workflow foundation supports:
 - estimate workspace item sourcing is now inventory-first, using active catalog items and sqft-scaled system expansion into canonical estimate line items
 - estimate workspace edits now use autosave with validation, dirty/error state handling, and stale-write conflict protection
 - estimate defaults now hydrate only when the estimate content is initially empty, using platform defaults first and organization overrides second
-- estimate proposal review and status progression
+- estimate customer send, email tracking, portal review, and status progression
 - estimate create, update, and status transitions now refresh the linked project's stored commercial-readiness fields, including project reassignment during estimate updates
+- approved estimate commercial snapshot creation on approval for downstream lineage
 - approved-estimate-to-contract generation and pre-sign contract editing
 - required internal contract approval and send-readiness gating on draft contracts
 - server-side canonical contract signature workflow progression with signer/event updates on the shared contract model
 - canonical change-order authoring, send-for-review, and customer portal approval or rejection on the shared project and contract chain
-- approved positive change orders linked to invoices can now extend the same canonical invoice through real invoice line items
+- approved change-order commercial snapshot creation on approval, with append-only downstream SOV and invoice integration
 - project-detail readiness hub for the upstream commercial chain with blockers, next action, and ready-to-schedule handoff visibility
 - downstream job creation now respects the canonical ready-to-schedule gate instead of relying only on estimate approval
 - downstream job reassignment now respects the same canonical ready-to-schedule gate instead of allowing a later project move to bypass the handoff rule
@@ -1051,16 +1130,16 @@ The current implemented workflow foundation supports:
 - job progression through execution states
 - invoice creation and maintenance from connected project, estimate, and job records
 - standard invoice creation without a job now respects the commercial handoff gate instead of bypassing contract-signature and deposit or financing readiness
-- invoice line-item-based totals
+- snapshot-based invoice lineage across direct estimate billing, SOV billing, approved change-order billing, and invoice-only adjustments
 - payment recording with invoice balance and paid-state recalculation
 - tax-aware invoice calculation using org defaults and customer exemption state
 - retainage-aware invoice balance foundation
-- approved estimate item seeding for future AIA/progress billing
-- approved-estimate schedule-of-values review and progress-billing invoice preparation on the same project, estimate, and invoice chain
+- approved-estimate schedule-of-values provisioning from snapshot lineage and progress-billing invoice preparation on the same project, estimate, and invoice chain
 - shared template selection and merge-data preparation for estimate, invoice, and contract document workflows
 - canonical rendered contract records with revision snapshots and signature-lock scaffolding
 - canonical contract signature-state, signer, and immutable signature-event foundation on the shared contract model
 - canonical contract signature workflow helpers that keep send, customer signature progression, optional countersign, and readiness sync on the same contract record
+- stored notification events, per-user notifications, delivery tracking, and canonical communication thread/message foundations
 - shared commercial-readiness foundation fields across opportunities, projects, contracts, invoices, and organization workflow settings
 - project commercial-readiness sync from signed-contract, deposit-readiness, financing-status, and recorded-payment state
 - shared plain-numeric customer-facing numbering across estimates, invoices, change orders, and contracts using the existing organization and platform workflow settings tables
@@ -1070,6 +1149,7 @@ The current implemented workflow foundation supports:
 These surfaces exist but are still foundational rather than production-complete:
 - dashboard command-center surface, including modular queue composition and quick-create studio direction
 - early module-dashboard pattern on overview pages
+- Financials Home control-panel structure, with AR and AP still defined only as placeholders
 - payments manager surface on the same shared manager-page system
 - first universal-create launcher foundation in the shared shell and dashboard
 - broader contractor-app theming consistency is now established through shared shell and manager-page components, but page-level cleanup still remains iterative on some deeper or lower-traffic surfaces
@@ -1095,6 +1175,7 @@ Implemented:
 - contractor-side workflow defaults for approved-estimate contract template assignment
 - stored contractor preferences for internal contract approval, signed-contract readiness, deposit-before-scheduling readiness, and financing-approval readiness
 - organization-scoped reusable catalog item management
+- `/settings/catalogs` now renders the same contractor cost item settings component used by `/cost-items-database/settings`
 - organization member role management
 - organization-level feature override storage within the shared platform feature policy model
 
@@ -1119,6 +1200,7 @@ Implemented:
 - platform-owned starter template management
 - platform-owned starter catalog seed management
 - platform-level feature policy management
+- platform module controls now include the inventory default policy used by the Cost Items Database module
 - platform admin assignment foundation
 - tenant lifecycle/status administration foundation
 
@@ -1142,7 +1224,6 @@ Not implemented yet:
 - billing/subscriptions
 - deeper gateway-backed customer-facing payment completion and reconciliation workflows
 - advanced permissions UI
-- full change-order credit, negative adjustment, and richer accounting treatment
 - deeper AIA/pay-application UX, export/reporting forms, and richer SOV draw management
 - external tax provider integration
 - rich template editing UI

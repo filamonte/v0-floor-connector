@@ -23,7 +23,7 @@ export function AuthField({
       <input
         id={inputId}
         aria-describedby={hintId}
-        className={`w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100 ${className ?? ""}`.trim()}
+        className={`h-9 w-full border border-[#cfd6e0] bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#d8731f] ${className ?? ""}`.trim()}
         {...props}
       />
       {hint ? (

@@ -22,13 +22,13 @@ export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
   },
   {
     href: "/settings/catalogs",
-    label: "Catalogs",
-    description: "Reusable materials, services, and system starter items."
+    label: "Catalog Configuration",
+    description: "Settings for Cost Items Database and inventory behavior."
   },
   {
     href: "/settings/financial",
     label: "Financial",
-    description: "Tax, retainage, and billing-ready default settings."
+    description: "Tax, retainage, billing defaults, and tax-code settings."
   },
   {
     href: "/settings/workflows",

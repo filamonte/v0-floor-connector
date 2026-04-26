@@ -1,13 +1,10 @@
 import { notFound } from "next/navigation";
 
 import { InvoiceForm } from "@/components/invoice-form";
-import {
-  RecordWorkspaceShell,
-  type RecordWorkspaceStage
-} from "@/components/record-workspace-shell";
+import { StandardWorkspaceLayout } from "@/components/workspace/standard-workspace-layout";
 import { listCatalogItems } from "@/lib/catalogs/data";
 import { updateInvoiceAction } from "@/lib/invoices/actions";
-import { getInvoiceById } from "@/lib/invoices/data";
+import { getInvoiceById, listInvoiceSourceOptions } from "@/lib/invoices/data";
 import { listEstimates } from "@/lib/estimates/data";
 import { listJobs } from "@/lib/jobs/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
@@ -25,34 +22,6 @@ type InvoiceEditPageProps = {
   }>;
 };
 
-function buildStages(status: string): RecordWorkspaceStage[] {
-  return [
-    { label: "Draft", tone: status === "draft" ? "active" : "complete" },
-    {
-      label: "Review",
-      tone:
-        status === "draft"
-          ? "active"
-          : status === "sent" || status === "partially_paid" || status === "paid"
-            ? "complete"
-            : "pending"
-    },
-    {
-      label: "Sent",
-      tone:
-        status === "sent" || status === "partially_paid"
-          ? "active"
-          : status === "paid"
-            ? "complete"
-            : "pending"
-    },
-    {
-      label: "Paid",
-      tone: status === "paid" ? "complete" : "pending"
-    }
-  ];
-}
-
 export default async function InvoiceEditPage({
   params,
   searchParams
@@ -66,13 +35,14 @@ export default async function InvoiceEditPage({
     notFound();
   }
 
-  const [invoice, projects, estimates, jobs, organizationFinancialSettings, catalogItems] =
+  const [invoice, projects, estimates, jobs, organizationFinancialSettings, sourceOptions, catalogItems] =
     await Promise.all([
       getInvoiceById(invoiceId, `/invoices/${invoiceId}/edit`),
       listProjects(),
       listEstimates(),
       listJobs(),
       getOrganizationFinancialSettings(organizationContext.organization.id),
+      listInvoiceSourceOptions(),
       listCatalogItems()
     ]);
 
@@ -107,62 +77,78 @@ export default async function InvoiceEditPage({
   }));
 
   return (
-    <RecordWorkspaceShell
-      backHref="/invoices"
-      backLabel="Back"
-      title={invoice.referenceNumber}
-      subtitle={
-        invoice.customer?.name
-          ? `${invoice.customer.name} billing workspace`
-          : "Invoice build workspace aligned to the same shared project, estimate, and payment lifecycle."
-      }
-      referenceLabel="Status"
-      referenceValue={invoice.status.replaceAll("_", " ")}
-      statusBadge={invoice.workflowRole.replaceAll("_", " ")}
-      stages={buildStages(invoice.status)}
-      sections={[
-        { id: "details", label: "Details" },
-        { id: "items", label: "Items" },
-        { id: "billing-notes-terms", label: "Billing Notes / Terms" },
-        { id: "files", label: "Files" },
-        { id: "payments", label: "Payments" },
-        { id: "notes", label: "Notes" },
-        { id: "review-send", label: "Review / Send" }
-      ]}
-      footerActionLabel="Submit to Client"
-      footerActionHref={`/invoices/${invoice.id}`}
-      footerMeta={
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-          <span>Created {new Date(invoice.createdAt).toLocaleDateString()}</span>
-          <span>Updated {new Date(invoice.updatedAt).toLocaleDateString()}</span>
-          <span>Balance due {Number(invoice.balanceDueAmount).toLocaleString("en-US", { style: "currency", currency: "USD" })}</span>
-        </div>
-      }
-    >
+    <div className="space-y-4">
       {resolvedSearchParams.error ? (
-        <div className="rounded-[24px] border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+        <div className="border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
           {resolvedSearchParams.error}
         </div>
       ) : null}
 
       {resolvedSearchParams.message ? (
-        <div className="rounded-[24px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+        <div className="border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
           {resolvedSearchParams.message}
         </div>
       ) : null}
 
-      <InvoiceForm
-        action={updateInvoiceAction}
-        submitLabel="Save invoice"
-        pendingLabel="Saving invoice..."
-        projects={projectOptions}
-        estimates={estimateOptions}
-        jobs={jobOptions}
-        organizationFinancialSettings={organizationFinancialSettings}
-        invoice={invoice}
-        paidAmount={invoice.paidAmount}
-        catalogItems={catalogItems}
-      />
-    </RecordWorkspaceShell>
+      <StandardWorkspaceLayout
+        header={{
+          eyebrow: "Financials module",
+          title: invoice.referenceNumber,
+          description: invoice.customer?.name
+            ? `${invoice.customer.name} billing workspace`
+            : "Invoice build workspace aligned to the same shared project, estimate, and payment lifecycle.",
+          actions: (
+            <div className="border border-[#d7c7b4] bg-[#fbf7f1] px-3 py-2 text-sm leading-5 text-[#665446]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+                Invoice status
+              </p>
+              <div className="mt-1 space-y-1">
+                <p className="capitalize">{invoice.status.replaceAll("_", " ")}</p>
+                <p className="capitalize">{invoice.workflowRole.replaceAll("_", " ")}</p>
+              </div>
+            </div>
+          )
+        }}
+        sidebar={[
+          { id: "details", label: "Details", iconName: "file-text", href: "#details" },
+          { id: "items", label: "Items", iconName: "receipt-text", href: "#items" },
+          {
+            id: "billing-notes-terms",
+            label: "Billing Notes / Terms",
+            iconName: "scroll-text",
+            href: "#billing-notes-terms"
+          },
+          { id: "files", label: "Files", iconName: "folder-open", href: "#files" },
+          {
+            id: "payments",
+            label: "Payments",
+            iconName: "circle-dollar-sign",
+            href: "#payments"
+          },
+          { id: "notes", label: "Notes", iconName: "notebook-pen", href: "#notes" },
+          { id: "review-send", label: "Review / Send", iconName: "send", href: "#review-send" }
+        ]}
+      >
+        <InvoiceForm
+          action={updateInvoiceAction}
+          submitLabel="Save invoice"
+          pendingLabel="Saving invoice..."
+          projects={projectOptions}
+          estimates={estimateOptions}
+          jobs={jobOptions}
+          organizationFinancialSettings={organizationFinancialSettings}
+          invoice={invoice}
+          paidAmount={invoice.paidAmount}
+          sourceOptions={sourceOptions}
+          catalogItems={catalogItems.map((item) => ({
+            id: item.id,
+            name: item.name,
+            unit: item.unit,
+            defaultUnitPrice: item.defaultUnitPrice,
+            status: item.status
+          }))}
+        />
+      </StandardWorkspaceLayout>
+    </div>
   );
 }

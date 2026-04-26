@@ -28,17 +28,19 @@ import type {
   InvoiceCustomerPaymentRequestInput,
   InvoicePaymentFailureInput,
   InvoiceInput,
-  InvoiceLineItemInput,
   InvoicePaymentInput,
   InvoicePaymentSuccessInput,
-  InvoicePaymentVoidInput
+  InvoicePaymentVoidInput,
+  InvoiceSourceConfiguration
 } from "./schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { buildCatalogItemPricingSnapshot } from "@/lib/catalogs/pricing";
 import { getEstimateById } from "@/lib/estimates/data";
 import { ensureScheduleOfValuesForEstimate } from "@/lib/financial/sov";
 import { getJobById } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { listPortalAccessGrantsForCurrentUser } from "@/lib/portal-access/data";
+import { recordInvoiceNotificationEvent } from "@/lib/notifications/system";
 import { getProjectById } from "@/lib/projects/data";
 import {
   assertInvoiceCommercialReadiness,
@@ -114,8 +116,19 @@ type InvoiceLineItemRow = {
   id: string;
   company_id: string;
   invoice_id: string;
+  estimate_line_item_id: string | null;
+  lineage_type:
+    | "estimate_snapshot_item"
+    | "sov_item"
+    | "change_order_snapshot_item"
+    | "invoice_only_adjustment"
+    | null;
+  estimate_snapshot_item_id: string | null;
   schedule_of_value_item_id: string | null;
+  change_order_snapshot_item_id: string | null;
+  invoice_only_adjustment_kind: "manual_catalog_item" | "explicit_adjustment" | null;
   catalog_item_id: string | null;
+  tax_code_id: string | null;
   name: string;
   description: string | null;
   quantity: string | number;
@@ -129,6 +142,11 @@ type InvoiceLineItemRow = {
   visible_markup_amount: string | number;
   hidden_markup_amount: string | number;
   unit_price: string | number;
+  tax_rate_snapshot: string | number;
+  discount_amount: string | number;
+  line_subtotal: string | number;
+  tax_amount: string | number;
+  cost_code: string | null;
   line_total: string | number;
   sort_order: number;
   created_at: string;
@@ -239,6 +257,27 @@ export type InvoiceDetail = InvoiceListItem & {
   payments: Payment[];
   paymentEvents: PaymentEvent[];
   paidAmount: string;
+};
+
+export type InvoiceSourceOptions = {
+  scheduleOfValueItems: Array<{
+    id: string;
+    scheduleOfValuesId: string;
+    estimateId: string;
+    projectId: string;
+    name: string;
+    description: string | null;
+    scheduledValueAmount: string;
+  }>;
+  changeOrderSnapshotItems: Array<{
+    id: string;
+    changeOrderId: string;
+    projectId: string;
+    invoiceId: string | null;
+    name: string;
+    description: string | null;
+    lineTotal: string;
+  }>;
 };
 
 type IdRow = {
@@ -354,9 +393,18 @@ function isInvoiceLineItemRow(value: unknown): value is InvoiceLineItemRow {
     typeof row.id === "string" &&
     typeof row.company_id === "string" &&
     typeof row.invoice_id === "string" &&
+    (row.estimate_line_item_id === null || typeof row.estimate_line_item_id === "string") &&
+    (row.lineage_type === null || typeof row.lineage_type === "string") &&
+    (row.estimate_snapshot_item_id === null ||
+      typeof row.estimate_snapshot_item_id === "string") &&
     (row.schedule_of_value_item_id === null ||
       typeof row.schedule_of_value_item_id === "string") &&
+    (row.change_order_snapshot_item_id === null ||
+      typeof row.change_order_snapshot_item_id === "string") &&
+    (row.invoice_only_adjustment_kind === null ||
+      typeof row.invoice_only_adjustment_kind === "string") &&
     (row.catalog_item_id === null || typeof row.catalog_item_id === "string") &&
+    (row.tax_code_id === null || typeof row.tax_code_id === "string") &&
     typeof row.name === "string" &&
     (typeof row.quantity === "string" || typeof row.quantity === "number") &&
     typeof row.unit === "string" &&
@@ -377,6 +425,12 @@ function isInvoiceLineItemRow(value: unknown): value is InvoiceLineItemRow {
     (typeof row.hidden_markup_amount === "string" ||
       typeof row.hidden_markup_amount === "number") &&
     (typeof row.unit_price === "string" || typeof row.unit_price === "number") &&
+    (typeof row.tax_rate_snapshot === "string" ||
+      typeof row.tax_rate_snapshot === "number") &&
+    (typeof row.discount_amount === "string" || typeof row.discount_amount === "number") &&
+    (typeof row.line_subtotal === "string" || typeof row.line_subtotal === "number") &&
+    (typeof row.tax_amount === "string" || typeof row.tax_amount === "number") &&
+    (row.cost_code === null || typeof row.cost_code === "string") &&
     (typeof row.line_total === "string" || typeof row.line_total === "number") &&
     typeof row.sort_order === "number" &&
     typeof row.created_at === "string" &&
@@ -490,8 +544,14 @@ function mapInvoiceLineItem(row: InvoiceLineItemRow): InvoiceLineItem {
     id: row.id,
     organizationId: row.company_id,
     invoiceId: row.invoice_id,
+    estimateLineItemId: row.estimate_line_item_id,
+    lineageType: row.lineage_type,
+    estimateSnapshotItemId: row.estimate_snapshot_item_id,
     scheduleOfValueItemId: row.schedule_of_value_item_id,
+    changeOrderSnapshotItemId: row.change_order_snapshot_item_id,
+    invoiceOnlyAdjustmentKind: row.invoice_only_adjustment_kind,
     catalogItemId: row.catalog_item_id,
+    taxCodeId: row.tax_code_id,
     name: row.name,
     description: row.description,
     quantity: Number(row.quantity).toFixed(2),
@@ -507,6 +567,11 @@ function mapInvoiceLineItem(row: InvoiceLineItemRow): InvoiceLineItem {
     visibleMarkupAmount: Number(row.visible_markup_amount).toFixed(2),
     hiddenMarkupAmount: Number(row.hidden_markup_amount).toFixed(2),
     unitPrice: Number(row.unit_price).toFixed(2),
+    taxRateSnapshot: Number(row.tax_rate_snapshot).toFixed(6),
+    discountAmount: Number(row.discount_amount).toFixed(2),
+    lineSubtotal: Number(row.line_subtotal).toFixed(2),
+    taxAmount: Number(row.tax_amount).toFixed(2),
+    costCode: row.cost_code,
     lineTotal: Number(row.line_total).toFixed(2),
     sortOrder: row.sort_order,
     createdAt: row.created_at,
@@ -698,8 +763,14 @@ async function getInvoiceLineItems(
         id,
         company_id,
         invoice_id,
+        estimate_line_item_id,
+        lineage_type,
+        estimate_snapshot_item_id,
         schedule_of_value_item_id,
+        change_order_snapshot_item_id,
+        invoice_only_adjustment_kind,
         catalog_item_id,
+        tax_code_id,
         name,
         description,
         quantity,
@@ -713,6 +784,11 @@ async function getInvoiceLineItems(
         visible_markup_amount,
         hidden_markup_amount,
         unit_price,
+        tax_rate_snapshot,
+        discount_amount,
+        line_subtotal,
+        tax_amount,
+        cost_code,
         line_total,
         sort_order,
         created_at,
@@ -1346,9 +1422,742 @@ async function syncInvoiceProjectReadiness(invoice: InvoiceRow) {
   });
 }
 
-type PersistedInvoiceLineItemInput = InvoiceLineItemInput & {
+export type PersistedInvoiceLineItemInput = {
+  estimateLineItemId?: string | null;
+  lineageType?:
+    | "estimate_snapshot_item"
+    | "sov_item"
+    | "change_order_snapshot_item"
+    | "invoice_only_adjustment"
+    | null;
+  estimateSnapshotItemId?: string | null;
   scheduleOfValueItemId?: string | null;
+  changeOrderSnapshotItemId?: string | null;
+  invoiceOnlyAdjustmentKind?: "manual_catalog_item" | "explicit_adjustment" | null;
+  catalogItemId: string | null;
+  taxCodeId?: string | null;
+  name: string;
+  description: string | null;
+  quantity: string;
+  unit: string;
+  taxable: boolean;
+  baseUnitCost: string | null;
+  baseUnitPrice: string | null;
+  markupPercent: string;
+  hiddenMarkupPercent: string;
+  unitPriceBeforeHiddenMarkup: string;
+  visibleMarkupAmount: string;
+  hiddenMarkupAmount: string;
+  unitPrice: string;
+  taxRateSnapshot?: string;
+  discountAmount?: string;
+  lineSubtotal?: string;
+  taxAmount?: string;
+  costCode: string | null;
+  lineTotal?: string;
 };
+
+type EstimateSnapshotItemRow = {
+  id: string;
+  company_id: string;
+  estimate_commercial_snapshot_id: string;
+  estimate_id: string;
+  estimate_line_item_id: string;
+  catalog_item_id: string | null;
+  tax_code_id: string | null;
+  name: string;
+  description: string | null;
+  quantity: string | number;
+  unit: string;
+  taxable: boolean;
+  base_unit_cost: string | number;
+  base_unit_price: string | number | null;
+  markup_percent: string | number;
+  hidden_markup_percent: string | number;
+  unit_price_before_hidden_markup: string | number;
+  visible_markup_amount: string | number;
+  hidden_markup_amount: string | number;
+  unit_price: string | number;
+  tax_rate_snapshot: string | number;
+  discount_amount: string | number;
+  line_subtotal: string | number;
+  tax_amount: string | number;
+  cost_code: string | null;
+  line_total: string | number;
+  sort_order: number;
+};
+
+type ScheduleOfValueItemSourceRow = {
+  id: string;
+  company_id: string;
+  schedule_of_values_id: string;
+  source_estimate_snapshot_item_id: string | null;
+  source_estimate_line_item_id: string;
+  name: string;
+  description: string | null;
+  scheduled_value_amount: string | number;
+  sort_order: number;
+};
+
+type ChangeOrderSnapshotItemRow = {
+  id: string;
+  company_id: string;
+  change_order_commercial_snapshot_id: string;
+  change_order_id: string;
+  catalog_item_id: string | null;
+  tax_code_id: string | null;
+  name: string;
+  description: string | null;
+  quantity: string | number;
+  unit: string;
+  taxable: boolean;
+  base_unit_cost: string | number;
+  base_unit_price: string | number | null;
+  markup_percent: string | number;
+  hidden_markup_percent: string | number;
+  unit_price_before_hidden_markup: string | number;
+  visible_markup_amount: string | number;
+  hidden_markup_amount: string | number;
+  unit_price: string | number;
+  tax_rate_snapshot: string | number;
+  discount_amount: string | number;
+  line_subtotal: string | number;
+  tax_amount: string | number;
+  cost_code: string | null;
+  line_total: string | number;
+  sort_order: number;
+};
+
+type CatalogItemSourceRow = {
+  id: string;
+  item_type:
+    | "material"
+    | "labor"
+    | "service"
+    | "equipment"
+    | "subcontractor"
+    | "other"
+    | "system";
+  name: string;
+  description: string | null;
+  unit: string;
+  default_unit_cost: string | number;
+  default_unit_price: string | number | null;
+  markup_percent: string | number;
+  hidden_markup_percent: string | number;
+  taxable: boolean;
+  tax_code_id: string | null;
+  cost_code: string | null;
+  status: string;
+};
+
+function formatMoneySnapshot(value: string | number | null | undefined) {
+  return Number(value ?? 0).toFixed(2);
+}
+
+function formatQuantitySnapshot(value: string | number | null | undefined) {
+  return Number(value ?? 0).toFixed(2);
+}
+
+async function loadLatestEstimateSnapshotItems(
+  organizationId: string,
+  estimateId: string
+) {
+  const supabase = await getSupabaseServerClient();
+  const snapshotResponse = await supabase
+    .from("estimate_commercial_snapshots")
+    .select("id")
+    .eq("company_id", organizationId)
+    .eq("estimate_id", estimateId)
+    .order("snapshot_version", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (snapshotResponse.error) {
+    throw new Error(
+      `Unable to load the latest approved estimate snapshot: ${snapshotResponse.error.message}`
+    );
+  }
+
+  const snapshotId =
+    snapshotResponse.data && typeof snapshotResponse.data.id === "string"
+      ? snapshotResponse.data.id
+      : null;
+
+  if (!snapshotId) {
+    throw new Error("The latest approved estimate snapshot could not be found.");
+  }
+
+  const itemsResponse = await supabase
+    .from("estimate_commercial_snapshot_items")
+    .select(
+      `
+        id,
+        company_id,
+        estimate_commercial_snapshot_id,
+        estimate_id,
+        estimate_line_item_id,
+        catalog_item_id,
+        tax_code_id,
+        name,
+        description,
+        quantity,
+        unit,
+        taxable,
+        base_unit_cost,
+        base_unit_price,
+        markup_percent,
+        hidden_markup_percent,
+        unit_price_before_hidden_markup,
+        visible_markup_amount,
+        hidden_markup_amount,
+        unit_price,
+        tax_rate_snapshot,
+        discount_amount,
+        line_subtotal,
+        tax_amount,
+        cost_code,
+        line_total,
+        sort_order
+      `
+    )
+    .eq("company_id", organizationId)
+    .eq("estimate_commercial_snapshot_id", snapshotId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (itemsResponse.error) {
+    throw new Error(
+      `Unable to load approved estimate snapshot items: ${itemsResponse.error.message}`
+    );
+  }
+
+  return (itemsResponse.data as EstimateSnapshotItemRow[] | null) ?? [];
+}
+
+async function loadEstimateSnapshotItemsByIds(
+  organizationId: string,
+  snapshotItemIds: string[]
+) {
+  if (snapshotItemIds.length === 0) {
+    return new Map<string, EstimateSnapshotItemRow>();
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("estimate_commercial_snapshot_items")
+    .select(
+      `
+        id,
+        company_id,
+        estimate_commercial_snapshot_id,
+        estimate_id,
+        estimate_line_item_id,
+        catalog_item_id,
+        tax_code_id,
+        name,
+        description,
+        quantity,
+        unit,
+        taxable,
+        base_unit_cost,
+        base_unit_price,
+        markup_percent,
+        hidden_markup_percent,
+        unit_price_before_hidden_markup,
+        visible_markup_amount,
+        hidden_markup_amount,
+        unit_price,
+        tax_rate_snapshot,
+        discount_amount,
+        line_subtotal,
+        tax_amount,
+        cost_code,
+        line_total,
+        sort_order
+      `
+    )
+    .eq("company_id", organizationId)
+    .in("id", snapshotItemIds);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load estimate snapshot item sources: ${response.error.message}`
+    );
+  }
+
+  const rows = (response.data as EstimateSnapshotItemRow[] | null) ?? [];
+  return new Map(rows.map((row) => [row.id, row] as const));
+}
+
+async function loadScheduleOfValueItemSources(
+  organizationId: string,
+  scheduleOfValueItemIds: string[]
+) {
+  if (scheduleOfValueItemIds.length === 0) {
+    return [];
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("schedule_of_value_items")
+    .select(
+      `
+        id,
+        company_id,
+        schedule_of_values_id,
+        source_estimate_snapshot_item_id,
+        source_estimate_line_item_id,
+        name,
+        description,
+        scheduled_value_amount,
+        sort_order
+      `
+    )
+    .eq("company_id", organizationId)
+    .in("id", scheduleOfValueItemIds)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (response.error) {
+    throw new Error(`Unable to load SOV sources: ${response.error.message}`);
+  }
+
+  return (response.data as ScheduleOfValueItemSourceRow[] | null) ?? [];
+}
+
+async function loadChangeOrderSnapshotItemsByIds(
+  organizationId: string,
+  snapshotItemIds: string[]
+) {
+  if (snapshotItemIds.length === 0) {
+    return [];
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("change_order_commercial_snapshot_items")
+    .select(
+      `
+        id,
+        company_id,
+        change_order_commercial_snapshot_id,
+        change_order_id,
+        catalog_item_id,
+        tax_code_id,
+        name,
+        description,
+        quantity,
+        unit,
+        taxable,
+        base_unit_cost,
+        base_unit_price,
+        markup_percent,
+        hidden_markup_percent,
+        unit_price_before_hidden_markup,
+        visible_markup_amount,
+        hidden_markup_amount,
+        unit_price,
+        tax_rate_snapshot,
+        discount_amount,
+        line_subtotal,
+        tax_amount,
+        cost_code,
+        line_total,
+        sort_order
+      `
+    )
+    .eq("company_id", organizationId)
+    .in("id", snapshotItemIds)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load change-order snapshot item sources: ${response.error.message}`
+    );
+  }
+
+  return (response.data as ChangeOrderSnapshotItemRow[] | null) ?? [];
+}
+
+async function loadCatalogItemsForInvoiceSources(
+  organizationId: string,
+  catalogItemIds: string[]
+) {
+  if (catalogItemIds.length === 0) {
+    return new Map<string, CatalogItemSourceRow>();
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("catalog_items")
+    .select(
+      `
+        id,
+        item_type,
+        name,
+        description,
+        unit,
+        default_unit_cost,
+        default_unit_price,
+        markup_percent,
+        hidden_markup_percent,
+        taxable,
+        tax_code_id,
+        cost_code,
+        status
+      `
+    )
+    .eq("company_id", organizationId)
+    .in("id", catalogItemIds);
+
+  if (response.error) {
+    throw new Error(`Unable to load invoice catalog item sources: ${response.error.message}`);
+  }
+
+  const rows = (response.data as CatalogItemSourceRow[] | null) ?? [];
+  return new Map(rows.map((row) => [row.id, row] as const));
+}
+
+function mapEstimateSnapshotRowToInvoiceLineItem(
+  row: EstimateSnapshotItemRow,
+  lineageType: PersistedInvoiceLineItemInput["lineageType"],
+  overrides?: {
+    scheduleOfValueItemId?: string | null;
+    quantity?: string;
+    lineSubtotal?: string;
+    lineTotal?: string;
+    description?: string | null;
+  }
+): PersistedInvoiceLineItemInput {
+  return {
+    estimateLineItemId: row.estimate_line_item_id,
+    lineageType,
+    estimateSnapshotItemId:
+      lineageType === "estimate_snapshot_item" ? row.id : null,
+    scheduleOfValueItemId: overrides?.scheduleOfValueItemId ?? null,
+    changeOrderSnapshotItemId: null,
+    invoiceOnlyAdjustmentKind: null,
+    catalogItemId: row.catalog_item_id,
+    taxCodeId: row.tax_code_id,
+    name: row.name,
+    description: overrides?.description ?? row.description,
+    quantity: overrides?.quantity ?? formatQuantitySnapshot(row.quantity),
+    unit: row.unit,
+    taxable: row.taxable,
+    baseUnitCost: formatMoneySnapshot(row.base_unit_cost),
+    baseUnitPrice:
+      row.base_unit_price == null ? null : formatMoneySnapshot(row.base_unit_price),
+    markupPercent: formatMoneySnapshot(row.markup_percent),
+    hiddenMarkupPercent: formatMoneySnapshot(row.hidden_markup_percent),
+    unitPriceBeforeHiddenMarkup: formatMoneySnapshot(row.unit_price_before_hidden_markup),
+    visibleMarkupAmount: formatMoneySnapshot(row.visible_markup_amount),
+    hiddenMarkupAmount: formatMoneySnapshot(row.hidden_markup_amount),
+    unitPrice: formatMoneySnapshot(row.unit_price),
+    taxRateSnapshot: Number(row.tax_rate_snapshot ?? 0).toFixed(6),
+    discountAmount: formatMoneySnapshot(row.discount_amount),
+    lineSubtotal: overrides?.lineSubtotal ?? formatMoneySnapshot(row.line_subtotal),
+    taxAmount: formatMoneySnapshot(row.tax_amount),
+    costCode: row.cost_code,
+    lineTotal: overrides?.lineTotal ?? formatMoneySnapshot(row.line_total)
+  };
+}
+
+function mapChangeOrderSnapshotRowToInvoiceLineItem(
+  row: ChangeOrderSnapshotItemRow
+): PersistedInvoiceLineItemInput {
+  return {
+    estimateLineItemId: null,
+    lineageType: "change_order_snapshot_item",
+    estimateSnapshotItemId: null,
+    scheduleOfValueItemId: null,
+    changeOrderSnapshotItemId: row.id,
+    invoiceOnlyAdjustmentKind: null,
+    catalogItemId: row.catalog_item_id,
+    taxCodeId: row.tax_code_id,
+    name: row.name,
+    description: row.description,
+    quantity: formatQuantitySnapshot(row.quantity),
+    unit: row.unit,
+    taxable: row.taxable,
+    baseUnitCost: formatMoneySnapshot(row.base_unit_cost),
+    baseUnitPrice:
+      row.base_unit_price == null ? null : formatMoneySnapshot(row.base_unit_price),
+    markupPercent: formatMoneySnapshot(row.markup_percent),
+    hiddenMarkupPercent: formatMoneySnapshot(row.hidden_markup_percent),
+    unitPriceBeforeHiddenMarkup: formatMoneySnapshot(row.unit_price_before_hidden_markup),
+    visibleMarkupAmount: formatMoneySnapshot(row.visible_markup_amount),
+    hiddenMarkupAmount: formatMoneySnapshot(row.hidden_markup_amount),
+    unitPrice: formatMoneySnapshot(row.unit_price),
+    taxRateSnapshot: Number(row.tax_rate_snapshot ?? 0).toFixed(6),
+    discountAmount: formatMoneySnapshot(row.discount_amount),
+    lineSubtotal: formatMoneySnapshot(row.line_subtotal),
+    taxAmount: formatMoneySnapshot(row.tax_amount),
+    costCode: row.cost_code,
+    lineTotal: formatMoneySnapshot(row.line_total)
+  };
+}
+
+function mapInvoiceLineItemToPersistedInput(
+  lineItem: InvoiceLineItem
+): PersistedInvoiceLineItemInput {
+  return {
+    estimateLineItemId: lineItem.estimateLineItemId ?? null,
+    lineageType: lineItem.lineageType ?? null,
+    estimateSnapshotItemId: lineItem.estimateSnapshotItemId ?? null,
+    scheduleOfValueItemId: lineItem.scheduleOfValueItemId ?? null,
+    changeOrderSnapshotItemId: lineItem.changeOrderSnapshotItemId ?? null,
+    invoiceOnlyAdjustmentKind: lineItem.invoiceOnlyAdjustmentKind ?? null,
+    catalogItemId: lineItem.catalogItemId,
+    taxCodeId: lineItem.taxCodeId ?? null,
+    name: lineItem.name,
+    description: lineItem.description,
+    quantity: lineItem.quantity,
+    unit: lineItem.unit,
+    taxable: lineItem.taxable,
+    baseUnitCost: lineItem.baseUnitCost,
+    baseUnitPrice: lineItem.baseUnitPrice,
+    markupPercent: lineItem.markupPercent,
+    hiddenMarkupPercent: lineItem.hiddenMarkupPercent,
+    unitPriceBeforeHiddenMarkup: lineItem.unitPriceBeforeHiddenMarkup,
+    visibleMarkupAmount: lineItem.visibleMarkupAmount,
+    hiddenMarkupAmount: lineItem.hiddenMarkupAmount,
+    unitPrice: lineItem.unitPrice,
+    taxRateSnapshot: lineItem.taxRateSnapshot,
+    discountAmount: lineItem.discountAmount,
+    lineSubtotal: lineItem.lineSubtotal,
+    taxAmount: lineItem.taxAmount,
+    costCode: lineItem.costCode,
+    lineTotal: lineItem.lineTotal
+  };
+}
+
+async function buildInvoiceLineItemsFromSourceConfiguration(input: {
+  organizationId: string;
+  estimateId: string | null;
+  sourceConfiguration: InvoiceSourceConfiguration;
+}) {
+  const baseLineItems: PersistedInvoiceLineItemInput[] = [];
+
+  if (input.sourceConfiguration.baseSourceType === "estimate_snapshot") {
+    if (!input.estimateId) {
+      throw new Error("A full invoice requires a linked approved estimate.");
+    }
+
+    const snapshotItems = await loadLatestEstimateSnapshotItems(
+      input.organizationId,
+      input.estimateId
+    );
+
+    for (const snapshotItem of snapshotItems) {
+      baseLineItems.push(
+        mapEstimateSnapshotRowToInvoiceLineItem(snapshotItem, "estimate_snapshot_item")
+      );
+    }
+  }
+
+  if (input.sourceConfiguration.baseSourceType === "sov_items") {
+    const sovItems = await loadScheduleOfValueItemSources(
+      input.organizationId,
+      input.sourceConfiguration.selectedSovItemIds
+    );
+    const snapshotItemsById = await loadEstimateSnapshotItemsByIds(
+      input.organizationId,
+      sovItems
+        .map((row) => row.source_estimate_snapshot_item_id)
+        .filter((value): value is string => typeof value === "string")
+    );
+
+    for (const sovItem of sovItems) {
+      if (!sovItem.source_estimate_snapshot_item_id) {
+        throw new Error("SOV invoice lines require approved snapshot lineage.");
+      }
+
+      const snapshotItem = snapshotItemsById.get(sovItem.source_estimate_snapshot_item_id);
+
+      if (!snapshotItem) {
+        throw new Error("A selected SOV item is missing its approved estimate snapshot source.");
+      }
+
+      baseLineItems.push(
+        mapEstimateSnapshotRowToInvoiceLineItem(snapshotItem, "sov_item", {
+          scheduleOfValueItemId: sovItem.id
+        })
+      );
+    }
+  }
+
+  if (input.sourceConfiguration.baseSourceType === "change_order_snapshot_items") {
+    const snapshotItems = await loadChangeOrderSnapshotItemsByIds(
+      input.organizationId,
+      input.sourceConfiguration.selectedChangeOrderSnapshotItemIds
+    );
+
+    for (const snapshotItem of snapshotItems) {
+      baseLineItems.push(mapChangeOrderSnapshotRowToInvoiceLineItem(snapshotItem));
+    }
+  }
+
+  const catalogItemsById = await loadCatalogItemsForInvoiceSources(
+    input.organizationId,
+    input.sourceConfiguration.manualCatalogItems.map((item) => item.catalogItemId)
+  );
+
+  for (const manualItem of input.sourceConfiguration.manualCatalogItems) {
+    const catalogItem = catalogItemsById.get(manualItem.catalogItemId);
+
+    if (!catalogItem) {
+      throw new Error("A selected manual catalog item is no longer available.");
+    }
+
+    const pricingSnapshot = buildCatalogItemPricingSnapshot({
+      catalogItem: {
+        id: catalogItem.id,
+        itemType: catalogItem.item_type,
+        name: catalogItem.name,
+        description: catalogItem.description,
+        unit: catalogItem.unit,
+        defaultUnitCost: formatMoneySnapshot(catalogItem.default_unit_cost),
+        defaultUnitPrice:
+          catalogItem.default_unit_price == null
+            ? null
+            : formatMoneySnapshot(catalogItem.default_unit_price),
+        markupPercent: formatMoneySnapshot(catalogItem.markup_percent),
+        hiddenMarkupPercent: formatMoneySnapshot(catalogItem.hidden_markup_percent),
+        taxable: catalogItem.taxable,
+        taxCodeId: catalogItem.tax_code_id,
+        costCode: catalogItem.cost_code
+      },
+      quantity: manualItem.quantity,
+      sourceType: "catalog_item"
+    });
+
+    baseLineItems.push({
+      estimateLineItemId: null,
+      lineageType: "invoice_only_adjustment",
+      estimateSnapshotItemId: null,
+      scheduleOfValueItemId: null,
+      changeOrderSnapshotItemId: null,
+      invoiceOnlyAdjustmentKind: "manual_catalog_item",
+      catalogItemId: catalogItem.id,
+      taxCodeId: pricingSnapshot.taxCodeId,
+      name: pricingSnapshot.name,
+      description: pricingSnapshot.description,
+      quantity: formatQuantitySnapshot(manualItem.quantity),
+      unit: pricingSnapshot.unit,
+      taxable: pricingSnapshot.taxable,
+      baseUnitCost: pricingSnapshot.baseUnitCost,
+      baseUnitPrice: pricingSnapshot.baseUnitPrice,
+      markupPercent: pricingSnapshot.markupPercent,
+      hiddenMarkupPercent: pricingSnapshot.hiddenMarkupPercent,
+      unitPriceBeforeHiddenMarkup: pricingSnapshot.unitPriceBeforeHiddenMarkup,
+      visibleMarkupAmount: pricingSnapshot.visibleMarkupAmount,
+      hiddenMarkupAmount: pricingSnapshot.hiddenMarkupAmount,
+      unitPrice: pricingSnapshot.unitPrice,
+      taxRateSnapshot: "0.000000",
+      discountAmount: "0.00",
+      lineSubtotal: formatMoneySnapshot(
+        Number(pricingSnapshot.quantity) * Number(pricingSnapshot.unitPrice)
+      ),
+      taxAmount: "0.00",
+      costCode: pricingSnapshot.costCode
+    });
+  }
+
+  for (const adjustment of input.sourceConfiguration.explicitAdjustments) {
+    const amount = Number(adjustment.amount);
+
+    baseLineItems.push({
+      estimateLineItemId: null,
+      lineageType: "invoice_only_adjustment",
+      estimateSnapshotItemId: null,
+      scheduleOfValueItemId: null,
+      changeOrderSnapshotItemId: null,
+      invoiceOnlyAdjustmentKind: "explicit_adjustment",
+      catalogItemId: null,
+      taxCodeId: null,
+      name: adjustment.name,
+      description: adjustment.description,
+      quantity: "1.00",
+      unit: "each",
+      taxable: false,
+      baseUnitCost: "0.00",
+      baseUnitPrice: null,
+      markupPercent: "0.00",
+      hiddenMarkupPercent: "0.00",
+      unitPriceBeforeHiddenMarkup: amount.toFixed(2),
+      visibleMarkupAmount: "0.00",
+      hiddenMarkupAmount: "0.00",
+      unitPrice: amount.toFixed(2),
+      taxRateSnapshot: "0.000000",
+      discountAmount: "0.00",
+      lineSubtotal: amount.toFixed(2),
+      taxAmount: "0.00",
+      costCode: null
+    });
+  }
+
+  const normalizedLineItems: PersistedInvoiceLineItemInput[] = [];
+
+  for (const lineItem of baseLineItems) {
+    const computedLineTotal = (
+      Number(lineItem.quantity) * Number(lineItem.unitPrice)
+    ).toFixed(2);
+
+    const nextLineItem: PersistedInvoiceLineItemInput = {
+      estimateLineItemId: lineItem.estimateLineItemId ?? null,
+      lineageType: lineItem.lineageType ?? null,
+      estimateSnapshotItemId: lineItem.estimateSnapshotItemId ?? null,
+      scheduleOfValueItemId: lineItem.scheduleOfValueItemId ?? null,
+      changeOrderSnapshotItemId: lineItem.changeOrderSnapshotItemId ?? null,
+      invoiceOnlyAdjustmentKind: lineItem.invoiceOnlyAdjustmentKind ?? null,
+      catalogItemId: lineItem.catalogItemId,
+      taxCodeId: lineItem.taxCodeId ?? null,
+      name: lineItem.name,
+      description: lineItem.description,
+      quantity: lineItem.quantity,
+      unit: lineItem.unit,
+      taxable: lineItem.taxable,
+      baseUnitCost: lineItem.baseUnitCost,
+      baseUnitPrice: lineItem.baseUnitPrice,
+      markupPercent: lineItem.markupPercent,
+      hiddenMarkupPercent: lineItem.hiddenMarkupPercent,
+      unitPriceBeforeHiddenMarkup: lineItem.unitPriceBeforeHiddenMarkup,
+      visibleMarkupAmount: lineItem.visibleMarkupAmount,
+      hiddenMarkupAmount: lineItem.hiddenMarkupAmount,
+      unitPrice: lineItem.unitPrice,
+      taxRateSnapshot: lineItem.taxRateSnapshot,
+      discountAmount: lineItem.discountAmount,
+      lineSubtotal: computedLineTotal,
+      taxAmount: lineItem.taxAmount,
+      costCode: lineItem.costCode,
+      lineTotal: computedLineTotal
+    };
+
+    normalizedLineItems.push(nextLineItem);
+  }
+
+  return normalizedLineItems;
+}
+
+function hasLegacyInvoiceLineItems(lineItems: InvoiceLineItem[]) {
+  return lineItems.some((lineItem) => !lineItem.lineageType);
+}
+
+function shouldRequireManualAdjustmentQuantities(
+  status: InvoiceStatus,
+  sourceConfiguration: InvoiceSourceConfiguration | null
+) {
+  if (status === "draft" || !sourceConfiguration) {
+    return false;
+  }
+
+  return sourceConfiguration.manualCatalogItems.some(
+    (manualItem) => Number(manualItem.quantity) <= 0
+  );
+}
 
 export async function replaceCanonicalInvoiceLineItems(
   organizationId: string,
@@ -1373,8 +2182,14 @@ export async function replaceCanonicalInvoiceLineItems(
     lineItems.map((lineItem, index) => ({
       company_id: organizationId,
       invoice_id: invoiceId,
+      estimate_line_item_id: lineItem.estimateLineItemId ?? null,
+      lineage_type: lineItem.lineageType ?? null,
+      estimate_snapshot_item_id: lineItem.estimateSnapshotItemId ?? null,
       schedule_of_value_item_id: lineItem.scheduleOfValueItemId ?? null,
+      change_order_snapshot_item_id: lineItem.changeOrderSnapshotItemId ?? null,
+      invoice_only_adjustment_kind: lineItem.invoiceOnlyAdjustmentKind ?? null,
       catalog_item_id: lineItem.catalogItemId,
+      tax_code_id: lineItem.taxCodeId ?? null,
       name: lineItem.name,
       description: lineItem.description,
       quantity: lineItem.quantity,
@@ -1388,6 +2203,11 @@ export async function replaceCanonicalInvoiceLineItems(
       visible_markup_amount: lineItem.visibleMarkupAmount,
       hidden_markup_amount: lineItem.hiddenMarkupAmount,
       unit_price: lineItem.unitPrice,
+      tax_rate_snapshot: lineItem.taxRateSnapshot ?? "0.000000",
+      discount_amount: lineItem.discountAmount ?? "0.00",
+      line_subtotal: lineItem.lineSubtotal ?? "0.00",
+      tax_amount: lineItem.taxAmount ?? "0.00",
+      cost_code: lineItem.costCode,
       sort_order: index,
       created_by: userId,
       updated_by: userId
@@ -1501,6 +2321,166 @@ export const listInvoices = cache(async (): Promise<InvoiceListItem[]> => {
   return sortInvoices(data.map(mapInvoiceListItem));
 });
 
+export const listInvoiceSourceOptions = cache(async (): Promise<InvoiceSourceOptions> => {
+  const scope = await requireInvoiceScope("/invoices");
+  const supabase = await getSupabaseServerClient();
+  const [
+    scheduleOfValuesResponse,
+    scheduleOfValueItemsResponse,
+    changeOrderSnapshotsResponse,
+    changeOrderSnapshotItemsResponse
+  ] = await Promise.all([
+    supabase
+      .from("schedule_of_values")
+      .select("id, estimate_id, project_id")
+      .eq("company_id", scope.organizationId),
+    supabase
+      .from("schedule_of_value_items")
+      .select("id, schedule_of_values_id, name, description, scheduled_value_amount")
+      .eq("company_id", scope.organizationId)
+      .eq("lineage_type", "estimate_snapshot_item")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("change_order_commercial_snapshots")
+      .select("id, change_order_id, project_id, invoice_id, snapshot_version, created_at")
+      .eq("company_id", scope.organizationId)
+      .order("snapshot_version", { ascending: false })
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("change_order_commercial_snapshot_items")
+      .select(
+        "id, change_order_commercial_snapshot_id, change_order_id, name, description, line_total"
+      )
+      .eq("company_id", scope.organizationId)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true })
+  ]);
+
+  if (scheduleOfValuesResponse.error) {
+    throw new Error(
+      `Unable to load invoice SOV sources: ${scheduleOfValuesResponse.error.message}`
+    );
+  }
+
+  if (scheduleOfValueItemsResponse.error) {
+    throw new Error(
+      `Unable to load invoice SOV item sources: ${scheduleOfValueItemsResponse.error.message}`
+    );
+  }
+
+  if (changeOrderSnapshotsResponse.error) {
+    throw new Error(
+      `Unable to load invoice change-order snapshot sources: ${changeOrderSnapshotsResponse.error.message}`
+    );
+  }
+
+  if (changeOrderSnapshotItemsResponse.error) {
+    throw new Error(
+      `Unable to load invoice change-order item sources: ${changeOrderSnapshotItemsResponse.error.message}`
+    );
+  }
+
+  const scheduleOfValuesRows =
+    (scheduleOfValuesResponse.data as Array<{
+      id: string;
+      estimate_id: string;
+      project_id: string;
+    }> | null) ?? [];
+  const scheduleOfValuesById = new Map(
+    scheduleOfValuesRows.map((row) => [row.id, row] as const)
+  );
+  const changeOrderSnapshotsRows =
+    (changeOrderSnapshotsResponse.data as Array<{
+      id: string;
+      change_order_id: string;
+      project_id: string;
+      invoice_id: string | null;
+      snapshot_version: number;
+      created_at: string;
+    }> | null) ?? [];
+  const latestSnapshotByChangeOrderId = new Map<
+    string,
+    (typeof changeOrderSnapshotsRows)[number]
+  >();
+
+  for (const row of changeOrderSnapshotsRows) {
+    if (!latestSnapshotByChangeOrderId.has(row.change_order_id)) {
+      latestSnapshotByChangeOrderId.set(row.change_order_id, row);
+    }
+  }
+
+  return {
+    scheduleOfValueItems: (
+      (scheduleOfValueItemsResponse.data as Array<{
+        id: string;
+        schedule_of_values_id: string;
+        name: string;
+        description: string | null;
+        scheduled_value_amount: string | number;
+      }> | null) ?? []
+    )
+      .map((row) => {
+        const header = scheduleOfValuesById.get(row.schedule_of_values_id);
+
+        if (!header) {
+          return null;
+        }
+
+        return {
+          id: row.id,
+          scheduleOfValuesId: row.schedule_of_values_id,
+          estimateId: header.estimate_id,
+          projectId: header.project_id,
+          name: row.name,
+          description: row.description,
+          scheduledValueAmount: Number(row.scheduled_value_amount).toFixed(2)
+        };
+      })
+      .filter(
+        (
+          row
+        ): row is InvoiceSourceOptions["scheduleOfValueItems"][number] => Boolean(row)
+      ),
+    changeOrderSnapshotItems: (
+      (changeOrderSnapshotItemsResponse.data as Array<{
+        id: string;
+        change_order_commercial_snapshot_id: string;
+        change_order_id: string;
+        name: string;
+        description: string | null;
+        line_total: string | number;
+      }> | null) ?? []
+    )
+      .map((row) => {
+        const latestSnapshot = latestSnapshotByChangeOrderId.get(row.change_order_id);
+
+        if (
+          !latestSnapshot ||
+          latestSnapshot.id !== row.change_order_commercial_snapshot_id
+        ) {
+          return null;
+        }
+
+        return {
+          id: row.id,
+          changeOrderId: row.change_order_id,
+          projectId: latestSnapshot.project_id,
+          invoiceId: latestSnapshot.invoice_id,
+          name: row.name,
+          description: row.description,
+          lineTotal: Number(row.line_total).toFixed(2)
+        };
+      })
+      .filter(
+        (
+          row
+        ): row is InvoiceSourceOptions["changeOrderSnapshotItems"][number] =>
+          Boolean(row)
+      )
+  };
+});
+
 export async function getInvoiceById(
   invoiceId: string,
   next = "/invoices"
@@ -1610,23 +2590,6 @@ export async function createInvoice(input: InvoiceInput) {
     throw new Error(`Unable to create the invoice: ${error?.message ?? "Unknown error."}`);
   }
 
-  try {
-    await replaceInvoiceLineItems(
-      scope.organizationId,
-      scope.userId,
-      data.id,
-      input.lineItems
-    );
-  } catch (lineItemError) {
-    await supabase
-      .from("invoices")
-      .delete()
-      .eq("company_id", scope.organizationId)
-      .eq("id", data.id);
-
-    throw lineItemError;
-  }
-
   const invoice = await getInvoiceRecordById(scope.organizationId, data.id);
 
   if (!invoice) {
@@ -1638,21 +2601,21 @@ export async function createInvoice(input: InvoiceInput) {
     projectId: invoice.project_id
   });
 
-  return mapInvoice(invoice);
-}
+  if (invoice.status === "sent") {
+    await recordInvoiceNotificationEvent({
+      organizationId: scope.organizationId,
+      invoiceId: invoice.id,
+      customerId: invoice.customer_id,
+      projectId: invoice.project_id,
+      invoiceReferenceNumber: invoice.reference_number,
+      eventType: "sent",
+      actorType: "organization_user",
+      actorUserId: scope.userId,
+      occurredAt: invoice.updated_at
+    });
+  }
 
-async function replaceInvoiceLineItems(
-  organizationId: string,
-  userId: string,
-  invoiceId: string,
-  lineItems: InvoiceLineItemInput[]
-) {
-  await replaceCanonicalInvoiceLineItems(
-    organizationId,
-    userId,
-    invoiceId,
-    lineItems
-  );
+  return mapInvoice(invoice);
 }
 
 export async function updateInvoice(invoiceId: string, input: InvoiceInput) {
@@ -1690,6 +2653,22 @@ export async function updateInvoice(invoiceId: string, input: InvoiceInput) {
     await ensureScheduleOfValuesForEstimate(resolvedEstimateId);
   }
 
+  const existingLineItems = await getInvoiceLineItems(scope.organizationId, invoiceId);
+  const isLegacyInvoice = hasLegacyInvoiceLineItems(existingLineItems);
+
+  if (
+    shouldRequireManualAdjustmentQuantities(input.status, input.sourceConfiguration)
+  ) {
+    throw new Error("Manual invoice items must have quantity greater than zero before send.");
+  }
+
+  const nextBillingModel =
+    input.sourceConfiguration?.baseSourceType === "estimate_snapshot"
+      ? "estimate_derived"
+      : currentInvoice.billing_model === "aia_progress"
+        ? currentInvoice.billing_model
+        : "standard";
+
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("invoices")
@@ -1698,7 +2677,7 @@ export async function updateInvoice(invoiceId: string, input: InvoiceInput) {
       project_id: project.id,
       estimate_id: resolvedEstimateId,
       job_id: input.workflowRole === "deposit" ? null : (job?.id ?? null),
-      billing_model: resolvedEstimateId ? "estimate_derived" : "standard",
+      billing_model: nextBillingModel,
       workflow_role: input.workflowRole,
       status: input.status,
       issue_date: input.issueDate,
@@ -1722,12 +2701,26 @@ export async function updateInvoice(invoiceId: string, input: InvoiceInput) {
     throw new Error("Invoice not found for this organization.");
   }
 
-  await replaceInvoiceLineItems(
-    scope.organizationId,
-    scope.userId,
-    invoiceId,
-    input.lineItems
-  );
+  if (input.sourceConfiguration) {
+    if (isLegacyInvoice && existingLineItems.length > 0) {
+      throw new Error(
+        "Legacy invoice rows are preserved as-is. Create a new invoice to use the source-system builder."
+      );
+    }
+
+    const nextLineItems = await buildInvoiceLineItemsFromSourceConfiguration({
+      organizationId: scope.organizationId,
+      estimateId: resolvedEstimateId,
+      sourceConfiguration: input.sourceConfiguration
+    });
+
+    await replaceCanonicalInvoiceLineItems(
+      scope.organizationId,
+      scope.userId,
+      invoiceId,
+      nextLineItems
+    );
+  }
 
   const invoice = await getInvoiceRecordById(scope.organizationId, invoiceId);
 
@@ -1739,6 +2732,36 @@ export async function updateInvoice(invoiceId: string, input: InvoiceInput) {
     organizationId: scope.organizationId,
     projectId: invoice.project_id
   });
+
+  if (currentInvoice.status !== invoice.status) {
+    if (invoice.status === "sent") {
+      await recordInvoiceNotificationEvent({
+        organizationId: scope.organizationId,
+        invoiceId: invoice.id,
+        customerId: invoice.customer_id,
+        projectId: invoice.project_id,
+        invoiceReferenceNumber: invoice.reference_number,
+        eventType: "sent",
+        actorType: "organization_user",
+        actorUserId: scope.userId,
+        occurredAt: invoice.updated_at
+      });
+    }
+
+    if (invoice.status === "void") {
+      await recordInvoiceNotificationEvent({
+        organizationId: scope.organizationId,
+        invoiceId: invoice.id,
+        customerId: invoice.customer_id,
+        projectId: invoice.project_id,
+        invoiceReferenceNumber: invoice.reference_number,
+        eventType: "voided",
+        actorType: "organization_user",
+        actorUserId: scope.userId,
+        occurredAt: invoice.updated_at
+      });
+    }
+  }
 
   return mapInvoice(invoice);
 }
@@ -1821,6 +2844,22 @@ export async function requestInvoicePayment(
       occurredAt: input.occurredAt ?? undefined
     }
   ]);
+  await recordInvoiceNotificationEvent({
+    organizationId: portalScope.invoice.company_id,
+    invoiceId: portalScope.invoice.id,
+    customerId: portalScope.invoice.customer_id,
+    projectId: portalScope.invoice.project_id,
+    invoiceReferenceNumber: portalScope.invoice.reference_number,
+    eventType: "payment_requested",
+    actorType: "portal_user",
+    portalUserId: portalScope.userId,
+    occurredAt: input.occurredAt ?? new Date().toISOString(),
+    payload: {
+      amount: input.amount,
+      payerEmail: input.payerEmail,
+      notes: input.notes
+    }
+  });
 
   return mapInvoice(portalScope.invoice);
 }
@@ -2197,6 +3236,25 @@ export async function recordInvoicePaymentSuccess(input: InvoicePaymentSuccessIn
   }
 
   await syncInvoiceProjectReadiness(updatedInvoice);
+  await recordInvoiceNotificationEvent({
+    organizationId: updatedInvoice.company_id,
+    invoiceId: updatedInvoice.id,
+    customerId: updatedInvoice.customer_id,
+    projectId: updatedInvoice.project_id,
+    invoiceReferenceNumber: updatedInvoice.reference_number,
+    eventType: "paid",
+    actorType: input.actorType,
+    actorUserId: input.actorUserId,
+    portalUserId: input.portalUserId,
+    occurredAt: input.occurredAt ?? new Date().toISOString(),
+    payload: {
+      amount: input.amount,
+      gatewayProvider: input.gatewayProvider,
+      gatewayPaymentIntentReference: input.gatewayPaymentIntentReference,
+      gatewayCheckoutSessionReference: input.gatewayCheckoutSessionReference,
+      providerEventId: input.providerEventId ?? null
+    }
+  });
 
   return mapInvoice(updatedInvoice);
 }
@@ -2271,6 +3329,23 @@ export async function recordInvoicePaymentFailure(input: InvoicePaymentFailureIn
       occurredAt: input.occurredAt ?? undefined
     }
   ]);
+  await recordInvoiceNotificationEvent({
+    organizationId: invoice.company_id,
+    invoiceId: invoice.id,
+    customerId: invoice.customer_id,
+    projectId: invoice.project_id,
+    invoiceReferenceNumber: invoice.reference_number,
+    eventType: "failed",
+    actorType: input.actorType,
+    actorUserId: input.actorUserId,
+    portalUserId: input.portalUserId,
+    occurredAt: input.occurredAt ?? new Date().toISOString(),
+    payload: {
+      amount: input.amount,
+      gatewayProvider: input.gatewayProvider,
+      providerEventId: input.providerEventId ?? null
+    }
+  });
 
   return mapInvoice(invoice);
 }
@@ -2341,6 +3416,21 @@ export async function voidInvoicePayment(input: InvoicePaymentVoidInput) {
   }
 
   await syncInvoiceProjectReadiness(updatedInvoice);
+  await recordInvoiceNotificationEvent({
+    organizationId: updatedInvoice.company_id,
+    invoiceId: updatedInvoice.id,
+    customerId: updatedInvoice.customer_id,
+    projectId: updatedInvoice.project_id,
+    invoiceReferenceNumber: updatedInvoice.reference_number,
+    eventType: "voided",
+    actorType: input.actorType,
+    actorUserId: input.actorUserId ?? scope.userId,
+    portalUserId: input.portalUserId,
+    occurredAt: input.occurredAt ?? new Date().toISOString(),
+    payload: {
+      paymentId: input.paymentId
+    }
+  });
 
   return mapInvoice(updatedInvoice);
 }
@@ -2423,6 +3513,20 @@ async function voidInvoicePaymentFromProvider(input: {
   }
 
   await syncInvoiceProjectReadiness(updatedInvoice);
+  await recordInvoiceNotificationEvent({
+    organizationId: updatedInvoice.company_id,
+    invoiceId: updatedInvoice.id,
+    customerId: updatedInvoice.customer_id,
+    projectId: updatedInvoice.project_id,
+    invoiceReferenceNumber: updatedInvoice.reference_number,
+    eventType: "voided",
+    actorType: "provider",
+    occurredAt: input.occurredAt ?? new Date().toISOString(),
+    payload: {
+      paymentId: input.paymentId,
+      providerEventId: input.providerEventId
+    }
+  });
 
   return mapInvoice(updatedInvoice);
 }
@@ -2606,6 +3710,169 @@ export async function processProviderPaymentWebhookEvent(
 
     throw error;
   }
+}
+
+export async function appendChangeOrderSnapshotItemsToInvoice(input: {
+  organizationId: string;
+  userId: string;
+  invoiceId: string;
+  changeOrderSnapshotItemIds: string[];
+}) {
+  const existingLineItems = await getInvoiceLineItems(input.organizationId, input.invoiceId);
+
+  if (hasLegacyInvoiceLineItems(existingLineItems)) {
+    throw new Error(
+      "Legacy invoice rows are preserved as-is. Create a new invoice to use approved change-order snapshot billing."
+    );
+  }
+
+  const existingSnapshotItemIds = new Set(
+    existingLineItems
+      .map((lineItem) => lineItem.changeOrderSnapshotItemId)
+      .filter((value): value is string => typeof value === "string")
+  );
+  const nextSnapshotItemIds = input.changeOrderSnapshotItemIds.filter(
+    (snapshotItemId) => !existingSnapshotItemIds.has(snapshotItemId)
+  );
+
+  if (nextSnapshotItemIds.length === 0) {
+    return existingLineItems.filter((lineItem) =>
+      input.changeOrderSnapshotItemIds.includes(lineItem.changeOrderSnapshotItemId ?? "")
+    );
+  }
+
+  const snapshotLineItems = (
+    await loadChangeOrderSnapshotItemsByIds(input.organizationId, nextSnapshotItemIds)
+  ).map((snapshotItem) => mapChangeOrderSnapshotRowToInvoiceLineItem(snapshotItem));
+
+  const nextLineItems = [
+    ...existingLineItems.map((lineItem) => mapInvoiceLineItemToPersistedInput(lineItem)),
+    ...snapshotLineItems
+  ];
+
+  await replaceCanonicalInvoiceLineItems(
+    input.organizationId,
+    input.userId,
+    input.invoiceId,
+    nextLineItems
+  );
+
+  const refreshedLineItems = await getInvoiceLineItems(input.organizationId, input.invoiceId);
+  return refreshedLineItems.filter((lineItem) =>
+    input.changeOrderSnapshotItemIds.includes(lineItem.changeOrderSnapshotItemId ?? "")
+  );
+}
+
+export async function copyEstimateLineItemsToInvoice(input: {
+  organizationId: string;
+  userId: string;
+  estimateId: string;
+  invoiceId: string;
+  scheduleOfValueItemIdByEstimateLineItemId?: Map<string, string>;
+}) {
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("estimate_line_items")
+    .select(
+      `
+        id,
+        catalog_item_id,
+        tax_code_id,
+        name,
+        description,
+        quantity,
+        unit,
+        taxable,
+        base_unit_cost,
+        base_unit_price,
+        markup_percent,
+        hidden_markup_percent,
+        unit_price_before_hidden_markup,
+        visible_markup_amount,
+        hidden_markup_amount,
+        unit_price,
+        tax_rate_snapshot,
+        discount_amount,
+        line_subtotal,
+        tax_amount,
+        cost_code,
+        line_total,
+        sort_order
+      `
+    )
+    .eq("company_id", input.organizationId)
+    .eq("estimate_id", input.estimateId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+  const rows = Array.isArray(response.data)
+    ? (response.data as Array<{
+        id: string;
+        catalog_item_id: string | null;
+        tax_code_id: string | null;
+        name: string;
+        description: string | null;
+        quantity: string | number;
+        unit: string;
+        taxable: boolean;
+        base_unit_cost: string | number;
+        base_unit_price: string | number | null;
+        markup_percent: string | number;
+        hidden_markup_percent: string | number;
+        unit_price_before_hidden_markup: string | number;
+        visible_markup_amount: string | number;
+        hidden_markup_amount: string | number;
+        unit_price: string | number;
+        tax_rate_snapshot: string | number;
+        discount_amount: string | number;
+        line_subtotal: string | number;
+        tax_amount: string | number;
+        cost_code: string | null;
+        line_total: string | number;
+        sort_order: number;
+      }> )
+    : [];
+
+  if (response.error) {
+    throw new Error(
+      `Unable to copy estimate line item snapshots to invoice: ${response.error.message}`
+    );
+  }
+
+  if (rows.length === 0) {
+    throw new Error("Invoice creation requires stored estimate line item snapshots.");
+  }
+
+  await replaceCanonicalInvoiceLineItems(
+    input.organizationId,
+    input.userId,
+    input.invoiceId,
+    rows.map((row) => ({
+      estimateLineItemId: row.id,
+      scheduleOfValueItemId:
+        input.scheduleOfValueItemIdByEstimateLineItemId?.get(row.id) ?? null,
+      catalogItemId: row.catalog_item_id,
+      taxCodeId: row.tax_code_id,
+      name: row.name,
+      description: row.description,
+      quantity: Number(row.quantity).toFixed(2),
+      unit: row.unit,
+      taxable: row.taxable,
+      baseUnitCost: Number(row.base_unit_cost).toFixed(2),
+      baseUnitPrice:
+        row.base_unit_price == null ? null : Number(row.base_unit_price).toFixed(2),
+      markupPercent: Number(row.markup_percent).toFixed(2),
+      hiddenMarkupPercent: Number(row.hidden_markup_percent).toFixed(2),
+      unitPriceBeforeHiddenMarkup: Number(row.unit_price_before_hidden_markup).toFixed(2),
+      visibleMarkupAmount: Number(row.visible_markup_amount).toFixed(2),
+      hiddenMarkupAmount: Number(row.hidden_markup_amount).toFixed(2),
+      unitPrice: Number(row.unit_price).toFixed(2),
+      taxRateSnapshot: Number(row.tax_rate_snapshot).toFixed(6),
+      discountAmount: Number(row.discount_amount).toFixed(2),
+      lineSubtotal: Number(row.line_subtotal).toFixed(2),
+      taxAmount: Number(row.tax_amount).toFixed(2),
+      costCode: row.cost_code
+    }))
+  );
 }
 
 async function getInvoiceByIdAdminSafe(organizationId: string, invoiceId: string) {

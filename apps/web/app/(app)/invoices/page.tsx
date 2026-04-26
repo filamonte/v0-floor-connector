@@ -1,10 +1,11 @@
 import Link from "next/link";
 import type { InvoiceWorkflowRole } from "@floorconnector/types";
 
-import { AppEmptyState } from "@/components/app-empty-state";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
 import { InvoiceQuickCreateForm } from "@/components/invoice-quick-create-form";
+import { InvoiceRecordsPanel } from "@/components/invoices/invoice-records-panel";
 import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
+import { RowsPerViewControl } from "@/components/rows-per-view-control";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { quickCreateInvoiceAction } from "@/lib/invoices/actions";
@@ -28,6 +29,8 @@ type InvoicesPageProps = {
     message?: string;
   }>;
 };
+
+const INVOICES_ROWS_PER_VIEW_STORAGE_KEY = "fc.grid.rows.invoices";
 
 function formatStatusLabel(status: string) {
   return status.replaceAll("_", " ");
@@ -221,22 +224,22 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       title={`Invoice manager for ${organizationContext.organization.displayName}`}
       description="Create the invoice, finish billing details, review it, send it, and then manage collections. This manager keeps the billing workflow clearer instead of jumping straight into payment detail."
       summary={
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+        <div className="grid gap-px border border-[#d7dce4] bg-[#d7dce4] sm:grid-cols-2 xl:grid-cols-4">
+          <div className="bg-white px-3 py-2.5">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Draft</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{draftCount}</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">{draftCount}</p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+          <div className="bg-white px-3 py-2.5">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Sent</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{sentCount}</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">{sentCount}</p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+          <div className="bg-white px-3 py-2.5">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Overdue</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{overdueCount}</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">{overdueCount}</p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
+          <div className="bg-white px-3 py-2.5">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Open balance</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{openCount}</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">{openCount}</p>
           </div>
         </div>
       }
@@ -300,18 +303,21 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           );
         }),
         actionSlot: (
-          <Link
-            href={buildInvoicesHref({ q: query, status: statusFilter, compose: "1" }) + "#invoice-create"}
-            className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
-          >
-            New invoice
-          </Link>
+          <>
+            <RowsPerViewControl storageKey={INVOICES_ROWS_PER_VIEW_STORAGE_KEY} />
+            <Link
+              href={buildInvoicesHref({ q: query, status: statusFilter, compose: "1" }) + "#invoice-create"}
+              className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
+            >
+              New invoice
+            </Link>
+          </>
         )
       }}
     >
-    <div className={showComposer ? "grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_420px]" : "space-y-4"}>
-      <section className="space-y-6">
-        <section className="grid gap-4 xl:auto-rows-fr xl:grid-cols-2">
+    <div className={showComposer ? "grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px]" : "space-y-3"}>
+      <section className="space-y-3">
+        <section className="grid gap-3 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)_minmax(0,0.92fr)]">
           <ManagerDashboardCard
               eyebrow="Collections"
             title="Sent invoices awaiting payment"
@@ -366,34 +372,34 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             emptyDescription="Draft invoices waiting to be finished or sent will appear here."
           />
 
-          <section className="flex h-full flex-col border border-[#dde3eb] bg-white">
-            <div className="border-b border-[#e8edf4] px-5 py-4 sm:px-6">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7a889d]">
+          <section className="flex h-full flex-col border border-[#d7dce4] bg-white">
+            <div className="border-b border-[#dfe4ec] px-4 py-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
                 Billing context
               </p>
-              <h3 className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">
+              <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#17243b]">
                 Billing posture
               </h3>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                Recent paid work and financial defaults stay visible without turning the invoice manager into a separate finance app.
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                Compact finance context for the invoice register.
               </p>
             </div>
 
-            <div className="flex flex-1 flex-col space-y-4 px-5 py-4 sm:px-6">
+            <div className="flex flex-1 flex-col space-y-3 px-4 py-3">
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="border border-[#e2e7ef] bg-[#fbfcfe] px-4 py-3">
+                <div className="border border-[#e2e7ef] bg-[#fbfcfe] px-3 py-2.5">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Tax default</p>
                   <p className="mt-1 text-sm font-medium text-slate-800">
                     {financialSettings.defaultTaxBehavior.replaceAll("_", " ")}
                   </p>
                 </div>
-                <div className="border border-[#e2e7ef] bg-[#fbfcfe] px-4 py-3">
+                <div className="border border-[#e2e7ef] bg-[#fbfcfe] px-3 py-2.5">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Tax rate</p>
                   <p className="mt-1 text-sm font-medium text-slate-800">
                     {formatRate(financialSettings.defaultTaxRate)}
                   </p>
                 </div>
-                <div className="border border-[#e2e7ef] bg-[#fbfcfe] px-4 py-3">
+                <div className="border border-[#e2e7ef] bg-[#fbfcfe] px-3 py-2.5">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Partially paid</p>
                   <p className="mt-1 text-sm font-medium text-slate-800">{partialCount} invoices</p>
                 </div>
@@ -435,7 +441,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                       </Link>
                     ))
                   ) : (
-                    <div className="px-4 py-5">
+                    <div className="px-4 py-4">
                       <p className="text-sm font-semibold text-slate-900">No recently paid invoices yet.</p>
                       <p className="mt-2 text-sm leading-6 text-slate-500">
                         Settled billing will surface here once invoices complete the payment flow.
@@ -460,98 +466,11 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           </div>
         ) : null}
 
-        <section className="border border-[#dde3eb] bg-white">
-          <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
-            <div className="flex items-end justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
-                  Invoice records
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-500">
-                  The complete billing register stays below the dashboard cards so finance review and collections follow-up still have one place to work from.
-                </p>
-              </div>
-              <div className="hidden grid-cols-[minmax(0,1.35fr)_1fr_160px_140px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
-                <span>Invoice</span>
-                <span>Project</span>
-                <span>Status</span>
-                <span className="text-right">Balance due</span>
-              </div>
-              <div className="md:hidden">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                  Invoices list
-                </p>
-              </div>
-              <p className="text-sm leading-6 text-slate-500">
-                {filteredInvoices.length} visible
-              </p>
-            </div>
-          </div>
-
-          <div className="divide-y divide-slate-200">
-            {filteredInvoices.length > 0 ? (
-              filteredInvoices.map((invoice) => (
-                <Link
-                  key={invoice.id}
-                  href={`/invoices/${invoice.id}/edit`}
-                  className="group block px-5 py-4 transition hover:bg-slate-50/70 sm:px-6"
-                >
-                  <div className="grid gap-4 md:grid-cols-[minmax(0,1.35fr)_1fr_160px_140px] md:items-center">
-                    <div className="min-w-0">
-                      <h3 className="text-base font-semibold text-slate-950 transition group-hover:text-brand-700">
-                        {invoice.referenceNumber}
-                      </h3>
-                      <p className="mt-2 text-sm leading-6 text-slate-500">
-                        {invoice.customer?.name ?? "Unknown customer"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                        Project
-                      </p>
-                      <p className="text-sm font-medium text-slate-700">
-                        {invoice.project?.name ?? "Unknown project"}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        {invoice.workflowRole === "deposit"
-                          ? "Deposit readiness invoice"
-                          : `Tax collected ${formatMoney(invoice.taxCollectedAmount)}`}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                        Status
-                      </p>
-                      <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
-                        {formatStatusLabel(invoice.status)}
-                      </span>
-                    </div>
-                    <div className="md:text-right">
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                        Balance due
-                      </p>
-                      <p className="text-sm font-semibold text-slate-950">
-                        {formatMoney(invoice.balanceDueAmount)}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="px-6 py-8 sm:px-8">
-                <AppEmptyState
-                  eyebrow={invoices.length > 0 ? "No matching invoices" : "No invoices yet"}
-                  title={invoices.length > 0 ? "Adjust the billing filters" : "Create the first invoice"}
-                  description={
-                    invoices.length > 0
-                      ? "Try a broader search or switch invoice views to find the financial record you need."
-                      : "Invoices remain canonical financial records tied to the same project, customer, estimate, and job context instead of becoming a disconnected billing module."
-                  }
-                />
-              </div>
-            )}
-          </div>
-        </section>
+        <InvoiceRecordsPanel
+          invoices={filteredInvoices}
+          totalInvoiceCount={invoices.length}
+          storageKey={INVOICES_ROWS_PER_VIEW_STORAGE_KEY}
+        />
       </section>
         <WorkspaceComposerSheet
           id="invoice-create"

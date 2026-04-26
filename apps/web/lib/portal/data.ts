@@ -8,6 +8,7 @@ import type {
   ContractSignerRole,
   ContractSignerStatus,
   ContractStatus,
+  EstimateAttachment,
   EstimateWorkspaceContent,
   EstimateStatus,
   InvoiceStatus,
@@ -19,7 +20,9 @@ import type {
 
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { normalizeEstimateWorkspaceContent } from "@/lib/estimates/workspace";
+import { recordInvoiceNotificationEvent } from "@/lib/notifications/system";
 import { listPortalAccessGrantsForCurrentUser } from "@/lib/portal-access/data";
+import { STORAGE_BUCKET_NAMES } from "@floorconnector/config";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 type PortalProjectRow = {
@@ -62,6 +65,10 @@ type PortalEstimateRow = {
   total_amount: string | number;
   notes: string | null;
   content: Record<string, unknown> | null;
+  sent_at: string | null;
+  customer_viewed_at: string | null;
+  approved_at: string | null;
+  rejected_at: string | null;
   created_at: string;
   updated_at: string;
   customers?:
@@ -78,6 +85,21 @@ type PortalEstimateRow = {
         status: string;
       }
     | null;
+};
+
+type PortalEstimateAttachmentRow = {
+  id: string;
+  company_id: string;
+  estimate_id: string;
+  attachment_type: string;
+  storage_path: string;
+  file_name: string;
+  mime_type: string;
+  file_size_bytes: number | null;
+  caption: string | null;
+  uploaded_by: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 type PortalEstimateLineItemRow = {
@@ -468,6 +490,15 @@ export type PortalEstimateReviewDetail = {
     lineTotal: string;
     sortOrder: number;
   }>;
+  attachments: Array<
+    EstimateAttachment & {
+      downloadUrl: string | null;
+    }
+  >;
+  sentAt: string | null;
+  customerViewedAt: string | null;
+  approvedAt: string | null;
+  rejectedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -698,6 +729,10 @@ const portalEstimateSelect = `
   total_amount,
   notes,
   content,
+  sent_at,
+  customer_viewed_at,
+  approved_at,
+  rejected_at,
   created_at,
   updated_at,
   customers (
@@ -835,6 +870,48 @@ function formatQuantity(value: string | number) {
   return Number(value).toFixed(2);
 }
 
+function mapPortalEstimateAttachment(row: PortalEstimateAttachmentRow): EstimateAttachment {
+  return {
+    id: row.id,
+    organizationId: row.company_id,
+    estimateId: row.estimate_id,
+    attachmentType: row.attachment_type,
+    storagePath: row.storage_path,
+    fileName: row.file_name,
+    mimeType: row.mime_type,
+    fileSizeBytes: row.file_size_bytes,
+    caption: row.caption,
+    uploadedByUserId: row.uploaded_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+async function resolvePortalEstimateAttachmentDownloadUrls(
+  attachments: EstimateAttachment[]
+) {
+  if (attachments.length === 0) {
+    return [];
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const signedUrlEntries = await Promise.all(
+    attachments.map(async (attachment) => {
+      const response = await supabase.storage
+        .from(STORAGE_BUCKET_NAMES.documents)
+        .createSignedUrl(attachment.storagePath, 60 * 60);
+
+      return [attachment.id, response.data?.signedUrl ?? null] as const;
+    })
+  );
+  const signedUrlMap = new Map<string, string | null>(signedUrlEntries);
+
+  return attachments.map((attachment) => ({
+    ...attachment,
+    downloadUrl: signedUrlMap.get(attachment.id) ?? null
+  }));
+}
+
 function formatLocationSummary(project: PortalProjectRow) {
   const parts = [
     project.address_line_1,
@@ -956,6 +1033,20 @@ async function createPortalRecordView(
 ) {
   const user = await requireAuthenticatedUser(next);
   const supabase = await getSupabaseServerClient();
+  const existingResponse = await supabase
+    .from("portal_record_views")
+    .select("id")
+    .eq("company_id", input.companyId)
+    .eq("portal_user_id", user.id)
+    .eq("subject_type", input.subjectType)
+    .eq("subject_id", input.subjectId)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingResponse.error) {
+    throw new Error(`Unable to inspect the portal view event: ${existingResponse.error.message}`);
+  }
+
   const response = await supabase.from("portal_record_views").insert({
     company_id: input.companyId,
     portal_user_id: user.id,
@@ -968,6 +1059,11 @@ async function createPortalRecordView(
   if (response.error) {
     throw new Error(`Unable to record the portal view event: ${response.error.message}`);
   }
+
+  return {
+    portalUserId: user.id,
+    isFirstView: !existingResponse.data
+  };
 }
 
 async function getLatestStatusesByProjectIds(projectIds: string[]) {
@@ -1523,6 +1619,40 @@ export async function getPortalEstimateReviewData(
     );
   }
 
+  const attachmentsResponse = await supabase
+    .from("estimate_attachments")
+    .select(
+      `
+        id,
+        company_id,
+        estimate_id,
+        attachment_type,
+        storage_path,
+        file_name,
+        mime_type,
+        file_size_bytes,
+        caption,
+        uploaded_by,
+        created_at,
+        updated_at
+      `
+    )
+    .eq("company_id", row.company_id)
+    .eq("estimate_id", estimateId)
+    .order("created_at", { ascending: false });
+  const attachmentRows =
+    (attachmentsResponse.data as PortalEstimateAttachmentRow[] | null) ?? [];
+
+  if (attachmentsResponse.error) {
+    throw new Error(
+      `Unable to load portal estimate attachments: ${attachmentsResponse.error.message}`
+    );
+  }
+
+  const attachments = await resolvePortalEstimateAttachmentDownloadUrls(
+    attachmentRows.map((attachment) => mapPortalEstimateAttachment(attachment))
+  );
+
   await createPortalRecordView(
     {
       companyId: row.company_id,
@@ -1572,6 +1702,11 @@ export async function getPortalEstimateReviewData(
       lineTotal: formatMoney(lineItem.line_total),
       sortOrder: lineItem.sort_order
     })),
+    attachments,
+    sentAt: row.sent_at,
+    customerViewedAt: row.customer_viewed_at,
+    approvedAt: row.approved_at,
+    rejectedAt: row.rejected_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -1830,7 +1965,7 @@ export async function getPortalInvoiceReviewData(
     );
   }
 
-  await createPortalRecordView(
+  const portalView = await createPortalRecordView(
     {
       companyId: row.company_id,
       customerId: row.customer_id,
@@ -1840,6 +1975,19 @@ export async function getPortalInvoiceReviewData(
     },
     next
   );
+  if (portalView.isFirstView) {
+    await recordInvoiceNotificationEvent({
+      organizationId: row.company_id,
+      invoiceId: row.id,
+      customerId: row.customer_id,
+      projectId: row.project_id,
+      invoiceReferenceNumber: row.reference_number,
+      eventType: "viewed",
+      actorType: "portal_user",
+      portalUserId: portalView.portalUserId,
+      occurredAt: new Date().toISOString()
+    });
+  }
 
   const paidAmount = paymentRows.reduce((sum, payment) => sum + Number(payment.amount), 0);
   const paymentWorkflow = computeInvoicePaymentWorkflowGate({
