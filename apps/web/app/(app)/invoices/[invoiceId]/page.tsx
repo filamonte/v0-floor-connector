@@ -10,20 +10,34 @@ import { InvoiceForm } from "@/components/invoice-form";
 import { InvoicePaymentForm } from "@/components/invoice-payment-form";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NextActionCard } from "@/components/next-action-card";
+import { RelatedConversationsCard } from "@/components/related-conversations-card";
+import {
+  ScheduleContextActions,
+  ScheduleContextFocusCard,
+  ScheduleContextMetrics,
+  ScheduleContextNotice
+} from "@/components/schedule-context-card";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { listCatalogItems } from "@/lib/catalogs/data";
 import { listInvoiceChangeOrders } from "@/lib/change-orders/data";
+import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
 import {
   recordInvoicePaymentAction,
   updateInvoiceAction
 } from "@/lib/invoices/actions";
 import { getInvoiceById, listInvoiceSourceOptions } from "@/lib/invoices/data";
 import { listEstimates } from "@/lib/estimates/data";
-import { listJobs } from "@/lib/jobs/data";
+import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 import { getProgressBillingByEstimateId } from "@/lib/progress-billing/data";
 import { listProjects } from "@/lib/projects/data";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
+import { buildScheduleHref } from "@/lib/schedule/links";
+import {
+  formatScheduleSummaryWindow,
+  getScheduleAssignmentSummary,
+  getScheduleSummarySortValue
+} from "@/lib/schedule/summary";
 
 type InvoiceDetailPageProps = {
   params: Promise<{
@@ -261,21 +275,27 @@ function getInvoiceContinuityTitle(input: { billingModel: string; workflowRole: 
   return "Billing continuity";
 }
 
+function buildProjectScheduleHref(projectId: string) {
+  return buildScheduleHref({ projectId });
+}
+
 export default async function InvoiceDetailPage({
   params,
   searchParams
 }: InvoiceDetailPageProps) {
   const { invoiceId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
-  const [invoice, projects, estimates, jobs, changeOrders, sourceOptions, catalogItems] = await Promise.all([
-    getInvoiceById(invoiceId, `/invoices/${invoiceId}`),
-    listProjects(),
-    listEstimates(),
-    listJobs(),
-    listInvoiceChangeOrders(invoiceId, `/invoices/${invoiceId}`),
-    listInvoiceSourceOptions(),
-    listCatalogItems()
-  ]);
+  const [invoice, projects, estimates, jobs, changeOrders, sourceOptions, catalogItems, communicationThreads] =
+    await Promise.all([
+      getInvoiceById(invoiceId, `/invoices/${invoiceId}`),
+      listProjects(),
+      listEstimates(),
+      listJobs(),
+      listInvoiceChangeOrders(invoiceId, `/invoices/${invoiceId}`),
+      listInvoiceSourceOptions(),
+      listCatalogItems(),
+      listCommunicationThreadsForSubject("invoice", invoiceId)
+    ]);
 
   if (!invoice) {
     notFound();
@@ -410,7 +430,6 @@ export default async function InvoiceDetailPage({
     invoice.billingModel === "aia_progress" && progressBillingWorkspace
       ? "Open progress billing workspace"
       : "Open project workspace";
-
   const projectOptions = projects.map((project) => ({
     id: project.id,
     name: project.name,
@@ -438,6 +457,53 @@ export default async function InvoiceDetailPage({
     dispatchStatus: job.dispatchStatus,
     estimateId: job.estimate?.id ?? null
   }));
+  const projectJobs = jobs.filter((job) => job.projectId === invoice.projectId);
+  const linkedJob = invoice.jobId
+    ? projectJobs.find((job) => job.id === invoice.jobId) ?? jobs.find((job) => job.id === invoice.jobId) ?? null
+    : null;
+  const scheduleSummaryJobs = linkedJob ? [linkedJob] : projectJobs;
+  const scheduleAssignmentsByJobId = await listJobAssignmentsByJobIds(
+    scheduleSummaryJobs.map((job) => job.id),
+    `/invoices/${invoiceId}`
+  );
+  const scheduleCounts = {
+    scheduled: projectJobs.filter((job) => job.dispatchStatus === "scheduled").length,
+    unscheduled: projectJobs.filter((job) => job.dispatchStatus === "unscheduled").length,
+    inProgress: projectJobs.filter((job) => job.dispatchStatus === "in_progress").length
+  };
+  const projectScheduleFocusJob =
+    [...projectJobs]
+      .filter(
+        (job) =>
+          (job.dispatchStatus === "scheduled" || job.dispatchStatus === "in_progress") &&
+          job.scheduledDate
+      )
+      .sort(
+        (left, right) => getScheduleSummarySortValue(left) - getScheduleSummarySortValue(right)
+      )[0] ?? null;
+  const scheduleFocusJob = linkedJob ?? projectScheduleFocusJob;
+  const scheduleFocusAssignments = scheduleFocusJob
+    ? scheduleAssignmentsByJobId.get(scheduleFocusJob.id) ?? []
+    : [];
+  const scheduleFocusAssignmentNames = scheduleFocusAssignments
+    .map((assignment) => assignment.person?.displayName ?? assignment.vendor?.name ?? null)
+    .filter((value): value is string => Boolean(value));
+  const scheduleFocusSummary = scheduleFocusJob
+    ? getScheduleAssignmentSummary({
+        assignmentNames: scheduleFocusAssignmentNames,
+        crewVendorName: scheduleFocusJob.crewVendor?.name ?? null,
+        assignmentCount: scheduleFocusAssignments.length
+      })
+    : null;
+  const projectJobsWithoutAssignments = projectJobs.filter(
+    (job) =>
+      job.dispatchStatus !== "completed" &&
+      ((linkedJob
+        ? job.id === linkedJob.id
+          ? scheduleAssignmentsByJobId.get(job.id)?.length ?? 0
+          : 0
+        : scheduleAssignmentsByJobId.get(job.id)?.length ?? 0) === 0)
+  );
 
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
@@ -1158,6 +1224,149 @@ export default async function InvoiceDetailPage({
 
       <aside className="space-y-6">
         <DetailPanel
+          title={linkedJob ? "Linked Schedule" : "Production Schedule"}
+          description={
+            linkedJob
+              ? "This invoice is linked to a canonical execution record, so billing can be read alongside that job's current schedule and crew state."
+              : "This invoice is not linked to a single job, so schedule context is summarized from canonical project jobs without creating a billing-to-schedule bridge model."
+          }
+          >
+            <div className="space-y-4 text-sm leading-6 text-slate-600">
+              {linkedJob ? (
+                scheduleFocusJob ? (
+                  <ScheduleContextFocusCard
+                    eyebrow={
+                      scheduleFocusJob.dispatchStatus === "in_progress"
+                        ? "Linked work in progress"
+                        : "Linked job"
+                    }
+                    title={invoice.project?.name ?? scheduleFocusJob.project?.name ?? "Linked job"}
+                    titleHref={`/jobs/${scheduleFocusJob.id}`}
+                    statusLabel={formatStatusLabel(scheduleFocusJob.dispatchStatus)}
+                    summary={formatScheduleSummaryWindow({
+                      scheduledDate: scheduleFocusJob.scheduledDate,
+                      scheduledStartAt: scheduleFocusJob.scheduledStartAt,
+                      scheduledEndAt: scheduleFocusJob.scheduledEndAt
+                    })}
+                    detailRows={[
+                      {
+                        label: "Crew",
+                        value:
+                          scheduleFocusAssignments.length > 0
+                            ? scheduleFocusSummary
+                            : scheduleFocusJob.dispatchStatus === "scheduled"
+                              ? "Scheduled, but crew assignment still needs to be confirmed"
+                              : scheduleFocusSummary
+                      }
+                    ]}
+                  />
+                ) : (
+                  <ScheduleContextNotice
+                    eyebrow="Ready for scheduling"
+                    title="The linked job exists, but it is still unscheduled"
+                  >
+                    Billing is already tied to a canonical execution record. Add a real schedule
+                    commitment on that job to surface its next production timing here.
+                  </ScheduleContextNotice>
+                )
+              ) : (
+                <>
+                  <ScheduleContextMetrics
+                    items={[
+                      { label: "Scheduled", value: scheduleCounts.scheduled },
+                      { label: "Unscheduled", value: scheduleCounts.unscheduled },
+                      { label: "In progress", value: scheduleCounts.inProgress }
+                    ]}
+                  />
+
+                  {scheduleFocusJob ? (
+                    <ScheduleContextFocusCard
+                      eyebrow={
+                        scheduleFocusJob.dispatchStatus === "in_progress"
+                          ? "Work in progress"
+                          : "Next scheduled job"
+                      }
+                      title={scheduleFocusJob.project?.name ?? invoice.project?.name ?? "Project job"}
+                      titleHref={`/jobs/${scheduleFocusJob.id}`}
+                      statusLabel={formatStatusLabel(scheduleFocusJob.dispatchStatus)}
+                      summary={formatScheduleSummaryWindow({
+                        scheduledDate: scheduleFocusJob.scheduledDate,
+                        scheduledStartAt: scheduleFocusJob.scheduledStartAt,
+                        scheduledEndAt: scheduleFocusJob.scheduledEndAt
+                      })}
+                      detailRows={[
+                        {
+                          label: "Crew",
+                          value:
+                            scheduleFocusAssignments.length > 0
+                              ? scheduleFocusSummary
+                              : scheduleFocusJob.dispatchStatus === "scheduled"
+                                ? "Scheduled, but crew assignment still needs to be confirmed"
+                                : scheduleFocusSummary
+                        }
+                      ]}
+                    />
+                  ) : (
+                    <ScheduleContextNotice
+                      eyebrow={projectJobs.length > 0 ? "Ready for scheduling" : "No jobs yet"}
+                      title={
+                        projectJobs.length > 0
+                          ? "Project work exists, but no schedule commitment is set yet"
+                          : "No production jobs are linked to this project yet"
+                      }
+                    >
+                      {projectJobs.length > 0
+                        ? "Canonical project jobs already exist for this invoice, but they are still unscheduled. The next production commitment will show here once a real date is attached."
+                        : "Schedule continuity will appear here after downstream production work is created on the canonical project chain."}
+                    </ScheduleContextNotice>
+                  )}
+                </>
+              )}
+
+            <ContextFactsList
+              items={[
+                {
+                  label: "Project link",
+                  value: invoice.project ? (
+                    <Link href={`/projects/${invoice.project.id}`} className="font-medium text-brand-700">
+                      {invoice.project.name}
+                    </Link>
+                  ) : (
+                    "Project context unavailable"
+                  )
+                },
+                {
+                  label: "Crew assignment state",
+                  value:
+                    linkedJob && scheduleFocusJob
+                      ? scheduleFocusSummary ?? "No crew state yet"
+                      : projectJobsWithoutAssignments.length > 0
+                        ? `${projectJobsWithoutAssignments.length} job${
+                            projectJobsWithoutAssignments.length === 1 ? "" : "s"
+                          } still need crew assignment rows`
+                        : projectJobs.length > 0
+                          ? "Crew coverage is already attached where needed"
+                          : "No project jobs yet"
+                }
+              ]}
+            />
+
+            <ScheduleContextActions
+              actions={[
+                ...(linkedJob
+                  ? [{ href: `/jobs/${linkedJob.id}`, label: "Open linked job" as const }]
+                  : []),
+                {
+                  href: buildProjectScheduleHref(invoice.projectId),
+                  label: "Open schedule",
+                  variant: "subtle"
+                }
+              ]}
+            />
+          </div>
+        </DetailPanel>
+
+        <DetailPanel
           title="Connected Records"
           description="Shortcuts to the surrounding commercial chain without displacing the invoice as billing truth."
         >
@@ -1302,6 +1511,15 @@ export default async function InvoiceDetailPage({
             ]}
           />
         </DetailPanel>
+
+        <RelatedConversationsCard
+          source="invoice"
+          description="Invoice-scoped communication stays on canonical threads and routes back into the shared communications workspace when billing follow-through needs context."
+          countLabel="Invoice threads"
+          emptyMessage="No invoice-scoped communication threads are attached to this canonical invoice yet."
+          actionClassName="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+          threads={communicationThreads}
+        />
       </aside>
     </div>
   );

@@ -12,8 +12,11 @@ import {
 type EstimateRecord = {
   id: string;
   referenceNumber: string;
+  title?: string | null;
   totalAmount: string;
   status: string;
+  estimateDate?: string | null;
+  updatedAt?: string | null;
   customer?: {
     name?: string | null;
   } | null;
@@ -29,6 +32,7 @@ type EstimateRecordsPanelProps = {
   estimates: EstimateRecord[];
   totalEstimateCount: number;
   storageKey: string;
+  createHref?: string;
 };
 
 function formatMoney(amount: string) {
@@ -42,10 +46,23 @@ function formatStatusLabel(status: string) {
   return status.replaceAll("_", " ");
 }
 
+function formatShortDate(value: string | null | undefined) {
+  if (!value) {
+    return "No date";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric"
+  }).format(new Date(`${value.slice(0, 10)}T00:00:00`));
+}
+
 export function EstimateRecordsPanel({
   estimates,
   totalEstimateCount,
-  storageKey
+  storageKey,
+  createHref
 }: EstimateRecordsPanelProps) {
   const { rowsPerView } = useRowsPerViewPreference(storageKey);
   const visibleEstimates = applyRowsPerView(estimates, rowsPerView);
@@ -62,9 +79,11 @@ export function EstimateRecordsPanel({
               Primary estimate register.
             </p>
           </div>
-          <div className="hidden grid-cols-[minmax(0,1.5fr)_1fr_160px_140px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
-            <span>Estimate</span>
+          <div className="hidden grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
+            <span>EST. #</span>
+            <span>Title / customer</span>
             <span>Project</span>
+            <span>Date</span>
             <span>Status</span>
             <span className="text-right">Total</span>
           </div>
@@ -91,12 +110,20 @@ export function EstimateRecordsPanel({
               href={`/estimates/${estimate.id}`}
               className="group block px-4 py-3 transition hover:bg-slate-50/70"
             >
-              <div className="grid gap-4 md:grid-cols-[minmax(0,1.5fr)_1fr_160px_140px] md:items-center">
+              <div className="grid gap-4 md:grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px] md:items-center">
                 <div className="min-w-0">
-                  <h3 className="text-base font-semibold text-slate-950 transition group-hover:text-brand-700">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                    EST. #
+                  </p>
+                  <h3 className="text-sm font-semibold text-slate-950 transition group-hover:text-brand-700">
                     {estimate.referenceNumber}
                   </h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-950">
+                    {estimate.title ?? estimate.opportunity?.title ?? "Untitled estimate"}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-slate-500">
                     {estimate.customer?.name ?? "Unknown customer"}
                   </p>
                   <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-400">
@@ -109,6 +136,14 @@ export function EstimateRecordsPanel({
                   </p>
                   <p className="text-sm font-medium text-slate-700">
                     {estimate.project?.name ?? "Unknown project"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                    Date
+                  </p>
+                  <p className="text-sm font-medium text-slate-700">
+                    {formatShortDate(estimate.estimateDate ?? estimate.updatedAt)}
                   </p>
                 </div>
                 <div>
@@ -140,8 +175,10 @@ export function EstimateRecordsPanel({
               description={
                 totalEstimateCount > 0
                   ? "Try a broader search or switch estimate views to find the commercial record you need."
-                  : "Estimates define the priced commercial scope that later flows into contracts, jobs, and invoicing."
+                  : "Next step after the customer and project are ready: create the priced commercial scope that later flows into contracts, jobs, and invoicing."
               }
+              actionHref={createHref}
+              actionLabel={totalEstimateCount > 0 ? undefined : "Create your first estimate"}
             />
           </div>
         )}

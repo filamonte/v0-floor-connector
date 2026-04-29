@@ -174,12 +174,54 @@ export default async function DashboardPage() {
       return appointmentDate.toISOString().slice(0, 10) === today;
     })
     .slice(0, 5);
+  const upcomingAppointments = scheduledAppointments
+    .filter((appointment) => appointment.startsAt >= new Date().toISOString())
+    .sort((left, right) => left.startsAt.localeCompare(right.startsAt))
+    .slice(0, 5);
   const openPunchlistCount = punchlistItems.filter(
     (item) => item.status === "open" || item.status === "in_progress"
   ).length;
   const progressBillingReadyCount = progressBillingWorkspaces.filter(
     (workspace) => workspace.status === "ready_to_bill"
   ).length;
+  const onboardingSteps = [
+    {
+      key: "settings",
+      label: "Review settings",
+      description:
+        "Confirm organization, workflow, financial, and template defaults before the first customer-facing send.",
+      href: "/settings",
+      actionLabel: "Review settings",
+      complete: Boolean(financialSettings && workflowSettings)
+    },
+    {
+      key: "customer",
+      label: "Create first customer",
+      description:
+        "Add the canonical customer account and email that estimates, portal access, invoices, and payments use.",
+      href: "/customers?compose=1#customer-create",
+      actionLabel: "Create first customer",
+      complete: customers.length > 0
+    },
+    {
+      key: "project",
+      label: "Create first project",
+      description:
+        "Create the project hub that connects estimating, contracts, jobs, invoices, and payments.",
+      href: "/projects?compose=1#project-create",
+      actionLabel: "Create first project",
+      complete: projects.length > 0
+    },
+    {
+      key: "estimate",
+      label: "Create first estimate",
+      description:
+        "Start the priced scope from a lead, customer, or project and continue in the estimate workspace.",
+      href: "/estimates?compose=1#estimate-create",
+      actionLabel: "Create first estimate",
+      complete: estimates.length > 0
+    }
+  ];
   const recentPayments = payments.filter((payment) => payment.status !== "void").slice(0, 5);
   const openReceivables = openInvoices.reduce(
     (sum, invoice) => sum + Number(invoice.balanceDueAmount),
@@ -242,7 +284,7 @@ export default async function DashboardPage() {
           value: String(leadsNeedingFollowUp.length),
           detail:
             "Upstream opportunity work still waiting on qualification, assessment, or commercial follow-through.",
-          href: "/opportunities"
+          href: "/leads"
         },
         {
           key: "estimates-awaiting-action",
@@ -266,7 +308,7 @@ export default async function DashboardPage() {
           value: String(appointmentsToday.length),
           detail:
             "Site visits, estimate meetings, and follow-up blocks stay visible without becoming a second job scheduler.",
-          href: "/calendar"
+          href: "/appointments"
         },
         {
           key: "jobs-today",
@@ -285,11 +327,11 @@ export default async function DashboardPage() {
           title: "Leads / opportunities needing follow-up",
           description:
             "Keep the early revenue queue visible so qualification and estimating work move before projects stall.",
-          href: "/opportunities",
+          href: "/leads",
           actionLabel: "Open leads",
           emptyTitle: "No leads are waiting on follow-up.",
           emptyDescription:
-            "When new, qualified, or proposal-stage opportunities need attention, they will surface here.",
+            "Start here by creating your first lead, or create a customer directly when the account is already known.",
           items: leadsNeedingFollowUp.map((lead) => ({
             id: lead.id,
             title: lead.title || lead.prospectName,
@@ -317,12 +359,12 @@ export default async function DashboardPage() {
           eyebrow: "Proposal queue",
           title: "Estimates awaiting action",
           description:
-            "Draft scope, customer follow-up, and revision work stays visible before the estimate chain goes quiet.",
+            "Draft scope, send-estimate follow-up, and revision work stay visible so the commercial handoff keeps moving.",
           href: "/estimates",
           actionLabel: "Open estimates",
           emptyTitle: "No estimates need immediate action.",
           emptyDescription:
-            "Draft, sent, or revised commercial records will surface here when the proposal queue needs attention.",
+            "Next step after the customer and project are ready: create your first estimate from the existing quick-create path.",
           items: estimatesAwaitingAction.map((estimate) => ({
             id: estimate.id,
             title: estimate.referenceNumber,
@@ -330,7 +372,7 @@ export default async function DashboardPage() {
             meta: `${labelize(estimate.status)} - updated ${formatDateTime(estimate.updatedAt)}`,
             href: `/estimates/${estimate.id}`,
             actionLabel:
-              estimate.status === "draft" ? "Finish estimate" : "Open estimate",
+              estimate.status === "draft" ? "Send estimate" : "Approve estimate",
             badge: labelize(estimate.status),
             trailing: formatCurrency(estimate.totalAmount),
             contextHref: estimate.project ? `/projects/${estimate.project.id}` : null,
@@ -386,7 +428,7 @@ export default async function DashboardPage() {
           actionLabel: "Open projects",
           emptyTitle: "No active projects need attention right now.",
           emptyDescription:
-            "Broader blocker scoring is still growing, but active projects will keep surfacing here as continuity work concentrates.",
+            "Create your first project to anchor estimates, contracts, jobs, invoices, and payments to one operational hub.",
           items: projectsNeedingAttention.map((project) => ({
             id: project.id,
             title: project.name,
@@ -473,6 +515,35 @@ export default async function DashboardPage() {
               job.scheduledDate
             )
           }))
+        },
+        {
+          key: "appointments",
+          eyebrow: "Appointments",
+          title: "Upcoming appointments",
+          description:
+            "Commercial visits and customer-facing appointment blocks stay visible from the same operational board.",
+          href: "/appointments",
+          actionLabel: "Open appointments",
+          emptyTitle: "No upcoming appointments are scheduled right now.",
+          emptyDescription:
+            "Site visits and follow-up appointments will surface here once scheduled from the canonical appointment flow.",
+          items: upcomingAppointments.map((appointment) => ({
+            id: appointment.id,
+            title: appointment.title,
+            subtitle: appointment.customer?.name ?? "Customer not linked",
+            meta: `${formatDateTime(appointment.startsAt)} - ${appointment.location ?? "Location pending"}`,
+            href: "/appointments",
+            actionLabel: "Open appointments",
+            badge: labelize(appointment.status),
+            contextHref: appointment.projectId ? `/projects/${appointment.projectId}` : null,
+            contextLabel: appointment.projectId ? "Open project" : null,
+            searchText: buildSearchText(
+              appointment.title,
+              appointment.customer?.name,
+              appointment.location,
+              appointment.status
+            )
+          }))
         }
       ]}
       financeWidgets={[
@@ -486,7 +557,7 @@ export default async function DashboardPage() {
           actionLabel: "Open payments",
           emptyTitle: "No unpaid or overdue invoices need attention right now.",
           emptyDescription:
-            "As open balances age, the related invoices will surface here for collections follow-through.",
+            "Invoices will appear after estimate approval, contract readiness, and job or billing context move forward on the same project chain.",
           items: (overdueInvoices.length > 0 ? overdueInvoices : openInvoices.slice(0, 5)).map(
             (invoice) => ({
               id: invoice.id,
@@ -549,6 +620,7 @@ export default async function DashboardPage() {
           }))
         }
       ]}
+      onboardingSteps={onboardingSteps}
       shortcuts={[
         {
           key: "cost-items-database",
@@ -563,7 +635,7 @@ export default async function DashboardPage() {
           label: "Appointments",
           description:
             "Run commercial and customer-facing visits from the same canonical lead, customer, and project chain.",
-          href: "/calendar",
+          href: "/appointments",
           metric: `${scheduledAppointments.length} scheduled`
         },
         {
@@ -586,7 +658,7 @@ export default async function DashboardPage() {
           key: "projects",
           label: "Projects",
           description:
-            "Open the operational root for readiness, execution, and downstream continuity.",
+            "Open the operational root for estimate approval, contract handoff, billing readiness, and execution continuity.",
           href: "/projects",
           metric: `${activeProjects.length} active`
         },
@@ -594,7 +666,7 @@ export default async function DashboardPage() {
           key: "estimates",
           label: "Estimates",
           description:
-            "Review pipeline, follow-up, and approved commercial work ready for the next step.",
+            "Review estimate pipeline, send estimate follow-up, and approved work ready for contract handoff.",
           href: "/estimates",
           metric: `${estimates.length} total`
         },
@@ -610,7 +682,7 @@ export default async function DashboardPage() {
           key: "progress-billing",
           label: "Progress billing",
           description:
-            "Review schedule-of-values state and turn approved-scope progress into canonical invoices.",
+            "Open progress billing from approved scope and turn billable progress into canonical invoices.",
           href: "/progress-billing",
           metric: `${progressBillingReadyCount} ready`
         },

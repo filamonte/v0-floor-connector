@@ -160,6 +160,11 @@ Current shell behavior:
   - project detail is the reference workflow and readiness hub
   - estimate, contract, invoice, and job detail now broadly follow the same shared page language and point back to the project hub when broader handoff state matters
   - remaining UI issues are now iterative polish items rather than structural layout breaks
+- first-login onboarding readiness has been polished without adding schema or new workflow logic:
+  - dashboard now shows a lightweight `Start here` setup guide until settings, the first customer, the first project, and the first estimate are present
+  - dashboard links now route to the current canonical `/leads` and `/appointments` surfaces
+  - first-empty states on leads, customers, projects, and estimates now include direct quick-create actions and clearer "create your first..." guidance
+  - quick-create remains the existing canonical-record-first path and still hands off into the full workspace
 
 ### Contractor UI System
 
@@ -168,6 +173,7 @@ Implemented contractor UI direction now includes:
 - one flattened shell/header system with breadcrumb and page context folded into the same top header instead of a permanent left-nav-plus-header stack
 - thinner command/search strips beneath page identity on manager surfaces
 - dashboard as a denser and more curated operational command-center surface with modular queue widgets, stronger quick-create entry, and continuity back into shared records instead of a loose summary page
+- dashboard validation polish now promotes canonical attention items, open estimates, unpaid invoices, upcoming appointments, leads, active projects, and today/live jobs near the top of the home board without introducing fake dashboard data
 - early module-dashboard direction on top of the same shared manager-page system, with estimates and invoices now reading more like operational entry surfaces than plain lists
 - manager pages built around:
   - page identity
@@ -178,6 +184,10 @@ Implemented contractor UI direction now includes:
   - collect minimum required fields only
   - create the canonical record first
   - route directly into the full record workspace for complete editing
+- estimate quick-create now starts from customer/account and project context; optional opportunity selection is treated as upstream continuity, and project-launched handoff derives the customer before creating the estimate
+- lead and project estimate handoff links now preserve an existing linked opportunity id when available so Add Estimate can reuse upstream continuity instead of creating duplicate opportunity context
+- estimate quick-create now also reuses an existing opportunity already linked to the selected customer project when `/estimates` starts from a customer/project selection without an explicit opportunity, preventing duplicate upstream opportunity context for the same project
+- seed-free estimate QA tightened the customer workspace so related contacts and portal access reads degrade safely against older local schema caches, and customer detail now shows connected estimate rows in addition to the estimate count
 - the shell and dashboard now expose a shared universal-create launcher that deep-links into those existing quick-create overlays across the canonical workflow
 
 Current contractor UI design notes:
@@ -216,17 +226,28 @@ Current protected routes include:
 - `/contracts`
 - `/invoices`
 - `/payments`
+- `/reports`
 - `/progress-billing`
 - `/schedule`
+- `/communications`
 - `/appointments`
 - `/jobs`
 - `/punchlists`
 - `/daily-logs`
+- `/directory`
 - `/people`
 - `/vendors`
 - `/time`
 - `/materials`
 - `/settings`
+
+Current route-language note:
+- `/people` is still the implemented workforce-oriented route today
+- the future contractor-facing direction is a broader `Directory` workspace that can unify customer accounts, related contacts, workforce records, vendors, and other contact-like entries at the view layer
+- that future Directory direction does not change the current canonical model in this pass
+- `/directory` now exists as a read-only unified contractor-facing view over canonical customers, related customer contacts, people, vendors, and opportunities, while each row still routes into its existing canonical workspace
+- the customer, person, vendor, and lead detail pages now include compact Directory-context handoff cards so users can jump back to the read-only index without weakening those canonical detail workspaces as the editing and workflow homes
+- Directory customer-contact rows now describe linked portal grants and contact-level permissions as managed on the parent customer detail page instead of presenting portal linkage as future-only
 
 ### Module Home Standard
 
@@ -239,6 +260,17 @@ Implemented now:
   - open receivables
   - quick links into invoices, payments, and adjacent financial workspaces
 - the route reuses the existing canonical invoice and payment data loaders and does not introduce a new finance data model
+- `/reports` now exists as the first internal-beta reporting basics surface
+- Reports Home is read-only and intentionally narrow:
+  - lead pipeline summary by canonical opportunity status
+  - estimate summary by canonical estimate status
+  - invoice summary and aging from canonical invoice balances and due dates
+  - recent payment activity from canonical payment records
+  - project readiness blocker visibility from canonical project readiness fields
+  - Sales Tax Summary from canonical invoice tax reporting snapshots
+- the route uses server-side tenant-scoped loaders over `opportunities`, `estimates`, `invoices`, `payments`, `projects`, and `invoice_tax_reporting_entries`
+- Sales Tax Summary uses invoice issue-date filtering, reports taxable sales, exempt sales, tax collected, invoice count, invoice/payment status context, and customer exemption snapshot visibility, with every row linking back to the canonical invoice
+- `/reports` does not create reporting tables, snapshots, exports, charts, mutations, filing workflows, tax-provider integrations, or a separate analytics model
 
 Defined but still foundation-only:
 - `/financials/accounts-receivable` exists as a purpose-defined placeholder for future collections, follow-up, aging, and receivable management work
@@ -296,6 +328,24 @@ Implemented:
 - create/list/read/update flows
 - protected customers list page
 - customer detail page
+- customer detail now includes a compact `Contacts` management section over canonical `contacts` and `customer_contacts`
+- contractor admins can now add related customer contacts, edit their basic contact details, and designate one main contact from customer detail
+- `/directory` now also surfaces those related customer contacts as read-only `Customer Contact` entries that route back to the parent customer detail page
+- customer detail and Directory now also show portal-readiness and permission context for related customer contacts:
+  - whether the contact has an email
+  - whether the contact is the main contact
+  - whether a linked-contact portal grant has stored permission flags available for enforced actions
+- customer detail portal access now also shows whether an existing grant is still customer-level or linked to one canonical related customer contact
+- linked-contact portal grants now also store customer-contact portal permissions and allow contractor-admin editing from customer detail
+- linked-contact portal grants now also enforce stored permissions for portal estimate approve/reject, change-order approve/reject, and contract sign/decline actions
+- null-contact customer-level grants still continue to use legacy portal behavior during this first enforcement rollout
+
+Current customer-account guardrails:
+- `customers` remain the canonical customer/account records for commercial and financial workflows
+- customer entries that later appear inside a unified contractor `Directory` should still be those full canonical customer/account records, not lightweight contact cards
+- estimate send, invoice recipient, contract customer context, payment/billing context, and project ownership should continue to read canonical customer/account fields by default
+- additional customer contacts are related contacts beneath the canonical customer/account and do not replace it
+- `customers.email` still remains the account-level estimate, contract, and invoice recipient source of truth in this phase
 
 Starter fields include:
 - name
@@ -321,10 +371,18 @@ Implemented:
 - project commercial-readiness sync foundation derived from contract, invoice, payment, financing, and workflow-setting state
 - stored project readiness fields now refresh from upstream opportunity and estimate mutations instead of waiting for later downstream changes to resync them
 - project detail now acts as the upstream sales-to-production readiness hub with blocker visibility, next-best-action guidance, and a derived ready-to-schedule handoff state
+- project detail next-action guidance now distinguishes draft/sent/rejected/approved estimate states, contract draft/signature states, deposit readiness, pending change orders, job scheduling, completed-work invoicing, and open invoice/payment follow-up using existing canonical records only
+- project detail completed-job invoice actions now preserve the canonical `jobId` when handing off to invoice quick-create, and active job follow-up routes through `/jobs?projectId=...` so the project context is not lost
 - estimate, contract, and invoice detail pages now point users back to the project readiness hub when the upstream handoff state matters
 - the contractor app now has a defined reusable record-workspace direction: header, workflow summary, primary workspace, context rail, and lower-priority secondary sections
 - project, estimate, contract, invoice, and job detail now all use that shared workspace pattern closely enough that the first major UI layout-system polish pass is considered complete
+- dashboard, leads, estimate detail, and project detail now normalize the phase-one lead-to-invoice CTA vocabulary around `Start estimate`, `Send estimate`, `Approve estimate`, `Generate contract`, `Open progress billing`, and `Create invoice` without changing workflow logic
 - project detail now surfaces linked appointments so project-facing visits and customer coordination stay visible on the same operational root without becoming a second scheduler
+- project detail now also includes a compact production-schedule context card derived from canonical jobs and job assignments, surfacing scheduled, unscheduled, and in-progress counts plus next schedule continuity while handing calendar work back to `/schedule`
+- customer detail now also includes a compact production-schedule context card derived from canonical customer projects, jobs, and job assignments, surfacing customer-level job counts, next scheduled continuity, crew-state visibility, and project-aware handoff back into `/schedule`
+- estimate detail now also includes a compact schedule-handoff context card that stays blocked for non-approved estimates and, once approved, derives project-level production counts, next scheduled continuity, and crew-state visibility only from canonical estimate `projectId`, project jobs, and job assignments
+- contract detail now also includes a compact schedule-handoff context card derived only from canonical contract `projectId` plus canonical jobs and job assignments, surfacing project-level production counts, next scheduled continuity, and crew-state visibility without changing contract workflow or creating a contract-schedule bridge model
+- invoice detail now also includes a compact linked-schedule context card derived only from canonical invoice `projectId` / optional `jobId` links plus canonical jobs and job assignments, surfacing linked-job or project-level production state without changing billing lineage
 
 Starter fields include:
 - name
@@ -341,26 +399,45 @@ Starter fields include:
 
 Implemented:
 - organization-scoped canonical `portal_access_grants` foundation
+- nullable `portal_access_grants.customer_contact_id` support for optionally linking a grant to one canonical `customer_contacts` row
+- tenant-scoped canonical `customer_contact_portal_permissions` foundation attached to linked `customer_contacts`
 - organization-scoped canonical `portal_project_access` foundation beneath the customer-level grant
 - tenant-safe data access foundation for contractor-side portal access management
 - authenticated-user portal access lookup foundation for customer-facing record loaders
 - tenant-safe portal record loaders for canonical project, estimate, contract, and invoice review data
 - lightweight `portal_record_views` audit foundation for customer-facing record visibility events
-- contractor-side portal access management on customer detail for granting, reviewing, revoking, and project-scoping customer portal access
+- contractor-side portal access management on customer detail for granting, linking, reviewing, revoking, and project-scoping customer portal access
+- contractor-side portal invite creation from customer detail now supports pending project-scoped invites for customer/contact emails that do not yet belong to an authenticated FloorConnector user
+- `/portal/invite?token=...` validates a hashed invite token, shows customer-safe customer/project context, sends users through the existing login/signup flow, and activates the canonical portal grant only when the authenticated email matches the invite
+- customer detail now also shows stored linked-contact permission readiness, including the supported customer-facing permission set
+- customer detail now also stores and edits linked-contact portal permissions, with first-pass enforcement active for estimate approve/reject, change-order approve/reject, and contract sign/decline actions
+- customer detail now clearly labels customer-level grants versus linked contact grants and provides cleanup guidance for gradually attaching legacy customer-level grants to existing related customer contacts
 
 Starter fields include:
 - canonical customer anchor
 - authenticated user linkage
 - invited email metadata
+- hashed invite-token metadata for pending contractor-created invites
 - invited, active, and revoked state
+- invite expiration and acceptance timestamps
 - activation and revocation timestamps
 - explicit project visibility beneath the customer grant
 
 Current portal access design notes:
 - portal access is anchored to the canonical customer record instead of inventing a separate portal-customer model
+- normal contractor workflow now starts customer portal access from a contractor-created customer/project invite, not from customer self-registration before anything is shared
+- null `customer_contact_id` still represents the existing customer-level portal grant behavior
+- existing customer-level grants are not migrated, revoked, or altered automatically; they continue to work as legacy account-level portal access
+- contractor admins can attach an existing customer-level grant to an existing related customer contact from the customer detail Portal Access area when they are ready to use contact-level permissions
+- linked-contact grants now identify which canonical related customer contact a login represents without changing project visibility behavior
+- linked-contact grants now also show stored permission readiness on customer detail
+- linked-contact grants now also persist stored permission flags for estimate visibility/approval, contract signing, change-order approval, invoice view/pay, and quote-request readiness
 - project visibility is explicitly granted beneath that customer access instead of exposing all tenant projects automatically
 - portal read access now flows through the same canonical project, estimate, contract, and invoice records instead of portal-specific copies
 - contractor admins now manage portal access from the canonical customer surface rather than a disconnected portal-contact subsystem
+- contact-specific permission gating is now active for linked-contact estimate approval/rejection, change-order approval/rejection, and contract sign/decline actions only
+- estimate send lookup, contract viewing, contractor countersign, invoice/payment behavior, and null-contact customer-level grants remain unchanged in this rollout
+- a future Directory customer-account workspace may expose dedicated tabs such as `Overview`, `Contacts`, `Projects`, `Portal Access`, and optional `Billing` / `Financial`, but that is a wording and UX direction rather than a current route or schema change
 - the customer-facing portal now has a real protected shell, portal home workspace, and project-detail workspace built on that same scoped read layer
 - customer-facing estimate, contract, and invoice review pages now exist inside the portal on top of the same tenant-safe canonical record loaders
 - portal review remains customer-safe and canonical-record-based in this pass, with contract signing now live on the shared contract record and portal invoice review now able to start customer payment activity on the same canonical invoice and payment chain without introducing a duplicate portal billing model
@@ -821,6 +898,7 @@ Current invoice design notes:
 - contractor-side invoice manager quick create now captures only the minimum project and workflow-role context, creates the canonical draft invoice, and routes into the full invoice workspace for complete editing
 - contractor-side project, customer, lead, contract, and daily-log managers now also use quick create overlays that capture only minimum required fields before handing off to the full record workspace
 - invoice overview now follows the early module-dashboard direction: summary, actionable queues, and continuity back into the shared project and billing chain
+- invoice manager now preserves project, estimate, job, and deposit workflow context in URL-driven handoffs so project/job invoice quick-create stays anchored to the same canonical chain
 - a dedicated payments manager page now exists as a finance-side module dashboard:
   - review-first summary of recorded, pending, failed, and open collection activity
   - continuity back into the same canonical invoice, customer, and project chain
@@ -828,15 +906,20 @@ Current invoice design notes:
 - a first contractor-side schedule manager page now exists on top of the canonical job model:
   - review-first summary of unscheduled, today, in-progress, and upcoming work
   - explicit schedule-view and crew-filter state normalization on the same `/schedule` surface
+  - optional `projectId` URL filtering for project-scoped schedule handoff, applied directly against canonical `jobs.project_id` while still allowing `q` text search to narrow the same result set
+  - optional `projectId` URL filtering on `/jobs`, applied directly against canonical `jobs.project_id` while preserving view, search, and quick-create handoff state
+  - compact active-filter banner on `/schedule` for project, search, crew, and selected job/action handoff state, with per-filter clear links that preserve the remaining query context
   - next-actions guidance for jobs that need scheduling, crew assignment, or immediate attention
   - cross-job visibility into crew assignment state using canonical `job_assignments`
   - clearer distinction between unscheduled work, scheduled work, and scheduled jobs that still need crew
   - calendar-oriented planner depth on the same `/schedule` surface:
     - bounded week planner
     - day focus view
-    - retained board view for quick date-grouped scanning
+    - board layout grouped into operational timing lanes for unscheduled ready work, today, tomorrow, next-seven-day work, later scheduled work, and in-progress jobs
   - scheduled jobs render from the same canonical job scheduling fields without introducing a separate scheduling model
 - inline schedule and crew-assignment action panel that reuses the existing job scheduling and assignment server actions
+- crew assignment can now be reviewed and unassigned directly from the same `/schedule` action panel, without leaving the canonical job and `job_assignments` chain
+- the `/schedule` action panel now blocks crew attachment until the job has a real date commitment and points users back to people, vendors, job, and project workspaces when the next prerequisite is elsewhere
 - quick links back into the same canonical job and project workspaces instead of a separate dispatch subsystem
 
 ### Appointments
@@ -989,12 +1072,31 @@ Implemented:
 - channel-aware `notification_deliveries` ledger for in-app and email delivery tracking, with future SMS support reserved in the same model
 - canonical `communication_threads` attached to shared customer, project, and subject records
 - immutable `communication_messages` inside canonical threads
+- first contractor-side communication review surface at `/communications`
+  - review-first queue over canonical threads and unread notifications
+  - thread preview and continuity links back to canonical customer, project, estimate, contract, invoice, change-order, and payment records where available
+  - selected-thread review now renders a clearer chronological history from canonical `communication_messages`, with actor labels, timestamps, empty-state handling, and compact source-record context on the same thread panel
+  - direct thread links now stay explicit: if a requested thread is unavailable in the current filters, the page shows unavailable-thread guidance instead of silently selecting another thread
+  - project and customer detail pages now expose compact related-conversation handoff cards derived from canonical thread summaries, with counts, latest-thread preview, and direct links back into `/communications`
+  - contract, invoice, change-order, and estimate detail pages now expose the same compact related-conversation handoff pattern from canonical thread summaries, without embedding inbox behavior on those workspaces
+  - first safe contractor-side reply composer now exists on existing thread preview/detail only
+  - contractor replies reuse the canonical posting helper and write new rows to `communication_messages` on the existing `communication_threads` record
+  - reply and triage forms now preserve the all-sources filter safely and explain that replies do not send email/SMS or execute automation
+  - first safe contractor-side notification triage now exists for communication unread state
+  - contractor users can mark selected-thread or all communication notifications read by updating canonical per-user `notifications` records only
 
 Current design notes:
 - notifications are now implemented as stored canonical workflow signals rather than ephemeral shell-only state
 - notification deliveries track sent, delivered, opened, clicked, and failed channel outcomes without creating duplicate estimate, invoice, or change-order records
 - communication threads stay attached to the same canonical customer/project chain instead of creating module-specific inboxes
 - communication messages are immutable and extend shared workflow continuity rather than replacing estimate, contract, invoice, or change-order records
+- the contractor communication surface still stays on the same canonical review queue, but selected existing threads can now accept safe contractor replies without introducing a second inbox, portal-specific copy, or new message model
+- communication triage on the contractor surface updates only the user's canonical `notifications.is_read` and `read_at` fields for communication-category records; it does not mutate `notification_events`, messages, or add message-local read state
+- communication baseline hardening is limited to queue clarity, selected-thread handling, unsupported-source copy, reply validation, and read-state feedback; provider sends and automation execution remain intentionally off
+- `/communications` now also supports compact URL-driven queue filtering by status grouping and supported source record type, plus text search across loaded customer, project, source-record, and preview labels from the same canonical thread list
+  - status grouping and source-record filtering now shape the server-side communications loader where safe, using the same canonical `communication_threads` foundation plus per-user communication notifications for unread and needs-response queue state
+  - supported source filters are currently limited to customer, project, estimate, contract, invoice, change order, and payment; unsupported source queries such as `source=job` now render an explicit help state instead of implying unsupported communication coverage
+  - text search currently stays as a client-side fallback over the loaded canonical thread labels and preview text so existing URL search behavior remains unchanged without introducing new indexing, shadow fields, or external search infrastructure
 
 ### Shared Templates
 
@@ -1089,6 +1191,14 @@ Current contract design notes:
 - contractor-side contract detail now surfaces canonical signature-state timestamps, signer routing/status visibility, and recent immutable signature events inside the existing contract workspace
 - contractor-side countersign now has a dedicated workspace action when the signed customer contract is waiting on the assigned organization signer
 - portal contract review now supports customer-facing signature-state visibility, signer visibility, and customer sign/decline actions on the same canonical contract record through tenant-safe portal scope
+- linked-contact customer-contact portal permissions now enforce estimate, change-order, and contract decision authority in the following limited first-pass ways:
+  - estimate approve/reject requires stored `can_approve_estimates`
+  - change-order approve/reject requires stored `can_approve_change_orders`
+  - contract sign/decline requires stored `can_sign_contracts` for linked-contact grants only
+  - contractor-side customer signer options now exclude linked-contact portal users who do not have stored contract-signing permission
+  - linked-contact permission enforcement still does not yet apply to estimate view, contract view, invoice/payment, or quote-request actions
+  - contractor countersign behavior is unchanged
+  - null-contact customer-level grants continue to use legacy behavior in this first pass
 - project readiness and portal project continuity now react to canonical signed-contract outcomes so signature completion changes the next visible commercial step instead of staying isolated on the contract page
 - contractor project detail now surfaces latest contract signature handoff summary alongside the readiness hub
 - portal project workspace now reflects signed-contract completion in project guidance and contract summaries before later payment work is introduced
@@ -1112,9 +1222,17 @@ The current implemented workflow foundation supports:
 - estimate authoring with line items and totals
 - estimate line items are now the authoritative estimate item-row source of truth; `estimates.content.itemRows` remains legacy read/migration-only
 - estimate workspace item sourcing is now inventory-first, using active catalog items and sqft-scaled system expansion into canonical estimate line items
+- estimate edit now groups item insertion into one clearer estimating-tools cluster: `Add manual item`, `Add from catalog`, and `Import from another estimate`, while keeping manual entry catalog-backed and non-billing-authoritative
+- estimate line-item import from another estimate is now live for same-organization source estimates into draft destination estimates only; imported rows are reseeded as new destination `estimate_line_items` and do not create invoice rows, SOV rows, contracts, or payments
+- estimate edit and detail now use clearer reusable-content language for scope / SOW, project details, terms, inclusions, and exclusions, and they distinguish insertable content blocks from defaults that only prefill empty estimates
+- estimate edit now also uses one shared reusable-content insertion area for scope / SOW, terms, inclusions, and exclusions, reusing the existing content-block system while preserving append behavior into the live estimate
+- reusable content import from another estimate is now live for same-organization source estimates into draft destination estimates only; Scope / SOW, Terms, Inclusions, and Exclusions append into the live destination estimate workspace without changing defaults, line items, or downstream billing records
+- estimate import now uses one shared source-estimate chooser in the estimating tools area so users pick a source once, then choose `Import line items`, `Import Scope / SOW`, `Import Terms`, `Import Inclusions`, or `Import Exclusions` without changing any import behavior
 - estimate workspace edits now use autosave with validation, dirty/error state handling, and stale-write conflict protection
 - estimate defaults now hydrate only when the estimate content is initially empty, using platform defaults first and organization overrides second
+- contractor workflow settings now explain estimate defaults more explicitly: Scope / SOW, Terms, Inclusions, and Exclusions are organization-owned starting defaults for empty estimates only, while reusable blocks append on demand and estimate import copies from a selected prior estimate
 - estimate customer send, email tracking, portal review, and status progression
+- estimate detail, customer portal-access setup, portal project visibility, portal estimate approval, and contract quick-create now include compact prerequisite guidance for the current send -> approval -> approved-snapshot -> contract generation path without weakening canonical guards
 - estimate create, update, and status transitions now refresh the linked project's stored commercial-readiness fields, including project reassignment during estimate updates
 - approved estimate commercial snapshot creation on approval for downstream lineage
 - approved-estimate-to-contract generation and pre-sign contract editing
@@ -1168,6 +1286,7 @@ Implemented:
   - catalogs/master data
   - financial defaults
   - workflow defaults
+  - automation visibility
   - organization admin
   - module controls
 - organization-scoped tax behavior and tax rate management
@@ -1178,11 +1297,25 @@ Implemented:
 - `/settings/catalogs` now renders the same contractor cost item settings component used by `/cost-items-database/settings`
 - organization member role management
 - organization-level feature override storage within the shared platform feature policy model
+- first contractor-side automation visibility/settings surface at `/settings/automation`
+  - automation readiness dashboard over canonical workflow, notification, communication, payments, contracts, estimates, change orders, projects, and scheduling foundations
+  - explicitly shows implemented vs foundation vs planned automation concepts, missing dependencies, safe-next-build guidance, and recent canonical samples without claiming background execution exists
+  - stores organization-scoped notification-only automation preferences on the existing `organization_workflow_settings` row
+  - now includes a manual, tenant-scoped notification-only runner that can be launched from `/settings/automation`
+  - the manual runner supports only customer message received, estimate awaiting approval, contract awaiting signature, and invoice overdue triggers
+  - executed runs create canonical `notification_events` and per-user in-app `notifications` only
+  - run audit/idempotency is stored in the new tenant-owned `automation_runs` table
+  - eligibility preview/debug, static template preview, and compact build-plan summaries remain visible for supported categories
+  - saved preference fields are limited to category, manual-enable intent, and intended contractor-role recipients
+  - no automation path sends email/SMS, creates queues or cron jobs, posts customer messages, or mutates workflow records
 
 Current design notes:
 - this is a contractor organization settings surface, separate from platform super-admin controls
 - shared templates remain on one canonical template system across estimates, invoices, and contracts
 - contract approval, signature, deposit, and financing readiness preferences are stored canonically now even though deeper enforcement UX is still future work
+- automation readiness reads real canonical foundations only, while the manual runner is tenant-scoped and guarded by `automation_runs` idempotency before notification creation
+- the notification-template preview on `/settings/automation` is static application copy only; it is not editable, does not save template records, and does not send customer messages
+- the automation build plan on `/settings/automation` merges saved preferences, eligibility output, and static template definitions without saving planner rows or mutating canonical records
 - contractor organizations adopt platform defaults into tenant-owned copies or tenant-scoped settings where applicable
 
 ### Super Admin
@@ -1217,6 +1350,11 @@ Not implemented yet:
 - full scheduling/dispatch system
 - drag-and-drop rescheduling, dispatch optimization, and deeper crew-calendar coordination
 - automated dispatching and external notifications
+- Takeoff & Scope Intelligence
+- on-screen plan/PDF/image takeoff, scale calibration, plan measurement, AI-assisted takeoff, takeoff-to-cost-item mapping, and automated takeoff-based estimate generation
+- takeoff source traceability, takeoff-estimate out-of-sync review state, and takeoff-driven material/labor/production planning
+- contractor network collaboration, contractor-to-contractor chat, marketplace behavior, and subcontractor/vendor portal collaboration
+- scoped external project/job workrooms for subcontractors, vendors, or partner contractors
 - broad module-dashboard coverage across the contractor app
 - PDF generation
 - external e-sign provider integration
@@ -1228,3 +1366,8 @@ Not implemented yet:
 - external tax provider integration
 - rich template editing UI
 - e-sign integration workflows on top of the canonical contract record
+
+Future-looking note:
+- the current vendors, people, compliance, jobs, daily logs, time, communication, notification, and portal access foundations could support future scoped collaboration, but no contractor network, marketplace, open contractor chat, or external subcontractor/vendor collaboration surface is implemented today.
+- the current projects, estimates, estimate line items, reusable catalog items, files/attachments foundations, and site-assessment requirements could support a future Takeoff & Scope Intelligence layer, but no on-screen takeoff, AI takeoff, plan measurement, takeoff-to-cost-item mapping, source traceability, out-of-sync review state, or automated estimate generation exists today.
+- future takeoff must stay separate from implemented truth: takeoff would produce quantities, catalog/cost items would define reusable cost, pricing, production, and tax behavior, and estimates would define customer-facing pricing and commercial scope.

@@ -2,25 +2,52 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AppEmptyState } from "@/components/app-empty-state";
+import { CustomerContactForm } from "@/components/customer-contact-form";
 import { CustomerForm } from "@/components/customer-form";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
+import { DirectoryContextCard } from "@/components/directory-context-card";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { PortalAccessGrantForm } from "@/components/portal-access-grant-form";
 import { PortalProjectAccessForm } from "@/components/portal-project-access-form";
+import { RelatedConversationsCard } from "@/components/related-conversations-card";
+import {
+  ScheduleContextActions,
+  ScheduleContextFocusCard,
+  ScheduleContextMetrics,
+  ScheduleContextNotice
+} from "@/components/schedule-context-card";
 import { listAppointmentsByCustomer } from "@/lib/appointments/data";
+import { getCurrentUser } from "@/lib/auth/session";
+import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
 import { updateCustomerAction } from "@/lib/customers/actions";
 import { getCustomerById } from "@/lib/customers/data";
 import { listEstimates } from "@/lib/estimates/data";
 import { listInvoices } from "@/lib/invoices/data";
-import { listJobs } from "@/lib/jobs/data";
+import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
+import {
+  createCustomerContactAction,
+  makeCustomerContactPrimaryAction,
+  updateCustomerContactAction
+} from "@/lib/contacts/actions";
+import { listCustomerContactsByCustomer } from "@/lib/contacts/data";
+import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import {
+  formatScheduleSummaryWindow,
+  getScheduleAssignmentSummary,
+  getScheduleSummarySortValue
+} from "@/lib/schedule/summary";
+import { buildScheduleHref } from "@/lib/schedule/links";
 import {
   createPortalAccessGrantAction,
+  updateCustomerContactPortalPermissionAction,
+  updatePortalAccessGrantLinkAction,
   createPortalProjectAccessAction,
   updatePortalAccessGrantStatusAction,
   updatePortalProjectAccessStatusAction
 } from "@/lib/portal-access/actions";
 import {
+  listCustomerContactPortalPermissionsByCustomer,
   listPortalAccessGrantsByCustomer,
   listPortalProjectAccessByGrantId
 } from "@/lib/portal-access/data";
@@ -33,6 +60,8 @@ type CustomerDetailPageProps = {
   searchParams?: Promise<{
     error?: string;
     message?: string;
+    inviteUrl?: string;
+    inviteEmail?: string;
   }>;
 };
 
@@ -58,28 +87,91 @@ function getPortalAccessStatusClasses(status: string) {
   }
 }
 
+function formatStatusLabel(status: string) {
+  return status.replaceAll("_", " ");
+}
+
+function formatRelationshipLabel(value: string | null) {
+  if (!value) {
+    return "Related contact";
+  }
+
+  return value.replaceAll("_", " ");
+}
+
+const futurePortalPermissionReadiness = [
+  "View estimates",
+  "Approve estimates",
+  "Sign contracts",
+  "Approve change orders",
+  "View/pay invoices",
+  "Request new quote"
+];
+
+function formatManagementSourceLabel(value: string) {
+  switch (value) {
+    case "contractor_admin":
+      return "Customized by contractor admin";
+    case "main_contact":
+      return "Customized by main contact";
+    case "migration":
+      return "Seeded from migration";
+    default:
+      return "Default stored permissions";
+  }
+}
+
+function buildCustomerScheduleHref(input: {
+  customerName: string;
+  projectId?: string;
+  view?: "all" | "unscheduled" | "today" | "upcoming" | "in_progress";
+  crew?: "all" | "assigned" | "unassigned";
+  action?: "schedule" | "assign";
+  jobId?: string;
+}) {
+  return buildScheduleHref({
+    projectId: input.projectId,
+    q: input.projectId ? undefined : input.customerName.trim() || undefined,
+    view: input.view,
+    crew: input.crew,
+    action: input.action,
+    jobId: input.jobId
+  });
+}
+
 export default async function CustomerDetailPage({
   params,
   searchParams
 }: CustomerDetailPageProps) {
   const { customerId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
+  const user = await getCurrentUser();
+  const organizationContext = user ? await getActiveOrganizationContext(user.id) : null;
+  const canManageCustomerContacts =
+    organizationContext?.membership.role === "owner" ||
+    organizationContext?.membership.role === "admin";
   const [
     customer,
     projects,
     estimates,
     jobs,
     invoices,
+    customerContacts,
     portalAccessGrants,
-    customerAppointments
+    customerContactPortalPermissions,
+    customerAppointments,
+    communicationThreads
   ] = await Promise.all([
     getCustomerById(customerId, `/customers/${customerId}`),
     listProjectsByCustomer(customerId, `/customers/${customerId}`),
     listEstimates(),
     listJobs(),
     listInvoices(),
+    listCustomerContactsByCustomer(customerId, `/customers/${customerId}`),
     listPortalAccessGrantsByCustomer(customerId, `/customers/${customerId}`),
-    listAppointmentsByCustomer(customerId, `/customers/${customerId}`)
+    listCustomerContactPortalPermissionsByCustomer(customerId, `/customers/${customerId}`),
+    listAppointmentsByCustomer(customerId, `/customers/${customerId}`),
+    listCommunicationThreadsForSubject("customer", customerId)
   ]);
 
   if (!customer) {
@@ -89,10 +181,54 @@ export default async function CustomerDetailPage({
   const projectIds = new Set(projects.map((project) => project.id));
   const customerEstimates = estimates.filter((estimate) => projectIds.has(estimate.projectId));
   const customerJobs = jobs.filter((job) => job.customerId === customer.id);
+  const customerJobAssignments = await listJobAssignmentsByJobIds(
+    customerJobs.map((job) => job.id),
+    `/customers/${customerId}`
+  );
   const customerInvoices = invoices.filter((invoice) => invoice.customerId === customer.id);
   const openInvoices = customerInvoices.filter(
     (invoice) => invoice.status !== "paid" && invoice.status !== "void"
   );
+  const unscheduledJobs = customerJobs.filter((job) => job.dispatchStatus === "unscheduled");
+  const activeJobs = customerJobs.filter((job) => job.dispatchStatus === "in_progress");
+  const scheduledOrActiveJobs = customerJobs.filter(
+    (job) => job.dispatchStatus === "scheduled" || job.dispatchStatus === "in_progress"
+  );
+  const jobsWithoutAssignments = customerJobs.filter(
+    (job) =>
+      job.dispatchStatus !== "completed" &&
+      (customerJobAssignments.get(job.id)?.length ?? 0) === 0
+  );
+  const nextScheduledJob =
+    [...scheduledOrActiveJobs]
+      .filter((job) => job.scheduledDate)
+      .sort(
+        (left, right) => getScheduleSummarySortValue(left) - getScheduleSummarySortValue(right)
+      )[0] ?? null;
+  const nextScheduledAssignments = nextScheduledJob
+    ? customerJobAssignments.get(nextScheduledJob.id) ?? []
+    : [];
+  const nextScheduledAssignmentNames = nextScheduledAssignments
+    .map((assignment) => assignment.person?.displayName ?? assignment.vendor?.name ?? null)
+    .filter((value): value is string => Boolean(value));
+  const nextScheduledCrewSummary = nextScheduledJob
+    ? getScheduleAssignmentSummary({
+        assignmentNames: nextScheduledAssignmentNames,
+        crewVendorName: nextScheduledJob.crewVendor?.name ?? null,
+        assignmentCount: nextScheduledAssignments.length
+      })
+    : null;
+  const customerScheduleHref = buildCustomerScheduleHref({
+    customerName: customer.name,
+    projectId: nextScheduledJob?.projectId,
+    view:
+      unscheduledJobs.length > 0
+        ? "unscheduled"
+        : activeJobs.length > 0
+          ? "in_progress"
+          : "upcoming",
+    crew: jobsWithoutAssignments.length > 0 ? "unassigned" : "all"
+  });
   const portalProjectAccessEntries = await Promise.all(
     portalAccessGrants.map(async (grant) => [
       grant.id,
@@ -109,7 +245,22 @@ export default async function CustomerDetailPage({
   const revokedPortalGrantCount = portalAccessGrants.filter(
     (grant) => grant.status === "revoked"
   ).length;
+  const customerContactOptions = customerContacts.map((customerContact) => {
+    const contactName = customerContact.contact?.displayName ?? "Linked contact";
+    const contactEmail = customerContact.contact?.email?.trim() ?? "";
+    const relationshipLabel = formatRelationshipLabel(customerContact.relationshipLabel);
+    const primaryLabel = customerContact.isPrimary ? "Main contact" : relationshipLabel;
 
+    return {
+      id: customerContact.id,
+      label: contactEmail
+        ? `${contactName} (${contactEmail}) - ${primaryLabel}`
+        : `${contactName} - ${primaryLabel}`
+    };
+  });
+  const portalPermissionsByCustomerContactId = new Map(
+    customerContactPortalPermissions.map((permission) => [permission.customerContactId, permission])
+  );
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
       <section className="space-y-6">
@@ -117,16 +268,24 @@ export default async function CustomerDetailPage({
           <DetailPageHeader
             eyebrow="Customer Review"
             title={customer.name}
-            description="Customers remain canonical across projects, estimates, jobs, invoices, and tax-aware financial settings. Review the relationship context here before drilling into connected records."
+            description="Customers remain the canonical billing, project, and estimate-recipient record across projects, estimates, jobs, invoices, and tax-aware financial settings. Review and maintain the customer email and phone here before drilling into connected records."
             backHref="/customers"
             backLabel="Back to customers"
             actions={
-              <Link
-                href={`/projects?customerId=${customer.id}`}
-                className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-              >
-                Create project
-              </Link>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href={`/estimates?customerId=${customer.id}#estimate-create`}
+                  className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                >
+                  Add estimate
+                </Link>
+                <Link
+                  href={`/projects?customerId=${customer.id}`}
+                  className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                >
+                  Create project
+                </Link>
+              </div>
             }
           />
 
@@ -139,6 +298,22 @@ export default async function CustomerDetailPage({
           {resolvedSearchParams.message ? (
             <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
               {resolvedSearchParams.message}
+            </div>
+          ) : null}
+
+          {resolvedSearchParams.inviteUrl ? (
+            <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-950">
+              <p className="font-semibold">Portal invite link</p>
+              <p className="mt-1">
+                Share this local QA link with{" "}
+                <span className="font-medium">
+                  {resolvedSearchParams.inviteEmail ?? "the invited customer"}
+                </span>
+                . It is shown only after creation; the database stores only the token hash.
+              </p>
+              <p className="mt-3 break-all rounded-xl border border-amber-200 bg-white/80 px-3 py-2 font-mono text-xs text-slate-900">
+                {resolvedSearchParams.inviteUrl}
+              </p>
             </div>
           ) : null}
 
@@ -201,6 +376,42 @@ export default async function CustomerDetailPage({
         </DetailPanel>
 
         <DetailPanel
+          title="Connected Estimates"
+          description="Estimate records tied to this customer's projects stay visible here while deeper estimate work remains in the estimate workspace."
+        >
+          <div className="grid gap-4">
+            {customerEstimates.length > 0 ? (
+              customerEstimates.slice(0, 5).map((estimate) => (
+                <LinkedRecordCard
+                  key={estimate.id}
+                  href={
+                    estimate.status === "draft"
+                      ? `/estimates/${estimate.id}/edit`
+                      : `/estimates/${estimate.id}`
+                  }
+                  title={`${estimate.referenceNumber} - ${
+                    estimate.title ?? estimate.project?.name ?? "Untitled estimate"
+                  }`}
+                  subtitle={estimate.project?.name ?? "Project pending"}
+                  meta={`Updated ${new Date(estimate.updatedAt).toLocaleDateString()}`}
+                  badge={
+                    <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                      {estimate.status}
+                    </span>
+                  }
+                />
+              ))
+            ) : (
+              <AppEmptyState
+                eyebrow="No estimates"
+                title="Start the first customer estimate"
+                description="Create an estimate from this customer once a project or site is ready for pricing."
+              />
+            )}
+          </div>
+        </DetailPanel>
+
+        <DetailPanel
           title="Appointments"
           description="Customer-facing visits and meetings stay connected to the same customer, project, and lead chain instead of becoming a disconnected calendar world."
         >
@@ -233,15 +444,170 @@ export default async function CustomerDetailPage({
         </DetailPanel>
 
         <DetailPanel
+          title="Contacts"
+          description="Manage related contacts beneath this canonical customer account so linked portal grants can use contact-level permissions without replacing the customer record."
+        >
+          <div className="space-y-8">
+            <div className="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
+              <div className="flex flex-col gap-2">
+                <p className="text-base font-semibold text-slate-950">
+                  {canManageCustomerContacts ? "Add related contact" : "Related contacts"}
+                </p>
+                <p className="text-sm leading-6 text-slate-600">
+                  Related contacts stay linked through canonical{" "}
+                  <span className="font-medium text-slate-950">contacts</span> and{" "}
+                  <span className="font-medium text-slate-950">customer_contacts</span>. The
+                  account-level customer email above still remains the estimate, contract, and
+                  invoice recipient source in this phase.
+                </p>
+              </div>
+              <div className="mt-5">
+                {canManageCustomerContacts ? (
+                  <CustomerContactForm
+                    action={createCustomerContactAction}
+                    customerId={customer.id}
+                  />
+                ) : (
+                  <p className="text-sm leading-6 text-slate-500">
+                    Contractor admins can add and maintain related customer contacts here.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {customerContacts.length > 0 ? (
+              <div className="grid gap-4">
+                {customerContacts.map((customerContact) => (
+                  <section
+                    key={customerContact.id}
+                    className="rounded-[1.75rem] border border-slate-200 bg-white px-5 py-5"
+                  >
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <p className="text-base font-semibold text-slate-950">
+                            {customerContact.contact?.displayName ?? "Linked contact"}
+                          </p>
+                          {customerContact.isPrimary ? (
+                            <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-900">
+                              Main contact
+                            </span>
+                          ) : (
+                            <span className="inline-flex rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                              Related contact
+                            </span>
+                          )}
+                        </div>
+                        <div className="space-y-1 text-sm leading-6 text-slate-600">
+                          <p>
+                            Relationship:{" "}
+                            <span className="font-medium text-slate-950">
+                              {customerContact.relationshipLabel ?? "Not labeled"}
+                            </span>
+                          </p>
+                          <p>
+                            Email:{" "}
+                            <span className="font-medium text-slate-950">
+                              {customerContact.contact?.email ?? "Not provided"}
+                            </span>
+                          </p>
+                          <p>
+                            Phone:{" "}
+                            <span className="font-medium text-slate-950">
+                              {customerContact.contact?.phone ?? "Not provided"}
+                            </span>
+                          </p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                          <p className="text-sm font-medium text-slate-950">
+                            Portal-access readiness
+                          </p>
+                          <div className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
+                            <p>
+                              Email status:{" "}
+                              <span className="font-medium text-slate-950">
+                                {customerContact.contact?.email?.trim() ? "Present" : "Missing"}
+                              </span>
+                            </p>
+                            <p>
+                              Main-contact status:{" "}
+                              <span className="font-medium text-slate-950">
+                                {customerContact.isPrimary ? "Main contact" : "Additional contact"}
+                              </span>
+                            </p>
+                            <p>
+                              Contact-linked portal access:{" "}
+                              <span className="font-medium text-slate-950">
+                                {customerContactPortalPermissions.some(
+                                  (permission) =>
+                                    permission.customerContactId === customerContact.id
+                                )
+                                  ? "Stored permissions available"
+                                  : "Ready for linked-contact grant"}
+                              </span>
+                            </p>
+                            <p className="text-xs leading-5 text-slate-500">
+                              Contact-specific permissions apply after a portal grant is linked to
+                              this contact. Estimate decisions, change-order decisions, and
+                              contract sign/decline are enforced for linked-contact grants.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {!customerContact.isPrimary && canManageCustomerContacts ? (
+                        <form action={makeCustomerContactPrimaryAction}>
+                          <input type="hidden" name="customerId" value={customer.id} />
+                          <input
+                            type="hidden"
+                            name="customerContactId"
+                            value={customerContact.id}
+                          />
+                          <button
+                            type="submit"
+                            className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                          >
+                            Make main contact
+                          </button>
+                        </form>
+                      ) : null}
+                    </div>
+
+                    {canManageCustomerContacts ? (
+                      <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4">
+                        <p className="text-sm font-medium text-slate-950">Edit related contact</p>
+                        <div className="mt-4">
+                          <CustomerContactForm
+                            action={updateCustomerContactAction}
+                            customerId={customer.id}
+                            customerContact={customerContact}
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <AppEmptyState
+                eyebrow="No related contacts"
+                title="Add the first customer contact"
+                description="Use related contacts for account-side participants without replacing the canonical customer record or changing the account-level estimate and billing recipient fields yet."
+              />
+            )}
+          </div>
+        </DetailPanel>
+
+        <DetailPanel
           title="Portal Access"
-          description="Grant and constrain customer-facing portal visibility here so access stays anchored to the canonical customer record and explicitly scoped projects."
+          description="Grant and constrain customer-facing portal visibility here so access stays anchored to the canonical customer record, explicitly scoped projects, and optional linked customer contacts."
         >
           <div className="space-y-8">
             <section className="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
               <div className="flex flex-col gap-2">
-                <p className="text-base font-semibold text-slate-950">Grant customer portal access</p>
+                <p className="text-base font-semibold text-slate-950">Invite customer to portal</p>
                 <p className="text-sm leading-6 text-slate-600">
-                  Use an email that already belongs to an authenticated FloorConnector user, then add only the projects that customer should see.
+                  Invite a customer contact after the contractor has created the customer and project. The invite creates a pending customer-anchored portal grant, scopes it to one project, and activates only when the invited email signs up or logs in.
                 </p>
               </div>
               <div className="mt-5">
@@ -249,6 +615,12 @@ export default async function CustomerDetailPage({
                   action={createPortalAccessGrantAction}
                   customerId={customer.id}
                   defaultEmail={customer.email}
+                  customerContacts={customerContactOptions}
+                  projects={projects.map((project) => ({
+                    id: project.id,
+                    label: project.name,
+                    status: project.status
+                  }))}
                 />
               </div>
             </section>
@@ -257,6 +629,9 @@ export default async function CustomerDetailPage({
               <div className="space-y-6">
                 {portalAccessGrants.map((grant) => {
                   const projectAccess = portalProjectAccessByGrantId.get(grant.id) ?? [];
+                  const storedPortalPermission = grant.customerContactId
+                    ? portalPermissionsByCustomerContactId.get(grant.customerContactId) ?? null
+                    : null;
                   const availableProjects = projects
                     .filter(
                       (project) =>
@@ -289,11 +664,52 @@ export default async function CustomerDetailPage({
                           </div>
                           <div className="space-y-1 text-sm leading-6 text-slate-600">
                             <p>
+                              Grant type:{" "}
+                              <span className="font-medium text-slate-950">
+                                {grant.customerContact
+                                  ? "Linked contact grant"
+                                  : "Customer-level grant"}
+                              </span>
+                            </p>
+                            {grant.customerContact ? (
+                              <>
+                                <p>
+                                  Linked contact:{" "}
+                                  <span className="font-medium text-slate-950">
+                                    {grant.customerContact.contact?.displayName ??
+                                      "Linked customer contact"}
+                                  </span>
+                                </p>
+                                <p>
+                                  Contact email:{" "}
+                                  <span className="font-medium text-slate-950">
+                                    {grant.customerContact.contact?.email ?? "Not provided"}
+                                  </span>
+                                </p>
+                              </>
+                            ) : null}
+                            <p>
                               Portal email:{" "}
                               <span className="font-medium text-slate-950">
                                 {grant.portalUser?.email ?? grant.invitedEmail ?? "Not captured"}
                               </span>
                             </p>
+                            {grant.inviteExpiresAt && grant.status === "invited" ? (
+                              <p>
+                                Invite expires:{" "}
+                                <span className="font-medium text-slate-950">
+                                  {new Date(grant.inviteExpiresAt).toLocaleString()}
+                                </span>
+                              </p>
+                            ) : null}
+                            {grant.inviteAcceptedAt ? (
+                              <p>
+                                Invite accepted:{" "}
+                                <span className="font-medium text-slate-950">
+                                  {new Date(grant.inviteAcceptedAt).toLocaleString()}
+                                </span>
+                              </p>
+                            ) : null}
                             <p>
                               Granted projects:{" "}
                               <span className="font-medium text-slate-950">
@@ -309,30 +725,328 @@ export default async function CustomerDetailPage({
                           </div>
                         </div>
 
-                        <form action={updatePortalAccessGrantStatusAction}>
-                          <input type="hidden" name="portalAccessGrantId" value={grant.id} />
-                          <input type="hidden" name="customerId" value={customer.id} />
-                          <input type="hidden" name="userId" value={grant.userId} />
-                          <input
-                            type="hidden"
-                            name="invitedEmail"
-                            value={grant.invitedEmail ?? grant.portalUser?.email ?? ""}
-                          />
-                          <input
-                            type="hidden"
-                            name="status"
-                            value={grant.status === "revoked" ? "active" : "revoked"}
-                          />
-                          <button
-                            type="submit"
-                            className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
-                          >
-                            {grant.status === "revoked" ? "Reactivate access" : "Revoke access"}
-                          </button>
-                        </form>
+                        {grant.status === "revoked" && !grant.userId ? (
+                          <p className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600">
+                            Invite revoked
+                          </p>
+                        ) : (
+                          <form action={updatePortalAccessGrantStatusAction}>
+                            <input type="hidden" name="portalAccessGrantId" value={grant.id} />
+                            <input type="hidden" name="customerId" value={customer.id} />
+                            <input
+                              type="hidden"
+                              name="customerContactId"
+                              value={grant.customerContactId ?? ""}
+                            />
+                            <input type="hidden" name="userId" value={grant.userId ?? ""} />
+                            <input
+                              type="hidden"
+                              name="invitedEmail"
+                              value={grant.invitedEmail ?? grant.portalUser?.email ?? ""}
+                            />
+                            <input
+                              type="hidden"
+                              name="status"
+                              value={grant.status === "revoked" ? "active" : "revoked"}
+                            />
+                            <button
+                              type="submit"
+                              className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                            >
+                              {grant.status === "revoked" ? "Reactivate access" : "Revoke access"}
+                            </button>
+                          </form>
+                        )}
                       </div>
 
                       <div className="mt-6 space-y-5">
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                          <p className="text-sm font-medium text-slate-950">Grant identity</p>
+                          <p className="mt-1 text-sm leading-6 text-slate-600">
+                            {grant.customerContact
+                              ? "This grant is linked to one canonical related customer contact. Updating the link keeps the same portal user and project visibility while changing which contact permission profile applies."
+                              : "This customer-level grant still works as legacy account-level access. Attach it to an existing related customer contact when this login should use contact-level permissions."}
+                          </p>
+                          {!grant.customerContact ? (
+                            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+                              Customer-level grants are not revoked or migrated automatically.
+                              They continue to use legacy portal behavior until a contractor
+                              admin links the grant to an existing customer contact.
+                            </div>
+                          ) : null}
+                          {grant.userId ? (
+                          <div className="mt-4">
+                            <form action={updatePortalAccessGrantLinkAction} className="space-y-4">
+                              <input
+                                type="hidden"
+                                name="portalAccessGrantId"
+                                value={grant.id}
+                              />
+                              <input type="hidden" name="customerId" value={customer.id} />
+                              <input type="hidden" name="userId" value={grant.userId ?? ""} />
+                              <input
+                                type="hidden"
+                                name="invitedEmail"
+                                value={grant.invitedEmail ?? grant.portalUser?.email ?? ""}
+                              />
+                              <input type="hidden" name="status" value={grant.status} />
+                              <label className="block">
+                                <span className="mb-2 block text-sm font-medium text-slate-800">
+                                  Related customer contact
+                                </span>
+                                <select
+                                  name="customerContactId"
+                                  defaultValue={grant.customerContactId ?? ""}
+                                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                                >
+                                  <option value="">Customer-level grant</option>
+                                  {customerContactOptions.map((customerContact) => (
+                                    <option key={customerContact.id} value={customerContact.id}>
+                                      {customerContact.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                              <button
+                                type="submit"
+                                className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                              >
+                                {grant.customerContactId
+                                  ? "Update linked contact"
+                                  : "Attach existing contact"}
+                              </button>
+                            </form>
+                          </div>
+                          ) : (
+                            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+                              This invite is still pending. Revoke it and create a fresh invite if
+                              the related contact needs to change before acceptance.
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                          <p className="text-sm font-medium text-slate-950">
+                            Permission readiness
+                          </p>
+                          <div className="mt-3 space-y-3 text-sm leading-6 text-slate-600">
+                            <p>
+                              Contact:{" "}
+                              <span className="font-medium text-slate-950">
+                                {grant.customerContact?.contact?.displayName ??
+                                  grant.portalUser?.fullName ??
+                                  grant.portalUser?.email ??
+                                  grant.invitedEmail ??
+                                  "Customer-level portal user"}
+                              </span>
+                            </p>
+                            <p>
+                              Email:{" "}
+                              <span className="font-medium text-slate-950">
+                                {grant.customerContact?.contact?.email ??
+                                  grant.portalUser?.email ??
+                                  grant.invitedEmail ??
+                                  "Not captured"}
+                              </span>
+                            </p>
+                            <p>
+                              Grant scope:{" "}
+                              <span className="font-medium text-slate-950">
+                                {grant.customerContact
+                                  ? "Linked-contact grant"
+                                  : "Customer-level grant"}
+                              </span>
+                            </p>
+                            {grant.customerContact ? (
+                              <>
+                                {storedPortalPermission ? (
+                                  <>
+                                    <p>
+                                      Storage state:{" "}
+                                      <span className="font-medium text-slate-950">
+                                        Stored
+                                      </span>
+                                    </p>
+                                    <p>
+                                      Management state:{" "}
+                                      <span className="font-medium text-slate-950">
+                                        {formatManagementSourceLabel(
+                                          storedPortalPermission.managementSource
+                                        )}
+                                      </span>
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {[
+                                        {
+                                          label: "View estimates",
+                                          enabled: storedPortalPermission.canViewEstimates
+                                        },
+                                        {
+                                          label: "Approve estimates",
+                                          enabled: storedPortalPermission.canApproveEstimates
+                                        },
+                                        {
+                                          label: "Sign contracts",
+                                          enabled: storedPortalPermission.canSignContracts
+                                        },
+                                        {
+                                          label: "Approve change orders",
+                                          enabled:
+                                            storedPortalPermission.canApproveChangeOrders
+                                        },
+                                        {
+                                          label: "View/pay invoices",
+                                          enabled: storedPortalPermission.canViewPayInvoices
+                                        },
+                                        {
+                                          label: "Request new quote",
+                                          enabled: storedPortalPermission.canRequestQuotes
+                                        }
+                                      ].map((permission) => (
+                                        <span
+                                          key={permission.label}
+                                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${
+                                            permission.enabled
+                                              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                                              : "border-slate-200 bg-slate-100 text-slate-700"
+                                          }`}
+                                        >
+                                          {permission.enabled ? "Enabled" : "Disabled"}:{" "}
+                                          {permission.label}
+                                        </span>
+                                      ))}
+                                    </div>
+                                    <p className="text-xs leading-5 text-slate-500">
+                                      Stored permissions are enforced for linked-contact estimate
+                                      decisions, change-order decisions, and contract sign/decline.
+                                      Contract viewing, invoice/payment, quote requests, and
+                                      customer-level grants keep their current behavior.
+                                    </p>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div className="flex flex-wrap gap-2">
+                                      {futurePortalPermissionReadiness.map((permission) => (
+                                        <span
+                                          key={permission}
+                                          className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-amber-900"
+                                        >
+                                          {permission}
+                                        </span>
+                                      ))}
+                                    </div>
+                                    <p className="text-xs leading-5 text-slate-500">
+                                      This linked-contact grant does not have a stored permission
+                                      row yet. Save permissions before relying on contact-level
+                                      decision authority for estimates, change orders, or
+                                      contracts.
+                                    </p>
+                                  </>
+                                )}
+                              </>
+                            ) : (
+                              <p className="text-xs leading-5 text-slate-500">
+                                This customer-level grant still works as legacy account-level
+                                access. Contact-level permissions only apply after this grant is
+                                linked to one existing related customer contact.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {grant.customerContact && canManageCustomerContacts ? (
+                          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                            <p className="text-sm font-medium text-slate-950">
+                              Edit stored permissions
+                            </p>
+                            <p className="mt-1 text-sm leading-6 text-slate-600">
+                              Save the linked contact's portal permission profile. Estimate
+                              decisions, change-order decisions, and contract sign/decline use
+                              these stored flags for linked-contact grants.
+                            </p>
+                            <form
+                              action={updateCustomerContactPortalPermissionAction}
+                              className="mt-4 space-y-4"
+                            >
+                              <input
+                                type="hidden"
+                                name="portalAccessGrantId"
+                                value={grant.id}
+                              />
+                              <input type="hidden" name="customerId" value={customer.id} />
+                              <input
+                                type="hidden"
+                                name="customerContactId"
+                                value={grant.customerContact.id}
+                              />
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                {[
+                                  {
+                                    name: "canViewEstimates",
+                                    label: "View estimates",
+                                    defaultChecked:
+                                      storedPortalPermission?.canViewEstimates ?? true
+                                  },
+                                  {
+                                    name: "canApproveEstimates",
+                                    label: "Approve estimates",
+                                    defaultChecked:
+                                      storedPortalPermission?.canApproveEstimates ?? true
+                                  },
+                                  {
+                                    name: "canSignContracts",
+                                    label: "Sign contracts",
+                                    defaultChecked:
+                                      storedPortalPermission?.canSignContracts ?? true
+                                  },
+                                  {
+                                    name: "canApproveChangeOrders",
+                                    label: "Approve change orders",
+                                    defaultChecked:
+                                      storedPortalPermission?.canApproveChangeOrders ?? true
+                                  },
+                                  {
+                                    name: "canViewPayInvoices",
+                                    label: "View/pay invoices",
+                                    defaultChecked:
+                                      storedPortalPermission?.canViewPayInvoices ?? true
+                                  },
+                                  {
+                                    name: "canRequestQuotes",
+                                    label: "Request new quote",
+                                    defaultChecked:
+                                      storedPortalPermission?.canRequestQuotes ?? true
+                                  }
+                                ].map((permission) => (
+                                  <label
+                                    key={permission.name}
+                                    className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      name={permission.name}
+                                      defaultChecked={permission.defaultChecked}
+                                      className="h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
+                                    />
+                                    <span>{permission.label}</span>
+                                  </label>
+                                ))}
+                              </div>
+                              <button
+                                type="submit"
+                                className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                              >
+                                Save stored permissions
+                              </button>
+                              <p className="text-xs leading-5 text-slate-500">
+                                Invoice/payment permissions are stored for later and are not
+                                enforced yet. Contract viewing, estimate send lookup, and project
+                                visibility are unchanged.
+                              </p>
+                            </form>
+                          </div>
+                        ) : null}
+
                         <div className="space-y-3">
                           <p className="text-sm font-medium text-slate-950">Visible projects</p>
                           {projectAccess.length > 0 ? (
@@ -432,7 +1146,7 @@ export default async function CustomerDetailPage({
 
         <DetailPanel
           title="Edit Customer"
-          description="Keep customer editing available here while the connected relationship context stays visible above."
+          description="Keep the canonical customer recipient details editable here while the connected relationship context stays visible above."
         >
           <CustomerForm
             action={updateCustomerAction}
@@ -444,18 +1158,34 @@ export default async function CustomerDetailPage({
       </section>
 
       <aside className="space-y-6">
+        <DirectoryContextCard
+          href={`/directory?view=customers&q=${encodeURIComponent(customer.name)}`}
+          recordLabel="Customer account"
+          description="Directory is the contractor-side scan-and-jump index. This customer page remains the canonical home for billing details, portal access, projects, and downstream workflow actions."
+        />
+
         <DetailPanel title="Customer Summary">
+          <div className="mb-4 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm leading-6 text-sky-900">
+            <p className="font-medium text-sky-950">Canonical recipient details</p>
+            <p className="mt-2">
+              This customer record owns the external billing and estimate-recipient contact
+              details. Estimate send uses <span className="font-semibold">customer.email</span>,
+              while related customer contacts below stay linked through the canonical
+              customer account and do not replace that send/billing recipient lookup in this
+              phase.
+            </p>
+          </div>
           <dl className="space-y-4 text-sm leading-6 text-slate-600">
             <div>
               <dt className="font-medium text-slate-950">Company</dt>
               <dd>{customer.companyName ?? "Not provided"}</dd>
             </div>
             <div>
-              <dt className="font-medium text-slate-950">Email</dt>
+              <dt className="font-medium text-slate-950">Email (estimate send / billing)</dt>
               <dd>{customer.email ?? "Not provided"}</dd>
             </div>
             <div>
-              <dt className="font-medium text-slate-950">Phone</dt>
+              <dt className="font-medium text-slate-950">Phone (customer coordination)</dt>
               <dd>{customer.phone ?? "Not provided"}</dd>
             </div>
             <div>
@@ -513,6 +1243,111 @@ export default async function CustomerDetailPage({
         </DetailPanel>
 
         <DetailPanel
+          title="Production Schedule"
+          description="Compact production continuity across this customer's projects, while all scheduling actions still hand off to the shared schedule workspace."
+        >
+          <div className="space-y-4 text-sm leading-6 text-slate-600">
+            <ScheduleContextMetrics
+              items={[
+                { label: "Active/scheduled", value: scheduledOrActiveJobs.length },
+                { label: "Unscheduled", value: unscheduledJobs.length },
+                { label: "In progress", value: activeJobs.length }
+              ]}
+            />
+
+            {nextScheduledJob ? (
+              <ScheduleContextFocusCard
+                eyebrow={
+                  nextScheduledJob.dispatchStatus === "in_progress"
+                    ? "Work in progress"
+                    : "Next scheduled job"
+                }
+                title={nextScheduledJob.project?.name ?? "Untitled project job"}
+                titleHref={`/jobs/${nextScheduledJob.id}`}
+                statusLabel={formatStatusLabel(nextScheduledJob.dispatchStatus)}
+                summary={formatScheduleSummaryWindow({
+                  scheduledDate: nextScheduledJob.scheduledDate,
+                  scheduledStartAt: nextScheduledJob.scheduledStartAt,
+                  scheduledEndAt: nextScheduledJob.scheduledEndAt
+                })}
+                detailRows={[
+                  {
+                    label: "Project",
+                    value: (
+                      <Link
+                        href={`/projects/${nextScheduledJob.projectId}`}
+                        className="font-medium text-brand-700"
+                      >
+                        {nextScheduledJob.project?.name ?? "Open project"}
+                      </Link>
+                    )
+                  },
+                  {
+                    label: "Crew",
+                    value:
+                      nextScheduledAssignments.length > 0
+                        ? nextScheduledCrewSummary
+                        : nextScheduledJob.dispatchStatus === "scheduled"
+                          ? "Scheduled, but crew assignment still needs to be confirmed"
+                          : nextScheduledCrewSummary
+                  }
+                ]}
+              />
+            ) : (
+              <ScheduleContextNotice
+                eyebrow={customerJobs.length > 0 ? "Ready for scheduling" : "No jobs yet"}
+                title={
+                  customerJobs.length > 0
+                    ? "Customer work exists, but no schedule commitment is set yet"
+                    : "No production jobs exist for this customer yet"
+                }
+              >
+                {customerJobs.length > 0
+                  ? "Jobs already exist across this customer's projects, but they are still unscheduled. The next production handoff will appear here once a real date is attached."
+                  : "Schedule continuity will appear here after downstream project jobs are created on the canonical production chain."}
+              </ScheduleContextNotice>
+            )}
+
+            <div className="space-y-2 text-sm leading-6 text-slate-600">
+              <p>
+                Crew assignment state:{" "}
+                {jobsWithoutAssignments.length > 0
+                  ? `${jobsWithoutAssignments.length} job${
+                      jobsWithoutAssignments.length === 1 ? "" : "s"
+                    } still need crew assignment rows`
+                  : customerJobs.length > 0
+                    ? "Crew coverage is already attached where needed"
+                    : "No customer jobs yet"}
+              </p>
+            </div>
+
+            <ScheduleContextActions
+              actions={[
+                { href: customerScheduleHref, label: "Open schedule" },
+                ...(nextScheduledJob
+                  ? [
+                      {
+                        href: `/projects/${nextScheduledJob.projectId}`,
+                        label: "Open project",
+                        variant: "subtle" as const
+                      }
+                    ]
+                  : [])
+              ]}
+            />
+          </div>
+        </DetailPanel>
+
+        <RelatedConversationsCard
+          source="customer"
+          description="Customer-scoped communication stays on canonical threads and routes back into the shared communications review workspace when this relationship needs follow-through."
+          countLabel="Customer threads"
+          emptyMessage="No customer-scoped communication threads are attached to this canonical customer yet."
+          actionClassName="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+          threads={communicationThreads}
+        />
+
+        <DetailPanel
           title="Portal Access Snapshot"
           description="A quick admin read on who can currently see this customer in the portal."
         >
@@ -520,6 +1355,14 @@ export default async function CustomerDetailPage({
             <p>Active portal users: {activePortalGrantCount}</p>
             <p>Invited portal users: {invitedPortalGrantCount}</p>
             <p>Revoked portal users: {revokedPortalGrantCount}</p>
+            <p>
+              Linked contact grants:{" "}
+              {portalAccessGrants.filter((grant) => grant.customerContactId).length}
+            </p>
+            <p>
+              Customer-level grants:{" "}
+              {portalAccessGrants.filter((grant) => !grant.customerContactId).length}
+            </p>
             {portalAccessGrants[0] ? (
               <p>
                 Latest portal grant:{" "}
@@ -532,6 +1375,19 @@ export default async function CustomerDetailPage({
             ) : (
               <p>No portal access has been granted for this customer yet.</p>
             )}
+            <p>Related customer contacts: {customerContacts.length}</p>
+            <p>
+              Contact-linked portal readiness:{" "}
+              {customerContacts.filter((customerContact) => customerContact.contact?.email?.trim())
+                .length}{" "}
+              with email,{" "}
+              {
+                customerContacts.filter(
+                  (customerContact) => !customerContact.contact?.email?.trim()
+                ).length
+              }{" "}
+              missing email
+            </p>
           </div>
         </DetailPanel>
       </aside>

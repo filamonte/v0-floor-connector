@@ -14,6 +14,7 @@ Use these docs together:
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow
 - [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
+- [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md): canonical UI standardization and interaction guardrails
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): doc maintenance and archival rules
 
 ## What Is Implemented Now
@@ -84,6 +85,9 @@ Important workflow rules:
 - projects should become the operational hub over time
 - the current contractor app may still use parallel top-level routes during that transition
 - contracts, invoices, and estimates must stay connected through the shared canonical model
+- canonical `customers` remain the commercial and financial customer/account record even if a broader contractor `Directory` view is introduced later
+- estimate send, invoice recipient, contract customer context, payment customer context, and project ownership must continue to read from canonical customer/account fields unless a later approved customer-contact permission model explicitly changes a specific flow
+- additional customer contacts remain related contacts beneath a canonical customer account; they do not replace the account record
 - all downstream financial systems must use immutable approved snapshots as their billing source of truth
 - do not use live `estimate_line_items` as a billing source
 - change orders must extend the same shared project, contract, and invoice chain rather than introducing a separate scope-change model
@@ -93,6 +97,15 @@ Important workflow rules:
 - customer-facing payment workflow foundations now attach to the same canonical invoice/payment chain used in the contractor app
 - templates are shared infrastructure across estimates, contracts, and invoices
 - records should flow forward instead of being recreated downstream
+- future Takeoff & Scope Intelligence must be project-scoped and feed the canonical estimate workflow; it must not become a separate estimating silo
+- takeoff produces quantities; catalog/cost items define reusable cost, pricing, production, and tax behavior; estimates define customer-facing pricing and commercial scope
+- takeoff quantities must generate estimate line items through catalog/cost item mapping, not bypass catalog logic or write directly to invoices
+- generated estimate line items should retain source linkage back to approved takeoff scope items, takeoff measurements, and source documents or photos when that future layer exists
+- if takeoff changes after estimate generation, the future takeoff-estimate link or estimate should be flagged out of sync until a user reviews it
+- AI-assisted takeoff, measurement, scope, and cost-item mapping suggestions must remain reviewable and user-approved before becoming customer-facing estimate content
+- takeoff quantities may inform material requirements, labor estimation, production readiness, and job planning only through the canonical estimate-to-job workflow, not through direct billing shortcuts
+- future contractor network collaboration must extend canonical projects, jobs, vendors, people, invoices, and payments rather than creating a separate social, marketplace, or partner-work data silo
+- contractor network communication should be record-based over free-floating chat, with messages tied to projects, jobs, change orders, invoices, daily logs, field notes, or other canonical workflow records
 - project detail is the primary workflow/readiness hub for the connected contractor flow
 - estimate, contract, invoice, and job pages should use one shared record-workspace pattern and point back to the project hub when broader workflow state matters
 - invoice detail should be treated as review-first in layout direction, even when edit controls remain available
@@ -115,12 +128,15 @@ Important workflow rules:
 - estimate autosave should validate before persist and use conflict protection against stale overwrites
 - estimate tax must stay derived from organization defaults, customer exemption state, and item-level taxable flags; do not add manual estimate tax overrides
 - `catalog_items` remains the one shared item master across material, labor, service, equipment, and system records; do not introduce a second inventory or labor model
+- future catalog/cost item markup should be treated as internal cost/profitability behavior: defaults can come from the item database, estimate-level overrides can be intentional, and customer-facing estimate output should not expose markup controls
 - systems remain canonical reusable assemblies on top of `catalog_items`, with component rows designed to scale by sqft into estimate line items
 - estimate attachments should stay on the shared `documents` bucket using organization-first storage paths
 
 ## Current Contractor UI Guardrails
 
 Treat the current contractor UI direction as implementation guardrail, not loose preference.
+
+Use [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md) as the canonical UI standardization document before changing contractor app pages.
 
 Do:
 - keep top-level navigation as the primary contractor app navigation
@@ -148,9 +164,11 @@ Do not:
 - do not treat dashboard and manager pages as separate visual systems
 - do not try to complete full record authoring inside a manager-page quick-create overlay
 - do not implement change orders as report-only artifacts, detached approvals, or portal-only records
+- do not build direct takeoff-to-invoice behavior or customer-facing AI takeoff output that bypasses human-reviewed estimate line items
 - do not let module dashboards become separate module apps with their own private worldview
 - do not build module-local queues or summaries that hide the shared project and record chain
 - do not let universal create become a siloed draft system or tool menu disconnected from canonical records
+- do not build an open contractor social feed, broad contractor-to-contractor chat, or open marketplace behavior as part of communications or portal work
 
 The contractor UI baseline is now established enough that future contractor-page work should start from this system by default rather than reopening normalization decisions page by page.
 The normalization phase is complete enough to stop; further contractor-page work should be treated as baseline-preserving feature work or targeted polish unless a real system-level mismatch appears.
@@ -159,8 +177,17 @@ The normalization phase is complete enough to stop; further contractor-page work
 
 - use canonical shared data only
 - do not create module-specific data silos
+- do not create a standalone takeoff/estimating app disconnected from projects, catalog/cost items, and canonical estimates
+- do not create duplicate project, estimate, catalog, invoice, or takeoff-specific commercial models for future takeoff behavior
+- do not create marketplace models, contractor-network models, or partner-work models until scoped collaboration, permissions, tenant isolation, and canonical ownership are designed
+- treat `Directory` as a unified view over canonical records, not as a new merged record model
+- keep workforce `people`, customer accounts, vendors, leads, and super-admin identities separate at the data-model level even if future contractor UI groups them more closely
 - keep business logic in shared packages or server-side utilities where practical
 - preserve tenant isolation everywhere
+- preserve tenant isolation and canonical workflow continuity for future takeoff records, documents, measurements, scope items, and estimate links
+- preserve explicit permissioning for future contractor network features: no contractor can browse another contractor's customers, projects, pricing, pipeline, files, or payment history
+- hide customer contact data and pricing by default for external collaborators unless the contractor organization explicitly grants visibility for that project, job, or record
+- share files intentionally, scope project/job access explicitly, and keep admin controls around inviting external collaborators
 - use real Supabase-backed persistence for canonical workflows
 - preserve snapshot lineage in financial flows; do not bypass approved estimate snapshots, SOV lineage, or approved change-order snapshots when adding downstream billing behavior
 - keep current route architecture unless the task explicitly calls for route changes

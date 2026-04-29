@@ -34,7 +34,7 @@ export default async function SettingsWorkflowsPage({ searchParams }: PageProps)
 
       <DetailPanel
         title="Workflow Defaults"
-        description="Set contract workflow defaults and the next human-facing estimate, invoice, change order, and contract numbers without breaking the canonical commercial chain."
+        description="Set organization-owned contract workflow defaults, estimate starting defaults, and the next human-facing estimate, invoice, change order, and contract numbers without breaking the canonical commercial chain."
       >
         <form action={updateOrganizationWorkflowSettingsAction} className="space-y-5">
           <label className="block">
@@ -144,30 +144,62 @@ export default async function SettingsWorkflowsPage({ searchParams }: PageProps)
             />
           </label>
 
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+            <p className="font-medium text-slate-900">Estimate starting defaults</p>
+            <p className="mt-2">
+              These fields prefill only when a new estimate still has empty reusable-content
+              areas. They are organization-owned working defaults, even when they originally came
+              from platform starter defaults.
+            </p>
+            <p className="mt-2">
+              Reusable content blocks are different: they stay tenant-owned and append on demand
+              inside estimate edit. Import from another estimate is different too: it copies from a
+              specific prior estimate that the user selects.
+            </p>
+          </div>
+
           <RichTextEditor
-            label="Default estimate terms"
+            label="Estimate default terms (starting content)"
             name="defaultEstimateTermsHtml"
             value={workflowSettings.defaultEstimateTermsHtml}
             mode="standard"
           />
           <RichTextEditor
-            label="Default inclusions"
+            label="Estimate default inclusions (starting content)"
             name="defaultEstimateInclusionsHtml"
             value={workflowSettings.defaultEstimateInclusionsHtml}
             mode="standard"
           />
           <RichTextEditor
-            label="Default exclusions"
+            label="Estimate default exclusions (starting content)"
             name="defaultEstimateExclusionsHtml"
             value={workflowSettings.defaultEstimateExclusionsHtml}
             mode="standard"
           />
           <RichTextEditor
-            label="Default scope summary"
+            label="Estimate default scope / SOW summary (starting content)"
             name="defaultEstimateScopeSummaryHtml"
             value={workflowSettings.defaultEstimateScopeSummaryHtml}
             mode="standard"
           />
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-4 text-xs leading-5 text-slate-500">
+            <p>
+              Empty estimates only: these defaults do not append into an estimate that already has
+              reusable-content text.
+            </p>
+            <p className="mt-2">
+              Separate from reusable blocks: blocks are inserted later, section by section, inside
+              estimate edit.
+            </p>
+            <p className="mt-2">
+              Separate from estimate import: import copies line items or reusable content from one
+              selected prior estimate and appends it into the current estimate.
+            </p>
+            <p className="mt-2">
+              Platform starter defaults explain where these defaults may begin, but this page is
+              where your organization owns and edits its working estimate defaults.
+            </p>
+          </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">

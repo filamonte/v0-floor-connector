@@ -244,6 +244,14 @@ export const estimateQuickCreateInputSchema = z.object({
       message: "Select a valid site or job."
     })
     .transform((value) => value ?? null),
+  projectName: z
+    .string()
+    .trim()
+    .max(160, "Project name must be 160 characters or fewer.")
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .optional()
+    .transform((value) => value ?? null),
   title: z.string().trim().min(1, "Estimate title is required.").max(160)
 }).superRefine((value, ctx) => {
   if (value.creationMode === "opportunity" && !value.opportunityId) {
@@ -263,6 +271,46 @@ export const estimateQuickCreateInputSchema = z.object({
       });
     }
   }
+
+  if (!value.opportunityId && value.customerId && !value.projectId && !value.projectName) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Select an existing project or enter a new project name for this customer.",
+      path: ["projectName"]
+    });
+  }
+});
+
+export const estimateLineItemImportInputSchema = z.object({
+  destinationEstimateId: z
+    .string()
+    .trim()
+    .uuid("Select a valid destination estimate."),
+  sourceEstimateId: z
+    .string()
+    .trim()
+    .min(1, "Select an estimate to import from.")
+    .uuid("Select a valid source estimate.")
+});
+
+export const estimateReusableContentImportSectionSchema = z.enum([
+  "scope",
+  "terms",
+  "inclusions",
+  "exclusions"
+] as const);
+
+export const estimateReusableContentImportInputSchema = z.object({
+  destinationEstimateId: z
+    .string()
+    .trim()
+    .uuid("Select a valid destination estimate."),
+  sourceEstimateId: z
+    .string()
+    .trim()
+    .min(1, "Select an estimate to import from.")
+    .uuid("Select a valid source estimate."),
+  section: estimateReusableContentImportSectionSchema
 });
 
 export const estimateSendToCustomerInputSchema = z.object({

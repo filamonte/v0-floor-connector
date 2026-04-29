@@ -302,6 +302,7 @@ export async function startEstimateFromOpportunityAction(formData: FormData) {
       opportunityId,
       customerId: null,
       projectId: null,
+      projectName: null,
       title: ""
     });
   } catch (error) {

@@ -5,6 +5,8 @@ import { listCatalogItems } from "@/lib/catalogs/data";
 import { listEstimateContentBlocks } from "@/lib/estimate-content-blocks/data";
 import {
   autosaveEstimateAction,
+  importEstimateLineItemsAction,
+  importEstimateReusableContentAction,
   insertCatalogItemToEstimateAction,
   openOrCreateScheduleOfValuesAction,
   insertSystemToEstimateAction,
@@ -15,7 +17,7 @@ import {
 import { resolveEstimateApprovalOrchestration } from "@/lib/estimates/approval-orchestration";
 import { quickCreateContractFromEstimateAction } from "@/lib/contracts/actions";
 import { quickCreateInvoiceAction } from "@/lib/invoices/actions";
-import { getEstimateById } from "@/lib/estimates/data";
+import { getEstimateById, listEstimates } from "@/lib/estimates/data";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 
 type EstimateEditPageProps = {
@@ -40,11 +42,29 @@ export default async function EstimateEditPage({
     notFound();
   }
 
-  const [catalogItems, contentBlocks, organizationFinancialSettings] = await Promise.all([
+  const [catalogItems, contentBlocks, organizationFinancialSettings, estimates] = await Promise.all([
     listCatalogItems(),
     listEstimateContentBlocks(),
-    getOrganizationFinancialSettings(estimate.organizationId)
+    getOrganizationFinancialSettings(estimate.organizationId),
+    listEstimates()
   ]);
+  const importSourceEstimates = estimates
+    .filter((sourceEstimate) => sourceEstimate.id !== estimate.id)
+    .map((sourceEstimate) => ({
+      id: sourceEstimate.id,
+      referenceNumber: sourceEstimate.referenceNumber,
+      title: sourceEstimate.title,
+      customerName: sourceEstimate.customer?.name ?? null,
+      projectName: sourceEstimate.project?.name ?? null,
+      status: sourceEstimate.status,
+      updatedAt: sourceEstimate.updatedAt,
+      hasScopeContent: Boolean(
+        sourceEstimate.content.scopeSummaryHtml || sourceEstimate.content.scopeItems.length > 0
+      ),
+      hasTermsContent: Boolean(sourceEstimate.content.termsHtml),
+      hasInclusionsContent: Boolean(sourceEstimate.content.inclusionsHtml),
+      hasExclusionsContent: Boolean(sourceEstimate.content.exclusionsHtml)
+    }));
   const approvalOrchestration =
     estimate.status === "approved"
       ? await resolveEstimateApprovalOrchestration(
@@ -81,7 +101,10 @@ export default async function EstimateEditPage({
         previewExpandedSystemAction={previewExpandedSystemAction}
         insertCatalogItemAction={insertCatalogItemToEstimateAction}
         insertSystemAction={insertSystemToEstimateAction}
+        importLineItemsFromEstimateAction={importEstimateLineItemsAction}
+        importReusableContentFromEstimateAction={importEstimateReusableContentAction}
         quickCreateCatalogItemAction={quickCreateEstimateCatalogItemAction}
+        importSourceEstimates={importSourceEstimates}
         approvalOrchestration={approvalOrchestration}
         contractAction={quickCreateContractFromEstimateAction}
         invoiceAction={quickCreateInvoiceAction}

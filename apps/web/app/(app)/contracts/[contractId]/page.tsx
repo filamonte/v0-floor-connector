@@ -12,14 +12,28 @@ import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NextActionCard } from "@/components/next-action-card";
+import { RelatedConversationsCard } from "@/components/related-conversations-card";
+import {
+  ScheduleContextActions,
+  ScheduleContextFocusCard,
+  ScheduleContextMetrics,
+  ScheduleContextNotice
+} from "@/components/schedule-context-card";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
 import { getContractById, getContractSignatureActionOptions } from "@/lib/contracts/data";
 import { listInvoices } from "@/lib/invoices/data";
-import { listJobs } from "@/lib/jobs/data";
+import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
+import { buildScheduleHref } from "@/lib/schedule/links";
+import {
+  formatScheduleSummaryWindow,
+  getScheduleAssignmentSummary,
+  getScheduleSummarySortValue
+} from "@/lib/schedule/summary";
 
 type ContractDetailPageProps = {
   params: Promise<{
@@ -222,6 +236,10 @@ function getContractNextAction(input: {
   };
 }
 
+function buildProjectScheduleHref(projectId: string) {
+  return buildScheduleHref({ projectId });
+}
+
 export default async function ContractDetailPage({
   params,
   searchParams
@@ -229,13 +247,15 @@ export default async function ContractDetailPage({
   const { contractId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
   const user = await requireAuthenticatedUser(`/contracts/${contractId}`);
-  const [contract, organizationContext, jobs, invoices, signatureActionOptions] = await Promise.all([
-    getContractById(contractId, `/contracts/${contractId}`),
-    getActiveOrganizationContext(user.id),
-    listJobs(),
-    listInvoices(),
-    getContractSignatureActionOptions(contractId, `/contracts/${contractId}`)
-  ]);
+  const [contract, organizationContext, jobs, invoices, signatureActionOptions, communicationThreads] =
+    await Promise.all([
+      getContractById(contractId, `/contracts/${contractId}`),
+      getActiveOrganizationContext(user.id),
+      listJobs(),
+      listInvoices(),
+      getContractSignatureActionOptions(contractId, `/contracts/${contractId}`),
+      listCommunicationThreadsForSubject("contract", contractId)
+    ]);
 
   if (!contract) {
     notFound();
@@ -268,7 +288,37 @@ export default async function ContractDetailPage({
   });
 
   const relatedJobs = jobs.filter((job) => job.projectId === contract.projectId);
+  const relatedJobAssignments = await listJobAssignmentsByJobIds(
+    relatedJobs.map((job) => job.id),
+    `/contracts/${contractId}`
+  );
   const relatedInvoices = invoices.filter((invoice) => invoice.projectId === contract.projectId);
+  const scheduledJobs = relatedJobs.filter((job) => job.dispatchStatus === "scheduled");
+  const unscheduledJobs = relatedJobs.filter((job) => job.dispatchStatus === "unscheduled");
+  const inProgressJobs = relatedJobs.filter((job) => job.dispatchStatus === "in_progress");
+  const nextScheduledJob =
+    [...scheduledJobs]
+      .filter((job) => job.scheduledDate)
+      .sort((left, right) => getScheduleSummarySortValue(left) - getScheduleSummarySortValue(right))[0] ??
+    null;
+  const nextScheduledAssignments = nextScheduledJob
+    ? relatedJobAssignments.get(nextScheduledJob.id) ?? []
+    : [];
+  const nextScheduledAssignmentNames = nextScheduledAssignments
+    .map((assignment) => assignment.person?.displayName ?? assignment.vendor?.name ?? null)
+    .filter((value): value is string => Boolean(value));
+  const nextScheduledCrewSummary = nextScheduledJob
+    ? getScheduleAssignmentSummary({
+        assignmentNames: nextScheduledAssignmentNames,
+        crewVendorName: nextScheduledJob.crewVendor?.name ?? null,
+        assignmentCount: nextScheduledAssignments.length
+      })
+    : null;
+  const jobsWithoutAssignments = relatedJobs.filter(
+    (job) =>
+      job.dispatchStatus !== "completed" &&
+      (relatedJobAssignments.get(job.id)?.length ?? 0) === 0
+  );
   const sendReadinessMessage = contractGate.canSend
     ? "This contract is ready to send."
     : contractGate.sendBlockers.includes("internal_approval_pending")
@@ -640,6 +690,107 @@ export default async function ContractDetailPage({
             </DetailPanel>
 
             <DetailPanel
+              title="Schedule Handoff"
+              description="Compact production context from the contract's canonical project jobs and job assignments, without creating a contract-to-schedule bridge model."
+            >
+              <div className="space-y-4 text-sm leading-6 text-slate-600">
+                <ScheduleContextMetrics
+                  items={[
+                    { label: "Scheduled", value: scheduledJobs.length },
+                    { label: "Unscheduled", value: unscheduledJobs.length },
+                    { label: "In progress", value: inProgressJobs.length }
+                  ]}
+                />
+
+                {nextScheduledJob ? (
+                  <ScheduleContextFocusCard
+                    eyebrow={
+                      nextScheduledJob.dispatchStatus === "in_progress"
+                        ? "Work in progress"
+                        : "Next scheduled job"
+                    }
+                    title={nextScheduledJob.project?.name ?? contract.project?.name ?? "Project job"}
+                    titleHref={`/jobs/${nextScheduledJob.id}`}
+                    statusLabel={formatStatusLabel(nextScheduledJob.dispatchStatus)}
+                    summary={formatScheduleSummaryWindow({
+                      scheduledDate: nextScheduledJob.scheduledDate,
+                      scheduledStartAt: nextScheduledJob.scheduledStartAt,
+                      scheduledEndAt: nextScheduledJob.scheduledEndAt
+                    })}
+                    detailRows={[
+                      {
+                        label: "Crew",
+                        value:
+                          nextScheduledAssignments.length > 0
+                            ? nextScheduledCrewSummary
+                            : nextScheduledJob.dispatchStatus === "scheduled"
+                              ? "Scheduled, but crew assignment still needs to be confirmed"
+                              : nextScheduledCrewSummary
+                      }
+                    ]}
+                  />
+                ) : (
+                  <ScheduleContextNotice
+                    eyebrow={relatedJobs.length > 0 ? "Ready for scheduling" : "No jobs yet"}
+                    title={
+                      relatedJobs.length > 0
+                        ? "Contract work has moved into jobs, but not onto the calendar yet"
+                        : "No production jobs are linked to this project yet"
+                    }
+                  >
+                    {relatedJobs.length > 0
+                      ? "Canonical project jobs already exist for this contract, but they are still unscheduled. The next production commitment will show here once a real date is attached."
+                      : "This contract is linked to a project, but downstream production jobs have not been created yet."}
+                  </ScheduleContextNotice>
+                )}
+
+                <ContextFactsList
+                  items={[
+                    {
+                      label: "Project link",
+                      value: contract.project ? (
+                        <Link
+                          href={`/projects/${contract.project.id}`}
+                          className="font-medium text-brand-700"
+                        >
+                          {contract.project.name}
+                        </Link>
+                      ) : (
+                        "Project context unavailable"
+                      )
+                    },
+                    {
+                      label: "Crew assignment state",
+                      value:
+                        nextScheduledJob && nextScheduledCrewSummary
+                          ? nextScheduledCrewSummary
+                          : jobsWithoutAssignments.length > 0
+                            ? `${jobsWithoutAssignments.length} job${
+                                jobsWithoutAssignments.length === 1 ? "" : "s"
+                              } still need crew assignment rows`
+                            : relatedJobs.length > 0
+                              ? "Crew coverage is already attached where needed"
+                              : "No project jobs yet"
+                    }
+                  ]}
+                />
+
+                <ScheduleContextActions
+                  actions={[
+                    ...(nextScheduledJob
+                      ? [{ href: `/jobs/${nextScheduledJob.id}`, label: "Open next scheduled job" as const }]
+                      : []),
+                    {
+                      href: buildProjectScheduleHref(contract.projectId),
+                      label: "Open schedule",
+                      variant: "subtle"
+                    }
+                  ]}
+                />
+              </div>
+            </DetailPanel>
+
+            <DetailPanel
               title="Signer Routing"
               description="Assigned signers and current signature timing on this contract."
             >
@@ -787,6 +938,15 @@ export default async function ContractDetailPage({
                 ) : null}
               </div>
             </DetailPanel>
+
+            <RelatedConversationsCard
+              source="contract"
+              description="Contract-scoped communication stays on canonical threads and routes back into the shared communications workspace when customer follow-through is needed."
+              countLabel="Contract threads"
+              emptyMessage="No contract-scoped communication threads are attached to this canonical contract yet."
+              actionClassName="inline-flex rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+              threads={communicationThreads}
+            />
 
             <DetailPanel
               title="Recent Signature Events"

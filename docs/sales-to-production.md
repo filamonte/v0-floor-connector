@@ -89,6 +89,7 @@ Purpose:
 May include:
 - measurements or square footage
 - photos
+- uploaded plans or drawings later
 - substrate condition
 - prep requirements
 - recommended system
@@ -97,7 +98,15 @@ May include:
 Input sources may be:
 - on-site inspection
 - customer-provided measurements and requirements
+- customer-provided plans and photos later
+- contractor-uploaded plans, photos, and site information later
 - future instant-estimate tooling
+
+Future Takeoff & Scope Intelligence:
+- site assessment may feed project-scoped takeoff work before estimate creation
+- takeoff should support plan upload, photo and site-info inputs, manual measurements, and later AI-assisted measurement suggestions
+- takeoff produces quantities; catalog/cost items define reusable cost, pricing, production, and tax behavior; estimates define customer-facing pricing and commercial scope
+- takeoff should not own pricing, replace the estimate, or bypass the canonical commercial record chain
 
 ### 4. Estimate Creation
 
@@ -107,8 +116,18 @@ Estimate creation may eventually support:
 - square-foot pricing
 - hybrid estimating
 - reusable catalogs and assemblies
+- catalog/cost item defaults for internal cost, markup, pricing, production behavior, and tax behavior, with estimate-level overrides where the contractor intentionally changes the commercial setup
+- takeoff-driven quantity generation from project-scoped plans, photos, and site data
+- cost item/catalog mapping from approved takeoff quantities into estimate line items
+- AI-assisted suggestions that remain reviewable and user-approved before becoming customer-facing
 
 Current product direction keeps the estimate as the canonical commercial scope record.
+
+In the future flow, Takeoff & Scope Intelligence should produce reviewed quantities and scope items that map to reusable catalog/cost items before generating estimate line items. The estimate remains where the contractor decides what to charge. Human review and approval are required before generated line items become part of a customer-facing estimate.
+
+Generated estimate line items should eventually retain source traceability back to the takeoff scope item, takeoff measurement, and source document or photo when applicable. If takeoff quantities change after estimate generation, the system should flag the takeoff-estimate link or estimate as out of sync so users know the estimate may need review.
+
+Takeoff quantities should eventually help with material requirements, labor estimation, production readiness, and job planning. The financial record path still runs through `Takeoff -> Estimate -> Contract / Job -> Invoice -> Payment`; there should be no direct takeoff-to-invoice workflow.
 
 Current implementation note:
 - the live estimate workspace is inventory-first, using shared `catalog_items` plus reusable systems/components instead of disconnected manual estimate rows
@@ -157,6 +176,7 @@ Once work is commercially and financially ready, operations should be able to:
 - create or confirm the job/work order
 - assign schedule readiness
 - move toward crew assignment and production planning later
+- prepare a future subcontractor, vendor, or partner-contractor handoff when an external collaborator is needed for scoped work
 
 ### 10. Job Execution
 
@@ -166,6 +186,7 @@ Later operational depth should support:
 - daily logs
 - time tracking
 - production visibility
+- scoped external partner updates, photos, field notes, and progress signals where a subcontractor, vendor, or partner contractor has been explicitly invited to the project or job
 
 ### 11. Invoice, Payment, And Closeout
 
@@ -209,17 +230,30 @@ FloorConnector should avoid:
 - module-specific template silos
 - manual re-entry of estimate or contract data downstream
 - contractors depending directly on one mutable global starter record
+- a separate takeoff or estimating silo disconnected from project, catalog, and estimate records
+- direct takeoff-to-invoice behavior that bypasses reviewed estimate line items and approved commercial scope
+- pricing directly inside raw takeoff measurements
+- AI-generated customer-facing estimates without contractor approval
+- duplicate project, estimate, catalog, or invoice models for takeoff
+- takeoff behavior that weakens tenant isolation or breaks canonical workflow continuity
+- free-floating contractor chat that is not tied back to canonical project, job, financial, or field records
+- external partner access that exposes customer contact data, pricing, files, pipeline, or project history without explicit permissions
 
 ## Future Extensions
 
 Future workflow expansion may include:
 - richer estimator tooling
+- Takeoff & Scope Intelligence for manual/on-screen takeoff, AI-assisted suggestions, cost item mapping, and estimate generation
 - online scheduling
 - customer portal flows
 - full AIA/progress billing workflows
 - communications and notifications
 - CRM and sales pipeline depth
 - deeper production and field execution tooling
+- subcontractor handoff from financially ready project/job records
+- overflow work sharing and partner contractor collaboration after project, financial, permission, and compliance readiness are clear
+
+External partner access must be scoped and permissioned. Customer contact data, pricing, project files, and billing context should be hidden by default and shared intentionally only where the contractor organization has granted access for a specific project, job, or related record.
 
 ## Summary
 

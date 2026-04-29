@@ -1,7 +1,11 @@
 import "server-only";
 
-import type { OrganizationWorkflowSettings } from "@floorconnector/types";
+import type {
+  AutomationNotificationPreference,
+  OrganizationWorkflowSettings
+} from "@floorconnector/types";
 
+import { normalizeAutomationNotificationPreferences } from "@/lib/automation/preferences";
 import { getPlatformWorkflowDefaults } from "@/lib/platform-admin/data";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -21,6 +25,7 @@ type OrganizationWorkflowSettingsRow = {
   next_invoice_number: number | null;
   next_change_order_number: number | null;
   next_contract_number: number | null;
+  automation_notification_preferences: unknown;
   created_at: string;
   updated_at: string;
 };
@@ -57,6 +62,7 @@ function isOrganizationWorkflowSettingsRow(
     (row.next_change_order_number === null ||
       typeof row.next_change_order_number === "number") &&
     (row.next_contract_number === null || typeof row.next_contract_number === "number") &&
+    typeof row.automation_notification_preferences !== "undefined" &&
     typeof row.created_at === "string" &&
     typeof row.updated_at === "string"
   );
@@ -90,6 +96,9 @@ function mapOrganizationWorkflowSettings(
     nextChangeOrderNumber:
       row.next_change_order_number ?? fallback.nextChangeOrderNumber,
     nextContractNumber: row.next_contract_number ?? fallback.nextContractNumber,
+    automationNotificationPreferences: normalizeAutomationNotificationPreferences(
+      row.automation_notification_preferences
+    ),
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -177,6 +186,7 @@ export async function getOrganizationWorkflowSettings(
         next_invoice_number,
         next_change_order_number,
         next_contract_number,
+        automation_notification_preferences,
         created_at,
         updated_at
       `
@@ -213,6 +223,7 @@ export async function getOrganizationWorkflowSettings(
       nextInvoiceNumber: platformDefaults.defaultInvoiceStartNumber,
       nextChangeOrderNumber: platformDefaults.defaultChangeOrderStartNumber,
       nextContractNumber: platformDefaults.defaultContractStartNumber,
+      automationNotificationPreferences: normalizeAutomationNotificationPreferences(null),
       createdAt: new Date(0).toISOString(),
       updatedAt: new Date(0).toISOString()
     };
@@ -243,6 +254,7 @@ export async function upsertOrganizationWorkflowSettings(input: {
   nextInvoiceNumber: number;
   nextChangeOrderNumber: number;
   nextContractNumber: number;
+  automationNotificationPreferences?: AutomationNotificationPreference[];
 }) {
   const supabase = await getSupabaseServerClient();
   const [platformDefaults, currentSettings, recordCounts] = await Promise.all([
@@ -287,6 +299,10 @@ export async function upsertOrganizationWorkflowSettings(input: {
     );
   }
 
+  const automationNotificationPreferences =
+    input.automationNotificationPreferences ??
+    currentSettings.automationNotificationPreferences;
+
   const response = await supabase
     .from("organization_workflow_settings")
     .upsert(
@@ -309,6 +325,7 @@ export async function upsertOrganizationWorkflowSettings(input: {
         next_invoice_number: input.nextInvoiceNumber,
         next_change_order_number: input.nextChangeOrderNumber,
         next_contract_number: input.nextContractNumber,
+        automation_notification_preferences: automationNotificationPreferences,
         updated_by: input.userId,
         created_by: input.userId
       },
@@ -333,6 +350,7 @@ export async function upsertOrganizationWorkflowSettings(input: {
         next_invoice_number,
         next_change_order_number,
         next_contract_number,
+        automation_notification_preferences,
         created_at,
         updated_at
       `
@@ -355,5 +373,37 @@ export async function upsertOrganizationWorkflowSettings(input: {
     nextInvoiceNumber: platformDefaults.defaultInvoiceStartNumber,
     nextChangeOrderNumber: platformDefaults.defaultChangeOrderStartNumber,
     nextContractNumber: platformDefaults.defaultContractStartNumber
+  });
+}
+
+export async function upsertOrganizationAutomationNotificationPreferences(input: {
+  organizationId: string;
+  userId: string;
+  automationNotificationPreferences: AutomationNotificationPreference[];
+}) {
+  const currentSettings = await getOrganizationWorkflowSettings(input.organizationId);
+
+  return upsertOrganizationWorkflowSettings({
+    organizationId: input.organizationId,
+    userId: input.userId,
+    approvedEstimateContractTemplateId:
+      currentSettings.approvedEstimateContractTemplateId,
+    requireContractInternalApproval: currentSettings.requireContractInternalApproval,
+    requireContractSignatureBeforeJobScheduling:
+      currentSettings.requireContractSignatureBeforeJobScheduling,
+    requireDepositBeforeJobScheduling:
+      currentSettings.requireDepositBeforeJobScheduling,
+    requireFinancingApprovalBeforeJobScheduling:
+      currentSettings.requireFinancingApprovalBeforeJobScheduling,
+    defaultDepositPercentage: currentSettings.defaultDepositPercentage,
+    defaultEstimateTermsHtml: currentSettings.defaultEstimateTermsHtml,
+    defaultEstimateInclusionsHtml: currentSettings.defaultEstimateInclusionsHtml,
+    defaultEstimateExclusionsHtml: currentSettings.defaultEstimateExclusionsHtml,
+    defaultEstimateScopeSummaryHtml: currentSettings.defaultEstimateScopeSummaryHtml,
+    nextEstimateNumber: currentSettings.nextEstimateNumber,
+    nextInvoiceNumber: currentSettings.nextInvoiceNumber,
+    nextChangeOrderNumber: currentSettings.nextChangeOrderNumber,
+    nextContractNumber: currentSettings.nextContractNumber,
+    automationNotificationPreferences: input.automationNotificationPreferences
   });
 }

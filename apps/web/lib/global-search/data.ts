@@ -201,7 +201,7 @@ const groupLabels: Record<GlobalSearchGroupKey, string> = {
   job: "Jobs",
   punchlist: "Punchlists",
   payment: "Payments",
-  person: "People",
+  person: "People (workforce)",
   vendor: "Vendors"
 };
 

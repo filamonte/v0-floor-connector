@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 import { ProtectedSurfaceHeader } from "@/components/protected-surface-header";
-import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +11,11 @@ type PortalLayoutProps = {
 };
 
 export default async function PortalLayout({ children }: PortalLayoutProps) {
-  const user = await requireAuthenticatedUser("/portal");
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return children;
+  }
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.98))]">

@@ -55,7 +55,7 @@ export function FinancialSummaryBar({
                 Financial Summary
               </span>
               <span className="text-[12px] text-[#7c8ba3]">
-                {visibleItemCount} visible manual item{visibleItemCount === 1 ? "" : "s"}
+                {visibleItemCount} visible estimate item{visibleItemCount === 1 ? "" : "s"}
               </span>
             </div>
           </div>

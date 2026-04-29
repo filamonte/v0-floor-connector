@@ -234,7 +234,7 @@ export function GlobalSearch({
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.currentTarget.value)}
-                placeholder="Search leads, customers, projects, appointments, estimates, contracts, invoices, jobs, payments, people, or vendors"
+                placeholder="Search leads, customers, projects, appointments, estimates, contracts, invoices, jobs, payments, workforce people, or vendors"
                 className="h-11 w-full bg-transparent text-[15px] text-[#221a14] outline-none placeholder:text-[#8d8074]"
               />
               <button
@@ -258,7 +258,7 @@ export function GlobalSearch({
                     </h2>
                     <p className="mt-2 text-sm leading-6 text-[#665446]">
                       Search across opportunities, customers, projects, appointments,
-                      estimates, contracts, invoices, jobs, payments, people, and vendors.
+                      estimates, contracts, invoices, jobs, payments, workforce people, and vendors.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -272,7 +272,7 @@ export function GlobalSearch({
                       "Invoices",
                       "Jobs",
                       "Payments",
-                      "People",
+                      "People (workforce)",
                       "Vendors"
                     ].map((item) => (
                       <span

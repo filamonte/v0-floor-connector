@@ -47,7 +47,9 @@ export function PortalProjectAccessForm({
           <span>Add project visibility</span>
         </AuthSubmitButton>
         <p className="text-sm leading-6 text-slate-500">
-          Portal users only see explicitly granted projects beneath the shared customer relationship.
+          Estimate send and portal approval require the portal user to have active visibility to
+          the estimate's project. Portal users only see explicitly granted projects beneath the
+          shared customer relationship.
         </p>
       </div>
     </form>

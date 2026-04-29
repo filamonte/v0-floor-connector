@@ -27,6 +27,7 @@ In practical terms:
 - downstream financial records should always inherit from immutable approved snapshots rather than live estimate editing rows
 - canonical records should stay linked so teams can follow the same job from intake through payment
 - the app should guide users toward the next best action instead of presenting every downstream action as equally primary
+- a future contractor-facing `Directory` may unify how contact-like records are browsed and managed, but it must remain a view over canonical records rather than a replacement business model
 
 ## Canonical Workflow Chain
 
@@ -54,6 +55,7 @@ Supporting workflow stages:
 - contact and qualification work
 - site assessment or inspection
 - customer-provided measurements, photos, and requirements
+- future project-scoped takeoff and scope intelligence
 - estimate review and approval
 - contract send / signature readiness
 - deposit or financial readiness checks
@@ -98,10 +100,19 @@ Implemented flow:
 - customer records are managed in the protected app
 - projects are created under canonical customers
 - project detail acts as the current bridge into estimating and downstream work
+- contractor admins can invite a customer/contact email to project-scoped portal access from the canonical customer record after a customer and project exist
+- invited customers use `/portal/invite?token=...` to sign up or log in, and the invite activates only when the authenticated email matches the contractor-created invite
 
 Current canonical records involved:
 - customer
 - project
+- portal access grant
+- portal project access
+
+Current customer-account interpretation:
+- the customer is the full canonical customer/account record, not a lightweight contact card
+- additional customer contacts may later appear beneath that account in a unified Directory workspace, but the account remains the commercial and financial source of truth
+- normal portal onboarding is contractor-initiated from the shared customer/project workflow; customers do not self-register first unless a later customer-led quote/intake surface explicitly supports that path
 
 ### Project To Estimate
 
@@ -130,6 +141,24 @@ Current canonical records involved:
 - estimate line items
 - catalog items
 - catalog system components
+
+Future workflow guidance:
+- Takeoff & Scope Intelligence may become a supporting pre-estimate workflow stage between opportunity/site assessment and estimate authoring
+- future inputs may include customer-provided plans/photos, contractor site data, measurements, requirements, and uploaded plan or image files
+- takeoff should stay project-scoped and feed estimate creation through reviewed quantities mapped to reusable catalog/cost items
+- Takeoff produces quantities. Catalog/cost items define reusable cost, pricing, production, and tax behavior. Estimates define customer-facing pricing and commercial scope.
+- takeoff is not a replacement for estimates; the canonical estimate remains the commercial scope record and the customer-facing pricing proposal
+- the intended future flow is `Lead / Opportunity -> Customer + Project -> Site Info / Plans / Photos -> Takeoff -> Cost Item Mapping -> Estimate Line Items -> Estimate -> Contract -> Job -> Invoice -> Payment`
+- conceptual future objects may include `takeoffs`, `takeoff_documents`, `takeoff_measurements`, `takeoff_scope_items`, and `takeoff_estimate_links`, but these are not existing tables and should not be treated as implemented schema
+- raw takeoff measurements should not own pricing; pricing belongs in catalog/cost items and estimate line items
+- generated estimate line items should retain future source linkage back to the approved takeoff scope item, the takeoff measurement, and the source document or photo when applicable
+- if a takeoff changes after estimate line items have been generated, the future takeoff-estimate link or estimate should be flagged as out of sync until a user reviews it
+- AI-assisted measurements, scope suggestions, and cost-item mapping suggestions must remain reviewable and explicitly contractor-approved before they become customer-facing estimate content
+- takeoff quantities may eventually inform material requirements, labor estimation, production readiness, and job planning, but there should be no direct takeoff-to-invoice flow
+
+Customer-account guardrail for downstream commercial flows:
+- estimate send recipient continuity remains on canonical customer/account fields by default
+- the same rule should continue for invoice recipient, contract customer context, payment/billing context, and project ownership unless a later approved customer-contact permission model explicitly changes a specific flow
 
 Implemented approval rules:
 - customer-facing estimate approval happens through the portal on the same canonical estimate record
@@ -273,6 +302,11 @@ Current canonical records involved:
 - daily log
 - field note
 
+Directory direction note:
+- the current `/people` route remains workforce-oriented today
+- a future contractor-facing `Directory` may surface workforce, customer-account, vendor, lead, and related-contact entries together at the view layer
+- that future direction does not merge workforce `people`, canonical customer accounts, vendors, or leads into one table
+
 ## Recommended Contractor Revenue Path
 
 The best current product direction for the contractor revenue workflow is:
@@ -282,13 +316,14 @@ The best current product direction for the contractor revenue workflow is:
 3. Site assessment / inspection or customer-provided measurements and requirements
 4. Customer
 5. Project
-6. Estimate
-7. Portal estimate approval and approved snapshot creation
-8. Contract
-9. Change order when scope changes
-10. Job execution / scheduling
-11. Invoice
-12. Payment and closeout
+6. Future takeoff / scope intelligence where plans, photos, and site data become reviewed quantities
+7. Estimate
+8. Portal estimate approval and approved snapshot creation
+9. Contract
+10. Change order when scope changes
+11. Job execution / scheduling
+12. Invoice
+13. Payment and closeout
 
 How this should be interpreted today:
 - some of these steps already map cleanly to canonical records in the app
@@ -308,6 +343,7 @@ The preferred contractor journey is:
 With supporting readiness stages between those records:
 - qualification
 - site assessment or requirements gathering
+- future takeoff and cost item mapping before estimate authoring
 - approval
 - signature readiness
 - deposit or billing readiness
@@ -336,10 +372,12 @@ Areas where the current implementation is real but still needs workflow tighteni
 Today, the app should be understood this way:
 - opportunities start the commercial path before a full project exists
 - customers and projects anchor the operational path
+- customers are canonical customer/account records, not generic contact cards
 - estimates define proposed commercial scope
 - customer estimate approval is portal-based and writes to the same canonical estimate record
 - estimate approval creates an immutable commercial snapshot and does not auto-run contract, SOV, invoice, or payment actions
 - Cost Items Database is the reusable item master module behind estimate authoring, systems, and optional inventory
+- future catalog/cost item design should treat default markup as internal cost behavior that can be overridden on an estimate and kept out of customer-facing output
 - approved estimate snapshots feed downstream contract generation, SOV provisioning, and direct estimate-based invoice lineage
 - change orders append approved scope changes through immutable change-order snapshots rather than mutating prior approved scope
 - contracts now carry the live customer-facing signature workflow on the same canonical contract record across contractor and portal surfaces
@@ -352,5 +390,6 @@ Today, the app should be understood this way:
   - `/invoices` remains the billing-record manager
   - `/payments` remains the collections and posted-payment manager
   - `/financials/accounts-receivable` and `/financials/accounts-payable` are present only as structure/spec placeholders in this pass
+- `/people` remains the current workforce-oriented route, while a future `Directory` workspace is intended to unify contractor-facing account and contact browsing without changing the canonical data model underneath
 
 That means FloorConnector is already operating on one shared business chain, even though some screens still expose the workflow in a more module-driven way than the intended product direction.

@@ -22,6 +22,10 @@ export type AuthSurfaceContext = {
 };
 
 export function isProtectedPath(pathname: string) {
+  if (pathname === "/portal/invite" || pathname.startsWith("/portal/invite/")) {
+    return false;
+  }
+
   return protectedPrefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );

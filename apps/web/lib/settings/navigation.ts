@@ -36,6 +36,12 @@ export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
     description: "Contract generation and commercial readiness defaults."
   },
   {
+    href: "/settings/automation",
+    label: "Automation",
+    description:
+      "Automation readiness plus future notification-only preferences on canonical settings."
+  },
+  {
     href: "/settings/admin",
     label: "Admin",
     description: "Organization members, roles, and admin-facing controls."

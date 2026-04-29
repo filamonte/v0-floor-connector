@@ -14,7 +14,10 @@ import type {
 } from "./schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { recordChangeOrderNotificationEvent } from "@/lib/notifications/system";
-import { listPortalAccessGrantsForCurrentUser } from "@/lib/portal-access/data";
+import {
+  listPortalAccessGrantsForCurrentUser,
+  resolvePortalScopedPermissionForCurrentUser
+} from "@/lib/portal-access/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getProjectById, listProjects } from "@/lib/projects/data";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -925,6 +928,18 @@ export async function approveChangeOrderFromPortal(
   next = "/portal"
 ) {
   const scope = await getScopedPortalChangeOrder(input.changeOrderId, next);
+  const permission = await resolvePortalScopedPermissionForCurrentUser({
+    customerId: scope.changeOrder.customer_id,
+    projectId: scope.changeOrder.project_id,
+    permission: "canApproveChangeOrders",
+    next
+  });
+
+  if (!permission.allowed) {
+    throw new Error(
+      "This contact does not currently have permission to approve or reject this change order."
+    );
+  }
 
   if (scope.changeOrder.status !== "sent") {
     throw new Error("Only sent change orders can be approved from the portal.");
@@ -978,6 +993,18 @@ export async function rejectChangeOrderFromPortal(
   next = "/portal"
 ) {
   const scope = await getScopedPortalChangeOrder(input.changeOrderId, next);
+  const permission = await resolvePortalScopedPermissionForCurrentUser({
+    customerId: scope.changeOrder.customer_id,
+    projectId: scope.changeOrder.project_id,
+    permission: "canApproveChangeOrders",
+    next
+  });
+
+  if (!permission.allowed) {
+    throw new Error(
+      "This contact does not currently have permission to approve or reject this change order."
+    );
+  }
 
   if (scope.changeOrder.status !== "sent") {
     throw new Error("Only sent change orders can be rejected from the portal.");

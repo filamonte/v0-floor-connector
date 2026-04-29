@@ -114,7 +114,7 @@ export default async function PlatformDefaultsPage({ searchParams }: PageProps) 
 
       <DetailPanel
         title="Platform Workflow Defaults"
-        description="Define the shared contract-generation and financial-readiness baseline that organizations inherit until they set tenant-owned workflow defaults."
+        description="Define the shared contract-generation baseline, starter estimate defaults, and financial-readiness defaults that seed organizations before they adopt tenant-owned workflow settings."
       >
         <form action={updatePlatformWorkflowDefaultsAction} className="space-y-5">
           <label className="block">
@@ -204,30 +204,64 @@ export default async function PlatformDefaultsPage({ searchParams }: PageProps) 
             />
           </label>
 
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+            <p className="font-medium text-slate-900">Platform starter estimate defaults</p>
+            <p className="mt-2">
+              These four fields seed contractor estimate starting content for Scope / SOW,
+              Terms, Inclusions, and Exclusions.
+            </p>
+            <p className="mt-2">
+              They are platform starter values only. After a contractor organization adopts or
+              updates its own workflow defaults, that organization owns its runtime defaults on
+              its own settings row.
+            </p>
+            <p className="mt-2">
+              Updating platform starter defaults does not rewrite existing contractor estimates,
+              and it does not mutate contractor-owned defaults that were already adopted or
+              customized.
+            </p>
+          </div>
+
           <RichTextEditor
-            label="Platform default estimate terms"
+            label="Platform starter default terms (seed content)"
             name="defaultEstimateTermsHtml"
             value={workflowDefaults.defaultEstimateTermsHtml}
             mode="standard"
           />
           <RichTextEditor
-            label="Platform default inclusions"
+            label="Platform starter default inclusions (seed content)"
             name="defaultEstimateInclusionsHtml"
             value={workflowDefaults.defaultEstimateInclusionsHtml}
             mode="standard"
           />
           <RichTextEditor
-            label="Platform default exclusions"
+            label="Platform starter default exclusions (seed content)"
             name="defaultEstimateExclusionsHtml"
             value={workflowDefaults.defaultEstimateExclusionsHtml}
             mode="standard"
           />
           <RichTextEditor
-            label="Platform default scope summary"
+            label="Platform starter default scope / SOW (seed content)"
             name="defaultEstimateScopeSummaryHtml"
             value={workflowDefaults.defaultEstimateScopeSummaryHtml}
             mode="standard"
           />
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-4 text-xs leading-5 text-slate-500">
+            <p>Empty estimates only: these starter defaults prefill only when estimate content is still empty.</p>
+            <p className="mt-2">
+              Contractor-owned runtime defaults: once an organization adopts or saves its own
+              workflow defaults, those tenant-owned values become the working defaults for that
+              organization.
+            </p>
+            <p className="mt-2">
+              Separate from reusable blocks: contractors still own insertable reusable content
+              blocks independently, and those blocks append on demand inside estimate edit.
+            </p>
+            <p className="mt-2">
+              No live estimate mutation: changing this platform copy does not backfill or rewrite
+              existing contractor estimates.
+            </p>
+          </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">

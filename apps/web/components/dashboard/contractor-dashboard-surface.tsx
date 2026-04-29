@@ -51,6 +51,15 @@ type DashboardShortcut = {
   metric?: string;
 };
 
+type DashboardOnboardingStep = {
+  key: string;
+  label: string;
+  description: string;
+  href: string;
+  actionLabel: string;
+  complete: boolean;
+};
+
 type DashboardPlaceholder = {
   key: string;
   title: string;
@@ -109,6 +118,7 @@ export type ContractorDashboardSurfaceProps = {
   commercialWidgets: DashboardWidget[];
   operationsWidgets: DashboardWidget[];
   financeWidgets: DashboardWidget[];
+  onboardingSteps?: DashboardOnboardingStep[];
   shortcuts: DashboardShortcut[];
   placeholders: DashboardPlaceholder[];
   quickCreate: {
@@ -313,6 +323,64 @@ function QueueRows({
   );
 }
 
+function OnboardingGuide({ steps }: { steps: DashboardOnboardingStep[] }) {
+  const incompleteSteps = steps.filter((step) => !step.complete);
+  const nextStep = incompleteSteps[0] ?? null;
+
+  if (!nextStep) {
+    return null;
+  }
+
+  return (
+    <section className="border border-[#d7c7b4] bg-white">
+      <div className="flex flex-col gap-4 border-b border-[#eadfd4] bg-[#fff8f1] px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+            Start here
+          </p>
+          <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#2b2118]">
+            Finish the first setup path
+          </h3>
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-[#665446]">
+            Create the first customer, project, and estimate from the existing quick-create paths.
+            Those records become the canonical chain for contracts, jobs, invoices, and payments.
+          </p>
+        </div>
+        <Link
+          href={nextStep.href}
+          className="inline-flex items-center justify-center border border-[#d8731f] bg-[#d8731f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#bf6519]"
+        >
+          {nextStep.actionLabel}
+        </Link>
+      </div>
+      <div className="grid gap-px bg-[#eadfd4] md:grid-cols-4">
+        {steps.map((step) => (
+          <Link
+            key={step.key}
+            href={step.href}
+            className="bg-white px-4 py-3 transition hover:bg-[#fffaf5]"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-semibold text-[#17243b]">{step.label}</p>
+              <span
+                className={[
+                  "shrink-0 border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                  step.complete
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                    : "border-amber-200 bg-amber-50 text-amber-900"
+                ].join(" ")}
+              >
+                {step.complete ? "Done" : "Next step"}
+              </span>
+            </div>
+            <p className="mt-2 text-sm leading-5 text-slate-500">{step.description}</p>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function FinanceTable({
   widget,
   items
@@ -387,6 +455,7 @@ export function ContractorDashboardSurface({
   commercialWidgets,
   operationsWidgets,
   financeWidgets,
+  onboardingSteps,
   shortcuts
 }: ContractorDashboardSurfaceProps) {
   const [query, setQuery] = useState("");
@@ -485,7 +554,7 @@ export function ContractorDashboardSurface({
                     setQuery(nextValue);
                   });
                 }}
-                placeholder="Search dashboard queues by project, customer, record, status, or priority"
+                placeholder="Search dashboard queues by project, customer, estimate, contract, invoice, status, or priority"
                 className="h-10 w-full border border-[#cfd6e0] bg-white pl-9 pr-3 text-sm text-[#22344d] outline-none placeholder:text-[#8b96a8] focus:border-[#d8731f]"
               />
             </label>
@@ -512,20 +581,39 @@ export function ContractorDashboardSurface({
       <div className="space-y-3 px-4 py-3 sm:px-6">
         <PriorityGrid metrics={metrics} />
 
-        <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)_minmax(0,0.85fr)]">
+        {onboardingSteps && onboardingSteps.some((step) => !step.complete) ? (
+          <OnboardingGuide steps={onboardingSteps} />
+        ) : null}
+
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,0.95fr)]">
           {attentionWidget ? (
             <QueueRows widget={attentionWidget} items={attentionWidget.items} />
+          ) : null}
+          {filteredCommercialWidgets[1] ? (
+            <QueueRows
+              widget={filteredCommercialWidgets[1]}
+              items={filteredCommercialWidgets[1].items}
+            />
+          ) : null}
+          {filteredFinanceWidgets[0] ? (
+            <FinanceTable
+              widget={filteredFinanceWidgets[0]}
+              items={filteredFinanceWidgets[0].items}
+            />
+          ) : null}
+        </div>
+
+        <div className="grid gap-3 xl:grid-cols-4">
+          {filteredOperationsWidgets[3] ? (
+            <QueueRows
+              widget={filteredOperationsWidgets[3]}
+              items={filteredOperationsWidgets[3].items}
+            />
           ) : null}
           {filteredCommercialWidgets[0] ? (
             <QueueRows
               widget={filteredCommercialWidgets[0]}
               items={filteredCommercialWidgets[0].items}
-            />
-          ) : null}
-          {filteredOperationsWidgets[2] ? (
-            <QueueRows
-              widget={filteredOperationsWidgets[2]}
-              items={filteredOperationsWidgets[2].items}
             />
           ) : null}
           {filteredOperationsWidgets[0] ? (
@@ -534,16 +622,16 @@ export function ContractorDashboardSurface({
               items={filteredOperationsWidgets[0].items}
             />
           ) : null}
+          {filteredOperationsWidgets[2] ? (
+            <QueueRows
+              widget={filteredOperationsWidgets[2]}
+              items={filteredOperationsWidgets[2].items}
+            />
+          ) : null}
         </div>
 
         <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
           <div className="space-y-3">
-            {filteredCommercialWidgets[1] ? (
-              <QueueRows
-                widget={filteredCommercialWidgets[1]}
-                items={filteredCommercialWidgets[1].items}
-              />
-            ) : null}
             {filteredCommercialWidgets[2] ? (
               <QueueRows
                 widget={filteredCommercialWidgets[2]}
@@ -563,12 +651,6 @@ export function ContractorDashboardSurface({
         </div>
 
         <div className="grid gap-3 xl:grid-cols-[minmax(0,1.28fr)_minmax(0,0.72fr)]">
-          {filteredFinanceWidgets[0] ? (
-            <FinanceTable
-              widget={filteredFinanceWidgets[0]}
-              items={filteredFinanceWidgets[0].items}
-            />
-          ) : null}
           {filteredOperationsWidgets[1] ? (
             <QueueRows
               widget={filteredOperationsWidgets[1]}

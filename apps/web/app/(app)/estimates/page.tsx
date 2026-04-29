@@ -11,6 +11,7 @@ import { listCustomers } from "@/lib/customers/data";
 import { quickCreateEstimateAction } from "@/lib/estimates/actions";
 import { listEstimates } from "@/lib/estimates/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { listOpportunities } from "@/lib/opportunities/data";
 import { listProjects } from "@/lib/projects/data";
 
@@ -23,6 +24,7 @@ type EstimatesPageProps = {
     opportunityId?: string;
     customerId?: string;
     projectId?: string;
+    projectName?: string;
     error?: string;
     message?: string;
   }>;
@@ -91,11 +93,12 @@ export default async function EstimatesPage({
     );
   }
 
-  const [estimates, opportunities, customers, projects] = await Promise.all([
+  const [estimates, opportunities, customers, projects, workflowSettings] = await Promise.all([
     listEstimates(),
     listOpportunities(),
     listCustomers(),
-    listProjects()
+    listProjects(),
+    getOrganizationWorkflowSettings(organizationContext.organization.id)
   ]);
   const opportunityOptions = opportunities.map((opportunity) => ({
     id: opportunity.id,
@@ -124,7 +127,8 @@ export default async function EstimatesPage({
     resolvedSearchParams.compose === "1" ||
     Boolean(resolvedSearchParams.error) ||
     Boolean(resolvedSearchParams.opportunityId) ||
-    Boolean(resolvedSearchParams.customerId);
+    Boolean(resolvedSearchParams.customerId) ||
+    Boolean(resolvedSearchParams.projectId);
   const draftCount = estimates.filter((estimate) => estimate.status === "draft").length;
   const sentCount = estimates.filter((estimate) => estimate.status === "sent").length;
   const approvedCount = estimates.filter((estimate) => estimate.status === "approved").length;
@@ -169,12 +173,33 @@ export default async function EstimatesPage({
   const revisionQueue = estimates
     .filter((estimate) => estimate.status === "rejected")
     .slice(0, 4);
+  const recentClientResponses = estimates
+    .filter(
+      (estimate) =>
+        Boolean(estimate.approvedAt) ||
+        Boolean(estimate.rejectedAt) ||
+        Boolean(estimate.customerViewedAt)
+    )
+    .sort((left, right) => {
+      const leftDate = left.approvedAt ?? left.rejectedAt ?? left.customerViewedAt ?? left.updatedAt;
+      const rightDate =
+        right.approvedAt ?? right.rejectedAt ?? right.customerViewedAt ?? right.updatedAt;
+      return rightDate.localeCompare(leftDate);
+    })
+    .slice(0, 5);
+  const statusBreakdownTotal = Math.max(estimates.length, 1);
+  const statusBreakdown = estimateViews
+    .filter((view) => view.key !== "all")
+    .map((view) => ({
+      ...view,
+      percent: Math.round((view.count / statusBreakdownTotal) * 100)
+    }));
 
   return (
     <ContractorWorkspacePage
       eyebrow="Estimates"
-      title={`Estimate manager for ${organizationContext.organization.displayName}`}
-      description="Create the estimate first, build scope and pricing in the workspace, then review and send. This manager keeps the estimating workflow clear instead of forcing project selection or proposal review too early."
+      title={`Estimates for ${organizationContext.organization.displayName}`}
+      description="A dense estimating module for draft build work, sent follow-up, customer responses, and approved handoff. New estimates start from customer and project context, then open the full estimate workspace."
       summary={
         <div className="grid gap-px border border-[#d7dce4] bg-[#d7dce4] sm:grid-cols-2 xl:grid-cols-4">
           <div className="bg-white px-3 py-2.5">
@@ -200,7 +225,7 @@ export default async function EstimatesPage({
       commandBar={{
         supportSlot: (
           <p>
-            Start from an opportunity, a customer, or standalone intake. FloorConnector will always keep the estimate tied to a canonical opportunity before opening the estimate workspace.
+            Start from the customer account, choose or create the project, then add the estimate. Opportunities can be linked as upstream context without becoming a second estimate model.
           </p>
         ),
         searchSlot: (
@@ -279,7 +304,7 @@ export default async function EstimatesPage({
               }
               className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
             >
-              New estimate
+              Add estimate
             </Link>
           </>
         )
@@ -287,7 +312,106 @@ export default async function EstimatesPage({
     >
       <div className={showComposer ? "grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px]" : "space-y-3"}>
         <section className="space-y-6">
-          <section className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)_minmax(0,0.85fr)]">
+          <section className="grid gap-3 xl:grid-cols-3">
+            <ManagerDashboardCard
+              eyebrow="Responses"
+              title="Recent client responses"
+              description="Portal views, approvals, and rejections from the canonical estimate record."
+              actionHref={buildEstimatesHref({
+                q: query,
+                status: "all",
+                compose: showComposer ? "1" : undefined,
+                opportunityId: resolvedSearchParams.opportunityId,
+                customerId: resolvedSearchParams.customerId,
+                projectId: resolvedSearchParams.projectId
+              })}
+              actionLabel="View register"
+              items={recentClientResponses.map((estimate) => ({
+                href: `/estimates/${estimate.id}`,
+                title: estimate.referenceNumber,
+                subtitle: `${estimate.customer?.name ?? "Unknown customer"} - ${estimate.project?.name ?? "Unknown project"}`,
+                meta: estimate.approvedAt
+                  ? "Approved by customer"
+                  : estimate.rejectedAt
+                    ? "Rejected by customer"
+                    : "Viewed by customer",
+                badge: estimate.status,
+                trailing: formatMoney(estimate.totalAmount)
+              }))}
+              emptyTitle="No customer responses yet."
+              emptyDescription="Customer views, approvals, and rejections appear here once estimates are sent through the portal."
+            />
+
+            <ManagerDashboardCard
+              eyebrow="Pending approval"
+              title="Sent estimates awaiting approval"
+              description="Customer-facing estimates that are out for decision and need follow-up."
+              actionHref={buildEstimatesHref({
+                q: query,
+                status: "sent",
+                compose: showComposer ? "1" : undefined,
+                opportunityId: resolvedSearchParams.opportunityId,
+                customerId: resolvedSearchParams.customerId,
+                projectId: resolvedSearchParams.projectId
+              })}
+              actionLabel="View sent queue"
+              items={followUpQueue.map((estimate) => ({
+                href: `/estimates/${estimate.id}`,
+                title: estimate.referenceNumber,
+                subtitle: `${estimate.customer?.name ?? "Unknown customer"} - ${estimate.project?.name ?? "Unknown project"}`,
+                meta: `Sent - ${estimate.opportunity?.title ?? "Opportunity linked"}`,
+                badge: "Sent",
+                trailing: formatMoney(estimate.totalAmount)
+              }))}
+              emptyTitle="No sent estimates are waiting right now."
+              emptyDescription="Sent estimates will appear here when customer follow-up is needed."
+            />
+
+            <section className="border border-[#cfd6e0] bg-white">
+              <div className="border-b border-[#dfe4ec] bg-[#f7f8fa] px-4 py-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
+                  Status
+                </p>
+                <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#17243b]">
+                  Estimates by status
+                </h3>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Current-state status mix from canonical estimate records.
+                </p>
+              </div>
+              <div className="divide-y divide-[#e7ebf1]">
+                {statusBreakdown.map((status) => (
+                  <Link
+                    key={status.key}
+                    href={buildEstimatesHref({
+                      q: query,
+                      status: status.key,
+                      compose: showComposer ? "1" : undefined,
+                      opportunityId: resolvedSearchParams.opportunityId,
+                      customerId: resolvedSearchParams.customerId,
+                      projectId: resolvedSearchParams.projectId
+                    })}
+                    className="grid grid-cols-[minmax(0,1fr)_120px_48px] items-center gap-3 px-4 py-3 text-sm transition hover:bg-slate-50"
+                  >
+                    <span className="font-semibold text-[#17243b]">
+                      {status.label} ({status.count})
+                    </span>
+                    <span className="h-2 overflow-hidden rounded-full bg-[#e7ebf1]">
+                      <span
+                        className="block h-full rounded-full bg-[#233a64]"
+                        style={{ width: `${status.percent}%` }}
+                      />
+                    </span>
+                    <span className="text-right text-xs font-semibold text-slate-500">
+                      {status.percent}%
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          </section>
+
+          <section className="grid gap-3 xl:grid-cols-3">
             <ManagerDashboardCard
               eyebrow="Build"
               title="Draft estimates to finish"
@@ -311,31 +435,6 @@ export default async function EstimatesPage({
               }))}
               emptyTitle="No draft estimates need build work."
               emptyDescription="New estimate drafts will surface here as soon as they are created."
-            />
-
-            <ManagerDashboardCard
-              eyebrow="Follow-up"
-              title="Sent estimates awaiting response"
-              description="Customer-facing estimates that are out for decision and need follow-up."
-              actionHref={buildEstimatesHref({
-                q: query,
-                status: "sent",
-                compose: showComposer ? "1" : undefined,
-                opportunityId: resolvedSearchParams.opportunityId,
-                customerId: resolvedSearchParams.customerId,
-                projectId: resolvedSearchParams.projectId
-              })}
-              actionLabel="View sent queue"
-              items={followUpQueue.map((estimate) => ({
-                href: `/estimates/${estimate.id}`,
-                title: estimate.referenceNumber,
-                subtitle: `${estimate.customer?.name ?? "Unknown customer"} - ${estimate.project?.name ?? "Unknown project"}`,
-                meta: `Sent - ${estimate.opportunity?.title ?? "Opportunity linked"}`,
-                badge: "Sent",
-                trailing: formatMoney(estimate.totalAmount)
-              }))}
-              emptyTitle="No sent estimates are waiting right now."
-              emptyDescription="Sent estimates will appear here when customer follow-up is needed."
             />
 
             <ManagerDashboardCard
@@ -389,7 +488,7 @@ export default async function EstimatesPage({
             />
           </section>
 
-          {resolvedSearchParams.error ? (
+          {resolvedSearchParams.error && !showComposer ? (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
               {resolvedSearchParams.error}
             </div>
@@ -405,13 +504,23 @@ export default async function EstimatesPage({
             estimates={filteredEstimates}
             totalEstimateCount={estimates.length}
             storageKey={ESTIMATES_ROWS_PER_VIEW_STORAGE_KEY}
+            createHref={
+              buildEstimatesHref({
+                q: query,
+                status: statusFilter,
+                compose: "1",
+                opportunityId: resolvedSearchParams.opportunityId,
+                customerId: resolvedSearchParams.customerId,
+                projectId: resolvedSearchParams.projectId
+              }) + "#estimate-create"
+            }
           />
         </section>
 
         <WorkspaceComposerSheet
           id="estimate-create"
-          title="Quick create estimate"
-          description="Start from an opportunity, a customer, or standalone intake. FloorConnector will always attach the estimate to a canonical opportunity before opening the build workspace."
+          title="Add estimate"
+          description="Choose the customer, choose or create the project, then enter the estimate basics. The full workspace opens after creation."
           open={showComposer}
           openHref={
             buildEstimatesHref({
@@ -432,6 +541,7 @@ export default async function EstimatesPage({
             customers={customerOptions}
             projects={projectOptions}
             estimatorLabel={user.email ?? user.id}
+            estimateNumberLabel={String(workflowSettings.nextEstimateNumber)}
             estimateDateLabel={new Intl.DateTimeFormat("en-US", {
               month: "2-digit",
               day: "2-digit",
@@ -441,6 +551,8 @@ export default async function EstimatesPage({
             initialOpportunityId={resolvedSearchParams.opportunityId}
             initialCustomerId={resolvedSearchParams.customerId}
             initialProjectId={resolvedSearchParams.projectId}
+            initialProjectName={resolvedSearchParams.projectName}
+            errorMessage={showComposer ? resolvedSearchParams.error ?? null : null}
           />
         </WorkspaceComposerSheet>
       </div>

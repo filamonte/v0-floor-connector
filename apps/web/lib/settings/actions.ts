@@ -18,6 +18,8 @@ import {
   uploadCatalogItemFiles,
   upsertOrganizationCatalogItem
 } from "@/lib/catalogs/data";
+import { automationNotificationPreferenceCategories } from "@/lib/automation/preferences";
+import { executeManualNotificationAutomation } from "@/lib/automation/execution";
 import {
   upsertOrganizationFeatureOverride
 } from "@/lib/organizations/module-settings";
@@ -31,6 +33,7 @@ import {
   upsertOrganizationFinancialSettings
 } from "@/lib/organizations/financial-settings";
 import {
+  upsertOrganizationAutomationNotificationPreferences,
   upsertOrganizationWorkflowSettings
 } from "@/lib/organizations/workflow-settings";
 import {
@@ -49,6 +52,7 @@ import {
   organizationMembershipRoleInputSchema,
   organizationProfileInputSchema,
   taxCodeSettingsInputSchema,
+  automationNotificationPreferencesInputSchema,
   organizationWorkflowSettingsInputSchema
 } from "./schemas";
 
@@ -97,6 +101,7 @@ function revalidateSettingsSlice() {
   revalidatePath("/materials");
   revalidatePath("/settings/financial");
   revalidatePath("/settings/workflows");
+  revalidatePath("/settings/automation");
   revalidatePath("/settings/admin");
   revalidatePath("/settings/modules");
   revalidatePath("/contracts");
@@ -367,6 +372,89 @@ export async function updateOrganizationWorkflowSettingsAction(formData: FormDat
   redirect(
     buildRedirect("/settings/workflows", {
       message: "Contract workflow defaults were updated."
+    })
+  );
+}
+
+export async function updateAutomationNotificationPreferencesAction(formData: FormData) {
+  const scope = await requireSettingsScope();
+  const returnTo = getFieldValue(formData, "returnTo") || "/settings/automation";
+  const result = automationNotificationPreferencesInputSchema.safeParse({
+    preferences: automationNotificationPreferenceCategories.map((category) => ({
+      category,
+      enabledForFutureExecution: getCheckboxValue(
+        formData,
+        `automation.${category}.enabledForFutureExecution`
+      ),
+      notifyRoles: getFieldValues(formData, `automation.${category}.notifyRoles`)
+    }))
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to update future automation notification preferences."
+      })
+    );
+  }
+
+  try {
+    await upsertOrganizationAutomationNotificationPreferences({
+      organizationId: scope.organizationId,
+      userId: scope.userId,
+      automationNotificationPreferences: result.data.preferences
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to update future automation notification preferences."
+      })
+    );
+  }
+
+  revalidateSettingsSlice();
+
+  redirect(
+    buildRedirect(returnTo, {
+      message:
+        "Future notification preferences were updated. Automation execution remains off."
+    })
+  );
+}
+
+export async function runManualAutomationNotificationsAction() {
+  const scope = await requireOrganizationAdminScope("/settings/automation");
+
+  let result;
+
+  try {
+    result = await executeManualNotificationAutomation({
+      organizationId: scope.organizationId,
+      userId: scope.userId
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/settings/automation", {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to run notification-only automation checks."
+      })
+    );
+  }
+
+  revalidateSettingsSlice();
+
+  redirect(
+    buildRedirect("/settings/automation", {
+      message: `Automation check complete: ${result.executedCount} notification${
+        result.executedCount === 1 ? "" : "s"
+      } created, ${result.blockedCount} blocked, ${result.skippedCount} skipped, ${result.failedCount} failed.`
     })
   );
 }

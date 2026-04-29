@@ -7,7 +7,9 @@ import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NextActionCard } from "@/components/next-action-card";
+import { RelatedConversationsCard } from "@/components/related-conversations-card";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
+import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
 import {
   addApprovedChangeOrderToSovAction,
   invoiceApprovedChangeOrderDirectlyAction,
@@ -122,11 +124,12 @@ export default async function ChangeOrderDetailPage({
 }: ChangeOrderDetailPageProps) {
   const { changeOrderId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
-  const [changeOrder, projects, contracts, invoices] = await Promise.all([
+  const [changeOrder, projects, contracts, invoices, communicationThreads] = await Promise.all([
     getChangeOrderById(changeOrderId, `/change-orders/${changeOrderId}`),
     listProjects(),
     listContracts(),
-    listInvoices()
+    listInvoices(),
+    listCommunicationThreadsForSubject("change_order", changeOrderId)
   ]);
 
   if (!changeOrder) {
@@ -591,6 +594,15 @@ export default async function ChangeOrderDetailPage({
             ]}
           />
         </DetailPanel>
+
+        <RelatedConversationsCard
+          source="change_order"
+          description="Change-order communication stays on canonical threads and routes back into the shared communications workspace when scope-review follow-through is needed."
+          countLabel="Change-order threads"
+          emptyMessage="No change-order-scoped communication threads are attached to this canonical change order yet."
+          actionClassName="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+          threads={communicationThreads}
+        />
       </aside>
     </div>
   );

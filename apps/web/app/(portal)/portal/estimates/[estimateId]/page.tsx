@@ -391,6 +391,11 @@ export default async function PortalEstimateReviewPage({
           <div className="space-y-4 text-sm leading-6 text-slate-600">
             {estimate.status === "sent" ? (
               <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
+                  Approval creates the approved commercial snapshot used later for contract,
+                  SOV, and invoice lineage. Do not approve here unless this shared estimate is
+                  ready to become the downstream baseline.
+                </div>
                 <form action={customerApproveEstimateAction} className="space-y-3">
                   <input type="hidden" name="estimateId" value={estimate.id} />
                   <label className="block space-y-2">

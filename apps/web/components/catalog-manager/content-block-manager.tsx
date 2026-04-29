@@ -88,10 +88,12 @@ export function ContentBlockManager({
             Reusable Content Blocks
           </p>
           <h3 className="mt-2 text-[1.5rem] font-semibold tracking-tight text-[#17243b]">
-            Scope, inclusions, and exclusions
+            Scope, terms, inclusions, and exclusions
           </h3>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#5f7190]">
-            Keep estimate language reusable without building a second template system. These blocks feed estimate terms, scope, inclusions, and exclusions directly.
+            Keep estimate language reusable without building a second template system. These blocks
+            are insertable estimating content, while workflow settings remain the source for default
+            starting content.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -114,14 +116,14 @@ export function ContentBlockManager({
             onClick={() => openDrawer(null, "inclusion")}
             className="rounded-full border border-[#d7deea] bg-white px-4 py-2 text-sm font-medium text-[#28456f]"
           >
-            New Inclusion
+            New Inclusion Block
           </button>
           <button
             type="button"
             onClick={() => openDrawer(null, "exclusion")}
             className="rounded-full border border-[#d7deea] bg-white px-4 py-2 text-sm font-medium text-[#28456f]"
           >
-            New Exclusion
+            New Exclusion Block
           </button>
         </div>
       </div>

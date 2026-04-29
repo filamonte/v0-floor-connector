@@ -68,14 +68,21 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   const query = resolvedSearchParams.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
   const view = resolvedSearchParams.view ?? "all";
+  const projectFilterId = resolvedSearchParams.projectId?.trim() ?? "";
+  const projectFilter = projectFilterId
+    ? projects.find((project) => project.id === projectFilterId) ?? null
+    : null;
   const showComposer =
     resolvedSearchParams.compose === "1" || Boolean(resolvedSearchParams.error);
   const assignmentsByJobId = await listJobAssignmentsByJobIds(
     jobs.map((job) => job.id),
     "/jobs"
   );
+  const scopedJobs = projectFilterId
+    ? jobs.filter((job) => job.projectId === projectFilterId)
+    : jobs;
 
-  const filteredJobs = jobs.filter((job) => {
+  const filteredJobs = scopedJobs.filter((job) => {
     const matchesView = view === "all" ? true : job.dispatchStatus === view;
     const matchesQuery =
       normalizedQuery.length === 0
@@ -93,10 +100,10 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
     return matchesView && matchesQuery;
   });
 
-  const unscheduledJobs = jobs.filter((job) => job.dispatchStatus === "unscheduled");
-  const scheduledJobs = jobs.filter((job) => job.dispatchStatus === "scheduled");
-  const inProgressJobs = jobs.filter((job) => job.dispatchStatus === "in_progress");
-  const completedJobs = jobs.filter((job) => job.dispatchStatus === "completed");
+  const unscheduledJobs = scopedJobs.filter((job) => job.dispatchStatus === "unscheduled");
+  const scheduledJobs = scopedJobs.filter((job) => job.dispatchStatus === "scheduled");
+  const inProgressJobs = scopedJobs.filter((job) => job.dispatchStatus === "in_progress");
+  const completedJobs = scopedJobs.filter((job) => job.dispatchStatus === "completed");
   const scheduledWithoutCrewVendor = scheduledJobs.filter((job) => job.crewVendorId === null);
   const scheduledWithoutAssignments = scheduledJobs.filter((job) => {
     const assignments = assignmentsByJobId.get(job.id) ?? [];
@@ -112,7 +119,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
     }));
 
   const jobViews = [
-    { key: "all", label: "All jobs", count: jobs.length },
+    { key: "all", label: "All jobs", count: scopedJobs.length },
     { key: "unscheduled", label: "Unscheduled", count: unscheduledJobs.length },
     { key: "scheduled", label: "Scheduled", count: scheduledJobs.length },
     { key: "in_progress", label: "In progress", count: inProgressJobs.length },
@@ -176,6 +183,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           <form action="/jobs" className="flex flex-col gap-2 sm:flex-row">
             {view !== "all" ? <input type="hidden" name="view" value={view} /> : null}
             {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
+            {projectFilterId ? <input type="hidden" name="projectId" value={projectFilterId} /> : null}
             <input
               type="search"
               name="q"
@@ -189,7 +197,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             >
               Search
             </button>
-            {query.length > 0 || view !== "all" || showComposer ? (
+            {query.length > 0 || view !== "all" || showComposer || projectFilterId ? (
               <Link
                 href="/jobs"
                 className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
@@ -208,7 +216,8 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               href={buildJobsHref({
                 q: query,
                 view: jobView.key,
-                compose: showComposer ? "1" : undefined
+                compose: showComposer ? "1" : undefined,
+                projectId: projectFilterId || undefined
               })}
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
@@ -231,7 +240,12 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
         }),
         actionSlot: (
           <Link
-            href={buildJobsHref({ q: query, view, compose: "1" })}
+            href={buildJobsHref({
+              q: query,
+              view,
+              compose: "1",
+              projectId: projectFilterId || undefined
+            })}
             className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
           >
             New job
@@ -252,12 +266,38 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           </div>
         ) : null}
 
+        {projectFilterId ? (
+          <div className="flex flex-col gap-3 border border-[#dde3eb] bg-white px-5 py-4 text-sm leading-6 text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+            <p>
+              Showing jobs for{" "}
+              <span className="font-semibold text-slate-900">
+                {projectFilter?.name ?? "the selected project"}
+              </span>
+              . Counts and queues are scoped to this project until the filter is cleared.
+            </p>
+            <Link
+              href={buildJobsHref({
+                q: query,
+                view,
+                compose: showComposer ? "1" : undefined
+              })}
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+            >
+              Clear project
+            </Link>
+          </div>
+        ) : null}
+
         <section className="grid gap-4 xl:grid-cols-2 2xl:grid-cols-4">
           <ManagerDashboardCard
             eyebrow="Workflow queue"
             title="Unscheduled"
             description="Jobs that exist canonically but still need scheduling follow-through."
-            actionHref={buildJobsHref({ q: query, view: "unscheduled" })}
+            actionHref={buildJobsHref({
+              q: query,
+              view: "unscheduled",
+              projectId: projectFilterId || undefined
+            })}
             actionLabel="Review jobs"
             items={unscheduledJobs.slice(0, 4).map((job) => ({
               href: `/jobs/${job.id}`,
@@ -275,7 +315,11 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             eyebrow="Workflow queue"
             title="Scheduled without crew vendor"
             description="Scheduled jobs that still do not have a crew vendor attached on the canonical job record."
-            actionHref={buildJobsHref({ q: query, view: "scheduled" })}
+            actionHref={buildJobsHref({
+              q: query,
+              view: "scheduled",
+              projectId: projectFilterId || undefined
+            })}
             actionLabel="Open scheduled"
             items={scheduledWithoutCrewVendor.slice(0, 4).map((job) => ({
               href: `/jobs/${job.id}`,
@@ -291,7 +335,11 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             eyebrow="Workflow queue"
             title="Scheduled without assignments"
             description="Scheduled jobs that do not yet have any crew assignments on the shared job-assignment chain."
-            actionHref={buildJobsHref({ q: query, view: "scheduled" })}
+            actionHref={buildJobsHref({
+              q: query,
+              view: "scheduled",
+              projectId: projectFilterId || undefined
+            })}
             actionLabel="Review staffing"
             items={scheduledWithoutAssignments.slice(0, 4).map((job) => ({
               href: `/jobs/${job.id}`,
@@ -307,7 +355,11 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             eyebrow="Workflow queue"
             title="In progress"
             description="Jobs already in execution and still connected to time, logs, punchlists, and downstream billing."
-            actionHref={buildJobsHref({ q: query, view: "in_progress" })}
+            actionHref={buildJobsHref({
+              q: query,
+              view: "in_progress",
+              projectId: projectFilterId || undefined
+            })}
             actionLabel="View active"
             items={inProgressJobs.slice(0, 4).map((job) => ({
               href: `/jobs/${job.id}`,
@@ -389,14 +441,16 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           ) : (
             <div className="px-6 py-8 sm:px-8">
               <AppEmptyState
-                eyebrow={jobs.length > 0 ? "No matching jobs" : "No jobs yet"}
+                eyebrow={scopedJobs.length > 0 ? "No matching jobs" : "No jobs yet"}
                 title={
-                  jobs.length > 0 ? "Adjust the jobs filters" : "Create the first job"
+                  scopedJobs.length > 0 ? "Adjust the jobs filters" : "Create the first job"
                 }
                 description={
-                  jobs.length > 0
-                    ? "Try a broader search or switch to another real job status."
-                    : "Jobs move approved project work into execution. Create them from ready project context and then finish scheduling in the full job workspace."
+                  scopedJobs.length > 0
+                    ? "Try a broader search, clear the project filter, or switch to another real job status."
+                    : projectFilterId
+                      ? "This selected project does not have a canonical job yet. Create one from ready project context, then finish scheduling in the job workspace."
+                      : "Jobs move approved project work into execution. Create them from ready project context and then finish scheduling in the full job workspace."
                 }
               />
             </div>
@@ -413,16 +467,20 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           q: query,
           view,
           compose: "1",
-          projectId: resolvedSearchParams.projectId
+          projectId: projectFilterId || undefined
         })}
-        closeHref={buildJobsHref({ q: query, view })}
+        closeHref={buildJobsHref({
+          q: query,
+          view,
+          projectId: projectFilterId || undefined
+        })}
         openLabel="Open job quick create"
       >
         {readyProjectOptions.length > 0 ? (
           <JobQuickCreateForm
             action={quickCreateJobAction}
             projects={readyProjectOptions}
-            initialProjectId={resolvedSearchParams.projectId ?? null}
+            initialProjectId={projectFilterId || null}
           />
         ) : (
           <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">

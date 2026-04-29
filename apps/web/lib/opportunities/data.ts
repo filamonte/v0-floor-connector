@@ -1080,6 +1080,14 @@ export async function updateOpportunity(opportunityId: string, input: Opportunit
       relationshipLabel: "primary_opportunity_contact",
       isPrimary: true
     });
+
+    await syncCustomerDirectEmailFromOpportunityContact({
+      organizationId: scope.organizationId,
+      userId: scope.userId,
+      customerId: currentOpportunity.customerId,
+      previousEmail: currentOpportunity.primaryContact?.email ?? currentOpportunity.email,
+      nextEmail: primaryContact.email
+    });
   }
 
   const supabase = await getSupabaseServerClient();
@@ -1249,6 +1257,14 @@ export async function ensureOpportunityEstimateFlow(opportunityId: string) {
     }
 
     customerId = customerData.id;
+  } else {
+    await syncCustomerDirectEmailFromOpportunityContact({
+      organizationId: scope.organizationId,
+      userId: scope.userId,
+      customerId,
+      previousEmail: opportunity.email,
+      nextEmail: opportunity.primaryContact.email
+    });
   }
 
   await upsertCustomerContactLink({
@@ -1266,7 +1282,7 @@ export async function ensureOpportunityEstimateFlow(opportunityId: string) {
       .insert({
         company_id: scope.organizationId,
         customer_id: customerId,
-        name: opportunity.title,
+        name: opportunity.siteName ?? opportunity.title,
         status: "estimating",
         description: opportunity.requirementsSummary ?? opportunity.notes,
         address_line_1: opportunity.addressLine1,
@@ -1383,6 +1399,51 @@ async function getCustomerForEstimateFlow(
   return data?.id ? data : null;
 }
 
+async function syncCustomerDirectEmailFromOpportunityContact(input: {
+  organizationId: string;
+  userId: string;
+  customerId: string;
+  previousEmail: string | null;
+  nextEmail: string | null;
+}) {
+  const nextEmail = input.nextEmail?.trim() ?? null;
+
+  if (!nextEmail) {
+    return;
+  }
+
+  const customer = await getCustomerForEstimateFlow(input.organizationId, input.customerId);
+
+  if (!customer) {
+    return;
+  }
+
+  const currentCustomerEmail = customer.email?.trim() ?? null;
+  const previousEmail = input.previousEmail?.trim() ?? null;
+  const shouldUpdateCustomerEmail =
+    currentCustomerEmail === null || currentCustomerEmail === previousEmail;
+
+  if (!shouldUpdateCustomerEmail || currentCustomerEmail === nextEmail) {
+    return;
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("customers")
+    .update({
+      email: nextEmail,
+      updated_by: input.userId
+    })
+    .eq("company_id", input.organizationId)
+    .eq("id", input.customerId);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to sync the customer email from the lead contact: ${response.error.message}`
+    );
+  }
+}
+
 async function getPrimaryCustomerContactForEstimateFlow(
   organizationId: string,
   customerId: string
@@ -1393,7 +1454,7 @@ async function getPrimaryCustomerContactForEstimateFlow(
     .select(
       `
         contact_id,
-        contacts:contacts!customer_contacts_contact_id_fkey (
+        contacts:contacts!customer_contacts_contact_company_fkey (
           id,
           display_name,
           company_name,
@@ -1422,6 +1483,7 @@ async function getPrimaryCustomerContactForEstimateFlow(
 export async function ensureOpportunityEstimateFlowFromCustomer(input: {
   customerId: string;
   projectId: string | null;
+  projectName?: string | null;
   title: string;
 }) {
   const scope = await requireOpportunityScope("/estimates");
@@ -1470,13 +1532,22 @@ export async function ensureOpportunityEstimateFlowFromCustomer(input: {
     isPrimary: true
   });
 
-  let selectedProjectName: string | null = null;
+  let selectedProjectName: string | null = input.projectName?.trim() || null;
 
   if (input.projectId) {
     const project = await getProjectById(input.projectId, "/estimates");
 
     if (!project || project.customerId !== customer.id) {
       throw new Error("Selected site or job does not belong to this customer.");
+    }
+
+    const existingProjectOpportunity = await getOpportunityByProjectId(
+      input.projectId,
+      "/estimates"
+    );
+
+    if (existingProjectOpportunity?.customerId === customer.id) {
+      return ensureOpportunityEstimateFlow(existingProjectOpportunity.id);
     }
 
     selectedProjectName = project.name;
@@ -1530,11 +1601,13 @@ export async function ensureOpportunityEstimateFlowFromCustomer(input: {
 export async function ensureOpportunityEstimateFlowFromStandalone(input: {
   customerId: string;
   projectId: string | null;
+  projectName?: string | null;
   title: string;
 }) {
   return ensureOpportunityEstimateFlowFromCustomer({
     customerId: input.customerId,
     projectId: input.projectId,
+    projectName: input.projectName,
     title: input.title
   });
 }

@@ -259,7 +259,25 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
       <div className="space-y-6">
         {resolvedSearchParams.error ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
-            {resolvedSearchParams.error}
+            <p>{resolvedSearchParams.error}</p>
+            {resolvedSearchParams.error.includes("Approved estimate snapshot is missing") ? (
+              <div className="mt-3 rounded-2xl border border-rose-200 bg-white/70 px-4 py-3 text-rose-900">
+                <p className="font-medium">Contract generation needs approved snapshot lineage.</p>
+                <p className="mt-1">
+                  Re-send and approve the estimate through the supported portal approval path,
+                  then return here. Existing approved sample records may be too old to include
+                  the current snapshot bundle.
+                </p>
+                {resolvedSearchParams.estimateId ? (
+                  <Link
+                    href={`/estimates/${resolvedSearchParams.estimateId}`}
+                    className="mt-3 inline-flex items-center rounded-full border border-rose-300 bg-white px-4 py-2 text-sm font-medium text-rose-900 transition hover:bg-rose-50"
+                  >
+                    Open estimate
+                  </Link>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         ) : null}
 

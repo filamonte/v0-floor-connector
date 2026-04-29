@@ -9,8 +9,16 @@ import { EstimateApprovalNextStepsPanel } from "@/components/estimates/approval-
 import { EstimateCustomerTimeline } from "@/components/estimates/estimate-customer-timeline";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NextActionCard } from "@/components/next-action-card";
+import { RelatedConversationsCard } from "@/components/related-conversations-card";
+import {
+  ScheduleContextActions,
+  ScheduleContextFocusCard,
+  ScheduleContextMetrics,
+  ScheduleContextNotice
+} from "@/components/schedule-context-card";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
 import { quickCreateContractFromEstimateAction } from "@/lib/contracts/actions";
 import { listContracts } from "@/lib/contracts/data";
 import {
@@ -21,9 +29,15 @@ import { resolveEstimateApprovalOrchestration } from "@/lib/estimates/approval-o
 import { getEstimateById, listEstimateCustomerEvents } from "@/lib/estimates/data";
 import { quickCreateInvoiceAction } from "@/lib/invoices/actions";
 import { listInvoices } from "@/lib/invoices/data";
-import { listJobs } from "@/lib/jobs/data";
+import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
+import { buildScheduleHref } from "@/lib/schedule/links";
+import {
+  formatScheduleSummaryWindow,
+  getScheduleAssignmentSummary,
+  getScheduleSummarySortValue
+} from "@/lib/schedule/summary";
 import { getIncludedEstimateScopeItems } from "@/lib/estimates/workspace";
 
 function formatStatusLabel(status: string) {
@@ -74,10 +88,11 @@ function getEstimateNextAction(input: {
 }) {
   if (input.estimateStatus !== "approved") {
     return {
-      title: "Get estimate approval",
-      description: "Approval is still the main commercial gate before contract and readiness work should continue.",
+      title: "Approve estimate",
+      description:
+        "Approval is still the active commercial gate before contract and readiness work should continue, and the approval handoff completes through the customer portal.",
       href: `/estimates/${input.estimateId}`,
-      label: "Stay on estimate review"
+      label: "Approve estimate"
     };
   }
 
@@ -103,7 +118,7 @@ function getEstimateNextAction(input: {
     title: "Use the project readiness hub",
     description: "The project page is now the authoritative place to clear contract, signature, and financial blockers in order.",
     href: `/projects/${input.projectId}`,
-    label: "Open project readiness hub"
+    label: "Open project workspace"
   };
 }
 
@@ -179,6 +194,10 @@ function buildGroupedLineItems(
   return [ungrouped, ...groups].filter((group) => group.items.length > 0);
 }
 
+function buildProjectScheduleHref(projectId: string) {
+  return buildScheduleHref({ projectId });
+}
+
 type EstimateDetailPageProps = {
   params: Promise<{
     estimateId: string;
@@ -197,15 +216,16 @@ export default async function EstimateDetailPage({
   const { estimateId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
   const user = await requireAuthenticatedUser(`/estimates/${estimateId}`);
-  const [estimate, organizationContext, contracts, jobs, invoices, customerEvents] =
+  const [estimate, organizationContext, contracts, jobs, invoices, customerEvents, communicationThreads] =
     await Promise.all([
-    getEstimateById(estimateId, `/estimates/${estimateId}`),
-    getActiveOrganizationContext(user.id),
-    listContracts(),
-    listJobs(),
-    listInvoices(),
-    listEstimateCustomerEvents(estimateId, `/estimates/${estimateId}`)
-  ]);
+      getEstimateById(estimateId, `/estimates/${estimateId}`),
+      getActiveOrganizationContext(user.id),
+      listContracts(),
+      listJobs(),
+      listInvoices(),
+      listEstimateCustomerEvents(estimateId, `/estimates/${estimateId}`),
+      listCommunicationThreadsForSubject("estimate", estimateId)
+    ]);
 
   if (!estimate) {
     notFound();
@@ -214,6 +234,37 @@ export default async function EstimateDetailPage({
   const estimateContracts = contracts.filter((contract) => contract.estimateId === estimate.id);
   const estimateJobs = jobs.filter((job) => job.estimateId === estimate.id);
   const estimateInvoices = invoices.filter((invoice) => invoice.estimateId === estimate.id);
+  const projectJobs = jobs.filter((job) => job.projectId === estimate.projectId);
+  const projectJobAssignments = await listJobAssignmentsByJobIds(
+    projectJobs.map((job) => job.id),
+    `/estimates/${estimate.id}`
+  );
+  const scheduledProjectJobs = projectJobs.filter((job) => job.dispatchStatus === "scheduled");
+  const unscheduledProjectJobs = projectJobs.filter((job) => job.dispatchStatus === "unscheduled");
+  const inProgressProjectJobs = projectJobs.filter((job) => job.dispatchStatus === "in_progress");
+  const nextScheduledProjectJob =
+    [...scheduledProjectJobs]
+      .filter((job) => job.scheduledDate)
+      .sort((left, right) => getScheduleSummarySortValue(left) - getScheduleSummarySortValue(right))[0] ??
+    null;
+  const nextScheduledProjectAssignments = nextScheduledProjectJob
+    ? projectJobAssignments.get(nextScheduledProjectJob.id) ?? []
+    : [];
+  const nextScheduledProjectAssignmentNames = nextScheduledProjectAssignments
+    .map((assignment) => assignment.person?.displayName ?? assignment.vendor?.name ?? null)
+    .filter((value): value is string => Boolean(value));
+  const nextScheduledProjectCrewSummary = nextScheduledProjectJob
+    ? getScheduleAssignmentSummary({
+        assignmentNames: nextScheduledProjectAssignmentNames,
+        crewVendorName: nextScheduledProjectJob.crewVendor?.name ?? null,
+        assignmentCount: nextScheduledProjectAssignments.length
+      })
+    : null;
+  const projectJobsWithoutAssignments = projectJobs.filter(
+    (job) =>
+      job.dispatchStatus !== "completed" &&
+      (projectJobAssignments.get(job.id)?.length ?? 0) === 0
+  );
   const approvalOrchestration =
     estimate.status === "approved"
       ? await resolveEstimateApprovalOrchestration(
@@ -285,7 +336,7 @@ export default async function EstimateDetailPage({
                     href={`/projects/${estimate.projectId}`}
                     className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
                   >
-                    Open project readiness hub
+                    Open project workspace
                   </Link>
                 </>
               ) : null}
@@ -388,7 +439,7 @@ export default async function EstimateDetailPage({
                       Proposal continuity stays on the shared project chain
                     </p>
                     <p className="mt-1 text-sm text-slate-600">
-                      Use this page to review scope and pricing, then hand off to the project and contract workspaces instead of recreating downstream records.
+                      Use this page to review scope and pricing, send estimate, and hand approved work off to the project and contract workspaces instead of recreating downstream records.
                     </p>
                   </>
                 )
@@ -549,7 +600,7 @@ export default async function EstimateDetailPage({
             getIncludedEstimateScopeItems(estimate.content).length > 0 ? (
               <section>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-                  Scope of Work Output
+                  Scope / SOW
                 </p>
                 <div className="mt-3 space-y-4 rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4 text-sm leading-7 text-slate-700">
                   {renderHtmlContent(estimate.content.scopeSummaryHtml)}
@@ -565,10 +616,10 @@ export default async function EstimateDetailPage({
             ) : (
               <section>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-                  Scope of Work Output
+                  Scope / SOW
                 </p>
                 <div className="mt-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-500">
-                  No output scope has been prepared for this estimate yet.
+                  No scope / SOW output has been prepared for this estimate yet.
                 </div>
               </section>
             )}
@@ -576,7 +627,7 @@ export default async function EstimateDetailPage({
             {hasHtmlContent(estimate.content.termsHtml) ? (
               <section>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-                  Terms
+                  Terms / conditions
                 </p>
                 <div className="prose prose-slate mt-3 max-w-none rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4 text-sm leading-7 text-slate-700">
                   {renderHtmlContent(estimate.content.termsHtml)}
@@ -587,7 +638,7 @@ export default async function EstimateDetailPage({
             {hasHtmlContent(estimate.content.inclusionsHtml) ? (
               <section>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-                  Inclusions
+                  Reusable inclusions
                 </p>
                 <div className="prose prose-slate mt-3 max-w-none rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4 text-sm leading-7 text-slate-700">
                   {renderHtmlContent(estimate.content.inclusionsHtml)}
@@ -598,10 +649,23 @@ export default async function EstimateDetailPage({
             {hasHtmlContent(estimate.content.exclusionsHtml) ? (
               <section>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-                  Exclusions
+                  Reusable exclusions
                 </p>
                 <div className="prose prose-slate mt-3 max-w-none rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4 text-sm leading-7 text-slate-700">
                   {renderHtmlContent(estimate.content.exclusionsHtml)}
+                </div>
+              </section>
+            ) : null}
+
+            {!hasHtmlContent(estimate.content.termsHtml) &&
+            !hasHtmlContent(estimate.content.inclusionsHtml) &&
+            !hasHtmlContent(estimate.content.exclusionsHtml) ? (
+              <section>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  Reusable estimate content
+                </p>
+                <div className="mt-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-500">
+                  No reusable terms, inclusions, or exclusions are filled on this estimate yet.
                 </div>
               </section>
             ) : null}
@@ -619,23 +683,85 @@ export default async function EstimateDetailPage({
 
             <DetailPanel
               title="Workflow Actions"
-              description="Move the estimate through the commercial workflow while keeping downstream actions in the right order."
+              description="Use the existing send and approval handoff in the right order before moving into contract or billing work."
             >
               {estimate.status === "draft" || estimate.status === "rejected" ? (
-                <form action={sendEstimateToCustomerAction} className="space-y-4">
-                  <input type="hidden" name="estimateId" value={estimate.id} />
+                <div className="space-y-4">
                   <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
                     {estimate.status === "draft"
                       ? "Send this estimate through the customer portal so FloorConnector can record delivery, email tracking, and the customer approval audit trail."
                       : "This estimate was rejected or returned for revision. After you finish updates, resend it through the customer portal from here."}
                   </div>
-                  <button
-                    type="submit"
-                    className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                  >
-                    {estimate.status === "draft" ? "Send to customer" : "Resend to customer"}
-                  </button>
-                </form>
+                  {estimate.customer?.email ? (
+                    <div className="space-y-4">
+                      <div className="rounded-[1.5rem] border border-slate-200 bg-white px-4 py-4 text-sm leading-6 text-slate-600">
+                        <p className="font-medium text-slate-950">
+                          Send prerequisites
+                        </p>
+                        <p className="mt-2">
+                          This estimate can be sent only after the customer has an
+                          authenticated portal user with active access to this project.
+                          Manage the portal grant and project visibility on the customer
+                          workspace before sending.
+                        </p>
+                        {estimate.customer ? (
+                          <Link
+                            href={`/customers/${estimate.customer.id}`}
+                            className="mt-3 inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                          >
+                            Manage customer portal access
+                          </Link>
+                        ) : null}
+                      </div>
+                      <form action={sendEstimateToCustomerAction} className="space-y-4">
+                        <input type="hidden" name="estimateId" value={estimate.id} />
+                        <button
+                          type="submit"
+                          className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                        >
+                          Send estimate
+                        </button>
+                      </form>
+                    </div>
+                  ) : (
+                    <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-900">
+                      <p className="font-medium text-amber-950">
+                        Customer email is missing on the canonical customer record.
+                      </p>
+                      <p className="mt-2">
+                        Estimate send uses <span className="font-semibold">customer.email</span> on
+                        the shared estimate -&gt; customer chain. The People directory is workforce-only
+                        and is not used for estimate recipients.
+                      </p>
+                      <p className="mt-2">
+                        Add the direct email on the customer first, or review the linked lead if
+                        the contact handoff into the customer record looks incomplete.
+                      </p>
+                      <p className="mt-2">
+                        After the email is saved, confirm the same customer also has an active
+                        portal access grant with visibility to this project before retrying send.
+                      </p>
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        {estimate.customer ? (
+                          <Link
+                            href={`/customers/${estimate.customer.id}`}
+                            className="inline-flex items-center rounded-full border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-950 transition hover:bg-amber-100"
+                          >
+                            Open customer
+                          </Link>
+                        ) : null}
+                        {estimate.opportunity ? (
+                          <Link
+                            href={`/leads/${estimate.opportunity.id}`}
+                            className="inline-flex items-center rounded-full border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-950 transition hover:bg-amber-100"
+                          >
+                            Review linked lead
+                          </Link>
+                        ) : null}
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : null}
               <EstimateStatusActions estimateId={estimate.id} currentStatus={estimate.status} />
               {estimate.status !== "approved" ? (
@@ -734,6 +860,142 @@ export default async function EstimateDetailPage({
             </DetailPanel>
 
             <DetailPanel
+              title={estimate.status === "approved" ? "Production Schedule" : "Schedule Handoff"}
+              description={
+                estimate.status === "approved"
+                  ? "Compact production context from canonical project jobs and job assignments, with scheduling work still handed off to the shared schedule workspace."
+                  : "Scheduling does not start from draft or sent estimates. Approval and project readiness handoff come first, so this page stays explicit about that blocker."
+              }
+            >
+              <div className="space-y-4 text-sm leading-6 text-slate-600">
+                {estimate.status === "approved" ? (
+                  <>
+                    <ScheduleContextMetrics
+                      items={[
+                        { label: "Scheduled", value: scheduledProjectJobs.length },
+                        { label: "Unscheduled", value: unscheduledProjectJobs.length },
+                        { label: "In progress", value: inProgressProjectJobs.length }
+                      ]}
+                    />
+
+                    {nextScheduledProjectJob ? (
+                      <ScheduleContextFocusCard
+                        eyebrow={
+                          nextScheduledProjectJob.dispatchStatus === "in_progress"
+                            ? "Work in progress"
+                            : "Next scheduled job"
+                        }
+                        title={
+                          nextScheduledProjectJob.project?.name ??
+                          estimate.project?.name ??
+                          "Project job"
+                        }
+                        titleHref={`/jobs/${nextScheduledProjectJob.id}`}
+                        statusLabel={formatStatusLabel(nextScheduledProjectJob.dispatchStatus)}
+                        summary={formatScheduleSummaryWindow({
+                          scheduledDate: nextScheduledProjectJob.scheduledDate,
+                          scheduledStartAt: nextScheduledProjectJob.scheduledStartAt,
+                          scheduledEndAt: nextScheduledProjectJob.scheduledEndAt
+                        })}
+                        detailRows={[
+                          {
+                            label: "Crew",
+                            value:
+                              nextScheduledProjectAssignments.length > 0
+                                ? nextScheduledProjectCrewSummary
+                                : nextScheduledProjectJob.dispatchStatus === "scheduled"
+                                  ? "Scheduled, but crew assignment still needs to be confirmed"
+                                  : nextScheduledProjectCrewSummary
+                          }
+                        ]}
+                      />
+                    ) : (
+                      <ScheduleContextNotice
+                        eyebrow={projectJobs.length > 0 ? "Ready for scheduling" : "No jobs yet"}
+                        title={
+                          projectJobs.length > 0
+                            ? "Approved work exists, but no schedule commitment is set yet"
+                            : "No production jobs are linked to this estimate's project yet"
+                        }
+                      >
+                        {projectJobs.length > 0
+                          ? "This estimate is approved and project jobs already exist, but they are still unscheduled. The next production commitment will show here once a real date is attached."
+                          : "Approval is complete, but downstream production jobs have not been created yet on the canonical project chain."}
+                      </ScheduleContextNotice>
+                    )}
+
+                    <ContextFactsList
+                      items={[
+                        {
+                          label: "Project link",
+                          value: estimate.project ? (
+                            <Link
+                              href={`/projects/${estimate.project.id}`}
+                              className="font-medium text-brand-700"
+                            >
+                              {estimate.project.name}
+                            </Link>
+                          ) : (
+                            "Project context unavailable"
+                          )
+                        },
+                        {
+                          label: "Crew assignment state",
+                          value:
+                            nextScheduledProjectJob && nextScheduledProjectCrewSummary
+                              ? nextScheduledProjectCrewSummary
+                              : projectJobsWithoutAssignments.length > 0
+                                ? `${projectJobsWithoutAssignments.length} job${
+                                    projectJobsWithoutAssignments.length === 1 ? "" : "s"
+                                  } still need crew assignment rows`
+                                : projectJobs.length > 0
+                                  ? "Crew coverage is already attached where needed"
+                                  : "No project jobs yet"
+                        }
+                      ]}
+                    />
+
+                    <ScheduleContextActions
+                      actions={[
+                        ...(nextScheduledProjectJob
+                          ? [
+                              {
+                                href: `/jobs/${nextScheduledProjectJob.id}`,
+                                label: "Open next scheduled job" as const
+                              }
+                            ]
+                          : []),
+                        {
+                          href: buildProjectScheduleHref(estimate.projectId),
+                          label: "Open schedule",
+                          variant: "subtle"
+                        }
+                      ]}
+                    />
+                  </>
+                ) : (
+                  <ScheduleContextNotice
+                    eyebrow="Approval blocker"
+                    title={
+                      estimate.status === "sent"
+                        ? "Production scheduling starts after customer approval"
+                        : estimate.status === "rejected"
+                          ? "Rejected estimates do not enter production scheduling"
+                          : "Draft estimates do not enter production scheduling"
+                    }
+                    tone="warning"
+                  >
+                    {estimate.status === "sent"
+                      ? "This estimate is still waiting on customer approval. Keep scheduling blocked until approval lands and the downstream project readiness handoff is clear."
+                      : estimate.status === "rejected"
+                        ? "Revise and re-approve this estimate before any production scheduling context should apply."
+                        : "Finish scope, send for customer review, and wait for approval before production scheduling context should appear here."}
+                  </ScheduleContextNotice>
+                )}
+              </div>
+            </DetailPanel>
+
+            <DetailPanel
               title="Pricing Snapshot"
               description="Keep the commercial total easy to scan while the proposal body above remains the primary review surface."
             >
@@ -756,6 +1018,15 @@ export default async function EstimateDetailPage({
                 </div>
               </dl>
             </DetailPanel>
+
+            <RelatedConversationsCard
+              source="estimate"
+              description="Estimate communication stays on canonical threads and routes back into the shared communications workspace when proposal follow-through is needed."
+              countLabel="Estimate threads"
+              emptyMessage="No estimate-scoped communication threads are attached to this canonical estimate yet."
+              actionClassName="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+              threads={communicationThreads}
+            />
           </aside>
         </div>
       </section>

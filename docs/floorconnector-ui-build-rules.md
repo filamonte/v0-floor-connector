@@ -4,6 +4,33 @@ Status: mandatory implementation rules for future UI and module work.
 
 These rules are the default for all future FloorConnector UI changes unless a task explicitly approves an exception.
 
+## Strict UI Standardization Rules
+
+- Do not invent new layouts.
+- Do not invent new page structures.
+- Do not create one-off card patterns.
+- Do not create new interaction styles unless explicitly approved.
+- Reuse the existing manager-page pattern for list and queue pages.
+- Reuse the existing record-workspace pattern for detail pages.
+- Reuse shared context-card patterns such as the existing production-schedule or schedule-handoff cards and `RelatedConversationsCard`.
+- Use Contractor Foreman as the primary UX interaction reference for:
+  - flow order
+  - speed
+  - button placement
+  - action visibility
+  - estimate-builder behavior
+  - next-step handoff
+- Do not copy Contractor Foreman's data model or module separation.
+- FloorConnector must remain canonically better:
+  - one shared lifecycle
+  - no duplicate business models
+  - estimate -> contract -> SOV -> invoice chain
+  - snapshot-based financials
+  - append-only financial mutations
+  - portal and contractor use the same canonical records
+- Core product direction: CF feel on a better system.
+- Every workflow page should clearly answer: "What do I do next?"
+
 ## 1. No Custom Module Shells
 
 - Do not create per-module app shells.

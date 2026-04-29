@@ -32,7 +32,7 @@ export function CustomerForm({
           name="name"
           defaultValue={customer?.name ?? ""}
           placeholder="Jane Doe"
-          hint="Use the primary customer contact name."
+          hint="Use the primary billing, project, or estimate-recipient contact name."
           required
         />
         <AuthField
@@ -48,6 +48,7 @@ export function CustomerForm({
           type="tel"
           defaultValue={getValue(customer?.phone)}
           placeholder="(555) 555-0123"
+          hint="Use the main customer coordination number for this canonical account."
         />
         <AuthField
           label="Email"
@@ -55,6 +56,7 @@ export function CustomerForm({
           type="email"
           defaultValue={getValue(customer?.email)}
           placeholder="customer@example.com"
+          hint="Estimate send and customer-facing billing handoff use this customer email."
         />
         <AuthField
           label="Address line 1"
@@ -175,7 +177,7 @@ export function CustomerForm({
           <span>{submitLabel}</span>
         </AuthSubmitButton>
         <p className="text-sm leading-6 text-slate-500">
-          Customer records are scoped to the active organization automatically.
+          Customer records are scoped to the active organization automatically and stay separate from workforce People records.
         </p>
       </div>
     </form>

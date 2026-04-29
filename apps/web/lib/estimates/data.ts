@@ -17,6 +17,7 @@ import type {
   EstimateCustomerEventType
 } from "@floorconnector/types";
 
+import { estimateLineItemInputSchema } from "./schemas";
 import type { EstimateInput, EstimateLineItemInput } from "./schemas";
 import {
   applyEstimateWorkspaceDefaults,
@@ -39,7 +40,10 @@ import {
 } from "@/lib/catalogs/system-expansion";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
-import { listPortalAccessGrantsForCurrentUser } from "@/lib/portal-access/data";
+import {
+  listPortalAccessGrantsForCurrentUser,
+  resolvePortalScopedPermissionForCurrentUser
+} from "@/lib/portal-access/data";
 import { STORAGE_BUCKET_NAMES } from "@floorconnector/config";
 import {
   ensureOpportunityEstimateFlow,
@@ -327,6 +331,7 @@ export type EstimateDetail = EstimateListItem & {
   lineItems: EstimateLineItem[];
   attachments: EstimateAttachmentListItem[];
   workspaceDefaultsApplied: boolean;
+  estimateDefaultsSource: "organization" | "platform_fallback";
 };
 
 export type EstimateCustomerEventListItem = EstimateCustomerEvent;
@@ -943,7 +948,7 @@ function resolveEstimatePortalRecipient(input: {
   }
 
   throw new Error(
-    "Customer portal access is required before sending this estimate. Add one active portal user for the project, or make sure the customer email matches the active portal recipient."
+    "Customer portal access is required before sending this estimate. Add one active portal user for this project, or make sure canonical customer.email matches an active portal recipient."
   );
 }
 
@@ -2013,6 +2018,10 @@ export async function getEstimateById(
     exclusionsHtml: workflowSettings.defaultEstimateExclusionsHtml,
     scopeSummaryHtml: workflowSettings.defaultEstimateScopeSummaryHtml
   };
+  const estimateDefaultsSource =
+    workflowSettings.createdAt === new Date(0).toISOString()
+      ? "platform_fallback"
+      : "organization";
   const workspaceDefaultsApplied = !hasMeaningfulEstimateWorkspaceContent(
     mappedEstimate.content
   );
@@ -2063,7 +2072,8 @@ export async function getEstimateById(
       : null,
     lineItems,
     attachments: resolvedAttachments,
-    workspaceDefaultsApplied
+    workspaceDefaultsApplied,
+    estimateDefaultsSource
   };
 }
 
@@ -2293,7 +2303,9 @@ export async function sendEstimateToCustomer(
   }
 
   if (!estimate.customers.email?.trim()) {
-    throw new Error("Customer email is required before sending the estimate.");
+    throw new Error(
+      "Canonical customer.email is required before sending the estimate. Update the customer account email and retry."
+    );
   }
 
   const portalRecipients = await listEstimatePortalRecipients({
@@ -2610,6 +2622,18 @@ export async function approveEstimateFromPortal(
   next = "/portal"
 ) {
   const scope = await getScopedPortalEstimate(input.estimateId, next);
+  const permission = await resolvePortalScopedPermissionForCurrentUser({
+    customerId: scope.estimate.customer_id,
+    projectId: scope.estimate.project_id,
+    permission: "canApproveEstimates",
+    next
+  });
+
+  if (!permission.allowed) {
+    throw new Error(
+      "This contact does not currently have permission to approve or reject this estimate."
+    );
+  }
 
   if (scope.estimate.status !== "sent") {
     throw new Error("Only sent estimates can be approved from the portal.");
@@ -2703,6 +2727,18 @@ export async function rejectEstimateFromPortal(
   next = "/portal"
 ) {
   const scope = await getScopedPortalEstimate(input.estimateId, next);
+  const permission = await resolvePortalScopedPermissionForCurrentUser({
+    customerId: scope.estimate.customer_id,
+    projectId: scope.estimate.project_id,
+    permission: "canApproveEstimates",
+    next
+  });
+
+  if (!permission.allowed) {
+    throw new Error(
+      "This contact does not currently have permission to approve or reject this estimate."
+    );
+  }
 
   if (scope.estimate.status !== "sent") {
     throw new Error("Only sent estimates can be rejected from the portal.");
@@ -2907,6 +2943,7 @@ export async function quickCreateEstimateFromContext(input: {
   opportunityId: string | null;
   customerId: string | null;
   projectId: string | null;
+  projectName: string | null;
   title: string;
 }) {
   let flow;
@@ -2925,6 +2962,7 @@ export async function quickCreateEstimateFromContext(input: {
         flow = await ensureOpportunityEstimateFlowFromCustomer({
           customerId: input.customerId,
           projectId: input.projectId,
+          projectName: input.projectName,
           title: input.title
         });
         break;
@@ -2938,6 +2976,7 @@ export async function quickCreateEstimateFromContext(input: {
         flow = await ensureOpportunityEstimateFlowFromStandalone({
           customerId: input.customerId,
           projectId: input.projectId,
+          projectName: input.projectName,
           title: input.title
         });
         break;
@@ -3062,4 +3101,174 @@ export async function insertSystemToEstimate(input: {
   }
 
   return updatedEstimate;
+}
+
+export async function importEstimateLineItemsFromEstimate(input: {
+  destinationEstimateId: string;
+  sourceEstimateId: string;
+}) {
+  const scope = await requireEstimateScope(`/estimates/${input.destinationEstimateId}/edit`);
+  const destinationEstimate = await getEstimateRecordById(
+    scope.organizationId,
+    input.destinationEstimateId
+  );
+
+  if (!destinationEstimate) {
+    throw new Error("Destination estimate not found for this organization.");
+  }
+
+  if (destinationEstimate.status !== "draft") {
+    throw new Error("Only draft estimates can import line items from another estimate.");
+  }
+
+  if (input.sourceEstimateId === input.destinationEstimateId) {
+    throw new Error("Choose a different estimate to import from.");
+  }
+
+  const sourceEstimate = await getEstimateRecordById(
+    scope.organizationId,
+    input.sourceEstimateId
+  );
+
+  if (!sourceEstimate) {
+    throw new Error("Source estimate not found for this organization.");
+  }
+
+  const sourceLineItems = await getEstimateLineItems(scope.organizationId, input.sourceEstimateId);
+
+  if (sourceLineItems.length === 0) {
+    throw new Error(`${sourceEstimate.reference_number} has no line items to import yet.`);
+  }
+
+  const importableLineItems = sourceLineItems
+    .filter(
+      (lineItem) =>
+        Boolean(lineItem.catalogItemId) &&
+        (lineItem.sourceType === "catalog_item" || lineItem.sourceType === "system_component")
+    )
+    .map((lineItem, index) => ({
+      rowKey: `import-${index + 1}`,
+      catalogItemId: lineItem.catalogItemId,
+      sourceType: lineItem.sourceType,
+      sourceSystemId: lineItem.sourceSystemId,
+      sourceComponentId: lineItem.sourceComponentId,
+      quantity: lineItem.quantity,
+      assignedTo: lineItem.assignedTo,
+      groupName: lineItem.groupName
+    }));
+
+  if (importableLineItems.length === 0) {
+    throw new Error(
+      `${sourceEstimate.reference_number} has no canonical estimate items available to import.`
+    );
+  }
+
+  const parsedImportLineItems = estimateLineItemInputSchema
+    .array()
+    .safeParse(importableLineItems);
+
+  if (!parsedImportLineItems.success) {
+    throw new Error(
+      `${sourceEstimate.reference_number} contains line items that can no longer be imported safely.`
+    );
+  }
+
+  const seededLineItems = await seedEstimateLineItemsFromSources(
+    scope.organizationId,
+    parsedImportLineItems.data
+  );
+
+  await appendEstimateLineItemSnapshots(
+    scope.organizationId,
+    scope.userId,
+    input.destinationEstimateId,
+    seededLineItems
+  );
+
+  const updatedEstimate = await getEstimateById(
+    input.destinationEstimateId,
+    `/estimates/${input.destinationEstimateId}/edit`
+  );
+
+  if (!updatedEstimate) {
+    throw new Error("Estimate not found after importing line items.");
+  }
+
+  return {
+    estimate: updatedEstimate,
+    importedCount: seededLineItems.length,
+    sourceEstimateReferenceNumber: sourceEstimate.reference_number
+  };
+}
+
+export async function importEstimateReusableContentFromEstimate(input: {
+  destinationEstimateId: string;
+  sourceEstimateId: string;
+  section: "scope" | "terms" | "inclusions" | "exclusions";
+}) {
+  const scope = await requireEstimateScope(`/estimates/${input.destinationEstimateId}/edit`);
+  const destinationEstimate = await getEstimateRecordById(
+    scope.organizationId,
+    input.destinationEstimateId
+  );
+
+  if (!destinationEstimate) {
+    throw new Error("Destination estimate not found for this organization.");
+  }
+
+  if (destinationEstimate.status !== "draft") {
+    throw new Error("Only draft estimates can import reusable content from another estimate.");
+  }
+
+  if (input.sourceEstimateId === input.destinationEstimateId) {
+    throw new Error("Choose a different estimate to import from.");
+  }
+
+  const sourceEstimate = await getEstimateRecordById(scope.organizationId, input.sourceEstimateId);
+
+  if (!sourceEstimate) {
+    throw new Error("Source estimate not found for this organization.");
+  }
+
+  const sourceContent = normalizeEstimateWorkspaceContent(
+    sourceEstimate.content,
+    sourceEstimate.notes
+  );
+
+  switch (input.section) {
+    case "scope":
+      if (!sourceContent.scopeSummaryHtml && sourceContent.scopeItems.length === 0) {
+        throw new Error(`${sourceEstimate.reference_number} has no reusable scope / SOW to import.`);
+      }
+      break;
+    case "terms":
+      if (!sourceContent.termsHtml) {
+        throw new Error(`${sourceEstimate.reference_number} has no reusable terms to import.`);
+      }
+      break;
+    case "inclusions":
+      if (!sourceContent.inclusionsHtml) {
+        throw new Error(`${sourceEstimate.reference_number} has no reusable inclusions to import.`);
+      }
+      break;
+    case "exclusions":
+      if (!sourceContent.exclusionsHtml) {
+        throw new Error(`${sourceEstimate.reference_number} has no reusable exclusions to import.`);
+      }
+      break;
+    default:
+      throw new Error("Unsupported reusable content import section.");
+  }
+
+  return {
+    sourceEstimateReferenceNumber: sourceEstimate.reference_number,
+    section: input.section,
+    content: {
+      scopeSummaryHtml: sourceContent.scopeSummaryHtml,
+      scopeItems: sourceContent.scopeItems,
+      termsHtml: sourceContent.termsHtml,
+      inclusionsHtml: sourceContent.inclusionsHtml,
+      exclusionsHtml: sourceContent.exclusionsHtml
+    }
+  };
 }

@@ -114,7 +114,7 @@ export default async function CustomersPage({
     <ContractorWorkspacePage
       eyebrow="Customers"
       title={`Customer records for ${organizationContext.organization.displayName}`}
-      description="Customers anchor the shared relationship, tax defaults, and downstream project continuity across the contractor operating system."
+      description="Customers anchor the shared external relationship, project continuity, billing defaults, and estimate-recipient contact details across the contractor operating system."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="border border-[#e2e7ef] bg-white px-4 py-3">
@@ -152,9 +152,7 @@ export default async function CustomersPage({
       commandBar={{
         supportSlot: (
           <p>
-            Review the canonical customer base, search quickly, and open quick
-            create only when you are ready to route a new account into its full
-            workspace.
+            Review the canonical customer base, keep recipient contact details current here, and open quick create only when you are ready to route a new customer account into its full workspace.
           </p>
         ),
         searchSlot: (
@@ -228,7 +226,7 @@ export default async function CustomersPage({
           <ManagerDashboardCard
             eyebrow="Workflow queue"
             title="Missing direct contact"
-            description="Customer records that still need either an email address or phone number."
+            description="Customer records that still need email or phone before estimate send, billing follow-through, or customer coordination are fully ready."
             actionHref={buildCustomersHref({ q: query })}
             actionLabel="Fill details"
             items={customersMissingContact.slice(0, 4).map((customer) => ({
@@ -292,6 +290,9 @@ export default async function CustomersPage({
               <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
                 Latest customer updates
               </h3>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Customer email and phone live here as the canonical recipient contact details for estimates, projects, invoices, and portal access.
+              </p>
             </div>
             <p className="text-sm leading-6 text-slate-500">
               {recentCustomers.length} visible
@@ -361,8 +362,10 @@ export default async function CustomersPage({
                 description={
                   customers.length > 0
                     ? "Try a broader search to find the customer account you need."
-                    : "Customer records need to exist before projects, estimates, and invoices can stay connected to the same canonical account."
+                    : "Start here when you already know the account. Customer records need to exist before projects, estimates, and invoices can stay connected to the same canonical account."
                 }
+                actionHref={buildCustomersHref({ q: query, compose: "1" }) + "#customer-create"}
+                actionLabel="Create your first customer"
               />
             </div>
           )}

@@ -47,6 +47,7 @@ The long-term thesis is that specialty surface contractors need a shared system 
 
 FloorConnector should unify the contractor revenue path so that:
 - work starts in one intake and qualification flow
+- future site data, plans, photos, and takeoff quantities can become reviewed estimate inputs instead of disconnected spreadsheet or drawing artifacts
 - approved commercial scope flows into contracts and execution without being recreated
 - execution flows into billing without disconnecting from the original scope
 - payments, tax-aware billing, retainage, and future progress billing all extend the same shared financial chain
@@ -93,10 +94,17 @@ The goal is not generic accounting replacement. It is contractor-specific financ
 As the system matures, FloorConnector should expand into the operational inputs behind the work itself:
 - reusable materials and item catalogs
 - estimating and invoicing consistency through shared catalogs
+- Takeoff & Scope Intelligence that can convert plans, photos, and site information into reviewed quantities before estimate generation
 - production and field-readiness support
 - future purchasing and supply-oriented workflows where they strengthen the core job chain
 
 This expansion matters because specialty surface work depends heavily on scope clarity, materials planning, and prep-sensitive execution.
+
+Takeoff & Scope Intelligence should strengthen the same contractor workflow rather than becoming a separate estimating product. Takeoff produces quantities. Catalog/cost items define reusable cost, pricing, production, and tax behavior. Estimates define customer-facing pricing and commercial scope. Over time, FloorConnector should be able to accept project-scoped plans, photos, and site data, support manual or AI-assisted measurements, map approved quantities to reusable cost items, and generate estimate line items for human review before anything becomes customer-facing.
+
+Generated estimate line items should eventually retain source traceability back to the takeoff scope item, takeoff measurement, and source document or photo when applicable. If takeoff quantities change after estimate generation, the system should be able to flag the takeoff-estimate link or estimate as out of sync so the contractor knows the customer-facing proposal may need review.
+
+AI-assisted measurement, scope, and cost-item mapping suggestions must stay human-in-the-loop. Suggestions should be reviewable and explicitly approved by the contractor before they become estimate content, and raw takeoff measurements should never own pricing or bypass the canonical `Takeoff -> Estimate -> Contract / Job -> Invoice -> Payment` path.
 
 ### 4. Customer And Communication Layer
 
@@ -114,9 +122,19 @@ The purpose is not to create a separate system. It is to project the same canoni
 Over the longer term, FloorConnector can grow beyond internal operations into broader platform infrastructure for the contractor business:
 - marketing and lead capture connected to the same downstream revenue records
 - service and integration adapters that reduce operational re-entry across systems
+- contractor network collaboration, or networked work, where trusted subcontractors, vendors, and partner contractors can participate through scoped project or job access
 - materials, purchasing, or marketplace-style extensions only where they reinforce the same canonical workflow chain
 
 This should happen carefully. Expansion only makes sense if it strengthens the contractor operating system instead of fragmenting it.
+
+The contractor network direction is not general contractor chat and not an immediate open marketplace. The practical path is record-based collaboration around canonical projects, jobs, change orders, invoices, daily logs, field notes, and payments. FloorConnector may eventually help contractors make more money through trusted partner work, overflow jobs, specialty subcontractors, and regional coverage, but only where that reinforces the `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment` chain.
+
+Early networked-work concepts should stay invite-based:
+- invite a known subcontractor, vendor, or partner contractor to a project or job
+- define scope, dates, access level, file and photo visibility, communication thread, and whether pricing is visible
+- allow limited status updates, photo uploads, field notes, and job progress updates tied to that record
+
+Later concepts may include trusted contractor connections, private referral or overflow work sharing, specialty subcontractor requests, regional partner coverage, and partner performance or compliance signals. A controlled marketplace, vetted network, referral tracking, or platform revenue model belongs much later and should not precede scoped collaboration, permissioning, tenant isolation, and canonical record ownership.
 
 ### 6. Administration And Control Layer
 
@@ -136,8 +154,9 @@ The expansion path is:
 - first, strengthen workflow continuity across the existing operational chain
 - then make `Project` the practical operational hub for active work
 - then deepen scheduling, materials, execution, notifications, and financial controls
+- then add project-scoped Takeoff & Scope Intelligence where plans, photos, and measurements feed catalog-mapped estimate line items
 - then extend outward into customer-facing experiences and external integrations
-- then consider broader connected platform layers such as marketing attribution, materials ecosystems, or marketplace behavior where they align with the same job lifecycle
+- then consider broader connected platform layers such as marketing attribution, materials ecosystems, contractor network collaboration, or marketplace behavior where they align with the same job lifecycle
 
 That means future platform growth should feel like a widening circle around the same shared contractor workflow, not a collection of disconnected products.
 

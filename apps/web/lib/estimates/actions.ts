@@ -17,6 +17,8 @@ import {
   EstimateVersionConflictError,
   createEstimate,
   deleteEstimateAttachmentFiles,
+  importEstimateLineItemsFromEstimate,
+  importEstimateReusableContentFromEstimate,
   insertCatalogItemToEstimate,
   insertSystemToEstimate,
   quickCreateEstimateFromContext,
@@ -32,6 +34,8 @@ import { resolveEstimateApprovalOrchestration } from "./approval-orchestration";
 import {
   estimateCatalogInsertInputSchema,
   estimateInputSchema,
+  estimateLineItemImportInputSchema,
+  estimateReusableContentImportInputSchema,
   estimatePortalCommentInputSchema,
   estimatePortalDecisionInputSchema,
   estimateQuickCreateInputSchema,
@@ -188,8 +192,17 @@ function parseEstimateQuickCreateInput(formData: FormData) {
     opportunityId: getFieldValue(formData, "opportunityId"),
     customerId: getFieldValue(formData, "customerId"),
     projectId: getFieldValue(formData, "projectId"),
+    projectName: getFieldValue(formData, "projectName"),
     title: getFieldValue(formData, "title")
   });
+}
+
+function getQuickCreateEstimateFailureMessage(message: string) {
+  if (/duplicate key|violates|foreign key|null value|invalid input/i.test(message)) {
+    return "Estimate could not be created from that selection. Choose a customer, then select one of that customer's projects or enter a new project name before trying again.";
+  }
+
+  return message;
 }
 
 function getStatusActionLabel(status: EstimateStatus) {
@@ -300,6 +313,37 @@ export type EstimateInsertResult =
       estimateId: string;
       updatedAt: string;
       lineItems: EstimateLineItem[];
+    }
+  | { ok: false; message: string };
+
+export type EstimateLineItemImportResult =
+  | {
+      ok: true;
+      estimateId: string;
+      updatedAt: string;
+      lineItems: EstimateLineItem[];
+      importedCount: number;
+      sourceEstimateReferenceNumber: string;
+    }
+  | { ok: false; message: string };
+
+export type EstimateReusableContentImportResult =
+  | {
+      ok: true;
+      sourceEstimateReferenceNumber: string;
+      section: "scope" | "terms" | "inclusions" | "exclusions";
+      content: {
+        scopeSummaryHtml: string | null;
+        scopeItems: Array<{
+          id: string;
+          text: string;
+          includeInOutput: boolean;
+          sortOrder: number;
+        }>;
+        termsHtml: string | null;
+        inclusionsHtml: string | null;
+        exclusionsHtml: string | null;
+      };
     }
   | { ok: false; message: string };
 
@@ -664,11 +708,85 @@ export async function insertSystemToEstimateAction(
   }
 }
 
+export async function importEstimateLineItemsAction(
+  input: unknown
+): Promise<EstimateLineItemImportResult> {
+  const result = estimateLineItemImportInputSchema.safeParse(input);
+
+  if (!result.success) {
+    return {
+      ok: false,
+      message:
+        result.error.issues[0]?.message ??
+        "Unable to import line items from the selected estimate."
+    };
+  }
+
+  try {
+    const importResult = await importEstimateLineItemsFromEstimate(result.data);
+    revalidatePath("/estimates");
+    revalidatePath(`/estimates/${importResult.estimate.id}`);
+    revalidatePath(`/estimates/${importResult.estimate.id}/edit`);
+
+    return {
+      ok: true,
+      estimateId: importResult.estimate.id,
+      updatedAt: importResult.estimate.updatedAt,
+      lineItems: importResult.estimate.lineItems,
+      importedCount: importResult.importedCount,
+      sourceEstimateReferenceNumber: importResult.sourceEstimateReferenceNumber
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to import line items from the selected estimate."
+    };
+  }
+}
+
+export async function importEstimateReusableContentAction(
+  input: unknown
+): Promise<EstimateReusableContentImportResult> {
+  const result = estimateReusableContentImportInputSchema.safeParse(input);
+
+  if (!result.success) {
+    return {
+      ok: false,
+      message:
+        result.error.issues[0]?.message ??
+        "Unable to import reusable content from the selected estimate."
+    };
+  }
+
+  try {
+    const importResult = await importEstimateReusableContentFromEstimate(result.data);
+
+    return {
+      ok: true,
+      sourceEstimateReferenceNumber: importResult.sourceEstimateReferenceNumber,
+      section: importResult.section,
+      content: importResult.content
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to import reusable content from the selected estimate."
+    };
+  }
+}
+
 export async function quickCreateEstimateAction(formData: FormData) {
   const creationMode = getFieldValue(formData, "creationMode");
   const opportunityId = getFieldValue(formData, "opportunityId");
   const customerId = getFieldValue(formData, "customerId");
   const projectId = getFieldValue(formData, "projectId");
+  const projectName = getFieldValue(formData, "projectName");
   const result = parseEstimateQuickCreateInput(formData);
 
   if (!result.success) {
@@ -679,6 +797,7 @@ export async function quickCreateEstimateAction(formData: FormData) {
         opportunityId,
         customerId,
         projectId,
+        projectName,
         error:
           result.error.issues[0]?.message ?? "Unable to create estimate."
       })
@@ -697,8 +816,11 @@ export async function quickCreateEstimateAction(formData: FormData) {
         opportunityId,
         customerId,
         projectId,
+        projectName,
         error:
-          error instanceof Error ? error.message : "Unable to create estimate."
+          error instanceof Error
+            ? getQuickCreateEstimateFailureMessage(error.message)
+            : "Unable to create estimate."
       })
     );
   }

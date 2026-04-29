@@ -65,6 +65,7 @@ Planned focus:
 Planned focus:
 - make project the primary operational workspace
 - connect estimates, contracts, jobs, invoices, files, and activity more clearly inside the project context
+- strengthen project-scoped site info, plan/photo/file inputs, and scope summary foundations that can later support Takeoff & Scope Intelligence
 - strengthen readiness, blockers, and next-action guidance
 - add tasks and richer role-based queue behavior on top of the existing notification foundation
 - add file attachments and shared activity foundations where needed
@@ -87,8 +88,12 @@ Planned focus:
 - reusable item and materials catalog management
 - seeded organization-owned defaults beyond the current settings foundation
 - shared catalog support directly inside estimating, invoicing, contracts, and future execution workflows
+- catalog/cost item design that can define reusable cost, markup, pricing, production, and tax behavior, while still allowing estimate-level overrides that remain internal in edit mode
+- planned manual/on-screen Takeoff & Scope Intelligence foundations where project-scoped measurements can produce quantities, map to reusable catalog/cost items, and generate reviewed estimate line items
 - richer shared template and document editing capability
 - broader document workflow refinement
+
+Takeoff work in this phase would be planned direction only. It should support the canonical estimate workflow instead of becoming a separate estimating app. Takeoff quantities may eventually inform material requirements, labor estimation, production readiness, and job planning, but they should flow through reviewed estimates before contracts, jobs, invoices, or payments.
 
 ## Phase 6
 
@@ -103,11 +108,16 @@ Planned focus:
 
 ## Phase 7
 
-**Later: portal expansion**
+**Later: portal, communications, and scoped collaboration expansion**
 
 Planned focus:
 - broader customer portal workflows beyond the current access, review, and contract-signature foundation
 - customer-facing online payment UI and richer post-review customer actions
+- record-based communication tied to projects, jobs, change orders, invoices, daily logs, field notes, and other canonical workflow records
+- scoped subcontractor/vendor/project partner collaboration where invited external participants can access only explicitly shared project or job workrooms
+- project/job workrooms for limited status updates, photo uploads, field notes, files, and record-tied communication
+
+This is planned direction only. It does not mean contractor network collaboration, subcontractor portal access, or contractor-to-contractor messaging is currently implemented.
 
 ## Phase 8
 
@@ -115,5 +125,11 @@ Planned focus:
 
 Planned focus:
 - growth and marketing engine
-- marketplace
+- AI-assisted Takeoff & Scope Intelligence suggestions on top of project-scoped plans, photos, site data, catalog mapping, and human-reviewed estimate generation
+- contractor network / networked work expansion for trusted partner contractors, specialty subcontractors, vendors, overflow work sharing, and regional coverage
+- private referral or overflow work sharing where it extends the same canonical project/job/payment chain
+- controlled marketplace or vetted network behavior only after scoped collaboration, permissions, compliance signals, and tenant isolation are designed
 - broader ecosystem expansion
+
+Open marketplace behavior is a later-phase platform direction, not a current implementation target.
+AI-assisted takeoff is also a later platform direction, not a current implementation target.

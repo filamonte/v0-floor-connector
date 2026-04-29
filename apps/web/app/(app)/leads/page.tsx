@@ -209,7 +209,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
       commandBar={{
         supportSlot: (
           <p>
-            This board stays grounded in real opportunity stages and real scheduled follow-up. No fake tasks or invented sales states.
+            This board stays grounded in real opportunity stages and real scheduled follow-up, with the next estimate handoff kept visible on the same lead chain.
           </p>
         ),
         searchSlot: (
@@ -394,6 +394,9 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
               <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
                 {view === "mine" ? "Assigned leads" : "All leads"}
               </h3>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Keep first contact, follow-up, and the next start-estimate handoff visible from the same manager page.
+              </p>
             </div>
             <p className="text-sm leading-6 text-slate-500">
               {visibleOpportunities.length} visible
@@ -408,13 +411,22 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                     <th className="px-5 py-3 sm:px-6">Lead</th>
                     <th className="px-5 py-3 sm:px-6">Primary contact</th>
                     <th className="px-5 py-3 sm:px-6">Stage</th>
-                    <th className="px-5 py-3 sm:px-6">Next task</th>
-                    <th className="px-5 py-3 text-right sm:px-6">Assigned</th>
+                    <th className="px-5 py-3 sm:px-6">Next step</th>
+                    <th className="px-5 py-3 sm:px-6">Assigned</th>
+                    <th className="px-5 py-3 text-right sm:px-6">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
                   {visibleOpportunities.map((opportunity) => {
                     const nextActivity = nextActivityByOpportunity.get(opportunity.id);
+                    const actionHref =
+                      opportunity.status === "lost"
+                        ? `/leads/${opportunity.id}`
+                        : opportunity.projectId
+                          ? `/estimates?projectId=${opportunity.projectId}&opportunityId=${opportunity.id}`
+                          : `/leads/${opportunity.id}`;
+                    const actionLabel =
+                      opportunity.status === "lost" ? "Open lead" : "Start estimate";
 
                     return (
                       <tr key={opportunity.id} className="hover:bg-slate-50/70">
@@ -454,11 +466,23 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                               </p>
                             </>
                           ) : (
-                            <p className="text-sm leading-6 text-slate-500">No scheduled task</p>
+                            <p className="text-sm leading-6 text-slate-500">
+                              {opportunity.status === "lost"
+                                ? "Reopen this lead before it can move forward."
+                                : "No scheduled follow-up. Start estimate when scope is ready."}
+                            </p>
                           )}
                         </td>
-                        <td className="px-5 py-4 text-right text-slate-500 sm:px-6">
+                        <td className="px-5 py-4 text-slate-500 sm:px-6">
                           {nextActivity?.assignedLabel ?? "Unassigned"}
+                        </td>
+                        <td className="px-5 py-4 text-right sm:px-6">
+                          <Link
+                            href={actionHref}
+                            className="inline-flex items-center rounded-[4px] border border-[#d9dee8] bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
+                          >
+                            {actionLabel}
+                          </Link>
                         </td>
                       </tr>
                     );
@@ -480,8 +504,10 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                 description={
                   opportunities.length > 0
                     ? "Try a broader search or switch between all leads and assigned leads."
-                    : "Leads are the earliest live intake point before work moves into the shared customer, estimate, and project chain."
+                    : "Start here with a real opportunity when the customer and scope are still being qualified. The lead can then move into the shared customer, project, estimate, and billing chain."
                 }
+                actionHref={buildLeadsHref({ q: query, view, compose: "1" }) + "#lead-create"}
+                actionLabel="Create your first lead"
               />
             </div>
           )}
@@ -491,7 +517,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
       <WorkspaceComposerSheet
         id="lead-create"
         title="Quick create lead"
-        description="Capture only the minimum opportunity context here, create the canonical lead, and then finish qualification in the full lead workspace."
+        description="Capture the minimum opportunity context here, create the canonical lead, and then qualify it in the full lead workspace before you start estimate."
         open={showComposer}
         openHref={buildLeadsHref({ q: query, view, compose: "1" })}
         closeHref={buildLeadsHref({ q: query, view })}

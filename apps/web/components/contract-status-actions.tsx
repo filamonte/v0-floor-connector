@@ -175,8 +175,8 @@ export function ContractStatusActions({
 
           {customerPortalSignerOptions.length === 0 ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-              No active portal user currently has access to this customer project. Grant portal
-              access before sending the contract.
+              No eligible customer signer is available for this project. Grant portal access and,
+              for linked customer contacts, confirm contract-signing permission before sending.
             </div>
           ) : (
             <form action={sendContractForSignatureAction} className="space-y-4">

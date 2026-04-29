@@ -46,7 +46,11 @@ import { sanitizeHtml } from "@/lib/html/sanitize";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { listOrganizationMembers } from "@/lib/organizations/admin";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
-import { listPortalAccessGrantsForCurrentUser } from "@/lib/portal-access/data";
+import {
+  listPortalAccessGrantsForCurrentUser,
+  resolvePortalScopedPermissionForCurrentUser,
+  resolvePortalScopedPermissionForGrantRecord
+} from "@/lib/portal-access/data";
 import { recordContractNotificationEvent } from "@/lib/notifications/system";
 import { syncProjectCommercialReadiness } from "@/lib/projects/readiness";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -175,6 +179,7 @@ type CompanyMembershipRow = {
 
 type ContractPortalSignerGrantRow = {
   id: string;
+  customer_contact_id: string | null;
   user_id: string;
   status: string;
   portal_user:
@@ -536,6 +541,7 @@ function isContractPortalSignerGrantRow(
 
   return (
     typeof row.id === "string" &&
+    (row.customer_contact_id === null || typeof row.customer_contact_id === "string") &&
     typeof row.user_id === "string" &&
     typeof row.status === "string"
   );
@@ -1323,10 +1329,13 @@ async function ensureActivePortalAccessGrant(
     id: data.id,
     organizationId: data.company_id,
     customerId: data.customer_id,
+    customerContactId: null,
     userId: data.user_id,
     status: data.status,
     invitedEmail: data.invited_email ?? null,
     invitedByUserId: data.invited_by ?? null,
+    inviteExpiresAt: null,
+    inviteAcceptedAt: null,
     activatedAt: data.activated_at ?? null,
     revokedAt: data.revoked_at ?? null,
     createdAt: data.created_at,
@@ -1687,6 +1696,7 @@ export async function getContractSignatureActionOptions(
       .select(
         `
           id,
+          customer_contact_id,
           user_id,
           status,
           portal_user:users!portal_access_grants_user_id_fkey (
@@ -1753,25 +1763,43 @@ export async function getContractSignatureActionOptions(
       : []
   );
 
-  const customerPortalSignerOptions = portalGrantData
-    .filter((grant) => activeProjectGrantIds.has(grant.id))
-    .map((grant) => {
-      const portalUser = Array.isArray(grant.portal_user) ? (grant.portal_user[0] ?? null) : null;
+  const customerPortalSignerOptions = (
+    await Promise.all(
+      portalGrantData
+        .filter((grant) => activeProjectGrantIds.has(grant.id))
+        .map(async (grant) => {
+          const portalUser = Array.isArray(grant.portal_user)
+            ? (grant.portal_user[0] ?? null)
+            : null;
 
-      if (!portalUser?.id || !portalUser.email) {
-        return null;
-      }
+          if (!portalUser?.id || !portalUser.email) {
+            return null;
+          }
 
-      return {
-        userId: portalUser.id,
-        displayName: getParticipantDisplayName({
-          fullName: portalUser.full_name,
-          email: portalUser.email
-        }),
-        email: portalUser.email
-      } satisfies ContractSignatureParticipantOption;
-    })
-    .filter((option): option is ContractSignatureParticipantOption => option !== null);
+          const permission = await resolvePortalScopedPermissionForGrantRecord({
+            organizationId: scope.organizationId,
+            customerId: contract.customer_id,
+            projectId: contract.project_id,
+            portalAccessGrantId: grant.id,
+            customerContactId: grant.customer_contact_id ?? null,
+            permission: "canSignContracts"
+          });
+
+          if (!permission.allowed) {
+            return null;
+          }
+
+          return {
+            userId: portalUser.id,
+            displayName: getParticipantDisplayName({
+              fullName: portalUser.full_name,
+              email: portalUser.email
+            }),
+            email: portalUser.email
+          } satisfies ContractSignatureParticipantOption;
+        })
+    )
+  ).filter((option): option is ContractSignatureParticipantOption => option !== null);
 
   return {
     contractId: contract.id,
@@ -2223,6 +2251,18 @@ export async function recordCustomerSignedContract(
   next = "/portal"
 ) {
   const portalScope = await getScopedPortalContract(input.contractId, next);
+  const permission = await resolvePortalScopedPermissionForCurrentUser({
+    customerId: portalScope.contract.customer_id,
+    projectId: portalScope.contract.project_id,
+    permission: "canSignContracts",
+    next
+  });
+
+  if (!permission.allowed) {
+    throw new Error(
+      "This contact does not currently have permission to sign or decline this contract."
+    );
+  }
   const signers = await listContractSignerRowsAdmin(
     portalScope.contract.company_id,
     portalScope.contract.id
@@ -2351,6 +2391,18 @@ export async function recordCustomerDeclinedContract(
   next = "/portal"
 ) {
   const portalScope = await getScopedPortalContract(input.contractId, next);
+  const permission = await resolvePortalScopedPermissionForCurrentUser({
+    customerId: portalScope.contract.customer_id,
+    projectId: portalScope.contract.project_id,
+    permission: "canSignContracts",
+    next
+  });
+
+  if (!permission.allowed) {
+    throw new Error(
+      "This contact does not currently have permission to sign or decline this contract."
+    );
+  }
   const signers = await listContractSignerRowsAdmin(
     portalScope.contract.company_id,
     portalScope.contract.id

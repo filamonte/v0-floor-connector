@@ -170,6 +170,22 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
         </SettingsOverviewCard>
 
         <SettingsOverviewCard
+          title="Automation readiness"
+          description="Review canonical automation foundations and store future notification-only preferences without enabling execution."
+          href="/settings/automation"
+          ctaLabel="Open automation planning"
+        >
+          <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+            <p>
+              Communications and payment failures already expose live visibility on canonical records.
+            </p>
+            <p>
+              Future notification preferences can be saved here, but scheduling, contract follow-up, and overdue collections still do not execute automatically.
+            </p>
+          </div>
+        </SettingsOverviewCard>
+
+        <SettingsOverviewCard
           title="Admin and module controls"
           description="Review members, roles, and feature overrides allowed under the platform policy."
           href="/settings/admin"

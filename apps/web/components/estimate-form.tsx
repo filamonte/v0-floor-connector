@@ -30,6 +30,7 @@ import { FilesSection } from "@/components/estimates/files-section";
 import { ItemsSection, type EstimateItemsDraft } from "@/components/estimates/items-section";
 import { NotesSection } from "@/components/estimates/notes-section";
 import { ScopeOfWork } from "@/components/estimates/scope-of-work";
+import { ReusableContentInserter } from "@/components/estimates/reusable-content-inserter";
 import { TermsEditor } from "@/components/estimates/terms-editor";
 import {
   calculateDiscountedTaxableSales,
@@ -40,6 +41,8 @@ import {
 import type {
   EstimateInsertResult,
   EstimateAutosaveResult,
+  EstimateLineItemImportResult,
+  EstimateReusableContentImportResult,
   ExpandedSystemPreviewResult,
   EstimateStatusTransitionResult
 } from "@/lib/estimates/actions";
@@ -55,6 +58,7 @@ type EditableEstimate = Estimate & {
     downloadUrl: string | null;
   }>;
   workspaceDefaultsApplied?: boolean;
+  estimateDefaultsSource?: "organization" | "platform_fallback";
 };
 
 type EstimateFormProps = {
@@ -84,10 +88,32 @@ type EstimateFormProps = {
     systemCatalogItemId: string;
     squareFootage: string;
   }) => Promise<EstimateInsertResult>;
+  importLineItemsFromEstimateAction: (input: {
+    destinationEstimateId: string;
+    sourceEstimateId: string;
+  }) => Promise<EstimateLineItemImportResult>;
+  importReusableContentFromEstimateAction: (input: {
+    destinationEstimateId: string;
+    sourceEstimateId: string;
+    section: "scope" | "terms" | "inclusions" | "exclusions";
+  }) => Promise<EstimateReusableContentImportResult>;
   quickCreateCatalogItemAction: (formData: FormData) => Promise<
     | { ok: true; item: CatalogItem }
     | { ok: false; message: string }
   >;
+  importSourceEstimates?: Array<{
+    id: string;
+    referenceNumber: string;
+    title: string | null;
+    customerName: string | null;
+    projectName: string | null;
+    status: EstimateStatus;
+    updatedAt: string;
+    hasScopeContent: boolean;
+    hasTermsContent: boolean;
+    hasInclusionsContent: boolean;
+    hasExclusionsContent: boolean;
+  }>;
   approvalOrchestration?: EstimateApprovalOrchestrationState | null;
   contractAction: (formData: FormData) => void | Promise<void>;
   invoiceAction: (formData: FormData) => void | Promise<void>;
@@ -378,6 +404,26 @@ function appendHtmlBlock(currentValue: string, blockHtml: string) {
   return `${trimmedCurrent}<hr />${trimmedBlock}`;
 }
 
+function appendImportedScopeItems(
+  currentItems: EstimateScopeItem[],
+  importedItems: EstimateScopeItem[]
+) {
+  const existingItems = currentItems.filter((item) => item.text.trim().length > 0);
+  const nextItems = [
+    ...existingItems,
+    ...importedItems.map((item, index) => ({
+      ...item,
+      id: createRowKey("scope", existingItems.length + index + 1),
+      sortOrder: existingItems.length + index
+    }))
+  ];
+
+  return [...nextItems, createBlankScopeItem(nextItems.length + 1)].map((item, index) => ({
+    ...item,
+    sortOrder: index
+  }));
+}
+
 function renderDetailsSection(input: {
   currentStatus: EstimateStatus;
   title: string;
@@ -431,8 +477,13 @@ function renderDetailsSection(input: {
     <section className="border-t border-[#e6e9ef] bg-white">
       <div className="border-b border-[#e6e9ef] bg-[#f7f8fb] px-4 py-3">
         <div className="flex items-center gap-3 text-[15px] font-semibold text-[#23395d]">
-          <span>Details</span>
+          <span>Project details and estimate context</span>
         </div>
+        <p className="mt-2 text-[13px] leading-5 text-[#6b7c96]">
+          This section keeps the project-specific estimate context together. Reusable scope, terms,
+          inclusions, and exclusions live in their own content areas, and project-details import is
+          still coming later.
+        </p>
       </div>
 
       <div className="grid gap-4 p-5 lg:grid-cols-2">
@@ -581,7 +632,10 @@ export function EstimateForm({
   previewExpandedSystemAction,
   insertCatalogItemAction,
   insertSystemAction,
+  importLineItemsFromEstimateAction,
+  importReusableContentFromEstimateAction,
   quickCreateCatalogItemAction,
+  importSourceEstimates = [],
   approvalOrchestration = null,
   contractAction,
   invoiceAction,
@@ -1013,6 +1067,128 @@ export function EstimateForm({
       setSystemSquareFootage("0");
       resetSystemPreview();
     });
+  }
+
+  async function handleImportLineItemsFromEstimate(sourceEstimateId: string) {
+    if (!estimate?.id) {
+      return { ok: false as const, message: "Save this estimate before importing line items." };
+    }
+
+    if (status !== "draft") {
+      return {
+        ok: false as const,
+        message: "Only draft estimates can import line items from another estimate."
+      };
+    }
+
+    const saveResult =
+      saveState === "dirty" || saveState === "error" || saveState === "conflict"
+        ? await persistEstimate("manual")
+        : null;
+
+    if (saveResult && !saveResult.ok) {
+      return { ok: false as const, message: saveResult.message };
+    }
+
+    const result = await importLineItemsFromEstimateAction({
+      destinationEstimateId: estimate.id,
+      sourceEstimateId
+    });
+
+    if (!result.ok) {
+      setSaveState("error");
+      setSaveMessage(result.message);
+      return { ok: false as const, message: result.message };
+    }
+
+    syncServerInsertedLineItems(result.lineItems, result.updatedAt);
+
+    return {
+      ok: true as const,
+      message: `Imported ${result.importedCount} line item${
+        result.importedCount === 1 ? "" : "s"
+      } from ${result.sourceEstimateReferenceNumber}.`
+    };
+  }
+
+  async function handleImportReusableContentFromEstimate(
+    sourceEstimateId: string,
+    section: "scope" | "terms" | "inclusions" | "exclusions"
+  ) {
+    if (!estimate?.id) {
+      return {
+        ok: false as const,
+        message: "Save this estimate before importing reusable content."
+      };
+    }
+
+    if (status !== "draft") {
+      return {
+        ok: false as const,
+        message: "Only draft estimates can import reusable content from another estimate."
+      };
+    }
+
+    const result = await importReusableContentFromEstimateAction({
+      destinationEstimateId: estimate.id,
+      sourceEstimateId,
+      section
+    });
+
+    if (!result.ok) {
+      setSaveState("error");
+      setSaveMessage(result.message);
+      return { ok: false as const, message: result.message };
+    }
+
+    if (section === "scope") {
+      if (result.content.scopeSummaryHtml) {
+        setScopeSummaryHtml((currentValue) =>
+          appendHtmlBlock(currentValue, result.content.scopeSummaryHtml ?? "")
+        );
+      }
+
+      if (result.content.scopeItems.length > 0) {
+        setScopeItems((currentItems) =>
+          appendImportedScopeItems(currentItems, result.content.scopeItems)
+        );
+      }
+    }
+
+    const importedTermsHtml = result.content.termsHtml;
+    const importedInclusionsHtml = result.content.inclusionsHtml;
+    const importedExclusionsHtml = result.content.exclusionsHtml;
+
+    if (section === "terms" && importedTermsHtml) {
+      setTermsHtml((currentValue) => appendHtmlBlock(currentValue, importedTermsHtml));
+    }
+
+    if (section === "inclusions" && importedInclusionsHtml) {
+      setInclusionsHtml((currentValue) =>
+        appendHtmlBlock(currentValue, importedInclusionsHtml)
+      );
+    }
+
+    if (section === "exclusions" && importedExclusionsHtml) {
+      setExclusionsHtml((currentValue) =>
+        appendHtmlBlock(currentValue, importedExclusionsHtml)
+      );
+    }
+
+    markDirty();
+
+    return {
+      ok: true as const,
+      message: `Imported ${
+        section === "scope"
+          ? "Scope / SOW"
+          : section === "terms"
+            ? "Terms"
+            : section === "inclusions"
+              ? "Inclusions"
+              : "Exclusions"
+      } from ${result.sourceEstimateReferenceNumber}.`
+    };
   }
 
   function applyScopeBlock(blockHtml: string) {
@@ -1489,6 +1665,8 @@ export function EstimateForm({
             showMarkup={showMarkup}
             showOnlyZeroItems={showOnlyZeroItems}
             visibleCatalogItems={filteredCatalogItems}
+            estimateStatus={status}
+            importSourceEstimates={importSourceEstimates}
             selectedCatalogItemId={selectedCatalogItemId}
             selectedSystemId={selectedSystemId}
             systemSquareFootage={systemSquareFootage}
@@ -1500,6 +1678,8 @@ export function EstimateForm({
             onSystemSquareFootageChange={handleSystemSquareFootageChange}
             onAddCatalogItem={handleAddCatalogItem}
             onQuickAddCatalogItem={handleQuickAddCatalogItem}
+            onImportLineItemsFromEstimate={handleImportLineItemsFromEstimate}
+            onImportReusableContentFromEstimate={handleImportReusableContentFromEstimate}
             onPreviewSystem={handlePreviewSystem}
             onExpandSystem={handleExpandSystem}
             onToggleMarkup={setShowMarkup}
@@ -1561,63 +1741,18 @@ export function EstimateForm({
         </div>
 
         <div className={activeSection === "terms" ? "block" : "hidden"}>
-          {(termsBlocks.length > 0 || inclusionBlocks.length > 0 || exclusionBlocks.length > 0) ? (
-            <div className="border-t border-[#e6e9ef] bg-[#fbfcfe] px-4 py-3">
-              <div className="grid gap-4 lg:grid-cols-3">
-                <div>
-                  <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
-                    Reusable Terms
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {termsBlocks.map((block) => (
-                      <button
-                        key={block.id}
-                        type="button"
-                        onClick={() => applyTermsBlock(block.contentHtml)}
-                        className="h-8 border border-[#cfd6e0] bg-white px-3 text-[12px] font-medium text-[#28456f]"
-                      >
-                        {block.title}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
-                    Reusable Inclusions
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {inclusionBlocks.map((block) => (
-                      <button
-                        key={block.id}
-                        type="button"
-                        onClick={() => applyInclusionBlock(block.contentHtml)}
-                        className="h-8 border border-[#cfd6e0] bg-white px-3 text-[12px] font-medium text-[#28456f]"
-                      >
-                        {block.title}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
-                    Reusable Exclusions
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {exclusionBlocks.map((block) => (
-                      <button
-                        key={block.id}
-                        type="button"
-                        onClick={() => applyExclusionBlock(block.contentHtml)}
-                        className="h-8 border border-[#cfd6e0] bg-white px-3 text-[12px] font-medium text-[#28456f]"
-                      >
-                        {block.title}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : null}
+          <ReusableContentInserter
+            scopeBlocks={scopeBlocks}
+            termsBlocks={termsBlocks}
+            inclusionBlocks={inclusionBlocks}
+            exclusionBlocks={exclusionBlocks}
+            workspaceDefaultsApplied={estimate?.workspaceDefaultsApplied ?? false}
+            defaultsSource={estimate?.estimateDefaultsSource ?? "organization"}
+            onApplyScopeBlock={applyScopeBlock}
+            onApplyTermsBlock={applyTermsBlock}
+            onApplyInclusionBlock={applyInclusionBlock}
+            onApplyExclusionBlock={applyExclusionBlock}
+          />
           <TermsEditor
             termsHtml={termsHtml}
             inclusionsHtml={inclusionsHtml}
@@ -1638,25 +1773,18 @@ export function EstimateForm({
         </div>
 
         <div className={activeSection === "scope" ? "block" : "hidden"}>
-          {scopeBlocks.length > 0 ? (
-            <div className="border-t border-[#e6e9ef] bg-[#fbfcfe] px-4 py-3">
-              <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
-                Reusable Scope Blocks
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {scopeBlocks.map((block) => (
-                  <button
-                    key={block.id}
-                    type="button"
-                    onClick={() => applyScopeBlock(block.contentHtml)}
-                    className="h-8 border border-[#cfd6e0] bg-white px-3 text-[12px] font-medium text-[#28456f]"
-                  >
-                    {block.title}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
+          <ReusableContentInserter
+            scopeBlocks={scopeBlocks}
+            termsBlocks={termsBlocks}
+            inclusionBlocks={inclusionBlocks}
+            exclusionBlocks={exclusionBlocks}
+            workspaceDefaultsApplied={estimate?.workspaceDefaultsApplied ?? false}
+            defaultsSource={estimate?.estimateDefaultsSource ?? "organization"}
+            onApplyScopeBlock={applyScopeBlock}
+            onApplyTermsBlock={applyTermsBlock}
+            onApplyInclusionBlock={applyInclusionBlock}
+            onApplyExclusionBlock={applyExclusionBlock}
+          />
           <ScopeOfWork
             summaryHtml={scopeSummaryHtml}
             items={scopeItems}

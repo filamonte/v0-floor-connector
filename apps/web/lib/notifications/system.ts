@@ -890,6 +890,116 @@ export async function markAllNotificationsRead(next = "/dashboard") {
   }
 }
 
+type CommunicationNotificationReadRow = {
+  id: string;
+  notification_events?:
+    | Array<{
+        payload: Record<string, unknown> | null;
+      }>
+    | null;
+};
+
+function getCommunicationThreadIdFromPayload(payload: Record<string, unknown> | null | undefined) {
+  return typeof payload?.threadId === "string" ? payload.threadId : null;
+}
+
+async function listUnreadCommunicationNotificationIds(input: {
+  next: string;
+  threadId?: string;
+}) {
+  const user = await requireAuthenticatedUser(input.next);
+  const organizationContext = await getActiveOrganizationContext(user.id);
+
+  if (!organizationContext) {
+    throw new Error("No active organization is available for notification updates.");
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("notifications")
+    .select(
+      `
+        id,
+        notification_events (
+          payload
+        )
+      `
+    )
+    .eq("company_id", organizationContext.organization.id)
+    .eq("user_id", user.id)
+    .eq("is_read", false)
+    .eq("notification_events.category", "communication");
+  const rows = (response.data as CommunicationNotificationReadRow[] | null) ?? [];
+
+  if (response.error) {
+    throw new Error(`Unable to load communication notifications: ${response.error.message}`);
+  }
+
+  const matchingIds =
+    input.threadId == null
+      ? rows.map((row) => row.id)
+      : rows
+          .filter((row) => {
+            const payload = row.notification_events?.[0]?.payload;
+            return getCommunicationThreadIdFromPayload(payload) === input.threadId;
+          })
+          .map((row) => row.id);
+
+  return {
+    notificationIds: matchingIds,
+    organizationId: organizationContext.organization.id,
+    userId: user.id
+  };
+}
+
+async function markNotificationIdsRead(input: {
+  organizationId: string;
+  userId: string;
+  notificationIds: string[];
+}) {
+  if (input.notificationIds.length === 0) {
+    return 0;
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("notifications")
+    .update({
+      is_read: true,
+      read_at: new Date().toISOString()
+    })
+    .eq("company_id", input.organizationId)
+    .eq("user_id", input.userId)
+    .eq("is_read", false)
+    .in("id", input.notificationIds)
+    .select("id");
+  const rows = (response.data as Array<{ id: string }> | null) ?? [];
+
+  if (response.error) {
+    throw new Error(`Unable to mark communication notifications as read: ${response.error.message}`);
+  }
+
+  return rows.length;
+}
+
+export async function markCommunicationThreadNotificationsRead(
+  threadId: string,
+  next = "/communications"
+) {
+  const matching = await listUnreadCommunicationNotificationIds({
+    next,
+    threadId
+  });
+
+  return markNotificationIdsRead(matching);
+}
+
+export async function markAllCommunicationNotificationsRead(next = "/communications") {
+  const matching = await listUnreadCommunicationNotificationIds({ next });
+
+  return markNotificationIdsRead(matching);
+}
+
 export async function assertPortalUserCanPostCommunication(input: {
   organizationId: string;
   customerId: string;

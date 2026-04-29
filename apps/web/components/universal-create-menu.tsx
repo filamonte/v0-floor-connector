@@ -31,7 +31,7 @@ const universalCreateGroups: UniversalCreateGroup[] = [
       },
       {
         label: "Customer",
-        description: "Create the shared customer account first.",
+        description: "Create the shared customer recipient account for projects, estimates, and billing.",
         href: "/customers?compose=1#customer-create"
       },
       {

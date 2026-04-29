@@ -25,7 +25,7 @@ export function ScopeOfWork({
       <div className="grid xl:grid-cols-[minmax(0,1.38fr)_480px]">
         <div className="border-r border-[#e6e9ef]">
           <RichTextEditor
-            label="Summary"
+            label="Scope / SOW summary"
             value={summaryHtml}
             mode="document"
             minHeight={575}
@@ -37,8 +37,12 @@ export function ScopeOfWork({
           <div className="border-b border-[#e6e9ef] bg-[#f7f8fb] px-4 py-3">
             <div className="flex items-center gap-3 text-[15px] font-semibold text-[#23395d]">
               <FileText className="h-4 w-4 text-[#607492]" />
-              <h2>Scope of Work (Checked items show on PDF)</h2>
+              <h2>Scope / SOW output items</h2>
             </div>
+            <p className="mt-2 text-[13px] leading-5 text-[#6b7c96]">
+              Use reusable scope blocks in the summary, then keep the checked line items here as the
+              output list that follows this estimate into customer-facing scope.
+            </p>
           </div>
 
           <div>
@@ -60,7 +64,7 @@ export function ScopeOfWork({
                 <input
                   value={item.text}
                   onChange={(event) => onItemTextChange(item.id, event.target.value)}
-                  placeholder="Add Scope of Work (max 2000 characters)."
+                  placeholder="Add scope / SOW output item (max 2000 characters)."
                   className="h-8 border-0 bg-transparent px-0 text-[14px] text-[#334a70] placeholder:text-[#a9b5c8] focus:outline-none"
                 />
               </div>

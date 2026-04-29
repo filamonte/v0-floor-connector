@@ -141,7 +141,7 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
     <ContractorWorkspacePage
       eyebrow="People"
       title={`Labor participants for ${organizationContext.organization.displayName}`}
-      description="Manage the shared people foundation for employees and vendor-linked subcontractor workers before time, compliance, and assignment workflows deepen."
+      description="Manage the shared workforce directory for employees and vendor-linked subcontractor workers before time, compliance, and assignment workflows deepen. Customer recipient contacts stay on customer records, not here."
       summary={
         <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-3">
           <div className="border border-[#e2e7ef] bg-white px-4 py-3">
@@ -161,7 +161,7 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
       commandBar={{
         supportSlot: (
           <p>
-            Search the workforce roster, switch between employee and subcontractor views, and open the people composer only when you need a new workforce record.
+            Search the workforce roster, switch between employee and subcontractor views, and open the people composer only when you need a new internal or subcontractor workforce record.
           </p>
         ),
         searchSlot: (
@@ -172,7 +172,7 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
               type="search"
               name="q"
               defaultValue={query}
-              placeholder="Search person, title, trade, vendor, or contact"
+              placeholder="Search workforce person, title, trade, vendor, or contact"
               className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
             />
             <button
@@ -222,7 +222,7 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
             href={buildPeopleHref({ q: query, view, compose: "1" }) + "#person-create"}
             className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
           >
-            New person
+            New workforce person
           </Link>
         )
       }}
@@ -314,7 +314,7 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
                     description={
                       people.length > 0
                         ? "Try a broader search or switch views to find the workforce record you need."
-                        : "People become the shared labor identity foundation for future compliance, time tracking, and assignment work."
+                        : "People become the shared labor identity foundation for workforce compliance, time tracking, and assignment work. Customer contacts stay on customer records."
                     }
                   />
                 </div>
@@ -325,8 +325,8 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
 
         <WorkspaceComposerSheet
           id="person-create"
-          title="Create person"
-          description="Add an employee or subcontractor worker using the same canonical people model."
+          title="Create workforce person"
+          description="Add an employee or subcontractor worker using the same canonical people model. This directory is not for customer recipients."
           open={showComposer}
           openHref={buildPeopleHref({ q: query, view, compose: "1" }) + "#person-create"}
           closeHref={buildPeopleHref({ q: query, view })}
@@ -334,8 +334,8 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
         >
           <PersonForm
             action={createPersonAction}
-            submitLabel="Create person"
-            pendingLabel="Creating person..."
+            submitLabel="Create workforce person"
+            pendingLabel="Creating workforce person..."
             vendors={vendorOptions}
             members={memberOptions}
           />

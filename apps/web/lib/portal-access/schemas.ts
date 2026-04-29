@@ -22,6 +22,13 @@ export const portalProjectAccessStatusSchema = z.enum(portalProjectAccessStatuse
 
 export const portalAccessGrantInputSchema = z.object({
   customerId: z.string().trim().uuid("Select a valid customer."),
+  customerContactId: z
+    .string()
+    .trim()
+    .uuid("Select a valid related customer contact.")
+    .nullable()
+    .optional()
+    .transform((value) => value ?? null),
   userId: z.string().trim().uuid("Select a valid authenticated user."),
   invitedEmail: optionalEmailField(),
   status: portalAccessGrantStatusSchema.default("invited")
@@ -33,7 +40,44 @@ export const portalProjectAccessInputSchema = z.object({
   status: portalProjectAccessStatusSchema.default("active")
 });
 
+export const portalInviteInputSchema = z.object({
+  customerId: z.string().trim().uuid("Select a valid customer."),
+  customerContactId: z
+    .string()
+    .trim()
+    .uuid("Select a valid related customer contact.")
+    .nullable()
+    .optional()
+    .transform((value) => value ?? null),
+  projectId: z.string().trim().uuid("Select a valid project."),
+  invitedEmail: optionalEmailField().refine((value) => value !== null, {
+    message: "Enter the customer email to invite."
+  })
+});
+
+export const portalPermissionManagementSourceSchema = z.enum([
+  "system_default",
+  "contractor_admin",
+  "main_contact",
+  "migration"
+]);
+
+export const customerContactPortalPermissionInputSchema = z.object({
+  portalAccessGrantId: z.string().trim().uuid("Select a valid portal access grant."),
+  customerContactId: z.string().trim().uuid("Select a valid related customer contact."),
+  canViewEstimates: z.boolean().default(true),
+  canApproveEstimates: z.boolean().default(true),
+  canSignContracts: z.boolean().default(true),
+  canApproveChangeOrders: z.boolean().default(true),
+  canViewPayInvoices: z.boolean().default(true),
+  canRequestQuotes: z.boolean().default(true)
+});
+
 export type PortalAccessGrantInput = z.infer<typeof portalAccessGrantInputSchema>;
 export type PortalProjectAccessInput = z.infer<typeof portalProjectAccessInputSchema>;
+export type PortalInviteInput = z.infer<typeof portalInviteInputSchema>;
+export type CustomerContactPortalPermissionInput = z.infer<
+  typeof customerContactPortalPermissionInputSchema
+>;
 export const portalAccessGrantStatusesList = portalAccessGrantStatuses;
 export const portalProjectAccessStatusesList = portalProjectAccessStatuses;

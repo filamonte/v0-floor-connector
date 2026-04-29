@@ -58,6 +58,10 @@ function buildInvoicesHref(input: {
   q?: string;
   status?: string;
   compose?: string;
+  projectId?: string;
+  estimateId?: string;
+  jobId?: string;
+  workflowRole?: string;
 }) {
   const searchParams = new URLSearchParams();
 
@@ -71,6 +75,22 @@ function buildInvoicesHref(input: {
 
   if (input.compose === "1") {
     searchParams.set("compose", "1");
+  }
+
+  if (input.projectId) {
+    searchParams.set("projectId", input.projectId);
+  }
+
+  if (input.estimateId) {
+    searchParams.set("estimateId", input.estimateId);
+  }
+
+  if (input.jobId) {
+    searchParams.set("jobId", input.jobId);
+  }
+
+  if (input.workflowRole && input.workflowRole !== "standard") {
+    searchParams.set("workflowRole", input.workflowRole);
   }
 
   const query = searchParams.toString();
@@ -143,7 +163,6 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
 
   const draftCount = invoices.filter((invoice) => invoice.status === "draft").length;
   const sentCount = invoices.filter((invoice) => invoice.status === "sent").length;
-  const paidCount = invoices.filter((invoice) => invoice.status === "paid").length;
   const openCount = invoices.filter(
     (invoice) => invoice.status !== "paid" && invoice.status !== "void"
   ).length;
@@ -161,13 +180,31 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
   const query = resolvedSearchParams.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
   const statusFilter = resolvedSearchParams.status ?? "all";
+  const projectFilterId = resolvedSearchParams.projectId?.trim() ?? initialState.projectId ?? "";
+  const estimateFilterId = resolvedSearchParams.estimateId?.trim() ?? initialState.estimateId ?? "";
+  const jobFilterId = resolvedSearchParams.jobId?.trim() ?? initialState.jobId ?? "";
+  const projectFilter = projectFilterId
+    ? projects.find((project) => project.id === projectFilterId) ?? null
+    : null;
+  const workflowRoleFilter =
+    resolvedSearchParams.workflowRole === "deposit" ? "deposit" : undefined;
   const showComposer =
     resolvedSearchParams.compose === "1" ||
     Boolean(resolvedSearchParams.error) ||
     Boolean(resolvedSearchParams.projectId) ||
     Boolean(resolvedSearchParams.estimateId) ||
     Boolean(resolvedSearchParams.jobId);
-  const filteredInvoices = invoices.filter((invoice) => {
+  const scopedInvoices = invoices.filter((invoice) => {
+    const matchesProject = projectFilterId ? invoice.projectId === projectFilterId : true;
+    const matchesEstimate = estimateFilterId ? invoice.estimateId === estimateFilterId : true;
+    const matchesJob = jobFilterId ? invoice.jobId === jobFilterId : true;
+    const matchesWorkflowRole = workflowRoleFilter
+      ? invoice.workflowRole === workflowRoleFilter
+      : true;
+
+    return matchesProject && matchesEstimate && matchesJob && matchesWorkflowRole;
+  });
+  const filteredInvoices = scopedInvoices.filter((invoice) => {
     const matchesStatus =
       statusFilter === "all"
         ? true
@@ -190,19 +227,23 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
     return matchesStatus && matchesQuery;
   });
   const invoiceViews = [
-    { key: "all", label: "All invoices", count: invoices.length },
-    { key: "draft", label: "Draft", count: draftCount },
-    { key: "sent", label: "Sent", count: sentCount },
-    { key: "open", label: "Open balance", count: openCount },
-    { key: "paid", label: "Paid", count: paidCount },
-    { key: "void", label: "Void", count: invoices.filter((invoice) => invoice.status === "void").length }
+    { key: "all", label: "All invoices", count: scopedInvoices.length },
+    { key: "draft", label: "Draft", count: scopedInvoices.filter((invoice) => invoice.status === "draft").length },
+    { key: "sent", label: "Sent", count: scopedInvoices.filter((invoice) => invoice.status === "sent").length },
+    {
+      key: "open",
+      label: "Open balance",
+      count: scopedInvoices.filter((invoice) => invoice.status !== "paid" && invoice.status !== "void").length
+    },
+    { key: "paid", label: "Paid", count: scopedInvoices.filter((invoice) => invoice.status === "paid").length },
+    { key: "void", label: "Void", count: scopedInvoices.filter((invoice) => invoice.status === "void").length }
   ] as const;
-  const awaitingPaymentQueue = invoices
+  const awaitingPaymentQueue = scopedInvoices
     .filter(
       (invoice) => invoice.status === "sent" || invoice.status === "partially_paid"
     )
     .slice(0, 3);
-  const overdueQueue = invoices
+  const overdueQueue = scopedInvoices
     .filter(
       (invoice) =>
         invoice.dueDate !== null &&
@@ -211,10 +252,10 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         invoice.dueDate < todayIso
     )
     .slice(0, 3);
-  const draftQueue = invoices
+  const draftQueue = scopedInvoices
     .filter((invoice) => invoice.status === "draft")
     .slice(0, 3);
-  const recentlyPaidQueue = invoices
+  const recentlyPaidQueue = scopedInvoices
     .filter((invoice) => invoice.status === "paid")
     .slice(0, 3);
 
@@ -253,6 +294,10 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           <form action="/invoices" className="flex flex-col gap-2 sm:flex-row">
             {statusFilter !== "all" ? <input type="hidden" name="status" value={statusFilter} /> : null}
             {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
+            {projectFilterId ? <input type="hidden" name="projectId" value={projectFilterId} /> : null}
+            {estimateFilterId ? <input type="hidden" name="estimateId" value={estimateFilterId} /> : null}
+            {jobFilterId ? <input type="hidden" name="jobId" value={jobFilterId} /> : null}
+            {workflowRoleFilter ? <input type="hidden" name="workflowRole" value={workflowRoleFilter} /> : null}
             <input
               type="search"
               name="q"
@@ -282,7 +327,15 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           return (
             <Link
               key={view.key}
-              href={buildInvoicesHref({ q: query, status: view.key, compose: showComposer ? "1" : undefined })}
+              href={buildInvoicesHref({
+                q: query,
+                status: view.key,
+                compose: showComposer ? "1" : undefined,
+                projectId: projectFilterId || undefined,
+                estimateId: estimateFilterId || undefined,
+                jobId: jobFilterId || undefined,
+                workflowRole: workflowRoleFilter
+              })}
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
@@ -306,7 +359,17 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           <>
             <RowsPerViewControl storageKey={INVOICES_ROWS_PER_VIEW_STORAGE_KEY} />
             <Link
-              href={buildInvoicesHref({ q: query, status: statusFilter, compose: "1" }) + "#invoice-create"}
+              href={
+                buildInvoicesHref({
+                  q: query,
+                  status: statusFilter,
+                  compose: "1",
+                  projectId: projectFilterId || undefined,
+                  estimateId: estimateFilterId || undefined,
+                  jobId: jobFilterId || undefined,
+                  workflowRole: workflowRoleFilter
+                }) + "#invoice-create"
+              }
               className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
             >
               New invoice
@@ -322,7 +385,15 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               eyebrow="Collections"
             title="Sent invoices awaiting payment"
             description="Open customer billing that has already been sent and now needs collections attention."
-            actionHref={buildInvoicesHref({ q: query, status: "open", compose: showComposer ? "1" : undefined })}
+            actionHref={buildInvoicesHref({
+              q: query,
+              status: "open",
+              compose: showComposer ? "1" : undefined,
+              projectId: projectFilterId || undefined,
+              estimateId: estimateFilterId || undefined,
+              jobId: jobFilterId || undefined,
+              workflowRole: workflowRoleFilter
+            })}
             actionLabel="View open"
             items={awaitingPaymentQueue.map((invoice) => ({
               href: `/invoices/${invoice.id}/edit`,
@@ -340,7 +411,15 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             eyebrow="Urgent"
             title="Overdue invoices needing follow-up"
             description="Past-due billing that should stay visible without burying the broader invoice workflow."
-            actionHref={buildInvoicesHref({ q: query, status: "open", compose: showComposer ? "1" : undefined })}
+            actionHref={buildInvoicesHref({
+              q: query,
+              status: "open",
+              compose: showComposer ? "1" : undefined,
+              projectId: projectFilterId || undefined,
+              estimateId: estimateFilterId || undefined,
+              jobId: jobFilterId || undefined,
+              workflowRole: workflowRoleFilter
+            })}
             actionLabel="Review overdue"
             items={overdueQueue.map((invoice) => ({
               href: `/invoices/${invoice.id}/edit`,
@@ -358,7 +437,15 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             eyebrow="Build"
             title="Draft invoices to finish"
             description="Build or review draft invoice detail here before sending it to the customer."
-            actionHref={buildInvoicesHref({ q: query, status: "draft", compose: showComposer ? "1" : undefined })}
+            actionHref={buildInvoicesHref({
+              q: query,
+              status: "draft",
+              compose: showComposer ? "1" : undefined,
+              projectId: projectFilterId || undefined,
+              estimateId: estimateFilterId || undefined,
+              jobId: jobFilterId || undefined,
+              workflowRole: workflowRoleFilter
+            })}
             actionLabel="View drafts"
             items={draftQueue.map((invoice) => ({
               href: `/invoices/${invoice.id}/edit`,
@@ -409,7 +496,15 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                 <div className="flex items-center justify-between gap-4">
                   <p className="text-sm font-semibold text-slate-900">Recently settled invoices</p>
                   <Link
-                    href={buildInvoicesHref({ q: query, status: "paid", compose: showComposer ? "1" : undefined })}
+                    href={buildInvoicesHref({
+                      q: query,
+                      status: "paid",
+                      compose: showComposer ? "1" : undefined,
+                      projectId: projectFilterId || undefined,
+                      estimateId: estimateFilterId || undefined,
+                      jobId: jobFilterId || undefined,
+                      workflowRole: workflowRoleFilter
+                    })}
                     className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#41536f] transition hover:bg-white"
                   >
                     View paid
@@ -466,9 +561,28 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           </div>
         ) : null}
 
+        {projectFilterId || estimateFilterId || jobFilterId || workflowRoleFilter ? (
+          <div className="flex flex-col gap-3 border border-[#dde3eb] bg-white px-5 py-4 text-sm leading-6 text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+            <p>
+              Billing context is scoped to{" "}
+              <span className="font-semibold text-slate-900">
+                {projectFilter?.name ?? "the selected canonical source"}
+              </span>
+              . Quick create will keep the same project, estimate, job, and workflow role where
+              those were provided.
+            </p>
+            <Link
+              href="/invoices"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+            >
+              Clear context
+            </Link>
+          </div>
+        ) : null}
+
         <InvoiceRecordsPanel
           invoices={filteredInvoices}
-          totalInvoiceCount={invoices.length}
+          totalInvoiceCount={scopedInvoices.length}
           storageKey={INVOICES_ROWS_PER_VIEW_STORAGE_KEY}
         />
       </section>
@@ -477,8 +591,25 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           title="Quick create invoice"
           description="Create the canonical invoice first, then finish line items, review, send, and payment readiness inside the invoice workspace."
         open={showComposer}
-        openHref={buildInvoicesHref({ q: query, status: statusFilter, compose: "1" }) + "#invoice-create"}
-        closeHref={buildInvoicesHref({ q: query, status: statusFilter })}
+        openHref={
+          buildInvoicesHref({
+            q: query,
+            status: statusFilter,
+            compose: "1",
+            projectId: projectFilterId || undefined,
+            estimateId: estimateFilterId || undefined,
+            jobId: jobFilterId || undefined,
+            workflowRole: workflowRoleFilter
+          }) + "#invoice-create"
+        }
+        closeHref={buildInvoicesHref({
+          q: query,
+          status: statusFilter,
+          projectId: projectFilterId || undefined,
+          estimateId: estimateFilterId || undefined,
+          jobId: jobFilterId || undefined,
+          workflowRole: workflowRoleFilter
+        })}
         openLabel="Open invoice quick create"
       >
         {projectOptions.length > 0 ? (

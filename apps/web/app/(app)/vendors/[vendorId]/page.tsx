@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
+import { DirectoryContextCard } from "@/components/directory-context-card";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NextActionCard } from "@/components/next-action-card";
 import { VendorForm } from "@/components/vendor-form";
@@ -258,6 +259,12 @@ export default async function VendorDetailPage({
       </section>
 
       <aside className="space-y-6">
+        <DirectoryContextCard
+          href={`/directory?view=vendors&q=${encodeURIComponent(vendor.name)}`}
+          recordLabel="Vendor company"
+          description="Directory is the contractor-side scan-and-jump index. This vendor page remains the canonical home for company details, linked workforce context, and vendor-specific workflow edits."
+        />
+
         <DetailPanel
           title="Linked Workforce"
           description="Vendor-linked subcontractor workers stay on the canonical people model instead of a vendor-specific person table."

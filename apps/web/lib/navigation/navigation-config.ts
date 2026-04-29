@@ -227,13 +227,14 @@ export const navigationSections: readonly NavigationSection[] = [
   {
     id: "people",
     label: "People",
-    description: "Coordinate workforce, opportunities, and shared team-facing records.",
+    description: "Review directory records, workforce continuity, and shared team-facing work.",
     items: [
       {
         key: "directory",
         label: "Directory",
         href: "/directory",
-        description: "Open the shared people directory and workforce roster.",
+        description:
+          "Open the unified read-only directory for customer accounts, workforce records, vendors, and leads.",
         minRole: "member",
         status: "live",
         matchPaths: ["/people"]
@@ -308,9 +309,9 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "reports",
         label: "Reports",
         href: "/reports",
-        description: "Generate and review operational reporting surfaces.",
+        description: "Review read-only internal beta summaries over canonical records.",
         minRole: "member",
-        status: "foundation"
+        status: "live"
       },
       {
         key: "forms-checklists",
@@ -351,6 +352,14 @@ export const navigationSections: readonly NavigationSection[] = [
         description: "Capture general shared notes that support job and project continuity.",
         minRole: "member",
         status: "foundation"
+      },
+      {
+        key: "communications",
+        label: "Communications",
+        href: "/communications",
+        description: "Review canonical communication threads and unread workflow alerts.",
+        minRole: "member",
+        status: "live"
       },
       {
         key: "document-writer",

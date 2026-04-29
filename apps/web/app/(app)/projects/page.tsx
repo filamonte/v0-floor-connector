@@ -438,8 +438,15 @@ export default async function ProjectsPage({
                 description={
                   projects.length > 0
                     ? "Try a broader search or switch to another real project status."
-                    : "Projects connect the customer record to estimating, contracts, jobs, and invoicing so the workflow can move forward without recreating data."
+                    : "Next step after the first customer: create the project hub so estimating, contracts, jobs, and invoicing can move forward without recreating data."
                 }
+                actionHref={buildProjectsHref({
+                  q: query,
+                  status: statusFilter,
+                  compose: "1",
+                  customerId: resolvedSearchParams.customerId
+                })}
+                actionLabel="Create your first project"
               />
             </div>
           )}

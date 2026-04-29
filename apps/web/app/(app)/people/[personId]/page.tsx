@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
+import { DirectoryContextCard } from "@/components/directory-context-card";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NextActionCard } from "@/components/next-action-card";
 import { PersonForm } from "@/components/person-form";
@@ -297,6 +298,12 @@ export default async function PersonDetailPage({
       </section>
 
       <aside className="space-y-6">
+        <DirectoryContextCard
+          href={`/directory?view=workforce&q=${encodeURIComponent(person.displayName)}`}
+          recordLabel={person.vendor ? "Subcontractor worker" : "Workforce record"}
+          description="Directory is the read-only workforce and account index. This person page remains the canonical home for labor identity, vendor linkage, assignability, and compliance context."
+        />
+
         {person.vendor ? (
           <DetailPanel
             title="Connected Vendor"

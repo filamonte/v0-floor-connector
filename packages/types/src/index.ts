@@ -460,6 +460,65 @@ export interface OrganizationFinancialSettings {
   updatedAt: string;
 }
 
+export type AutomationNotificationPreferenceCategory =
+  | "customer_message_received"
+  | "estimate_awaiting_approval"
+  | "contract_awaiting_signature"
+  | "contract_signed"
+  | "deposit_paid_ready_to_schedule"
+  | "payment_failed"
+  | "invoice_overdue"
+  | "change_order_approved"
+  | "schedule_reminder"
+  | "crew_assignment_reminder";
+
+export type AutomationNotificationPreferenceRole =
+  | "owner"
+  | "admin"
+  | "manager"
+  | "member";
+
+export interface AutomationNotificationPreference {
+  category: AutomationNotificationPreferenceCategory;
+  enabledForFutureExecution: boolean;
+  notifyRoles: AutomationNotificationPreferenceRole[];
+}
+
+export interface AutomationNotificationTemplateContextField {
+  key: string;
+  label: string;
+  description: string;
+}
+
+export interface AutomationNotificationTemplateDefinition {
+  category: AutomationNotificationPreferenceCategory;
+  displayName: string;
+  intendedRecipients: AutomationNotificationPreferenceRole[];
+  triggerSource: string;
+  sampleSubject: string;
+  sampleBody: string;
+  requiredCanonicalContextFields: AutomationNotificationTemplateContextField[];
+  executionAvailable: false;
+}
+
+export type AutomationPlanningReadinessStatus =
+  | "planning_ready"
+  | "needs_preferences"
+  | "needs_sample_context"
+  | "needs_preferences_and_sample_context";
+
+export interface AutomationPlanningSummary {
+  category: AutomationNotificationPreferenceCategory;
+  displayName: string;
+  preferenceSummary: string;
+  eligibilitySummary: string;
+  templateSummary: string;
+  readinessStatus: AutomationPlanningReadinessStatus;
+  blockers: string[];
+  nextSafeImplementationStep: string;
+  executionAvailable: boolean;
+}
+
 export interface OrganizationWorkflowSettings {
   organizationId: OrganizationId;
   approvedEstimateContractTemplateId: TemplateId | null;
@@ -476,6 +535,7 @@ export interface OrganizationWorkflowSettings {
   nextInvoiceNumber: number;
   nextChangeOrderNumber: number;
   nextContractNumber: number;
+  automationNotificationPreferences: AutomationNotificationPreference[];
   createdAt: string;
   updatedAt: string;
 }
@@ -1467,12 +1527,37 @@ export interface PortalAccessGrant {
   id: PortalAccessGrantId;
   organizationId: OrganizationId;
   customerId: CustomerId;
-  userId: ProfileId;
+  customerContactId: string | null;
+  userId: ProfileId | null;
   status: PortalAccessGrantStatus;
   invitedEmail: string | null;
   invitedByUserId: ProfileId | null;
+  inviteExpiresAt: string | null;
+  inviteAcceptedAt: string | null;
   activatedAt: string | null;
   revokedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type PortalPermissionManagementSource =
+  | "system_default"
+  | "contractor_admin"
+  | "main_contact"
+  | "migration";
+
+export interface CustomerContactPortalPermission {
+  id: string;
+  organizationId: OrganizationId;
+  customerContactId: string;
+  portalAccessGrantId: PortalAccessGrantId | null;
+  canViewEstimates: boolean;
+  canApproveEstimates: boolean;
+  canSignContracts: boolean;
+  canApproveChangeOrders: boolean;
+  canViewPayInvoices: boolean;
+  canRequestQuotes: boolean;
+  managementSource: PortalPermissionManagementSource;
   createdAt: string;
   updatedAt: string;
 }

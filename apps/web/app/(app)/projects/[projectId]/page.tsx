@@ -10,12 +10,20 @@ import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NextActionCard } from "@/components/next-action-card";
 import { ProjectForm } from "@/components/project-form";
+import { RelatedConversationsCard } from "@/components/related-conversations-card";
+import {
+  ScheduleContextActions,
+  ScheduleContextFocusCard,
+  ScheduleContextMetrics,
+  ScheduleContextNotice
+} from "@/components/schedule-context-card";
 import { listContracts } from "@/lib/contracts/data";
+import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
 import { listDailyLogsByProject } from "@/lib/daily-logs/data";
 import { listCustomers } from "@/lib/customers/data";
 import { listEstimates, listProjectEstimateAttachments } from "@/lib/estimates/data";
 import { getInvoiceById, listInvoices } from "@/lib/invoices/data";
-import { listJobs } from "@/lib/jobs/data";
+import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getOpportunityByProjectId } from "@/lib/opportunities/data";
 import { listPunchlistItemsByProject } from "@/lib/punchlists/data";
 import { listProgressBillingByProject } from "@/lib/progress-billing/data";
@@ -23,6 +31,12 @@ import { updateProjectAction } from "@/lib/projects/actions";
 import { getProjectById } from "@/lib/projects/data";
 import type { ProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
+import { buildScheduleHref } from "@/lib/schedule/links";
+import {
+  formatScheduleSummaryWindow,
+  getScheduleAssignmentSummary,
+  getScheduleSummarySortValue
+} from "@/lib/schedule/summary";
 import { listOpenTimeCardStates, listTimeCardsByProject } from "@/lib/time/data";
 
 type ProjectDetailPageProps = {
@@ -48,9 +62,13 @@ type NextAction = {
   primaryHref?: string;
   secondaryLabel?: string;
   secondaryHref?: string;
+  blockerCopy?: string;
 };
 
+type ProjectEstimateListItem = Awaited<ReturnType<typeof listEstimates>>[number];
+type ProjectContractListItem = Awaited<ReturnType<typeof listContracts>>[number];
 type ProjectInvoiceListItem = Awaited<ReturnType<typeof listInvoices>>[number];
+type ProjectChangeOrderListItem = Awaited<ReturnType<typeof listProjectChangeOrders>>[number];
 type ProjectPaymentListItem = NonNullable<Awaited<ReturnType<typeof getInvoiceById>>>["payments"][number];
 type WorkspaceStateTone = "positive" | "warning" | "critical" | "neutral";
 type WorkspaceActionItem = {
@@ -198,6 +216,34 @@ function SectionOverview({
   );
 }
 
+function buildProjectScheduleHref(input: {
+  projectId: string;
+  projectName?: string;
+  view?: "all" | "unscheduled" | "today" | "upcoming" | "in_progress";
+  crew?: "all" | "assigned" | "unassigned";
+  action?: "schedule" | "assign";
+  jobId?: string;
+}) {
+  return buildScheduleHref({
+    projectId: input.projectId,
+    q: input.projectName?.trim().length ? input.projectName.trim() : undefined,
+    view: input.view,
+    crew: input.crew,
+    action: input.action,
+    jobId: input.jobId
+  });
+}
+
+function buildProjectEstimateCreateHref(projectId: string, opportunityId?: string | null) {
+  const params = new URLSearchParams({ projectId });
+
+  if (opportunityId) {
+    params.set("opportunityId", opportunityId);
+  }
+
+  return `/estimates?${params.toString()}`;
+}
+
 function getPaymentRecordSummary(payment: ProjectPaymentListItem) {
   return `${new Date(payment.paymentDate).toLocaleDateString()} | ${formatStatusLabel(payment.status)} | ${payment.paymentMethod.replaceAll("_", " ")}`;
 }
@@ -303,6 +349,10 @@ function getProjectContractSummary(input: {
   }
 
   return contract.estimate?.referenceNumber ?? "No source estimate";
+}
+
+function getMostRecentByUpdatedAt<T extends { updatedAt: string }>(items: T[]) {
+  return [...items].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))[0] ?? null;
 }
 
 function buildReadinessStages(input: {
@@ -437,40 +487,100 @@ function buildReadinessStages(input: {
 
 function getNextAction(input: {
   projectId: string;
+  opportunityId: string | null;
   approvedEstimateId: string | null;
   readinessSnapshot: ProjectFinancialReadinessSnapshot | null;
   projectEstimatesCount: number;
   projectContractsCount: number;
+  latestEstimate: ProjectEstimateListItem | null;
+  latestContract: ProjectContractListItem | null;
+  latestOpenInvoice: ProjectInvoiceListItem | null;
+  pendingChangeOrder: ProjectChangeOrderListItem | null;
+  projectJobsCount: number;
+  unscheduledJobsCount: number;
+  activeJobsCount: number;
+  hasCompletedJobWithoutInvoice: boolean;
+  completedJobWithoutInvoiceId: string | null;
   depositInvoice: ProjectInvoiceListItem | null;
   depositLatestPaymentEventType: string | null;
 }): NextAction {
   const {
     projectId,
+    opportunityId,
     approvedEstimateId,
     readinessSnapshot,
     projectEstimatesCount,
     projectContractsCount,
+    latestEstimate,
+    latestContract,
+    latestOpenInvoice,
+    pendingChangeOrder,
+    projectJobsCount,
+    unscheduledJobsCount,
+    activeJobsCount,
+    hasCompletedJobWithoutInvoice,
+    completedJobWithoutInvoiceId,
     depositInvoice,
     depositLatestPaymentEventType
   } = input;
 
   if (projectEstimatesCount === 0) {
     return {
-      title: "Blocked: create the first estimate",
+      title: "Blocked: start the first estimate",
       description: "Scope and pricing still need to enter the canonical project chain before contracts, scheduling, and downstream work can continue.",
-      primaryLabel: "Create estimate",
-      primaryHref: `/estimates?projectId=${projectId}`
+      primaryLabel: "Start estimate",
+      primaryHref: buildProjectEstimateCreateHref(projectId, opportunityId),
+      blockerCopy: "No estimate exists yet, so contract, job, invoice, and payment work should wait."
     };
   }
 
-  if (readinessSnapshot?.status === "waiting_on_estimate_approval") {
+  if (latestEstimate?.status === "draft" && !approvedEstimateId) {
     return {
-      title: "Requires follow-up: get estimate approval",
-      description: "Estimate work exists on the same project chain, but approval is still the active gate before contracts or readiness can move forward.",
+      title: "Next: finish and send the draft estimate",
+      description:
+        "A draft estimate exists, but the customer-facing approval path has not started yet. Finish the estimate workspace, then send it through the existing estimate flow.",
+      primaryLabel: "Finish estimate",
+      primaryHref: `/estimates/${latestEstimate.id}/edit`,
+      secondaryLabel: "Review estimate",
+      secondaryHref: `/estimates/${latestEstimate.id}`,
+      blockerCopy: "Approval, contract generation, and downstream work stay blocked until the estimate is sent and approved."
+    };
+  }
+
+  if (latestEstimate?.status === "sent" && !approvedEstimateId) {
+    return {
+      title: "Next: await estimate approval",
+      description:
+        "The estimate has been sent for customer review. Keep follow-up anchored to the existing estimate record instead of creating downstream work early.",
+      primaryLabel: "Review sent estimate",
+      primaryHref: `/estimates/${latestEstimate.id}`,
+      blockerCopy: "Contract generation and scheduling should wait until the estimate is approved."
+    };
+  }
+
+  if (latestEstimate?.status === "rejected" && !approvedEstimateId) {
+    return {
+      title: "Next: revise the rejected estimate",
+      description:
+        "The latest estimate was rejected. Revise the existing estimate or start a new project estimate before moving into contract or operations work.",
+      primaryLabel: "Revise estimate",
+      primaryHref: `/estimates/${latestEstimate.id}/edit`,
+      secondaryLabel: "Start new estimate",
+      secondaryHref: buildProjectEstimateCreateHref(projectId, opportunityId),
+      blockerCopy: "A rejected estimate cannot generate the canonical contract or billing chain."
+    };
+  }
+
+  if (readinessSnapshot?.status === "waiting_on_estimate_approval" && !approvedEstimateId) {
+    return {
+      title: "Requires follow-up: move estimate approval forward",
+      description:
+        "Estimate work exists on the same project chain, but approval is still the active gate before contracts or readiness can move forward.",
       primaryLabel: "Review estimate",
       primaryHref: readinessSnapshot.estimateId
         ? `/estimates/${readinessSnapshot.estimateId}`
-        : `/estimates?projectId=${projectId}`
+        : buildProjectEstimateCreateHref(projectId, opportunityId),
+      blockerCopy: "The project cannot move to contract or scheduling until estimate approval is recorded."
     };
   }
 
@@ -481,7 +591,24 @@ function getNextAction(input: {
       primaryLabel: "Generate contract",
       primaryHref: `/contracts?estimateId=${approvedEstimateId}`,
       secondaryLabel: "Review approved estimate",
-      secondaryHref: `/estimates/${approvedEstimateId}`
+      secondaryHref: `/estimates/${approvedEstimateId}`,
+      blockerCopy: "No contract exists yet, so signature readiness and downstream operations remain blocked."
+    };
+  }
+
+  if (latestContract?.status === "draft") {
+    return {
+      title: "Next: prepare the draft contract for signature",
+      description:
+        latestContract.internalApprovalStatus === "pending"
+          ? "The contract exists, but internal approval is still pending before it can be sent for signature."
+          : "The contract exists as a draft. Review the contract workspace and use the existing send/signature readiness controls there.",
+      primaryLabel: "Review contract",
+      primaryHref: `/contracts/${latestContract.id}`,
+      blockerCopy:
+        latestContract.internalApprovalStatus === "pending"
+          ? "Send-for-signature is blocked until internal approval is complete."
+          : "Customer signature work starts from the contract workspace; this project hub does not bypass that flow."
     };
   }
 
@@ -498,7 +625,27 @@ function getNextAction(input: {
       primaryLabel: "Review contract",
       primaryHref: readinessSnapshot.contractId
         ? `/contracts/${readinessSnapshot.contractId}`
-        : "/contracts"
+        : "/contracts",
+      blockerCopy:
+        readinessSnapshot.status === "waiting_on_internal_approval"
+          ? "The contract cannot be sent until internal approval is complete."
+          : "Operations should wait until the required signature gate is complete."
+    };
+  }
+
+  if (latestContract && (latestContract.status === "sent" || latestContract.status === "viewed")) {
+    return {
+      title:
+        latestContract.status === "viewed"
+          ? "Next: follow up on viewed contract"
+          : "Next: await contract signature",
+      description:
+        latestContract.status === "viewed"
+          ? "The customer has viewed the contract, but signature is still pending on the canonical contract record."
+          : "The contract has been sent for signature. Keep signature follow-up on the existing contract record.",
+      primaryLabel: "Review contract",
+      primaryHref: `/contracts/${latestContract.id}`,
+      blockerCopy: "Jobs, invoices, and payment collection should wait until the configured contract signature gate is clear."
     };
   }
 
@@ -544,13 +691,15 @@ function getNextAction(input: {
                       )} still needs to clear before the commercial handoff is complete.`
                     : "A deposit invoice exists, but the commercial handoff will stay blocked until that invoice is paid.",
           primaryLabel: "Review deposit invoice",
-          primaryHref: `/invoices/${readinessSnapshot.depositInvoiceId}`
+          primaryHref: `/invoices/${readinessSnapshot.depositInvoiceId}`,
+          blockerCopy: "Scheduling stays blocked until the required deposit is satisfied."
         }
       : {
           title: "Blocked: create the deposit request",
           description: "The organization requires a deposit before operations can schedule this work on the same project chain.",
           primaryLabel: "Create deposit invoice",
-          primaryHref: `/invoices?projectId=${projectId}&estimateId=${approvedEstimateId ?? ""}&workflowRole=deposit`
+          primaryHref: `/invoices?projectId=${projectId}&estimateId=${approvedEstimateId ?? ""}&workflowRole=deposit`,
+          blockerCopy: "Deposit collection cannot start until a deposit invoice is created from the existing project and approved-estimate context."
         };
   }
 
@@ -558,22 +707,115 @@ function getNextAction(input: {
     return {
       title: "Blocked: resolve financing readiness",
       description: "Financing status is still blocking the operations handoff. Update the project financing state once the commercial outcome is known.",
-      secondaryLabel: "Edit project financing below"
+      secondaryLabel: "Edit project financing below",
+      blockerCopy: "Operations should wait until financing is approved or no longer required."
+    };
+  }
+
+  if (pendingChangeOrder) {
+    return {
+      title:
+        pendingChangeOrder.status === "draft"
+          ? "Next: finish the draft change order"
+          : "Next: follow up on the sent change order",
+      description:
+        pendingChangeOrder.status === "draft"
+          ? "A draft change order is open on this project. Finish or resolve that scope change before treating the current commercial chain as settled."
+          : "A sent change order is waiting on customer decision. Keep the scope adjustment on the same canonical change-order record.",
+      primaryLabel: "Review change order",
+      primaryHref: `/change-orders/${pendingChangeOrder.id}`,
+      blockerCopy:
+        pendingChangeOrder.status === "draft"
+          ? "Draft scope changes can confuse billing and field handoff if they are left unresolved."
+          : "Approved change-order scope should be resolved before billing or closeout decisions depend on it."
     };
   }
 
   if (readinessSnapshot?.isReadyToSchedule) {
+    if (projectJobsCount === 0) {
+      return {
+        title: "Next: create the first job",
+        description:
+          "Commercial handoff is complete, but no job exists yet. Create the operational job from the existing project context.",
+        primaryLabel: "Create job",
+        primaryHref: `/jobs?projectId=${projectId}`,
+        secondaryLabel: "Open schedule",
+        secondaryHref: `/schedule?projectId=${projectId}`,
+        blockerCopy: "Scheduling cannot assign real work until a canonical job exists."
+      };
+    }
+
+    if (unscheduledJobsCount > 0) {
+      return {
+        title: "Next: schedule the project work",
+        description:
+          unscheduledJobsCount === 1
+            ? "One job exists but is still unscheduled. Use the schedule workspace to place it on the calendar and coordinate crew."
+            : `${unscheduledJobsCount} jobs exist but are still unscheduled. Use the schedule workspace to place them on the calendar and coordinate crew.`,
+        primaryLabel: "Open schedule",
+        primaryHref: `/schedule?projectId=${projectId}`,
+        blockerCopy: "Field execution is not fully planned until the project jobs have schedule commitments."
+      };
+    }
+
+    if (hasCompletedJobWithoutInvoice) {
+      return {
+        title: "Next: invoice completed work",
+        description:
+          "A completed job exists without a connected invoice. Create billing from the same project and job context so payment stays tied to completed work.",
+        primaryLabel: "Create invoice",
+        primaryHref: completedJobWithoutInvoiceId
+          ? `/invoices?projectId=${projectId}&jobId=${completedJobWithoutInvoiceId}`
+          : `/invoices?projectId=${projectId}`,
+        blockerCopy: "Payment follow-up cannot start until completed work is represented by a canonical invoice."
+      };
+    }
+
+    if (activeJobsCount > 0) {
+      return {
+        title: "Next: monitor active field work",
+        description:
+          "Execution is underway. Keep job updates, daily logs, punchlist work, and billing handoff tied to this project chain.",
+        primaryLabel: "Open jobs",
+        primaryHref: `/jobs?projectId=${projectId}`
+      };
+    }
+
+    if (latestOpenInvoice) {
+      return {
+        title:
+          latestOpenInvoice.status === "draft"
+            ? "Next: finish the draft invoice"
+            : "Next: follow open payment",
+        description:
+          latestOpenInvoice.status === "draft"
+            ? "A draft invoice exists on this project. Finish and send it before payment follow-up starts."
+            : `${formatMoney(latestOpenInvoice.balanceDueAmount)} remains open on the latest project invoice.`,
+        primaryLabel: "Review invoice",
+        primaryHref: `/invoices/${latestOpenInvoice.id}`,
+        secondaryLabel: "Open payments",
+        secondaryHref: "/payments",
+        blockerCopy:
+          latestOpenInvoice.status === "draft"
+            ? "Payment collection should wait until the invoice is sent or otherwise finalized."
+            : "Payment is not complete while the invoice still has an open balance."
+      };
+    }
+
     return {
       title: "Ready: commercial handoff complete",
       description: "This project is ready for operational scheduling. Operations can take over next while staying on the same project, job, time, and billing chain.",
-      primaryLabel: "Open jobs workspace",
-      primaryHref: "/jobs"
+      primaryLabel: "Open schedule",
+      primaryHref: `/schedule?projectId=${projectId}`,
+      secondaryLabel: "Create job",
+      secondaryHref: `/jobs?projectId=${projectId}`
     };
   }
 
   return {
     title: "Requires follow-up: review the commercial chain",
-    description: "Use the blocker list and readiness stages above to clear the next gate in order, rather than jumping ahead into disconnected downstream work."
+    description: "Use the blocker list and readiness stages above to clear the next gate in order, rather than jumping ahead into disconnected downstream work.",
+    blockerCopy: "No supported downstream action is available until the current commercial blocker is resolved."
   };
 }
 
@@ -585,6 +827,7 @@ function buildWorkspaceActions(input: {
   unscheduledJobsCount: number;
   jobsWithoutCrewCount: number;
   hasCompletedJobWithoutInvoice: boolean;
+  completedJobWithoutInvoiceId: string | null;
   unresolvedPunchlistCount: number;
   openInvoiceCount: number;
   activeAppointmentCount: number;
@@ -633,7 +876,7 @@ function buildWorkspaceActions(input: {
           ? "One canonical job is still unscheduled."
           : `${input.unscheduledJobsCount} canonical jobs are still unscheduled.`,
       label: "Open schedule",
-      href: "/schedule",
+      href: `/schedule?projectId=${input.projectId}`,
       tone: "warning"
     });
   }
@@ -646,7 +889,7 @@ function buildWorkspaceActions(input: {
           ? "One active project job still has no crew vendor assigned."
           : `${input.jobsWithoutCrewCount} active project jobs still have no crew vendor assigned.`,
       label: "Review jobs",
-      href: "/jobs",
+      href: `/jobs?projectId=${input.projectId}`,
       tone: "secondary"
     });
   }
@@ -668,7 +911,9 @@ function buildWorkspaceActions(input: {
       description:
         "A completed job exists on this project, but billing has not been tied back to it yet.",
       label: "Create invoice",
-      href: `/invoices?projectId=${input.projectId}`,
+      href: input.completedJobWithoutInvoiceId
+        ? `/invoices?projectId=${input.projectId}&jobId=${input.completedJobWithoutInvoiceId}`
+        : `/invoices?projectId=${input.projectId}`,
       tone: "warning"
     });
   }
@@ -730,7 +975,8 @@ export default async function ProjectDetailPage({
     projectChangeOrders,
     projectAppointments,
     projectPunchlistItems,
-    projectProgressBilling
+    projectProgressBilling,
+    communicationThreads
   ] = await Promise.all([
     getProjectById(projectId, `/projects/${projectId}`),
     listCustomers(),
@@ -742,7 +988,8 @@ export default async function ProjectDetailPage({
     listProjectChangeOrders(projectId, `/projects/${projectId}`),
     listAppointmentsByProject(projectId, `/projects/${projectId}`),
     listPunchlistItemsByProject(projectId, `/projects/${projectId}`),
-    listProgressBillingByProject(projectId, `/projects/${projectId}`)
+    listProgressBillingByProject(projectId, `/projects/${projectId}`),
+    listCommunicationThreadsForSubject("project", projectId)
   ]);
 
   if (!project) {
@@ -762,16 +1009,26 @@ export default async function ProjectDetailPage({
 
   const projectEstimates = estimates.filter((estimate) => estimate.projectId === project.id);
   const approvedEstimate = projectEstimates.find((estimate) => estimate.status === "approved");
+  const latestEstimate = getMostRecentByUpdatedAt(projectEstimates);
   const projectContracts = contracts.filter((contract) => contract.projectId === project.id);
+  const latestContract = getMostRecentByUpdatedAt(projectContracts);
   const projectContractDocuments = projectContracts.filter(
     (contract) => contract.sentPdfDownloadUrl && contract.sentPdfFileName
   );
   const projectJobs = jobs.filter((job) => job.projectId === project.id);
+  const projectJobAssignments = await listJobAssignmentsByJobIds(
+    projectJobs.map((job) => job.id),
+    `/projects/${projectId}`
+  );
   const completedJob = projectJobs.find((job) => job.dispatchStatus === "completed");
   const projectOpenTimeStates = openTimeStates.filter(
     (state) => state.projectId === project.id
   );
   const projectInvoices = invoices.filter((invoice) => invoice.projectId === project.id);
+  const pendingChangeOrder =
+    projectChangeOrders.find(
+      (changeOrder) => changeOrder.status === "sent" || changeOrder.status === "draft"
+    ) ?? null;
   const depositInvoice =
     (readinessSnapshot?.depositInvoiceId
       ? projectInvoices.find((invoice) => invoice.id === readinessSnapshot.depositInvoiceId)
@@ -811,6 +1068,12 @@ export default async function ProjectDetailPage({
     ? projectInvoices.some((invoice) => invoice.jobId === completedJob.id)
     : false;
   const canCreateInvoice = Boolean(completedJob) && !hasInvoiceForCompletedJob;
+  const unscheduledJobs = projectJobs.filter((job) => job.dispatchStatus === "unscheduled");
+  const scheduledJobs = projectJobs.filter((job) => job.dispatchStatus === "scheduled");
+  const activeJobs = projectJobs.filter((job) => job.dispatchStatus === "in_progress");
+  const jobsWithoutCrew = projectJobs.filter(
+    (job) => job.dispatchStatus !== "completed" && !job.crewVendorId
+  );
   const approvedEstimateId = approvedEstimate?.id ?? null;
   const completedJobId = completedJob?.id ?? null;
   const readinessStatus = readinessSnapshot?.status ?? project.commercialReadinessStatus;
@@ -827,10 +1090,20 @@ export default async function ProjectDetailPage({
   });
   const nextAction = getNextAction({
     projectId: project.id,
+    opportunityId: projectOpportunity?.id ?? null,
     approvedEstimateId,
     readinessSnapshot,
     projectEstimatesCount: projectEstimates.length,
     projectContractsCount: projectContracts.length,
+    latestEstimate,
+    latestContract,
+    latestOpenInvoice,
+    pendingChangeOrder,
+    projectJobsCount: projectJobs.length,
+    unscheduledJobsCount: unscheduledJobs.length,
+    activeJobsCount: activeJobs.length,
+    hasCompletedJobWithoutInvoice: canCreateInvoice,
+    completedJobWithoutInvoiceId: canCreateInvoice ? completedJobId : null,
     depositInvoice,
     depositLatestPaymentEventType:
       paymentFocusInvoice?.id === depositInvoice?.id ? paymentFocusLatestEventType : null
@@ -849,12 +1122,48 @@ export default async function ProjectDetailPage({
   const scheduledAppointments = projectAppointments.filter(
     (appointment) => appointment.status === "scheduled"
   );
-  const unscheduledJobs = projectJobs.filter((job) => job.dispatchStatus === "unscheduled");
-  const scheduledJobs = projectJobs.filter((job) => job.dispatchStatus === "scheduled");
-  const activeJobs = projectJobs.filter((job) => job.dispatchStatus === "in_progress");
-  const jobsWithoutCrew = projectJobs.filter(
-    (job) => job.dispatchStatus !== "completed" && !job.crewVendorId
+  const jobsWithoutAssignments = projectJobs.filter(
+    (job) =>
+      job.dispatchStatus !== "completed" &&
+      (projectJobAssignments.get(job.id)?.length ?? 0) === 0
   );
+  const scheduledOrActiveJobs = [...projectJobs]
+    .filter(
+      (job) =>
+        (job.dispatchStatus === "scheduled" || job.dispatchStatus === "in_progress") &&
+        job.scheduledDate
+    )
+    .sort(
+      (left, right) => getScheduleSummarySortValue(left) - getScheduleSummarySortValue(right)
+    );
+  const latestScheduledJob = [...projectJobs]
+    .filter((job) => job.scheduledDate)
+    .sort(
+      (left, right) => getScheduleSummarySortValue(right) - getScheduleSummarySortValue(left)
+    )[0] ?? null;
+  const nextScheduledJob =
+    activeJobs
+      .filter((job) => job.scheduledDate)
+      .sort(
+        (left, right) => getScheduleSummarySortValue(left) - getScheduleSummarySortValue(right)
+      )[0] ??
+    scheduledOrActiveJobs[0] ??
+    latestScheduledJob;
+  const scheduleFocusJob = nextScheduledJob ?? latestScheduledJob ?? null;
+  const scheduleFocusAssignments = scheduleFocusJob
+    ? projectJobAssignments.get(scheduleFocusJob.id) ?? []
+    : [];
+  const scheduleFocusAssignmentNames = scheduleFocusAssignments
+    .map((assignment) => assignment.person?.displayName ?? assignment.vendor?.name ?? null)
+    .filter((value): value is string => Boolean(value));
+  const scheduleFocusLabel = activeJobs.length > 0 ? "In progress now" : "Next scheduled job";
+  const scheduleFocusSummary = scheduleFocusJob
+    ? getScheduleAssignmentSummary({
+        assignmentNames: scheduleFocusAssignmentNames,
+        crewVendorName: scheduleFocusJob.crewVendor?.name ?? null,
+        assignmentCount: scheduleFocusAssignments.length
+      })
+    : null;
   const openInvoices = projectInvoices.filter(
     (invoice) =>
       invoice.status !== "paid" &&
@@ -964,6 +1273,7 @@ export default async function ProjectDetailPage({
     unscheduledJobsCount: unscheduledJobs.length,
     jobsWithoutCrewCount: jobsWithoutCrew.length,
     hasCompletedJobWithoutInvoice: canCreateInvoice,
+    completedJobWithoutInvoiceId: canCreateInvoice ? completedJobId : null,
     unresolvedPunchlistCount: unresolvedPunchlistItems.length,
     openInvoiceCount: openInvoices.length,
     activeAppointmentCount: scheduledAppointments.length,
@@ -978,17 +1288,17 @@ export default async function ProjectDetailPage({
           <DetailPageHeader
             eyebrow="Project Workspace"
             title={project.name}
-            description="Use this workspace to understand project state, see the connected records behind it, and move the next operational step forward without hopping across modules."
+            description="Use this workspace to see the connected records behind the project and move the next estimate, contract, progress billing, or invoice step forward without hopping across modules."
             backHref="/projects"
             backLabel="Back to projects"
             actions={
               <>
                 <div className="flex flex-wrap gap-2.5">
                   <Link
-                    href={`/estimates?projectId=${project.id}`}
+                    href={buildProjectEstimateCreateHref(project.id, projectOpportunity?.id)}
                     className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
                   >
-                    Create estimate
+                    Start estimate
                   </Link>
                   {approvedEstimateId && projectContracts.length === 0 ? (
                     <Link
@@ -1131,7 +1441,7 @@ export default async function ProjectDetailPage({
                       detail:
                         readinessSnapshot?.isReadyToSchedule
                           ? "Commercial handoff is complete."
-                          : "Use the next actions below to clear the current gate.",
+                          : "Use the next action below to clear the current gate and keep the workflow moving.",
                       tone: readinessSnapshot?.isReadyToSchedule
                         ? ("positive" as WorkspaceStateTone)
                         : ("warning" as WorkspaceStateTone)
@@ -1230,6 +1540,11 @@ export default async function ProjectDetailPage({
                   ) : undefined
                 }
               />
+              {nextAction.blockerCopy ? (
+                <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm leading-6 text-amber-950">
+                  {nextAction.blockerCopy}
+                </div>
+              ) : null}
             </section>
 
             <div className="grid gap-3">
@@ -1337,8 +1652,8 @@ export default async function ProjectDetailPage({
                 ) : (
                   <AppEmptyState
                     eyebrow="No contracts"
-                    title="Generate a contract after approval"
-                    description="Once an estimate is approved, use the contract workflow to keep the signed record tied to the same project."
+                    title="Generate contract after approval"
+                    description="Once the estimate is approved, generate contract from the same project chain so the signed record stays connected."
                   />
                 )}
               </div>
@@ -1623,8 +1938,8 @@ export default async function ProjectDetailPage({
                 ) : (
                   <AppEmptyState
                     eyebrow="No progress billing"
-                    title="Approved scope will flow here"
-                    description="Once approved estimate items seed a schedule of values on this project, progress billing will stay tied to the same estimate, project, and invoice chain."
+                    title="Open progress billing after approved scope seeds here"
+                    description="Once approved estimate items seed a schedule of values on this project, progress billing stays tied to the same estimate, project, and invoice chain."
                   />
                 )}
               </div>
@@ -1653,7 +1968,7 @@ export default async function ProjectDetailPage({
                 ) : (
                   <AppEmptyState
                     eyebrow="No invoices"
-                    title="Invoice from the connected workflow"
+                    title="Create invoice from the connected workflow"
                     description="Billing should continue from the same project and downstream work context, with deposit readiness staying on canonical invoices instead of a side model."
                   />
                 )}
@@ -1984,6 +2299,135 @@ export default async function ProjectDetailPage({
             ) : null}
           </div>
         </DetailPanel>
+
+        <DetailPanel
+          title="Production Schedule"
+          description="Compact schedule continuity from canonical jobs and job assignments, with calendar work still handed off to the shared schedule workspace."
+        >
+          <div className="space-y-4 text-sm leading-6 text-slate-600">
+            <ScheduleContextMetrics
+              items={[
+                { label: "Scheduled", value: scheduledJobs.length },
+                { label: "Unscheduled", value: unscheduledJobs.length },
+                { label: "In progress", value: activeJobs.length }
+              ]}
+            />
+
+            {scheduleFocusJob ? (
+              <ScheduleContextFocusCard
+                eyebrow={
+                  scheduleFocusJob.dispatchStatus === "in_progress"
+                    ? "Work in progress"
+                    : scheduleFocusLabel
+                }
+                title={project.name}
+                titleHref={`/jobs/${scheduleFocusJob.id}`}
+                statusLabel={formatStatusLabel(scheduleFocusJob.dispatchStatus)}
+                summary={formatScheduleSummaryWindow({
+                  scheduledDate: scheduleFocusJob.scheduledDate,
+                  scheduledStartAt: scheduleFocusJob.scheduledStartAt,
+                  scheduledEndAt: scheduleFocusJob.scheduledEndAt
+                })}
+                detailRows={[
+                  {
+                    label: "Crew",
+                    value:
+                      scheduleFocusAssignments.length > 0
+                        ? scheduleFocusSummary
+                        : scheduleFocusJob.dispatchStatus === "scheduled"
+                          ? "Scheduled, but crew assignment still needs to be confirmed"
+                          : scheduleFocusSummary
+                  }
+                ]}
+              />
+            ) : (
+              <ScheduleContextNotice
+                eyebrow={projectJobs.length > 0 ? "Ready for scheduling" : "No jobs yet"}
+                title={
+                  projectJobs.length > 0
+                    ? "Project jobs exist, but no calendar commitment is set yet"
+                    : "Production work has not been created yet"
+                }
+              >
+                {projectJobs.length > 0
+                  ? "The project has canonical jobs, but they are still unscheduled. Once a real date is attached, the next production commitment will show here."
+                  : "Create downstream project jobs first. Schedule continuity will appear here once production work exists on the canonical job chain."}
+              </ScheduleContextNotice>
+            )}
+
+            <ContextFactsList
+              items={[
+                {
+                  label: "Crew assignment state",
+                  value:
+                    jobsWithoutAssignments.length > 0
+                      ? `${jobsWithoutAssignments.length} job${
+                          jobsWithoutAssignments.length === 1 ? "" : "s"
+                        } still need crew assignment rows`
+                      : projectJobs.length > 0
+                        ? "Crew coverage is already attached where needed"
+                        : "No project jobs yet"
+                },
+                {
+                  label: "Current handoff",
+                  value:
+                    scheduleFocusJob?.dispatchStatus === "in_progress"
+                      ? "Field work is already active on this project"
+                      : readinessSnapshot?.isReadyToSchedule
+                        ? unscheduledJobs.length > 0
+                          ? "Commercial handoff is clear and production can now be placed on the calendar"
+                          : "Commercial handoff is clear for schedule follow-through"
+                        : "Project is still upstream of operational scheduling"
+                }
+              ]}
+            />
+
+            <ScheduleContextActions
+              actions={[
+                {
+                  href: buildProjectScheduleHref({
+                    projectId: project.id,
+                    view:
+                      unscheduledJobs.length > 0
+                        ? "unscheduled"
+                        : activeJobs.length > 0
+                          ? "in_progress"
+                          : "all",
+                    crew: jobsWithoutAssignments.length > 0 ? "unassigned" : "all"
+                  }),
+                  label: "Open schedule",
+                  variant: "subtle"
+                },
+                ...(scheduleFocusJob
+                  ? [
+                      {
+                        href: buildProjectScheduleHref({
+                          projectId: project.id,
+                          jobId: scheduleFocusJob.id,
+                          action:
+                            scheduleFocusAssignments.length > 0 ||
+                            scheduleFocusJob.dispatchStatus === "unscheduled"
+                              ? "schedule"
+                              : "assign"
+                        }),
+                        label: "Open focused job in schedule",
+                        variant: "subtle" as const
+                      }
+                    ]
+                  : [])
+              ]}
+            />
+          </div>
+        </DetailPanel>
+
+        <RelatedConversationsCard
+          source="project"
+          description="Project-scoped communication stays on canonical threads and routes back into the shared communications review workspace when follow-through is needed."
+          countLabel="Project threads"
+          emptyMessage="No project-scoped communication threads are attached to this canonical project yet."
+          actionClassName={getWorkspaceActionLinkClassName("secondary")}
+          threads={communicationThreads}
+        />
       </aside>
     </div>
   );

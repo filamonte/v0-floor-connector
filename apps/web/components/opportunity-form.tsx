@@ -192,8 +192,9 @@ export function OpportunityForm({
             Primary Contact
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-500">
-            The opportunity links to a real contact record. The lead no longer owns
-            identity directly.
+            The opportunity links to a real contact record. Once this lead creates or links a
+            canonical customer, safe email updates can sync forward there, and downstream estimate
+            send uses the customer record instead of a workforce person.
           </p>
         </div>
         <div className="grid gap-4 md:grid-cols-2">

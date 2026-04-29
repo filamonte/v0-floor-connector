@@ -108,6 +108,7 @@ This area should include:
 - project workspace sections
 - project status and health
 - linked estimates, jobs, invoices, files, and activity
+- future takeoff status, generated quantities, linked estimate context, and scope summary
 
 Projects should answer:
 - what work is being delivered
@@ -139,6 +140,7 @@ This area should include:
 - certifications and compliance later
 - time cards later
 - internal directory
+- future scoped subcontractor/vendor collaboration profiles where project or job workspace access may be granted intentionally
 
 People should support staffing and accountability, not project execution alone.
 
@@ -152,6 +154,7 @@ This area should eventually include:
 - daily logs
 - inspections
 - punch lists
+- scoped subcontractor/vendor job collaboration later
 - service tickets or warranty later
 - mobile-friendly execution tools later
 
@@ -176,13 +179,14 @@ Documents should support both project-level and organization-level retrieval.
 Communications should be the cross-channel messaging and interaction layer.
 
 This area should eventually include:
-- internal communication
-- customer communication
+- internal communication tied to canonical records
+- customer communication tied to canonical records
+- subcontractor, vendor, and project partner communication tied to canonical records later
 - estimate/invoice delivery history
 - portal communications later
 - activity notifications later
 
-Communications should group conversation flows rather than scattering them across modules.
+Communications should group conversation flows rather than scattering them across modules. Future communication should be record-based over free-floating chat, with threads attached to projects, jobs, change orders, invoices, daily logs, field notes, or other canonical records.
 
 ## Settings
 
@@ -211,6 +215,7 @@ In UX terms, a project should become the primary record that organizes delivery 
 
 Target project workspace sections:
 - Overview
+- Takeoff & Scope later
 - Estimate
 - Scope
 - Jobs / Work Orders
@@ -228,6 +233,14 @@ Additional sections can be added later, but this is the intended core workspace 
 ### Overview
 
 Summary of project health, stage, customer, location, assigned people, and current blockers.
+
+### Takeoff & Scope
+
+Future project-scoped workspace for uploaded plans, photos, site information, takeoff status, generated quantities, cost item/catalog mapping, linked estimate handoff, source traceability, out-of-sync review state, and scope summary.
+
+This does not require a route change now. Takeoff should remain a supporting project workflow that feeds canonical estimate line items instead of becoming a separate estimating app.
+
+This workspace should keep the boundary clear: takeoff produces quantities, catalog/cost items define reusable cost/pricing/production/tax behavior, and estimates define customer-facing pricing and commercial scope. AI-assisted suggestions and generated line items should remain reviewable and explicitly approved before they are exposed to the customer.
 
 ### Estimate
 

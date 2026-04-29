@@ -1,7 +1,22 @@
 import { z } from "zod";
 
+import {
+  automationNotificationPreferenceCategories,
+  automationNotificationPreferenceRoles
+} from "@/lib/automation/preferences";
+
 const templateStatuses = ["active", "archived"] as const;
 const taxBehaviors = ["exclusive", "inclusive", "none"] as const;
+const automationNotificationPreferenceCategoryOptions =
+  automationNotificationPreferenceCategories as unknown as [
+    (typeof automationNotificationPreferenceCategories)[number],
+    ...(typeof automationNotificationPreferenceCategories)[number][]
+  ];
+const automationNotificationPreferenceRoleOptions =
+  automationNotificationPreferenceRoles as unknown as [
+    (typeof automationNotificationPreferenceRoles)[number],
+    ...(typeof automationNotificationPreferenceRoles)[number][]
+  ];
 
 function trimmedNullableString(maxLength: number) {
   return z
@@ -130,6 +145,37 @@ export const organizationWorkflowSettingsInputSchema = z.object({
   nextInvoiceNumber: positiveIntegerField("Next invoice number"),
   nextChangeOrderNumber: positiveIntegerField("Next change order number"),
   nextContractNumber: positiveIntegerField("Next contract number")
+});
+
+export const automationNotificationPreferencesInputSchema = z.object({
+  preferences: z
+    .array(
+      z.object({
+        category: z.enum(automationNotificationPreferenceCategoryOptions),
+        enabledForFutureExecution: z.boolean(),
+        notifyRoles: z
+          .array(z.enum(automationNotificationPreferenceRoleOptions))
+          .transform((value) => Array.from(new Set(value)))
+      })
+    )
+    .length(
+      automationNotificationPreferenceCategories.length,
+      "Every automation category needs a preference row."
+    )
+    .superRefine((value, context) => {
+      const seen = new Set<string>();
+
+      for (const preference of value) {
+        if (seen.has(preference.category)) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Duplicate automation preference category: ${preference.category}.`
+          });
+        }
+
+        seen.add(preference.category);
+      }
+    })
 });
 
 export const organizationProfileInputSchema = z.object({
@@ -325,6 +371,9 @@ export type OrganizationFinancialSettingsInput = z.infer<
 >;
 export type OrganizationWorkflowSettingsInput = z.infer<
   typeof organizationWorkflowSettingsInputSchema
+>;
+export type AutomationNotificationPreferencesInput = z.infer<
+  typeof automationNotificationPreferencesInputSchema
 >;
 export type OrganizationProfileInput = z.infer<
   typeof organizationProfileInputSchema

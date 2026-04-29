@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useState } from "react";
 
 import { AuthField } from "@/components/auth-field";
@@ -36,23 +37,28 @@ type EstimateQuickCreateFormProps = {
   projects: EstimateQuickCreateProjectOption[];
   estimatorLabel: string;
   estimateDateLabel: string;
+  estimateNumberLabel?: string;
+  errorMessage?: string | null;
   initialCreationMode?: "opportunity" | "customer" | "standalone" | null;
   initialOpportunityId?: string | null;
   initialCustomerId?: string | null;
   initialProjectId?: string | null;
+  initialProjectName?: string | null;
 };
 
 function formatStatusLabel(status: string) {
   return status.replaceAll("_", " ");
 }
 
-function ModeButton({
+function ChoiceButton({
   active,
   label,
+  description,
   onClick
 }: {
   active: boolean;
   label: string;
+  description: string;
   onClick: () => void;
 }) {
   return (
@@ -60,13 +66,21 @@ function ModeButton({
       type="button"
       onClick={onClick}
       className={[
-        "rounded-[4px] border px-3 py-2 text-sm font-medium transition",
+        "rounded-[4px] border px-3 py-2 text-left transition",
         active
           ? "border-[#233a64] bg-[#233a64] text-white"
           : "border-[#d9dee8] bg-white text-slate-700 hover:bg-slate-50"
       ].join(" ")}
     >
-      {label}
+      <span className="block text-sm font-semibold">{label}</span>
+      <span
+        className={[
+          "mt-1 block text-xs leading-5",
+          active ? "text-white/75" : "text-slate-500"
+        ].join(" ")}
+      >
+        {description}
+      </span>
     </button>
   );
 }
@@ -114,7 +128,7 @@ function SearchPanel({
   placeholder: string;
   value: string;
   onChange: (nextValue: string) => void;
-  children: React.ReactNode;
+  children: ReactNode;
   empty: boolean;
 }) {
   return (
@@ -150,40 +164,50 @@ export function EstimateQuickCreateForm({
   projects,
   estimatorLabel,
   estimateDateLabel,
-  initialCreationMode,
+  estimateNumberLabel = "Assigned on create",
+  errorMessage,
   initialOpportunityId,
   initialCustomerId,
-  initialProjectId
+  initialProjectId,
+  initialProjectName
 }: EstimateQuickCreateFormProps) {
-  const [creationMode, setCreationMode] = useState<
-    "opportunity" | "customer" | "standalone"
-  >(initialCreationMode ?? "customer");
+  const initialProject =
+    projects.find((project) => project.id === (initialProjectId ?? "")) ?? null;
   const [opportunityQuery, setOpportunityQuery] = useState("");
   const [customerQuery, setCustomerQuery] = useState("");
   const [projectQuery, setProjectQuery] = useState("");
   const [title, setTitle] = useState("");
+  const [projectChoice, setProjectChoice] = useState<"existing" | "new">(
+    initialProjectId ? "existing" : "new"
+  );
+  const [projectName, setProjectName] = useState(initialProjectName ?? "");
   const [selectedOpportunityId, setSelectedOpportunityId] = useState(
     initialOpportunityId ?? ""
   );
   const [selectedCustomerId, setSelectedCustomerId] = useState(
-    initialCustomerId ?? ""
+    initialCustomerId ?? initialProject?.customerId ?? ""
   );
   const [selectedProjectId, setSelectedProjectId] = useState(initialProjectId ?? "");
 
   const selectedOpportunity =
     opportunities.find((opportunity) => opportunity.id === selectedOpportunityId) ?? null;
+  const selectedProject =
+    projects.find((project) => project.id === selectedProjectId) ?? null;
   const derivedCustomerId =
     selectedOpportunity?.customerId && selectedOpportunity.customerId.length > 0
       ? selectedOpportunity.customerId
       : null;
-  const activeCustomerId = derivedCustomerId ?? selectedCustomerId;
+  const projectCustomerId =
+    selectedProject?.customerId && selectedProject.customerId.length > 0
+      ? selectedProject.customerId
+      : null;
+  const activeCustomerId = selectedCustomerId || derivedCustomerId || projectCustomerId || null;
   const activeCustomer =
     customers.find((customer) => customer.id === activeCustomerId) ?? null;
 
   const visibleOpportunities = opportunities
     .filter((opportunity) => {
       if (
-        creationMode !== "opportunity" &&
         activeCustomerId &&
         opportunity.customerId !== activeCustomerId
       ) {
@@ -239,52 +263,129 @@ export function EstimateQuickCreateForm({
     })
     .slice(0, 8);
 
+  const hasExistingProjects = visibleProjects.length > 0;
+
   return (
     <form action={action} className="space-y-5">
-      <input type="hidden" name="creationMode" value={creationMode} />
+      <input type="hidden" name="creationMode" value="customer" />
       <input type="hidden" name="opportunityId" value={selectedOpportunityId} />
       <input type="hidden" name="customerId" value={activeCustomerId ?? ""} />
-      <input type="hidden" name="projectId" value={selectedProjectId} />
+      <input
+        type="hidden"
+        name="projectId"
+        value={projectChoice === "existing" ? selectedProjectId : ""}
+      />
+      <input
+        type="hidden"
+        name="projectName"
+        value={projectChoice === "new" ? projectName : ""}
+      />
 
       <QuickCreateFormShell
-        eyebrow="Quick create"
-        title="Create estimate"
-        description="Start from opportunity continuity, customer continuity, or a standalone commercial intake. FloorConnector will always create or reuse the canonical opportunity behind the scenes before opening the estimate workspace."
-        footer="Estimate build is the primary destination. Review, send, and customer-facing proposal flow come after the commercial scope is ready."
+        eyebrow="Add estimate"
+        title="Customer, project, estimate"
+        description="Choose the customer account first, then use or create the customer project. Any linked opportunity stays as upstream context while the estimate opens on the canonical customer and project chain."
+        footer="After create, FloorConnector opens the full estimate workspace for scope, pricing, review, and customer send."
       >
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            <ModeButton
-              active={creationMode === "opportunity"}
-              label="Opportunity"
-              onClick={() => {
-                setCreationMode("opportunity");
-                setSelectedCustomerId("");
-                setSelectedProjectId("");
-              }}
-            />
-            <ModeButton
-              active={creationMode === "customer"}
-              label="Customer"
-              onClick={() => {
-                setCreationMode("customer");
-                setSelectedOpportunityId("");
-              }}
-            />
-            <ModeButton
-              active={creationMode === "standalone"}
-              label="Standalone"
-              onClick={() => {
-                setCreationMode("standalone");
-                setSelectedOpportunityId("");
-              }}
-            />
-          </div>
+          {errorMessage ? (
+            <div
+              role="alert"
+              className="rounded-[4px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-900"
+            >
+              <p className="font-semibold">Estimate was not created</p>
+              <p className="mt-1">{errorMessage}</p>
+            </div>
+          ) : null}
 
-          {creationMode === "opportunity" ? (
+          <SearchPanel
+            label="Customer / account"
+            placeholder="Search customer or company"
+            value={customerQuery}
+            onChange={setCustomerQuery}
+            empty={visibleCustomers.length === 0}
+          >
+            {visibleCustomers.map((customer) => (
+              <SelectionCard
+                key={customer.id}
+                active={activeCustomerId === customer.id}
+                title={customer.name}
+                subtitle={customer.companyName ?? "Customer account"}
+                meta="Customer"
+                onClick={() => {
+                  setSelectedCustomerId(customer.id);
+                  setSelectedOpportunityId("");
+                  setSelectedProjectId("");
+                  setProjectChoice("new");
+                }}
+              />
+            ))}
+          </SearchPanel>
+
+          {activeCustomerId ? (
+            <div className="space-y-3">
+              <div>
+                <span className="mb-2 block text-sm font-medium text-slate-800">
+                  Project / site
+                </span>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <ChoiceButton
+                    active={projectChoice === "existing"}
+                    label="Use existing project"
+                    description="Attach this estimate to one of this customer's project records."
+                    onClick={() => setProjectChoice("existing")}
+                  />
+                  <ChoiceButton
+                    active={projectChoice === "new"}
+                    label="Create new project"
+                    description="Create the customer project before opening the estimate workspace."
+                    onClick={() => {
+                      setProjectChoice("new");
+                      setSelectedProjectId("");
+                    }}
+                  />
+                </div>
+              </div>
+
+              {projectChoice === "existing" ? (
+                <SearchPanel
+                  label="Existing customer project"
+                  placeholder="Search customer projects"
+                  value={projectQuery}
+                  onChange={setProjectQuery}
+                  empty={!hasExistingProjects}
+                >
+                  {visibleProjects.map((project) => (
+                    <SelectionCard
+                      key={project.id}
+                      active={selectedProjectId === project.id}
+                      title={project.name}
+                      subtitle="Project"
+                      meta={project.status.replaceAll("_", " ")}
+                      onClick={() => setSelectedProjectId(project.id)}
+                    />
+                  ))}
+                </SearchPanel>
+              ) : (
+                <AuthField
+                  label="New project name"
+                  name="projectNameDisplay"
+                  placeholder="Garage floor recoating"
+                  value={projectName}
+                  onChange={(event) => setProjectName(event.target.value)}
+                />
+              )}
+            </div>
+          ) : (
+            <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+              Select the customer account before choosing or creating the project.
+            </div>
+          )}
+
+          {activeCustomerId ? (
             <SearchPanel
-              label="Opportunity"
-              placeholder="Search lead, customer, site, or status"
+              label="Linked opportunity (optional)"
+              placeholder="Search upstream lead or opportunity"
               value={opportunityQuery}
               onChange={setOpportunityQuery}
               empty={visibleOpportunities.length === 0}
@@ -305,82 +406,15 @@ export function EstimateQuickCreateForm({
                   onClick={() => {
                     setSelectedOpportunityId(opportunity.id);
                     setSelectedCustomerId(opportunity.customerId ?? "");
-                    setSelectedProjectId("");
+                    if (!opportunity.customerId || opportunity.customerId !== activeCustomerId) {
+                      setSelectedProjectId("");
+                      setProjectChoice("new");
+                    }
                   }}
                 />
               ))}
             </SearchPanel>
-          ) : (
-            <>
-              <SearchPanel
-                label="Customer"
-                placeholder="Search customer or company"
-                value={customerQuery}
-                onChange={setCustomerQuery}
-                empty={visibleCustomers.length === 0}
-              >
-                {visibleCustomers.map((customer) => (
-                  <SelectionCard
-                    key={customer.id}
-                    active={activeCustomerId === customer.id}
-                    title={customer.name}
-                    subtitle={customer.companyName ?? "Customer account"}
-                    meta="Customer"
-                    onClick={() => {
-                      setSelectedCustomerId(customer.id);
-                      setSelectedOpportunityId("");
-                      setSelectedProjectId("");
-                    }}
-                  />
-                ))}
-              </SearchPanel>
-
-              {activeCustomerId ? (
-                <SearchPanel
-                  label="Opportunity (optional)"
-                  placeholder="Reuse an existing opportunity when continuity already exists"
-                  value={opportunityQuery}
-                  onChange={setOpportunityQuery}
-                  empty={visibleOpportunities.length === 0}
-                >
-                  {visibleOpportunities.map((opportunity) => (
-                    <SelectionCard
-                      key={opportunity.id}
-                      active={selectedOpportunityId === opportunity.id}
-                      title={opportunity.title}
-                      subtitle={opportunity.contactName}
-                      meta={[
-                        opportunity.siteName ?? "Site pending",
-                        formatStatusLabel(opportunity.status)
-                      ].join(" - ")}
-                      onClick={() => setSelectedOpportunityId(opportunity.id)}
-                    />
-                  ))}
-                </SearchPanel>
-              ) : null}
-
-              {activeCustomerId && visibleProjects.length > 0 ? (
-                <SearchPanel
-                  label="Site / job (optional)"
-                  placeholder="Search customer sites and jobs"
-                  value={projectQuery}
-                  onChange={setProjectQuery}
-                  empty={visibleProjects.length === 0}
-                >
-                  {visibleProjects.map((project) => (
-                    <SelectionCard
-                      key={project.id}
-                      active={selectedProjectId === project.id}
-                      title={project.name}
-                      subtitle="Project"
-                      meta={project.status.replaceAll("_", " ")}
-                      onClick={() => setSelectedProjectId(project.id)}
-                    />
-                  ))}
-                </SearchPanel>
-              ) : null}
-            </>
-          )}
+          ) : null}
 
           <div className="grid gap-4 md:grid-cols-2">
             <AuthField
@@ -395,16 +429,24 @@ export function EstimateQuickCreateForm({
             <div className="grid gap-4 md:grid-cols-2 md:col-span-1">
               <div className="rounded-[4px] border border-[#d9dee8] bg-[#f8fafc] px-4 py-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  EST. #
+                </p>
+                <p className="mt-2 text-sm font-medium text-slate-900">
+                  {estimateNumberLabel}
+                </p>
+              </div>
+              <div className="rounded-[4px] border border-[#d9dee8] bg-[#f8fafc] px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                   Estimate date
                 </p>
                 <p className="mt-2 text-sm font-medium text-slate-900">{estimateDateLabel}</p>
               </div>
-              <div className="rounded-[4px] border border-[#d9dee8] bg-[#f8fafc] px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  Estimator / sales person
-                </p>
-                <p className="mt-2 text-sm font-medium text-slate-900">{estimatorLabel}</p>
-              </div>
+            </div>
+            <div className="md:col-span-2 rounded-[4px] border border-[#d9dee8] bg-[#f8fafc] px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Estimator / sales person
+              </p>
+              <p className="mt-2 text-sm font-medium text-slate-900">{estimatorLabel}</p>
             </div>
           </div>
 

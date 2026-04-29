@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AppEmptyState } from "@/components/app-empty-state";
+import { DirectoryContextCard } from "@/components/directory-context-card";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { OpportunityForm } from "@/components/opportunity-form";
 import { listAppointmentsByOpportunity } from "@/lib/appointments/data";
@@ -76,7 +77,7 @@ export default async function LeadDetailPage({
   }
 
   const primaryEstimateHref = opportunity.projectId
-    ? `/estimates?projectId=${opportunity.projectId}`
+    ? `/estimates?projectId=${opportunity.projectId}&opportunityId=${opportunity.id}`
     : null;
   const canStartEstimate = opportunity.status !== "lost";
   const estimatingReadiness = opportunity.projectId
@@ -102,8 +103,10 @@ export default async function LeadDetailPage({
             </h2>
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
               Review the intake record, keep the pre-project commercial context
-              current, and move the opportunity into the live estimate workflow
-              when it is ready.
+              current, and use this page to decide when to start estimate on
+              the shared customer and project chain. Once a customer is linked,
+              estimate send uses the linked customer email rather than this lead
+              page alone.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -152,6 +155,11 @@ export default async function LeadDetailPage({
           <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
               Primary Contact
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              This is the upstream lead contact. When a canonical customer is linked, safe email
+              updates can sync forward into that customer record, but downstream estimate send uses
+              the linked customer email.
             </p>
             <dl className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
               <div>
@@ -248,12 +256,18 @@ export default async function LeadDetailPage({
                   <dt className="font-medium text-slate-950">Linked customer</dt>
                   <dd>
                     {opportunity.customer ? (
-                      <Link
-                        href={`/customers/${opportunity.customer.id}`}
-                        className="font-medium text-brand-700"
-                      >
-                        {opportunity.customer.name}
-                      </Link>
+                      <div className="space-y-1">
+                        <Link
+                          href={`/customers/${opportunity.customer.id}`}
+                          className="font-medium text-brand-700"
+                        >
+                          {opportunity.customer.name}
+                        </Link>
+                        <p className="text-xs leading-5 text-slate-500">
+                          This linked customer becomes the canonical external recipient record for
+                          projects, estimates, invoices, and portal access.
+                        </p>
+                      </div>
                     ) : (
                       "No customer created yet"
                     )}
@@ -398,79 +412,89 @@ export default async function LeadDetailPage({
         </div>
       </section>
 
-      <aside className="rounded-3xl border border-slate-200 bg-white/85 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-          Next Step
-        </p>
-        <p className="mt-4 text-sm leading-6 text-slate-600">
-          The primary operational handoff from a lead is into the estimate flow.
-          Starting that flow will create or link the canonical customer and
-          project if they do not already exist.
-        </p>
-        {canStartEstimate ? (
-          <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-900">
-            Use the primary action in the header to move this lead into the live estimate flow.
-          </div>
-        ) : (
-          <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-900">
-            Lost leads do not move into the estimate workflow unless the status is reopened.
-          </div>
-        )}
+      <aside className="space-y-6">
+        <DirectoryContextCard
+          href={`/directory?view=leads&q=${encodeURIComponent(opportunity.title)}`}
+          recordLabel="Lead opportunity"
+          description="Directory is the read-only scan-and-jump index. This lead page remains the canonical home for pre-customer commercial context and estimate handoff decisions."
+        />
 
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">
-          Requirements summary:
-          <div className="mt-2 text-slate-500">
-            {opportunity.requirementsSummary ??
-              "No assessment-based requirements have been captured yet."}
-          </div>
-        </div>
+        <section className="rounded-3xl border border-slate-200 bg-white/85 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+            Next Step
+          </p>
+          <p className="mt-4 text-sm leading-6 text-slate-600">
+            The next workflow handoff from a lead is to start estimate. Starting
+            estimate here creates or links the canonical customer and project if
+            they do not already exist, so the commercial chain stays connected. If this lead is
+            already linked, keep the customer email current there because estimate send uses
+            <span className="font-semibold"> customer.email</span>.
+          </p>
+          {canStartEstimate ? (
+            <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-900">
+              Use the primary action in the header to start estimate from this lead.
+            </div>
+          ) : (
+            <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-900">
+              Lost leads do not move into the estimate workflow unless the status is reopened.
+            </div>
+          )}
 
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">
-          Internal summary notes:
-          <div className="mt-2 text-slate-500">
-            {opportunity.notes ?? "No internal notes have been added yet."}
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">
+            Requirements summary:
+            <div className="mt-2 text-slate-500">
+              {opportunity.requirementsSummary ??
+                "No assessment-based requirements have been captured yet."}
+            </div>
           </div>
-        </div>
 
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-700">
-              Appointments
-            </p>
-            <Link
-              href={`/appointments?compose=1&opportunityId=${opportunity.id}${opportunity.customerId ? `&customerId=${opportunity.customerId}` : ""}${opportunity.projectId ? `&projectId=${opportunity.projectId}` : ""}#appointment-create`}
-              className="text-sm font-medium text-brand-700 transition hover:text-brand-900"
-            >
-              New appointment
-            </Link>
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">
+            Internal summary notes:
+            <div className="mt-2 text-slate-500">
+              {opportunity.notes ?? "No internal notes have been added yet."}
+            </div>
           </div>
-          <div className="mt-4 space-y-3">
-            {leadAppointments.slice(0, 2).length > 0 ? (
-              leadAppointments.slice(0, 2).map((appointment) => (
-                <LinkedRecordCard
-                  key={appointment.id}
-                  href={`/appointments/${appointment.id}`}
-                  title={appointment.title}
-                  subtitle={appointment.project?.name ?? appointment.customer?.name ?? "Lead-linked appointment"}
-                  meta={`${appointment.appointmentType.replaceAll("_", " ")} | ${new Date(appointment.startsAt).toLocaleString()}`}
-                  badge={
-                    <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
-                      {appointment.status.replaceAll("_", " ")}
-                    </span>
-                  }
+
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-700">
+                Appointments
+              </p>
+              <Link
+                href={`/appointments?compose=1&opportunityId=${opportunity.id}${opportunity.customerId ? `&customerId=${opportunity.customerId}` : ""}${opportunity.projectId ? `&projectId=${opportunity.projectId}` : ""}#appointment-create`}
+                className="text-sm font-medium text-brand-700 transition hover:text-brand-900"
+              >
+                New appointment
+              </Link>
+            </div>
+            <div className="mt-4 space-y-3">
+              {leadAppointments.slice(0, 2).length > 0 ? (
+                leadAppointments.slice(0, 2).map((appointment) => (
+                  <LinkedRecordCard
+                    key={appointment.id}
+                    href={`/appointments/${appointment.id}`}
+                    title={appointment.title}
+                    subtitle={appointment.project?.name ?? appointment.customer?.name ?? "Lead-linked appointment"}
+                    meta={`${appointment.appointmentType.replaceAll("_", " ")} | ${new Date(appointment.startsAt).toLocaleString()}`}
+                    badge={
+                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                        {appointment.status.replaceAll("_", " ")}
+                      </span>
+                    }
+                  />
+                ))
+              ) : (
+                <AppEmptyState
+                  eyebrow="No appointments"
+                  title="Schedule the next lead visit here"
+                  description="Use appointments for assessments, estimate meetings, and follow-up visits while keeping the real workflow on the same lead and downstream project chain."
+                  actionHref={`/appointments?compose=1&opportunityId=${opportunity.id}${opportunity.customerId ? `&customerId=${opportunity.customerId}` : ""}${opportunity.projectId ? `&projectId=${opportunity.projectId}` : ""}#appointment-create`}
+                  actionLabel="Create appointment"
                 />
-              ))
-            ) : (
-              <AppEmptyState
-                eyebrow="No appointments"
-                title="Schedule the next lead visit here"
-                description="Use appointments for assessments, estimate meetings, and follow-up visits while keeping the real workflow on the same lead and downstream project chain."
-                actionHref={`/appointments?compose=1&opportunityId=${opportunity.id}${opportunity.customerId ? `&customerId=${opportunity.customerId}` : ""}${opportunity.projectId ? `&projectId=${opportunity.projectId}` : ""}#appointment-create`}
-                actionLabel="Create appointment"
-              />
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        </section>
       </aside>
     </div>
   );

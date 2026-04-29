@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowUp,
   Eye,
   EyeOff,
+  FileDown,
   FolderTree,
   GripVertical,
   Lock,
@@ -15,8 +16,17 @@ import {
   Trash2,
   UserRound
 } from "lucide-react";
-import type { CatalogItem, CatalogItemType, EstimateItemGroup } from "@floorconnector/types";
+import type {
+  CatalogItem,
+  CatalogItemType,
+  EstimateItemGroup,
+  EstimateStatus
+} from "@floorconnector/types";
 
+import {
+  EstimateImportChooser,
+  type EstimateImportSourceOption
+} from "@/components/estimates/estimate-import-chooser";
 import { FinancialSummaryBar } from "@/components/estimates/financial-summary-bar";
 import type { ExpandedSystemPreview } from "@/lib/catalogs/system-expansion";
 
@@ -58,8 +68,10 @@ type ItemsSectionProps = {
   taxBehaviorLabel: string;
   taxRateLabel: string;
   customerTaxExempt: boolean;
+  estimateStatus: EstimateStatus;
   lineItems: EstimateItemsDraft[];
   itemGroups: EstimateItemGroup[];
+  importSourceEstimates: EstimateImportSourceOption[];
   showMarkup: boolean;
   showOnlyZeroItems: boolean;
   visibleCatalogItems: CatalogItem[];
@@ -74,6 +86,13 @@ type ItemsSectionProps = {
   onSystemSquareFootageChange: (value: string) => void;
   onAddCatalogItem: () => void;
   onQuickAddCatalogItem: (catalogItemId: string) => void;
+  onImportLineItemsFromEstimate: (
+    sourceEstimateId: string
+  ) => Promise<{ ok: boolean; message: string }>;
+  onImportReusableContentFromEstimate: (
+    sourceEstimateId: string,
+    section: "scope" | "terms" | "inclusions" | "exclusions"
+  ) => Promise<{ ok: boolean; message: string }>;
   onPreviewSystem: () => void;
   onExpandSystem: () => void;
   onToggleMarkup: (value: boolean) => void;
@@ -193,8 +212,10 @@ export function ItemsSection({
   taxBehaviorLabel,
   taxRateLabel,
   customerTaxExempt,
+  estimateStatus,
   lineItems,
   itemGroups,
+  importSourceEstimates,
   showMarkup,
   showOnlyZeroItems,
   visibleCatalogItems,
@@ -209,6 +230,8 @@ export function ItemsSection({
   onSystemSquareFootageChange,
   onAddCatalogItem,
   onQuickAddCatalogItem,
+  onImportLineItemsFromEstimate,
+  onImportReusableContentFromEstimate,
   onPreviewSystem,
   onExpandSystem,
   onToggleMarkup,
@@ -222,6 +245,7 @@ export function ItemsSection({
   onQuickCreateCatalogItem,
   inventoryCreateError
 }: ItemsSectionProps) {
+  const catalogSearchInputRef = useRef<HTMLInputElement | null>(null);
   const [itemSearch, setItemSearch] = useState("");
   const [showCreateItemForm, setShowCreateItemForm] = useState(false);
   const [quickItemName, setQuickItemName] = useState("");
@@ -261,14 +285,64 @@ export function ItemsSection({
       <div className="grid gap-4 border-b border-[#e6e9ef] px-4 py-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
         <div className="rounded-[12px] border border-[#dfe5ef] bg-[#fbfcfe] p-4">
           <div className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
-            Add Item
+            Estimating Tools
+          </div>
+          <div className="mb-3 text-[13px] leading-5 text-[#6b7c96]">
+            Use one tool area to add estimate items. Manual entry still creates a reusable
+            catalog item first, then adds a locked estimate snapshot to this estimate.
+          </div>
+          <div className="mb-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setShowCreateItemForm((current) => !current)}
+              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d7deea] bg-white px-4 text-[14px] font-medium text-[#28456f]"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add manual item</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowCreateItemForm(false);
+                catalogSearchInputRef.current?.focus();
+              }}
+              className="inline-flex h-10 items-center gap-2 rounded-[8px] bg-[#1f5fd6] px-4 text-[14px] font-medium text-white"
+            >
+              <Package className="h-4 w-4" />
+              <span>Add from catalog</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowCreateItemForm(false);
+                catalogSearchInputRef.current?.blur();
+              }}
+              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d7deea] bg-white px-4 text-[14px] font-medium text-[#28456f]"
+            >
+              <FileDown className="h-4 w-4" />
+              <span>Import from another estimate</span>
+            </button>
+          </div>
+          <div className="mb-4 rounded-[10px] border border-[#d7deea] bg-white px-3 py-3 text-[12px] leading-5 text-[#6b7c96]">
+            Manual one-off entry does not create disconnected billing rows. If you need a new
+            item, add it here as a catalog-backed estimate item. Save-to-catalog-later is not
+            available in this pass.
+          </div>
+          <div className="mb-4">
+            <EstimateImportChooser
+              estimateStatus={estimateStatus}
+              importSourceEstimates={importSourceEstimates}
+              onImportLineItemsFromEstimate={onImportLineItemsFromEstimate}
+              onImportReusableContentFromEstimate={onImportReusableContentFromEstimate}
+            />
           </div>
           <div className="mb-3">
             <label className="text-[12px] font-medium text-[#5d6f8a]">
-              Search active inventory or systems
+              Add from catalog / cost database
               <div className="mt-1.5 flex h-11 items-center rounded-[8px] border border-[#d7deea] bg-white px-3">
                 <Search className="h-4 w-4 text-[#7b8aa3]" />
                 <input
+                  ref={catalogSearchInputRef}
                   value={itemSearch}
                   onChange={(event) => setItemSearch(event.target.value)}
                   onKeyDown={(event) => {
@@ -279,7 +353,7 @@ export function ItemsSection({
                     event.preventDefault();
                     onQuickAddCatalogItem(firstQuickAddItem.id);
                   }}
-                  placeholder="Search active items and systems"
+                  placeholder="Search reusable items and systems"
                   className="h-full w-full border-0 bg-transparent px-3 text-[14px] text-[#334a70] outline-none"
                 />
               </div>
@@ -287,18 +361,18 @@ export function ItemsSection({
           </div>
           {firstQuickAddItem ? (
             <div className="mb-3 text-[12px] text-[#6b7c96]">
-              Press Enter to add <span className="font-medium text-[#334a70]">{firstQuickAddItem.name}</span>.
+              Press Enter to add <span className="font-medium text-[#334a70]">{firstQuickAddItem.name}</span> as an estimate item.
             </div>
           ) : null}
           <div className="flex flex-wrap items-end gap-3">
             <label className="min-w-[260px] flex-1 text-[12px] font-medium text-[#5d6f8a]">
-              Inventory item
+              Catalog / cost database item
               <select
                 value={selectedCatalogItemId}
                 onChange={(event) => onSelectedCatalogItemIdChange(event.target.value)}
                 className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
               >
-                <option value="">Select inventory item</option>
+                <option value="">Select catalog item</option>
                 {directCatalogItems.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.name} ({item.itemType})
@@ -313,21 +387,13 @@ export function ItemsSection({
               className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-[#1f5fd6] px-4 text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:bg-[#9fb7ea]"
             >
               <Package className="h-4 w-4" />
-              <span>Add Item</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowCreateItemForm((current) => !current)}
-              className="inline-flex h-11 items-center gap-2 rounded-[8px] border border-[#d7deea] bg-white px-4 text-[14px] font-medium text-[#28456f]"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Create New Item</span>
+              <span>Add from catalog</span>
             </button>
           </div>
           {quickAddItems.length > 0 ? (
             <div className="mt-3">
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7a8aa3]">
-                Quick Matches
+                Catalog quick matches
               </div>
               <div className="flex flex-wrap gap-2">
                 {quickAddItems.map((item) => (
@@ -347,7 +413,8 @@ export function ItemsSection({
           {showCreateItemForm ? (
             <div className="mt-3 rounded-[10px] border border-[#d7deea] bg-white p-3">
               <div className="mb-2 text-[12px] leading-5 text-[#6b7c96]">
-                Create a small inventory item and add it to this estimate immediately.
+                Add a manual one-off estimate item by creating the reusable catalog item first, then
+                adding it to this estimate immediately.
               </div>
               <div className="grid gap-3 md:grid-cols-3">
                 <label className="text-[12px] font-medium text-[#5d6f8a]">
@@ -432,7 +499,7 @@ export function ItemsSection({
                   disabled={!canSubmitQuickCreate}
                   className="rounded-[8px] bg-[#1f5fd6] px-4 py-2 text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:bg-[#9fb7ea]"
                 >
-                  Create and Add
+                  Create item and add to estimate
                 </button>
               </div>
             </div>
@@ -441,11 +508,15 @@ export function ItemsSection({
 
         <div className="rounded-[12px] border border-[#dfe5ef] bg-[#fbfcfe] p-4">
           <div className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
-            System Expansion
+            Add system from catalog
+          </div>
+          <div className="mb-3 text-[13px] leading-5 text-[#6b7c96]">
+            Use reusable systems from the cost database, preview the server-built estimate items,
+            then add the preview into this estimate.
           </div>
           <div className="flex flex-wrap items-end gap-3">
             <label className="min-w-[220px] flex-1 text-[12px] font-medium text-[#5d6f8a]">
-              System
+              Catalog system
               <select
                 value={selectedSystemId}
                 onChange={(event) => onSelectedSystemIdChange(event.target.value)}
@@ -474,7 +545,7 @@ export function ItemsSection({
               className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-[#23395d] px-4 text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:bg-[#a9b6c8]"
             >
               <Search className="h-4 w-4" />
-              <span>{isPreviewPending ? "Previewing..." : "Preview System"}</span>
+              <span>{isPreviewPending ? "Previewing..." : "Preview estimate items"}</span>
             </button>
             <button
               type="button"
@@ -483,11 +554,12 @@ export function ItemsSection({
               className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-[#1f5fd6] px-4 text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:bg-[#9fb7ea]"
             >
               <Plus className="h-4 w-4" />
-              <span>Add Preview to Estimate</span>
+              <span>Add system items</span>
             </button>
           </div>
           <div className="mt-3 text-[13px] leading-5 text-[#6b7c96]">
-            Choose a catalog system, enter sqft, then preview. The preview comes from the server and uses the same expansion logic as estimate persistence.
+            Choose a catalog system, enter sqft, then preview. The preview comes from the server
+            and uses the same expansion logic as estimate persistence.
           </div>
           {systemPreviewMessage ? (
             <div className="mt-3 rounded-[8px] border border-[#d7deea] bg-white px-3 py-2 text-[13px] text-[#48617f]">
@@ -635,7 +707,9 @@ export function ItemsSection({
       </div>
 
       <div className="border-b border-[#e6e9ef] bg-[#fbfcfe] px-4 py-3 text-[12px] leading-6 text-[#7c8ba3]">
-        Pricing is a locked commercial snapshot from inventory or server-expanded systems. Only quantity, grouping, and assignment remain editable in this workspace.
+        Estimate items are locked commercial snapshots from catalog entries or server-expanded
+        systems. Only quantity, grouping, and assignment remain editable here, and downstream
+        billing does not read live estimate editing rows.
       </div>
 
       <div className="min-h-[720px] bg-[#f8f9fc] p-4">
@@ -751,11 +825,11 @@ export function ItemsSection({
                               {lineItem.name}
                             </div>
                             <div className="min-h-7 px-0 text-[12px] text-[#8694ab]">
-                              {lineItem.description || "Catalog snapshot"}
+                              {lineItem.description || "Estimate item snapshot from catalog"}
                             </div>
                             <div className="inline-flex w-fit items-center gap-1 rounded-full bg-[#eef3fb] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
                               <Lock className="h-3 w-3" />
-                              <span>Locked Snapshot</span>
+                              <span>Locked Estimate Snapshot</span>
                             </div>
                           </div>
                         </td>

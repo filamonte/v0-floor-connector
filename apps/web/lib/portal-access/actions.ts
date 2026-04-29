@@ -1,15 +1,23 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import {
-  createPortalAccessGrant,
+  acceptPortalInvite,
+  createPortalInvite,
+  updateCustomerContactPortalPermission,
   createPortalProjectAccess,
-  findPortalUserByEmail,
   updatePortalAccessGrant,
+  updatePortalAccessGrantStatus,
   updatePortalProjectAccess
 } from "./data";
+import {
+  customerContactPortalPermissionInputSchema,
+  portalInviteInputSchema
+} from "./schemas";
+import { getRequestOrigin } from "@/lib/auth/urls";
 
 function getFieldValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -41,16 +49,27 @@ function getPortalGrantStatus(formData: FormData) {
   return status === "active" || status === "revoked" ? status : "invited";
 }
 
+function getOptionalCustomerContactId(formData: FormData) {
+  const value = getFieldValue(formData, "customerContactId").trim();
+
+  return value.length > 0 ? value : null;
+}
+
 function getPortalProjectStatus(formData: FormData) {
   const status = getFieldValue(formData, "status");
 
   return status === "revoked" ? "revoked" : "active";
 }
 
+function getCheckboxValue(formData: FormData, key: string) {
+  return formData.get(key) === "on";
+}
+
 export async function createPortalAccessGrantAction(formData: FormData) {
   const customerId = getFieldValue(formData, "customerId");
+  const customerContactId = getOptionalCustomerContactId(formData);
   const portalUserEmail = getFieldValue(formData, "portalUserEmail").trim().toLowerCase();
-  const status = getPortalGrantStatus(formData);
+  const projectId = getFieldValue(formData, "projectId");
 
   if (!customerId) {
     redirect(
@@ -68,42 +87,29 @@ export async function createPortalAccessGrantAction(formData: FormData) {
     );
   }
 
-  let portalUser;
+  const parsedInvite = portalInviteInputSchema.safeParse({
+    customerId,
+    customerContactId,
+    projectId,
+    invitedEmail: portalUserEmail
+  });
 
-  try {
-    portalUser = await findPortalUserByEmail(portalUserEmail);
-  } catch (error) {
+  if (!parsedInvite.success) {
     redirect(
       buildRedirect(getCustomerPath(customerId), {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Unable to resolve the portal user email."
+        error: parsedInvite.error.issues[0]?.message ?? "Unable to create portal invite."
       })
     );
   }
 
-  if (!portalUser) {
-    redirect(
-      buildRedirect(getCustomerPath(customerId), {
-        error:
-          "That email does not belong to an authenticated FloorConnector user yet. Have them sign in first, then grant portal access."
-      })
-    );
-  }
-
+  let inviteResult;
   try {
-    await createPortalAccessGrant({
-      customerId,
-      userId: portalUser.id,
-      invitedEmail: portalUserEmail,
-      status
-    });
+    inviteResult = await createPortalInvite(parsedInvite.data);
   } catch (error) {
     redirect(
       buildRedirect(getCustomerPath(customerId), {
         error:
-          error instanceof Error ? error.message : "Unable to create portal access."
+          error instanceof Error ? error.message : "Unable to create portal invite."
       })
     );
   }
@@ -112,9 +118,23 @@ export async function createPortalAccessGrantAction(formData: FormData) {
   revalidatePath(getCustomerPath(customerId));
   revalidatePath("/portal");
 
+  const requestHeaders = await headers();
+  const origin = getRequestOrigin(requestHeaders);
+  const inviteUrl = inviteResult.inviteToken
+    ? `${origin}/portal/invite?token=${encodeURIComponent(inviteResult.inviteToken)}`
+    : undefined;
+
   redirect(
     buildRedirect(getCustomerPath(customerId), {
-      message: `Portal access for ${portalUserEmail} was created successfully.`
+      message: inviteResult.reusedExistingGrant
+        ? inviteResult.activatedImmediately
+          ? `Existing portal access for ${portalUserEmail} was scoped to the selected project.`
+          : `A pending portal invite already exists for ${portalUserEmail}. Revoke it and create a fresh invite if the original link is no longer available.`
+        : inviteResult.activatedImmediately
+          ? `Portal access for ${portalUserEmail} was activated and scoped to the selected project.`
+          : `Portal invite for ${portalUserEmail} was created. Copy the invite link from this page.`,
+      inviteUrl,
+      inviteEmail: inviteResult.invitedEmail
     })
   );
 }
@@ -122,11 +142,12 @@ export async function createPortalAccessGrantAction(formData: FormData) {
 export async function updatePortalAccessGrantStatusAction(formData: FormData) {
   const portalAccessGrantId = getFieldValue(formData, "portalAccessGrantId");
   const customerId = getFieldValue(formData, "customerId");
+  const customerContactId = getOptionalCustomerContactId(formData);
   const userId = getFieldValue(formData, "userId");
   const invitedEmail = getFieldValue(formData, "invitedEmail").trim().toLowerCase();
   const status = getPortalGrantStatus(formData);
 
-  if (!portalAccessGrantId || !customerId || !userId) {
+  if (!portalAccessGrantId || !customerId) {
     redirect(
       buildRedirect("/customers", {
         error: "Portal access update is missing required identifiers."
@@ -135,12 +156,23 @@ export async function updatePortalAccessGrantStatusAction(formData: FormData) {
   }
 
   try {
-    await updatePortalAccessGrant(portalAccessGrantId, {
-      customerId,
-      userId,
-      invitedEmail,
-      status
-    });
+    if (userId) {
+      await updatePortalAccessGrant(portalAccessGrantId, {
+        customerId,
+        customerContactId,
+        userId,
+        invitedEmail,
+        status
+      });
+    } else {
+      if (status === "active") {
+        throw new Error(
+          "Pending invites cannot be activated by a contractor. The invited customer must accept the portal invite."
+        );
+      }
+
+      await updatePortalAccessGrantStatus(portalAccessGrantId, status);
+    }
   } catch (error) {
     redirect(
       buildRedirect(getCustomerPath(customerId), {
@@ -160,6 +192,55 @@ export async function updatePortalAccessGrantStatusAction(formData: FormData) {
         status === "revoked"
           ? "Portal access was revoked."
           : "Portal access was updated."
+    })
+  );
+}
+
+export async function updatePortalAccessGrantLinkAction(formData: FormData) {
+  const portalAccessGrantId = getFieldValue(formData, "portalAccessGrantId");
+  const customerId = getFieldValue(formData, "customerId");
+  const customerContactId = getOptionalCustomerContactId(formData);
+  const userId = getFieldValue(formData, "userId");
+  const invitedEmail = getFieldValue(formData, "invitedEmail").trim().toLowerCase();
+  const status = getPortalGrantStatus(formData);
+
+  if (!portalAccessGrantId || !customerId || !userId) {
+    redirect(
+      buildRedirect("/customers", {
+        error: "Portal access link update is missing required identifiers."
+      })
+    );
+  }
+
+  try {
+    await updatePortalAccessGrant(portalAccessGrantId, {
+      customerId,
+      customerContactId,
+      userId,
+      invitedEmail,
+      status
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect(getCustomerPath(customerId), {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to update the related customer contact for portal access."
+      })
+    );
+  }
+
+  revalidatePath("/customers");
+  revalidatePath(getCustomerPath(customerId));
+  revalidatePath("/directory");
+  revalidatePath("/portal");
+
+  redirect(
+    buildRedirect(getCustomerPath(customerId), {
+      message: customerContactId
+        ? "Portal access was linked to the selected customer contact."
+        : "Portal access now remains a customer-level grant."
     })
   );
 }
@@ -247,6 +328,100 @@ export async function updatePortalProjectAccessStatusAction(formData: FormData) 
         status === "revoked"
           ? "Project portal visibility was revoked."
           : "Project portal visibility was reactivated."
+    })
+  );
+}
+
+export async function updateCustomerContactPortalPermissionAction(formData: FormData) {
+  const portalAccessGrantId = getFieldValue(formData, "portalAccessGrantId");
+  const customerId = getFieldValue(formData, "customerId");
+  const customerContactId = getFieldValue(formData, "customerContactId");
+
+  const result = customerContactPortalPermissionInputSchema.safeParse({
+    portalAccessGrantId,
+    customerContactId,
+    canViewEstimates: getCheckboxValue(formData, "canViewEstimates"),
+    canApproveEstimates: getCheckboxValue(formData, "canApproveEstimates"),
+    canSignContracts: getCheckboxValue(formData, "canSignContracts"),
+    canApproveChangeOrders: getCheckboxValue(formData, "canApproveChangeOrders"),
+    canViewPayInvoices: getCheckboxValue(formData, "canViewPayInvoices"),
+    canRequestQuotes: getCheckboxValue(formData, "canRequestQuotes")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(getCustomerPath(customerId || ""), {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to update stored portal permissions."
+      })
+    );
+  }
+
+  try {
+    await updateCustomerContactPortalPermission(result.data);
+  } catch (error) {
+    redirect(
+      buildRedirect(getCustomerPath(customerId), {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to update stored portal permissions."
+      })
+    );
+  }
+
+  revalidatePath("/customers");
+  revalidatePath(getCustomerPath(customerId));
+  revalidatePath("/directory");
+  revalidatePath("/portal");
+
+  redirect(
+    buildRedirect(getCustomerPath(customerId), {
+      message: "Stored portal permissions were updated."
+    })
+  );
+}
+
+export async function acceptPortalInviteAction(formData: FormData) {
+  const token = getFieldValue(formData, "token");
+
+  if (!token) {
+    redirect(
+      buildRedirect("/portal/invite", {
+        error: "Portal invite token is missing."
+      })
+    );
+  }
+
+  let result;
+
+  try {
+    result = await acceptPortalInvite(token);
+  } catch (error) {
+    redirect(
+      buildRedirect(`/portal/invite`, {
+        token,
+        error:
+          error instanceof Error ? error.message : "Unable to accept portal invite."
+      })
+    );
+  }
+
+  revalidatePath("/portal");
+
+  if (!result.accepted || !result.projectId) {
+    redirect(
+      buildRedirect(`/portal/invite`, {
+        token,
+        error: result.message
+      })
+    );
+  }
+
+  redirect(
+    buildRedirect(`/portal/projects/${result.projectId}`, {
+      message: result.message
     })
   );
 }
