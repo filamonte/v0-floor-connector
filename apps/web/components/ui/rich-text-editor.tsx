@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   AlignCenter,
   AlignLeft,
@@ -114,10 +114,7 @@ export function RichTextEditor({
   const [isFocused, setIsFocused] = useState(false);
   const modeDefaults = useMemo(() => getModeDefaults(mode), [mode]);
   const resolvedMinHeight = minHeight ?? modeDefaults.minHeight;
-  const editorId = useMemo(
-    () => `rich-editor-${Math.random().toString(36).slice(2, 10)}`,
-    []
-  );
+  const editorId = `rich-editor-${useId().replace(/:/g, "")}`;
 
   useEffect(() => {
     const nextValue = value ?? "";

@@ -77,13 +77,18 @@ type ItemsSectionProps = {
   visibleCatalogItems: CatalogItem[];
   selectedCatalogItemId: string;
   selectedSystemId: string;
+  systemInputMode: "dimensions" | "direct";
+  systemLength: string;
+  systemWidth: string;
   systemSquareFootage: string;
+  systemLinearFootage: string;
+  systemCount: string;
   systemPreview: ExpandedSystemPreview | null;
   systemPreviewMessage?: string | null;
   isPreviewPending?: boolean;
   onSelectedCatalogItemIdChange: (value: string) => void;
   onSelectedSystemIdChange: (value: string) => void;
-  onSystemSquareFootageChange: (value: string) => void;
+  onSystemMeasurementChange: (field: string, value: string) => void;
   onAddCatalogItem: () => void;
   onQuickAddCatalogItem: (catalogItemId: string) => void;
   onImportLineItemsFromEstimate: (
@@ -221,13 +226,18 @@ export function ItemsSection({
   visibleCatalogItems,
   selectedCatalogItemId,
   selectedSystemId,
+  systemInputMode,
+  systemLength,
+  systemWidth,
   systemSquareFootage,
+  systemLinearFootage,
+  systemCount,
   systemPreview,
   systemPreviewMessage,
   isPreviewPending = false,
   onSelectedCatalogItemIdChange,
   onSelectedSystemIdChange,
-  onSystemSquareFootageChange,
+  onSystemMeasurementChange,
   onAddCatalogItem,
   onQuickAddCatalogItem,
   onImportLineItemsFromEstimate,
@@ -248,6 +258,7 @@ export function ItemsSection({
   const catalogSearchInputRef = useRef<HTMLInputElement | null>(null);
   const [itemSearch, setItemSearch] = useState("");
   const [showCreateItemForm, setShowCreateItemForm] = useState(false);
+  const [showImportTools, setShowImportTools] = useState(false);
   const [quickItemName, setQuickItemName] = useState("");
   const [quickItemType, setQuickItemType] = useState<CatalogItemType>("material");
   const [quickItemUnit, setQuickItemUnit] = useState("each");
@@ -282,20 +293,16 @@ export function ItemsSection({
         visibleItemCount={visibleItemCount}
       />
 
-      <div className="grid gap-4 border-b border-[#e6e9ef] px-4 py-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-        <div className="rounded-[12px] border border-[#dfe5ef] bg-[#fbfcfe] p-4">
+      <div className="grid gap-4 border-b border-[#e6e9ef] px-4 py-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
+        <div className="order-2 rounded-[12px] border border-[#dfe5ef] bg-white p-4 xl:order-2">
           <div className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
-            Estimating Tools
-          </div>
-          <div className="mb-3 text-[13px] leading-5 text-[#6b7c96]">
-            Use one tool area to add estimate items. Manual entry still creates a reusable
-            catalog item first, then adds a locked estimate snapshot to this estimate.
+            More ways to add items
           </div>
           <div className="mb-4 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setShowCreateItemForm((current) => !current)}
-              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d7deea] bg-white px-4 text-[14px] font-medium text-[#28456f]"
+              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d7deea] bg-white px-4 text-[14px] font-medium text-[#607492]"
             >
               <Plus className="h-4 w-4" />
               <span>Add manual item</span>
@@ -306,7 +313,7 @@ export function ItemsSection({
                 setShowCreateItemForm(false);
                 catalogSearchInputRef.current?.focus();
               }}
-              className="inline-flex h-10 items-center gap-2 rounded-[8px] bg-[#1f5fd6] px-4 text-[14px] font-medium text-white"
+              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d7deea] bg-white px-4 text-[14px] font-medium text-[#28456f]"
             >
               <Package className="h-4 w-4" />
               <span>Add from catalog</span>
@@ -315,27 +322,31 @@ export function ItemsSection({
               type="button"
               onClick={() => {
                 setShowCreateItemForm(false);
-                catalogSearchInputRef.current?.blur();
+                setShowImportTools((current) => !current);
               }}
-              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d7deea] bg-white px-4 text-[14px] font-medium text-[#28456f]"
+              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d7deea] bg-white px-4 text-[14px] font-medium text-[#607492]"
             >
               <FileDown className="h-4 w-4" />
-              <span>Import from another estimate</span>
+              <span>Import</span>
             </button>
           </div>
-          <div className="mb-4 rounded-[10px] border border-[#d7deea] bg-white px-3 py-3 text-[12px] leading-5 text-[#6b7c96]">
-            Manual one-off entry does not create disconnected billing rows. If you need a new
-            item, add it here as a catalog-backed estimate item. Save-to-catalog-later is not
-            available in this pass.
-          </div>
-          <div className="mb-4">
-            <EstimateImportChooser
-              estimateStatus={estimateStatus}
-              importSourceEstimates={importSourceEstimates}
-              onImportLineItemsFromEstimate={onImportLineItemsFromEstimate}
-              onImportReusableContentFromEstimate={onImportReusableContentFromEstimate}
-            />
-          </div>
+          <details
+            open={showImportTools}
+            onToggle={(event) => setShowImportTools(event.currentTarget.open)}
+            className="mb-4 rounded-[10px] border border-[#d7deea] bg-[#fbfcfe] px-3 py-3"
+          >
+            <summary className="cursor-pointer text-[13px] font-medium text-[#48617f]">
+              Import from another estimate
+            </summary>
+            <div className="mt-3">
+              <EstimateImportChooser
+                estimateStatus={estimateStatus}
+                importSourceEstimates={importSourceEstimates}
+                onImportLineItemsFromEstimate={onImportLineItemsFromEstimate}
+                onImportReusableContentFromEstimate={onImportReusableContentFromEstimate}
+              />
+            </div>
+          </details>
           <div className="mb-3">
             <label className="text-[12px] font-medium text-[#5d6f8a]">
               Add from catalog / cost database
@@ -506,13 +517,20 @@ export function ItemsSection({
           ) : null}
         </div>
 
-        <div className="rounded-[12px] border border-[#dfe5ef] bg-[#fbfcfe] p-4">
-          <div className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
-            Add system from catalog
+        <div
+          id="system-estimate-builder"
+          className="order-1 rounded-[14px] border border-[#efb583] bg-[linear-gradient(180deg,#fff7ef,#ffffff)] p-5 shadow-[0_22px_55px_-42px_rgba(239,125,50,0.95)] xl:order-1"
+        >
+          <div className="mb-2 inline-flex rounded-full bg-[#ef7d32] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white">
+            Generate from System
           </div>
-          <div className="mb-3 text-[13px] leading-5 text-[#6b7c96]">
-            Use reusable systems from the cost database, preview the server-built estimate items,
-            then add the preview into this estimate.
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold tracking-tight text-[#2b2118]">
+              Generate Estimate from System
+            </h2>
+            <p className="mt-1 text-[13px] leading-5 text-[#6b5a4f]">
+              Pick a floor system, enter Length x Width, then generate the estimate items.
+            </p>
           </div>
           <div className="flex flex-wrap items-end gap-3">
             <label className="min-w-[220px] flex-1 text-[12px] font-medium text-[#5d6f8a]">
@@ -530,36 +548,105 @@ export function ItemsSection({
                 ))}
               </select>
             </label>
-            <label className="w-[140px] text-[12px] font-medium text-[#5d6f8a]">
-              Sqft
-              <input
-                value={systemSquareFootage}
-                onChange={(event) => onSystemSquareFootageChange(event.target.value)}
-                className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
-              />
-            </label>
+            <div className="w-full">
+              <div className="mb-2 inline-flex overflow-hidden rounded-[8px] border border-[#d7deea] bg-white text-[13px] font-medium">
+                <button
+                  type="button"
+                  onClick={() => onSystemMeasurementChange("inputMode", "dimensions")}
+                  className={systemInputMode === "dimensions" ? "bg-[#23395d] px-3 py-2 text-white" : "px-3 py-2 text-[#5d6f8a]"}
+                >
+                  Length x Width
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSystemMeasurementChange("inputMode", "direct")}
+                  className={systemInputMode === "direct" ? "bg-[#23395d] px-3 py-2 text-white" : "px-3 py-2 text-[#5d6f8a]"}
+                >
+                  Direct Area + LF
+                </button>
+              </div>
+              {systemInputMode === "dimensions" ? (
+                <div className="grid gap-3 md:grid-cols-4">
+                  <label className="text-[12px] font-medium text-[#5d6f8a]">
+                    Length
+                    <input
+                      value={systemLength}
+                      onChange={(event) => onSystemMeasurementChange("length", event.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
+                    />
+                  </label>
+                  <label className="text-[12px] font-medium text-[#5d6f8a]">
+                    Width
+                    <input
+                      value={systemWidth}
+                      onChange={(event) => onSystemMeasurementChange("width", event.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
+                    />
+                  </label>
+                  <label className="text-[12px] font-medium text-[#5d6f8a]">
+                    Area
+                    <input
+                      value={systemSquareFootage}
+                      readOnly
+                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-[#f5f7fb] px-3 text-[14px] text-[#334a70] outline-none"
+                    />
+                  </label>
+                  <label className="text-[12px] font-medium text-[#5d6f8a]">
+                    Perimeter / LF
+                    <input
+                      value={systemLinearFootage}
+                      readOnly
+                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-[#f5f7fb] px-3 text-[14px] text-[#334a70] outline-none"
+                    />
+                  </label>
+                </div>
+              ) : (
+                <div className="grid gap-3 md:grid-cols-3">
+                  <label className="text-[12px] font-medium text-[#5d6f8a]">
+                    Direct Area
+                    <input
+                      value={systemSquareFootage}
+                      onChange={(event) => onSystemMeasurementChange("area", event.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
+                    />
+                  </label>
+                  <label className="text-[12px] font-medium text-[#5d6f8a]">
+                    Direct Linear Footage
+                    <input
+                      value={systemLinearFootage}
+                      onChange={(event) => onSystemMeasurementChange("linearFootage", event.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
+                    />
+                  </label>
+                  <label className="text-[12px] font-medium text-[#5d6f8a]">
+                    Count
+                    <input
+                      value={systemCount}
+                      onChange={(event) => onSystemMeasurementChange("count", event.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
+                    />
+                  </label>
+                </div>
+              )}
+            </div>
             <button
               type="button"
               onClick={onPreviewSystem}
               disabled={!selectedSystemId || getNumericValue(systemSquareFootage) <= 0}
-              className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-[#23395d] px-4 text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:bg-[#a9b6c8]"
+              className="inline-flex h-11 items-center gap-2 rounded-[8px] border border-[#d8be9f] bg-white px-4 text-[14px] font-medium text-[#5f3b20] disabled:cursor-not-allowed disabled:text-[#b7a594]"
             >
               <Search className="h-4 w-4" />
-              <span>{isPreviewPending ? "Previewing..." : "Preview estimate items"}</span>
+              <span>{isPreviewPending ? "Previewing..." : "Preview system"}</span>
             </button>
             <button
               type="button"
               onClick={onExpandSystem}
               disabled={!systemPreview || isPreviewPending}
-              className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-[#1f5fd6] px-4 text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:bg-[#9fb7ea]"
+              className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-[#ef7d32] px-5 text-[14px] font-semibold text-white shadow-[0_14px_30px_-20px_rgba(239,125,50,0.9)] disabled:cursor-not-allowed disabled:bg-[#e6b894]"
             >
               <Plus className="h-4 w-4" />
-              <span>Add system items</span>
+              <span>Generate items</span>
             </button>
-          </div>
-          <div className="mt-3 text-[13px] leading-5 text-[#6b7c96]">
-            Choose a catalog system, enter sqft, then preview. The preview comes from the server
-            and uses the same expansion logic as estimate persistence.
           </div>
           {systemPreviewMessage ? (
             <div className="mt-3 rounded-[8px] border border-[#d7deea] bg-white px-3 py-2 text-[13px] text-[#48617f]">
@@ -886,13 +973,16 @@ export function ItemsSection({
                         <td className="px-2 py-3 text-right">
                           <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2">
                             <div className="text-[15px] text-[#334a70]">
-                              ${getNumericValue(lineItem.baseUnitPrice).toFixed(2)}
+                              <input
+                                value={lineItem.unitPrice}
+                                onChange={(event) =>
+                                  onLineItemChange(lineItem.rowKey, "unitPrice", event.target.value)
+                                }
+                                className="h-8 w-full rounded-[6px] border border-[#d7deea] bg-white px-2 text-right text-[15px] text-[#334a70] outline-none"
+                              />
                             </div>
                             <div className="mt-1 text-[12px] text-[#8694ab]">
-                              Pre-hidden ${getNumericValue(lineItem.unitPriceBeforeHiddenMarkup).toFixed(2)}
-                            </div>
-                            <div className="mt-1 text-[12px] font-medium text-[#334a70]">
-                              {lineItem.unitPrice}
+                              Catalog base ${getNumericValue(lineItem.baseUnitPrice).toFixed(2)}
                             </div>
                           </div>
                         </td>

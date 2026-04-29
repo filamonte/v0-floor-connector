@@ -66,6 +66,16 @@ The key distinction is:
 - canonical records are durable business entities stored in the shared system model
 - supporting workflow stages are operational checkpoints that move canonical records forward
 
+Estimating terminology:
+- Measurements are manual inputs such as length x width, direct square footage, direct linear footage, and counts.
+- Takeoff means plan, PDF, or drawing-based measurement.
+- AI Capture is a future photo, app, or AI-derived measurement input method.
+- Catalog/Cost Items define reusable pricing, cost, production, markup, and tax behavior.
+- System Templates are reusable estimating systems made from catalog/cost items, formulas, grouping rules, optional components, and required inputs.
+- Estimates are customer-facing commercial scope and price.
+
+Boundary rule: Takeoff and measurements produce quantities. Catalog/cost items define reusable cost, pricing, production, markup, and tax behavior. System Templates map quantities to grouped estimate content. Estimates define customer-facing pricing and commercial scope.
+
 ## Current Implemented Workflows
 
 The current app already supports the following live workflows:
@@ -120,7 +130,7 @@ Implemented flow:
 - estimates are created from project context
 - estimate authoring is cost-item-first:
   - active `catalog_items` can be added directly
-  - reusable systems expand by sqft through shared system logic
+  - reusable systems expand through shared system logic from length x width or direct area plus linear footage
   - quick create from the estimate workspace saves a minimal new `catalog_items` record first, then adds it to the estimate
 - `catalog_items` are the canonical reusable sellable cost item database; physical stock now belongs in `inventory_items`
 - inventory remains optional per organization and never blocks cost item selection in estimates
@@ -144,16 +154,21 @@ Current canonical records involved:
 
 Future workflow guidance:
 - Takeoff & Scope Intelligence may become a supporting pre-estimate workflow stage between opportunity/site assessment and estimate authoring
-- future inputs may include customer-provided plans/photos, contractor site data, measurements, requirements, and uploaded plan or image files
-- takeoff should stay project-scoped and feed estimate creation through reviewed quantities mapped to reusable catalog/cost items
-- Takeoff produces quantities. Catalog/cost items define reusable cost, pricing, production, and tax behavior. Estimates define customer-facing pricing and commercial scope.
+- future inputs may include Measurements, Takeoff, AI Capture, customer-provided plans/photos, contractor site data, requirements, and uploaded plan or image files
+- manual measurement-driven estimating should support length x width, direct floor area, direct linear footage, counts, and optional room/zone detail before full takeoff exists and after full takeoff exists
+- example measurement formulas include L x W for floor square footage and `(L x 2) + (W x 2)` for perimeter linear footage
+- integrated cove base and vinyl cove base are measured in linear feet and may be generated from perimeter or entered directly
+- takeoff should stay project-scoped and feed estimate creation through reviewed quantities mapped to System Templates and reusable catalog/cost items
+- Takeoff and measurements produce quantities. Catalog/cost items define reusable cost, pricing, production, markup, and tax behavior. System Templates map quantities to grouped estimate content. Estimates define customer-facing pricing and commercial scope.
 - takeoff is not a replacement for estimates; the canonical estimate remains the commercial scope record and the customer-facing pricing proposal
-- the intended future flow is `Lead / Opportunity -> Customer + Project -> Site Info / Plans / Photos -> Takeoff -> Cost Item Mapping -> Estimate Line Items -> Estimate -> Contract -> Job -> Invoice -> Payment`
+- the intended future flow is `Lead / Opportunity -> Customer + Project -> Site Info / Measurements / Plans / Photos -> Measurement, Takeoff, or AI Capture -> System Template -> Catalog/Cost Item Mapping -> Grouped Estimate Line Items -> Estimate -> Contract -> Job -> Invoice -> Payment`
 - conceptual future objects may include `takeoffs`, `takeoff_documents`, `takeoff_measurements`, `takeoff_scope_items`, and `takeoff_estimate_links`, but these are not existing tables and should not be treated as implemented schema
 - raw takeoff measurements should not own pricing; pricing belongs in catalog/cost items and estimate line items
 - generated estimate line items should retain future source linkage back to the approved takeoff scope item, the takeoff measurement, and the source document or photo when applicable
 - if a takeoff changes after estimate line items have been generated, the future takeoff-estimate link or estimate should be flagged as out of sync until a user reviews it
-- AI-assisted measurements, scope suggestions, and cost-item mapping suggestions must remain reviewable and explicitly contractor-approved before they become customer-facing estimate content
+- Quick Build should let a contractor select a System Template, enter minimal measurements, and generate grouped estimate lines for review
+- Detailed Build should support multiple rooms/zones, options, conditions, waste factors, optional components, overrides, and review before generation
+- AI-assisted measurements, area suggestions, system suggestions, scope suggestions, estimate drafts, and cost-item mapping suggestions must remain reviewable and explicitly contractor-approved before they become customer-facing estimate content
 - takeoff quantities may eventually inform material requirements, labor estimation, production readiness, and job planning, but there should be no direct takeoff-to-invoice flow
 
 Customer-account guardrail for downstream commercial flows:
@@ -377,7 +392,16 @@ Today, the app should be understood this way:
 - customer estimate approval is portal-based and writes to the same canonical estimate record
 - estimate approval creates an immutable commercial snapshot and does not auto-run contract, SOV, invoice, or payment actions
 - Cost Items Database is the reusable item master module behind estimate authoring, systems, and optional inventory
-- future catalog/cost item design should treat default markup as internal cost behavior that can be overridden on an estimate and kept out of customer-facing output
+- future catalog/cost item design should treat default cost, markup, labor, production, price, and tax behavior as internal cost behavior that can be overridden intentionally on an estimate and kept out of customer-facing output
+- customer-facing estimates should show only customer-facing descriptions, quantities, unit prices, and totals; markup and internal cost should not appear on customer-facing estimate output
+- one-off estimate-line price overrides should affect that estimate line, while catalog/cost item updates should affect future estimates only
+- quick system generation now supports V1 manual measurements inside the existing estimate editor:
+  - length x width calculates floor area and perimeter
+  - direct area and direct linear footage are accepted when the contractor already knows field quantities
+  - area-based system components use sqft, perimeter-based components use LF, and count-based components use count
+  - generated lines remain editable canonical estimate line items
+- imported estimate lines should preserve their snapshot price, markup, and override behavior; new lines added from catalog should use current item defaults
+- past estimates should not mutate when catalog defaults change
 - approved estimate snapshots feed downstream contract generation, SOV provisioning, and direct estimate-based invoice lineage
 - change orders append approved scope changes through immutable change-order snapshots rather than mutating prior approved scope
 - contracts now carry the live customer-facing signature workflow on the same canonical contract record across contractor and portal surfaces

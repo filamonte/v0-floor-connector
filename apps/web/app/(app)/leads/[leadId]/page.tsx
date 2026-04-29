@@ -4,7 +4,10 @@ import { notFound } from "next/navigation";
 import { AppEmptyState } from "@/components/app-empty-state";
 import { DirectoryContextCard } from "@/components/directory-context-card";
 import { LinkedRecordCard } from "@/components/linked-record-card";
+import { NextActionCard } from "@/components/next-action-card";
 import { OpportunityForm } from "@/components/opportunity-form";
+import { StandardWorkspaceLayout } from "@/components/workspace/standard-workspace-layout";
+import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { listAppointmentsByOpportunity } from "@/lib/appointments/data";
 import {
   startEstimateFromOpportunityAction,
@@ -61,6 +64,70 @@ function getStatusClasses(status: string) {
   }
 }
 
+function getLeadNextAction(input: {
+  opportunity: NonNullable<Awaited<ReturnType<typeof getOpportunityById>>>;
+  appointmentHref: string;
+  canStartEstimate: boolean;
+}) {
+  if (input.opportunity.status === "lost") {
+    return {
+      title: "Reopen the lead before scheduling or estimating",
+      description:
+        "Lost leads stay out of the appointment and estimate handoff until the status is intentionally changed.",
+      href: "#qualification",
+      label: "Review qualification",
+      kind: "link" as const
+    };
+  }
+
+  if (
+    input.opportunity.siteAssessmentStatus === "pending" ||
+    input.opportunity.status === "new" ||
+    input.opportunity.status === "contacted" ||
+    input.opportunity.status === "qualified"
+  ) {
+    return {
+      title: "Create the site visit / inspection appointment",
+      description:
+        "Finish qualification details, then schedule the site visit on this lead before converting it into the customer and project chain.",
+      href: input.appointmentHref,
+      label: "Create site visit",
+      kind: "link" as const
+    };
+  }
+
+  if (input.opportunity.siteAssessmentStatus === "scheduled") {
+    return {
+      title: "Complete the site visit and capture requirements",
+      description:
+        "A site visit is scheduled. Capture the inspection outcome and requirements summary here before estimating.",
+      href: "#site-visit",
+      label: "Update site visit",
+      kind: "link" as const
+    };
+  }
+
+  if (input.canStartEstimate) {
+    return {
+      title: "Continue to project / estimate when ready",
+      description:
+        "Assessment context is ready. Starting the estimate creates or links the canonical customer and project records without duplicating the lead.",
+      href: "#project-handoff",
+      label: "Start estimate",
+      kind: "estimate" as const
+    };
+  }
+
+  return {
+    title: "Keep lead context current",
+    description:
+      "Review qualification, contact details, site visit state, and notes so downstream handoff stays reliable.",
+    href: "#qualification",
+    label: "Review lead",
+    kind: "link" as const
+  };
+}
+
 export default async function LeadDetailPage({
   params,
   searchParams
@@ -80,6 +147,12 @@ export default async function LeadDetailPage({
     ? `/estimates?projectId=${opportunity.projectId}&opportunityId=${opportunity.id}`
     : null;
   const canStartEstimate = opportunity.status !== "lost";
+  const leadAppointmentHref = `/appointments?compose=1&opportunityId=${opportunity.id}${opportunity.customerId ? `&customerId=${opportunity.customerId}` : ""}${opportunity.projectId ? `&projectId=${opportunity.projectId}` : ""}#appointment-create`;
+  const nextAction = getLeadNextAction({
+    opportunity,
+    appointmentHref: leadAppointmentHref,
+    canStartEstimate
+  });
   const estimatingReadiness = opportunity.projectId
     ? "This opportunity is already linked into the live project and estimating chain."
     : opportunity.siteAssessmentStatus === "completed" ||
@@ -91,8 +164,111 @@ export default async function LeadDetailPage({
         : "Capture assessment timing and requirements here so the estimating handoff does not rely on re-entry later.";
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-      <section className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+    <StandardWorkspaceLayout
+      header={{
+        eyebrow: "Lead Workspace",
+        title: opportunity.title,
+        description:
+          "Qualify the lead, schedule the site visit, capture inspection context, and only then move into the canonical customer, project, and estimate chain.",
+        actions: (
+          <div className="flex flex-wrap gap-2.5">
+            <Link
+              href="/leads"
+              className="inline-flex items-center rounded-full border border-[#e2d4c5] bg-[#fbf5ee] px-3.5 py-2 text-sm font-medium text-[#5f4d40] transition hover:border-[#caac88] hover:bg-white hover:text-[#2b2118]"
+            >
+              Back to leads
+            </Link>
+            <Link
+              href={leadAppointmentHref}
+              className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+            >
+              Create site visit
+            </Link>
+          </div>
+        )
+      }}
+      sidebar={[
+        { id: "summary", label: "Workflow summary", iconName: "home", href: "#summary" },
+        { id: "qualification", label: "Qualification", iconName: "clipboard-list", href: "#qualification" },
+        { id: "contact", label: "Customer/contact", iconName: "notebook-pen", href: "#contact" },
+        { id: "site-visit", label: "Site visit", iconName: "check-square", href: "#site-visit" },
+        { id: "project-handoff", label: "Project handoff", iconName: "folder-open", href: "#project-handoff" },
+        { id: "activity", label: "Notes and activity", iconName: "file-text", href: "#activity" }
+      ]}
+      summaryBand={
+        <WorkspaceSummaryBand
+          className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)]"
+          items={[
+            {
+              key: "status",
+              label: "Qualification state",
+              content: (
+                <span
+                  className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusClasses(
+                    opportunity.status
+                  )}`}
+                >
+                  {formatStatusLabel(opportunity.status)}
+                </span>
+              )
+            },
+            {
+              key: "site-visit",
+              label: "Site visit / inspection",
+              content: (
+                <p className="text-sm font-semibold capitalize text-slate-950">
+                  {formatStatusLabel(opportunity.siteAssessmentStatus)}
+                </p>
+              )
+            },
+            {
+              key: "next-action",
+              label: "Next suggested action",
+              content: (
+                <NextActionCard
+                  eyebrow="Guided workflow"
+                  title={nextAction.title}
+                  description={nextAction.description}
+                  primaryAction={
+                    nextAction.kind === "estimate" ? (
+                      primaryEstimateHref ? (
+                        <Link
+                          href={primaryEstimateHref}
+                          className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                        >
+                          {nextAction.label}
+                        </Link>
+                      ) : (
+                        <form action={startEstimateFromOpportunityAction}>
+                          <input type="hidden" name="opportunityId" value={opportunity.id} />
+                          <button
+                            type="submit"
+                            className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                          >
+                            {nextAction.label}
+                          </button>
+                        </form>
+                      )
+                    ) : (
+                      <Link
+                        href={nextAction.href}
+                        className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                      >
+                        {nextAction.label}
+                      </Link>
+                    )
+                  }
+                  className="space-y-3 text-sm leading-6 text-slate-600"
+                />
+              )
+            }
+          ]}
+        />
+      }
+    >
+    <div id="summary" className="grid gap-6 p-4 xl:grid-cols-[minmax(0,1fr)_340px] sm:p-5">
+      <section className="space-y-6">
+        <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
@@ -152,7 +328,7 @@ export default async function LeadDetailPage({
         ) : null}
 
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
-          <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
+          <section id="contact" className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
               Primary Contact
             </p>
@@ -205,7 +381,7 @@ export default async function LeadDetailPage({
             </dl>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
+          <section id="qualification" className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
               Workflow
             </p>
@@ -309,7 +485,7 @@ export default async function LeadDetailPage({
           </section>
         </div>
 
-        <div className="mt-8">
+        <div id="site-visit" className="mt-8">
           <div className="mb-6 rounded-2xl border border-brand-200 bg-brand-50/60 px-5 py-4 text-sm leading-6 text-slate-700">
             <p className="font-medium text-slate-950">Estimating readiness</p>
             <p className="mt-2">{estimatingReadiness}</p>
@@ -322,7 +498,7 @@ export default async function LeadDetailPage({
           />
         </div>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <div id="activity" className="mt-8 grid gap-6 lg:grid-cols-3">
           <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
               Measurements
@@ -411,6 +587,7 @@ export default async function LeadDetailPage({
           </section>
         </div>
       </section>
+      </section>
 
       <aside className="space-y-6">
         <DirectoryContextCard
@@ -419,16 +596,15 @@ export default async function LeadDetailPage({
           description="Directory is the read-only scan-and-jump index. This lead page remains the canonical home for pre-customer commercial context and estimate handoff decisions."
         />
 
-        <section className="rounded-3xl border border-slate-200 bg-white/85 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+        <section id="project-handoff" className="rounded-3xl border border-slate-200 bg-white/85 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
             Next Step
           </p>
           <p className="mt-4 text-sm leading-6 text-slate-600">
-            The next workflow handoff from a lead is to start estimate. Starting
-            estimate here creates or links the canonical customer and project if
-            they do not already exist, so the commercial chain stays connected. If this lead is
-            already linked, keep the customer email current there because estimate send uses
-            <span className="font-semibold"> customer.email</span>.
+            {nextAction.description} Site visits remain lead-linked appointments; starting
+            estimate later creates or links the canonical customer and project so the commercial
+            chain stays connected. If this lead is already linked, keep the customer email current
+            there because estimate send uses <span className="font-semibold">customer.email</span>.
           </p>
           {canStartEstimate ? (
             <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-900">
@@ -461,7 +637,7 @@ export default async function LeadDetailPage({
                 Appointments
               </p>
               <Link
-                href={`/appointments?compose=1&opportunityId=${opportunity.id}${opportunity.customerId ? `&customerId=${opportunity.customerId}` : ""}${opportunity.projectId ? `&projectId=${opportunity.projectId}` : ""}#appointment-create`}
+                href={leadAppointmentHref}
                 className="text-sm font-medium text-brand-700 transition hover:text-brand-900"
               >
                 New appointment
@@ -488,7 +664,7 @@ export default async function LeadDetailPage({
                   eyebrow="No appointments"
                   title="Schedule the next lead visit here"
                   description="Use appointments for assessments, estimate meetings, and follow-up visits while keeping the real workflow on the same lead and downstream project chain."
-                  actionHref={`/appointments?compose=1&opportunityId=${opportunity.id}${opportunity.customerId ? `&customerId=${opportunity.customerId}` : ""}${opportunity.projectId ? `&projectId=${opportunity.projectId}` : ""}#appointment-create`}
+                  actionHref={leadAppointmentHref}
                   actionLabel="Create appointment"
                 />
               )}
@@ -497,5 +673,6 @@ export default async function LeadDetailPage({
         </section>
       </aside>
     </div>
+    </StandardWorkspaceLayout>
   );
 }

@@ -9,6 +9,7 @@ import { QuickCreateFormShell } from "@/components/quick-create-form-shell";
 type OpportunityOption = {
   id: string;
   title: string;
+  defaultAppointmentTitle?: string;
 };
 
 type CustomerOption = {
@@ -36,6 +37,7 @@ type AppointmentQuickCreateFormProps = {
   defaultOpportunityId?: string;
   defaultCustomerId?: string;
   defaultProjectId?: string;
+  defaultTitle?: string;
 };
 
 const appointmentTypeOptions = [
@@ -71,9 +73,14 @@ export function AppointmentQuickCreateForm({
   people,
   defaultOpportunityId,
   defaultCustomerId,
-  defaultProjectId
+  defaultProjectId,
+  defaultTitle
 }: AppointmentQuickCreateFormProps) {
   const [customerId, setCustomerId] = useState(defaultCustomerId ?? "");
+  const [opportunityId, setOpportunityId] = useState(defaultOpportunityId ?? "");
+  const selectedOpportunityDefaultTitle = opportunities.find(
+    (opportunity) => opportunity.id === opportunityId
+  )?.defaultAppointmentTitle;
 
   const filteredProjects = useMemo(
     () =>
@@ -93,9 +100,13 @@ export function AppointmentQuickCreateForm({
       >
         <div className="grid gap-4">
           <AuthField
+            key={`${opportunityId || "none"}-${defaultTitle ?? selectedOpportunityDefaultTitle ?? "site-visit"}`}
             label="Title"
             name="title"
             placeholder="Example: Final site visit with owner"
+            defaultValue={
+              defaultTitle ?? selectedOpportunityDefaultTitle ?? "Site Visit / Inspection"
+            }
             required
           />
 
@@ -130,7 +141,8 @@ export function AppointmentQuickCreateForm({
             </span>
             <select
               name="opportunityId"
-              defaultValue={defaultOpportunityId ?? ""}
+              value={opportunityId}
+              onChange={(event) => setOpportunityId(event.target.value)}
               className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
             >
               <option value="">No linked lead</option>

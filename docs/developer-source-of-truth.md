@@ -14,6 +14,9 @@ Use these docs together:
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow
 - [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
+- [docs/estimate-builder-build-plan.md](C:/FloorConnector/docs/estimate-builder-build-plan.md): long-term Estimate Builder blueprint
+- [docs/estimate-builder-v1-scope.md](C:/FloorConnector/docs/estimate-builder-v1-scope.md): current Estimate Builder execution scope
+- [docs/estimate-builder-system-generation-spec.md](C:/FloorConnector/docs/estimate-builder-system-generation-spec.md): future system-generation planning detail
 - [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md): canonical UI standardization and interaction guardrails
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): doc maintenance and archival rules
 
@@ -66,6 +69,8 @@ The current branch already includes a real multi-tenant contractor app with:
 
 Treat [docs/current-state.md](C:/FloorConnector/docs/current-state.md) as the source of truth for implemented status.
 
+Estimate Builder implementation should follow [docs/estimate-builder-v1-scope.md](C:/FloorConnector/docs/estimate-builder-v1-scope.md) for current build scope. [docs/estimate-builder-build-plan.md](C:/FloorConnector/docs/estimate-builder-build-plan.md) is the long-term blueprint. Do not implement future Estimate Builder phases unless explicitly requested.
+
 ## What Is Target Architecture Only
 
 These docs describe target direction, not current implementation truth:
@@ -98,11 +103,13 @@ Important workflow rules:
 - templates are shared infrastructure across estimates, contracts, and invoices
 - records should flow forward instead of being recreated downstream
 - future Takeoff & Scope Intelligence must be project-scoped and feed the canonical estimate workflow; it must not become a separate estimating silo
-- takeoff produces quantities; catalog/cost items define reusable cost, pricing, production, and tax behavior; estimates define customer-facing pricing and commercial scope
-- takeoff quantities must generate estimate line items through catalog/cost item mapping, not bypass catalog logic or write directly to invoices
+- Measurements are manual inputs such as length x width, direct square footage, direct linear footage, and counts; Takeoff means plan, PDF, or drawing-based measurement; AI Capture is a future photo, app, or AI-derived measurement input method
+- takeoff and measurements produce quantities; catalog/cost items define reusable cost, pricing, production, markup, and tax behavior; System Templates map quantities to grouped estimate content; estimates define customer-facing pricing and commercial scope
+- Measurements, Takeoff, and AI Capture must feed the same estimate generation engine and must not create separate estimating models
+- takeoff or measurement quantities must generate estimate line items through System Templates and catalog/cost item mapping, not bypass catalog logic or write directly to invoices
 - generated estimate line items should retain source linkage back to approved takeoff scope items, takeoff measurements, and source documents or photos when that future layer exists
 - if takeoff changes after estimate generation, the future takeoff-estimate link or estimate should be flagged out of sync until a user reviews it
-- AI-assisted takeoff, measurement, scope, and cost-item mapping suggestions must remain reviewable and user-approved before becoming customer-facing estimate content
+- AI-assisted takeoff, measurement, area, system, scope, cost-item mapping, and estimate-draft suggestions must remain reviewable and user-approved before becoming customer-facing estimate content
 - takeoff quantities may inform material requirements, labor estimation, production readiness, and job planning only through the canonical estimate-to-job workflow, not through direct billing shortcuts
 - future contractor network collaboration must extend canonical projects, jobs, vendors, people, invoices, and payments rather than creating a separate social, marketplace, or partner-work data silo
 - contractor network communication should be record-based over free-floating chat, with messages tied to projects, jobs, change orders, invoices, daily logs, field notes, or other canonical workflow records
@@ -129,7 +136,9 @@ Important workflow rules:
 - estimate tax must stay derived from organization defaults, customer exemption state, and item-level taxable flags; do not add manual estimate tax overrides
 - `catalog_items` remains the one shared item master across material, labor, service, equipment, and system records; do not introduce a second inventory or labor model
 - future catalog/cost item markup should be treated as internal cost/profitability behavior: defaults can come from the item database, estimate-level overrides can be intentional, and customer-facing estimate output should not expose markup controls
-- systems remain canonical reusable assemblies on top of `catalog_items`, with component rows designed to scale by sqft into estimate line items
+- future catalog/cost item defaults for cost, markup, price, labor, production, and tax behavior are internal; customer-facing estimate output should show customer-facing description, quantity, unit price, and total only
+- one-off estimate-line price overrides should not mutate catalog defaults, catalog updates should affect future estimates only, imported estimate lines should preserve snapshot price/markup/override behavior, and past estimates should not mutate when catalog defaults change
+- systems remain canonical reusable assemblies on top of `catalog_items`, with component rows designed to scale by sqft into estimate line items; future System Templates should extend that direction with formulas, grouping rules, optional components, and required inputs
 - estimate attachments should stay on the shared `documents` bucket using organization-first storage paths
 
 ## Current Contractor UI Guardrails
@@ -178,13 +187,14 @@ The normalization phase is complete enough to stop; further contractor-page work
 - use canonical shared data only
 - do not create module-specific data silos
 - do not create a standalone takeoff/estimating app disconnected from projects, catalog/cost items, and canonical estimates
-- do not create duplicate project, estimate, catalog, invoice, or takeoff-specific commercial models for future takeoff behavior
+- do not create duplicate project, estimate, catalog, invoice, template, or takeoff-specific commercial models for future takeoff or estimate-generation behavior
 - do not create marketplace models, contractor-network models, or partner-work models until scoped collaboration, permissions, tenant isolation, and canonical ownership are designed
 - treat `Directory` as a unified view over canonical records, not as a new merged record model
 - keep workforce `people`, customer accounts, vendors, leads, and super-admin identities separate at the data-model level even if future contractor UI groups them more closely
 - keep business logic in shared packages or server-side utilities where practical
 - preserve tenant isolation everywhere
 - preserve tenant isolation and canonical workflow continuity for future takeoff records, documents, measurements, scope items, and estimate links
+- preserve source traceability from generated estimate lines back to System Template, measurement/takeoff input, and source file/photo where applicable; if inputs change after generation, future behavior should flag generated estimate content as out of sync or needing review
 - preserve explicit permissioning for future contractor network features: no contractor can browse another contractor's customers, projects, pricing, pipeline, files, or payment history
 - hide customer contact data and pricing by default for external collaborators unless the contractor organization explicitly grants visibility for that project, job, or record
 - share files intentionally, scope project/job access explicitly, and keep admin controls around inviting external collaborators

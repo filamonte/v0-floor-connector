@@ -151,7 +151,14 @@ export type OpportunityInput = z.infer<typeof opportunityInputSchema>;
 export const opportunityQuickCreateInputSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required.").max(80),
   lastName: z.string().trim().min(1, "Last name is required.").max(80),
-  address: z.string().trim().min(1, "Address is required.").max(160),
+  addressLine1: z.string().trim().min(1, "Address line 1 is required.").max(160),
+  addressLine2: optionalTrimmedString(160),
+  city: z.string().trim().min(1, "City is required.").max(120),
+  stateRegion: z.string().trim().min(1, "State is required.").max(120),
+  postalCode: z.string().trim().min(1, "ZIP/postal code is required.").max(40),
+  countryCode: optionalTrimmedString(2).transform((value) =>
+    value ? value.toUpperCase() : "US"
+  ),
   phoneNumber: z.string().trim().min(1, "Phone number is required.").max(40),
   email: z
     .string()

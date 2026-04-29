@@ -62,7 +62,6 @@ const forbiddenEstimatePricingFields = [
   "lineItemName",
   "lineItemDescription",
   "lineItemUnit",
-  "lineItemUnitPrice",
   "lineItemBaseUnitCost",
   "lineItemBaseUnitPrice",
   "lineItemMarkupPercent",
@@ -119,6 +118,7 @@ function parseEstimateInput(formData: FormData) {
     "lineItemSourceComponentId"
   );
   const lineItemQuantities = getFieldValues(formData, "lineItemQuantity");
+  const lineItemUnitPriceOverrides = getFieldValues(formData, "lineItemUnitPriceOverride");
   const lineItemAssignedToValues = getFieldValues(formData, "lineItemAssignedTo");
   const lineItemGroupNames = getFieldValues(formData, "lineItemGroupName");
   const itemGroupIds = getFieldValues(formData, "itemGroupId");
@@ -139,6 +139,7 @@ function parseEstimateInput(formData: FormData) {
       sourceSystemId: lineItemSourceSystemIds[index] ?? "",
       sourceComponentId: lineItemSourceComponentIds[index] ?? "",
       quantity: lineItemQuantities[index] ?? "",
+      unitPriceOverride: lineItemUnitPriceOverrides[index] ?? null,
       assignedTo: lineItemAssignedToValues[index] ?? "",
       groupName: lineItemGroupNames[index] ?? ""
     }))
@@ -282,12 +283,35 @@ const quickEstimateCatalogItemInputSchema = z.object({
 
 const expandedSystemPreviewInputSchema = z.object({
   systemCatalogItemId: z.string().uuid("Select a valid system."),
+  inputMode: z.enum(["dimensions", "direct"] as const),
+  length: z
+    .string()
+    .trim()
+    .optional(),
+  width: z
+    .string()
+    .trim()
+    .optional(),
   squareFootage: z
     .string()
     .trim()
-    .min(1, "Square footage is required.")
+    .min(1, "Area is required.")
     .refine((value) => !Number.isNaN(Number(value)) && Number(value) > 0, {
-      message: "Square footage must be greater than zero."
+      message: "Area must be greater than zero."
+    }),
+  linearFootage: z
+    .string()
+    .trim()
+    .min(1, "Linear footage is required.")
+    .refine((value) => !Number.isNaN(Number(value)) && Number(value) >= 0, {
+      message: "Linear footage cannot be negative."
+    }),
+  count: z
+    .string()
+    .trim()
+    .min(1, "Count is required.")
+    .refine((value) => !Number.isNaN(Number(value)) && Number(value) > 0, {
+      message: "Count must be greater than zero."
     })
 });
 
@@ -303,6 +327,8 @@ export type ExpandedSystemPreviewResult =
       preview: ExpandedSystemPreview;
       systemCatalogItemId: string;
       squareFootage: string;
+      linearFootage: string;
+      count: string;
       systemName: string;
     }
   | { ok: false; message: string };
@@ -577,7 +603,12 @@ export async function quickCreateEstimateCatalogItemAction(
 
 export async function previewExpandedSystemAction(input: {
   systemCatalogItemId: string;
+  inputMode: "dimensions" | "direct";
+  length: string;
+  width: string;
   squareFootage: string;
+  linearFootage: string;
+  count: string;
 }): Promise<ExpandedSystemPreviewResult> {
   const result = expandedSystemPreviewInputSchema.safeParse(input);
 
@@ -606,7 +637,9 @@ export async function previewExpandedSystemAction(input: {
     const preview = buildExpandedSystemPreview({
       systemCatalogItem,
       catalogItems,
-      squareFootage: Number(result.data.squareFootage)
+      squareFootage: Number(result.data.squareFootage),
+      perimeter: Number(result.data.linearFootage),
+      count: Number(result.data.count)
     });
 
     if (preview.rows.length === 0) {
@@ -621,6 +654,8 @@ export async function previewExpandedSystemAction(input: {
       preview,
       systemCatalogItemId: systemCatalogItem.id,
       squareFootage: Number(result.data.squareFootage).toFixed(2),
+      linearFootage: Number(result.data.linearFootage).toFixed(2),
+      count: Number(result.data.count).toFixed(2),
       systemName: systemCatalogItem.name
     };
   } catch (error) {

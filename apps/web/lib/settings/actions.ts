@@ -903,6 +903,25 @@ export async function updateOrganizationCatalogSystemComponentsAction(
     );
   }
 
+  const seenComponentCatalogItemIds = new Set<string>();
+  const duplicateComponent = components.find((component) => {
+    if (seenComponentCatalogItemIds.has(component.componentCatalogItemId)) {
+      return true;
+    }
+
+    seenComponentCatalogItemIds.add(component.componentCatalogItemId);
+    return false;
+  });
+
+  if (duplicateComponent) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          "Each component item can only be added once inside a system. Remove the duplicate component and save again."
+      })
+    );
+  }
+
   try {
     await replaceOrganizationCatalogSystemComponents({
       systemCatalogItemId,

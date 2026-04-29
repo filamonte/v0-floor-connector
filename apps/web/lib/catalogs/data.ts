@@ -1097,25 +1097,42 @@ export async function replaceOrganizationCatalogSystemComponents(input: {
 }) {
   const scope = await requireCatalogScope();
   const supabase = await getSupabaseServerClient();
-  const deleteResponse = await supabase
-    .from("catalog_system_components")
-    .delete()
-    .eq("company_id", scope.organizationId)
-    .eq("system_catalog_item_id", input.systemCatalogItemId);
 
-  if (deleteResponse.error) {
+  const duplicateComponentIds = new Set<string>();
+  const duplicateComponent = input.components.find((component) => {
+    if (duplicateComponentIds.has(component.componentCatalogItemId)) {
+      return true;
+    }
+
+    duplicateComponentIds.add(component.componentCatalogItemId);
+    return false;
+  });
+
+  if (duplicateComponent) {
     throw new Error(
-      `Unable to clear system components: ${deleteResponse.error.message}`
+      "Each component item can only be added once inside a system."
     );
   }
 
   if (input.components.length === 0) {
+    const deleteResponse = await supabase
+      .from("catalog_system_components")
+      .delete()
+      .eq("company_id", scope.organizationId)
+      .eq("system_catalog_item_id", input.systemCatalogItemId);
+
+    if (deleteResponse.error) {
+      throw new Error(
+        `Unable to clear system components: ${deleteResponse.error.message}`
+      );
+    }
+
     return [];
   }
 
-  const insertResponse = await supabase
+  const upsertResponse = await supabase
     .from("catalog_system_components")
-    .insert(
+    .upsert(
       input.components.map((component, index) => ({
         company_id: scope.organizationId,
         system_catalog_item_id: input.systemCatalogItemId,
@@ -1125,7 +1142,10 @@ export async function replaceOrganizationCatalogSystemComponents(input: {
         sort_order: component.sortOrder ?? index,
         created_by: scope.userId,
         updated_by: scope.userId
-      }))
+      })),
+      {
+        onConflict: "company_id,system_catalog_item_id,component_catalog_item_id"
+      }
     )
     .select(
       `
@@ -1150,14 +1170,30 @@ export async function replaceOrganizationCatalogSystemComponents(input: {
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
-  if (insertResponse.error) {
+  if (upsertResponse.error) {
     throw new Error(
-      `Unable to save system components: ${insertResponse.error.message}`
+      `Unable to save system components: ${upsertResponse.error.message}`
     );
   }
 
-  const rows = Array.isArray(insertResponse.data)
-    ? (insertResponse.data as CatalogSystemComponentRow[])
+  const componentCatalogItemIds = input.components.map(
+    (component) => component.componentCatalogItemId
+  );
+  const deleteStaleResponse = await supabase
+    .from("catalog_system_components")
+    .delete()
+    .eq("company_id", scope.organizationId)
+    .eq("system_catalog_item_id", input.systemCatalogItemId)
+    .not("component_catalog_item_id", "in", `(${componentCatalogItemIds.join(",")})`);
+
+  if (deleteStaleResponse.error) {
+    throw new Error(
+      `Unable to remove stale system components: ${deleteStaleResponse.error.message}`
+    );
+  }
+
+  const rows = Array.isArray(upsertResponse.data)
+    ? (upsertResponse.data as CatalogSystemComponentRow[])
     : [];
 
   return rows

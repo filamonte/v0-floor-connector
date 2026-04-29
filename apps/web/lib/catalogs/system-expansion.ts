@@ -43,11 +43,20 @@ export type ExpandedSystemPreview = {
   totalPrice: string;
   taxablePrice: string;
   exemptPrice: string;
+  area: string;
+  perimeter: string;
+  count: string;
 };
 
 export type ExpandedSystemSnapshot = CommercialLineItemSnapshot & {
   sourceSystemId: string;
   sourceComponentId: string;
+};
+
+export type SystemMeasurementInput = {
+  area: number;
+  perimeter: number;
+  count?: number;
 };
 
 export function normalizeCatalogSystemComponents(
@@ -82,17 +91,20 @@ export function buildExpandedSystemPreview(input: {
   systemCatalogItem: CatalogItem;
   catalogItems: CatalogItem[];
   squareFootage: number;
+  perimeter?: number;
+  count?: number;
 }): ExpandedSystemPreview {
+  const measurements = normalizeSystemMeasurements(input);
   const systemComponents = normalizeCatalogSystemComponents(input.systemCatalogItem);
   const catalogItemsById = new Map(input.catalogItems.map((item) => [item.id, item] as const));
   const rows: ExpandedSystemRow[] = systemComponents.map((component) => {
     const componentCatalogItem =
       catalogItemsById.get(component.componentCatalogItemId) ?? null;
     const quantityPerUnit = parseNumericValue(component.quantityPerUnit);
-    const quantity =
-      component.basisUnit === "sqft"
-        ? quantityPerUnit * input.squareFootage
-        : quantityPerUnit;
+    const quantity = quantityPerUnit * resolveSystemComponentBasisQuantity(
+      component.basisUnit,
+      measurements
+    );
     const baseUnitCost = componentCatalogItem?.defaultUnitCost ?? "0.00";
     const pricing = calculateSharedUnitPricing({
       baseUnitCost,
@@ -113,8 +125,8 @@ export function buildExpandedSystemPreview(input: {
       description:
         component.componentDescription ??
         `Generated from ${input.systemCatalogItem.name} at ${formatQuantityValue(
-          input.squareFootage
-        )} sqft.`,
+          measurements.area
+        )} sqft / ${formatQuantityValue(measurements.perimeter)} lf.`,
       quantity: formatQuantityValue(quantity),
       unit: component.unit,
       baseUnitCost: formatMoneyValue(pricing.baseUnitCost),
@@ -162,7 +174,10 @@ export function buildExpandedSystemPreview(input: {
     totalCost: formatMoneyValue(totals.totalCost),
     totalPrice: formatMoneyValue(totals.totalPrice),
     taxablePrice: formatMoneyValue(totals.taxablePrice),
-    exemptPrice: formatMoneyValue(totals.exemptPrice)
+    exemptPrice: formatMoneyValue(totals.exemptPrice),
+    area: formatQuantityValue(measurements.area),
+    perimeter: formatQuantityValue(measurements.perimeter),
+    count: formatQuantityValue(measurements.count ?? 1)
   };
 }
 
@@ -170,9 +185,12 @@ export function buildExpandedSystemLineItemSnapshots(input: {
   systemCatalogItem: CatalogItem;
   catalogItems: CatalogItem[];
   squareFootage: number;
+  perimeter?: number;
+  count?: number;
   groupName?: string | null;
   assignedTo?: string | null;
 }): ExpandedSystemSnapshot[] {
+  const measurements = normalizeSystemMeasurements(input);
   const systemComponents = normalizeCatalogSystemComponents(input.systemCatalogItem);
   const catalogItemsById = new Map(input.catalogItems.map((item) => [item.id, item] as const));
 
@@ -185,10 +203,10 @@ export function buildExpandedSystemLineItemSnapshots(input: {
     }
 
     const quantityPerUnit = parseNumericValue(component.quantityPerUnit);
-    const quantity =
-      component.basisUnit === "sqft"
-        ? quantityPerUnit * input.squareFootage
-        : quantityPerUnit;
+    const quantity = quantityPerUnit * resolveSystemComponentBasisQuantity(
+      component.basisUnit,
+      measurements
+    );
 
     return [
       {
@@ -204,8 +222,8 @@ export function buildExpandedSystemLineItemSnapshots(input: {
           description:
             component.componentDescription ??
             `Generated from ${input.systemCatalogItem.name} at ${formatQuantityValue(
-              input.squareFootage
-            )} sqft.`,
+              measurements.area
+            )} sqft / ${formatQuantityValue(measurements.perimeter)} lf.`,
           unit: component.unit
         }),
         sourceSystemId: input.systemCatalogItem.id,
@@ -213,4 +231,47 @@ export function buildExpandedSystemLineItemSnapshots(input: {
       }
     ];
   });
+}
+
+function normalizeSystemMeasurements(input: {
+  squareFootage: number;
+  perimeter?: number;
+  count?: number;
+}): Required<SystemMeasurementInput> {
+  return {
+    area: Math.max(0, input.squareFootage),
+    perimeter: Math.max(0, input.perimeter ?? 0),
+    count: Math.max(1, input.count ?? 1)
+  };
+}
+
+function resolveSystemComponentBasisQuantity(
+  basisUnit: string,
+  measurements: Required<SystemMeasurementInput>
+) {
+  const normalizedBasis = basisUnit.trim().toLowerCase().replace(/[\s_-]+/g, "");
+
+  if (["sqft", "sf", "ft2", "squarefoot", "squarefeet", "area"].includes(normalizedBasis)) {
+    return measurements.area;
+  }
+
+  if (
+    [
+      "lf",
+      "linearft",
+      "linearfeet",
+      "linearfoot",
+      "perimeter",
+      "linealft",
+      "linealfeet"
+    ].includes(normalizedBasis)
+  ) {
+    return measurements.perimeter;
+  }
+
+  if (["count", "each", "ea", "unit", "units"].includes(normalizedBasis)) {
+    return measurements.count;
+  }
+
+  return 1;
 }

@@ -50,12 +50,28 @@ export function OpportunityQuickCreateForm({
           </div>
           <div className="md:col-span-2">
             <AuthField
-              label="Address"
-              name="address"
+              label="Address line 1"
+              name="addressLine1"
               placeholder="123 Main Street"
               required
             />
           </div>
+          <div className="md:col-span-2">
+            <AuthField
+              label="Address line 2"
+              name="addressLine2"
+              placeholder="Suite, unit, building, or floor"
+            />
+          </div>
+          <AuthField label="City" name="city" placeholder="Westfield" required />
+          <AuthField label="State" name="stateRegion" placeholder="MA" required />
+          <AuthField
+            label="ZIP / postal code"
+            name="postalCode"
+            placeholder="01085"
+            required
+          />
+          <AuthField label="Country" name="countryCode" placeholder="US" />
           <AuthField
             label="Phone Number"
             name="phoneNumber"

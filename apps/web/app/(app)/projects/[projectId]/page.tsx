@@ -1296,9 +1296,9 @@ export default async function ProjectDetailPage({
                 <div className="flex flex-wrap gap-2.5">
                   <Link
                     href={buildProjectEstimateCreateHref(project.id, projectOpportunity?.id)}
-                    className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                    className="inline-flex items-center rounded-full bg-[#ef7d32] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_14px_30px_-18px_rgba(239,125,50,0.9)] transition hover:bg-[#d96d27]"
                   >
-                    Start estimate
+                    Create Estimate
                   </Link>
                   {approvedEstimateId && projectContracts.length === 0 ? (
                     <Link

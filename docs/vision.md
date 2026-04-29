@@ -94,17 +94,22 @@ The goal is not generic accounting replacement. It is contractor-specific financ
 As the system matures, FloorConnector should expand into the operational inputs behind the work itself:
 - reusable materials and item catalogs
 - estimating and invoicing consistency through shared catalogs
-- Takeoff & Scope Intelligence that can convert plans, photos, and site information into reviewed quantities before estimate generation
+- System Templates that combine reusable catalog/cost items, formulas, grouping rules, optional components, and required inputs into repeatable estimating systems
+- Takeoff & Scope Intelligence that can convert plans, drawings, photos, site information, and reviewed measurements into quantities before estimate generation
 - production and field-readiness support
 - future purchasing and supply-oriented workflows where they strengthen the core job chain
 
 This expansion matters because specialty surface work depends heavily on scope clarity, materials planning, and prep-sensitive execution.
 
-Takeoff & Scope Intelligence should strengthen the same contractor workflow rather than becoming a separate estimating product. Takeoff produces quantities. Catalog/cost items define reusable cost, pricing, production, and tax behavior. Estimates define customer-facing pricing and commercial scope. Over time, FloorConnector should be able to accept project-scoped plans, photos, and site data, support manual or AI-assisted measurements, map approved quantities to reusable cost items, and generate estimate line items for human review before anything becomes customer-facing.
+Takeoff & Scope Intelligence should strengthen the same contractor workflow rather than becoming a separate estimating product. Measurements are manual inputs such as length x width, direct square footage, direct linear footage, and counts. Takeoff means plan, PDF, or drawing-based measurement. AI Capture is a future photo, app, or AI-derived input method. All of these inputs should feed the same estimate generation engine instead of becoming separate estimating silos.
+
+Takeoff and measurements produce quantities. Catalog/cost items define reusable cost, pricing, production, markup, and tax behavior. System Templates map quantities to grouped estimate content. Estimates define customer-facing pricing and commercial scope.
+
+The cost item database/catalog is the pricing and production brain of the system. System Templates should let contractors reuse common flooring systems by bundling catalog/cost items with formulas, required inputs, grouping rules, optional components, and defaults. A contractor should eventually be able to generate a quick estimate from minimal measurements or a detailed estimate from multiple rooms, zones, conditions, waste factors, optional components, and reviewable overrides.
 
 Generated estimate line items should eventually retain source traceability back to the takeoff scope item, takeoff measurement, and source document or photo when applicable. If takeoff quantities change after estimate generation, the system should be able to flag the takeoff-estimate link or estimate as out of sync so the contractor knows the customer-facing proposal may need review.
 
-AI-assisted measurement, scope, and cost-item mapping suggestions must stay human-in-the-loop. Suggestions should be reviewable and explicitly approved by the contractor before they become estimate content, and raw takeoff measurements should never own pricing or bypass the canonical `Takeoff -> Estimate -> Contract / Job -> Invoice -> Payment` path.
+AI-assisted measurement, scope, system, and cost-item mapping suggestions must stay human-in-the-loop. Suggestions should be reviewable and explicitly approved by the contractor before they become estimate content, and raw measurements, takeoff records, or AI Capture outputs should never own pricing or bypass the canonical `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment` path.
 
 ### 4. Customer And Communication Layer
 

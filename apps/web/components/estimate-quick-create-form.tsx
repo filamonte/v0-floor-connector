@@ -202,9 +202,6 @@ export function EstimateQuickCreateForm({
       ? selectedProject.customerId
       : null;
   const activeCustomerId = selectedCustomerId || derivedCustomerId || projectCustomerId || null;
-  const activeCustomer =
-    customers.find((customer) => customer.id === activeCustomerId) ?? null;
-
   const visibleOpportunities = opportunities
     .filter((opportunity) => {
       if (
@@ -283,9 +280,9 @@ export function EstimateQuickCreateForm({
 
       <QuickCreateFormShell
         eyebrow="Add estimate"
-        title="Customer, project, estimate"
-        description="Choose the customer account first, then use or create the customer project. Any linked opportunity stays as upstream context while the estimate opens on the canonical customer and project chain."
-        footer="After create, FloorConnector opens the full estimate workspace for scope, pricing, review, and customer send."
+        title="Create estimate"
+        description="Confirm the customer and project, then open the estimate workspace."
+        footer="Next step: generate the estimate from a system."
       >
         <div className="space-y-4">
           {errorMessage ? (
@@ -383,37 +380,44 @@ export function EstimateQuickCreateForm({
           )}
 
           {activeCustomerId ? (
-            <SearchPanel
-              label="Linked opportunity (optional)"
-              placeholder="Search upstream lead or opportunity"
-              value={opportunityQuery}
-              onChange={setOpportunityQuery}
-              empty={visibleOpportunities.length === 0}
-            >
-              {visibleOpportunities.map((opportunity) => (
-                <SelectionCard
-                  key={opportunity.id}
-                  active={selectedOpportunityId === opportunity.id}
-                  title={opportunity.title}
-                  subtitle={[
-                    opportunity.contactName,
-                    opportunity.customerName ?? "Customer pending"
-                  ].join(" - ")}
-                  meta={[
-                    opportunity.siteName ?? "Site pending",
-                    formatStatusLabel(opportunity.status)
-                  ].join(" - ")}
-                  onClick={() => {
-                    setSelectedOpportunityId(opportunity.id);
-                    setSelectedCustomerId(opportunity.customerId ?? "");
-                    if (!opportunity.customerId || opportunity.customerId !== activeCustomerId) {
-                      setSelectedProjectId("");
-                      setProjectChoice("new");
-                    }
-                  }}
-                />
-              ))}
-            </SearchPanel>
+            <details className="rounded-[4px] border border-[#d9dee8] bg-[#f8fafc] px-4 py-3">
+              <summary className="cursor-pointer text-sm font-medium text-slate-700">
+                Linked opportunity (optional)
+              </summary>
+              <div className="mt-3">
+                <SearchPanel
+                  label="Opportunity"
+                  placeholder="Search lead or opportunity"
+                  value={opportunityQuery}
+                  onChange={setOpportunityQuery}
+                  empty={visibleOpportunities.length === 0}
+                >
+                  {visibleOpportunities.map((opportunity) => (
+                    <SelectionCard
+                      key={opportunity.id}
+                      active={selectedOpportunityId === opportunity.id}
+                      title={opportunity.title}
+                      subtitle={[
+                        opportunity.contactName,
+                        opportunity.customerName ?? "Customer pending"
+                      ].join(" - ")}
+                      meta={[
+                        opportunity.siteName ?? "Site pending",
+                        formatStatusLabel(opportunity.status)
+                      ].join(" - ")}
+                      onClick={() => {
+                        setSelectedOpportunityId(opportunity.id);
+                        setSelectedCustomerId(opportunity.customerId ?? "");
+                        if (!opportunity.customerId || opportunity.customerId !== activeCustomerId) {
+                          setSelectedProjectId("");
+                          setProjectChoice("new");
+                        }
+                      }}
+                    />
+                  ))}
+                </SearchPanel>
+              </div>
+            </details>
           ) : null}
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -454,21 +458,12 @@ export function EstimateQuickCreateForm({
             <div className="rounded-[4px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-800">
               This estimate will stay attached to <strong>{selectedOpportunity.title}</strong>.
             </div>
-          ) : activeCustomer ? (
-            <div className="rounded-[4px] border border-[#d9dee8] bg-[#f8fafc] px-4 py-3 text-sm leading-6 text-slate-700">
-              FloorConnector will silently create or reuse the canonical opportunity continuity for{" "}
-              <strong>{activeCustomer.name}</strong> before opening the estimate workspace.
-            </div>
-          ) : (
-            <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-              Select the opportunity or customer that should anchor this estimate before creation.
-            </div>
-          )}
+          ) : null}
         </div>
       </QuickCreateFormShell>
 
       <AuthSubmitButton pendingLabel="Creating estimate..." className="w-full">
-        <span>Create estimate</span>
+        <span>Create Estimate</span>
       </AuthSubmitButton>
     </form>
   );

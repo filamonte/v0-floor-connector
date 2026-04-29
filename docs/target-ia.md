@@ -200,6 +200,7 @@ This area should include:
 - financial defaults
 - templates
 - reusable catalogs and starter items
+- System Template adoption, organization-owned estimating systems, local copies, defaults, and optional share-back workflow later
 - automation settings later
 - terminology/workflow defaults later
 
@@ -236,11 +237,13 @@ Summary of project health, stage, customer, location, assigned people, and curre
 
 ### Takeoff & Scope
 
-Future project-scoped workspace for uploaded plans, photos, site information, takeoff status, generated quantities, cost item/catalog mapping, linked estimate handoff, source traceability, out-of-sync review state, and scope summary.
+Future project-scoped workspace for uploaded plans, photos, site information, manual Measurements, Takeoff status, AI Capture inputs, generated quantities, System Template selection, cost item/catalog mapping, linked estimate handoff, source traceability, out-of-sync review state, and scope summary.
 
 This does not require a route change now. Takeoff should remain a supporting project workflow that feeds canonical estimate line items instead of becoming a separate estimating app.
 
-This workspace should keep the boundary clear: takeoff produces quantities, catalog/cost items define reusable cost/pricing/production/tax behavior, and estimates define customer-facing pricing and commercial scope. AI-assisted suggestions and generated line items should remain reviewable and explicitly approved before they are exposed to the customer.
+This workspace should keep the boundary clear: Measurements are manual inputs such as length x width, direct square footage, direct linear footage, and counts. Takeoff means plan, PDF, or drawing-based measurement. AI Capture is a future photo, app, or AI-derived measurement input method. Takeoff and measurements produce quantities. Catalog/cost items define reusable cost, pricing, production, markup, and tax behavior. System Templates map quantities to grouped estimate content. Estimates define customer-facing pricing and commercial scope.
+
+Quick Build should support selecting a System Template, entering minimal measurements, and generating grouped estimate lines for review. Detailed Build should support multiple rooms/zones, options, conditions, waste factors, optional components, overrides, and review before generation. AI-assisted suggestions and generated line items should remain reviewable and explicitly approved before they are exposed to the customer.
 
 ### Estimate
 

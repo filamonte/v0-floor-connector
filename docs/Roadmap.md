@@ -9,6 +9,8 @@ It tracks delivery sequence and major platform milestones. It should be read alo
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target system design
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow direction
 - [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
+- [docs/estimate-builder-build-plan.md](C:/FloorConnector/docs/estimate-builder-build-plan.md): long-term Estimate Builder blueprint
+- [docs/estimate-builder-v1-scope.md](C:/FloorConnector/docs/estimate-builder-v1-scope.md): constrained Estimate Builder V1 scope
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
 
 This document is sequencing guidance, not a claim that a later phase is already implemented. If status and plan conflict, trust [docs/current-state.md](C:/FloorConnector/docs/current-state.md) for current reality.
@@ -89,11 +91,14 @@ Planned focus:
 - seeded organization-owned defaults beyond the current settings foundation
 - shared catalog support directly inside estimating, invoicing, contracts, and future execution workflows
 - catalog/cost item design that can define reusable cost, markup, pricing, production, and tax behavior, while still allowing estimate-level overrides that remain internal in edit mode
-- planned manual/on-screen Takeoff & Scope Intelligence foundations where project-scoped measurements can produce quantities, map to reusable catalog/cost items, and generate reviewed estimate line items
+- Estimate Builder work in this phase should follow [docs/estimate-builder-build-plan.md](C:/FloorConnector/docs/estimate-builder-build-plan.md), with current execution constrained by [docs/estimate-builder-v1-scope.md](C:/FloorConnector/docs/estimate-builder-v1-scope.md)
+- planned manual measurement-driven estimating foundations where length x width, direct floor area, direct linear footage, counts, and optional room/zone detail can produce quantities for reviewed estimate generation
+- planned System Template foundations where reusable estimating systems bundle catalog/cost items, formulas, grouping rules, optional components, and required inputs
+- planned on-screen Takeoff & Scope Intelligence foundations where project-scoped plan/PDF/drawing measurement can produce quantities, map through System Templates and reusable catalog/cost items, and generate reviewed estimate line items
 - richer shared template and document editing capability
 - broader document workflow refinement
 
-Takeoff work in this phase would be planned direction only. It should support the canonical estimate workflow instead of becoming a separate estimating app. Takeoff quantities may eventually inform material requirements, labor estimation, production readiness, and job planning, but they should flow through reviewed estimates before contracts, jobs, invoices, or payments.
+Takeoff work in this phase would be planned direction only. Manual measurements are not takeoff; they are contractor-entered quantities or dimensions. Takeoff means plan, PDF, or drawing-based measurement. Both input paths should support the canonical estimate workflow instead of becoming separate estimating apps. Takeoff and measurement quantities may eventually inform material requirements, labor estimation, production readiness, and job planning, but they should flow through reviewed estimates before contracts, jobs, invoices, or payments.
 
 ## Phase 6
 
@@ -125,7 +130,7 @@ This is planned direction only. It does not mean contractor network collaboratio
 
 Planned focus:
 - growth and marketing engine
-- AI-assisted Takeoff & Scope Intelligence suggestions on top of project-scoped plans, photos, site data, catalog mapping, and human-reviewed estimate generation
+- AI Capture and AI-assisted Takeoff & Scope Intelligence suggestions on top of project-scoped plans, photos, site data, measurements, System Templates, catalog mapping, and human-reviewed estimate generation
 - contractor network / networked work expansion for trusted partner contractors, specialty subcontractors, vendors, overflow work sharing, and regional coverage
 - private referral or overflow work sharing where it extends the same canonical project/job/payment chain
 - controlled marketplace or vetted network behavior only after scoped collaboration, permissions, compliance signals, and tenant isolation are designed
@@ -133,3 +138,4 @@ Planned focus:
 
 Open marketplace behavior is a later-phase platform direction, not a current implementation target.
 AI-assisted takeoff is also a later platform direction, not a current implementation target.
+AI Capture may eventually suggest measurements, areas, systems, cost-item mappings, and estimate drafts, but customer-facing estimate content should remain reviewable, manually approved, and auditable.

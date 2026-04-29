@@ -503,6 +503,65 @@ async function normalizeAppointmentInput(
   };
 }
 
+async function syncOpportunityAssessmentFromAppointment(input: {
+  organizationId: string;
+  userId: string;
+  appointment: AppointmentRecord;
+}) {
+  if (
+    !input.appointment.opportunityId ||
+    input.appointment.appointmentType !== "site_visit" ||
+    input.appointment.status === "canceled" ||
+    input.appointment.status === "no_show"
+  ) {
+    return;
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const opportunity = await getScopedOpportunity(
+    input.organizationId,
+    input.appointment.opportunityId
+  );
+
+  if (!opportunity) {
+    return;
+  }
+
+  const update =
+    input.appointment.status === "completed"
+      ? {
+          status: "site_assessment_complete" as const,
+          site_assessment_status: "completed" as const,
+          site_assessment_scheduled_at: input.appointment.startsAt,
+          site_assessment_completed_at: input.appointment.startsAt,
+          qualified_at: new Date().toISOString(),
+          updated_by: input.userId
+        }
+      : {
+          status:
+            opportunity.status === "new" ||
+            opportunity.status === "contacted" ||
+            opportunity.status === "qualified"
+              ? ("site_assessment_scheduled" as const)
+              : opportunity.status,
+          site_assessment_status: "scheduled" as const,
+          site_assessment_scheduled_at: input.appointment.startsAt,
+          updated_by: input.userId
+        };
+
+  const response = await supabase
+    .from("opportunities")
+    .update(update)
+    .eq("company_id", input.organizationId)
+    .eq("id", input.appointment.opportunityId);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to update the linked lead assessment state: ${response.error.message}`
+    );
+  }
+}
+
 export const listAppointments = cache(async (): Promise<AppointmentListItem[]> => {
   const scope = await requireAppointmentScope("/appointments");
   const supabase = await getSupabaseServerClient();
@@ -658,7 +717,15 @@ export async function createAppointment(input: AppointmentInput) {
     throw new Error("Unexpected appointment response after create.");
   }
 
-  return mapAppointmentListItem(data);
+  const appointment = mapAppointmentListItem(data);
+
+  await syncOpportunityAssessmentFromAppointment({
+    organizationId: scope.organizationId,
+    userId: scope.userId,
+    appointment
+  });
+
+  return appointment;
 }
 
 export async function updateAppointment(
@@ -698,5 +765,13 @@ export async function updateAppointment(
     throw new Error("Appointment not found for this organization.");
   }
 
-  return mapAppointmentListItem(data);
+  const appointment = mapAppointmentListItem(data);
+
+  await syncOpportunityAssessmentFromAppointment({
+    organizationId: scope.organizationId,
+    userId: scope.userId,
+    appointment
+  });
+
+  return appointment;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import type { CatalogItem, CatalogSystemComponent } from "@floorconnector/types";
 
 import { buildExpandedSystemPreview } from "@/lib/catalogs/system-expansion";
@@ -53,7 +53,10 @@ export function SystemBuilder({
   saveAction
 }: SystemBuilderProps) {
   const [rows, setRows] = useState<ComponentDraft[]>(() => createComponentRows(systemItem));
+  const [validationMessage, setValidationMessage] = useState<string | null>(null);
   const [previewSquareFootage, setPreviewSquareFootage] = useState("1000");
+  const [previewLinearFootage, setPreviewLinearFootage] = useState("200");
+  const [previewCount, setPreviewCount] = useState("1");
   const componentOptions = useMemo(
     () =>
       catalogItems.filter(
@@ -94,25 +97,37 @@ export function SystemBuilder({
   );
   const preview = useMemo(() => {
     const squareFootage = Number(previewSquareFootage);
+    const linearFootage = Number(previewLinearFootage);
+    const count = Number(previewCount);
 
-    if (!Number.isFinite(squareFootage) || squareFootage <= 0) {
+    if (
+      !Number.isFinite(squareFootage) ||
+      squareFootage <= 0 ||
+      !Number.isFinite(linearFootage) ||
+      linearFootage < 0 ||
+      !Number.isFinite(count) ||
+      count <= 0
+    ) {
       return null;
     }
 
     const expanded = buildExpandedSystemPreview({
       systemCatalogItem: hydratedSystemItem,
       catalogItems,
-      squareFootage
+      squareFootage,
+      perimeter: linearFootage,
+      count
     });
 
     return expanded.rows.length > 0 ? expanded : null;
-  }, [catalogItems, hydratedSystemItem, previewSquareFootage]);
+  }, [catalogItems, hydratedSystemItem, previewCount, previewLinearFootage, previewSquareFootage]);
 
   function updateRow(
     key: string,
     field: keyof Omit<ComponentDraft, "key">,
     value: string | number
   ) {
+    setValidationMessage(null);
     setRows((currentRows) =>
       currentRows.map((row) =>
         row.key === key ? { ...row, [field]: value } : row
@@ -121,6 +136,7 @@ export function SystemBuilder({
   }
 
   function addRow() {
+    setValidationMessage(null);
     setRows((currentRows) => [
       ...currentRows,
       {
@@ -134,6 +150,7 @@ export function SystemBuilder({
   }
 
   function removeRow(key: string) {
+    setValidationMessage(null);
     setRows((currentRows) =>
       currentRows.length === 1
         ? currentRows
@@ -144,6 +161,7 @@ export function SystemBuilder({
   }
 
   function moveRow(key: string, direction: -1 | 1) {
+    setValidationMessage(null);
     setRows((currentRows) => {
       const index = currentRows.findIndex((row) => row.key === key);
 
@@ -163,6 +181,42 @@ export function SystemBuilder({
 
       return reordered.map((row, rowIndex) => ({ ...row, sortOrder: rowIndex }));
     });
+  }
+
+  function findDuplicateComponentName(currentRows: ComponentDraft[]) {
+    const seenComponentIds = new Set<string>();
+
+    for (const row of currentRows) {
+      const componentCatalogItemId = row.componentCatalogItemId.trim();
+
+      if (!componentCatalogItemId) {
+        continue;
+      }
+
+      if (seenComponentIds.has(componentCatalogItemId)) {
+        return (
+          componentOptions.find((item) => item.id === componentCatalogItemId)?.name ??
+          "this component"
+        );
+      }
+
+      seenComponentIds.add(componentCatalogItemId);
+    }
+
+    return null;
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    const duplicateComponentName = findDuplicateComponentName(rows);
+
+    if (!duplicateComponentName) {
+      return;
+    }
+
+    event.preventDefault();
+    setValidationMessage(
+      `${duplicateComponentName} is already in this system. Each component item can only be added once.`
+    );
   }
 
   return (
@@ -185,9 +239,15 @@ export function SystemBuilder({
         </button>
       </div>
 
-      <form action={saveAction} className="space-y-4">
+      <form action={saveAction} onSubmit={handleSubmit} className="space-y-4">
         <input type="hidden" name="returnTo" value={returnTo} />
         <input type="hidden" name="systemCatalogItemId" value={systemItem.id} />
+
+        {validationMessage ? (
+          <div className="rounded-[12px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-800">
+            {validationMessage}
+          </div>
+        ) : null}
 
         <div className="overflow-hidden rounded-[16px] border border-[#d8e0eb] bg-white">
           <table className="min-w-full border-collapse">
@@ -232,14 +292,19 @@ export function SystemBuilder({
                     />
                   </td>
                   <td className="px-3 py-3">
-                    <input
+                    <select
                       name="componentBasisUnit"
                       value={row.basisUnit}
                       onChange={(event) =>
                         updateRow(row.key, "basisUnit", event.target.value)
                       }
                       className="w-full rounded-[10px] border border-[#d7deea] bg-white px-3 py-2 text-sm text-[#334a70] outline-none"
-                    />
+                    >
+                      <option value="sqft">Area / sqft</option>
+                      <option value="lf">Perimeter / LF</option>
+                      <option value="count">Count</option>
+                      <option value="fixed">Fixed quantity</option>
+                    </select>
                   </td>
                   <td className="px-3 py-3">
                     <div className="flex gap-2">
@@ -282,6 +347,22 @@ export function SystemBuilder({
                 value={previewSquareFootage}
                 onChange={(event) => setPreviewSquareFootage(event.target.value)}
                 className="ml-3 w-[120px] rounded-[10px] border border-[#d7deea] bg-white px-3 py-2 text-sm text-[#334a70] outline-none"
+              />
+            </label>
+            <label className="text-sm font-medium text-[#334a70]">
+              Preview LF
+              <input
+                value={previewLinearFootage}
+                onChange={(event) => setPreviewLinearFootage(event.target.value)}
+                className="ml-3 w-[120px] rounded-[10px] border border-[#d7deea] bg-white px-3 py-2 text-sm text-[#334a70] outline-none"
+              />
+            </label>
+            <label className="text-sm font-medium text-[#334a70]">
+              Count
+              <input
+                value={previewCount}
+                onChange={(event) => setPreviewCount(event.target.value)}
+                className="ml-3 w-[90px] rounded-[10px] border border-[#d7deea] bg-white px-3 py-2 text-sm text-[#334a70] outline-none"
               />
             </label>
           </div>

@@ -35,6 +35,9 @@ Document roles:
 - `docs/target-ia.md`: target contractor app navigation and workspace structure
 - `docs/workflow-spec.md`: primary contractor workflow definition
 - `docs/workflow-state-machine.md`: stages, blockers, and transition guidance
+- `docs/estimate-builder-build-plan.md`: long-lived Estimate Builder master blueprint
+- `docs/estimate-builder-v1-scope.md`: constrained Estimate Builder V1 execution scope
+- `docs/estimate-builder-system-generation-spec.md`: planning spec for future system-based estimate generation
 - `docs/figma-redesign-brief.md`: exploratory workflow-first design brief for future Figma work
 - `docs/archive/README.md`: archive index for historical planning/reference docs
 - `docs/opportunity-model.md`: archived pointer to the historical opportunity planning doc

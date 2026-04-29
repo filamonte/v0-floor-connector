@@ -87,7 +87,7 @@ Purpose:
 - preserve real job context before final scope is priced
 
 May include:
-- measurements or square footage
+- Measurements such as length x width, direct square footage, direct linear footage, and counts
 - photos
 - uploaded plans or drawings later
 - substrate condition
@@ -104,30 +104,52 @@ Input sources may be:
 
 Future Takeoff & Scope Intelligence:
 - site assessment may feed project-scoped takeoff work before estimate creation
-- takeoff should support plan upload, photo and site-info inputs, manual measurements, and later AI-assisted measurement suggestions
-- takeoff produces quantities; catalog/cost items define reusable cost, pricing, production, and tax behavior; estimates define customer-facing pricing and commercial scope
+- manual measurements are not takeoff; Takeoff means plan, PDF, or drawing-based measurement
+- AI Capture is a future photo, app, or AI-derived input method
+- all input methods should feed the same estimate generation engine
+- Takeoff and measurements produce quantities. Catalog/cost items define reusable cost, pricing, production, markup, and tax behavior. System Templates map quantities to grouped estimate content. Estimates define customer-facing pricing and commercial scope.
 - takeoff should not own pricing, replace the estimate, or bypass the canonical commercial record chain
 
 ### 4. Estimate Creation
 
 Estimate creation may eventually support:
+- Quick Build, where the contractor selects a System Template, enters minimal measurements, and generates grouped estimate lines for review
+- Detailed Build, where the contractor uses multiple rooms/zones, options, conditions, waste factors, optional components, overrides, and review before generation
 - custom quote workflows
 - system-based pricing
 - square-foot pricing
 - hybrid estimating
 - reusable catalogs and assemblies
+- System Templates made from catalog/cost items, formulas, grouping rules, optional components, and required inputs
+- manual measurement-driven generation from length x width, direct floor area, direct linear footage, counts, and optional room/zone detail
 - catalog/cost item defaults for internal cost, markup, pricing, production behavior, and tax behavior, with estimate-level overrides where the contractor intentionally changes the commercial setup
-- takeoff-driven quantity generation from project-scoped plans, photos, and site data
-- cost item/catalog mapping from approved takeoff quantities into estimate line items
-- AI-assisted suggestions that remain reviewable and user-approved before becoming customer-facing
+- takeoff-driven quantity generation from project-scoped plans, PDFs, drawings, photos, and site data
+- cost item/catalog mapping from reviewed quantities into grouped estimate line items
+- AI-assisted suggestions for measurements, areas, systems, cost-item mappings, and estimate drafts that remain reviewable and user-approved before becoming customer-facing
 
 Current product direction keeps the estimate as the canonical commercial scope record.
 
-In the future flow, Takeoff & Scope Intelligence should produce reviewed quantities and scope items that map to reusable catalog/cost items before generating estimate line items. The estimate remains where the contractor decides what to charge. Human review and approval are required before generated line items become part of a customer-facing estimate.
+In the future flow, Measurements, Takeoff, and AI Capture should produce reviewed quantities and scope items that flow through System Templates and reusable catalog/cost items before generating estimate line items. The estimate remains where the contractor decides what to charge. Human review and approval are required before generated line items become part of a customer-facing estimate.
+
+Example measurement behavior:
+- L x W can generate floor square footage.
+- `(L x 2) + (W x 2)` can generate perimeter linear footage.
+- integrated cove base and vinyl cove base are measured in linear feet and may be generated from perimeter or entered directly.
+
+Pricing behavior:
+- catalog/cost item default cost, markup, price, labor, production, and tax behavior are internal
+- customer-facing estimate output should show only customer-facing description, quantity, unit price, and total
+- markup and cost should not appear on customer-facing estimate output
+- contractors should be able to make one-off price overrides on estimate lines or update catalog/cost database defaults for future estimates
+- imported estimate lines should preserve their snapshot price, markup, and override behavior
+- new lines added from catalog should use current item defaults
+- past estimates should not mutate when catalog defaults change
 
 Generated estimate line items should eventually retain source traceability back to the takeoff scope item, takeoff measurement, and source document or photo when applicable. If takeoff quantities change after estimate generation, the system should flag the takeoff-estimate link or estimate as out of sync so users know the estimate may need review.
 
-Takeoff quantities should eventually help with material requirements, labor estimation, production readiness, and job planning. The financial record path still runs through `Takeoff -> Estimate -> Contract / Job -> Invoice -> Payment`; there should be no direct takeoff-to-invoice workflow.
+The target estimate generation path is `Lead / Opportunity -> Customer + Project -> Site Info / Measurements / Plans / Photos -> Measurement, Takeoff, or AI Capture -> System Template -> Catalog/Cost Item Mapping -> Grouped Estimate Line Items -> Estimate -> Contract -> Job -> Invoice -> Payment`.
+
+Takeoff and measurement quantities should eventually help with material requirements, labor estimation, production readiness, and job planning. The financial record path still runs through the canonical estimate workflow; there should be no direct takeoff-to-invoice workflow.
 
 Current implementation note:
 - the live estimate workspace is inventory-first, using shared `catalog_items` plus reusable systems/components instead of disconnected manual estimate rows
@@ -207,6 +229,11 @@ The broader workflow depends on configuration at two layers.
 Super admin should define:
 - platform starter templates
 - platform starter catalogs
+- platform starter systems / System Templates
+- import or review contractor-created shareable systems
+- strip or anonymize cost and markup before promotion
+- promote reviewed systems to platform templates
+- version platform templates so contractor-owned copies are not silently broken
 - global financial defaults
 - global workflow defaults
 - feature and module policy
@@ -216,6 +243,10 @@ Super admin should define:
 Contractor admins should manage:
 - organization-owned templates
 - organization-owned reusable items
+- adoption of platform-seeded System Templates
+- organization-owned System Templates
+- local editable copies, defaults, and estimate-generation use of System Templates
+- optional sharing of contractor-created templates back to the platform for review
 - tax defaults
 - retainage defaults
 - contract workflow defaults
@@ -234,8 +265,10 @@ FloorConnector should avoid:
 - direct takeoff-to-invoice behavior that bypasses reviewed estimate line items and approved commercial scope
 - pricing directly inside raw takeoff measurements
 - AI-generated customer-facing estimates without contractor approval
-- duplicate project, estimate, catalog, or invoice models for takeoff
+- duplicate project, estimate, catalog, invoice, or template models for takeoff or estimating
 - takeoff behavior that weakens tenant isolation or breaks canonical workflow continuity
+- generated estimate content with no source traceability back to System Template, measurement/takeoff input, and source file or photo where applicable
+- silent reuse of generated estimate content after source inputs change without an out-of-sync or needs-review signal
 - free-floating contractor chat that is not tied back to canonical project, job, financial, or field records
 - external partner access that exposes customer contact data, pricing, files, pipeline, or project history without explicit permissions
 

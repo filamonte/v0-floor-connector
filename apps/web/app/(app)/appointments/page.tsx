@@ -128,6 +128,20 @@ function buildAppointmentsHref(input: {
   return query.length > 0 ? `/appointments?${query}` : "/appointments";
 }
 
+function getLeadDisplayName(opportunity: Awaited<ReturnType<typeof listOpportunities>>[number]) {
+  return (
+    opportunity.prospectCompanyName ??
+    opportunity.primaryContact?.companyName ??
+    opportunity.primaryContact?.displayName ??
+    opportunity.prospectName ??
+    opportunity.title
+  );
+}
+
+function buildSiteVisitTitle(opportunity: Awaited<ReturnType<typeof listOpportunities>>[number]) {
+  return `Site Visit / Inspection - ${getLeadDisplayName(opportunity)}`;
+}
+
 export default async function AppointmentsPage({
   searchParams
 }: AppointmentsPageProps) {
@@ -255,6 +269,35 @@ export default async function AppointmentsPage({
         ? opportunities.find((opportunity) => opportunity.id === linkedOpportunityId)?.title ??
           "Selected lead"
         : null;
+  const selectedOpportunity = linkedOpportunityId
+    ? opportunities.find((opportunity) => opportunity.id === linkedOpportunityId) ?? null
+    : null;
+  const selectedCustomer = linkedCustomerId
+    ? customers.find((customer) => customer.id === linkedCustomerId) ?? null
+    : null;
+  const selectedProject = linkedProjectId
+    ? projects.find((project) => project.id === linkedProjectId) ?? null
+    : null;
+  const opportunityOptions = selectedOpportunity ? [selectedOpportunity] : opportunities;
+  const customerOptions = selectedCustomer
+    ? [selectedCustomer]
+    : selectedOpportunity?.customerId
+      ? customers.filter((customer) => customer.id === selectedOpportunity.customerId)
+      : selectedOpportunity
+        ? []
+      : customers;
+  const projectOptions = selectedProject
+    ? [selectedProject]
+    : selectedOpportunity?.projectId
+      ? projects.filter((project) => project.id === selectedOpportunity.projectId)
+      : selectedOpportunity
+        ? []
+      : linkedCustomerId
+        ? projects.filter((project) => project.customerId === linkedCustomerId)
+        : projects;
+  const defaultAppointmentTitle = selectedOpportunity
+    ? buildSiteVisitTitle(selectedOpportunity)
+    : undefined;
 
   return (
     <ContractorWorkspacePage
@@ -574,15 +617,16 @@ export default async function AppointmentsPage({
         >
           <AppointmentQuickCreateForm
             action={quickCreateAppointmentAction}
-            opportunities={opportunities.map((opportunity) => ({
+            opportunities={opportunityOptions.map((opportunity) => ({
               id: opportunity.id,
-              title: opportunity.title
+              title: opportunity.title,
+              defaultAppointmentTitle: buildSiteVisitTitle(opportunity)
             }))}
-            customers={customers.map((customer) => ({
+            customers={customerOptions.map((customer) => ({
               id: customer.id,
               name: customer.name
             }))}
-            projects={projects.map((project) => ({
+            projects={projectOptions.map((project) => ({
               id: project.id,
               name: project.name,
               customerId: project.customerId
@@ -596,6 +640,7 @@ export default async function AppointmentsPage({
             defaultOpportunityId={linkedOpportunityId}
             defaultCustomerId={linkedCustomerId}
             defaultProjectId={linkedProjectId}
+            defaultTitle={defaultAppointmentTitle}
           />
         </WorkspaceComposerSheet>
       </div>

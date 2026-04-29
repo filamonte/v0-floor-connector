@@ -152,6 +152,7 @@ export const estimateLineItemInputSchema = z.object({
   sourceSystemId: optionalUuidishString(120),
   sourceComponentId: optionalUuidishString(120),
   quantity: positiveQuantityField(),
+  unitPriceOverride: currencyAmountField("Unit price override").nullable().optional(),
   assignedTo: optionalTrimmedString(120),
   groupName: optionalTrimmedString(120)
 }).superRefine((value, ctx) => {
@@ -372,7 +373,12 @@ export const estimateSystemInsertInputSchema = z
   .object({
     estimateId: z.string().uuid("Estimate id is required."),
     systemCatalogItemId: z.string().uuid("Select a valid system."),
-    squareFootage: positiveQuantityField()
+    inputMode: z.enum(["dimensions", "direct"] as const).default("direct"),
+    length: positiveQuantityField().nullable().optional(),
+    width: positiveQuantityField().nullable().optional(),
+    squareFootage: positiveQuantityField(),
+    linearFootage: currencyAmountField("Linear footage").nullable().optional(),
+    count: positiveQuantityField().nullable().optional()
   })
   .strict()
   .superRefine(rejectClientOwnedEstimateInsertPayload);

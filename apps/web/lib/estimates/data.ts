@@ -33,7 +33,8 @@ import { listCatalogItems } from "@/lib/catalogs/data";
 import {
   buildCatalogItemPricingSnapshot,
   calculateLineTotal,
-  formatMoneyValue
+  formatMoneyValue,
+  parseNumericValue
 } from "@/lib/catalogs/pricing";
 import {
   buildExpandedSystemLineItemSnapshots
@@ -1670,13 +1671,13 @@ export async function seedEstimateLineItemsFromSources(
     }
 
     if (lineItem.sourceType === "catalog_item") {
-      return buildCatalogItemPricingSnapshot({
+      return applyEstimateLineUnitPriceOverride(buildCatalogItemPricingSnapshot({
         catalogItem,
         quantity: lineItem.quantity,
         sourceType: "catalog_item",
         groupName: lineItem.groupName,
         assignedTo: lineItem.assignedTo
-      });
+      }), lineItem.unitPriceOverride);
     }
 
     if (!lineItem.sourceSystemId || !lineItem.sourceComponentId) {
@@ -1696,7 +1697,7 @@ export async function seedEstimateLineItemsFromSources(
       throw new Error("System-derived estimate row lineage does not match its catalog source.");
     }
 
-    return buildCatalogItemPricingSnapshot({
+    return applyEstimateLineUnitPriceOverride(buildCatalogItemPricingSnapshot({
       catalogItem,
       quantity: lineItem.quantity,
       sourceType: "system_component",
@@ -1707,8 +1708,26 @@ export async function seedEstimateLineItemsFromSources(
       name: component.component_item_name,
       description: component.component_item_description,
       unit: component.component_item_unit
-    });
+    }), lineItem.unitPriceOverride);
   });
+}
+
+function applyEstimateLineUnitPriceOverride(
+  snapshot: ReturnType<typeof buildCatalogItemPricingSnapshot>,
+  unitPriceOverride?: string | null
+) {
+  if (unitPriceOverride == null || unitPriceOverride.trim().length === 0) {
+    return snapshot;
+  }
+
+  const unitPrice = formatMoneyValue(parseNumericValue(unitPriceOverride));
+  const lineTotal = formatMoneyValue(calculateLineTotal(snapshot.quantity, unitPrice));
+
+  return {
+    ...snapshot,
+    unitPrice,
+    lineTotal
+  };
 }
 
 type EstimateLineItemSeed = Awaited<ReturnType<typeof seedEstimateLineItemsFromSources>>[number];
@@ -3051,6 +3070,8 @@ export async function insertSystemToEstimate(input: {
   estimateId: string;
   systemCatalogItemId: string;
   squareFootage: string;
+  linearFootage?: string | null;
+  count?: string | null;
 }) {
   const scope = await requireEstimateScope(`/estimates/${input.estimateId}/edit`);
   const estimate = await getEstimateRecordById(scope.organizationId, input.estimateId);
@@ -3072,11 +3093,15 @@ export async function insertSystemToEstimate(input: {
   }
 
   const squareFootage = Number(input.squareFootage);
-  const groupName = `${systemCatalogItem.name} (${squareFootage.toFixed(2)} sqft)`;
+  const linearFootage = Number(input.linearFootage ?? 0);
+  const count = Number(input.count ?? 1);
+  const groupName = `${systemCatalogItem.name} (${squareFootage.toFixed(2)} sqft / ${linearFootage.toFixed(2)} lf)`;
   const lineItemSnapshots = buildExpandedSystemLineItemSnapshots({
     systemCatalogItem,
     catalogItems,
     squareFootage,
+    perimeter: linearFootage,
+    count,
     groupName
   });
 
@@ -3153,6 +3178,7 @@ export async function importEstimateLineItemsFromEstimate(input: {
       sourceSystemId: lineItem.sourceSystemId,
       sourceComponentId: lineItem.sourceComponentId,
       quantity: lineItem.quantity,
+      unitPriceOverride: lineItem.unitPrice,
       assignedTo: lineItem.assignedTo,
       groupName: lineItem.groupName
     }));

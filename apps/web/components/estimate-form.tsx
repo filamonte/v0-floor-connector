@@ -77,7 +77,12 @@ type EstimateFormProps = {
   updateStatusAction: (formData: FormData) => Promise<EstimateStatusTransitionResult>;
   previewExpandedSystemAction: (input: {
     systemCatalogItemId: string;
+    inputMode: "dimensions" | "direct";
+    length: string;
+    width: string;
     squareFootage: string;
+    linearFootage: string;
+    count: string;
   }) => Promise<ExpandedSystemPreviewResult>;
   insertCatalogItemAction: (input: {
     estimateId: string;
@@ -87,6 +92,8 @@ type EstimateFormProps = {
     estimateId: string;
     systemCatalogItemId: string;
     squareFootage: string;
+    linearFootage: string;
+    count: string;
   }) => Promise<EstimateInsertResult>;
   importLineItemsFromEstimateAction: (input: {
     destinationEstimateId: string;
@@ -176,14 +183,21 @@ function formatTaxBehaviorLabel(taxBehavior: TaxBehavior) {
   }
 }
 
-function applyDraftPricing(lineItem: EstimateItemsDraft): EstimateItemsDraft {
+function applyDraftPricing(
+  lineItem: EstimateItemsDraft,
+  options: { preserveUnitPriceOverride?: boolean } = {}
+): EstimateItemsDraft {
   const pricing = calculateSharedUnitPricing({
     baseUnitCost: lineItem.baseUnitCost,
     baseUnitPrice: lineItem.baseUnitPrice,
     markupPercent: lineItem.markupPercent,
     hiddenMarkupPercent: lineItem.hiddenMarkupPercent
   });
-  const computedLineTotal = calculateLineTotal(lineItem.quantity, pricing.finalUnitPrice);
+  const resolvedUnitPrice =
+    options.preserveUnitPriceOverride && lineItem.unitPrice.trim().length > 0
+      ? parseNumericInput(lineItem.unitPrice)
+      : pricing.finalUnitPrice;
+  const computedLineTotal = calculateLineTotal(lineItem.quantity, resolvedUnitPrice);
 
   return {
     ...lineItem,
@@ -195,7 +209,7 @@ function applyDraftPricing(lineItem: EstimateItemsDraft): EstimateItemsDraft {
     unitPriceBeforeHiddenMarkup: formatMoneyValue(pricing.unitPriceBeforeHiddenMarkup),
     visibleMarkupAmount: formatMoneyValue(pricing.visibleMarkupAmount),
     hiddenMarkupAmount: formatMoneyValue(pricing.hiddenMarkupAmount),
-    unitPrice: formatMoney(pricing.finalUnitPrice),
+    unitPrice: formatMoney(resolvedUnitPrice),
     lineTotal: formatMoney(computedLineTotal)
   };
 }
@@ -307,7 +321,7 @@ function buildLineItemDrafts(
         taxCode: lineItem.taxable ? "taxable" : "non-taxable",
         assignedTo: lineItem.assignedTo ?? legacyRow?.assignedTo ?? "",
         lineTotal: formatMoney(parseNumericInput(lineItem.lineTotal))
-      });
+      }, { preserveUnitPriceOverride: true });
     });
   }
 
@@ -690,7 +704,12 @@ export function EstimateForm({
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
   const [selectedCatalogItemId, setSelectedCatalogItemId] = useState("");
   const [selectedSystemId, setSelectedSystemId] = useState("");
-  const [systemSquareFootage, setSystemSquareFootage] = useState("0");
+  const [systemInputMode, setSystemInputMode] = useState<"dimensions" | "direct">("dimensions");
+  const [systemLength, setSystemLength] = useState("");
+  const [systemWidth, setSystemWidth] = useState("");
+  const [systemSquareFootage, setSystemSquareFootage] = useState("");
+  const [systemLinearFootage, setSystemLinearFootage] = useState("");
+  const [systemCount, setSystemCount] = useState("1");
   const [systemPreviewResult, setSystemPreviewResult] =
     useState<ExpandedSystemPreviewResult | null>(null);
   const [systemPreviewMessage, setSystemPreviewMessage] = useState<string | null>(null);
@@ -762,7 +781,9 @@ export function EstimateForm({
   const selectedSystemPreview =
     systemPreviewResult?.ok &&
     systemPreviewResult.systemCatalogItemId === selectedSystemId &&
-    systemPreviewResult.squareFootage === Number(systemSquareFootage || 0).toFixed(2)
+    systemPreviewResult.squareFootage === Number(systemSquareFootage || 0).toFixed(2) &&
+    systemPreviewResult.linearFootage === Number(systemLinearFootage || 0).toFixed(2) &&
+    systemPreviewResult.count === Number(systemCount || 1).toFixed(2)
       ? systemPreviewResult.preview
       : null;
 
@@ -872,7 +893,7 @@ export function EstimateForm({
     field: keyof EstimateItemsDraft,
     value: string
   ) {
-    if (!["quantity", "groupId", "assignedTo"].includes(field)) {
+    if (!["quantity", "groupId", "assignedTo", "unitPrice"].includes(field)) {
       return;
     }
 
@@ -890,7 +911,9 @@ export function EstimateForm({
           groupId: nextGroupId
         };
 
-        return applyDraftPricing(nextLineItem);
+        return applyDraftPricing(nextLineItem, {
+          preserveUnitPriceOverride: field === "quantity" || field === "unitPrice"
+        });
       })
     );
   }
@@ -992,16 +1015,39 @@ export function EstimateForm({
     resetSystemPreview();
   }
 
-  function handleSystemSquareFootageChange(value: string) {
-    setSystemSquareFootage(value);
+  function handleSystemMeasurementChange(field: string, value: string) {
+    if (field === "inputMode") {
+      setSystemInputMode(value === "direct" ? "direct" : "dimensions");
+    } else if (field === "length") {
+      setSystemLength(value);
+      const length = parseNumericInput(value);
+      const width = parseNumericInput(systemWidth);
+      setSystemSquareFootage(length > 0 && width > 0 ? (length * width).toFixed(2) : "");
+      setSystemLinearFootage(length > 0 && width > 0 ? ((length * 2) + (width * 2)).toFixed(2) : "");
+    } else if (field === "width") {
+      setSystemWidth(value);
+      const length = parseNumericInput(systemLength);
+      const width = parseNumericInput(value);
+      setSystemSquareFootage(length > 0 && width > 0 ? (length * width).toFixed(2) : "");
+      setSystemLinearFootage(length > 0 && width > 0 ? ((length * 2) + (width * 2)).toFixed(2) : "");
+    } else if (field === "area") {
+      setSystemSquareFootage(value);
+    } else if (field === "linearFootage") {
+      setSystemLinearFootage(value);
+    } else if (field === "count") {
+      setSystemCount(value);
+    }
+
     resetSystemPreview();
   }
 
   function handlePreviewSystem() {
     const squareFootage = parseNumericInput(systemSquareFootage);
+    const linearFootage = parseNumericInput(systemLinearFootage);
+    const count = parseNumericInput(systemCount) || 1;
 
     if (!selectedSystemId || squareFootage <= 0) {
-      setSystemPreviewMessage("Select a system and enter square footage to preview.");
+      setSystemPreviewMessage("Select a system and enter area measurements to preview.");
       setSystemPreviewResult(null);
       return;
     }
@@ -1010,7 +1056,12 @@ export function EstimateForm({
     startPreviewTransition(async () => {
       const result = await previewExpandedSystemAction({
         systemCatalogItemId: selectedSystemId,
-        squareFootage: squareFootage.toFixed(2)
+        inputMode: systemInputMode,
+        length: systemLength,
+        width: systemWidth,
+        squareFootage: squareFootage.toFixed(2),
+        linearFootage: linearFootage.toFixed(2),
+        count: count.toFixed(2)
       });
 
       if (!result.ok) {
@@ -1021,13 +1072,15 @@ export function EstimateForm({
 
       setSystemPreviewResult(result);
       setSystemPreviewMessage(
-        `${result.systemName} previewed from the server at ${formatQuantity(squareFootage)} sqft.`
+        `${result.systemName} previewed from the server at ${formatQuantity(squareFootage)} sqft and ${formatQuantity(linearFootage)} lf.`
       );
     });
   }
 
   function handleExpandSystem() {
     const squareFootage = Number(systemPreviewResult?.ok ? systemPreviewResult.squareFootage : 0);
+    const linearFootage = Number(systemPreviewResult?.ok ? systemPreviewResult.linearFootage : 0);
+    const count = Number(systemPreviewResult?.ok ? systemPreviewResult.count : 1);
 
     if (!estimate?.id || !systemPreviewResult?.ok) {
       return;
@@ -1035,7 +1088,9 @@ export function EstimateForm({
 
     if (
       systemPreviewResult.systemCatalogItemId !== selectedSystemId ||
-      systemPreviewResult.squareFootage !== squareFootage.toFixed(2)
+      systemPreviewResult.squareFootage !== squareFootage.toFixed(2) ||
+      systemPreviewResult.linearFootage !== linearFootage.toFixed(2) ||
+      systemPreviewResult.count !== count.toFixed(2)
     ) {
       return;
     }
@@ -1053,7 +1108,9 @@ export function EstimateForm({
       const result = await insertSystemAction({
         estimateId: estimate.id,
         systemCatalogItemId: selectedSystemId,
-        squareFootage: squareFootage.toFixed(2)
+        squareFootage: squareFootage.toFixed(2),
+        linearFootage: linearFootage.toFixed(2),
+        count: count.toFixed(2)
       });
 
       if (!result.ok) {
@@ -1064,7 +1121,11 @@ export function EstimateForm({
 
       syncServerInsertedLineItems(result.lineItems, result.updatedAt);
       setSelectedSystemId("");
-      setSystemSquareFootage("0");
+      setSystemLength("");
+      setSystemWidth("");
+      setSystemSquareFootage("");
+      setSystemLinearFootage("");
+      setSystemCount("1");
       resetSystemPreview();
     });
   }
@@ -1587,6 +1648,7 @@ export function EstimateForm({
               value={lineItem.sourceComponentId ?? ""}
             />
             <input type="hidden" name="lineItemQuantity" value={lineItem.quantity} />
+            <input type="hidden" name="lineItemUnitPriceOverride" value={lineItem.unitPrice} />
             <input type="hidden" name="lineItemAssignedTo" value={lineItem.assignedTo} />
             <input type="hidden" name="lineItemGroupName" value={groupName} />
           </div>
@@ -1669,13 +1731,18 @@ export function EstimateForm({
             importSourceEstimates={importSourceEstimates}
             selectedCatalogItemId={selectedCatalogItemId}
             selectedSystemId={selectedSystemId}
+            systemInputMode={systemInputMode}
+            systemLength={systemLength}
+            systemWidth={systemWidth}
             systemSquareFootage={systemSquareFootage}
+            systemLinearFootage={systemLinearFootage}
+            systemCount={systemCount}
             systemPreview={selectedSystemPreview}
             systemPreviewMessage={systemPreviewMessage}
             isPreviewPending={isPreviewPending}
             onSelectedCatalogItemIdChange={setSelectedCatalogItemId}
             onSelectedSystemIdChange={handleSelectedSystemIdChange}
-            onSystemSquareFootageChange={handleSystemSquareFootageChange}
+            onSystemMeasurementChange={handleSystemMeasurementChange}
             onAddCatalogItem={handleAddCatalogItem}
             onQuickAddCatalogItem={handleQuickAddCatalogItem}
             onImportLineItemsFromEstimate={handleImportLineItemsFromEstimate}
