@@ -64,7 +64,18 @@ export function OpportunityQuickCreateForm({
             />
           </div>
           <AuthField label="City" name="city" placeholder="Westfield" required />
-          <AuthField label="State" name="stateRegion" placeholder="MA" required />
+          <AuthField
+            label="State"
+            name="stateRegion"
+            placeholder="MA"
+            maxLength={2}
+            autoCapitalize="characters"
+            onInput={(event) => {
+              event.currentTarget.value = event.currentTarget.value.toUpperCase();
+            }}
+            hint="Use the 2-letter state code."
+            required
+          />
           <AuthField
             label="ZIP / postal code"
             name="postalCode"

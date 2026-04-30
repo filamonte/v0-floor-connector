@@ -561,6 +561,7 @@ export function ContractorDashboardSurface({
 
             <div className="flex flex-wrap gap-1.5">
               <UniversalCreateMenu
+                idBase="dashboard-universal-create-menu"
                 buttonLabel="Universal create"
                 buttonClassName="inline-flex h-10 items-center border border-[#d8731f] bg-[#d8731f] px-4 text-[12px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[#bf6519]"
                 panelClassName="border-[#cfd6e0]"

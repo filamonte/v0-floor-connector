@@ -22,6 +22,52 @@ function getFieldValues(formData: FormData, key: string) {
     .map((value) => (typeof value === "string" ? value : ""));
 }
 
+function normalizeMeasurementType(value: string) {
+  const normalized = value.trim().toLowerCase();
+
+  if (
+    normalized === "area" ||
+    normalized === "sqft" ||
+    normalized === "sq_ft" ||
+    normalized === "square_footage" ||
+    normalized === "square_feet"
+  ) {
+    return "area";
+  }
+
+  if (
+    normalized === "linear" ||
+    normalized === "lf" ||
+    normalized === "linear_footage" ||
+    normalized === "linear_feet"
+  ) {
+    return "linear";
+  }
+
+  if (
+    normalized === "count" ||
+    normalized === "ea" ||
+    normalized === "each"
+  ) {
+    return "count";
+  }
+
+  return normalized;
+}
+
+function deriveMeasurementUnit(measurementType: string) {
+  switch (measurementType) {
+    case "area":
+      return "sqft";
+    case "linear":
+      return "lf";
+    case "count":
+      return "ea";
+    default:
+      return "";
+  }
+}
+
 function buildRedirect(
   pathname: string,
   params: Record<string, string | undefined>
@@ -64,17 +110,28 @@ function parseOpportunityInput(formData: FormData) {
   const attachmentTags = getFieldValues(formData, "attachmentTag");
 
   const measurements = measurementTypes
-    .map((measurementType, index) => ({
-      areaLabel: measurementAreaLabels[index] ?? "",
-      measurementType,
-      valueNumeric: measurementValues[index] ?? "",
-      unit: measurementUnits[index] ?? "",
-      quantity: measurementQuantities[index] ?? "",
-      captureMethod: measurementCaptureMethods[index] ?? "",
-      notes: measurementNotes[index] ?? ""
-    }))
+    .map((measurementType, index) => {
+      const normalizedMeasurementType = normalizeMeasurementType(measurementType);
+      const derivedUnit = deriveMeasurementUnit(normalizedMeasurementType);
+
+      return {
+        areaLabel: measurementAreaLabels[index] ?? "",
+        measurementType: normalizedMeasurementType,
+        valueNumeric: measurementValues[index] ?? "",
+        unit: derivedUnit || (measurementUnits[index] ?? ""),
+        quantity: measurementQuantities[index] ?? "",
+        captureMethod: measurementCaptureMethods[index] ?? "",
+        notes: measurementNotes[index] ?? ""
+      };
+    })
     .filter((measurement) =>
-      Object.values(measurement).some((value) => value.trim().length > 0)
+      [
+        measurement.areaLabel,
+        measurement.valueNumeric,
+        measurement.quantity,
+        measurement.captureMethod,
+        measurement.notes
+      ].some((value) => value.trim().length > 0)
     );
 
   const observations = observationTitles
@@ -85,7 +142,10 @@ function parseOpportunityInput(formData: FormData) {
       severity: observationSeverities[index] ?? ""
     }))
     .filter((observation) =>
-      Object.values(observation).some((value) => value.trim().length > 0)
+      observation.title.trim().length > 0 ||
+      observation.body.trim().length > 0 ||
+      observation.severity.trim().length > 0 ||
+      observation.observationType.trim() !== "general"
     );
 
   const attachments = attachmentPaths
@@ -98,7 +158,13 @@ function parseOpportunityInput(formData: FormData) {
       tag: attachmentTags[index] ?? ""
     }))
     .filter((attachment) =>
-      Object.values(attachment).some((value) => value.trim().length > 0)
+      [
+        attachment.storagePath,
+        attachment.fileName,
+        attachment.mimeType,
+        attachment.caption,
+        attachment.tag
+      ].some((value) => value.trim().length > 0)
     );
 
   return opportunityInputSchema.safeParse({

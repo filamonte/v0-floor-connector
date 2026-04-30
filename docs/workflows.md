@@ -9,6 +9,7 @@ Cross-references:
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): system design
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): next-phase build order
 - [docs/inventory-cost-architecture.md](C:/FloorConnector/docs/inventory-cost-architecture.md): inventory, cost-item, and tax model
+- [docs/site-visit-scope-intake-plan.md](C:/FloorConnector/docs/site-visit-scope-intake-plan.md): Scope Intake planning guardrails between site visit and estimate planning
 
 This workflow document assumes the supporting configuration model now has two layers:
 - super admin defines platform defaults and starter records
@@ -54,6 +55,7 @@ Canonical system records:
 Supporting workflow stages:
 - contact and qualification work
 - site assessment or inspection
+- Scope Intake for structured measurements, observations, requested finish, current conditions, files, logistics, and notes
 - customer-provided measurements, photos, and requirements
 - future project-scoped takeoff and scope intelligence
 - estimate review and approval
@@ -109,6 +111,7 @@ Current canonical records involved:
 Implemented flow:
 - contractor creates an opportunity in `/leads`
 - opportunity can be reviewed and updated
+- the lead workspace includes lightweight site visit Scope Intake capture for manual measurements and structured observations
 - starting the estimate path creates or links the downstream customer and project records as needed
 
 Current canonical records involved:
@@ -165,6 +168,8 @@ Current canonical records involved:
 - catalog system components
 
 Future workflow guidance:
+- the intended pre-estimate lead path is `Lead -> Site Visit Appointment -> Scope Intake -> Estimate Plan -> Estimate`
+- Scope Intake should remain a reviewed pre-estimate support stage, not a direct intake-to-invoice or intake-to-customer-price workflow
 - Takeoff & Scope Intelligence may become a supporting pre-estimate workflow stage between opportunity/site assessment and estimate authoring
 - future inputs may include Measurements, Takeoff, AI Capture, customer-provided plans/photos, contractor site data, requirements, and uploaded plan or image files
 - manual measurement-driven estimating should support length x width, direct floor area, direct linear footage, counts, and optional room/zone detail before full takeoff exists and after full takeoff exists

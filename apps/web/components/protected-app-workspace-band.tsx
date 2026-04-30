@@ -106,6 +106,7 @@ export function ProtectedAppWorkspaceBand({
 
         <div className="flex items-center justify-end gap-1">
           <UniversalCreateMenu
+            idBase="workspace-band-universal-create-menu"
             buttonLabel="Create"
             buttonClassName="mr-2 h-7 rounded-[4px] border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white hover:bg-white/15"
             panelClassName="mt-3"

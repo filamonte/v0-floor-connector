@@ -10,6 +10,7 @@ Use these docs together:
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow direction
 - [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
+- [docs/site-visit-scope-intake-plan.md](C:/FloorConnector/docs/site-visit-scope-intake-plan.md): Scope Intake planning guardrails between site visit and estimate planning
 - [docs/estimate-builder-build-plan.md](C:/FloorConnector/docs/estimate-builder-build-plan.md): long-term Estimate Builder blueprint
 - [docs/estimate-builder-v1-scope.md](C:/FloorConnector/docs/estimate-builder-v1-scope.md): constrained Estimate Builder V1 scope
 - [docs/estimate-builder-system-generation-spec.md](C:/FloorConnector/docs/estimate-builder-system-generation-spec.md): future system-generation planning detail
@@ -301,6 +302,7 @@ Implemented:
 - lead detail page
 - site assessment scheduled/completed date capture on the canonical opportunity record
 - requirements-summary capture on the canonical opportunity record
+- lightweight lead workspace Scope Intake capture for manual measurements and structured observations
 - canonical lead-to-estimate conversion flow that creates or links the downstream customer and project records as needed
 
 Opportunity statuses currently implemented:
@@ -1236,6 +1238,7 @@ The current implemented workflow foundation supports:
 - automatic first-user tenant bootstrap
 - lead and opportunity intake
 - site assessment scheduling/completion capture on the canonical opportunity
+- lead Scope Intake capture for manual measurements and structured observations before estimate handoff
 - requirements capture on the canonical opportunity before estimate handoff
 - canonical lead-to-estimate handoff through customer and project creation/linking
 - seeding project estimating context from opportunity requirements when the estimate flow starts
@@ -1386,6 +1389,7 @@ Not implemented yet:
 - full per-record display-template switching across estimates, invoices, contracts, SOW output, and custom document layouts beyond the currently implemented shared template references
 - contractor shareable template/system/add-on opt-in settings, super-admin review/import/promotion, anonymization review, or promoted platform defaults for other contractors to adopt
 - Takeoff & Scope Intelligence
+- automated Scope Intake to Estimate Plan or estimate-line generation
 - detailed measurement-driven estimate generation with multiple rooms/zones, irregular geometry, optional components, or advanced quantity review
 - full System Template estimate generation beyond V1 Quick Build, including Detailed Build, advanced formula-driven required inputs, optional components, defaults, and template share-back/review workflows
 - System Template adoption/promotion/versioning workflows beyond the current catalog system and document-template foundations
@@ -1412,5 +1416,6 @@ Not implemented yet:
 Future-looking note:
 - the current vendors, people, compliance, jobs, daily logs, time, communication, notification, and portal access foundations could support future scoped collaboration, but no contractor network, marketplace, open contractor chat, or external subcontractor/vendor collaboration surface is implemented today.
 - the current projects, estimates, estimate line items, reusable catalog item foundations, platform starter catalog foundations, organization-owned catalog items, document-template/settings foundations, files/attachments foundations, site-assessment fields, and customer/project workflow could support future measurement-driven estimating, System Template generation, add-ons/options, Templates & Systems administration, Takeoff & Scope Intelligence, and AI Capture.
+- the current lead Scope Intake fields can support future reviewed estimate planning, but they do not currently generate estimate lines, SOW, labor plans, material plans, takeoff records, AI suggestions, invoices, or customer-facing commercial scope automatically.
 - no manual measurement-driven estimate generation, full System Template estimate generation, System Template sharing, dedicated Templates & Systems admin module, add-on/option management workflow, on-screen takeoff, AI Capture, AI takeoff, plan measurement, takeoff-to-cost-item mapping, source traceability, out-of-sync review state, or automated estimate generation exists today.
 - future takeoff must stay separate from implemented truth: Measurements are manual quantity inputs; Takeoff means plan/PDF/drawing-based measurement; AI Capture is a future photo/app/AI-derived input method. Takeoff and measurements would produce quantities, catalog/cost items would define reusable cost, pricing, production, markup, and tax behavior, System Templates would map quantities to grouped estimate content, and estimates would define customer-facing pricing and commercial scope.

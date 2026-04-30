@@ -9,6 +9,7 @@ type UniversalCreateMenuProps = {
   buttonLabel?: string;
   buttonClassName?: string;
   panelClassName?: string;
+  idBase?: string;
 };
 
 type UniversalCreateGroup = {
@@ -79,6 +80,10 @@ const createIconStyle = {
   flexShrink: 0
 } as const;
 
+function sanitizeDomId(value: string) {
+  return value.replace(/[^A-Za-z0-9_-]/g, "");
+}
+
 function PlusIcon() {
   return (
     <svg
@@ -105,10 +110,14 @@ export function UniversalCreateMenu({
   align = "right",
   buttonLabel = "Create",
   buttonClassName,
-  panelClassName
+  panelClassName,
+  idBase
 }: UniversalCreateMenuProps) {
   const [open, setOpen] = useState(false);
-  const menuId = useId();
+  const reactId = useId();
+  const menuId = idBase
+    ? sanitizeDomId(idBase)
+    : `universal-create-menu-${sanitizeDomId(reactId)}`;
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {

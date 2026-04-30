@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import type { MembershipRole } from "@floorconnector/types";
@@ -133,7 +133,7 @@ export function ProtectedAppTopNav({
   } = useProtectedNavigationState(currentRole);
   const [menuOpen, setMenuOpen] = useState(false);
   const shellRef = useRef<HTMLDivElement | null>(null);
-  const menuId = useId();
+  const menuId = "protected-app-top-nav-menu";
   const quickLinks = useMemo(
     () =>
       ["/projects", "/cost-items-database", "/time-cards"]
@@ -293,6 +293,7 @@ export function ProtectedAppTopNav({
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-[#ebe0d6] px-4 py-2.5">
             <div className="flex min-w-0 flex-wrap items-center gap-3">
               <UniversalCreateMenu
+                idBase="top-nav-universal-create-menu"
                 buttonLabel="Quick create"
                 buttonClassName="inline-flex h-10 items-center rounded-[4px] border border-[#ef7d32] bg-[#ef7d32] px-4 py-2 text-[13px] font-semibold text-[#1f140d] transition hover:bg-[#f08b47]"
               />

@@ -6,6 +6,23 @@ This document is a lightweight inventory of notable product systems. It should b
 
 ## Not Built Yet
 
+### Site Visit Scope Intake
+
+Status: Lightweight lead-workspace intake is implemented; deeper estimate-feed behavior is planned.
+
+[docs/site-visit-scope-intake-plan.md](C:/FloorConnector/docs/site-visit-scope-intake-plan.md) defines the planning guardrails for Scope Intake as the structured step between a site visit appointment and estimate planning.
+
+Implemented today:
+- lead workspace capture for manual measurement rows
+- derived measurement units for area, linear, and count inputs
+- structured observations with type and severity
+- linked intake file fields as supporting evidence
+
+Planned direction:
+- clearer lead workspace sections for Overview, Contact / Address, Site Visit, Scope Intake, Estimate Plan, and Notes / Activity
+- reviewed handoff from intake into system template selection, SOW generation, estimate draft lines, and labor/material planning
+- no direct Scope Intake to invoice behavior
+
 ### UI, Directory, Tax, Estimate Editor, Workflow Guidance, And Project Address Alignment
 
 Status: Planning backlog; not an implementation plan by itself.
@@ -100,6 +117,7 @@ Status: Not implemented yet.
 Takeoff & Scope Intelligence is a future project-scoped system for turning job plans, PDFs, drawings, photos, site information, and reviewed quantities into estimate-generation inputs for the canonical estimate workflow.
 
 Related Estimate Builder planning docs:
+- [docs/site-visit-scope-intake-plan.md](C:/FloorConnector/docs/site-visit-scope-intake-plan.md): pre-estimate Scope Intake planning guardrails
 - [docs/estimate-builder-build-plan.md](C:/FloorConnector/docs/estimate-builder-build-plan.md): long-term master build plan
 - [docs/estimate-builder-v1-scope.md](C:/FloorConnector/docs/estimate-builder-v1-scope.md): constrained V1 execution slice
 - [docs/estimate-builder-system-generation-spec.md](C:/FloorConnector/docs/estimate-builder-system-generation-spec.md): system-generation planning detail

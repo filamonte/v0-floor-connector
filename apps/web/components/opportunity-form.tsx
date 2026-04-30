@@ -2,13 +2,14 @@ import type {
   Contact,
   Opportunity,
   OpportunityAttachment,
-  OpportunityObservation,
   OpportunityMeasurement,
+  OpportunityObservation,
   OpportunityStatus
 } from "@floorconnector/types";
 
 import { AuthField } from "@/components/auth-field";
 import { AuthSubmitButton } from "@/components/auth-submit-button";
+import { OpportunityStructuredIntakeFields } from "@/components/opportunity-structured-intake-fields";
 import { opportunityStatusesList } from "@/lib/opportunities/schemas";
 
 type OpportunityFormOpportunity = Opportunity & {
@@ -23,23 +24,6 @@ type OpportunityFormProps = {
   submitLabel: string;
   pendingLabel: string;
   opportunity?: OpportunityFormOpportunity | null;
-};
-
-type MeasurementRow = {
-  areaLabel: string;
-  measurementType: string;
-  valueNumeric: string;
-  unit: string;
-  quantity: string;
-  captureMethod: string;
-  notes: string;
-};
-
-type ObservationRow = {
-  observationType: string;
-  title: string;
-  body: string;
-  severity: string;
 };
 
 type AttachmentRow = {
@@ -61,59 +45,6 @@ function getDateValue(value: string | null | undefined) {
 
 function formatStatusLabel(status: OpportunityStatus) {
   return status.replaceAll("_", " ");
-}
-
-function buildMeasurementRows(
-  measurements: OpportunityMeasurement[] | undefined
-): MeasurementRow[] {
-  const seeded =
-    measurements?.map((measurement) => ({
-      areaLabel: measurement.areaLabel ?? "",
-      measurementType: measurement.measurementType,
-      valueNumeric: measurement.valueNumeric,
-      unit: measurement.unit,
-      quantity:
-        measurement.quantity === null ? "" : String(measurement.quantity),
-      captureMethod: measurement.captureMethod ?? "",
-      notes: measurement.notes ?? ""
-    })) ?? [];
-
-  while (seeded.length < 3) {
-    seeded.push({
-      areaLabel: "",
-      measurementType: "",
-      valueNumeric: "",
-      unit: "",
-      quantity: "",
-      captureMethod: "",
-      notes: ""
-    });
-  }
-
-  return seeded;
-}
-
-function buildObservationRows(
-  observations: OpportunityObservation[] | undefined
-): ObservationRow[] {
-  const seeded =
-    observations?.map((observation) => ({
-      observationType: observation.observationType,
-      title: observation.title,
-      body: observation.body ?? "",
-      severity: observation.severity ?? ""
-    })) ?? [];
-
-  while (seeded.length < 3) {
-    seeded.push({
-      observationType: "",
-      title: "",
-      body: "",
-      severity: ""
-    });
-  }
-
-  return seeded;
 }
 
 function buildAttachmentRows(
@@ -149,8 +80,6 @@ export function OpportunityForm({
   pendingLabel,
   opportunity
 }: OpportunityFormProps) {
-  const measurementRows = buildMeasurementRows(opportunity?.measurements);
-  const observationRows = buildObservationRows(opportunity?.observations);
   const attachmentRows = buildAttachmentRows(opportunity?.attachments);
 
   return (
@@ -331,131 +260,10 @@ export function OpportunityForm({
         </div>
       </section>
 
-      <section className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-700">
-            Measurements
-          </p>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            Save structured measurement facts here instead of burying quantities
-            inside notes.
-          </p>
-        </div>
-        <div className="space-y-4">
-          {measurementRows.map((measurement, index) => (
-            <div
-              key={`measurement-${index}`}
-              className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-3"
-            >
-              <AuthField
-                label="Area label"
-                name="measurementAreaLabel"
-                defaultValue={measurement.areaLabel}
-                placeholder="Main slab"
-              />
-              <AuthField
-                label="Measurement type"
-                name="measurementType"
-                defaultValue={measurement.measurementType}
-                placeholder="square_footage"
-              />
-              <AuthField
-                label="Value"
-                name="measurementValue"
-                defaultValue={measurement.valueNumeric}
-                placeholder="1200"
-              />
-              <AuthField
-                label="Unit"
-                name="measurementUnit"
-                defaultValue={measurement.unit}
-                placeholder="sq_ft"
-              />
-              <AuthField
-                label="Quantity"
-                name="measurementQuantity"
-                defaultValue={measurement.quantity}
-                placeholder="1"
-              />
-              <AuthField
-                label="Capture method"
-                name="measurementCaptureMethod"
-                defaultValue={measurement.captureMethod}
-                placeholder="manual, onsite, photo_derived"
-              />
-              <div className="md:col-span-3">
-                <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-slate-800">
-                    Measurement notes
-                  </span>
-                  <textarea
-                    name="measurementNotes"
-                    defaultValue={measurement.notes}
-                    rows={2}
-                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
-                    placeholder="Optional context for this measurement"
-                  />
-                </label>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-700">
-            Observations
-          </p>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            Capture structured pre-sale observations for estimator review and later
-            automation.
-          </p>
-        </div>
-        <div className="space-y-4">
-          {observationRows.map((observation, index) => (
-            <div
-              key={`observation-${index}`}
-              className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-2"
-            >
-              <AuthField
-                label="Observation type"
-                name="observationType"
-                defaultValue={observation.observationType}
-                placeholder="substrate, access, damage"
-              />
-              <AuthField
-                label="Severity"
-                name="observationSeverity"
-                defaultValue={observation.severity}
-                placeholder="low, medium, high"
-              />
-              <div className="md:col-span-2">
-                <AuthField
-                  label="Observation title"
-                  name="observationTitle"
-                  defaultValue={observation.title}
-                  placeholder="Existing coating is peeling near north wall"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-slate-800">
-                    Observation details
-                  </span>
-                  <textarea
-                    name="observationBody"
-                    defaultValue={observation.body}
-                    rows={3}
-                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
-                    placeholder="Describe the condition, risk, customer request, or estimator note"
-                  />
-                </label>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <OpportunityStructuredIntakeFields
+        measurements={opportunity?.measurements}
+        observations={opportunity?.observations}
+      />
 
       <section className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
         <div>

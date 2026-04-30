@@ -326,7 +326,7 @@ export type MeasurementCaptureMethod =
   | "onsite"
   | "photo_derived"
   | "imported";
-export type OpportunityObservationSeverity = "low" | "medium" | "high";
+export type OpportunityObservationSeverity = "low" | "medium" | "high" | "critical";
 
 export interface Profile {
   id: ProfileId;

@@ -14,6 +14,7 @@ Use these docs together:
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow
 - [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
+- [docs/site-visit-scope-intake-plan.md](C:/FloorConnector/docs/site-visit-scope-intake-plan.md): Scope Intake planning guardrails between site visit and estimate planning
 - [docs/estimate-builder-build-plan.md](C:/FloorConnector/docs/estimate-builder-build-plan.md): long-term Estimate Builder blueprint
 - [docs/estimate-builder-v1-scope.md](C:/FloorConnector/docs/estimate-builder-v1-scope.md): current Estimate Builder execution scope
 - [docs/estimate-builder-system-generation-spec.md](C:/FloorConnector/docs/estimate-builder-system-generation-spec.md): future system-generation planning detail
@@ -106,6 +107,7 @@ Important workflow rules:
 - document template defaults should be copied into contractor-owned templates; platform defaults must not silently mutate contractor local copies
 - records should flow forward instead of being recreated downstream
 - future Takeoff & Scope Intelligence must be project-scoped and feed the canonical estimate workflow; it must not become a separate estimating silo
+- Scope Intake is the lead/site-visit support stage for measurements, conditions, observations, photos/files, logistics, and notes; it must feed reviewed estimate planning rather than creating direct intake-to-invoice behavior
 - Measurements are manual inputs such as length x width, direct square footage, direct linear footage, and counts; Takeoff means plan, PDF, or drawing-based measurement; AI Capture is a future photo, app, or AI-derived measurement input method
 - takeoff and measurements produce quantities; catalog/cost items define reusable cost, pricing, production, markup, and tax behavior; System Templates map quantities to grouped estimate content; estimates define customer-facing pricing and commercial scope
 - Measurements, Takeoff, and AI Capture must feed the same estimate generation engine and must not create separate estimating models
