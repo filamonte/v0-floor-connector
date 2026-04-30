@@ -37,6 +37,9 @@ export function CostItemsSettingsContent({
     ...new Set(catalogItems.flatMap((item) => (item.category ? [item.category] : [])))
   ].sort((left, right) => left.localeCompare(right));
   const defaultItems = catalogItems.filter((item) => item.isDefault);
+  const addOnOptionItems = catalogItems.filter(
+    (item) => (item.category ?? "").trim().toLowerCase() === "add-ons / options"
+  );
   const availableSeeds = platformSeeds.filter(
     (seed) => !catalogItems.some((item) => item.sourceSeedId === seed.id)
   );
@@ -157,7 +160,7 @@ export function CostItemsSettingsContent({
         <SettingsSectionCard
           eyebrow="Category Defaults"
           title="Current reusable categories"
-          description="Categories are currently driven by live cost items so the shared master stays canonical. This pass keeps category defaults lightweight and schema-safe."
+          description="Categories are currently driven by live Catalog Items so the shared master stays canonical. Use Add-ons / Options for optional scope modifiers such as cove base LF, control joints LF, mobilization ea or flat, and coating removal sqft."
         >
           <div className="flex flex-wrap gap-2">
             {categoryDefaults.length > 0 ? (
@@ -174,6 +177,25 @@ export function CostItemsSettingsContent({
                 Categories will appear here as cost items are organized.
               </p>
             )}
+          </div>
+        </SettingsSectionCard>
+
+        <SettingsSectionCard
+          eyebrow="Add-ons / Options"
+          title="Catalog-backed optional scope"
+          description="V1 classifies add-ons through the existing Catalog Item category field. No separate add-on table or optional-component migration is introduced."
+        >
+          <div className="space-y-2 text-sm leading-6 text-slate-600">
+            <p>
+              {addOnOptionItems.length} Catalog Item
+              {addOnOptionItems.length === 1 ? "" : "s"} are categorized as Add-ons / Options.
+            </p>
+            <p>
+              Units can stay practical for estimating: LF, sqft, ea, or a fixed/project row through the existing system basis selector.
+            </p>
+            <p>
+              System-level optional toggles remain a future Templates & Systems decision.
+            </p>
           </div>
         </SettingsSectionCard>
 

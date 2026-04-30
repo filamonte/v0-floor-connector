@@ -119,6 +119,7 @@ function parseEstimateInput(formData: FormData) {
   );
   const lineItemQuantities = getFieldValues(formData, "lineItemQuantity");
   const lineItemUnitPriceOverrides = getFieldValues(formData, "lineItemUnitPriceOverride");
+  const lineItemTaxableOverrides = getFieldValues(formData, "lineItemTaxableOverride");
   const lineItemAssignedToValues = getFieldValues(formData, "lineItemAssignedTo");
   const lineItemGroupNames = getFieldValues(formData, "lineItemGroupName");
   const itemGroupIds = getFieldValues(formData, "itemGroupId");
@@ -140,6 +141,12 @@ function parseEstimateInput(formData: FormData) {
       sourceComponentId: lineItemSourceComponentIds[index] ?? "",
       quantity: lineItemQuantities[index] ?? "",
       unitPriceOverride: lineItemUnitPriceOverrides[index] ?? null,
+      taxableOverride:
+        lineItemTaxableOverrides[index] === "true"
+          ? true
+          : lineItemTaxableOverrides[index] === "false"
+            ? false
+            : undefined,
       assignedTo: lineItemAssignedToValues[index] ?? "",
       groupName: lineItemGroupNames[index] ?? ""
     }))
@@ -261,6 +268,11 @@ const quickEstimateCatalogItemInputSchema = z.object({
     ["material", "labor", "service", "equipment", "subcontractor", "other"] as const
   ),
   unit: z.string().trim().min(1, "Unit is required.").max(40),
+  category: z
+    .string()
+    .trim()
+    .max(120, "Category must be 120 characters or fewer.")
+    .transform((value) => (value.length > 0 ? value : null)),
   defaultUnitCost: z
     .string()
     .trim()
@@ -545,6 +557,7 @@ export async function quickCreateEstimateCatalogItemAction(
     name: getFieldValue(formData, "name"),
     itemType: getFieldValue(formData, "itemType"),
     unit: getFieldValue(formData, "unit"),
+    category: getFieldValue(formData, "category"),
     defaultUnitCost: getFieldValue(formData, "defaultUnitCost"),
     defaultUnitPrice: getFieldValue(formData, "defaultUnitPrice"),
     taxable: getCheckboxValue(formData, "taxable")
@@ -573,7 +586,7 @@ export async function quickCreateEstimateCatalogItemAction(
       taxable: result.data.taxable,
       taxCodeId: null,
       vendorId: null,
-      category: null,
+      category: result.data.category,
       costCode: null,
       sku: null,
       photoStoragePath: null,

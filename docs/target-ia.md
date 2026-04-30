@@ -169,7 +169,7 @@ This area should include:
 - estimate and invoice attachments
 - photos
 - forms/checklists later
-- templates later
+- document output and attachments
 - shared company documents later
 
 Documents should support both project-level and organization-level retrieval.
@@ -198,13 +198,21 @@ This area should include:
 - module enable/disable
 - integrations
 - financial defaults
-- templates
+- Templates & Systems administration later
 - reusable catalogs and starter items
-- System Template adoption, organization-owned estimating systems, local copies, defaults, and optional share-back workflow later
 - automation settings later
 - terminology/workflow defaults later
 
 Settings should remain administrative, not operational.
+
+The future Templates & Systems area under Settings should manage:
+- document templates for estimates, invoices, contracts, proposals/SOW, and future work orders
+- System Templates for reusable floor systems such as epoxy flake, urethane cement, polishing, garage, and commercial systems
+- add-ons/options backed by catalog/cost items
+- sharing and review settings for contractor-created templates, systems, and add-ons
+- contractor defaults and local copies adopted from platform defaults
+
+Templates & Systems should not become a separate estimating or document silo. Estimates, invoices, contracts, jobs, and payments still move through the canonical workflow. The settings area governs reusable configuration; record workspaces use those configurations.
 
 Important boundary:
 - contractor `Settings` is tenant-scoped organization administration

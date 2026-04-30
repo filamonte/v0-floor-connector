@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { SettingsFeedback } from "@/components/settings-feedback";
 import { SettingsOverviewCard } from "@/components/settings-overview-card";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
@@ -37,6 +39,10 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
     listOrganizationMembers(scope.organizationId),
     listOrganizationFeatureOverrides(scope.organizationId)
   ]);
+  const systemCount = catalogItems.filter((item) => item.itemType === "system").length;
+  const addOnOptionCount = catalogItems.filter(
+    (item) => (item.category ?? "").trim().toLowerCase() === "add-ons / options"
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -111,7 +117,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
         <SettingsOverviewCard
           title="Catalog configuration"
-          description="Adjust the settings that support Cost Items Database and inventory behavior without moving the module out of Financials."
+          description="Adjust the settings that support Catalog Items, Systems, Add-ons / Options, and inventory behavior without moving the module out of Financials."
           href="/settings/catalogs"
           ctaLabel="Open catalog configuration"
         >
@@ -129,6 +135,42 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                 </div>
               );
             })}
+          </div>
+        </SettingsOverviewCard>
+
+        <SettingsOverviewCard
+          title="Templates & Systems"
+          description="Current V1 reusable setup lives across Document Templates plus Cost Items Database Systems. A dedicated Templates & Systems module is still future work."
+          href="/settings/templates"
+          ctaLabel="Review document templates"
+        >
+          <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+            <p>
+              <span className="font-medium text-slate-950">{allTemplates.length}</span>{" "}
+              Document Templates support estimate, invoice, and contract output.
+            </p>
+            <p>
+              <span className="font-medium text-slate-950">{systemCount}</span> Systems
+              and <span className="font-medium text-slate-950">{addOnOptionCount}</span>{" "}
+              Add-ons / Options are managed as Catalog Items today.
+            </p>
+            <p>
+              System add-on toggles, sharing, and template promotion remain deferred.
+            </p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Link
+                href="/settings/catalogs"
+                className="inline-flex rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400"
+              >
+                Catalog settings
+              </Link>
+              <Link
+                href="/cost-items-database/systems"
+                className="inline-flex rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400"
+              >
+                Systems workspace
+              </Link>
+            </div>
           </div>
         </SettingsOverviewCard>
 

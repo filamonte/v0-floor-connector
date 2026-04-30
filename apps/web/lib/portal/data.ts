@@ -111,6 +111,7 @@ type PortalEstimateLineItemRow = {
   unit: string;
   unit_price: string | number;
   line_total: string | number;
+  group_name: string | null;
   sort_order: number;
 };
 
@@ -488,6 +489,7 @@ export type PortalEstimateReviewDetail = {
     unit: string;
     unitPrice: string;
     lineTotal: string;
+    groupName: string | null;
     sortOrder: number;
   }>;
   attachments: Array<
@@ -1605,6 +1607,7 @@ export async function getPortalEstimateReviewData(
         unit,
         unit_price,
         line_total,
+        group_name,
         sort_order
       `
     )
@@ -1700,6 +1703,7 @@ export async function getPortalEstimateReviewData(
       unit: lineItem.unit,
       unitPrice: formatMoney(lineItem.unit_price),
       lineTotal: formatMoney(lineItem.line_total),
+      groupName: lineItem.group_name,
       sortOrder: lineItem.sort_order
     })),
     attachments,

@@ -76,6 +76,16 @@ A reusable internal pricing, cost, production, unit, and tax behavior record. Ca
 
 A reusable bundle of catalog or cost items plus input schema, formulas, grouping rules, optional components, and estimate output rules.
 
+Examples include epoxy flake systems, urethane cement systems, polishing systems, garage systems, and commercial systems.
+
+### Add-on / Option
+
+An optional scope modifier backed by catalog/cost items. Add-ons and options may be sqft based, lf based, each/count based, project/flat price based, or labor/multiplier based later.
+
+Examples include integrated cove base, vinyl cove base, control joints, crack repair, coating removal, coal tar epoxy, moisture mitigation, extra topcoat, prevailing wage labor adjustment, and mobilization/setup.
+
+Integrated cove base and vinyl cove base are hybrid components: they are not full floor systems by themselves. They can be catalog items, optional system components, or add-ons generated from perimeter or entered directly.
+
 ### Estimate
 
 The customer-facing commercial scope and pricing record attached to the canonical project workflow.
@@ -246,6 +256,8 @@ A system template conceptually includes:
 
 System templates should be reusable estimating recipes, not customer-specific records.
 
+They should map measurements, intake, and future takeoff quantities to catalog/cost items and grouped estimate output.
+
 ### Template Inputs
 
 Required inputs define the minimum data needed to generate a system.
@@ -265,6 +277,12 @@ Examples:
 - termination detail linear footage
 - number of drains
 - number of steps
+- integrated or vinyl cove base linear footage
+- coating removal area
+- control joint linear footage
+- mobilization/setup flat-price selection
+
+Optional inputs may be exposed as add-ons/options when they represent optional scope modifiers instead of required system scope.
 
 ### Formula Rules
 
@@ -337,6 +355,8 @@ Catalog and cost items provide reusable estimating defaults, including:
 
 Catalog items are internal source records. Estimate lines created from catalog items must snapshot relevant values at creation time.
 
+Labor should eventually be modeled as an internal catalog/cost item component with crew size, production rate, minimum site time, markup, and condition/access multipliers. Near term, labor may remain baked into system pricing where that keeps the implementation smaller and safer.
+
 Customer-facing output must never show:
 - cost
 - markup
@@ -344,6 +364,8 @@ Customer-facing output must never show:
 - internal production assumptions
 - internal notes
 - production rates unless intentionally converted into customer-facing scope language
+
+Add-ons/options should also be catalog-backed so optional scope, pricing, and source traceability stay on the same cost item foundation.
 
 ## Estimate Line Creation And Snapshots
 
@@ -412,6 +434,20 @@ Out-of-sync behavior:
 - if system inputs change after generation, related generated lines should eventually be marked out-of-sync or needing review
 - out-of-sync lines should not silently recalculate and overwrite reviewed pricing
 - regeneration policy should be explicit before implementation
+
+## Customer-Facing Display Templates
+
+Estimate, invoice, contract, and SOW output should eventually support flexible display templates without changing the underlying canonical records.
+
+Display direction:
+- clean grouped customer view should be the default
+- detailed line-item view should be available
+- SOW plus price view should be available
+- contractors should be able to switch display templates per estimate, invoice, or contract
+- custom templates can be supported later
+- internal cost, markup, margin, private notes, and production math must stay hidden unless intentionally configured as customer-facing scope language
+
+Display templates are document-output behavior. They should not create a second estimate, invoice, contract, or pricing model.
 
 ## UI State Model
 
@@ -578,6 +614,20 @@ Even if customer-facing output is collapsed later, internal line detail should r
 
 ## Future Integrations
 
+### Templates & Systems Administration
+
+System Template and add-on/option management should eventually live in a dedicated Templates & Systems settings/admin area rather than inside the estimate editor alone.
+
+That future area should manage:
+- document templates for estimates, invoices, contracts, proposal/SOW output, and future work orders
+- System Templates for reusable floor-system bundles
+- add-ons/options backed by catalog/cost items
+- sharing and review settings
+
+Contractors should have defaults and local editable copies. Super admin can seed platform defaults, but platform defaults should be copied into contractor-owned templates and systems rather than live-mutating adopted local records.
+
+The sharing loop should let contractors mark templates, systems, or add-ons as shareable. Super admin can review, import, anonymize or strip private pricing data, and promote approved versions into platform defaults for other contractors to adopt. Costs, markup, margin, private notes, internal pricing, and production assumptions should be stripped/anonymized or explicitly reviewed before promotion. Promoted platform versions must not silently update existing contractor local copies.
+
 ### Takeoff And Scope Intelligence
 
 Takeoff can later provide measurement sources for estimate generation.
@@ -642,9 +692,11 @@ Do not allow:
 - a separate estimating silo outside canonical estimate records
 - customer exposure of cost, markup, margin, or internal production assumptions
 - duplicate catalog or system template models per module
+- scattered module-specific document-template, System Template, or add-on/option management
 - generated estimate lines that are detached from the canonical project and estimate chain
 - cross-tenant estimate import, catalog access, system generation, takeoff access, or AI capture access
 - AI suggestions to become customer-facing output without user approval
+- promoted platform defaults that silently mutate contractor-owned local copies
 
 Required safeguards:
 - all generated estimate lines stay tied to the canonical project and estimate chain
@@ -661,6 +713,8 @@ Future implementation should decide:
 - whether grouped customer-facing output can hide detailed internal lines
 - how system templates are versioned
 - how contractor-created templates are shared, promoted, or standardized by super admin
+- how default shareable settings are configured for contractor templates, systems, and add-ons/options
+- how cost, markup, margin, private notes, internal pricing, and production assumptions are stripped or reviewed before promotion
 - how detailed irregular geometry inputs will be represented before full takeoff exists
 - how source records should store formula input snapshots
 - whether out-of-sync state lives on individual lines, generated groups, or the estimate builder session
@@ -674,10 +728,12 @@ Future implementation should likely proceed in small phases:
 2. system template model and manual system generation
 3. quick measurement-driven generation
 4. detailed room and zone builder
-5. import and clone improvements
-6. takeoff source compatibility
-7. AI capture draft compatibility
-8. customer-facing grouped output controls
+5. add-ons/options management
+6. import and clone improvements
+7. takeoff source compatibility
+8. AI capture draft compatibility
+9. customer-facing grouped output controls
+10. broader Templates & Systems administration and sharing review
 
 Each phase should include:
 - tenant-aware server validation

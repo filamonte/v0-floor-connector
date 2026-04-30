@@ -57,6 +57,25 @@ function formatAddress(parts: Array<string | null | undefined>) {
   return filtered.length > 0 ? filtered.join(", ") : null;
 }
 
+function formatUnitLabel(unit: string) {
+  const normalized = unit.trim();
+  const lower = normalized.toLowerCase();
+
+  if (lower === "sqft" || lower === "sf" || lower === "square foot" || lower === "square feet") {
+    return "sqft";
+  }
+
+  if (lower === "lf" || lower === "linear foot" || lower === "linear feet") {
+    return "lf";
+  }
+
+  if (lower === "each" || lower === "ea" || lower === "count") {
+    return "ea";
+  }
+
+  return normalized || "ea";
+}
+
 function getStatusBadgeClassName(status: string) {
   switch (status) {
     case "sent":
@@ -346,9 +365,9 @@ export default async function EstimateDetailPage({
                   estimate.status === "approved"
                     ? "border border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-white"
                     : "bg-brand-700 text-white hover:bg-brand-900"
-                }`}
+                  }`}
               >
-                Edit estimate
+                Back to edit
               </Link>
             </>
           }
@@ -497,7 +516,7 @@ export default async function EstimateDetailPage({
         <div className="grid gap-6 border-b border-slate-200 py-8 md:grid-cols-2">
           <section>
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-              Customer
+              Customer Contact / Billing Context
             </p>
             <div className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
               <p className="text-lg font-semibold text-slate-950">
@@ -512,7 +531,7 @@ export default async function EstimateDetailPage({
 
           <section>
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-              Project
+              Project Service Address
             </p>
             <div className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
               <p className="text-lg font-semibold text-slate-950">
@@ -524,7 +543,48 @@ export default async function EstimateDetailPage({
                 </p>
               ) : null}
               {estimate.project?.description ? <p>{estimate.project.description}</p> : null}
-              {projectAddress ? <p>{projectAddress}</p> : null}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Service location
+                </p>
+                {projectAddress ? (
+                  <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+                    <div>
+                      <dt className="text-slate-500">Address line 1</dt>
+                      <dd className="font-medium text-slate-800">
+                        {estimate.project?.addressLine1 ?? "Not provided"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">Address line 2</dt>
+                      <dd className="font-medium text-slate-800">
+                        {estimate.project?.addressLine2 ?? "Not provided"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">City</dt>
+                      <dd className="font-medium text-slate-800">
+                        {estimate.project?.city ?? "Not provided"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">State / Postal</dt>
+                      <dd className="font-medium text-slate-800">
+                        {[estimate.project?.stateRegion, estimate.project?.postalCode]
+                          .filter(Boolean)
+                          .join(" ") || "Not provided"}
+                      </dd>
+                    </div>
+                  </dl>
+                ) : (
+                  <p className="mt-2 text-sm text-slate-500">
+                    No structured project service address is saved yet.
+                  </p>
+                )}
+                <p className="mt-3 text-xs leading-5 text-slate-500">
+                  This jobsite address is separate from the customer contact or billing address.
+                </p>
+              </div>
             </div>
           </section>
         </div>
@@ -576,7 +636,7 @@ export default async function EstimateDetailPage({
                             {lineItem.quantity}
                           </td>
                           <td className="border-y border-slate-200 bg-white px-4 py-4">
-                            {lineItem.unit}
+                            {formatUnitLabel(lineItem.unit)}
                           </td>
                           <td className="border-y border-slate-200 bg-white px-4 py-4 text-right">
                             {formatMoney(lineItem.unitPrice)}

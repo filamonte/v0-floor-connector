@@ -20,6 +20,18 @@ type ComponentDraft = {
   sortOrder: number;
 };
 
+function isAddOnOptionCategory(category: string | null | undefined) {
+  return (category ?? "").trim().toLowerCase() === "add-ons / options";
+}
+
+function getComponentOptionLabel(item: CatalogItem) {
+  const classification = isAddOnOptionCategory(item.category)
+    ? "Add-on / Option"
+    : "Core Catalog Item";
+
+  return `${item.name} (${item.itemType}${item.category ? ` / ${item.category}` : ""}) - ${classification}`;
+}
+
 function createComponentRows(systemItem: CatalogItem): ComponentDraft[] {
   const components = Array.isArray(systemItem.metadata.systemComponents)
     ? (systemItem.metadata.systemComponents as CatalogSystemComponent[])
@@ -224,10 +236,10 @@ export function SystemBuilder({
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#607492]">
-            Systems / Packages Builder
+            Systems Builder
           </p>
           <p className="mt-2 text-sm leading-6 text-[#5f7190]">
-            Component quantities, reorder, cost, final price, and taxable mix are previewed from the same expansion logic used by estimates.
+            Core Catalog Items and Add-ons / Options both expand through the same estimate generation logic. Optional toggles are not stored on system components yet; classify add-ons with the Catalog Item category when they should read as optional scope.
           </p>
         </div>
         <button
@@ -253,7 +265,8 @@ export function SystemBuilder({
           <table className="min-w-full border-collapse">
             <thead>
               <tr className="bg-[#f6f8fc] text-left text-[11px] uppercase tracking-[0.12em] text-[#7c8ba3]">
-                <th className="px-3 py-3">Component</th>
+                <th className="px-3 py-3">Catalog Item</th>
+                <th className="px-3 py-3">Role</th>
                 <th className="px-3 py-3">Qty / Unit</th>
                 <th className="px-3 py-3">Basis</th>
                 <th className="px-3 py-3">Order</th>
@@ -264,6 +277,14 @@ export function SystemBuilder({
               {rows.map((row, index) => (
                 <tr key={row.key} className="border-t border-[#edf1f6] text-sm text-[#334a70]">
                   <td className="px-3 py-3">
+                    {(() => {
+                      const selectedItem =
+                        componentOptions.find(
+                          (item) => item.id === row.componentCatalogItemId
+                        ) ?? null;
+
+                      return (
+                        <>
                     <input type="hidden" name="componentSortOrder" value={index} />
                     <select
                       name="componentCatalogItemId"
@@ -276,10 +297,40 @@ export function SystemBuilder({
                       <option value="">Select component item</option>
                       {componentOptions.map((item) => (
                         <option key={item.id} value={item.id}>
-                          {item.name} ({item.itemType})
+                          {getComponentOptionLabel(item)}
                         </option>
                       ))}
                     </select>
+                          {selectedItem?.category ? (
+                            <p className="mt-1 text-[11px] text-[#7a8aa3]">
+                              Category: {selectedItem.category}
+                            </p>
+                          ) : null}
+                        </>
+                      );
+                    })()}
+                  </td>
+                  <td className="px-3 py-3">
+                    {(() => {
+                      const selectedItem =
+                        componentOptions.find(
+                          (item) => item.id === row.componentCatalogItemId
+                        ) ?? null;
+                      const isAddOn = isAddOnOptionCategory(selectedItem?.category);
+
+                      return (
+                        <span
+                          className={[
+                            "inline-flex rounded-[4px] border px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.1em]",
+                            isAddOn
+                              ? "border-amber-200 bg-amber-50 text-amber-800"
+                              : "border-[#d7deea] bg-[#f6f8fc] text-[#607492]"
+                          ].join(" ")}
+                        >
+                          {isAddOn ? "Add-on / Option" : "Core"}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-3 py-3">
                     <input
@@ -302,8 +353,8 @@ export function SystemBuilder({
                     >
                       <option value="sqft">Area / sqft</option>
                       <option value="lf">Perimeter / LF</option>
-                      <option value="count">Count</option>
-                      <option value="fixed">Fixed quantity</option>
+                      <option value="count">Count / ea</option>
+                      <option value="fixed">Fixed / project price</option>
                     </select>
                   </td>
                   <td className="px-3 py-3">
@@ -400,7 +451,7 @@ export function SystemBuilder({
           <table className="min-w-full border-collapse">
             <thead>
               <tr className="bg-[#f6f8fc] text-left text-[11px] uppercase tracking-[0.12em] text-[#7c8ba3]">
-                <th className="px-3 py-2">Component</th>
+                <th className="px-3 py-2">Catalog Item</th>
                 <th className="px-3 py-2 text-right">Qty</th>
                 <th className="px-3 py-2 text-right">Cost</th>
                 <th className="px-3 py-2 text-right">Price</th>

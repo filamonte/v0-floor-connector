@@ -2178,6 +2178,24 @@ export default async function ProjectDetailPage({
                 ])
               },
               {
+                label: "Service address line 1",
+                value: project.addressLine1 ?? "Not provided"
+              },
+              {
+                label: "Service address line 2",
+                value: project.addressLine2 ?? "Not provided"
+              },
+              {
+                label: "Service city",
+                value: project.city ?? "Not provided"
+              },
+              {
+                label: "Service state / postal",
+                value:
+                  [project.stateRegion, project.postalCode].filter(Boolean).join(" ") ||
+                  "Not provided"
+              },
+              {
                 label: "Created",
                 value: new Date(project.createdAt).toLocaleString()
               },

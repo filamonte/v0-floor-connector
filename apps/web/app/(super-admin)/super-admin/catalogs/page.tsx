@@ -22,9 +22,9 @@ export default async function PlatformCatalogsPage({ searchParams }: PageProps) 
       />
 
       <SettingsSectionCard
-        eyebrow="Starter Cost Items"
-        title="Manage platform cost item and system seeds"
-        description="Platform starter seeds define reusable cost items, systems, and default categories tenants can adopt into organization-owned catalog records."
+        eyebrow="Starter Catalog Items"
+        title="Manage platform Catalog Item and System seeds"
+        description="Platform starter seeds define reusable Catalog Items, Systems, Add-ons / Options, and default categories tenants can adopt into organization-owned catalog records."
       >
         <div className="space-y-4">
           {seeds.map((seed) => (

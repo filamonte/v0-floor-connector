@@ -1671,13 +1671,16 @@ export async function seedEstimateLineItemsFromSources(
     }
 
     if (lineItem.sourceType === "catalog_item") {
-      return applyEstimateLineUnitPriceOverride(buildCatalogItemPricingSnapshot({
-        catalogItem,
-        quantity: lineItem.quantity,
-        sourceType: "catalog_item",
-        groupName: lineItem.groupName,
-        assignedTo: lineItem.assignedTo
-      }), lineItem.unitPriceOverride);
+      return applyEstimateLineTaxableOverride(
+        applyEstimateLineUnitPriceOverride(buildCatalogItemPricingSnapshot({
+          catalogItem,
+          quantity: lineItem.quantity,
+          sourceType: "catalog_item",
+          groupName: lineItem.groupName,
+          assignedTo: lineItem.assignedTo
+        }), lineItem.unitPriceOverride),
+        lineItem.taxableOverride
+      );
     }
 
     if (!lineItem.sourceSystemId || !lineItem.sourceComponentId) {
@@ -1697,18 +1700,21 @@ export async function seedEstimateLineItemsFromSources(
       throw new Error("System-derived estimate row lineage does not match its catalog source.");
     }
 
-    return applyEstimateLineUnitPriceOverride(buildCatalogItemPricingSnapshot({
-      catalogItem,
-      quantity: lineItem.quantity,
-      sourceType: "system_component",
-      sourceSystemId: lineItem.sourceSystemId,
-      sourceComponentId: lineItem.sourceComponentId,
-      groupName: lineItem.groupName,
-      assignedTo: lineItem.assignedTo,
-      name: component.component_item_name,
-      description: component.component_item_description,
-      unit: component.component_item_unit
-    }), lineItem.unitPriceOverride);
+    return applyEstimateLineTaxableOverride(
+      applyEstimateLineUnitPriceOverride(buildCatalogItemPricingSnapshot({
+        catalogItem,
+        quantity: lineItem.quantity,
+        sourceType: "system_component",
+        sourceSystemId: lineItem.sourceSystemId,
+        sourceComponentId: lineItem.sourceComponentId,
+        groupName: lineItem.groupName,
+        assignedTo: lineItem.assignedTo,
+        name: component.component_item_name,
+        description: component.component_item_description,
+        unit: component.component_item_unit
+      }), lineItem.unitPriceOverride),
+      lineItem.taxableOverride
+    );
   });
 }
 
@@ -1727,6 +1733,21 @@ function applyEstimateLineUnitPriceOverride(
     ...snapshot,
     unitPrice,
     lineTotal
+  };
+}
+
+function applyEstimateLineTaxableOverride(
+  snapshot: ReturnType<typeof buildCatalogItemPricingSnapshot>,
+  taxableOverride?: boolean
+) {
+  if (taxableOverride == null || taxableOverride === snapshot.taxable) {
+    return snapshot;
+  }
+
+  return {
+    ...snapshot,
+    taxable: taxableOverride,
+    taxCodeId: taxableOverride ? snapshot.taxCodeId : null
   };
 }
 
@@ -3179,6 +3200,7 @@ export async function importEstimateLineItemsFromEstimate(input: {
       sourceComponentId: lineItem.sourceComponentId,
       quantity: lineItem.quantity,
       unitPriceOverride: lineItem.unitPrice,
+      taxableOverride: lineItem.taxable,
       assignedTo: lineItem.assignedTo,
       groupName: lineItem.groupName
     }));

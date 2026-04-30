@@ -18,6 +18,7 @@ Use these docs together:
 - [docs/estimate-builder-v1-scope.md](C:/FloorConnector/docs/estimate-builder-v1-scope.md): current Estimate Builder execution scope
 - [docs/estimate-builder-system-generation-spec.md](C:/FloorConnector/docs/estimate-builder-system-generation-spec.md): future system-generation planning detail
 - [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md): canonical UI standardization and interaction guardrails
+- [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): planning backlog for UI, directory/contact, tax, estimate editor, project-address, and workflow-guidance alignment
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): doc maintenance and archival rules
 
 ## What Is Implemented Now
@@ -101,6 +102,8 @@ Important workflow rules:
 - customer-facing signature actions now attach to the same canonical contract record used in the contractor app
 - customer-facing payment workflow foundations now attach to the same canonical invoice/payment chain used in the contractor app
 - templates are shared infrastructure across estimates, contracts, and invoices
+- future Templates & Systems administration should centralize document templates, System Templates, add-ons/options, and sharing/review settings instead of scattering those controls across estimate, invoice, contract, and catalog surfaces
+- document template defaults should be copied into contractor-owned templates; platform defaults must not silently mutate contractor local copies
 - records should flow forward instead of being recreated downstream
 - future Takeoff & Scope Intelligence must be project-scoped and feed the canonical estimate workflow; it must not become a separate estimating silo
 - Measurements are manual inputs such as length x width, direct square footage, direct linear footage, and counts; Takeoff means plan, PDF, or drawing-based measurement; AI Capture is a future photo, app, or AI-derived measurement input method
@@ -139,7 +142,10 @@ Important workflow rules:
 - future catalog/cost item defaults for cost, markup, price, labor, production, and tax behavior are internal; customer-facing estimate output should show customer-facing description, quantity, unit price, and total only
 - one-off estimate-line price overrides should not mutate catalog defaults, catalog updates should affect future estimates only, imported estimate lines should preserve snapshot price/markup/override behavior, and past estimates should not mutate when catalog defaults change
 - systems remain canonical reusable assemblies on top of `catalog_items`, with component rows designed to scale by sqft into estimate line items; future System Templates should extend that direction with formulas, grouping rules, optional components, and required inputs
+- add-ons/options should be catalog-backed optional scope modifiers, not separate mini-workflows; cove base is a hybrid catalog item plus optional system/add-on component, not a standalone floor system
+- future labor modeling should live as internal catalog/cost item behavior with production assumptions and multipliers hidden from customer-facing output unless intentionally surfaced as scope language
 - estimate attachments should stay on the shared `documents` bucket using organization-first storage paths
+- future UI/data-model alignment work should follow [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): standardize module-page defaults before customizable views, avoid duplicate contact models, keep project/service address distinct from customer billing/contact address, manage tax rates from settings/super admin rather than project detail, and keep customer-facing estimate output free of internal cost, markup, margin, and profitability controls
 
 ## Current Contractor UI Guardrails
 
@@ -188,6 +194,7 @@ The normalization phase is complete enough to stop; further contractor-page work
 - do not create module-specific data silos
 - do not create a standalone takeoff/estimating app disconnected from projects, catalog/cost items, and canonical estimates
 - do not create duplicate project, estimate, catalog, invoice, template, or takeoff-specific commercial models for future takeoff or estimate-generation behavior
+- do not create module-specific template or add-on silos for estimates, invoices, contracts, proposals/SOW, work orders, or System Templates
 - do not create marketplace models, contractor-network models, or partner-work models until scoped collaboration, permissions, tenant isolation, and canonical ownership are designed
 - treat `Directory` as a unified view over canonical records, not as a new merged record model
 - keep workforce `people`, customer accounts, vendors, leads, and super-admin identities separate at the data-model level even if future contractor UI groups them more closely
@@ -205,6 +212,7 @@ The normalization phase is complete enough to stop; further contractor-page work
 - when refining contractor UI, prefer the shared workspace pattern over one-off page layouts
 - for contractor overview/list pages, prefer the newer top-nav manager pattern: clear page identity, command bar, wide workspace, overview/list-first composition, and contextual secondary navigation only when it truly helps
 - preserve the shared lifecycle language: continuity over silos, project/record chain over module isolation, and quick create over local-only scaffolding
+- use the UI/data-model alignment backlog as planning context for demo-polish tasks, especially estimate editor navigation/review actions, project service-address display, line taxable-toggle planning, module-page consistency, directory/contact unification, tax settings/rates direction, and workflow guidance
 
 ## Documentation Update Rules
 

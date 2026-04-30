@@ -15,6 +15,8 @@ Current foundation priorities to document as the repo grows:
 - environment setup and operational checks
 - modular contractor settings and super-admin boundaries
 - platform defaults versus organization-owned copies and overrides
+- future Templates & Systems administration for document templates, System Templates, add-ons/options, and sharing/review controls
+- future UI, directory/contact, tax, estimate editor, workflow-guidance, and project-address alignment before broader demo/investor polish
 
 Environment notes:
 - Local `.env.local` files should use valid localhost URLs including `http://`.
@@ -35,6 +37,8 @@ Document roles:
 - `docs/target-ia.md`: target contractor app navigation and workspace structure
 - `docs/workflow-spec.md`: primary contractor workflow definition
 - `docs/workflow-state-machine.md`: stages, blockers, and transition guidance
+- `docs/system-inventory.md`: implemented/foundation/planned system inventory, including current template/catalog foundations and planned Templates & Systems administration
+- `docs/ui-data-model-alignment-backlog.md`: planning backlog for contractor UI consistency, module-page patterns, directory/contact direction, estimate editor polish, tax model alignment, workflow guidance, project address display, and later configurable module/dashboard views
 - `docs/estimate-builder-build-plan.md`: long-lived Estimate Builder master blueprint
 - `docs/estimate-builder-v1-scope.md`: constrained Estimate Builder V1 execution scope
 - `docs/estimate-builder-system-generation-spec.md`: planning spec for future system-based estimate generation

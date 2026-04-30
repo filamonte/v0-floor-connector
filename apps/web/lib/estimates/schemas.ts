@@ -153,6 +153,7 @@ export const estimateLineItemInputSchema = z.object({
   sourceComponentId: optionalUuidishString(120),
   quantity: positiveQuantityField(),
   unitPriceOverride: currencyAmountField("Unit price override").nullable().optional(),
+  taxableOverride: z.boolean().optional(),
   assignedTo: optionalTrimmedString(120),
   groupName: optionalTrimmedString(120)
 }).superRefine((value, ctx) => {

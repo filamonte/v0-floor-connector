@@ -92,6 +92,18 @@ export default async function EstimateEditPage({
         opportunityTitle={estimate.opportunity?.title ?? null}
         customerName={estimate.customer?.name ?? null}
         projectName={estimate.project?.name ?? null}
+        projectServiceAddress={
+          estimate.project
+            ? {
+                addressLine1: estimate.project.addressLine1,
+                addressLine2: estimate.project.addressLine2,
+                city: estimate.project.city,
+                stateRegion: estimate.project.stateRegion,
+                postalCode: estimate.project.postalCode,
+                countryCode: estimate.project.countryCode
+              }
+            : null
+        }
         catalogItems={catalogItems}
         contentBlocks={contentBlocks}
         customerTaxExempt={estimate.customer?.isTaxExempt ?? false}

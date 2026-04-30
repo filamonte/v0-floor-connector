@@ -13,7 +13,10 @@ import {
 } from "@/lib/estimates/actions";
 import { getIncludedEstimateScopeItems } from "@/lib/estimates/workspace";
 import { recordPortalViewedEstimate } from "@/lib/estimates/data";
-import { getPortalEstimateReviewData } from "@/lib/portal/data";
+import {
+  getPortalEstimateReviewData,
+  type PortalEstimateReviewDetail
+} from "@/lib/portal/data";
 
 type PortalEstimateReviewPageProps = {
   params: Promise<{
@@ -38,6 +41,25 @@ function formatMoney(value: string) {
 
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString();
+}
+
+function formatUnitLabel(unit: string) {
+  const normalized = unit.trim();
+  const lower = normalized.toLowerCase();
+
+  if (lower === "sqft" || lower === "sf" || lower === "square foot" || lower === "square feet") {
+    return "sqft";
+  }
+
+  if (lower === "lf" || lower === "linear foot" || lower === "linear feet") {
+    return "lf";
+  }
+
+  if (lower === "each" || lower === "ea" || lower === "count") {
+    return "ea";
+  }
+
+  return normalized || "ea";
 }
 
 function getNextAction(status: string, projectId: string) {
@@ -92,6 +114,39 @@ function renderHtmlContent(value: string | null | undefined) {
   return <div dangerouslySetInnerHTML={{ __html: value ?? "" }} />;
 }
 
+function groupEstimateLineItems(
+  lineItems: PortalEstimateReviewDetail["lineItems"]
+) {
+  const groups: Array<{
+    label: string;
+    rows: PortalEstimateReviewDetail["lineItems"];
+    subtotal: number;
+  }> = [];
+  const groupsByLabel = new Map<string, (typeof groups)[number]>();
+
+  for (const lineItem of lineItems) {
+    const label = lineItem.groupName?.trim() || "Estimate Items";
+    const existing = groupsByLabel.get(label);
+    const group =
+      existing ??
+      {
+        label,
+        rows: [],
+        subtotal: 0
+      };
+
+    group.rows.push(lineItem);
+    group.subtotal += Number(lineItem.lineTotal);
+
+    if (!existing) {
+      groupsByLabel.set(label, group);
+      groups.push(group);
+    }
+  }
+
+  return groups;
+}
+
 export default async function PortalEstimateReviewPage({
   params,
   searchParams
@@ -124,6 +179,7 @@ export default async function PortalEstimateReviewPage({
   }
 
   const nextAction = getNextAction(estimate.status, estimate.projectId);
+  const lineItemGroups = groupEstimateLineItems(estimate.lineItems);
 
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
@@ -232,27 +288,40 @@ export default async function PortalEstimateReviewPage({
           <div className="space-y-6">
             {estimate.lineItems.length > 0 ? (
               <div className="space-y-3">
-                {estimate.lineItems.map((lineItem) => (
+                {lineItemGroups.map((group) => (
                   <div
-                    key={lineItem.id}
+                    key={group.label}
                     className="rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4"
                   >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-slate-950">{lineItem.name}</p>
-                        {lineItem.description ? (
-                          <p className="text-sm leading-6 text-slate-600">
-                            {lineItem.description}
-                          </p>
-                        ) : null}
-                        <p className="text-sm text-slate-500">
-                          {Number(lineItem.quantity).toLocaleString("en-US")} {lineItem.unit} at{" "}
-                          {formatMoney(lineItem.unitPrice)}
-                        </p>
-                      </div>
+                    <div className="flex flex-col gap-2 border-b border-slate-200 pb-3 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-sm font-semibold text-slate-950">{group.label}</p>
                       <p className="text-sm font-semibold text-slate-950">
-                        {formatMoney(lineItem.lineTotal)}
+                        {formatMoney(group.subtotal.toFixed(2))}
                       </p>
+                    </div>
+                    <div className="mt-3 space-y-3">
+                      {group.rows.map((lineItem) => (
+                        <div
+                          key={lineItem.id}
+                          className="flex flex-col gap-3 rounded-2xl bg-white px-4 py-3 sm:flex-row sm:items-start sm:justify-between"
+                        >
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-slate-950">{lineItem.name}</p>
+                            {lineItem.description ? (
+                              <p className="text-sm leading-6 text-slate-600">
+                                {lineItem.description}
+                              </p>
+                            ) : null}
+                            <p className="text-sm text-slate-500">
+                              {Number(lineItem.quantity).toLocaleString("en-US")}{" "}
+                              {formatUnitLabel(lineItem.unit)} at {formatMoney(lineItem.unitPrice)}
+                            </p>
+                          </div>
+                          <p className="text-sm font-semibold text-slate-950">
+                            {formatMoney(lineItem.lineTotal)}
+                          </p>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}

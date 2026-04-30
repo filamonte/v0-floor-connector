@@ -66,6 +66,14 @@ type EstimateFormProps = {
   opportunityTitle?: string | null;
   customerName?: string | null;
   projectName?: string | null;
+  projectServiceAddress?: {
+    addressLine1: string | null;
+    addressLine2: string | null;
+    city: string | null;
+    stateRegion: string | null;
+    postalCode: string | null;
+    countryCode: string | null;
+  } | null;
   catalogItems?: CatalogItem[];
   customerTaxExempt: boolean;
   organizationFinancialSettings: Pick<
@@ -444,6 +452,7 @@ function renderDetailsSection(input: {
   customerName?: string | null;
   projectName?: string | null;
   opportunityTitle?: string | null;
+  projectServiceAddressLabel: string;
   estimateDate: string;
   expirationDate: string;
   projectType: string;
@@ -468,6 +477,7 @@ function renderDetailsSection(input: {
     customerName,
     projectName,
     opportunityTitle,
+    projectServiceAddressLabel,
     estimateDate,
     expirationDate,
     projectType,
@@ -523,6 +533,17 @@ function renderDetailsSection(input: {
             <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#fbfcfe] px-3 py-3 text-[14px] text-[#243a5f]">
               {projectName ?? opportunityTitle ?? "Opportunity continuity linked"}
             </div>
+          </div>
+          <div>
+            <label className="text-[12px] font-medium text-[#5d6f8a]">
+              Project Service Address
+            </label>
+            <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#fbfcfe] px-3 py-3 text-[14px] leading-5 text-[#243a5f]">
+              {projectServiceAddressLabel}
+            </div>
+            <p className="mt-1.5 text-[12px] leading-5 text-[#7b8ba5]">
+              Jobsite/service address, separate from customer billing or contact address.
+            </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
@@ -637,6 +658,7 @@ export function EstimateForm({
   opportunityTitle,
   customerName,
   projectName,
+  projectServiceAddress,
   catalogItems = [],
   customerTaxExempt,
   organizationFinancialSettings,
@@ -729,6 +751,18 @@ export function EstimateForm({
   );
   const [isPending, startSaveTransition] = useTransition();
   const [isPreviewPending, startPreviewTransition] = useTransition();
+  const projectServiceAddressLabel = useMemo(() => {
+    const parts = [
+      projectServiceAddress?.addressLine1,
+      projectServiceAddress?.addressLine2,
+      projectServiceAddress?.city,
+      projectServiceAddress?.stateRegion,
+      projectServiceAddress?.postalCode,
+      projectServiceAddress?.countryCode
+    ].filter((value): value is string => Boolean(value && value.trim().length > 0));
+
+    return parts.length > 0 ? parts.join(", ") : "No project service address provided";
+  }, [projectServiceAddress]);
 
   const filteredCatalogItems = catalogInventoryItems.filter(
     (item) => item.status === "active"
@@ -893,7 +927,7 @@ export function EstimateForm({
     field: keyof EstimateItemsDraft,
     value: string
   ) {
-    if (!["quantity", "groupId", "assignedTo", "unitPrice"].includes(field)) {
+    if (!["quantity", "groupId", "assignedTo", "unitPrice", "taxCode"].includes(field)) {
       return;
     }
 
@@ -976,6 +1010,7 @@ export function EstimateForm({
     name: string;
     itemType: CatalogItem["itemType"];
     unit: string;
+    category: string | null;
     defaultUnitCost: string;
     defaultUnitPrice: string | null;
   }) {
@@ -983,6 +1018,9 @@ export function EstimateForm({
     formData.set("name", input.name);
     formData.set("itemType", input.itemType);
     formData.set("unit", input.unit);
+    if (input.category) {
+      formData.set("category", input.category);
+    }
     formData.set("defaultUnitCost", input.defaultUnitCost);
     if (input.defaultUnitPrice) {
       formData.set("defaultUnitPrice", input.defaultUnitPrice);
@@ -1532,57 +1570,69 @@ export function EstimateForm({
   );
 
   const headerActions = (
-    <div className="relative">
+    <div className="flex flex-wrap items-center justify-end gap-2">
       <button
         type="button"
-        onClick={() => setMenuOpen((current) => !current)}
-        className="flex h-8 w-8 items-center justify-center border border-[#cfd6e0] hover:bg-[#f0f3f7]"
+        onClick={() => setActiveSection("review-submit")}
+        className="inline-flex h-9 items-center justify-center border border-[#d8731f] bg-[#fff1e4] px-3 text-[13px] font-semibold text-[#a4581a] transition hover:bg-[#ffe2c5]"
       >
-        <MoreVertical className="h-4 w-4" />
+        Review
       </button>
+      {estimate?.id ? (
+        <Link
+          href={`/estimates/${estimate.id}`}
+          className="inline-flex h-9 items-center justify-center border border-[#d8731f] bg-[#d8731f] px-3 text-[13px] font-semibold text-white transition hover:bg-[#bf6519]"
+        >
+          Open review page
+        </Link>
+      ) : null}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setMenuOpen((current) => !current)}
+          className="flex h-9 w-9 items-center justify-center border border-[#cfd6e0] hover:bg-[#f0f3f7]"
+          title="More estimate actions"
+        >
+          <MoreVertical className="h-4 w-4" />
+        </button>
 
-      {menuOpen ? (
-        <div className="absolute right-0 top-[36px] z-20 min-w-[220px] border border-[#cfd6e0] bg-white p-1">
-          <Link
-            href={`/estimates/${estimate?.id ?? ""}`}
-            className="block px-3 py-1.5 text-[13px] text-[#334a70] hover:bg-[#f0f3f7]"
-          >
-            Open Review Page
-          </Link>
-          {status === "approved" ? (
+        {menuOpen ? (
+          <div className="absolute right-0 top-[40px] z-20 min-w-[220px] border border-[#cfd6e0] bg-white p-1">
+            {status === "approved" ? (
+              <Link
+                href={`/contracts?estimateId=${estimate?.id ?? ""}`}
+                className="block px-3 py-1.5 text-[13px] text-[#334a70] hover:bg-[#f0f3f7]"
+              >
+                Generate Contract
+              </Link>
+            ) : (
+              <button
+                type="button"
+                disabled
+                className="block w-full px-3 py-1.5 text-left text-[13px] text-[#a7b2c4]"
+                title="Contract generation becomes real after estimate approval."
+              >
+                Generate Contract
+              </button>
+            )}
             <Link
-              href={`/contracts?estimateId=${estimate?.id ?? ""}`}
+              href={`/projects/${estimate?.projectId ?? ""}`}
               className="block px-3 py-1.5 text-[13px] text-[#334a70] hover:bg-[#f0f3f7]"
             >
-              Generate Contract
+              Open Project
             </Link>
-          ) : (
             <button
               type="button"
               disabled
-              className="block w-full px-3 py-1.5 text-left text-[13px] text-[#a7b2c4]"
-              title="Contract generation becomes real after estimate approval."
+              className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#a7b2c4]"
+              title="Copy/export actions still need backend continuity and remain out of scope for this run."
             >
-              Generate Contract
+              <FilePlus2 className="h-4 w-4" />
+              <span>Copy / Export</span>
             </button>
-          )}
-          <Link
-            href={`/projects/${estimate?.projectId ?? ""}`}
-            className="block px-3 py-1.5 text-[13px] text-[#334a70] hover:bg-[#f0f3f7]"
-          >
-            Open Project
-          </Link>
-          <button
-            type="button"
-            disabled
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#a7b2c4]"
-            title="Copy/export actions still need backend continuity and remain out of scope for this run."
-          >
-            <FilePlus2 className="h-4 w-4" />
-            <span>Copy / Export</span>
-          </button>
-        </div>
-      ) : null}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 
@@ -1649,6 +1699,11 @@ export function EstimateForm({
             />
             <input type="hidden" name="lineItemQuantity" value={lineItem.quantity} />
             <input type="hidden" name="lineItemUnitPriceOverride" value={lineItem.unitPrice} />
+            <input
+              type="hidden"
+              name="lineItemTaxableOverride"
+              value={lineItem.taxCode === "taxable" ? "true" : "false"}
+            />
             <input type="hidden" name="lineItemAssignedTo" value={lineItem.assignedTo} />
             <input type="hidden" name="lineItemGroupName" value={groupName} />
           </div>
@@ -1769,6 +1824,7 @@ export function EstimateForm({
             customerName,
             projectName,
             opportunityTitle,
+            projectServiceAddressLabel,
             estimateDate,
             expirationDate,
             projectType,
@@ -1909,18 +1965,68 @@ export function EstimateForm({
 
         <div className={activeSection === "review-submit" ? "block" : "hidden"}>
           <div className="border-t border-[#e6e9ef] bg-white px-4 py-4">
-            <div className="border border-[#d7dce4] bg-[#f7f8fa] px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Review and Submit
-              </p>
-              <div className="mt-3 space-y-3 text-sm leading-5 text-slate-600">
-                <p>
-                  Review the estimate content, confirm pricing and terms, then use the existing
-                  header controls or footer save action to continue the estimate workflow.
-                </p>
-                <div className="border border-slate-200 bg-white px-3 py-2.5">
-                  <p className="font-medium text-slate-900">Current save state</p>
-                  <p className="mt-1">{isPending || saveState === "saving" ? "Saving..." : saveMessage}</p>
+            <div className="border border-[#d7dce4] bg-[#f7f8fa] px-4 py-4">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Review and Submit
+                  </p>
+                  <h2 className="mt-2 text-[20px] font-semibold text-slate-950">
+                    Check the customer-facing estimate, then take the next workflow step.
+                  </h2>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                    Use this checkpoint after editing items, scope, terms, files, and notes. The
+                    review page shows the proposal output and the real send/contract handoff
+                    actions already supported by FloorConnector.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection("items")}
+                    className="inline-flex h-10 items-center justify-center border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Back to edit
+                  </button>
+                  {estimate?.id ? (
+                    <Link
+                      href={`/estimates/${estimate.id}`}
+                      className="inline-flex h-10 items-center justify-center border border-[#d8731f] bg-[#d8731f] px-4 text-sm font-semibold text-white transition hover:bg-[#bf6519]"
+                    >
+                      Open review page
+                    </Link>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-3 lg:grid-cols-3">
+                <div className="border border-slate-200 bg-white px-3 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Save state
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-slate-900">
+                    {isPending || saveState === "saving" ? "Saving..." : saveMessage}
+                  </p>
+                </div>
+                <div className="border border-slate-200 bg-white px-3 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Current status
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-slate-900">
+                    {statusDisplayLabels[status]}
+                  </p>
+                </div>
+                <div className="border border-slate-200 bg-white px-3 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Next supported action
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-slate-900">
+                    {status === "approved"
+                      ? "Generate contract or continue project readiness"
+                      : status === "sent"
+                        ? "Wait for portal approval or customer feedback"
+                        : "Open review page and send when portal access is ready"}
+                  </p>
                 </div>
               </div>
             </div>

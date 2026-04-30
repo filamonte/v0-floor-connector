@@ -76,6 +76,18 @@ Estimating terminology:
 
 Boundary rule: Takeoff and measurements produce quantities. Catalog/cost items define reusable cost, pricing, production, markup, and tax behavior. System Templates map quantities to grouped estimate content. Estimates define customer-facing pricing and commercial scope.
 
+Future Templates & Systems administration:
+- document templates, System Templates, add-ons/options, and sharing/review settings should eventually live in a dedicated contractor settings/admin area rather than being scattered across estimates, invoices, contracts, and other modules
+- document templates should include estimate, invoice, contract, proposal/SOW, and future work order templates
+- contractors should have defaults, be able to switch templates per estimate/invoice/contract where the workflow supports it, and be able to create or edit local copies
+- super admin may seed platform defaults, but those defaults should be copied into contractor-owned templates instead of live-mutating contractor records
+- System Templates should cover reusable floor system bundles such as epoxy flake, urethane cement, polishing, garage, and commercial systems
+- add-ons/options should be optional scope modifiers backed by catalog/cost items; examples include integrated cove base, vinyl cove base, control joints, crack repair, coating removal, coal tar epoxy, moisture mitigation, extra topcoat, prevailing wage labor adjustment, and mobilization/setup
+- add-ons may be square-foot, linear-foot, count/each, project/flat-price, or later labor/multiplier based
+- cove base is a hybrid: not a full floor system by itself, but a catalog item plus optional System Template/add-on component that can be generated from perimeter or entered directly
+- customer-facing estimate, invoice, and contract display should default to a clean grouped view while allowing detailed line-item and SOW-plus-price views; custom display templates are a later direction
+- internal cost, markup, margin, private notes, and production math should stay internal unless intentionally configured as customer-facing language
+
 ## Current Implemented Workflows
 
 The current app already supports the following live workflows:

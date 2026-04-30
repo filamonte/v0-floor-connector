@@ -145,6 +145,13 @@ Pricing behavior:
 - new lines added from catalog should use current item defaults
 - past estimates should not mutate when catalog defaults change
 
+Display-template behavior:
+- clean grouped customer-facing output should be the default
+- detailed line-item output should be available when the contractor wants transparency or itemized presentation
+- SOW plus price output should be available when the contractor wants a concise proposal format
+- contractors should be able to switch supported display templates per estimate, invoice, or contract
+- custom output templates can be supported later through the shared document-template foundation
+
 Generated estimate line items should eventually retain source traceability back to the takeoff scope item, takeoff measurement, and source document or photo when applicable. If takeoff quantities change after estimate generation, the system should flag the takeoff-estimate link or estimate as out of sync so users know the estimate may need review.
 
 The target estimate generation path is `Lead / Opportunity -> Customer + Project -> Site Info / Measurements / Plans / Photos -> Measurement, Takeoff, or AI Capture -> System Template -> Catalog/Cost Item Mapping -> Grouped Estimate Line Items -> Estimate -> Contract -> Job -> Invoice -> Payment`.
@@ -227,13 +234,14 @@ The broader workflow depends on configuration at two layers.
 ### Platform / Super Admin
 
 Super admin should define:
-- platform starter templates
+- platform starter document templates for estimates, invoices, contracts, proposals/SOW, and future work orders
 - platform starter catalogs
 - platform starter systems / System Templates
-- import or review contractor-created shareable systems
-- strip or anonymize cost and markup before promotion
-- promote reviewed systems to platform templates
-- version platform templates so contractor-owned copies are not silently broken
+- platform starter add-ons/options where they are broadly useful
+- import or review contractor-created shareable document templates, systems, and add-ons
+- strip, anonymize, or explicitly review cost, markup, margin, private notes, internal pricing, and production assumptions before promotion
+- promote reviewed systems, add-ons, or document templates to platform defaults
+- version platform defaults so contractor-owned copies are not silently broken
 - global financial defaults
 - global workflow defaults
 - feature and module policy
@@ -241,17 +249,23 @@ Super admin should define:
 ### Contractor Organization
 
 Contractor admins should manage:
-- organization-owned templates
+- organization-owned document templates
 - organization-owned reusable items
 - adoption of platform-seeded System Templates
 - organization-owned System Templates
 - local editable copies, defaults, and estimate-generation use of System Templates
-- optional sharing of contractor-created templates back to the platform for review
+- add-ons/options backed by catalog items
+- optional sharing of contractor-created templates, systems, or add-ons back to the platform for review, with default opt-in behavior configurable in settings
 - tax defaults
 - retainage defaults
 - contract workflow defaults
 - deposit or readiness preferences
 - allowed feature overrides
+
+Templates & Systems direction:
+- these controls should eventually live in a dedicated Templates & Systems settings/admin area instead of being scattered across estimate, invoice, contract, and catalog surfaces
+- platform defaults should be copied into contractor-owned templates or systems on adoption
+- promoted platform versions should become available for other contractors to adopt, but should not silently update existing contractor local copies
 
 ## What We Avoid
 

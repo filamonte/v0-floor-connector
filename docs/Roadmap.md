@@ -11,6 +11,7 @@ It tracks delivery sequence and major platform milestones. It should be read alo
 - [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
 - [docs/estimate-builder-build-plan.md](C:/FloorConnector/docs/estimate-builder-build-plan.md): long-term Estimate Builder blueprint
 - [docs/estimate-builder-v1-scope.md](C:/FloorConnector/docs/estimate-builder-v1-scope.md): constrained Estimate Builder V1 scope
+- [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): UI, directory/contact, tax, estimate editor, workflow-guidance, project-address, and configurable-view alignment backlog
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
 
 This document is sequencing guidance, not a claim that a later phase is already implemented. If status and plan conflict, trust [docs/current-state.md](C:/FloorConnector/docs/current-state.md) for current reality.
@@ -59,6 +60,7 @@ Planned focus:
 - deepen module controls and entitlement behavior beyond the current configuration foundation
 - keep contractor admin and super-admin responsibilities clearly separated as more modules plug into settings
 - reduce route and UI inconsistencies before expanding new domains
+- address demo-polish alignment items from [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md), especially estimate editor navigation/review actions, project service-address visibility, line taxable-toggle planning, and UI consistency audit work
 
 ## Phase 3
 
@@ -67,6 +69,7 @@ Planned focus:
 Planned focus:
 - make project the primary operational workspace
 - connect estimates, contracts, jobs, invoices, files, and activity more clearly inside the project context
+- align project/service address display with the planned structured address direction while keeping it distinct from customer billing/contact address
 - strengthen project-scoped site info, plan/photo/file inputs, and scope summary foundations that can later support Takeoff & Scope Intelligence
 - strengthen readiness, blockers, and next-action guidance
 - add tasks and richer role-based queue behavior on top of the existing notification foundation
@@ -94,11 +97,16 @@ Planned focus:
 - Estimate Builder work in this phase should follow [docs/estimate-builder-build-plan.md](C:/FloorConnector/docs/estimate-builder-build-plan.md), with current execution constrained by [docs/estimate-builder-v1-scope.md](C:/FloorConnector/docs/estimate-builder-v1-scope.md)
 - planned manual measurement-driven estimating foundations where length x width, direct floor area, direct linear footage, counts, and optional room/zone detail can produce quantities for reviewed estimate generation
 - planned System Template foundations where reusable estimating systems bundle catalog/cost items, formulas, grouping rules, optional components, and required inputs
+- planned Templates & Systems settings/admin area for document templates, System Templates, add-ons/options, and sharing/review settings instead of scattering those controls across estimate, invoice, and contract modules
+- planned add-on/option foundations for catalog-backed optional scope modifiers such as integrated cove base, vinyl cove base, control joints, crack repair, coating removal, moisture mitigation, extra topcoat, mobilization/setup, and future labor adjustments
+- planned template sharing loop where contractor-created templates/systems/add-ons can be marked shareable, reviewed by super admin, stripped or anonymized for private cost/markup/margin/internal notes, and promoted as platform defaults without silently updating contractor local copies
 - planned on-screen Takeoff & Scope Intelligence foundations where project-scoped plan/PDF/drawing measurement can produce quantities, map through System Templates and reusable catalog/cost items, and generate reviewed estimate line items
 - richer shared template and document editing capability
 - broader document workflow refinement
 
 Takeoff work in this phase would be planned direction only. Manual measurements are not takeoff; they are contractor-entered quantities or dimensions. Takeoff means plan, PDF, or drawing-based measurement. Both input paths should support the canonical estimate workflow instead of becoming separate estimating apps. Takeoff and measurement quantities may eventually inform material requirements, labor estimation, production readiness, and job planning, but they should flow through reviewed estimates before contracts, jobs, invoices, or payments.
+
+Document-template work in this phase should preserve the existing copied-template model: platform defaults seed contractor-owned templates, contractors can edit local copies and switch templates per estimate, invoice, or contract where supported, and future proposal/SOW or work order templates should extend the same shared template foundation instead of creating module-specific template silos.
 
 ## Phase 6
 

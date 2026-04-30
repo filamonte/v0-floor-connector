@@ -116,6 +116,7 @@ type ItemsSectionProps = {
     name: string;
     itemType: CatalogItem["itemType"];
     unit: string;
+    category: string | null;
     defaultUnitCost: string;
     defaultUnitPrice: string | null;
   }) => Promise<boolean>;
@@ -157,6 +158,53 @@ function getNumericValue(value: string) {
 
 function formatMoney(value: number) {
   return `$${value.toFixed(2)}`;
+}
+
+function formatUnitLabel(unit: string) {
+  const normalized = unit.trim();
+  const lower = normalized.toLowerCase();
+
+  if (lower === "sqft" || lower === "sf" || lower === "square foot" || lower === "square feet") {
+    return "sqft";
+  }
+
+  if (lower === "lf" || lower === "linear foot" || lower === "linear feet") {
+    return "lf";
+  }
+
+  if (lower === "each" || lower === "ea" || lower === "count") {
+    return "ea";
+  }
+
+  return normalized || "ea";
+}
+
+function getCatalogPriceBasis(lineItem: EstimateItemsDraft) {
+  const unitPriceBeforeHiddenMarkup = getNumericValue(lineItem.unitPriceBeforeHiddenMarkup);
+  const hiddenMarkupAmount = getNumericValue(lineItem.hiddenMarkupAmount);
+
+  if (unitPriceBeforeHiddenMarkup > 0) {
+    return unitPriceBeforeHiddenMarkup + hiddenMarkupAmount;
+  }
+
+  return getNumericValue(lineItem.baseUnitPrice);
+}
+
+function isUnitPriceOverridden(lineItem: EstimateItemsDraft) {
+  const currentUnitPrice = getNumericValue(lineItem.unitPrice);
+  const catalogPrice = getCatalogPriceBasis(lineItem);
+
+  return Math.abs(currentUnitPrice - catalogPrice) >= 0.01;
+}
+
+function isAddOnOptionCategory(category: string | null | undefined) {
+  return (category ?? "").trim().toLowerCase() === "add-ons / options";
+}
+
+function getCatalogItemOptionLabel(item: CatalogItem) {
+  const suffix = isAddOnOptionCategory(item.category) ? " - Add-on / Option" : "";
+
+  return `${item.name} (${item.itemType}${item.category ? ` / ${item.category}` : ""})${suffix}`;
 }
 
 function getVisibleRowGroups(
@@ -262,6 +310,7 @@ export function ItemsSection({
   const [quickItemName, setQuickItemName] = useState("");
   const [quickItemType, setQuickItemType] = useState<CatalogItemType>("material");
   const [quickItemUnit, setQuickItemUnit] = useState("each");
+  const [quickItemCategory, setQuickItemCategory] = useState("");
   const [quickItemCost, setQuickItemCost] = useState("");
   const [quickItemPrice, setQuickItemPrice] = useState("");
   const visibleGroups = getVisibleRowGroups(lineItems, itemGroups, showOnlyZeroItems);
@@ -386,7 +435,7 @@ export function ItemsSection({
                 <option value="">Select catalog item</option>
                 {directCatalogItems.map((item) => (
                   <option key={item.id} value={item.id}>
-                    {item.name} ({item.itemType})
+                    {getCatalogItemOptionLabel(item)}
                   </option>
                 ))}
               </select>
@@ -460,6 +509,17 @@ export function ItemsSection({
                   />
                 </label>
                 <label className="text-[12px] font-medium text-[#5d6f8a]">
+                  Classification
+                  <select
+                    value={quickItemCategory}
+                    onChange={(event) => setQuickItemCategory(event.target.value)}
+                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] px-3 text-[14px] text-[#334a70] outline-none"
+                  >
+                    <option value="">Catalog Item</option>
+                    <option value="Add-ons / Options">Add-ons / Options</option>
+                  </select>
+                </label>
+                <label className="text-[12px] font-medium text-[#5d6f8a]">
                   Cost
                   <input
                     value={quickItemCost}
@@ -495,12 +555,14 @@ export function ItemsSection({
                         name: quickItemName,
                         itemType: quickItemType,
                         unit: quickItemUnit,
+                        category: quickItemCategory.trim().length > 0 ? quickItemCategory : null,
                         defaultUnitCost: quickItemCost,
                         defaultUnitPrice: quickItemPrice.trim().length > 0 ? quickItemPrice : null
                       });
                       if (didCreate) {
                         setQuickItemName("");
                         setQuickItemUnit("each");
+                        setQuickItemCategory("");
                         setQuickItemCost("");
                         setQuickItemPrice("");
                         setShowCreateItemForm(false);
@@ -529,7 +591,7 @@ export function ItemsSection({
               Generate Estimate from System
             </h2>
             <p className="mt-1 text-[13px] leading-5 text-[#6b5a4f]">
-              Pick a floor system, enter Length x Width, then generate the estimate items.
+              Pick a System, enter area, LF, and count measurements, then generate grouped estimate items. Catalog Items categorized as Add-ons / Options can be included as LF, sqft, ea, or fixed/project rows through the existing unit and basis behavior.
             </p>
           </div>
           <div className="flex flex-wrap items-end gap-3">
@@ -658,7 +720,7 @@ export function ItemsSection({
               <div className="grid gap-3 border-b border-[#e6e9ef] px-3 py-3 text-[12px] text-[#607492] sm:grid-cols-4">
                 <div>
                   <span className="block font-semibold uppercase tracking-[0.08em]">
-                    Components
+                    Catalog Items
                   </span>
                   <span className="mt-1 block text-[15px] font-semibold text-[#23395d]">
                     {systemPreview.rows.length}
@@ -693,7 +755,7 @@ export function ItemsSection({
                 <table className="min-w-full border-collapse">
                   <thead>
                     <tr className="border-b border-[#e6e9ef] bg-[#f6f8fc] text-[11px] uppercase tracking-[0.08em] text-[#7c8ba3]">
-                      <th className="px-3 py-2 text-left">Component</th>
+                      <th className="px-3 py-2 text-left">Catalog Item</th>
                       <th className="px-3 py-2 text-right">Qty</th>
                       <th className="px-3 py-2 text-right">Cost</th>
                       <th className="px-3 py-2 text-right">Price</th>
@@ -946,8 +1008,11 @@ export function ItemsSection({
                           />
                         </td>
                         <td className="px-2 py-3">
-                          <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2 text-[15px] text-[#6f8098]">
-                            {lineItem.unit}
+                          <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2 text-[15px] font-semibold text-[#334a70]">
+                            {formatUnitLabel(lineItem.unit)}
+                            <div className="mt-1 text-[11px] font-normal uppercase tracking-[0.08em] text-[#8c99ad]">
+                              Unit
+                            </div>
                           </div>
                         </td>
                         <td className="px-2 py-3">
@@ -982,17 +1047,39 @@ export function ItemsSection({
                               />
                             </div>
                             <div className="mt-1 text-[12px] text-[#8694ab]">
-                              Catalog base ${getNumericValue(lineItem.baseUnitPrice).toFixed(2)}
+                              Catalog price ${getCatalogPriceBasis(lineItem).toFixed(2)}
                             </div>
+                            {isUnitPriceOverridden(lineItem) ? (
+                              <div className="mt-2 inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-900">
+                                Price override
+                              </div>
+                            ) : null}
                           </div>
                         </td>
                         <td className="px-2 py-3 text-right text-[15px] font-semibold text-[#334a70]">
                           {lineItem.lineTotal}
                         </td>
                         <td className="px-2 py-3 text-center">
-                          <span className="inline-flex rounded-full bg-[#eef3fb] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
-                            {lineItem.taxCode === "taxable" ? "Tax" : "Exempt"}
-                          </span>
+                          <label className="inline-flex cursor-pointer flex-col items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
+                            <input
+                              type="checkbox"
+                              checked={lineItem.taxCode === "taxable"}
+                              onChange={(event) =>
+                                onLineItemChange(
+                                  lineItem.rowKey,
+                                  "taxCode",
+                                  event.target.checked ? "taxable" : "non-taxable"
+                                )
+                              }
+                              className="h-4 w-4 rounded border-[#cbd4e1] text-[#d8731f] focus:ring-[#d8731f]"
+                            />
+                            <span>{lineItem.taxCode === "taxable" ? "Taxable" : "Exempt"}</span>
+                          </label>
+                          {customerTaxExempt ? (
+                            <div className="mt-1 text-[10px] font-medium normal-case tracking-normal text-[#8c99ad]">
+                              Customer exempt
+                            </div>
+                          ) : null}
                         </td>
                         <td className="px-2 py-3 text-[#8694ab]">
                           <div className="flex items-center gap-2">

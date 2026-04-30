@@ -39,6 +39,18 @@ Catalog/cost items are reusable internal records for cost, markup, price, labor,
 
 System Templates are reusable estimating systems made of catalog/cost items, formulas, grouping rules, required inputs, optional components, and output rules. They map quantities into grouped estimate content.
 
+Examples include epoxy flake systems, urethane cement systems, polishing systems, garage systems, and commercial systems.
+
+### Add-ons / Options
+
+Add-ons and options are optional scope modifiers backed by catalog/cost items. They should extend a selected system or estimate scope without becoming separate floor systems or disconnected pricing records.
+
+Examples include integrated cove base, vinyl cove base, control joints, crack repair, coating removal, coal tar epoxy, moisture mitigation, extra topcoat, prevailing wage labor adjustment, and mobilization/setup.
+
+Add-ons may be sqft based, lf based, each/count based, project/flat price based, or labor/multiplier based later.
+
+Integrated cove base and vinyl cove base are hybrid add-ons: they are catalog items and optional system/add-on components, not full floor systems by themselves. They can be generated from perimeter or entered directly when the contractor knows the field quantity.
+
 ### Estimate
 
 An estimate is the customer-facing commercial scope and pricing record in the canonical workflow. It is the proposed commercial scope that later feeds approval, contract generation, job handoff, invoice lineage, and payment flow.
@@ -66,9 +78,12 @@ The complete system vision includes:
 - quick measurement-driven generation
 - detailed measurement-driven generation
 - System Templates
+- add-ons/options backed by catalog/cost items
 - platform-seeded templates
 - contractor-owned templates
 - contractor settings defaults
+- document templates for estimate, invoice, contract, proposal/SOW, and future work order output
+- flexible display templates, including grouped customer view, detailed line-item view, and SOW plus price view
 - super-admin review and promotion of shareable contractor templates
 - source traceability from generated lines back to source measurements, templates, takeoff records, or AI Capture inputs
 - price, cost, markup, tax, unit, and description snapshots on estimate line creation
@@ -106,21 +121,23 @@ Phase 2 expands measurement-driven estimating for more precise jobs:
 
 ### Phase 3: System Template Management
 
-Phase 3 introduces durable template management:
-- contractor-owned System Templates in settings
-- platform-seeded System Templates
+Phase 3 introduces durable Templates & Systems administration:
+- contractor-owned System Templates in a dedicated future settings/admin area
+- platform-seeded System Templates copied into contractor-owned templates on adoption
 - contractor defaults
 - versioning
 - template copy and adoption behavior
 - super-admin starter systems
+- add-ons/options management for catalog-backed optional scope modifiers
+- document-template defaults for estimate, invoice, contract, proposal/SOW, and future work order output
 
 ### Phase 4: Template Sharing / Ecosystem
 
 Phase 4 introduces controlled template sharing:
-- contractor opt-in shareable templates
-- anonymize and strip cost and markup before review
+- contractor opt-in shareable templates, systems, and add-ons/options, with default opt-in configurable in settings
+- anonymize, strip, or explicitly review cost, markup, margin, private notes, internal pricing, and production assumptions before promotion
 - super-admin import, review, and promotion
-- promoted platform templates
+- promoted platform templates/defaults that other contractors may adopt into local copies
 - no silent updates to contractor copies
 
 ### Phase 5: Takeoff Integration
@@ -172,6 +189,22 @@ V1 should reuse existing tables, shared packages, and established patterns when 
 
 Any future schema work must use migrations, preserve RLS for tenant-owned tables, keep organization boundaries explicit, and document RLS impact.
 
+## Templates & Systems Administration Direction
+
+The long-term product direction is a dedicated Templates & Systems settings/admin area rather than scattering template and system management across estimates, invoices, contracts, and other modules.
+
+That future area should manage:
+- document templates
+- System Templates
+- add-ons/options
+- sharing and review settings
+
+Document templates should cover estimate templates, invoice templates, contract templates, proposal/SOW templates, and future work order templates. Contractors should have defaults, be able to switch templates per estimate, invoice, or contract, and be able to create and edit local copies. Super admin may seed platform defaults, but platform defaults should be copied into contractor-owned templates rather than live-mutating contractor records.
+
+System Templates should map measurements, intake, and future takeoff quantities to catalog/cost items and grouped estimate output.
+
+The sharing loop should let contractors mark templates, systems, and add-ons as shareable. Super admin can review, import, and promote approved versions into platform defaults for other contractors to adopt. No promoted version should silently update a contractor's existing local copy.
+
 ## Pricing And Override Rules
 
 Pricing rules:
@@ -184,6 +217,13 @@ Pricing rules:
 - new catalog-added lines use current catalog defaults
 - catalog changes do not mutate past estimate pricing
 - generated lines should retain source traceability
+
+Customer-facing display template direction:
+- clean grouped customer view should be the default
+- detailed line-item view should be available
+- SOW plus price view should be available
+- contractors should eventually switch display templates per estimate, invoice, or contract
+- custom templates can be supported later through the Templates & Systems area
 
 Snapshot rules:
 - estimate lines represent the contractor's intent at the time of line creation or edit
@@ -202,6 +242,12 @@ V1 measurement-driven estimating should support simple formulas:
 Integrated cove base and vinyl cove base use linear footage. They may use calculated perimeter linear footage or direct linear footage when the contractor already knows the field quantity.
 
 Future rooms and zones can aggregate area and perimeter across multiple spaces. This remains measurement-driven estimating, not takeoff.
+
+## Labor Direction
+
+Labor should eventually become an internal catalog/cost item component that can support crew size, production rate, minimum site time, markup, and condition/access multipliers.
+
+Near term, labor may remain baked into system pricing where that is the smallest safe implementation path. Customer-facing templates should not expose cost, markup, margin, internal production math, or private pricing notes unless a contractor intentionally configures customer-facing scope language.
 
 ## UI Architecture
 
@@ -228,6 +274,7 @@ The UI should support review before generation, editable generated lines, intern
 Do not allow:
 - a separate estimating silo
 - duplicate catalog, template, estimate, customer, project, invoice, or takeoff-specific commercial models
+- module-specific template, System Template, or add-on/option silos outside the future Templates & Systems administration direction
 - pricing directly inside raw measurements or raw takeoff measurements
 - direct takeoff-to-invoice behavior
 - direct measurement-to-invoice behavior
@@ -235,6 +282,7 @@ Do not allow:
 - AI suggestions to become customer-facing estimate content without approval
 - cross-tenant catalog, template, takeoff, AI Capture, estimate, or import access
 - silent recalculation that overwrites reviewed generated lines or past estimate pricing
+- silent platform updates that mutate contractor-owned template, system, or add-on copies after adoption
 
 Required safeguards:
 - preserve tenant isolation

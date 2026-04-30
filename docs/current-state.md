@@ -13,6 +13,7 @@ Use these docs together:
 - [docs/estimate-builder-build-plan.md](C:/FloorConnector/docs/estimate-builder-build-plan.md): long-term Estimate Builder blueprint
 - [docs/estimate-builder-v1-scope.md](C:/FloorConnector/docs/estimate-builder-v1-scope.md): constrained Estimate Builder V1 scope
 - [docs/estimate-builder-system-generation-spec.md](C:/FloorConnector/docs/estimate-builder-system-generation-spec.md): future system-generation planning detail
+- [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): future/planned UI, directory/contact, tax, estimate editor, project-address, and workflow-guidance alignment backlog
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
 - [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md): mandatory UI and module implementation rules
 
@@ -1123,6 +1124,9 @@ Current design notes:
 - estimate and invoice records now support optional shared template references instead of module-specific template models
 - contract template generation is shared through the same template and merge-data foundation
 - these are document templates, not future System Templates for measurement-driven estimating
+- the implemented settings surfaces do not yet provide one dedicated Templates & Systems administration area; that future area should organize document templates, System Templates, add-ons/options, and sharing/review controls without moving them into separate module-specific silos
+- proposal/SOW templates and future work order templates are planned document-template categories, not implemented template categories today
+- flexible customer-facing display modes such as clean grouped view, detailed line-item view, SOW plus price view, and custom per-record template switching beyond the implemented estimate/invoice/contract template references remain future work
 
 ### Catalogs And Reusable Items
 
@@ -1153,6 +1157,10 @@ Current design notes:
 - `system` remains the canonical reusable assembly concept, with component rows designed to scale immediately by sqft in estimates
 - current systems are reusable catalog assemblies; they are not yet the planned System Templates with required inputs, formulas beyond current sqft expansion, grouping rules, Quick Build, Detailed Build, or share-back review
 - current catalog management is still foundation-first, but estimate sourcing now runs on the same shared catalog and line-item chain instead of a parallel item-row payload
+- planned add-ons/options should be catalog-backed optional scope modifiers, not a second pricing model; examples include cove base, control joints, crack repair, coating removal, moisture mitigation, extra topcoat, prevailing wage labor adjustment, and mobilization/setup
+- cove base is currently best treated as a catalog item and optional system/add-on component; it is not a full floor system by itself
+- long-term labor should become an internal catalog/cost item component with crew size, production rate, minimum site time, markup, and condition/access multipliers, while near-term labor may remain baked into system or item pricing
+- internal cost, markup, margin, private notes, and production math should remain hidden from customer-facing templates unless intentionally configured for customer scope language
 
 ### Contracts
 
@@ -1239,8 +1247,11 @@ The current implemented workflow foundation supports:
 - Estimate Builder V1 quick system generation is now implemented inside the existing estimate editor:
   - contractors can select an existing catalog system, enter length x width or direct area plus linear footage, preview area/perimeter-derived quantities, and append grouped canonical estimate line items
   - existing catalog system components map `sqft`/area basis rows to area, `lf`/perimeter basis rows to linear footage, and count basis rows to count input
+  - the estimate editor now uses clearer V1 terminology for Catalog Items, Systems, Add-ons / Options, and Document Templates; Add-ons / Options reuse the existing catalog item `category` field instead of introducing a separate schema
+  - Catalog Items categorized as Add-ons / Options can be inserted directly or included in Systems with existing `sqft`, `lf`, count/ea, or fixed/project basis behavior; dedicated optional-component toggles remain a future Templates & Systems decision
   - generated lines remain normal editable estimate line items with catalog pricing snapshotted at insertion
   - one-off estimate-line unit price overrides are supported in the existing item table and persist on the estimate line without mutating catalog defaults
+  - customer-facing portal estimate review groups line items by the existing generated group snapshot and continues to hide internal cost, markup, hidden markup, and labor/cost internals
 - estimate edit now groups item insertion into one clearer estimating-tools cluster: `Add manual item`, `Add from catalog`, and `Import from another estimate`, while keeping manual entry catalog-backed and non-billing-authoritative
 - estimate line-item import from another estimate is now live for same-organization source estimates into draft destination estimates only; imported rows are reseeded as new destination `estimate_line_items` and do not create invoice rows, SOV rows, contracts, or payments
 - estimate edit and detail now use clearer reusable-content language for scope / SOW, project details, terms, inclusions, and exclusions, and they distinguish insertable content blocks from defaults that only prefill empty estimates
@@ -1314,6 +1325,7 @@ Implemented:
 - stored contractor preferences for internal contract approval, signed-contract readiness, deposit-before-scheduling readiness, and financing-approval readiness
 - organization-scoped reusable catalog item management
 - `/settings/catalogs` now renders the same contractor cost item settings component used by `/cost-items-database/settings`
+- `/settings` now includes a lightweight Templates & Systems planning note linking the existing Document Templates, Catalog Items, Systems, and Add-ons / Options surfaces without adding a dedicated future module
 - organization member role management
 - organization-level feature override storage within the shared platform feature policy model
 - first contractor-side automation visibility/settings surface at `/settings/automation`
@@ -1369,10 +1381,16 @@ Not implemented yet:
 - full scheduling/dispatch system
 - drag-and-drop rescheduling, dispatch optimization, and deeper crew-calendar coordination
 - automated dispatching and external notifications
+- a dedicated Templates & Systems settings/admin area that unifies document templates, System Templates, add-ons/options, and sharing/review settings
+- full document-template coverage for proposal/SOW and future work order templates
+- full per-record display-template switching across estimates, invoices, contracts, SOW output, and custom document layouts beyond the currently implemented shared template references
+- contractor shareable template/system/add-on opt-in settings, super-admin review/import/promotion, anonymization review, or promoted platform defaults for other contractors to adopt
 - Takeoff & Scope Intelligence
 - detailed measurement-driven estimate generation with multiple rooms/zones, irregular geometry, optional components, or advanced quantity review
 - full System Template estimate generation beyond V1 Quick Build, including Detailed Build, advanced formula-driven required inputs, optional components, defaults, and template share-back/review workflows
 - System Template adoption/promotion/versioning workflows beyond the current catalog system and document-template foundations
+- dedicated add-ons/options management for sqft, lf, each/count, project/flat-price, or future labor/multiplier based modifiers
+- full internal labor modeling as catalog/cost item components with crew size, production rate, minimum site time, markup, and condition/access multipliers
 - AI Capture, AI-assisted takeoff, AI-suggested measurements, AI-suggested system/cost-item mapping, and AI-generated estimate drafts
 - on-screen plan/PDF/image takeoff, scale calibration, plan measurement, takeoff-to-cost-item mapping, and automated takeoff-based estimate generation
 - takeoff source traceability, takeoff-estimate out-of-sync review state, and takeoff-driven material/labor/production planning
@@ -1389,9 +1407,10 @@ Not implemented yet:
 - external tax provider integration
 - rich template editing UI
 - e-sign integration workflows on top of the canonical contract record
+- broader alignment from [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md), including stronger module-page UI consistency, directory/contact unification, estimate editor navigation/review improvements, line taxable-toggle planning, structured project/service address display, configurable tax-rate direction, and fuller workflow-guidance states
 
 Future-looking note:
 - the current vendors, people, compliance, jobs, daily logs, time, communication, notification, and portal access foundations could support future scoped collaboration, but no contractor network, marketplace, open contractor chat, or external subcontractor/vendor collaboration surface is implemented today.
-- the current projects, estimates, estimate line items, reusable catalog item foundations, platform starter catalog foundations, organization-owned catalog items, templates/settings foundations, files/attachments foundations, site-assessment fields, and customer/project workflow could support future measurement-driven estimating, System Template generation, Takeoff & Scope Intelligence, and AI Capture.
-- no manual measurement-driven estimate generation, full System Template estimate generation, System Template sharing, on-screen takeoff, AI Capture, AI takeoff, plan measurement, takeoff-to-cost-item mapping, source traceability, out-of-sync review state, or automated estimate generation exists today.
+- the current projects, estimates, estimate line items, reusable catalog item foundations, platform starter catalog foundations, organization-owned catalog items, document-template/settings foundations, files/attachments foundations, site-assessment fields, and customer/project workflow could support future measurement-driven estimating, System Template generation, add-ons/options, Templates & Systems administration, Takeoff & Scope Intelligence, and AI Capture.
+- no manual measurement-driven estimate generation, full System Template estimate generation, System Template sharing, dedicated Templates & Systems admin module, add-on/option management workflow, on-screen takeoff, AI Capture, AI takeoff, plan measurement, takeoff-to-cost-item mapping, source traceability, out-of-sync review state, or automated estimate generation exists today.
 - future takeoff must stay separate from implemented truth: Measurements are manual quantity inputs; Takeoff means plan/PDF/drawing-based measurement; AI Capture is a future photo/app/AI-derived input method. Takeoff and measurements would produce quantities, catalog/cost items would define reusable cost, pricing, production, markup, and tax behavior, System Templates would map quantities to grouped estimate content, and estimates would define customer-facing pricing and commercial scope.

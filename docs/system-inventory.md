@@ -6,6 +6,93 @@ This document is a lightweight inventory of notable product systems. It should b
 
 ## Not Built Yet
 
+### UI, Directory, Tax, Estimate Editor, Workflow Guidance, And Project Address Alignment
+
+Status: Planning backlog; not an implementation plan by itself.
+
+[docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md) captures system-level improvements identified from product review before broader demo/investor polish and deeper feature expansion.
+
+Planned alignment areas:
+- contractor UI color, contrast, section hierarchy, status color, table/card, and action-hierarchy polish
+- uniform module-page defaults across header/title, primary actions, workflow guidance, filters/search, and list/card/table content
+- shared directory/contact direction that avoids duplicate person, customer, vendor, portal-user, and project-contact models
+- estimate editor navigation, review/send actions, internal markup controls, and line taxable-toggle planning
+- contractor tax settings/rates direction, item default taxability, line-level taxable override, and customer/project tax applicability context
+- context-aware workflow guidance with complete, current, blocked, and future visual states
+- structured project/service address display distinct from customer billing/contact address
+- later configurable dashboard and module data views after strong defaults are standardized
+
+Priority grouping:
+- Now / demo polish: estimate editor navigation/review actions, project service-address display, line taxable-toggle planning, and UI consistency audit
+- Next / system alignment: directory/contact unification plan, tax settings/rates model, and uniform module-page polish
+- Later / platform depth: customizable dashboard/module views, USPS or other address verification, and advanced permissions/portal directory management
+
+This backlog is intentionally planning-only until specific implementation tasks are requested.
+
+### Templates & Systems Administration
+
+Status: Dedicated module not implemented yet.
+
+FloorConnector has implemented shared document-template and reusable catalog foundations, but a dedicated Templates & Systems settings/admin area is planned future direction. That area should eventually manage document templates, System Templates, add-ons/options, and sharing/review settings without scattering those controls across estimates, invoices, contracts, and other modules.
+
+Planned document template scope:
+- estimate templates
+- invoice templates
+- contract templates
+- proposal/SOW templates
+- future work order templates
+
+Planned document template rules:
+- contractors have defaults
+- contractors can switch supported templates per estimate, invoice, or contract
+- contractors can create and edit local copies
+- super admin can seed platform defaults
+- platform defaults are copied into contractor-owned templates and do not live-mutate contractor copies
+
+Planned System Template scope:
+- epoxy flake systems
+- urethane cement systems
+- polishing systems
+- garage systems
+- commercial systems
+
+System Templates should map measurements, intake, and future takeoff quantities to catalog/cost items and grouped estimate output.
+
+Planned add-ons/options:
+- integrated cove base
+- vinyl cove base
+- control joints
+- crack repair
+- coating removal
+- coal tar epoxy
+- moisture mitigation
+- extra topcoat
+- prevailing wage labor adjustment
+- mobilization/setup
+
+Add-ons may be square-foot based, linear-foot based, each/count based, project/flat-price based, or labor/multiplier based later. Cove base should be treated as a hybrid: not a full floor system by itself, but a catalog item plus optional system/add-on component that can be selected, generated from perimeter, or entered directly.
+
+Planned sharing loop:
+- contractor can mark templates, systems, or add-ons shareable
+- default sharing opt-in behavior should be configurable in settings
+- super admin can review, import, and promote selected submissions
+- costs, markup, margin, private notes, internal pricing, and production math should be stripped, anonymized, or explicitly reviewed before promotion
+- promoted versions become platform defaults for other contractors to adopt
+- contractor local copies are never silently updated by promoted platform versions
+
+Labor direction:
+- labor should eventually be an internal catalog/cost item component
+- long-term labor modeling may include crew size, production rate, minimum site time, markup, and condition/access multipliers
+- near-term labor may remain baked into system pricing
+- customer-facing templates should not expose cost, markup, margin, private notes, or internal production math unless intentionally configured as customer-facing language
+
+Display-template direction:
+- clean grouped customer view should be the default
+- detailed line-item view should be available
+- SOW plus price view should be available
+- contractors should be able to switch supported display templates per estimate, invoice, or contract
+- custom templates are a later direction
+
 ### Takeoff & Scope Intelligence
 
 Status: Not implemented yet.

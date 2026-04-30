@@ -17,13 +17,13 @@ export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
   },
   {
     href: "/settings/templates",
-    label: "Templates",
+    label: "Document Templates",
     description: "Organization-owned estimate, invoice, and contract templates."
   },
   {
     href: "/settings/catalogs",
-    label: "Catalog Configuration",
-    description: "Settings for Cost Items Database and inventory behavior."
+    label: "Catalog Items",
+    description: "Catalog Items, Systems, Add-ons / Options, and inventory behavior."
   },
   {
     href: "/settings/financial",
