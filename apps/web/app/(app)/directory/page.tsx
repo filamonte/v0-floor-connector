@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AppEmptyState } from "@/components/app-empty-state";
+import { DirectoryFilterSelect } from "@/components/directory-filter-select";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { listCustomerContactsForDirectory } from "@/lib/contacts/data";
 import { listCustomers } from "@/lib/customers/data";
@@ -561,19 +562,7 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
 
         {/* Filter dropdown */}
         <div className="mb-2 flex justify-end">
-          <select
-            value={view}
-            onChange={(e) => {
-              window.location.href = buildDirectoryHref({ q: query, view: e.target.value });
-            }}
-            className="border border-[#e2dcd5] bg-white px-3 py-1.5 text-[12px] text-[#221a14] outline-none focus:border-[#ef7d32]"
-          >
-            {directoryViews.map((v) => (
-              <option key={v.key} value={v.key}>
-                {v.label}
-              </option>
-            ))}
-          </select>
+          <DirectoryFilterSelect value={view} query={query} options={directoryViews} />
         </div>
 
         {/* Main data table */}
