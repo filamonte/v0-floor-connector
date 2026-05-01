@@ -84,6 +84,30 @@ function buildRedirect(pathname: string, params: Record<string, string | undefin
   return query ? `${pathname}?${query}` : pathname;
 }
 
+function getCatalogItemSaveErrorMessage(error: unknown) {
+  const message =
+    error instanceof Error ? error.message : "Unable to update reusable catalog item.";
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("cost item with this name") ||
+    normalized.includes("catalog_items_company_normalized_name") ||
+    normalized.includes("duplicate key") && normalized.includes("normalized_name")
+  ) {
+    return "A cost item with this name already exists for this organization. Use a unique item name or edit the existing catalog item.";
+  }
+
+  if (
+    normalized.includes("cost item with this sku") ||
+    normalized.includes("catalog_items_company_normalized_sku") ||
+    normalized.includes("duplicate key") && normalized.includes("normalized_sku")
+  ) {
+    return "A cost item with this SKU already exists for this organization. Use a unique SKU or edit the existing catalog item.";
+  }
+
+  return message;
+}
+
 async function requireSettingsScope() {
   return requireOrganizationAdminScope("/settings");
 }
@@ -570,10 +594,7 @@ export async function updateOrganizationCatalogItemAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect(returnTo, {
-          error:
-            error instanceof Error
-            ? error.message
-            : "Unable to update reusable catalog item."
+        error: getCatalogItemSaveErrorMessage(error)
       })
     );
   }

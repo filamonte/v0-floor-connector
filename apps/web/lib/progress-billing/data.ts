@@ -5,7 +5,7 @@ import type { InvoiceStatus } from "@floorconnector/types";
 
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
-import { assertStandardInvoiceCommercialReadiness } from "@/lib/projects/readiness";
+import { assertInvoiceCommercialReadiness } from "@/lib/projects/readiness";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { replaceCanonicalInvoiceLineItems } from "@/lib/invoices/data";
 
@@ -816,7 +816,7 @@ export async function buildProgressBillingInvoice(
     throw new Error("Schedule of values not found for this organization.");
   }
 
-  await assertStandardInvoiceCommercialReadiness({
+  await assertInvoiceCommercialReadiness({
     organizationId: scope.organizationId,
     projectId: workspace.projectId,
     jobId: null,

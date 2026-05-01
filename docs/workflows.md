@@ -5,6 +5,7 @@ This document defines the canonical business workflows in FloorConnector as they
 It is an operational workflow document, not a technical architecture document.
 
 Cross-references:
+- [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary development entry point and guardrails
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): system design
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): next-phase build order
@@ -32,9 +33,11 @@ In practical terms:
 
 ## Canonical Workflow Chain
 
-The current canonical business chain is:
+The current canonical business lifecycle is:
 
-`Auth -> Organization Bootstrap -> Dashboard -> Lead / Opportunity -> Customer -> Project -> Estimate -> Contract -> Change Order -> Job -> Invoice -> Payment`
+`opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
+
+Authentication, organization bootstrap, dashboard entry, site assessment, Scope Intake, financial readiness, and scheduling readiness are supporting access or workflow stages around that lifecycle. They should guide the same records forward rather than creating duplicate records or module-specific silos.
 
 This chain is already real in the current system, even though the user experience is still distributed across multiple module pages instead of being fully project-centered.
 
@@ -48,6 +51,7 @@ Canonical system records:
 - project
 - estimate
 - contract
+- change order
 - job
 - invoice
 - payment
@@ -72,11 +76,11 @@ Estimating terminology:
 - Measurements are manual inputs such as length x width, direct square footage, direct linear footage, and counts.
 - Takeoff means plan, PDF, or drawing-based measurement.
 - AI Capture is a future photo, app, or AI-derived measurement input method.
-- Catalog/Cost Items define reusable pricing, cost, production, markup, and tax behavior.
+- Catalog items are the implemented reusable cost item database on `catalog_items`; they define reusable pricing, cost, production, markup, and tax behavior as the foundation evolves.
 - System Templates are reusable estimating systems made from catalog/cost items, formulas, grouping rules, optional components, and required inputs.
 - Estimates are customer-facing commercial scope and price.
 
-Boundary rule: Takeoff and measurements produce quantities. Catalog/cost items define reusable cost, pricing, production, markup, and tax behavior. System Templates map quantities to grouped estimate content. Estimates define customer-facing pricing and commercial scope.
+Boundary rule: Takeoff and measurements produce quantities. Catalog items / cost items define reusable cost, pricing, production, markup, and tax behavior. System Templates map quantities to grouped estimate content. Estimates define customer-facing pricing and commercial scope.
 
 Future Templates & Systems administration:
 - document templates, System Templates, add-ons/options, and sharing/review settings should eventually live in a dedicated contractor settings/admin area rather than being scattered across estimates, invoices, contracts, and other modules
@@ -89,6 +93,85 @@ Future Templates & Systems administration:
 - cove base is a hybrid: not a full floor system by itself, but a catalog item plus optional System Template/add-on component that can be generated from perimeter or entered directly
 - customer-facing estimate, invoice, and contract display should default to a clean grouped view while allowing detailed line-item and SOW-plus-price views; custom display templates are a later direction
 - internal cost, markup, margin, private notes, and production math should stay internal unless intentionally configured as customer-facing language
+
+## Financial Workflow Rules
+
+### Billing Trigger Rule
+
+An invoice may only be created when a valid billing trigger exists:
+- contract is signed (deposit allowed)
+- deposit is required by workflow
+- job or work is completed or billable
+- approved change order introduces billable scope
+
+Invoices must not be created before contract signature unless explicitly part of a deposit-readiness workflow.
+
+### Invoice Role Clarification
+
+Existing invoice roles clarify billing behavior only; do not introduce new enums for this.
+
+`deposit`:
+- used for readiness and pre-execution billing
+- tied to contract or financial readiness, not execution
+
+`standard`:
+- used for executed or billable work
+- tied to job completion or approved scope
+
+### Scope Vs Billing Rule
+
+Approved scope does not automatically equal billable scope.
+
+- estimates define proposed scope
+- contracts define committed scope
+- invoices define billable scope
+
+Only executed or explicitly billable portions of scope should be invoiced.
+
+### Invoice Source Rule
+
+Every invoice must trace back to real scope:
+- project (required)
+- and at least one of:
+  - job
+  - estimate items
+  - change order
+  - deposit requirement
+
+Invoices must not be freeform or disconnected from canonical records.
+
+### Balance Truth Rule
+
+- invoices are the source of truth for money owed
+- payments are the source of truth for money collected
+
+No parallel balance systems should exist on:
+- project
+- estimate
+- contract
+
+All financial reporting must derive from invoices and payments.
+
+### Change Order Billing Rule
+
+Approved change orders extend the same billing chain.
+
+They may:
+- add line items to an existing invoice
+- or be included in a future invoice
+
+They must not create a separate billing system.
+
+### Readiness Vs Billing Rule
+
+Operational readiness and billing readiness are related but distinct:
+- readiness determines whether work or billing can proceed
+- billing must still follow valid billing triggers
+
+Examples:
+- contract signed -> deposit allowed
+- deposit paid -> scheduling allowed
+- job complete -> standard invoice allowed
 
 ## Current Implemented Workflows
 
@@ -144,7 +227,9 @@ Current customer-account interpretation:
 Implemented flow:
 - estimates are created from project context
 - estimate authoring is cost-item-first:
-  - active `catalog_items` can be added directly
+  - active non-system `catalog_items` can be added from the estimate editor Catalog Items panel
+  - inserted catalog items become editable commercial `estimate_line_items` snapshots rather than live-bound catalog rows
+  - archived catalog items remain visible for review where surfaced but are blocked from insertion
   - reusable systems expand through shared system logic from length x width or direct area plus linear footage
   - quick create from the estimate workspace saves a minimal new `catalog_items` record first, then adds it to the estimate
 - `catalog_items` are the canonical reusable sellable cost item database; physical stock now belongs in `inventory_items`
@@ -178,7 +263,7 @@ Future workflow guidance:
 - takeoff should stay project-scoped and feed estimate creation through reviewed quantities mapped to System Templates and reusable catalog/cost items
 - Takeoff and measurements produce quantities. Catalog/cost items define reusable cost, pricing, production, markup, and tax behavior. System Templates map quantities to grouped estimate content. Estimates define customer-facing pricing and commercial scope.
 - takeoff is not a replacement for estimates; the canonical estimate remains the commercial scope record and the customer-facing pricing proposal
-- the intended future flow is `Lead / Opportunity -> Customer + Project -> Site Info / Measurements / Plans / Photos -> Measurement, Takeoff, or AI Capture -> System Template -> Catalog/Cost Item Mapping -> Grouped Estimate Line Items -> Estimate -> Contract -> Job -> Invoice -> Payment`
+- the intended future estimate-input flow still feeds the canonical lifecycle: `Opportunity -> Customer -> Project -> Site Info / Measurements / Plans / Photos -> Measurement, Takeoff, or AI Capture -> System Template -> Catalog/Cost Item Mapping -> Grouped Estimate Line Items -> Estimate -> Contract -> Change Order -> Job -> Invoice -> Payment`
 - conceptual future objects may include `takeoffs`, `takeoff_documents`, `takeoff_measurements`, `takeoff_scope_items`, and `takeoff_estimate_links`, but these are not existing tables and should not be treated as implemented schema
 - raw takeoff measurements should not own pricing; pricing belongs in catalog/cost items and estimate line items
 - generated estimate line items should retain future source linkage back to the approved takeoff scope item, the takeoff measurement, and the source document or photo when applicable
@@ -258,6 +343,7 @@ Implemented flow:
   - approved change-order snapshot item
   - invoice-only adjustment
 - direct billing from live `estimate_line_items` is not canonical
+- direct invoice insertion from live `catalog_items` is not implemented; any future catalog-backed invoice adjustment should be scoped separately and preserve invoice snapshot lineage
 
 Current canonical records involved:
 - project
@@ -370,7 +456,7 @@ The intended near-term direction is not to invent a new business model. It is to
 
 The preferred contractor journey is:
 
-`Opportunity -> Customer -> Project -> Estimate -> Contract -> Change Order -> Job -> Invoice -> Payment`
+`opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
 With supporting readiness stages between those records:
 - qualification
@@ -408,7 +494,8 @@ Today, the app should be understood this way:
 - estimates define proposed commercial scope
 - customer estimate approval is portal-based and writes to the same canonical estimate record
 - estimate approval creates an immutable commercial snapshot and does not auto-run contract, SOV, invoice, or payment actions
-- Cost Items Database is the reusable item master module behind estimate authoring, systems, and optional inventory
+- Cost Items Database is the reusable item master module backed by canonical `catalog_items`; it is the Phase 1 foundation for estimate authoring, systems, optional inventory, future invoice reuse, and materials planning
+- active non-system catalog items can now be inserted into estimates from the estimate editor Catalog Items panel as editable commercial snapshots; archived items are blocked from insertion, and systems continue through the existing system expansion flow
 - future catalog/cost item design should treat default cost, markup, labor, production, price, and tax behavior as internal cost behavior that can be overridden intentionally on an estimate and kept out of customer-facing output
 - customer-facing estimates should show only customer-facing descriptions, quantities, unit prices, and totals; markup and internal cost should not appear on customer-facing estimate output
 - one-off estimate-line price overrides should affect that estimate line, while catalog/cost item updates should affect future estimates only
@@ -425,6 +512,7 @@ Today, the app should be understood this way:
 - jobs represent execution
 - workforce time and field execution now support the same project-centered operating chain through shared people, vendor, time-card, and daily-log records
 - invoices and payments complete the financial path, with invoice rows sourced from approved estimate snapshot items, SOV items, approved change-order snapshot items, or invoice-only adjustments
+- invoice catalog insertion remains intentionally deferred; invoice rows should continue to come from approved commercial lineage or explicit invoice-only adjustments, not live catalog item selection
 - notifications and communications now have stored canonical foundations rather than shell-only placeholder behavior
 - Financials is now starting to read as one sectioned system:
   - `/financials` is the cross-project control panel
@@ -434,3 +522,25 @@ Today, the app should be understood this way:
 - `/people` remains the current workforce-oriented route, while a future `Directory` workspace is intended to unify contractor-facing account and contact browsing without changing the canonical data model underneath
 
 That means FloorConnector is already operating on one shared business chain, even though some screens still expose the workflow in a more module-driven way than the intended product direction.
+
+## CONTEXT-AWARE CREATION RULE
+
+All records must respect origin context:
+
+### Project Context
+- Created downstream records are automatically linked to the project and derived customer
+
+### Customer Context
+- Customer pre-filled
+- Project must be selected or created
+
+### Global Context
+- Requires explicit selection of both customer and project
+
+This applies to:
+- Contracts
+- Estimates
+- Invoices
+- Jobs
+
+This is required to maintain data integrity and workflow continuity

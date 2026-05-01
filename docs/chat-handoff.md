@@ -1,8 +1,22 @@
-# This file is the first document to read when starting a new chat or session. - Also known as chat hand off
+## REQUIRED FIRST STEP
+
+Before doing anything, developers must read:
+
+docs/developer-source-of-truth.md
+
+`docs/developer-source-of-truth.md` defines:
+- system rules
+- canonical lifecycle
+- workflow constraints
+- implementation guardrails
+
+Do not proceed without it. This chat handoff is only a launcher and compact operational orientation; it is not a competing source of truth.
+
+# Chat Handoff
 
 Status: compact operational handoff for the current branch.
 
-Use this file for fast orientation. For exact implemented truth, defer to [docs/current-state.md](C:/FloorConnector/docs/current-state.md).
+Use this file for fast orientation after reading [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md). For exact implemented truth, defer to [docs/current-state.md](C:/FloorConnector/docs/current-state.md).
 
 For stronger implementation control on new tasks, also use:
 - [docs/product-brain.md](C:/FloorConnector/docs/product-brain.md)
@@ -25,6 +39,15 @@ FloorConnector is a production-first specialty-contractor operating system built
 
 Current stage:
 - Phase B first-pass foundations are now implemented for onboarding readiness polish, reporting basics, Sales Tax Summary, and manual notification-only automation
+- Inventory / Cost Item Database Phase 1 audit is recorded in [docs/inventory-cost-item-database-plan.md](C:/FloorConnector/docs/inventory-cost-item-database-plan.md). The safe implementation decision is to keep `catalog_items` as the canonical reusable cost item database, with optional stock tracking through linked `inventory_items` and audited `inventory_transactions`; no new `contractor_cost_items` table was added.
+- Catalog item hardening follow-up is documented in [docs/catalog-items-hardening-test-plan.md](C:/FloorConnector/docs/catalog-items-hardening-test-plan.md), and a read-only duplicate-name report lives at [scripts/catalog-items-duplicate-normalized-name-report.sql](C:/FloorConnector/scripts/catalog-items-duplicate-normalized-name-report.sql). No automated test harness exists yet, so no new framework was introduced.
+- Cost Items Database UI was safely tightened on the existing catalog item grid: rows now surface type/category, unit, default cost, default price behavior, taxable state, active/archived state, and the default item marker; duplicate name/SKU save errors now return clearer organization-scoped guidance.
+- Documentation is now aligned that `catalog_items` is the canonical cost item database and Phase 1 inventory/cost item foundation; deeper estimate/invoice integration is intentionally deferred to future workflow work and should preserve snapshot lineage.
+- Catalog-to-estimate/invoice integration is now designed in [docs/catalog-to-estimate-invoice-integration-spec.md](C:/FloorConnector/docs/catalog-to-estimate-invoice-integration-spec.md). It is planning only: catalog items provide reusable defaults, estimate and invoice line items must snapshot selected values, custom one-off lines remain valid, invoice billing should continue to prefer approved estimate/SOV/change-order lineage, and direct catalog use in invoices should be limited to carefully scoped invoice-only adjustments if implemented later.
+- Estimate edit includes a `Catalog Items` panel on the Items workspace. It lists organization-scoped `catalog_items`, supports name search plus type/category filters, shows unit, default price, taxable state, and active/archived status, and previews selected items before insertion.
+- Estimate Catalog Selection Phase 2B is now implemented from the estimate editor Catalog Items panel. Active non-system catalog items can be previewed and added to estimates through the existing `insertCatalogItemToEstimateAction` path, creating server-owned estimate line-item snapshots. Archived items remain visible for review but are disabled in the panel and rejected server-side; systems still use the existing system expansion flow. No migrations, invoice behavior, or estimate calculation formulas were changed.
+- Phase 2B estimate catalog insertion QA checklist now lives at [docs/qa-estimate-catalog-item-insertion.md](C:/FloorConnector/docs/qa-estimate-catalog-item-insertion.md). It covers active insertion, archived blocking, system-flow preservation, snapshot fields, quantity default, editability, catalog-change immutability, custom one-off items, totals, and `pnpm typecheck` / `pnpm lint`.
+- Documentation alignment after catalog-to-estimate work is complete across current-state, developer source of truth, roadmap, workflows, and supporting catalog docs. Current truth: `catalog_items` remains canonical, estimate catalog insertion is implemented for active non-system items with server-owned snapshots, the manual QA checklist exists, and invoice catalog insertion remains intentionally deferred.
 - current recommendation is to pause feature expansion and run internal validation before contractor beta; use [docs/phase-b-internal-validation-runbook.md](C:/FloorConnector/docs/phase-b-internal-validation-runbook.md)
 - contractor UI system is stabilized and normalized
 - contractor app and portal both run on shared canonical records
@@ -136,6 +159,15 @@ Implemented on the current branch:
 - first real contractor-side punchlist system on the shared project/job execution chain
 - people, vendors, compliance, time tracking, daily logs, field notes, execution attachments
 - contractor settings and super-admin foundations
+- Cost Items Database Phase 1 foundation is present on the current branch:
+  - `catalog_items` is the organization-scoped reusable cost item master for materials, labor, equipment, subcontractors, other items, and systems
+  - no duplicate cost item table should be created; future workflows should extend or snapshot canonical `catalog_items`
+  - `inventory_items` is optional stock tracking linked to catalog items where needed
+  - `inventory_transactions` records auditable quantity movements
+  - `/cost-items-database`, `/cost-items-database/items`, `/cost-items-database/inventory`, `/cost-items-database/systems`, and `/settings/catalogs` are the implemented contractor/admin surfaces
+  - estimate and invoice calculations were intentionally left unchanged; line items continue to snapshot selected item data and historical estimates/invoices must not mutate when catalog items change
+  - duplicate normalized catalog item name hardening is currently covered by server-helper checks plus a documented test plan and read-only duplicate report script, not automated tests
+  - the existing item grid is the safe admin surface for catalog management; it now includes clearer reusable-cost-item empty-state copy without wiring the database into new estimate or invoice behavior
 
 Current Directory-direction reminder:
 - a future `Directory` workspace should unify contractor-facing account and contact browsing over canonical records
@@ -197,12 +229,21 @@ Primary focus for the next phase:
 Goal:
 - prove the current foundation before contractor beta, then fix only validation-blocking defects before adding more breadth
 
+## Estimate Editor Group-First Planning
+
+Long-term Estimate Editor workflow planning now lives at [docs/estimate-editor-group-first-refactor-plan.md](C:/FloorConnector/docs/estimate-editor-group-first-refactor-plan.md). This is planning only: no code, schema, invoice behavior, or estimate calculations changed. Current findings: the editor already has workspace `itemGroups`, line-level `group_name`, grouped customer-facing output, catalog insertion, system expansion, and previous-estimate import; however, catalog/system/import insertion does not yet target a selected group directly. Recommended direction is to make groups the primary authoring surface, move the permanent Catalog Items panel into a group-scoped Add Item drawer, and phase work through UI-only regrouping, group-level catalog add, group-level system/template add, previous-estimate reuse, and a later larger design/v0 pass.
+
+## v0 UI Cleanup Brief
+
+The next header/project/estimate UI cleanup brief now lives at [docs/v0-ui-cleanup-brief-header-project-estimate.md](C:/FloorConnector/docs/v0-ui-cleanup-brief-header-project-estimate.md). This is design/documentation only: no code, schema, estimate calculation, invoice behavior, catalog insertion behavior, or workflow changes. The brief covers responsive top-nav overflow while preserving the top-nav-first shell, searchable project quick-create customer selection, project detail contextual workspace navigation with financing status in readiness/financial context, context-aware estimate creation, long-term group-first estimate editor direction, input formatting guidance, a ready-to-use v0 prompt, non-goals, and follow-up Codex implementation phases after design approval.
+
 ## System Rules
 
 Keep these short rules in mind:
 - no duplicate business models
 - no portal-only copies of shared records
 - no module-local silos
+- workflow, lifecycle, creation-logic, or canonical-relationship changes must update relevant docs in the same change set, as applicable: `docs/developer-source-of-truth.md`, `docs/current-state.md`, and/or `docs/workflows.md`
 - dashboards must point back into the shared chain
 - quick create must hand off into full workspaces
 - project / shared record continuity stays more important than module completeness

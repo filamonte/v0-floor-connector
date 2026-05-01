@@ -131,7 +131,6 @@ type EstimateFormProps = {
   }>;
   approvalOrchestration?: EstimateApprovalOrchestrationState | null;
   contractAction: (formData: FormData) => void | Promise<void>;
-  invoiceAction: (formData: FormData) => void | Promise<void>;
   scheduleOfValuesAction: (formData: FormData) => void | Promise<void>;
 };
 
@@ -674,7 +673,6 @@ export function EstimateForm({
   importSourceEstimates = [],
   approvalOrchestration = null,
   contractAction,
-  invoiceAction,
   scheduleOfValuesAction
 }: EstimateFormProps) {
   const initialItemGroups = buildItemGroups(estimate);
@@ -744,6 +742,7 @@ export function EstimateForm({
   );
   const [titleEditing, setTitleEditing] = useState(false);
   const [inventoryCreateError, setInventoryCreateError] = useState<string | null>(null);
+  const [catalogPreviewAddMessage, setCatalogPreviewAddMessage] = useState<string | null>(null);
   const [catalogInventoryItems, setCatalogInventoryItems] = useState<CatalogItem[]>(catalogItems);
   const [approvalPanelInitialOpen, setApprovalPanelInitialOpen] = useState(false);
   const [approvalState, setApprovalState] = useState<EstimateApprovalOrchestrationState | null>(
@@ -954,7 +953,7 @@ export function EstimateForm({
 
   async function insertCatalogItem(catalogItem: CatalogItem) {
     if (!estimate?.id) {
-      return;
+      return false;
     }
 
     const saveResult =
@@ -963,7 +962,7 @@ export function EstimateForm({
         : null;
 
     if (saveResult && !saveResult.ok) {
-      return;
+      return false;
     }
 
     const result = await insertCatalogItemAction({
@@ -974,10 +973,11 @@ export function EstimateForm({
     if (!result.ok) {
       setSaveState("error");
       setSaveMessage(result.message);
-      return;
+      return false;
     }
 
     syncServerInsertedLineItems(result.lineItems, result.updatedAt);
+    return true;
   }
 
   function handleAddCatalogItem() {
@@ -1002,6 +1002,29 @@ export function EstimateForm({
 
     startSaveTransition(async () => {
       await insertCatalogItem(catalogItem);
+      setSelectedCatalogItemId("");
+    });
+  }
+
+  function handleAddPreviewCatalogItem(catalogItemId: string) {
+    const catalogItem = filteredCatalogItems.find(
+      (item) => item.id === catalogItemId && item.itemType !== "system"
+    );
+
+    if (!catalogItem) {
+      setCatalogPreviewAddMessage("Only active catalog items can be added from this panel.");
+      return;
+    }
+
+    setCatalogPreviewAddMessage(`Adding ${catalogItem.name} to this estimate...`);
+    startSaveTransition(async () => {
+      const wasInserted = await insertCatalogItem(catalogItem);
+
+      setCatalogPreviewAddMessage(
+        wasInserted
+          ? `${catalogItem.name} was added as a locked estimate snapshot.`
+          : "Catalog item could not be added. Review the save message above and try again."
+      );
       setSelectedCatalogItemId("");
     });
   }
@@ -1571,19 +1594,12 @@ export function EstimateForm({
 
   const headerActions = (
     <div className="flex flex-wrap items-center justify-end gap-2">
-      <button
-        type="button"
-        onClick={() => setActiveSection("review-submit")}
-        className="inline-flex h-9 items-center justify-center border border-[#d8731f] bg-[#fff1e4] px-3 text-[13px] font-semibold text-[#a4581a] transition hover:bg-[#ffe2c5]"
-      >
-        Review
-      </button>
       {estimate?.id ? (
         <Link
           href={`/estimates/${estimate.id}`}
           className="inline-flex h-9 items-center justify-center border border-[#d8731f] bg-[#d8731f] px-3 text-[13px] font-semibold text-white transition hover:bg-[#bf6519]"
         >
-          Open review page
+          Review Estimate
         </Link>
       ) : null}
       <div className="relative">
@@ -1642,7 +1658,6 @@ export function EstimateForm({
         <EstimateApprovalNextStepsPanel
           orchestration={approvalState}
           contractAction={contractAction}
-          invoiceAction={invoiceAction}
           scheduleOfValuesAction={scheduleOfValuesAction}
           initialOpen={approvalPanelInitialOpen}
         />
@@ -1782,6 +1797,7 @@ export function EstimateForm({
             showMarkup={showMarkup}
             showOnlyZeroItems={showOnlyZeroItems}
             visibleCatalogItems={filteredCatalogItems}
+            catalogItemsForReview={catalogInventoryItems}
             estimateStatus={status}
             importSourceEstimates={importSourceEstimates}
             selectedCatalogItemId={selectedCatalogItemId}
@@ -1800,6 +1816,7 @@ export function EstimateForm({
             onSystemMeasurementChange={handleSystemMeasurementChange}
             onAddCatalogItem={handleAddCatalogItem}
             onQuickAddCatalogItem={handleQuickAddCatalogItem}
+            onAddPreviewCatalogItem={handleAddPreviewCatalogItem}
             onImportLineItemsFromEstimate={handleImportLineItemsFromEstimate}
             onImportReusableContentFromEstimate={handleImportReusableContentFromEstimate}
             onPreviewSystem={handlePreviewSystem}
@@ -1814,6 +1831,8 @@ export function EstimateForm({
             onRemoveLineItem={handleRemoveLineItem}
             onQuickCreateCatalogItem={handleQuickCreateCatalogItem}
             inventoryCreateError={inventoryCreateError}
+            catalogPreviewAddMessage={catalogPreviewAddMessage}
+            isCatalogPreviewAddPending={isPending}
           />
         </div>
 
@@ -1969,15 +1988,14 @@ export function EstimateForm({
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    Review and Submit
+                    Review Estimate
                   </p>
                   <h2 className="mt-2 text-[20px] font-semibold text-slate-950">
-                    Check the customer-facing estimate, then take the next workflow step.
+                    Open the customer-facing estimate before sending.
                   </h2>
                   <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                    Use this checkpoint after editing items, scope, terms, files, and notes. The
-                    review page shows the proposal output and the real send/contract handoff
-                    actions already supported by FloorConnector.
+                    Confirm the proposal output, grouped lines, terms, and totals in the same view a
+                    customer will understand.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -1988,14 +2006,6 @@ export function EstimateForm({
                   >
                     Back to edit
                   </button>
-                  {estimate?.id ? (
-                    <Link
-                      href={`/estimates/${estimate.id}`}
-                      className="inline-flex h-10 items-center justify-center border border-[#d8731f] bg-[#d8731f] px-4 text-sm font-semibold text-white transition hover:bg-[#bf6519]"
-                    >
-                      Open review page
-                    </Link>
-                  ) : null}
                 </div>
               </div>
 
@@ -2025,7 +2035,7 @@ export function EstimateForm({
                       ? "Generate contract or continue project readiness"
                       : status === "sent"
                         ? "Wait for portal approval or customer feedback"
-                        : "Open review page and send when portal access is ready"}
+                        : "Review the estimate, then send when portal access is ready"}
                   </p>
                 </div>
               </div>

@@ -1,10 +1,96 @@
 # Developer Source Of Truth
 
+# FloorConnector - Developer Source of Truth
+
+## PURPOSE
+This file is the primary entry point for all development.
+
+You must:
+- Read this file first
+- Follow all rules strictly
+- Do not rely on prior chat context
+
+---
+
+## CORE RULES (NON-NEGOTIABLE)
+
+- Do NOT break schema, workflows, calculations, or financial logic
+- Project is the core operational object
+- No duplicate records across core entities
+- Canonical lifecycle must remain intact
+
+Opportunity -> Customer -> Project -> Estimate -> Contract -> Change Order -> Job -> Invoice -> Payment
+
+Lead and intake language may appear in older or broader planning docs, but implementation work should treat `opportunity` as the canonical pre-customer commercial record unless a task explicitly scopes otherwise.
+
+---
+
+## Financial Guardrails
+
+- Invoices require valid billing triggers.
+- Invoices must be tied to real scope; no freeform or disconnected billing.
+- Approved scope is not automatically billable.
+- Invoices are money owed; payments are money collected.
+- Change orders extend the same financial chain.
+
+---
+
+## CONTEXT-AWARE CREATION (REQUIRED)
+
+- Project context → auto-linked
+- Customer context → must attach/select project
+- Global context → must select customer + project
+
+Applies to:
+- estimates
+- jobs
+- invoices
+- contracts
+
+---
+
+## SYSTEM MAP
+
+Core:
+- docs/developer-source-of-truth.md
+- docs/current-state.md
+- docs/workflows.md
+- docs/Roadmap.md
+
+UI:
+- docs/floorconnector-ui-build-rules.md
+- docs/v0-ui-cleanup-brief-header-project-estimate.md
+
+Execution:
+- docs/chat-handoff.md
+
+---
+
+## HOW TO WORK
+
+1. Read this file
+2. Read current-state.md + workflows.md
+3. Follow rules strictly
+4. Ask if anything is unclear
+
+---
+
+## ACTIVE DIRECTION
+
+- Improve UI clarity (no system logic changes)
+- Enforce context-aware creation
+- Strengthen project-centered operational continuity
+
+---
+
+## ↓ EXISTING SYSTEM DETAILS BELOW (DO NOT IGNORE)
+
 Status: implementation guardrail document.
 
-Use this file as the short developer-facing summary of what to trust when building in FloorConnector. It does not replace the deeper docs. It exists to reduce prompt drift and keep implementation work aligned with the current branch reality.
+Use this file as the primary developer entry point and short guardrail summary for FloorConnector. It does not replace the deeper docs. It exists to reduce prompt drift and keep implementation work aligned with the current branch reality.
 
 Use these docs together:
+- [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary development entry point and guardrails
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth
 - [docs/product-brain.md](C:/FloorConnector/docs/product-brain.md): high-signal product memory and anti-drift rules
 - [docs/decisions.md](C:/FloorConnector/docs/decisions.md): compact log of branch-level product and architecture decisions
@@ -56,7 +142,7 @@ The current branch already includes a real multi-tenant contractor app with:
 - punchlist items on the shared project/job execution chain
 - customer portal access, review, and contract-signature workflows
 - shared templates
-- reusable catalog foundations
+- reusable catalog / cost item database foundations on canonical `catalog_items`, including estimate-side active catalog item insertion through server-owned line-item snapshots
 - shared commercial numbering through the existing workflow settings model
 - quick-create -> canonical record -> full workspace pattern across core contractor manager pages
 - first shared universal-create launcher in the contractor shell and dashboard
@@ -84,7 +170,7 @@ Do not describe target-only capabilities as already implemented unless [docs/cur
 
 ## Current Preferred Business Workflow
 
-The preferred connected business path is:
+The current canonical lifecycle is:
 
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
@@ -127,6 +213,7 @@ Important workflow rules:
 - the protected contractor app now shares one warmer charcoal/orange/light-neutral UI direction across the shell, manager pages, quick-create surfaces, and common cards; do not reintroduce blue-heavy overview chrome on new or updated contractor pages
 - dashboards are entry surfaces into the same lifecycle, not separate product worlds
 - quick create must create canonical records first and then route into the full workspace
+- creation must remain context-aware: project-launched creation auto-links the project, customer-launched creation requires project selection or creation, and global creation requires explicit customer and project selection
 - global search should stay shell-level, tenant-safe, and canonical-record-based; do not invent search-only records, search-only summaries, or disconnected module search systems
 - scheduling depth should stay on the canonical job model; add planner or calendar UI on `/schedule`, but do not invent schedule-only records or a disconnected dispatch subsystem
 - appointments should stay as canonical visit and meeting records linked to the same opportunity/customer/project chain; do not turn them into duplicate jobs or a second dispatch model
@@ -139,7 +226,10 @@ Important workflow rules:
 - estimate defaults should hydrate only when estimate content is initially empty, resolving platform defaults before contractor overrides and never silently reapplying after user edits
 - estimate autosave should validate before persist and use conflict protection against stale overwrites
 - estimate tax must stay derived from organization defaults, customer exemption state, and item-level taxable flags; do not add manual estimate tax overrides
-- `catalog_items` remains the one shared item master across material, labor, service, equipment, and system records; do not introduce a second inventory or labor model
+- `catalog_items` is the only canonical cost item model and the one shared item master across material, labor, service, equipment, subcontractor, other, and system records
+- do not create duplicate cost item tables such as `contractor_cost_items`, module-specific catalog tables, or separate estimate/invoice/materials item masters
+- estimate line items can snapshot selected active non-system catalog item data through the canonical estimate insertion path; do not bypass snapshot lineage or mutate historical records when catalog items change
+- invoice catalog insertion remains deferred and conservative: invoices should continue to use approved estimate snapshot, SOV, approved change-order snapshot, or invoice-only lineage rather than live catalog rows unless a future scoped invoice-only catalog adjustment flow is explicitly implemented
 - future catalog/cost item markup should be treated as internal cost/profitability behavior: defaults can come from the item database, estimate-level overrides can be intentional, and customer-facing estimate output should not expose markup controls
 - future catalog/cost item defaults for cost, markup, price, labor, production, and tax behavior are internal; customer-facing estimate output should show customer-facing description, quantity, unit price, and total only
 - one-off estimate-line price overrides should not mutate catalog defaults, catalog updates should affect future estimates only, imported estimate lines should preserve snapshot price/markup/override behavior, and past estimates should not mutate when catalog defaults change
@@ -195,7 +285,8 @@ The normalization phase is complete enough to stop; further contractor-page work
 - use canonical shared data only
 - do not create module-specific data silos
 - do not create a standalone takeoff/estimating app disconnected from projects, catalog/cost items, and canonical estimates
-- do not create duplicate project, estimate, catalog, invoice, template, or takeoff-specific commercial models for future takeoff or estimate-generation behavior
+- do not create duplicate project, estimate, catalog, cost item, invoice, template, or takeoff-specific commercial models for future takeoff or estimate-generation behavior
+- do not create module-specific catalog or cost item silos; extend canonical `catalog_items` and snapshot from it where downstream workflows need immutable commercial history
 - do not create module-specific template or add-on silos for estimates, invoices, contracts, proposals/SOW, work orders, or System Templates
 - do not create marketplace models, contractor-network models, or partner-work models until scoped collaboration, permissions, tenant isolation, and canonical ownership are designed
 - treat `Directory` as a unified view over canonical records, not as a new merged record model

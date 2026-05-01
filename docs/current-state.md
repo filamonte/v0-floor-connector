@@ -4,7 +4,10 @@ Status: implemented truth on the current working branch.
 
 This document summarizes the current implemented architecture and feature foundation in the FloorConnector monorepo.
 
+Use [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md) as the primary developer entry point. Use this document for implemented truth after that first orientation.
+
 Use these docs together:
+- [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary development entry point and implementation guardrails
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth and current branch reality
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
@@ -23,7 +26,13 @@ That includes all future module workspace standardization work, which should ali
 
 If this document conflicts with a planning, target-design, or historical document, trust this document for implemented status.
 
-Estimate Builder planning docs are planning docs only. V1 estimate builder/system generation is not implemented unless this file and the codebase explicitly say it is. The existing reusable catalog and estimate foundations remain the current implemented baseline.
+Estimate Builder planning docs are planning docs only. V1 estimate builder/system generation is not implemented unless this file and the codebase explicitly say it is. The existing reusable catalog, cost item database, and estimate foundations remain the current implemented baseline.
+
+Current canonical lifecycle:
+
+`opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
+
+Implemented surfaces may still use lead or intake language where the UI is describing pre-sale work, but implementation status and data-model language should preserve the canonical `opportunity` record and avoid duplicate lead/customer/project models.
 
 ## Repository Shape
 
@@ -65,7 +74,7 @@ Current shared canonical model includes:
 - platform template seeds
 - platform catalog item seeds
 - document templates
-- catalog items
+- catalog items / reusable cost items
 - customers
 - projects
 - estimates
@@ -796,7 +805,7 @@ Estimate statuses currently implemented:
 
 Quick reference:
 - inventory-first only; new user-facing manual estimate rows are intentionally disabled
-- `catalog_items` is the source for reusable estimate items
+- `catalog_items` is the canonical reusable cost item database and the source for reusable estimate items
 - `catalog_system_components` drives reusable systems on top of `catalog_items`
 - `estimate_line_items` is the only authoritative pricing truth; `estimates.content.itemRows` is legacy-only
 - approved estimates create immutable commercial snapshots for downstream contract, SOV, and invoice lineage
@@ -1135,7 +1144,7 @@ Current design notes:
 Implemented:
 - platform-scoped starter catalog item seeds for materials, labor, services, equipment, and systems
 - organization-scoped reusable catalog item records
-- catalog items now act as the canonical cost item master for commercial pricing and optional inventory tracking
+- `catalog_items` now act as the canonical reusable cost item database for commercial pricing foundations and optional inventory tracking
 - Cost Items Database now exists as a first-class contractor module with routes for dashboard, items, systems, inventory, and settings
 - contractor-side adoption of platform starter items into organization-owned copies
 - organization-side editing, defaulting, and archiving of reusable catalog items
@@ -1143,22 +1152,27 @@ Implemented:
 - optional linked inventory tracking on catalog items through `inventory_items`
 - linked inventory tracking now exposes quantity on hand, reorder point, default location, manual adjustments, and recent transaction history from the same cost item workflow
 - canonical `catalog_system_components` foundation for system / assembly rows attached to `catalog_items`
-- estimate line items can now source directly from shared catalog items and sqft-expanded systems
+- estimate line item authoring can add active non-system `catalog_items` from the estimate editor Catalog Items panel, with server-owned snapshot creation
+- archived catalog items remain visible for review in the estimate editor panel but are blocked from insertion and rejected server-side
+- system catalog items continue to use the existing system expansion flow instead of direct single-line catalog insertion
+- sqft-expanded systems continue to generate normal canonical estimate line item snapshots through the existing system flow
 - organization-scoped reusable `estimate_content_blocks` foundation for scope, inclusion, exclusion, and terms snippets
 
 Current design notes:
 - organizations do not depend on one mutable global starter item after adoption
 - reusable items stay on the same canonical foundation instead of spawning module-specific catalog silos
-- `catalog_items` is the shared commercial and item-master foundation; there is no second cost item model
-- catalog items are the current foundation for reusable item pricing, cost fields, taxable behavior, optional inventory links, and future production/markup behavior, but a full System Template generation engine is not implemented
+- `catalog_items` is the shared commercial item master and the only canonical cost item model; there is no second cost item table
+- catalog items are the current Phase 1 foundation for reusable item pricing, cost fields, taxable behavior, optional inventory links, and future production/markup behavior
+- estimate workflows now reuse and snapshot active non-system catalog item data through canonical `estimate_line_items`; future invoice and materials workflows should extend the same shared model instead of creating module-specific item silos
 - inventory is now an optional operational extension of the same catalog item instead of a separate primary inventory workflow
 - inventory availability is now controlled through the shared platform / organization feature policy key `inventory_enabled`
 - linked inventory rows currently use the default location in the contractor UI, while the schema allows additional locations later without splitting the item master
 - item-level tax UX is intentionally simplified to a taxable on or off checkbox, with tax rates remaining in organization and platform financial settings and optional `tax_code_id` retained as advanced infrastructure
-- estimate and invoice pricing still snapshot from `catalog_items`; inventory quantity is operational context only and does not drive pricing
+- estimate item sourcing snapshots from `catalog_items` for active non-system catalog items through the estimate editor panel; deeper invoice catalog insertion and materials execution workflows remain future work
+- invoice pricing remains snapshot-based through approved estimate, SOV, change-order, or invoice-only lineage; inventory quantity is operational context only and does not drive pricing
 - `system` remains the canonical reusable assembly concept, with component rows designed to scale immediately by sqft in estimates
 - current systems are reusable catalog assemblies; they are not yet the planned System Templates with required inputs, formulas beyond current sqft expansion, grouping rules, Quick Build, Detailed Build, or share-back review
-- current catalog management is still foundation-first, but estimate sourcing now runs on the same shared catalog and line-item chain instead of a parallel item-row payload
+- current catalog management is still foundation-first; future work should deepen reuse across estimating, invoicing, and execution without replacing the shared catalog and line-item chain
 - planned add-ons/options should be catalog-backed optional scope modifiers, not a second pricing model; examples include cove base, control joints, crack repair, coating removal, moisture mitigation, extra topcoat, prevailing wage labor adjustment, and mobilization/setup
 - cove base is currently best treated as a catalog item and optional system/add-on component; it is not a full floor system by itself
 - long-term labor should become an internal catalog/cost item component with crew size, production rate, minimum site time, markup, and condition/access multipliers, while near-term labor may remain baked into system or item pricing
@@ -1246,8 +1260,11 @@ The current implemented workflow foundation supports:
 - project management
 - estimate authoring with line items and totals
 - estimate line items are now the authoritative estimate item-row source of truth; `estimates.content.itemRows` remains legacy read/migration-only
-- estimate workspace item sourcing is now inventory-first, using active catalog items and sqft-scaled system expansion into canonical estimate line items
+- estimate workspace item sourcing is now catalog/cost-item-first, using active catalog items and sqft-scaled system expansion into canonical estimate line items
 - Estimate Builder V1 quick system generation is now implemented inside the existing estimate editor:
+  - contractors can add active non-system catalog items from the estimate editor Catalog Items panel; insertion uses the existing server action path to create immutable estimate line-item snapshots for name, description, unit, pricing, taxability, source metadata, and supported cost fields
+  - archived catalog items are visible in the Catalog Items panel for review but cannot be inserted, and server-side insertion rejects archived/inactive catalog items
+  - system catalog items remain routed through the system expansion flow instead of direct single-line catalog insertion
   - contractors can select an existing catalog system, enter length x width or direct area plus linear footage, preview area/perimeter-derived quantities, and append grouped canonical estimate line items
   - existing catalog system components map `sqft`/area basis rows to area, `lf`/perimeter basis rows to linear footage, and count basis rows to count input
   - the estimate editor now uses clearer V1 terminology for Catalog Items, Systems, Add-ons / Options, and Document Templates; Add-ons / Options reuse the existing catalog item `category` field instead of introducing a separate schema
@@ -1281,6 +1298,9 @@ The current implemented workflow foundation supports:
 - job progression through execution states
 - invoice creation and maintenance from connected project, estimate, and job records
 - standard invoice creation without a job now respects the commercial handoff gate instead of bypassing contract-signature and deposit or financing readiness
+- invoice quick-create now requires a real billing source before draft creation: completed job, approved estimate scope, approved change order, or explicit deposit role
+- approved estimate next steps no longer present full estimate-based invoice creation as a primary action; approval routes users toward contract or project readiness before billing
+- progress billing invoice preparation now uses the same invoice commercial readiness guard as standard invoice creation while staying on the approved-estimate -> schedule-of-values -> invoice chain
 - snapshot-based invoice lineage across direct estimate billing, SOV billing, approved change-order billing, and invoice-only adjustments
 - payment recording with invoice balance and paid-state recalculation
 - tax-aware invoice calculation using org defaults and customer exemption state
@@ -1419,3 +1439,32 @@ Future-looking note:
 - the current lead Scope Intake fields can support future reviewed estimate planning, but they do not currently generate estimate lines, SOW, labor plans, material plans, takeoff records, AI suggestions, invoices, or customer-facing commercial scope automatically.
 - no manual measurement-driven estimate generation, full System Template estimate generation, System Template sharing, dedicated Templates & Systems admin module, add-on/option management workflow, on-screen takeoff, AI Capture, AI takeoff, plan measurement, takeoff-to-cost-item mapping, source traceability, out-of-sync review state, or automated estimate generation exists today.
 - future takeoff must stay separate from implemented truth: Measurements are manual quantity inputs; Takeoff means plan/PDF/drawing-based measurement; AI Capture is a future photo/app/AI-derived input method. Takeoff and measurements would produce quantities, catalog/cost items would define reusable cost, pricing, production, markup, and tax behavior, System Templates would map quantities to grouped estimate content, and estimates would define customer-facing pricing and commercial scope.
+
+## UI DIRECTION UPDATE (LATEST)
+
+The system is functionally correct but has UI clarity gaps.
+
+### Identified Issues:
+- Header navigation overcrowding
+- Project detail lacks strong contextual navigation
+- Estimate creation not consistently context-aware
+- Financial readiness not clearly surfaced
+
+### Direction:
+- Project becomes primary working surface
+- Navigation becomes clearer and contextual
+- Creation flows respect origin context
+- Financial and readiness states are grouped logically
+
+### Context-aware creation:
+- Project context: downstream records are auto-linked to the project and derived customer.
+- Customer context: the customer is prefilled, and a project must be selected or created.
+- Global context: both customer and project must be selected explicitly.
+- Applies to estimates, jobs, contracts, and invoices.
+
+### Constraints:
+- No changes to data model
+- No workflow changes
+- No calculation changes
+
+This is a UI/UX clarity evolution only

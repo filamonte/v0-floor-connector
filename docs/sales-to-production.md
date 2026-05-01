@@ -26,7 +26,9 @@ It is not a claim that every stage below is already fully implemented. For imple
 
 Data should move forward through the same canonical chain:
 
-`opportunity -> customer -> project -> estimate -> contract -> financial readiness -> job / production -> invoice -> payment`
+`opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
+
+Financial readiness, scheduling readiness, production readiness, and similar checkpoints are supporting workflow stages operating on the same canonical record chain. They do not introduce new record types, replace the lifecycle, become replacement records, or create a separate module-owned lifecycle.
 
 That flow may tighten over time into a more project-centered UX, but the key rule is unchanged:
 - no duplicate re-entry of core business data at later stages
@@ -154,7 +156,11 @@ Display-template behavior:
 
 Generated estimate line items should eventually retain source traceability back to the takeoff scope item, takeoff measurement, and source document or photo when applicable. If takeoff quantities change after estimate generation, the system should flag the takeoff-estimate link or estimate as out of sync so users know the estimate may need review.
 
-The target estimate generation path is `Lead / Opportunity -> Customer + Project -> Site Info / Measurements / Plans / Photos -> Measurement, Takeoff, or AI Capture -> System Template -> Catalog/Cost Item Mapping -> Grouped Estimate Line Items -> Estimate -> Contract -> Job -> Invoice -> Payment`.
+The target estimate generation path still feeds the canonical lifecycle:
+
+`opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
+
+Site info, measurements, plans, photos, Measurement, Takeoff, AI Capture, System Templates, Catalog/Cost Item Mapping, and grouped estimate line items are supporting estimate-input stages. They operate within the same project and estimate workflow; they do not create a parallel lifecycle or replace the canonical chain.
 
 Takeoff and measurement quantities should eventually help with material requirements, labor estimation, production readiness, and job planning. The financial record path still runs through the canonical estimate workflow; there should be no direct takeoff-to-invoice workflow.
 

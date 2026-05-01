@@ -121,7 +121,7 @@ function getLeadNextAction(input: {
   return {
     title: "Keep lead context current",
     description:
-      "Review qualification, contact details, site visit state, and notes so downstream handoff stays reliable.",
+      "Review contact details, site visit state, scope intake, and estimate planning notes.",
     href: "#qualification",
     label: "Review lead",
     kind: "link" as const
@@ -188,12 +188,13 @@ export default async function LeadDetailPage({
         )
       }}
       sidebar={[
-        { id: "summary", label: "Workflow summary", iconName: "home", href: "#summary" },
+        { id: "summary", label: "Overview", iconName: "home", href: "#summary" },
         { id: "qualification", label: "Qualification", iconName: "clipboard-list", href: "#qualification" },
-        { id: "contact", label: "Customer/contact", iconName: "notebook-pen", href: "#contact" },
-        { id: "site-visit", label: "Site visit", iconName: "check-square", href: "#site-visit" },
-        { id: "project-handoff", label: "Project handoff", iconName: "folder-open", href: "#project-handoff" },
-        { id: "activity", label: "Notes and activity", iconName: "file-text", href: "#activity" }
+        { id: "contact", label: "Contact / Address", iconName: "notebook-pen", href: "#contact" },
+        { id: "site-visit", label: "Site Visit", iconName: "check-square", href: "#site-visit" },
+        { id: "scope-intake", label: "Scope Intake", iconName: "layers-3", href: "#scope-intake" },
+        { id: "project-handoff", label: "Estimate Plan", iconName: "folder-open", href: "#project-handoff" },
+        { id: "activity", label: "Notes / Activity", iconName: "file-text", href: "#activity" }
       ]}
       summaryBand={
         <WorkspaceSummaryBand
@@ -278,11 +279,8 @@ export default async function LeadDetailPage({
               {opportunity.title}
             </h2>
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Review the intake record, keep the pre-project commercial context
-              current, and use this page to decide when to start estimate on
-              the shared customer and project chain. Once a customer is linked,
-              estimate send uses the linked customer email rather than this lead
-              page alone.
+              Review the lead, complete the site visit and scope intake, then
+              start the estimate on the shared customer and project chain.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -487,15 +485,17 @@ export default async function LeadDetailPage({
 
         <div id="site-visit" className="mt-8">
           <div className="mb-6 rounded-2xl border border-brand-200 bg-brand-50/60 px-5 py-4 text-sm leading-6 text-slate-700">
-            <p className="font-medium text-slate-950">Estimating readiness</p>
+            <p className="font-medium text-slate-950">Site Visit / Scope Intake / Estimate Plan</p>
             <p className="mt-2">{estimatingReadiness}</p>
           </div>
-          <OpportunityForm
-            action={updateOpportunityAction}
-            submitLabel="Save lead"
-            pendingLabel="Saving lead..."
-            opportunity={opportunity}
-          />
+          <div id="scope-intake">
+            <OpportunityForm
+              action={updateOpportunityAction}
+              submitLabel="Save lead"
+              pendingLabel="Saving lead..."
+              opportunity={opportunity}
+            />
+          </div>
         </div>
 
         <div id="activity" className="mt-8 grid gap-6 lg:grid-cols-3">
@@ -598,13 +598,11 @@ export default async function LeadDetailPage({
 
         <section id="project-handoff" className="rounded-3xl border border-slate-200 bg-white/85 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-            Next Step
+            Estimate Plan
           </p>
           <p className="mt-4 text-sm leading-6 text-slate-600">
-            {nextAction.description} Site visits remain lead-linked appointments; starting
-            estimate later creates or links the canonical customer and project so the commercial
-            chain stays connected. If this lead is already linked, keep the customer email current
-            there because estimate send uses <span className="font-semibold">customer.email</span>.
+            {nextAction.description} Site visits stay lead-linked, while estimate creation links
+            the canonical customer and project before commercial scope is sent.
           </p>
           {canStartEstimate ? (
             <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-900">

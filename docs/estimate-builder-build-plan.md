@@ -61,7 +61,7 @@ Measurements and takeoff produce quantities. Catalog/cost items define reusable 
 
 The full target Estimate Builder workflow is:
 
-`Lead / Opportunity -> Customer + Project -> Site Info / Measurements / Plans / Photos -> Measurement, Takeoff, or AI Capture -> System Template -> Catalog/Cost Item Mapping -> Grouped Estimate Line Items -> Estimate -> Contract -> Job -> Invoice -> Payment`
+`Opportunity -> Customer -> Project -> Site Info / Measurements / Plans / Photos -> Measurement, Takeoff, or AI Capture -> System Template -> Catalog/Cost Item Mapping -> Grouped Estimate Line Items -> Estimate -> Contract -> Change Order -> Job -> Invoice -> Payment`
 
 Rules:
 - measurement, takeoff, and AI Capture are input sources, not downstream commercial records

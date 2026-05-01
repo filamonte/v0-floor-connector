@@ -21,6 +21,8 @@ type EstimateQuickCreateCustomerOption = {
   id: string;
   name: string;
   companyName?: string | null;
+  email?: string | null;
+  phone?: string | null;
 };
 
 type EstimateQuickCreateProjectOption = {
@@ -44,6 +46,8 @@ type EstimateQuickCreateFormProps = {
   initialCustomerId?: string | null;
   initialProjectId?: string | null;
   initialProjectName?: string | null;
+  initialTitle?: string | null;
+  errorField?: string | null;
 };
 
 function formatStatusLabel(status: string) {
@@ -157,6 +161,114 @@ function SearchPanel({
   );
 }
 
+function CustomerCombobox({
+  customers,
+  selectedCustomerId,
+  query,
+  error,
+  onQueryChange,
+  onSelect
+}: {
+  customers: EstimateQuickCreateCustomerOption[];
+  selectedCustomerId: string | null;
+  query: string;
+  error: boolean;
+  onQueryChange: (nextValue: string) => void;
+  onSelect: (customerId: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const normalizedQuery = query.trim().toLowerCase();
+  const selectedCustomer =
+    customers.find((customer) => customer.id === selectedCustomerId) ?? null;
+  const visibleCustomers = customers
+    .filter((customer) => {
+      if (normalizedQuery.length === 0) {
+        return true;
+      }
+
+      return [
+        customer.name,
+        customer.companyName ?? "",
+        customer.email ?? "",
+        customer.phone ?? ""
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(normalizedQuery);
+    })
+    .slice(0, 8);
+
+  return (
+    <div className="relative">
+      <span className="mb-2 block text-sm font-medium text-slate-800">
+        Customer / account
+      </span>
+      <input
+        type="search"
+        value={query}
+        onFocus={() => setIsOpen(true)}
+        onChange={(event) => {
+          onQueryChange(event.target.value);
+          setIsOpen(true);
+        }}
+        placeholder="Search name, email, or phone"
+        aria-invalid={error}
+        className={[
+          "w-full rounded-[4px] border bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]",
+          error ? "border-rose-300 ring-4 ring-rose-50" : "border-[#d9dee8]"
+        ].join(" ")}
+      />
+      {selectedCustomer ? (
+        <p className="mt-2 text-xs leading-5 text-slate-500">
+          Selected: {selectedCustomer.name}
+          {selectedCustomer.email ? ` / ${selectedCustomer.email}` : ""}
+          {selectedCustomer.phone ? ` / ${selectedCustomer.phone}` : ""}
+        </p>
+      ) : null}
+      {isOpen ? (
+        <div className="absolute z-20 mt-2 max-h-[240px] w-full overflow-y-auto rounded-[4px] border border-[#dde3eb] bg-white p-1 shadow-[0_18px_50px_-28px_rgba(15,23,42,0.45)]">
+          {visibleCustomers.length === 0 ? (
+            <div className="px-3 py-4 text-sm leading-6 text-slate-500">
+              No matching customer accounts found.
+            </div>
+          ) : (
+            visibleCustomers.map((customer) => (
+              <button
+                key={customer.id}
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  onSelect(customer.id);
+                  onQueryChange(customer.name);
+                  setIsOpen(false);
+                }}
+                className={[
+                  "w-full rounded-[4px] px-3 py-2.5 text-left text-sm transition",
+                  selectedCustomerId === customer.id
+                    ? "bg-[#233a64] text-white"
+                    : "text-slate-700 hover:bg-slate-50"
+                ].join(" ")}
+              >
+                <span className="block font-semibold">{customer.name}</span>
+                <span
+                  className={[
+                    "mt-1 block text-xs leading-5",
+                    selectedCustomerId === customer.id ? "text-white/75" : "text-slate-500"
+                  ].join(" ")}
+                >
+                  {[customer.companyName, customer.email, customer.phone]
+                    .filter(Boolean)
+                    .join(" / ") || "Customer account"}
+                </span>
+              </button>
+            ))
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function EstimateQuickCreateForm({
   action,
   opportunities,
@@ -166,17 +278,24 @@ export function EstimateQuickCreateForm({
   estimateDateLabel,
   estimateNumberLabel = "Assigned on create",
   errorMessage,
+  errorField,
   initialOpportunityId,
   initialCustomerId,
   initialProjectId,
-  initialProjectName
+  initialProjectName,
+  initialTitle
 }: EstimateQuickCreateFormProps) {
   const initialProject =
     projects.find((project) => project.id === (initialProjectId ?? "")) ?? null;
+  const initialCustomer =
+    customers.find(
+      (customer) => customer.id === (initialProject?.customerId ?? initialCustomerId ?? "")
+    ) ?? null;
+  const isProjectContextLocked = Boolean(initialProject);
   const [opportunityQuery, setOpportunityQuery] = useState("");
-  const [customerQuery, setCustomerQuery] = useState("");
+  const [customerQuery, setCustomerQuery] = useState(initialCustomer?.name ?? "");
   const [projectQuery, setProjectQuery] = useState("");
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(initialTitle ?? "");
   const [projectChoice, setProjectChoice] = useState<"existing" | "new">(
     initialProjectId ? "existing" : "new"
   );
@@ -185,7 +304,7 @@ export function EstimateQuickCreateForm({
     initialOpportunityId ?? ""
   );
   const [selectedCustomerId, setSelectedCustomerId] = useState(
-    initialCustomerId ?? initialProject?.customerId ?? ""
+    initialProject?.customerId ?? initialCustomerId ?? ""
   );
   const [selectedProjectId, setSelectedProjectId] = useState(initialProjectId ?? "");
 
@@ -201,7 +320,10 @@ export function EstimateQuickCreateForm({
     selectedProject?.customerId && selectedProject.customerId.length > 0
       ? selectedProject.customerId
       : null;
-  const activeCustomerId = selectedCustomerId || derivedCustomerId || projectCustomerId || null;
+  const activeCustomerId =
+    projectCustomerId || selectedCustomerId || derivedCustomerId || null;
+  const selectedCustomer =
+    customers.find((customer) => customer.id === activeCustomerId) ?? null;
   const visibleOpportunities = opportunities
     .filter((opportunity) => {
       if (
@@ -229,20 +351,6 @@ export function EstimateQuickCreateForm({
     })
     .slice(0, 8);
 
-  const visibleCustomers = customers
-    .filter((customer) => {
-      if (customerQuery.trim().length === 0) {
-        return true;
-      }
-
-      const haystack = [customer.name, customer.companyName ?? ""]
-        .join(" ")
-        .toLowerCase();
-
-      return haystack.includes(customerQuery.trim().toLowerCase());
-    })
-    .slice(0, 8);
-
   const visibleProjects = projects
     .filter((project) => {
       if (!activeCustomerId || project.customerId !== activeCustomerId) {
@@ -261,6 +369,9 @@ export function EstimateQuickCreateForm({
     .slice(0, 8);
 
   const hasExistingProjects = visibleProjects.length > 0;
+  const isCustomerError = errorField === "customerId";
+  const isProjectError = errorField === "projectId" || errorField === "projectName";
+  const isTitleError = errorField === "title";
 
   return (
     <form action={action} className="space-y-5">
@@ -295,33 +406,38 @@ export function EstimateQuickCreateForm({
             </div>
           ) : null}
 
-          <SearchPanel
-            label="Customer / account"
-            placeholder="Search customer or company"
-            value={customerQuery}
-            onChange={setCustomerQuery}
-            empty={visibleCustomers.length === 0}
-          >
-            {visibleCustomers.map((customer) => (
-              <SelectionCard
-                key={customer.id}
-                active={activeCustomerId === customer.id}
-                title={customer.name}
-                subtitle={customer.companyName ?? "Customer account"}
-                meta="Customer"
-                onClick={() => {
-                  setSelectedCustomerId(customer.id);
-                  setSelectedOpportunityId("");
-                  setSelectedProjectId("");
-                  setProjectChoice("new");
-                }}
-              />
-            ))}
-          </SearchPanel>
+          {isProjectContextLocked ? (
+            <div className="rounded-[4px] border border-[#d9dee8] bg-[#f8fafc] px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Project context
+              </p>
+              <p className="mt-2 text-sm font-semibold text-slate-950">
+                {initialProject?.name}
+              </p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                {selectedCustomer?.name ?? "Customer account"} is already linked to this project.
+              </p>
+            </div>
+          ) : (
+            <CustomerCombobox
+              customers={customers}
+              selectedCustomerId={activeCustomerId}
+              query={customerQuery}
+              error={isCustomerError}
+              onQueryChange={setCustomerQuery}
+              onSelect={(customerId) => {
+                setSelectedCustomerId(customerId);
+                setSelectedOpportunityId("");
+                setSelectedProjectId("");
+                setProjectChoice("new");
+              }}
+            />
+          )}
 
           {activeCustomerId ? (
             <div className="space-y-3">
-              <div>
+              {isProjectContextLocked ? null : (
+                <div>
                 <span className="mb-2 block text-sm font-medium text-slate-800">
                   Project / site
                 </span>
@@ -343,8 +459,13 @@ export function EstimateQuickCreateForm({
                   />
                 </div>
               </div>
+              )}
 
-              {projectChoice === "existing" ? (
+              {isProjectContextLocked ? (
+                <div className="rounded-[4px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-800">
+                  This estimate will be created on the current project. You do not need to re-select the customer or project.
+                </div>
+              ) : projectChoice === "existing" ? (
                 <SearchPanel
                   label="Existing customer project"
                   placeholder="Search customer projects"
@@ -352,6 +473,11 @@ export function EstimateQuickCreateForm({
                   onChange={setProjectQuery}
                   empty={!hasExistingProjects}
                 >
+                  {isProjectError ? (
+                    <div className="mb-2 rounded-[4px] border border-rose-200 bg-rose-50 px-3 py-2 text-xs leading-5 text-rose-800">
+                      Select one of this customer's projects, or switch to create a new project.
+                    </div>
+                  ) : null}
                   {visibleProjects.map((project) => (
                     <SelectionCard
                       key={project.id}
@@ -369,6 +495,8 @@ export function EstimateQuickCreateForm({
                   name="projectNameDisplay"
                   placeholder="Garage floor recoating"
                   value={projectName}
+                  aria-invalid={isProjectError}
+                  className={isProjectError ? "border-rose-300 ring-4 ring-rose-50" : undefined}
                   onChange={(event) => setProjectName(event.target.value)}
                 />
               )}
@@ -427,6 +555,8 @@ export function EstimateQuickCreateForm({
               placeholder="Garage floor recoating proposal"
               required
               value={title}
+              aria-invalid={isTitleError}
+              className={isTitleError ? "border-rose-300 ring-4 ring-rose-50" : undefined}
               onChange={(event) => setTitle(event.target.value)}
             />
 

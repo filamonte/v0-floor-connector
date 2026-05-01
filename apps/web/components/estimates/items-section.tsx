@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowUp,
@@ -75,6 +75,7 @@ type ItemsSectionProps = {
   showMarkup: boolean;
   showOnlyZeroItems: boolean;
   visibleCatalogItems: CatalogItem[];
+  catalogItemsForReview: CatalogItem[];
   selectedCatalogItemId: string;
   selectedSystemId: string;
   systemInputMode: "dimensions" | "direct";
@@ -91,6 +92,7 @@ type ItemsSectionProps = {
   onSystemMeasurementChange: (field: string, value: string) => void;
   onAddCatalogItem: () => void;
   onQuickAddCatalogItem: (catalogItemId: string) => void;
+  onAddPreviewCatalogItem: (catalogItemId: string) => void;
   onImportLineItemsFromEstimate: (
     sourceEstimateId: string
   ) => Promise<{ ok: boolean; message: string }>;
@@ -121,6 +123,8 @@ type ItemsSectionProps = {
     defaultUnitPrice: string | null;
   }) => Promise<boolean>;
   inventoryCreateError?: string | null;
+  catalogPreviewAddMessage?: string | null;
+  isCatalogPreviewAddPending?: boolean;
 };
 
 type RowGroup = {
@@ -207,6 +211,37 @@ function getCatalogItemOptionLabel(item: CatalogItem) {
   return `${item.name} (${item.itemType}${item.category ? ` / ${item.category}` : ""})${suffix}`;
 }
 
+function formatCatalogCurrency(value: string | null) {
+  if (value == null || value.trim().length === 0) {
+    return "Not set";
+  }
+
+  return formatMoney(getNumericValue(value));
+}
+
+function formatCatalogTypeLabel(itemType: CatalogItemType) {
+  switch (itemType) {
+    case "material":
+      return "Material";
+    case "labor":
+      return "Labor";
+    case "service":
+      return "Service";
+    case "equipment":
+      return "Equipment";
+    case "subcontractor":
+      return "Subcontractor";
+    case "system":
+      return "System";
+    default:
+      return "Other";
+  }
+}
+
+function getCatalogCategoryLabel(item: CatalogItem) {
+  return item.category?.trim() || formatCatalogTypeLabel(item.itemType);
+}
+
 function getVisibleRowGroups(
   lineItems: EstimateItemsDraft[],
   itemGroups: EstimateItemGroup[],
@@ -272,6 +307,7 @@ export function ItemsSection({
   showMarkup,
   showOnlyZeroItems,
   visibleCatalogItems,
+  catalogItemsForReview,
   selectedCatalogItemId,
   selectedSystemId,
   systemInputMode,
@@ -288,6 +324,7 @@ export function ItemsSection({
   onSystemMeasurementChange,
   onAddCatalogItem,
   onQuickAddCatalogItem,
+  onAddPreviewCatalogItem,
   onImportLineItemsFromEstimate,
   onImportReusableContentFromEstimate,
   onPreviewSystem,
@@ -301,7 +338,9 @@ export function ItemsSection({
   onMoveLineItem,
   onRemoveLineItem,
   onQuickCreateCatalogItem,
-  inventoryCreateError
+  inventoryCreateError,
+  catalogPreviewAddMessage,
+  isCatalogPreviewAddPending = false
 }: ItemsSectionProps) {
   const catalogSearchInputRef = useRef<HTMLInputElement | null>(null);
   const [itemSearch, setItemSearch] = useState("");
@@ -313,6 +352,10 @@ export function ItemsSection({
   const [quickItemCategory, setQuickItemCategory] = useState("");
   const [quickItemCost, setQuickItemCost] = useState("");
   const [quickItemPrice, setQuickItemPrice] = useState("");
+  const [catalogPreviewSearch, setCatalogPreviewSearch] = useState("");
+  const [catalogPreviewType, setCatalogPreviewType] = useState("all");
+  const [catalogPreviewCategory, setCatalogPreviewCategory] = useState("all");
+  const [selectedCatalogPreviewId, setSelectedCatalogPreviewId] = useState("");
   const visibleGroups = getVisibleRowGroups(lineItems, itemGroups, showOnlyZeroItems);
   const visibleItemCount = visibleGroups.reduce((sum, group) => sum + group.rows.length, 0);
   const filteredPickerItems = visibleCatalogItems.filter((item) =>
@@ -322,6 +365,71 @@ export function ItemsSection({
   const systemCatalogItems = filteredPickerItems.filter((item) => item.itemType === "system");
   const quickAddItems = directCatalogItems.slice(0, 6);
   const firstQuickAddItem = quickAddItems[0] ?? directCatalogItems[0] ?? null;
+  const readOnlyCatalogItems = catalogItemsForReview.length > 0
+    ? catalogItemsForReview
+    : visibleCatalogItems;
+  const catalogPreviewTypeOptions = useMemo(
+    () => Array.from(new Set(readOnlyCatalogItems.map((item) => item.itemType))).sort(),
+    [readOnlyCatalogItems]
+  );
+  const catalogPreviewCategoryOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          readOnlyCatalogItems
+            .map((item) => item.category?.trim())
+            .filter((category): category is string => Boolean(category))
+        )
+      ).sort((a, b) => a.localeCompare(b)),
+    [readOnlyCatalogItems]
+  );
+  const filteredCatalogPreviewItems = useMemo(() => {
+    const normalizedSearch = catalogPreviewSearch.trim().toLowerCase();
+
+    return readOnlyCatalogItems.filter((item) => {
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        item.name.toLowerCase().includes(normalizedSearch) ||
+        (item.category ?? "").toLowerCase().includes(normalizedSearch) ||
+        (item.sku ?? "").toLowerCase().includes(normalizedSearch) ||
+        (item.costCode ?? "").toLowerCase().includes(normalizedSearch);
+      const matchesType = catalogPreviewType === "all" || item.itemType === catalogPreviewType;
+      const matchesCategory =
+        catalogPreviewCategory === "all" ||
+        item.category?.trim().toLowerCase() === catalogPreviewCategory.toLowerCase();
+
+      return matchesSearch && matchesType && matchesCategory;
+    });
+  }, [
+    catalogPreviewCategory,
+    catalogPreviewSearch,
+    catalogPreviewType,
+    readOnlyCatalogItems
+  ]);
+  const selectedCatalogPreviewItem =
+    readOnlyCatalogItems.find((item) => item.id === selectedCatalogPreviewId) ??
+    filteredCatalogPreviewItems[0] ??
+    null;
+  const canAddSelectedCatalogPreviewItem =
+    Boolean(selectedCatalogPreviewItem) &&
+    selectedCatalogPreviewItem?.status === "active" &&
+    selectedCatalogPreviewItem.itemType !== "system";
+  const selectedCatalogPreviewAddLabel = isCatalogPreviewAddPending
+    ? "Adding..."
+    : canAddSelectedCatalogPreviewItem
+      ? "Add to estimate"
+      : selectedCatalogPreviewItem?.itemType === "system"
+        ? "Use system expansion"
+        : selectedCatalogPreviewItem?.status !== "active"
+          ? "Archived item"
+          : "Add to estimate";
+  const selectedCatalogPreviewAddTitle = canAddSelectedCatalogPreviewItem
+    ? "Add this active catalog item to the estimate as a server-owned snapshot."
+    : selectedCatalogPreviewItem?.itemType === "system"
+      ? "Systems must be inserted through the system expansion flow."
+      : selectedCatalogPreviewItem?.status !== "active"
+        ? "Archived catalog items stay visible for review but cannot be added to estimates."
+        : "Select an active catalog item to add it to this estimate.";
   const canSubmitQuickCreate =
     quickItemName.trim().length > 0 &&
     quickItemUnit.trim().length > 0 &&
@@ -343,6 +451,260 @@ export function ItemsSection({
       />
 
       <div className="grid gap-4 border-b border-[#e6e9ef] px-4 py-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
+        <div className="order-3 rounded-[12px] border border-[#dfe5ef] bg-white p-4 xl:col-span-2">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
+                Catalog Items
+              </div>
+              <p className="mt-1 max-w-3xl text-[13px] leading-5 text-[#6b7c96]">
+                Catalog items are reusable cost items for future estimates, invoices, and materials
+                planning. Selecting a row previews its details; active non-system items can be
+                added to this estimate as locked snapshots.
+              </p>
+            </div>
+            <span className="inline-flex w-fit rounded-full border border-[#f0c7a5] bg-[#fff7ef] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#a4581a]">
+              Active direct items can be added
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(280px,0.7fr)]">
+            <div>
+              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_220px]">
+                <label className="text-[12px] font-medium text-[#5d6f8a]">
+                  Search by name
+                  <div className="mt-1.5 flex h-10 items-center rounded-[8px] border border-[#d7deea] bg-white px-3">
+                    <Search className="h-4 w-4 text-[#7b8aa3]" />
+                    <input
+                      value={catalogPreviewSearch}
+                      onChange={(event) => setCatalogPreviewSearch(event.target.value)}
+                      placeholder="Search catalog items"
+                      className="h-full w-full border-0 bg-transparent px-3 text-[14px] text-[#334a70] outline-none"
+                    />
+                  </div>
+                </label>
+                <label className="text-[12px] font-medium text-[#5d6f8a]">
+                  Type
+                  <select
+                    value={catalogPreviewType}
+                    onChange={(event) => setCatalogPreviewType(event.target.value)}
+                    className="mt-1.5 h-10 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
+                  >
+                    <option value="all">All types</option>
+                    {catalogPreviewTypeOptions.map((itemType) => (
+                      <option key={itemType} value={itemType}>
+                        {formatCatalogTypeLabel(itemType)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-[12px] font-medium text-[#5d6f8a]">
+                  Category
+                  <select
+                    value={catalogPreviewCategory}
+                    onChange={(event) => setCatalogPreviewCategory(event.target.value)}
+                    className="mt-1.5 h-10 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
+                  >
+                    <option value="all">All categories</option>
+                    {catalogPreviewCategoryOptions.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="mt-4 overflow-hidden rounded-[10px] border border-[#e1e7f0]">
+                <div className="overflow-x-auto">
+                  <div className="min-w-[760px]">
+                    <div className="grid grid-cols-[minmax(0,1.35fr)_minmax(120px,0.55fr)_88px_120px_82px_92px] bg-[#f6f8fc] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7c8ba3]">
+                      <span>Name</span>
+                      <span>Type / Category</span>
+                      <span>Unit</span>
+                      <span className="text-right">Default Price</span>
+                      <span className="text-center">Taxable</span>
+                      <span className="text-right">Status</span>
+                    </div>
+                    <div className="max-h-[300px] overflow-auto">
+                      {filteredCatalogPreviewItems.map((item) => {
+                        const isSelected = selectedCatalogPreviewItem?.id === item.id;
+
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => setSelectedCatalogPreviewId(item.id)}
+                            className={[
+                              "grid w-full grid-cols-[minmax(0,1.35fr)_minmax(120px,0.55fr)_88px_120px_82px_92px] items-center gap-0 border-t border-[#edf1f6] px-3 py-3 text-left text-[13px] transition",
+                              isSelected ? "bg-[#fff7ef]" : "bg-white hover:bg-[#fbfcfe]"
+                            ].join(" ")}
+                          >
+                            <span className="min-w-0">
+                              <span className="block truncate font-semibold text-[#23395d]">
+                                {item.name}
+                              </span>
+                              <span className="mt-0.5 block truncate text-[11px] text-[#8a98ad]">
+                                {item.sku || item.costCode || item.description || "Reusable cost item"}
+                              </span>
+                            </span>
+                            <span className="min-w-0 text-[#5d6f8a]">
+                              <span className="block truncate">
+                                {formatCatalogTypeLabel(item.itemType)}
+                              </span>
+                              <span className="mt-0.5 block truncate text-[11px] text-[#8a98ad]">
+                                {getCatalogCategoryLabel(item)}
+                              </span>
+                            </span>
+                            <span className="text-[#334a70]">{formatUnitLabel(item.unit)}</span>
+                            <span className="text-right font-semibold text-[#23395d]">
+                              {formatCatalogCurrency(item.defaultUnitPrice)}
+                            </span>
+                            <span className="text-center text-[#5d6f8a]">
+                              {item.taxable ? "Yes" : "No"}
+                            </span>
+                            <span className="text-right">
+                              <span
+                                className={[
+                                  "inline-flex rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]",
+                                  item.status === "active"
+                                    ? "bg-emerald-50 text-emerald-700"
+                                    : "bg-slate-100 text-slate-600"
+                                ].join(" ")}
+                              >
+                                {item.status === "active" ? "Active" : "Archived"}
+                              </span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                      {filteredCatalogPreviewItems.length === 0 ? (
+                        <div className="border-t border-[#edf1f6] bg-[#fbfcfe] px-4 py-8 text-center text-[14px] leading-6 text-[#7c8ba3]">
+                          No catalog items match this search yet. Catalog items are reusable cost
+                          items for estimates, invoices, and materials planning.
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <aside className="rounded-[10px] border border-[#dfe5ef] bg-[#fbfcfe] p-4">
+              {selectedCatalogPreviewItem ? (
+                <div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#7a8aa3]">
+                        Preview
+                      </p>
+                      <h3 className="mt-1 break-words text-[17px] font-semibold leading-6 text-[#23395d]">
+                        {selectedCatalogPreviewItem.name}
+                      </h3>
+                    </div>
+                    <span
+                      className={[
+                        "shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]",
+                        selectedCatalogPreviewItem.status === "active"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-slate-100 text-slate-600"
+                      ].join(" ")}
+                    >
+                      {selectedCatalogPreviewItem.status === "active" ? "Active" : "Archived"}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-[13px] leading-5 text-[#6b7c96]">
+                    {selectedCatalogPreviewItem.description ||
+                      "No description saved for this reusable cost item yet."}
+                  </p>
+                  <dl className="mt-4 grid grid-cols-2 gap-3 text-[12px]">
+                    <div className="rounded-[8px] bg-white p-3">
+                      <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
+                        Type
+                      </dt>
+                      <dd className="mt-1 text-[14px] font-semibold text-[#23395d]">
+                        {formatCatalogTypeLabel(selectedCatalogPreviewItem.itemType)}
+                      </dd>
+                    </div>
+                    <div className="rounded-[8px] bg-white p-3">
+                      <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
+                        Category
+                      </dt>
+                      <dd className="mt-1 text-[14px] font-semibold text-[#23395d]">
+                        {getCatalogCategoryLabel(selectedCatalogPreviewItem)}
+                      </dd>
+                    </div>
+                    <div className="rounded-[8px] bg-white p-3">
+                      <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
+                        Unit
+                      </dt>
+                      <dd className="mt-1 text-[14px] font-semibold text-[#23395d]">
+                        {formatUnitLabel(selectedCatalogPreviewItem.unit)}
+                      </dd>
+                    </div>
+                    <div className="rounded-[8px] bg-white p-3">
+                      <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
+                        Default Price
+                      </dt>
+                      <dd className="mt-1 text-[14px] font-semibold text-[#23395d]">
+                        {formatCatalogCurrency(selectedCatalogPreviewItem.defaultUnitPrice)}
+                      </dd>
+                    </div>
+                    <div className="rounded-[8px] bg-white p-3">
+                      <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
+                        Taxable
+                      </dt>
+                      <dd className="mt-1 text-[14px] font-semibold text-[#23395d]">
+                        {selectedCatalogPreviewItem.taxable ? "Yes" : "No"}
+                      </dd>
+                    </div>
+                    <div className="rounded-[8px] bg-white p-3">
+                      <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
+                        Code
+                      </dt>
+                      <dd className="mt-1 truncate text-[14px] font-semibold text-[#23395d]">
+                        {selectedCatalogPreviewItem.sku ||
+                          selectedCatalogPreviewItem.costCode ||
+                          "Not set"}
+                      </dd>
+                    </div>
+                  </dl>
+                  <button
+                    type="button"
+                    disabled={!canAddSelectedCatalogPreviewItem || isCatalogPreviewAddPending}
+                    onClick={() => {
+                      if (!selectedCatalogPreviewItem || !canAddSelectedCatalogPreviewItem) {
+                        return;
+                      }
+
+                      onAddPreviewCatalogItem(selectedCatalogPreviewItem.id);
+                    }}
+                    className={[
+                      "mt-4 inline-flex h-10 w-full items-center justify-center rounded-[8px] border px-4 text-[13px] font-semibold transition",
+                      canAddSelectedCatalogPreviewItem && !isCatalogPreviewAddPending
+                        ? "border-[#d8731f] bg-[#d8731f] text-white hover:bg-[#bf6519]"
+                        : "border-[#d7deea] bg-white text-[#8a98ad]"
+                    ].join(" ")}
+                    title={selectedCatalogPreviewAddTitle}
+                  >
+                    {selectedCatalogPreviewAddLabel}
+                  </button>
+                  {catalogPreviewAddMessage ? (
+                    <p className="mt-2 rounded-[8px] border border-[#dfe5ef] bg-white px-3 py-2 text-[12px] leading-5 text-[#6b7c96]">
+                      {catalogPreviewAddMessage}
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="flex min-h-[260px] items-center justify-center rounded-[8px] border border-dashed border-[#d7deea] bg-white px-4 text-center text-[13px] leading-6 text-[#7c8ba3]">
+                  Select a catalog item to preview reusable cost, unit, taxability, and status
+                  details before adding an active direct item to this estimate.
+                </div>
+              )}
+            </aside>
+          </div>
+        </div>
+
         <div className="order-2 rounded-[12px] border border-[#dfe5ef] bg-white p-4 xl:order-2">
           <div className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
             More ways to add items
@@ -591,7 +953,7 @@ export function ItemsSection({
               Generate Estimate from System
             </h2>
             <p className="mt-1 text-[13px] leading-5 text-[#6b5a4f]">
-              Pick a System, enter area, LF, and count measurements, then generate grouped estimate items. Catalog Items categorized as Add-ons / Options can be included as LF, sqft, ea, or fixed/project rows through the existing unit and basis behavior.
+              Pick a system, confirm the measured sqft and lf, then generate grouped estimate items.
             </p>
           </div>
           <div className="flex flex-wrap items-end gap-3">
@@ -646,7 +1008,7 @@ export function ItemsSection({
                     />
                   </label>
                   <label className="text-[12px] font-medium text-[#5d6f8a]">
-                    Area
+                    Area (sqft)
                     <input
                       value={systemSquareFootage}
                       readOnly
@@ -654,7 +1016,7 @@ export function ItemsSection({
                     />
                   </label>
                   <label className="text-[12px] font-medium text-[#5d6f8a]">
-                    Perimeter / LF
+                    Perimeter (lf)
                     <input
                       value={systemLinearFootage}
                       readOnly
@@ -665,7 +1027,7 @@ export function ItemsSection({
               ) : (
                 <div className="grid gap-3 md:grid-cols-3">
                   <label className="text-[12px] font-medium text-[#5d6f8a]">
-                    Direct Area
+                    Direct Area (sqft)
                     <input
                       value={systemSquareFootage}
                       onChange={(event) => onSystemMeasurementChange("area", event.target.value)}
@@ -673,7 +1035,7 @@ export function ItemsSection({
                     />
                   </label>
                   <label className="text-[12px] font-medium text-[#5d6f8a]">
-                    Direct Linear Footage
+                    Direct Linear Footage (lf)
                     <input
                       value={systemLinearFootage}
                       onChange={(event) => onSystemMeasurementChange("linearFootage", event.target.value)}
@@ -681,7 +1043,7 @@ export function ItemsSection({
                     />
                   </label>
                   <label className="text-[12px] font-medium text-[#5d6f8a]">
-                    Count
+                    Count (ea)
                     <input
                       value={systemCount}
                       onChange={(event) => onSystemMeasurementChange("count", event.target.value)}

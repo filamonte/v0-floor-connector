@@ -835,9 +835,12 @@ export async function quickCreateEstimateAction(formData: FormData) {
   const customerId = getFieldValue(formData, "customerId");
   const projectId = getFieldValue(formData, "projectId");
   const projectName = getFieldValue(formData, "projectName");
+  const title = getFieldValue(formData, "title");
   const result = parseEstimateQuickCreateInput(formData);
 
   if (!result.success) {
+    const issue = result.error.issues[0];
+
     redirect(
       buildRedirect("/estimates", {
         compose: "1",
@@ -846,8 +849,9 @@ export async function quickCreateEstimateAction(formData: FormData) {
         customerId,
         projectId,
         projectName,
-        error:
-          result.error.issues[0]?.message ?? "Unable to create estimate."
+        title,
+        errorField: issue?.path[0]?.toString(),
+        error: issue?.message ?? "Unable to create estimate."
       })
     );
   }
@@ -865,6 +869,7 @@ export async function quickCreateEstimateAction(formData: FormData) {
         customerId,
         projectId,
         projectName,
+        title,
         error:
           error instanceof Error
             ? getQuickCreateEstimateFailureMessage(error.message)

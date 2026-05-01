@@ -58,7 +58,9 @@ The UI should guide users through:
 
 The primary contractor path should be:
 
-`Opportunity / Intake -> Customer -> Project -> Estimate -> Contract -> Financial Readiness -> Job / Schedule -> Invoice -> Payment`
+`Opportunity -> Customer -> Project -> Estimate -> Contract -> Change Order -> Job -> Invoice -> Payment`
+
+Intake, financial readiness, and scheduling are supporting states around that canonical lifecycle, not replacement records or module-specific silos.
 
 Design should reinforce this as the default path.
 

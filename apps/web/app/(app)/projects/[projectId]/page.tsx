@@ -234,8 +234,12 @@ function buildProjectScheduleHref(input: {
   });
 }
 
-function buildProjectEstimateCreateHref(projectId: string, opportunityId?: string | null) {
-  const params = new URLSearchParams({ projectId });
+function buildProjectEstimateCreateHref(
+  projectId: string,
+  customerId: string,
+  opportunityId?: string | null
+) {
+  const params = new URLSearchParams({ projectId, customerId });
 
   if (opportunityId) {
     params.set("opportunityId", opportunityId);
@@ -487,6 +491,7 @@ function buildReadinessStages(input: {
 
 function getNextAction(input: {
   projectId: string;
+  customerId: string;
   opportunityId: string | null;
   approvedEstimateId: string | null;
   readinessSnapshot: ProjectFinancialReadinessSnapshot | null;
@@ -506,6 +511,7 @@ function getNextAction(input: {
 }): NextAction {
   const {
     projectId,
+    customerId,
     opportunityId,
     approvedEstimateId,
     readinessSnapshot,
@@ -529,7 +535,7 @@ function getNextAction(input: {
       title: "Blocked: start the first estimate",
       description: "Scope and pricing still need to enter the canonical project chain before contracts, scheduling, and downstream work can continue.",
       primaryLabel: "Start estimate",
-      primaryHref: buildProjectEstimateCreateHref(projectId, opportunityId),
+      primaryHref: buildProjectEstimateCreateHref(projectId, customerId, opportunityId),
       blockerCopy: "No estimate exists yet, so contract, job, invoice, and payment work should wait."
     };
   }
@@ -566,7 +572,7 @@ function getNextAction(input: {
       primaryLabel: "Revise estimate",
       primaryHref: `/estimates/${latestEstimate.id}/edit`,
       secondaryLabel: "Start new estimate",
-      secondaryHref: buildProjectEstimateCreateHref(projectId, opportunityId),
+      secondaryHref: buildProjectEstimateCreateHref(projectId, customerId, opportunityId),
       blockerCopy: "A rejected estimate cannot generate the canonical contract or billing chain."
     };
   }
@@ -579,7 +585,7 @@ function getNextAction(input: {
       primaryLabel: "Review estimate",
       primaryHref: readinessSnapshot.estimateId
         ? `/estimates/${readinessSnapshot.estimateId}`
-        : buildProjectEstimateCreateHref(projectId, opportunityId),
+        : buildProjectEstimateCreateHref(projectId, customerId, opportunityId),
       blockerCopy: "The project cannot move to contract or scheduling until estimate approval is recorded."
     };
   }
@@ -1090,6 +1096,7 @@ export default async function ProjectDetailPage({
   });
   const nextAction = getNextAction({
     projectId: project.id,
+    customerId: project.customerId,
     opportunityId: projectOpportunity?.id ?? null,
     approvedEstimateId,
     readinessSnapshot,
@@ -1295,7 +1302,11 @@ export default async function ProjectDetailPage({
               <>
                 <div className="flex flex-wrap gap-2.5">
                   <Link
-                    href={buildProjectEstimateCreateHref(project.id, projectOpportunity?.id)}
+                    href={buildProjectEstimateCreateHref(
+                      project.id,
+                      project.customerId,
+                      projectOpportunity?.id
+                    )}
                     className="inline-flex items-center rounded-full bg-[#ef7d32] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_14px_30px_-18px_rgba(239,125,50,0.9)] transition hover:bg-[#d96d27]"
                   >
                     Create Estimate

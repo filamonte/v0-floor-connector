@@ -27,7 +27,6 @@ import {
 } from "@/lib/estimates/actions";
 import { resolveEstimateApprovalOrchestration } from "@/lib/estimates/approval-orchestration";
 import { getEstimateById, listEstimateCustomerEvents } from "@/lib/estimates/data";
-import { quickCreateInvoiceAction } from "@/lib/invoices/actions";
 import { listInvoices } from "@/lib/invoices/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
@@ -472,7 +471,6 @@ export default async function EstimateDetailPage({
             <EstimateApprovalNextStepsPanel
               orchestration={approvalOrchestration}
               contractAction={quickCreateContractFromEstimateAction}
-              invoiceAction={quickCreateInvoiceAction}
               scheduleOfValuesAction={openOrCreateScheduleOfValuesAction}
               initialOpen={resolvedSearchParams.showNextSteps === "1"}
             />

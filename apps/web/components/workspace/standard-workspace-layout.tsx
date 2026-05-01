@@ -136,7 +136,7 @@ export function StandardWorkspaceLayout<TView extends string>({
                 {header.eyebrow}
               </p>
             ) : null}
-            <h2 className="mt-1 text-[22px] font-semibold tracking-tight text-[#2b2118] sm:text-[24px]">
+            <h2 className="mt-1 whitespace-normal break-words text-[22px] font-semibold leading-tight tracking-tight text-[#2b2118] [overflow-wrap:anywhere] sm:text-[24px]">
               {header.title}
             </h2>
             {header.description ? (
@@ -158,17 +158,17 @@ export function StandardWorkspaceLayout<TView extends string>({
         <div
           className={[
             "grid min-h-[620px] bg-white",
-            hasSidebar ? "grid-cols-[52px_minmax(0,1fr)]" : "grid-cols-1"
+            hasSidebar ? "grid-cols-1 lg:grid-cols-[184px_minmax(0,1fr)]" : "grid-cols-1"
           ].join(" ")}
         >
           {hasSidebar ? (
-            <aside className="border-r border-[#dfe4ec] bg-[#f6f7f9] py-2">
-              <div className="flex flex-col items-center gap-1.5">
+            <aside className="border-b border-[#dfe4ec] bg-[#f6f7f9] px-2 py-2 lg:border-b-0 lg:border-r">
+              <div className="flex gap-1.5 overflow-x-auto lg:flex-col lg:overflow-visible">
                 {sidebar?.map((item) => {
                   const Icon = iconMap[item.iconName];
                   const active = item.id === activeView;
                   const className = [
-                    "inline-flex h-9 w-9 items-center justify-center border text-[#4d5f79] transition",
+                    "inline-flex h-10 min-w-[44px] items-center justify-center gap-2 border px-3 text-[#4d5f79] transition lg:w-full lg:justify-start",
                     active
                       ? "border-[#d8731f] bg-[#d8731f] text-white"
                       : "border-[#d4dbe5] bg-white hover:border-[#c6d0dd] hover:bg-[#f0f3f7]"
@@ -194,7 +194,9 @@ export function StandardWorkspaceLayout<TView extends string>({
                         className={className}
                       >
                         <Icon className="h-[15px] w-[15px]" />
-                        <span className="sr-only">{item.label}</span>
+                        <span className="hidden whitespace-normal break-words text-left text-[12px] font-semibold leading-4 [overflow-wrap:anywhere] lg:inline">
+                          {item.label}
+                        </span>
                       </Link>
                     );
                   }
@@ -219,7 +221,9 @@ export function StandardWorkspaceLayout<TView extends string>({
                       ].join(" ")}
                     >
                       <Icon className="h-[15px] w-[15px]" />
-                      <span className="sr-only">{item.label}</span>
+                      <span className="hidden whitespace-normal break-words text-left text-[12px] font-semibold leading-4 [overflow-wrap:anywhere] lg:inline">
+                        {item.label}
+                      </span>
                     </button>
                   );
                 })}

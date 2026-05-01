@@ -132,7 +132,7 @@ This matches the intended product direction: core system continuity with optiona
 ## Recommended Lifecycle Model
 The recommended operating model should be adopted as the target product truth:
 
-`Contact -> Opportunity -> Estimate(s) -> accepted estimate -> Project -> Contract -> Invoice -> Job -> Payment`
+`Opportunity -> Customer -> Project -> Estimate -> Contract -> Change Order -> Job -> Invoice -> Payment`
 
 Important clarification:
 - jobs may be created after project/commercial readiness is satisfied, not simply as the next sequential commercial record after invoice

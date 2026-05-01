@@ -570,7 +570,7 @@ Controls:
 
 ## Recommended Next 10 Implementation Prompts
 
-Use these in order. Each prompt should begin by reading `docs/current-state.md`, `docs/developer-source-of-truth.md`, `docs/full-platform-feature-map.md`, and this plan.
+Use these in order. Each prompt should begin by reading `docs/developer-source-of-truth.md`, `docs/current-state.md`, `docs/workflows.md`, `docs/full-platform-feature-map.md`, and this plan.
 
 1. Finish linked-contact portal permission enforcement for invoice view/payment actions and estimate/contract view actions, preserving null-contact compatibility and existing canonical record loaders.
 2. Add contractor-admin cleanup guidance for customer-level portal grants, including clear customer detail UI copy and safe filters for grants that should be linked to related customer contacts.

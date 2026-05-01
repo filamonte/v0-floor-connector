@@ -127,6 +127,12 @@ The clearest way to understand FloorConnector is this loop:
 
 That loop is one of the central product ideas. It explains why FloorConnector is more than a contractor app plus a portal: the contractor creates and manages canonical records, the system holds the truth, the customer acts on those same records, the system updates state, and the contractor continues from the updated truth.
 
+Canonical lifecycle callout:
+
+`opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
+
+The system operates on this same canonical lifecycle. Contractor actions, customer interactions, portal access, signatures, payments, and execution workflows extend the same record chain; they must not create parallel systems.
+
 ### Step 1: Contractor -> System
 
 The contractor creates and manages the canonical records:
@@ -189,9 +195,9 @@ That is the practical value of the system:
 
 ### Contractor Flow
 
-The implemented contractor-side chain can be summarized as:
+The implemented contractor-side lifecycle can be summarized as:
 
-`lead -> project -> estimate -> contract -> sign -> invoice -> payment -> execution`
+`opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
 In practical terms:
 - a contractor starts with opportunity or lead intake
@@ -209,9 +215,9 @@ The implemented customer-side chain can be summarized as:
 
 `portal -> project -> contract -> sign -> invoice -> pay`
 
-One simple visual summary of the shared operating chain is:
+One simple visual summary of the shared customer-facing operating chain is:
 
-`Lead -> Project -> Estimate -> Contract -> Sign -> Invoice -> Pay -> Execute`
+`Opportunity -> Customer -> Project -> Estimate -> Contract -> Change Order -> Job -> Invoice -> Payment`
 
 In practical terms:
 - the customer enters through project-scoped portal access

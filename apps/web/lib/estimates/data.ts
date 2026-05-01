@@ -3061,6 +3061,10 @@ export async function insertCatalogItemToEstimate(input: {
     throw new Error("The selected catalog item could not be found in active inventory.");
   }
 
+  if (catalogItem.status !== "active") {
+    throw new Error("Archived catalog items cannot be added to estimates.");
+  }
+
   if (catalogItem.itemType === "system") {
     throw new Error("Systems must be inserted through the canonical system expansion flow.");
   }

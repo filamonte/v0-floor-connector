@@ -6,6 +6,7 @@ It does not replace the target platform architecture or the current implementati
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
 - [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): broader business workflow intent
+- [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary developer entry point and implementation guardrails
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): source of truth for what is implemented today
 
 ## Purpose
@@ -87,9 +88,9 @@ That means workflow guidance can be configurable without collapsing tenant-owned
 
 The target primary path should be:
 
-`Opportunity / Intake -> Customer -> Project -> Estimate -> Contract -> Financial Readiness -> Job / Schedule -> Invoice -> Payment`
+`Opportunity -> Customer -> Project -> Estimate -> Contract -> Change Order -> Job -> Invoice -> Payment`
 
-This does not mean every step needs a large standalone module immediately. It means the system should orient around this progression.
+Intake, financial readiness, scheduling, and similar checkpoints support this path, but they should not become duplicate records or module-specific silos. This does not mean every step needs a large standalone module immediately. It means the system should orient around this progression.
 
 ## Target Workflow Stages
 

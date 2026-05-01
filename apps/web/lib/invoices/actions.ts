@@ -6,6 +6,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import {
+  getChangeOrderById,
+  invoiceApprovedChangeOrderDirectly
+} from "@/lib/change-orders/data";
 import { getEstimateById } from "@/lib/estimates/data";
 import { getJobById } from "@/lib/jobs/data";
 
@@ -138,6 +142,7 @@ function parseInvoiceQuickCreateInput(formData: FormData) {
     projectId: getFieldValue(formData, "projectId"),
     estimateId: getFieldValue(formData, "estimateId"),
     jobId: getFieldValue(formData, "jobId"),
+    changeOrderId: getFieldValue(formData, "changeOrderId"),
     workflowRole: getFieldValue(formData, "workflowRole")
   });
 }
@@ -181,6 +186,7 @@ export async function quickCreateInvoiceAction(formData: FormData) {
   const projectId = getFieldValue(formData, "projectId");
   const estimateId = getFieldValue(formData, "estimateId");
   const jobId = getFieldValue(formData, "jobId");
+  const changeOrderId = getFieldValue(formData, "changeOrderId");
   const workflowRole = getFieldValue(formData, "workflowRole");
   const result = parseInvoiceQuickCreateInput(formData);
 
@@ -191,6 +197,7 @@ export async function quickCreateInvoiceAction(formData: FormData) {
         projectId,
         estimateId,
         jobId,
+        changeOrderId,
         workflowRole,
         error: result.error.issues[0]?.message ?? "Unable to create invoice."
       })
@@ -211,18 +218,45 @@ export async function quickCreateInvoiceAction(formData: FormData) {
   let invoice;
 
   try {
-    invoice = await createInvoice({
-      projectId: result.data.projectId,
-      estimateId: result.data.estimateId,
-      jobId: result.data.workflowRole === "deposit" ? null : result.data.jobId,
-      workflowRole: result.data.workflowRole,
-      status: "draft",
-      issueDate: issueDate.toISOString().slice(0, 10),
-      dueDate: dueDate.toISOString().slice(0, 10),
-      discountAmount: estimate?.discountAmount ?? "0.00",
-      notes: null,
-      sourceConfiguration: null
-    });
+    if (result.data.changeOrderId) {
+      const changeOrderSource = await getChangeOrderById(
+        result.data.changeOrderId,
+        "/invoices"
+      );
+
+      if (!changeOrderSource || changeOrderSource.projectId !== result.data.projectId) {
+        throw new Error(
+          "Select an approved change order that belongs to the selected project."
+        );
+      }
+
+      const changeOrder = await invoiceApprovedChangeOrderDirectly(
+        result.data.changeOrderId
+      );
+
+      if (!changeOrder.invoiceId) {
+        throw new Error("The approved change order did not produce an invoice.");
+      }
+
+      invoice = {
+        id: changeOrder.invoiceId,
+        projectId: changeOrder.projectId,
+        referenceNumber: changeOrder.invoice?.referenceNumber ?? "Invoice"
+      };
+    } else {
+      invoice = await createInvoice({
+        projectId: result.data.projectId,
+        estimateId: result.data.estimateId,
+        jobId: result.data.workflowRole === "deposit" ? null : result.data.jobId,
+        workflowRole: result.data.workflowRole,
+        status: "draft",
+        issueDate: issueDate.toISOString().slice(0, 10),
+        dueDate: dueDate.toISOString().slice(0, 10),
+        discountAmount: estimate?.discountAmount ?? "0.00",
+        notes: null,
+        sourceConfiguration: null
+      });
+    }
   } catch (error) {
     redirect(
       buildRedirect("/invoices", {
@@ -230,6 +264,7 @@ export async function quickCreateInvoiceAction(formData: FormData) {
         projectId,
         estimateId,
         jobId,
+        changeOrderId,
         workflowRole,
         error: error instanceof Error ? error.message : "Unable to create invoice."
       })

@@ -16,6 +16,14 @@ It tracks delivery sequence and major platform milestones. It should be read alo
 
 This document is sequencing guidance, not a claim that a later phase is already implemented. If status and plan conflict, trust [docs/current-state.md](C:/FloorConnector/docs/current-state.md) for current reality.
 
+## Canonical Lifecycle Alignment
+
+All roadmap phases extend and refine the same canonical lifecycle:
+
+`opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
+
+No phase introduces a parallel workflow or replaces this chain. Later phases deepen, connect, and improve clarity within the same system.
+
 ## Phase 1
 
 **Current implemented foundation**
@@ -89,14 +97,20 @@ Planned focus:
 
 **Next: materials and reusable catalogs**
 
-Planned focus:
-- reusable item and materials catalog management
-- seeded organization-owned defaults beyond the current settings foundation
-- shared catalog support directly inside estimating, invoicing, contracts, and future execution workflows
-- catalog/cost item design that can define reusable cost, markup, pricing, production, and tax behavior, while still allowing estimate-level overrides that remain internal in edit mode
+Current reality and planned focus:
+- reusable catalog foundation already exists on canonical `catalog_items`
+- estimate-side catalog insertion has begun: active non-system catalog items can be added to estimate line items as server-owned snapshots, while archived items are blocked and systems still use the existing expansion flow
+- deepen reusable item and materials catalog management on top of the existing `catalog_items` foundation
+- seeded organization-owned defaults beyond the current starter catalog/settings foundation
+- deeper shared catalog support inside estimating, invoicing, contracts, and future execution workflows, with snapshot behavior preserved where commercial records are created
+- future invoice catalog usage remains deferred and should stay conservative, favoring approved estimate, SOV, change-order, and invoice-only lineage instead of live catalog billing shortcuts
+- richer materials workflows, inventory quantity/reservation/issue/return workflows, and job material planning remain future work
+- assemblies/systems still need deeper formula, optional component, versioning, and regeneration policy work beyond the current system expansion foundation
+- SOV/progress billing depth remains future work and should continue to use approved commercial snapshot lineage, not live catalog prices
+- catalog/cost item behavior that can define reusable cost, markup, pricing, production, and tax defaults while still allowing intentional estimate-level overrides that remain internal in edit mode
 - Estimate Builder work in this phase should follow [docs/estimate-builder-build-plan.md](C:/FloorConnector/docs/estimate-builder-build-plan.md), with current execution constrained by [docs/estimate-builder-v1-scope.md](C:/FloorConnector/docs/estimate-builder-v1-scope.md)
 - planned manual measurement-driven estimating foundations where length x width, direct floor area, direct linear footage, counts, and optional room/zone detail can produce quantities for reviewed estimate generation
-- planned System Template foundations where reusable estimating systems bundle catalog/cost items, formulas, grouping rules, optional components, and required inputs
+- planned System Template foundations where reusable estimating systems extend `catalog_items` and catalog-backed components with formulas, grouping rules, optional components, and required inputs
 - planned Templates & Systems settings/admin area for document templates, System Templates, add-ons/options, and sharing/review settings instead of scattering those controls across estimate, invoice, and contract modules
 - planned add-on/option foundations for catalog-backed optional scope modifiers such as integrated cove base, vinyl cove base, control joints, crack repair, coating removal, moisture mitigation, extra topcoat, mobilization/setup, and future labor adjustments
 - planned template sharing loop where contractor-created templates/systems/add-ons can be marked shareable, reviewed by super admin, stripped or anonymized for private cost/markup/margin/internal notes, and promoted as platform defaults without silently updating contractor local copies
@@ -104,7 +118,7 @@ Planned focus:
 - richer shared template and document editing capability
 - broader document workflow refinement
 
-Takeoff work in this phase would be planned direction only. Manual measurements are not takeoff; they are contractor-entered quantities or dimensions. Takeoff means plan, PDF, or drawing-based measurement. Both input paths should support the canonical estimate workflow instead of becoming separate estimating apps. Takeoff and measurement quantities may eventually inform material requirements, labor estimation, production readiness, and job planning, but they should flow through reviewed estimates before contracts, jobs, invoices, or payments.
+Takeoff work in this phase would be planned direction only. Manual measurements are not takeoff; they are contractor-entered quantities or dimensions. Takeoff means plan, PDF, or drawing-based measurement. Both input paths should support the canonical estimate workflow and the existing `catalog_items` cost item database instead of becoming separate estimating apps. Takeoff and measurement quantities may eventually inform material requirements, labor estimation, production readiness, and job planning, but they should flow through reviewed estimates before contracts, jobs, invoices, or payments.
 
 Document-template work in this phase should preserve the existing copied-template model: platform defaults seed contractor-owned templates, contractors can edit local copies and switch templates per estimate, invoice, or contract where supported, and future proposal/SOW or work order templates should extend the same shared template foundation instead of creating module-specific template silos.
 

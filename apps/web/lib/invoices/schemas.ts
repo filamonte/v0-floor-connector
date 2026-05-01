@@ -303,6 +303,7 @@ export const invoiceQuickCreateInputSchema = z
     projectId: z.string().uuid("Select a valid project."),
     estimateId: optionalUuidField("Select a valid approved estimate."),
     jobId: optionalUuidField("Select a valid job."),
+    changeOrderId: optionalUuidField("Select a valid approved change order."),
     workflowRole: invoiceWorkflowRoleSchema
   })
   .superRefine((value, ctx) => {
@@ -311,6 +312,36 @@ export const invoiceQuickCreateInputSchema = z
         code: z.ZodIssueCode.custom,
         message: "Deposit invoices should stay tied to project and estimate context, not a job.",
         path: ["jobId"]
+      });
+    }
+
+    if (value.workflowRole === "deposit" && value.changeOrderId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Deposit invoices should stay tied to deposit context, not a change order.",
+        path: ["changeOrderId"]
+      });
+    }
+
+    if (value.changeOrderId && (value.estimateId || value.jobId)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Bill approved change orders as their own invoice source.",
+        path: ["changeOrderId"]
+      });
+    }
+
+    if (
+      value.workflowRole !== "deposit" &&
+      !value.estimateId &&
+      !value.jobId &&
+      !value.changeOrderId
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Select a billing source: a completed job, approved estimate, approved change order, or deposit invoice role.",
+        path: ["workflowRole"]
       });
     }
   });

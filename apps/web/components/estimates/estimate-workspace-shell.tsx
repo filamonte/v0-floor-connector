@@ -49,7 +49,7 @@ const sectionConfig: Array<StandardWorkspaceSidebarItem<EstimateWorkspaceSection
   { id: "files", label: "Files", iconName: "folder-open" },
   { id: "cover-sheet", label: "Cover Sheet", iconName: "package-check" },
   { id: "notes", label: "Notes", iconName: "notebook-pen" },
-  { id: "review-submit", label: "Review and Submit", iconName: "send" }
+  { id: "review-submit", label: "Review Estimate", iconName: "send" }
 ];
 
 function formatStatusBadge(statusLabel?: string | null) {
@@ -103,7 +103,7 @@ export function EstimateWorkspaceShell({
     >
       <div className="flex min-h-[620px] min-w-0 flex-col bg-white">
         <header className="border-b border-[#e6e9ef]">
-          <div className="flex items-start justify-between gap-4 px-4 py-3">
+          <div className="flex flex-col gap-4 px-4 py-3 xl:flex-row xl:items-start xl:justify-between">
             <div className="flex min-w-0 items-start gap-3">
               <div className="flex h-10 w-10 items-center justify-center border border-[#f0c7a5] bg-[#fff1e4] text-[#d8731f]">
                 <FileText className="h-4 w-4" />
@@ -118,7 +118,9 @@ export function EstimateWorkspaceShell({
                       className="h-9 min-w-[260px] max-w-[460px] border border-[#cfd6e0] px-3 text-[18px] font-semibold text-[#23395d] outline-none"
                     />
                   ) : (
-                    <h1 className="truncate text-[18px] font-semibold text-[#23395d]">{title}</h1>
+                    <h1 className="whitespace-normal break-words text-[18px] font-semibold leading-6 text-[#23395d] [overflow-wrap:anywhere]">
+                      {title}
+                    </h1>
                   )}
                   {onTitleEditToggle ? (
                     <button
@@ -138,13 +140,12 @@ export function EstimateWorkspaceShell({
                   {subtitle ?? "Project/Opportunity"}
                 </p>
                 <p className="mt-1 text-[12px] text-[#8694ab]">
-                  Items is the primary estimating workspace. Details, scope, files, and terms support
-                  the build around it.
+                  Build items, review scope, then open the customer-facing estimate.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-start gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start xl:flex-shrink-0">
               <div>{statusStrip}</div>
 
               <div className="flex items-center gap-2 text-[#6b7c96]">

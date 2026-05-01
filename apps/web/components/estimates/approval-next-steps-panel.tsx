@@ -13,7 +13,6 @@ import type {
 type EstimateApprovalNextStepsPanelProps = {
   orchestration: EstimateApprovalOrchestrationState;
   contractAction: (formData: FormData) => void | Promise<void>;
-  invoiceAction: (formData: FormData) => void | Promise<void>;
   scheduleOfValuesAction: (formData: FormData) => void | Promise<void>;
   initialOpen?: boolean;
 };
@@ -40,7 +39,6 @@ function ChecklistItem({ item }: { item: EstimateApprovalChecklistItem }) {
 export function EstimateApprovalNextStepsPanel({
   orchestration,
   contractAction,
-  invoiceAction,
   scheduleOfValuesAction,
   initialOpen = false
 }: EstimateApprovalNextStepsPanelProps) {
@@ -169,10 +167,10 @@ export function EstimateApprovalNextStepsPanel({
 
           <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-              Estimate-Based Invoice
+              Billing Readiness
             </p>
             <p className="mt-3 text-lg font-semibold text-slate-950">
-              {existingInvoice ? "Existing invoice found" : "Manual estimate-based invoice"}
+              {existingInvoice ? "Existing invoice found" : "Continue downstream first"}
             </p>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               {orchestration.invoice.safetySummary}
@@ -186,14 +184,16 @@ export function EstimateApprovalNextStepsPanel({
                   Open Existing Estimate-Based Invoice
                 </Link>
               ) : (
-                <form action={invoiceAction}>
-                  <input type="hidden" name="projectId" value={orchestration.projectId} />
-                  <input type="hidden" name="estimateId" value={orchestration.estimateId} />
-                  <input type="hidden" name="workflowRole" value="standard" />
-                  <AuthSubmitButton pendingLabel="Generating invoice...">
-                    <span>{orchestration.invoice.label}</span>
-                  </AuthSubmitButton>
-                </form>
+                <Link
+                  href={
+                    existingContract
+                      ? `/contracts/${existingContract.id}`
+                      : `/projects/${orchestration.projectId}`
+                  }
+                  className="inline-flex h-9 items-center justify-center rounded-full border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                >
+                  {existingContract ? "Open Contract" : "Open Project Readiness"}
+                </Link>
               )}
             </div>
           </section>

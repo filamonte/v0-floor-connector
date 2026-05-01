@@ -27,8 +27,8 @@ Available setup guides:
 - `docs/auth-setup.md` for the planned shared auth model, Google-first plus email/password support, redirect URL expectations, and local auth verification routes.
 
 Document roles:
+- `docs/developer-source-of-truth.md`: primary entry point for day-to-day development guardrails
 - `docs/documentation-governance.md`: documentation system rules, archival policy, and doc update expectations
-- `docs/developer-source-of-truth.md`: short implementation guardrail summary for day-to-day development
 - `docs/Architecture.md`: target system design
 - `docs/Roadmap.md`: phased implementation plan
 - `docs/current-state.md`: source of truth for implemented status
@@ -50,6 +50,7 @@ Document roles:
 
 ## Documentation Layers
 
+- `docs/developer-source-of-truth.md` -> what every development session reads first
 - `docs/current-state.md` -> what is implemented today
 - `docs/workflows.md` -> how the implemented and near-term business workflows are intended to operate
 - `docs/Roadmap.md` -> what is being built next
@@ -57,6 +58,7 @@ Document roles:
 - `docs/vision.md` -> where the product is intended to expand over time
 
 Current documentation focus:
+- keep `developer-source-of-truth.md` as the primary development entry point
 - keep implemented truth in `current-state.md`
 - keep workflow guidance in `workflows.md`
 - keep long-term product direction out of current-state and inside `vision.md`

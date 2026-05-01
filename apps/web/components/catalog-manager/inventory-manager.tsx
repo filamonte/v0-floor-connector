@@ -128,6 +128,10 @@ function formatStatusLabel(status: CatalogItem["status"]) {
 }
 
 function formatTypeLabel(itemType: CatalogItem["itemType"]) {
+  if (itemType === "subcontractor") {
+    return "Subcontractor";
+  }
+
   return itemType.charAt(0).toUpperCase() + itemType.slice(1);
 }
 
@@ -569,6 +573,10 @@ export function InventoryManager({
           {inventoryEnabled ? <span>{activeTrackedCount} tracked</span> : null}
           {inventoryEnabled ? <span>{lowStockItems.length} low stock</span> : null}
           {lockedSidebarView === "systems" ? <span>Systems only</span> : null}
+          <span>
+            Reusable catalog items are the cost-item foundation for future estimates, invoices, and
+            materials planning.
+          </span>
         </div>
       </div>
 
@@ -673,7 +681,7 @@ export function InventoryManager({
                         ) : null}
                       </div>
                     </th>
-                    <th className="w-12 px-3 py-2">Type</th>
+                    <th className="min-w-[150px] px-3 py-2">Type / Category</th>
                     <th className="px-3 py-2">SKU</th>
                     <th className="px-3 py-2">
                       <button
@@ -684,14 +692,14 @@ export function InventoryManager({
                         Name
                       </button>
                     </th>
-                    <th className="px-3 py-2">Unit Cost</th>
+                    <th className="px-3 py-2">Default Cost</th>
                     <th className="px-3 py-2">Unit</th>
                     {inventoryEnabled ? <th className="px-3 py-2">On Hand</th> : null}
                     {inventoryEnabled ? <th className="px-3 py-2">Reorder</th> : null}
                     {inventoryEnabled ? <th className="px-3 py-2">Low Stock</th> : null}
                     <th className="px-3 py-2">MU %</th>
                     <th className="px-3 py-2">Hidden MU %</th>
-                    <th className="px-3 py-2">Final Price</th>
+                    <th className="px-3 py-2">Default Price</th>
                     <th className="px-3 py-2">Cost Code</th>
                     <th className="px-3 py-2">Taxable</th>
                     <th className="px-3 py-2">Status</th>
@@ -795,15 +803,32 @@ export function InventoryManager({
                           />
                         </td>
                         <td className="px-3 py-2">
-                          <div className="flex h-6 w-6 items-center justify-center border border-[#d8dee7] bg-[#f6f7f9] text-[#4d5f79]">
-                            <TypeIcon className="h-4 w-4" />
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-6 w-6 items-center justify-center border border-[#d8dee7] bg-[#f6f7f9] text-[#4d5f79]">
+                              <TypeIcon className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-medium text-[#22344d]">
+                                {formatTypeLabel(item.itemType)}
+                              </div>
+                              <div className="mt-0.5 max-w-[140px] truncate text-xs text-[#8b96a8]">
+                                {item.category ?? "Uncategorized"}
+                              </div>
+                            </div>
                           </div>
                         </td>
                         <td className="px-3 py-2 text-[#667a97]">{item.sku ?? "-"}</td>
                         <td className="px-3 py-2">
-                          <div className="font-medium">{item.name}</div>
-                          <div className="mt-0.5 text-xs text-[#8b96a8]">
-                            {item.description ?? item.category ?? formatTypeLabel(item.itemType)}
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-medium">{item.name}</span>
+                            {item.isDefault ? (
+                              <span className="border border-[#f0d3b8] bg-[#fff7ed] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#a4581a]">
+                                Default
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="mt-0.5 max-w-[340px] truncate text-xs text-[#8b96a8]">
+                            {item.description ?? "Reusable cost item for catalog-backed planning."}
                           </div>
                         </td>
                         <td className="px-3 py-2">${item.defaultUnitCost}</td>
@@ -834,10 +859,40 @@ export function InventoryManager({
                         ) : null}
                         <td className="px-3 py-2">{item.markupPercent}</td>
                         <td className="px-3 py-2">{item.hiddenMarkupPercent}</td>
-                        <td className="px-3 py-2">${formatMoneyValue(pricing.finalUnitPrice)}</td>
+                        <td className="px-3 py-2">
+                          {item.defaultUnitPrice == null ? (
+                            <span title={`Derived price: $${formatMoneyValue(pricing.finalUnitPrice)}`}>
+                              Derived
+                            </span>
+                          ) : (
+                            `$${item.defaultUnitPrice}`
+                          )}
+                        </td>
                         <td className="px-3 py-2 text-[#667a97]">{item.costCode ?? "-"}</td>
-                        <td className="px-3 py-2">{item.taxable ? "Yes" : "No"}</td>
-                        <td className="px-3 py-2">{formatStatusLabel(item.status)}</td>
+                        <td className="px-3 py-2">
+                          <span
+                            className={[
+                              "border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                              item.taxable
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                                : "border-slate-200 bg-slate-50 text-slate-600"
+                            ].join(" ")}
+                          >
+                            {item.taxable ? "Taxable" : "Exempt"}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2">
+                          <span
+                            className={[
+                              "border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                              item.status === "active"
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                                : "border-slate-200 bg-slate-50 text-slate-600"
+                            ].join(" ")}
+                          >
+                            {formatStatusLabel(item.status)}
+                          </span>
+                        </td>
                         <td className="px-3 py-2 text-right" onClick={stopRowAction}>
                           <div className="flex items-center justify-end gap-2">
                             <button
@@ -945,7 +1000,19 @@ export function InventoryManager({
                         colSpan={inventoryEnabled ? 16 : 13}
                         className="px-3 py-12 text-center text-sm text-[#7d8aa0]"
                       >
-                        No cost items match the current filters.
+                        <div className="mx-auto max-w-2xl">
+                          <p className="font-medium text-[#22344d]">
+                            {items.length === 0
+                              ? "No reusable cost items yet."
+                              : "No cost items match the current filters."}
+                          </p>
+                          <p className="mt-2 leading-6">
+                            Catalog items are organization-scoped reusable cost records for
+                            materials, labor, equipment, subcontractor work, systems, and future
+                            materials planning. Add an item here without changing estimate or
+                            invoice calculations.
+                          </p>
+                        </div>
                       </td>
                     </tr>
                   ) : null}

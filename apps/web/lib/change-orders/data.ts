@@ -635,18 +635,21 @@ export async function invoiceApprovedChangeOrderDirectly(changeOrderId: string) 
     const dueDate = new Date(issueDate);
     dueDate.setDate(dueDate.getDate() + 30);
 
-    const createdInvoice = await createInvoice({
-      projectId: changeOrder.projectId,
-      estimateId: null,
-      jobId: null,
-      workflowRole: "standard",
-      status: "draft",
-      issueDate: issueDate.toISOString().slice(0, 10),
-      dueDate: dueDate.toISOString().slice(0, 10),
-      discountAmount: "0.00",
-      notes: `Approved change order ${changeOrder.referenceNumber}`,
-      sourceConfiguration: null
-    });
+    const createdInvoice = await createInvoice(
+      {
+        projectId: changeOrder.projectId,
+        estimateId: null,
+        jobId: null,
+        workflowRole: "standard",
+        status: "draft",
+        issueDate: issueDate.toISOString().slice(0, 10),
+        dueDate: dueDate.toISOString().slice(0, 10),
+        discountAmount: "0.00",
+        notes: `Approved change order ${changeOrder.referenceNumber}`,
+        sourceConfiguration: null
+      },
+      { sourceContext: "change_order" }
+    );
 
     invoiceId = createdInvoice.id;
     targetInvoice = await getInvoiceById(createdInvoice.id, `/change-orders/${changeOrderId}`);

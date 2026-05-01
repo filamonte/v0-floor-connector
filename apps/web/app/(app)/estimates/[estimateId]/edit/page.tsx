@@ -16,7 +16,6 @@ import {
 } from "@/lib/estimates/actions";
 import { resolveEstimateApprovalOrchestration } from "@/lib/estimates/approval-orchestration";
 import { quickCreateContractFromEstimateAction } from "@/lib/contracts/actions";
-import { quickCreateInvoiceAction } from "@/lib/invoices/actions";
 import { getEstimateById, listEstimates } from "@/lib/estimates/data";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 
@@ -119,7 +118,6 @@ export default async function EstimateEditPage({
         importSourceEstimates={importSourceEstimates}
         approvalOrchestration={approvalOrchestration}
         contractAction={quickCreateContractFromEstimateAction}
-        invoiceAction={quickCreateInvoiceAction}
         scheduleOfValuesAction={openOrCreateScheduleOfValuesAction}
       />
     </div>

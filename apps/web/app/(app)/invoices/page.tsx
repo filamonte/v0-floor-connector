@@ -8,10 +8,11 @@ import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { RowsPerViewControl } from "@/components/rows-per-view-control";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { listChangeOrders } from "@/lib/change-orders/data";
 import { quickCreateInvoiceAction } from "@/lib/invoices/actions";
 import { listInvoices } from "@/lib/invoices/data";
-import { getEstimateById } from "@/lib/estimates/data";
-import { getJobById } from "@/lib/jobs/data";
+import { getEstimateById, listEstimates } from "@/lib/estimates/data";
+import { getJobById, listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 import { listProjects } from "@/lib/projects/data";
@@ -21,6 +22,7 @@ type InvoicesPageProps = {
     projectId?: string;
     estimateId?: string;
     jobId?: string;
+    changeOrderId?: string;
     workflowRole?: string;
     compose?: string;
     q?: string;
@@ -61,6 +63,7 @@ function buildInvoicesHref(input: {
   projectId?: string;
   estimateId?: string;
   jobId?: string;
+  changeOrderId?: string;
   workflowRole?: string;
 }) {
   const searchParams = new URLSearchParams();
@@ -87,6 +90,10 @@ function buildInvoicesHref(input: {
 
   if (input.jobId) {
     searchParams.set("jobId", input.jobId);
+  }
+
+  if (input.changeOrderId) {
+    searchParams.set("changeOrderId", input.changeOrderId);
   }
 
   if (input.workflowRole && input.workflowRole !== "standard") {
@@ -140,9 +147,20 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
     );
   }
 
-  const [invoices, projects, initialState, financialSettings] = await Promise.all([
+  const [
+    invoices,
+    projects,
+    estimates,
+    jobs,
+    changeOrders,
+    initialState,
+    financialSettings
+  ] = await Promise.all([
     listInvoices(),
     listProjects(),
+    listEstimates(),
+    listJobs(),
+    listChangeOrders(),
     getInitialInvoiceState(
       resolvedSearchParams.estimateId,
       resolvedSearchParams.jobId,
@@ -160,6 +178,35 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
     customerRetainagePercentageDefault:
       project.customer?.retainagePercentageDefault ?? "0.00"
   }));
+  const approvedEstimateOptions = estimates
+    .filter((estimate) => estimate.status === "approved")
+    .map((estimate) => ({
+      id: estimate.id,
+      projectId: estimate.projectId,
+      referenceNumber: estimate.referenceNumber,
+      totalAmount: estimate.totalAmount
+    }));
+  const completedJobOptions = jobs
+    .filter((job) => job.dispatchStatus === "completed")
+    .map((job) => ({
+      id: job.id,
+      projectId: job.projectId,
+      estimateReferenceNumber: job.estimate?.referenceNumber ?? null,
+      scheduledDate: job.scheduledDate
+    }));
+  const approvedChangeOrderOptions = changeOrders
+    .filter(
+      (changeOrder) =>
+        changeOrder.status === "approved" &&
+        !changeOrder.invoiceId &&
+        changeOrder.latestCommercialSnapshotItemIds.length > 0
+    )
+    .map((changeOrder) => ({
+      id: changeOrder.id,
+      projectId: changeOrder.projectId,
+      referenceNumber: changeOrder.referenceNumber,
+      title: changeOrder.title
+    }));
 
   const draftCount = invoices.filter((invoice) => invoice.status === "draft").length;
   const sentCount = invoices.filter((invoice) => invoice.status === "sent").length;
@@ -183,6 +230,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
   const projectFilterId = resolvedSearchParams.projectId?.trim() ?? initialState.projectId ?? "";
   const estimateFilterId = resolvedSearchParams.estimateId?.trim() ?? initialState.estimateId ?? "";
   const jobFilterId = resolvedSearchParams.jobId?.trim() ?? initialState.jobId ?? "";
+  const changeOrderFilterId = resolvedSearchParams.changeOrderId?.trim() ?? "";
   const projectFilter = projectFilterId
     ? projects.find((project) => project.id === projectFilterId) ?? null
     : null;
@@ -193,7 +241,8 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
     Boolean(resolvedSearchParams.error) ||
     Boolean(resolvedSearchParams.projectId) ||
     Boolean(resolvedSearchParams.estimateId) ||
-    Boolean(resolvedSearchParams.jobId);
+    Boolean(resolvedSearchParams.jobId) ||
+    Boolean(resolvedSearchParams.changeOrderId);
   const scopedInvoices = invoices.filter((invoice) => {
     const matchesProject = projectFilterId ? invoice.projectId === projectFilterId : true;
     const matchesEstimate = estimateFilterId ? invoice.estimateId === estimateFilterId : true;
@@ -297,6 +346,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             {projectFilterId ? <input type="hidden" name="projectId" value={projectFilterId} /> : null}
             {estimateFilterId ? <input type="hidden" name="estimateId" value={estimateFilterId} /> : null}
             {jobFilterId ? <input type="hidden" name="jobId" value={jobFilterId} /> : null}
+            {changeOrderFilterId ? <input type="hidden" name="changeOrderId" value={changeOrderFilterId} /> : null}
             {workflowRoleFilter ? <input type="hidden" name="workflowRole" value={workflowRoleFilter} /> : null}
             <input
               type="search"
@@ -599,6 +649,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             projectId: projectFilterId || undefined,
             estimateId: estimateFilterId || undefined,
             jobId: jobFilterId || undefined,
+            changeOrderId: changeOrderFilterId || undefined,
             workflowRole: workflowRoleFilter
           }) + "#invoice-create"
         }
@@ -608,6 +659,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           projectId: projectFilterId || undefined,
           estimateId: estimateFilterId || undefined,
           jobId: jobFilterId || undefined,
+          changeOrderId: changeOrderFilterId || undefined,
           workflowRole: workflowRoleFilter
         })}
         openLabel="Open invoice quick create"
@@ -616,10 +668,15 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           <InvoiceQuickCreateForm
             action={quickCreateInvoiceAction}
             projects={projectOptions}
+            approvedEstimates={approvedEstimateOptions}
+            completedJobs={completedJobOptions}
+            approvedChangeOrders={approvedChangeOrderOptions}
             initialProjectId={resolvedSearchParams.projectId ?? initialState.projectId}
             initialEstimateId={initialState.estimateId}
             initialJobId={initialState.jobId}
+            initialChangeOrderId={changeOrderFilterId}
             initialWorkflowRole={initialState.workflowRole}
+            errorMessage={resolvedSearchParams.error ?? null}
           />
         ) : (
           <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">

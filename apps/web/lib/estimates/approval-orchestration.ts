@@ -343,10 +343,10 @@ export const resolveEstimateApprovalOrchestration = cache(
               workflowRole: existingInvoice.workflow_role
             }
           : null,
-        canCreate: estimate.status === "approved",
-        label: "Generate Estimate-Based Invoice (Full Amount)",
+        canCreate: false,
+        label: "Review Billing Readiness",
         safetySummary:
-          "Uses the existing estimate-based invoice path. No automatic downstream action will run."
+          "Approved scope is not automatically billable. Continue through contract signature, deposit/readiness, job completion, or approved change-order billing before creating an invoice."
       },
       existingRecords: {
         contracts: relatedContracts.map((contract) => ({

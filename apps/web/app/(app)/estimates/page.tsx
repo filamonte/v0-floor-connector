@@ -25,6 +25,8 @@ type EstimatesPageProps = {
     customerId?: string;
     projectId?: string;
     projectName?: string;
+    title?: string;
+    errorField?: string;
     error?: string;
     message?: string;
   }>;
@@ -103,6 +105,7 @@ export default async function EstimatesPage({
   const opportunityOptions = opportunities.map((opportunity) => ({
     id: opportunity.id,
     title: opportunity.title,
+    customerId: opportunity.customerId,
     contactName: opportunity.primaryContact?.displayName ?? opportunity.prospectName,
     customerName: opportunity.customer?.name ?? null,
     jobType: opportunity.jobType,
@@ -112,7 +115,9 @@ export default async function EstimatesPage({
   const customerOptions = customers.map((customer) => ({
     id: customer.id,
     name: customer.name,
-    companyName: customer.companyName
+    companyName: customer.companyName,
+    email: customer.email,
+    phone: customer.phone
   }));
   const projectOptions = projects.map((project) => ({
     id: project.id,
@@ -552,6 +557,8 @@ export default async function EstimatesPage({
             initialCustomerId={resolvedSearchParams.customerId}
             initialProjectId={resolvedSearchParams.projectId}
             initialProjectName={resolvedSearchParams.projectName}
+            initialTitle={resolvedSearchParams.title}
+            errorField={resolvedSearchParams.errorField}
             errorMessage={showComposer ? resolvedSearchParams.error ?? null : null}
           />
         </WorkspaceComposerSheet>

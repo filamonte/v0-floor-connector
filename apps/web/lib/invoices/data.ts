@@ -2539,7 +2539,14 @@ export async function getInvoiceById(
   };
 }
 
-export async function createInvoice(input: InvoiceInput) {
+type InvoiceCreationOptions = {
+  sourceContext?: "change_order";
+};
+
+export async function createInvoice(
+  input: InvoiceInput,
+  options: InvoiceCreationOptions = {}
+) {
   const scope = await requireInvoiceScope("/invoices");
   const project = await resolveScopedProject(input.projectId, "/invoices");
   const estimate = await resolveApprovedEstimate(
@@ -2549,8 +2556,26 @@ export async function createInvoice(input: InvoiceInput) {
   );
   const job = await resolveScopedJob(input.jobId, input.projectId, "/invoices");
   const resolvedEstimateId = estimate?.id ?? job?.estimateId ?? null;
+  const hasBillingSource =
+    input.workflowRole === "deposit" ||
+    Boolean(job) ||
+    Boolean(resolvedEstimateId) ||
+    options.sourceContext === "change_order";
 
   validateConnectedRecords(resolvedEstimateId, job);
+
+  if (!hasBillingSource) {
+    throw new Error(
+      "Invoices require a billing source: deposit context, completed job, approved estimate, or approved change order."
+    );
+  }
+
+  if (input.workflowRole === "standard" && job && job.dispatchStatus !== "completed") {
+    throw new Error(
+      "Standard job invoices require completed work before invoice creation."
+    );
+  }
+
   await assertInvoiceCommercialReadiness({
     organizationId: scope.organizationId,
     projectId: project.id,
