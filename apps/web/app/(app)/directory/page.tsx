@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { AppEmptyState } from "@/components/app-empty-state";
-import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { listCustomerContactsForDirectory } from "@/lib/contacts/data";
 import { listCustomers } from "@/lib/customers/data";
@@ -24,16 +23,13 @@ type DirectoryRow = {
   href: string;
   typeLabel: string;
   typeGroup: Exclude<DirectoryView, "all">;
+  company: string;
   name: string;
-  context: string;
-  detail: string;
-  status: string | null;
+  employeeId: string | null;
+  phone: string | null;
+  cell: string | null;
+  address: string;
   searchText: string;
-};
-
-type DirectoryHelperCard = {
-  label: string;
-  description: string;
 };
 
 function buildDirectoryHref(input: { q?: string; view?: string }) {
@@ -66,166 +62,90 @@ function formatVendorTypeLabel(vendorType: string) {
     .join(" ");
 }
 
-function buildCustomerContext(input: { companyName: string | null; email: string | null }) {
-  return input.companyName?.trim() || input.email?.trim() || "Canonical customer account";
-}
-
-function buildCustomerDetail(input: {
-  phone: string | null;
-  city: string | null;
-  stateRegion: string | null;
+function buildAddress(input: {
+  street?: string | null;
+  city?: string | null;
+  stateRegion?: string | null;
+  postalCode?: string | null;
 }) {
-  const location = [input.city, input.stateRegion].filter(Boolean).join(", ");
-  return input.phone?.trim() || location || "Commercial and billing account";
+  const parts = [input.street, input.city, input.stateRegion, input.postalCode].filter(Boolean);
+  return parts.length > 0 ? parts.join(", ") : "-";
 }
 
-function buildCustomerStatus(input: { isTaxExempt: boolean }) {
-  return input.isTaxExempt ? "Tax exempt" : "Standard account";
-}
-
-function buildCustomerContactContext(input: {
-  customerName: string | null;
-  relationshipLabel: string | null;
-}) {
-  const parentLabel = input.customerName?.trim() || "Canonical customer account";
-  const relationshipLabel = input.relationshipLabel?.trim();
-
-  return relationshipLabel
-    ? `${parentLabel} - ${relationshipLabel}`
-    : `${parentLabel} - Related customer contact`;
-}
-
-function buildCustomerContactDetail(input: {
-  email: string | null;
-  phone: string | null;
-  customerName: string | null;
-}) {
-  const primaryDetail = input.email?.trim() || input.phone?.trim();
-  const parentCustomer = input.customerName?.trim() || "customer detail";
-  const readinessLabel = input.email?.trim()
-    ? "Email ready for linked portal grants"
-    : "Email needed before linked portal grants";
-
-  if (primaryDetail) {
-    return `${primaryDetail} - ${readinessLabel} - Managed on ${parentCustomer} customer detail`;
+function getTypeBadgeStyle(typeLabel: string) {
+  const normalized = typeLabel.toLowerCase();
+  
+  if (normalized === "customer" || normalized === "customer contact") {
+    return "bg-[#2f6a3e] text-white";
   }
-
-  return `${readinessLabel} - Managed on ${parentCustomer} customer detail`;
-}
-
-function buildCustomerContactStatus(input: { isPrimary: boolean }) {
-  return input.isPrimary ? "Main contact" : "Related contact";
-}
-
-function buildCustomerContactPortalNote() {
-  return "Linked portal grants and permission settings are managed on the parent customer detail page";
-}
-
-function buildPersonContext(input: {
-  personType: string;
-  vendorName: string | null;
-  linkedUserEmail: string | null;
-}) {
-  if (input.personType === "subcontractor_worker") {
-    return input.vendorName?.trim() || "Vendor-linked subcontractor";
+  
+  if (normalized === "vendor" || normalized === "subcontractor") {
+    return "border border-[#ef7d32] bg-white text-[#ef7d32]";
   }
-
-  return input.linkedUserEmail?.trim() || "Internal workforce";
-}
-
-function buildPersonDetail(input: { jobTitle: string | null; trade: string | null }) {
-  return input.jobTitle?.trim() || input.trade?.trim() || "Workforce participant";
-}
-
-function buildVendorContext(input: {
-  primaryContactName: string | null;
-  email: string | null;
-  isLaborProvider: boolean;
-}) {
-  if (input.primaryContactName?.trim()) {
-    return input.primaryContactName.trim();
+  
+  if (normalized === "employee") {
+    return "bg-[#1a2536] text-white";
   }
-
-  if (input.email?.trim()) {
-    return input.email.trim();
+  
+  if (normalized === "lead") {
+    return "bg-[#8a7a6c] text-white";
   }
-
-  return input.isLaborProvider ? "Labor provider vendor" : "Vendor company";
+  
+  return "bg-[#f0ebe6] text-[#5f564d]";
 }
 
-function buildVendorDetail(input: {
-  phone: string | null;
-  city: string | null;
-  stateRegion: string | null;
-}) {
-  const location = [input.city, input.stateRegion].filter(Boolean).join(", ");
-  return input.phone?.trim() || location || "Vendor record";
-}
-
-function buildLeadContext(input: {
-  contactName: string | null;
-  customerName: string | null;
-  projectName: string | null;
-}) {
+// Refresh icon component
+function RefreshIcon() {
   return (
-    input.contactName?.trim() ||
-    input.customerName?.trim() ||
-    input.projectName?.trim() ||
-    "Opportunity contact pending"
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+    </svg>
   );
 }
 
-function buildLeadDetail(input: {
-  customerName: string | null;
-  projectName: string | null;
-  siteName: string | null;
-}) {
+// Star icon component
+function StarIcon({ filled = false }: { filled?: boolean }) {
   return (
-    input.projectName?.trim() ||
-    input.customerName?.trim() ||
-    input.siteName?.trim() ||
-    "Pre-project commercial record"
+    <svg className="h-4 w-4" fill={filled ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+    </svg>
   );
 }
 
-function getStatusTone(status: string | null) {
-  if (!status) {
-    return "border-[#dde3eb] bg-[#f8fafc] text-slate-600";
-  }
+// More menu icon
+function MoreIcon() {
+  return (
+    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+    </svg>
+  );
+}
 
-  const normalizedStatus = status.toLowerCase();
+// Filter icon
+function FilterIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+    </svg>
+  );
+}
 
-  if (
-    normalizedStatus === "active" ||
-    normalizedStatus === "standard account" ||
-    normalizedStatus === "tax exempt" ||
-    normalizedStatus === "won" ||
-    normalizedStatus === "converted"
-  ) {
-    return "border-emerald-200 bg-emerald-50 text-emerald-800";
-  }
+// Export icon
+function ExportIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+    </svg>
+  );
+}
 
-  if (
-    normalizedStatus === "inactive" ||
-    normalizedStatus === "lost" ||
-    normalizedStatus === "revoked"
-  ) {
-    return "border-slate-200 bg-slate-100 text-slate-700";
-  }
-
-  if (
-    normalizedStatus === "main contact" ||
-    normalizedStatus === "qualified" ||
-    normalizedStatus === "contacted" ||
-    normalizedStatus === "estimating" ||
-    normalizedStatus === "proposal_sent" ||
-    normalizedStatus === "site_assessment_scheduled" ||
-    normalizedStatus === "site_assessment_complete"
-  ) {
-    return "border-amber-200 bg-amber-50 text-amber-800";
-  }
-
-  return "border-[#dde3eb] bg-[#f8fafc] text-slate-600";
+// Search icon
+function SearchIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+  );
 }
 
 export default async function DirectoryPage({ searchParams }: DirectoryPageProps) {
@@ -235,7 +155,7 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
 
   if (!organizationContext) {
     return (
-      <section className="rounded-3xl border border-amber-200 bg-amber-50 px-8 py-6 text-sm leading-6 text-amber-900">
+      <section className="border border-amber-200 bg-amber-50 px-8 py-6 text-sm leading-6 text-amber-900">
         Directory records need an active organization before they can be reviewed.
         Sign out and back in if this account was just initialized.
       </section>
@@ -254,23 +174,24 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
   const normalizedQuery = query.toLowerCase();
   const view: DirectoryView = resolvedSearchParams.view ?? "all";
 
+  // Build directory rows matching the CF table structure
   const directoryRows: DirectoryRow[] = [
     ...customers.map((customer) => ({
       id: customer.id,
       href: `/customers/${customer.id}`,
       typeLabel: "Customer",
       typeGroup: "customers" as const,
-      name: customer.name,
-      context: buildCustomerContext({
-        companyName: customer.companyName,
-        email: customer.email
-      }),
-      detail: buildCustomerDetail({
-        phone: customer.phone,
+      company: customer.companyName || customer.name,
+      name: customer.companyName ? customer.name : "-",
+      employeeId: null,
+      phone: customer.phone,
+      cell: null,
+      address: buildAddress({
+        street: customer.addressLine1,
         city: customer.city,
-        stateRegion: customer.stateRegion
+        stateRegion: customer.stateRegion,
+        postalCode: customer.postalCode
       }),
-      status: buildCustomerStatus({ isTaxExempt: customer.isTaxExempt }),
       searchText: [
         "customer",
         customer.name,
@@ -286,38 +207,21 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
     ...customerContacts.map((customerContact) => ({
       id: customerContact.id,
       href: `/customers/${customerContact.customerId}`,
-      typeLabel: "Customer Contact",
+      typeLabel: "Customer",
       typeGroup: "customers" as const,
-      name: customerContact.contact?.displayName ?? "Linked customer contact",
-      context: buildCustomerContactContext({
-        customerName: customerContact.customer?.name ?? null,
-        relationshipLabel: customerContact.relationshipLabel
-      }),
-      detail: buildCustomerContactDetail({
-        email: customerContact.contact?.email ?? null,
-        phone: customerContact.contact?.phone ?? null,
-        customerName: customerContact.customer?.name ?? null
-      }),
-      status: buildCustomerContactStatus({
-        isPrimary: customerContact.isPrimary
-      }),
+      company: customerContact.customer?.companyName || customerContact.customer?.name || "-",
+      name: customerContact.contact?.displayName ?? "-",
+      employeeId: null,
+      phone: customerContact.contact?.phone ?? null,
+      cell: null,
+      address: "-",
       searchText: [
         "customer contact",
         "contact",
-        "portal readiness",
-        "linked portal grants",
-        "permission settings",
         customerContact.contact?.displayName ?? "",
-        customerContact.contact?.companyName ?? "",
         customerContact.contact?.email ?? "",
         customerContact.contact?.phone ?? "",
-        customerContact.relationshipLabel ?? "",
-        customerContact.customer?.name ?? "",
-        customerContact.customer?.companyName ?? "",
-        customerContact.contact?.email?.trim()
-          ? "email ready for linked portal grants"
-          : "email needed before linked portal grants",
-        customerContact.isPrimary ? "main contact" : "related contact"
+        customerContact.customer?.name ?? ""
       ]
         .join(" ")
         .toLowerCase()
@@ -327,26 +231,19 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
       href: `/people/${person.id}`,
       typeLabel: formatPersonTypeLabel(person.personType),
       typeGroup: "workforce" as const,
+      company: person.vendor?.name || "-",
       name: person.displayName,
-      context: buildPersonContext({
-        personType: person.personType,
-        vendorName: person.vendor?.name ?? null,
-        linkedUserEmail: person.linkedUser?.email ?? null
-      }),
-      detail: buildPersonDetail({
-        jobTitle: person.jobTitle,
-        trade: person.trade
-      }),
-      status: person.isActive ? "Active" : "Inactive",
+      employeeId: person.id.slice(0, 8).toUpperCase(),
+      phone: person.phone,
+      cell: null,
+      address: "-",
       searchText: [
         person.personType === "subcontractor_worker" ? "subcontractor" : "employee",
         person.displayName,
         person.email ?? "",
         person.phone ?? "",
         person.jobTitle ?? "",
-        person.trade ?? "",
-        person.vendor?.name ?? "",
-        person.linkedUser?.email ?? ""
+        person.vendor?.name ?? ""
       ]
         .join(" ")
         .toLowerCase()
@@ -356,18 +253,17 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
       href: `/vendors/${vendor.id}`,
       typeLabel: formatVendorTypeLabel(vendor.vendorType),
       typeGroup: "vendors" as const,
-      name: vendor.name,
-      context: buildVendorContext({
-        primaryContactName: vendor.primaryContactName,
-        email: vendor.email,
-        isLaborProvider: vendor.isLaborProvider
-      }),
-      detail: buildVendorDetail({
-        phone: vendor.phone,
+      company: vendor.name,
+      name: vendor.primaryContactName || "-",
+      employeeId: null,
+      phone: vendor.phone,
+      cell: null,
+      address: buildAddress({
+        street: vendor.addressLine1,
         city: vendor.city,
-        stateRegion: vendor.stateRegion
+        stateRegion: vendor.stateRegion,
+        postalCode: vendor.postalCode
       }),
-      status: vendor.isActive ? "Active" : "Inactive",
       searchText: [
         "vendor",
         vendor.vendorType,
@@ -375,8 +271,7 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
         vendor.primaryContactName ?? "",
         vendor.email ?? "",
         vendor.phone ?? "",
-        vendor.city ?? "",
-        vendor.stateRegion ?? ""
+        vendor.city ?? ""
       ]
         .join(" ")
         .toLowerCase()
@@ -386,27 +281,18 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
       href: `/leads/${opportunity.id}`,
       typeLabel: "Lead",
       typeGroup: "leads" as const,
-      name: opportunity.title,
-      context: buildLeadContext({
-        contactName: opportunity.primaryContact?.displayName ?? null,
-        customerName: opportunity.customer?.name ?? null,
-        projectName: opportunity.project?.name ?? null
-      }),
-      detail: buildLeadDetail({
-        customerName: opportunity.customer?.name ?? null,
-        projectName: opportunity.project?.name ?? null,
-        siteName: opportunity.siteName
-      }),
-      status: opportunity.status,
+      company: opportunity.customer?.companyName || opportunity.customer?.name || "-",
+      name: opportunity.primaryContact?.displayName || opportunity.title,
+      employeeId: null,
+      phone: opportunity.primaryContact?.phone ?? null,
+      cell: null,
+      address: opportunity.siteName || "-",
       searchText: [
         "lead",
         "opportunity",
         opportunity.title,
         opportunity.primaryContact?.displayName ?? "",
         opportunity.customer?.name ?? "",
-        opportunity.customer?.companyName ?? "",
-        opportunity.project?.name ?? "",
-        opportunity.status,
         opportunity.siteName ?? ""
       ]
         .join(" ")
@@ -422,248 +308,346 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
     return matchesView && matchesQuery;
   });
 
+  // Contact type counts for the sidebar card
+  const contactTypeCounts = [
+    { type: "Users", count: people.filter(p => p.personType === "employee").length },
+    { type: "Contractors", count: people.filter(p => p.personType === "subcontractor_worker").length },
+    { type: "Customers", count: customers.length },
+    { type: "Employees", count: people.length },
+    { type: "Leads", count: opportunities.length }
+  ];
+
+  const vendorCounts = [
+    { type: "Misc. Contacts", count: customerContacts.length },
+    { type: "Vendors", count: vendors.length }
+  ];
+
   const directoryViews = [
-    { key: "all", label: "All records", count: directoryRows.length },
+    { key: "all", label: "All", count: directoryRows.length },
     { key: "customers", label: "Customers", count: customers.length + customerContacts.length },
     { key: "workforce", label: "Workforce", count: people.length },
     { key: "vendors", label: "Vendors", count: vendors.length },
     { key: "leads", label: "Leads", count: opportunities.length }
   ] as const;
-  const helperCards: DirectoryHelperCard[] = [
-    {
-      label: "Customers",
-      description:
-        "Canonical account and billing records used by commercial and financial workflows."
-    },
-    {
-      label: "Customer Contacts",
-      description:
-        "Related contacts beneath canonical customer accounts, routed back to the customer detail workspace for management."
-    },
-    {
-      label: "Workforce",
-      description: "Operational people records for employees and subcontractor workers."
-    },
-    {
-      label: "Vendors",
-      description:
-        "Vendor and company records for external businesses, suppliers, and labor providers."
-    },
-    {
-      label: "Leads",
-      description: "Pre-customer opportunities that route into the canonical commercial path."
-    }
-  ];
 
   return (
-    <ContractorWorkspacePage
-      eyebrow="Directory"
-      title={`Unified contractor directory for ${organizationContext.organization.displayName}`}
-      description="Review customer accounts, related customer contacts, workforce people, vendors, and leads together in one read-only workspace while each row still routes back to its existing canonical record."
-      summary={
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Customers</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
-              {customers.length}
-            </p>
+    <div className="-mx-5 sm:-mx-8">
+      {/* Dark navy page header */}
+      <header className="flex items-center justify-between bg-[#1a2536] px-4 py-2.5 sm:px-6">
+        <div className="flex items-center gap-2">
+          <Link href="/" className="text-white/60 hover:text-white">
+            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+            </svg>
+          </Link>
+          <span className="text-white/40">/</span>
+          <span className="text-[13px] font-medium text-white">Directory</span>
+        </div>
+        <div className="text-center">
+          <span className="text-[14px] font-semibold text-white">
+            {organizationContext.organization.displayName}
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <button className="flex items-center gap-1.5 bg-[#ef7d32] px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-[#d86b28]">
+            <span>+</span>
+            <span>Contact</span>
+          </button>
+        </div>
+      </header>
+
+      {/* License info bar */}
+      <div className="flex items-center justify-between border-b border-[#e2dcd5] bg-[#f8f6f4] px-4 py-2 sm:px-6">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-1.5 text-[12px]">
+            <svg className="h-4 w-4 text-[#8a7a6c]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span className="text-[#5f564d]">Purchased Licenses:</span>
+            <span className="font-semibold text-[#1a2536]">#{customers.length + people.length + vendors.length}</span>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
-              Customer Contacts
-            </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
-              {customerContacts.length}
-            </p>
+          <div className="flex items-center gap-1.5 text-[12px]">
+            <span className="text-[#5f564d]">Used Licenses:</span>
+            <span className="font-semibold text-[#1a2536]">#{people.length}</span>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Workforce</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
-              {people.length}
-            </p>
-          </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Vendors</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
-              {vendors.length}
-            </p>
-          </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Leads</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
-              {opportunities.length}
-            </p>
+          <div className="flex items-center gap-1.5 text-[12px]">
+            <span className="text-[#5f564d]">Available Licenses:</span>
+            <span className="font-semibold text-[#1a2536]">#{customers.length + vendors.length}</span>
           </div>
         </div>
-      }
-      commandBar={{
-        supportSlot: (
-          <p>
-            Directory is read-only in this phase. Open the linked canonical workspace when you need
-            to review or edit a customer account, related customer contact, workforce record,
-            vendor, or lead.
-          </p>
-        ),
-        searchSlot: (
-          <form action="/directory" className="flex flex-col gap-2 sm:flex-row">
-            {view !== "all" ? <input type="hidden" name="view" value={view} /> : null}
-            <input
-              type="search"
-              name="q"
-              defaultValue={query}
-              placeholder="Search customer, customer contact, workforce person, vendor, or lead"
-              className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
-            />
-            <button
-              type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-            >
-              Search
-            </button>
-            {query.length > 0 || view !== "all" ? (
-              <Link
-                href="/directory"
-                className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
-              >
-                Clear
-              </Link>
-            ) : null}
-          </form>
-        ),
-        filterSlot: directoryViews.map((directoryView) => {
-          const isActive = view === directoryView.key;
+        <button className="flex items-center gap-1.5 border border-[#1a2536] px-3 py-1 text-[12px] font-medium text-[#1a2536] transition hover:bg-[#1a2536] hover:text-white">
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          <span>Upgrade</span>
+        </button>
+      </div>
 
-          return (
-            <Link
-              key={directoryView.key}
-              href={buildDirectoryHref({ q: query, view: directoryView.key })}
-              className={[
-                "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
-                isActive
-                  ? "bg-[#233a64] text-white"
-                  : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
-              ].join(" ")}
-            >
-              <span>{directoryView.label}</span>
-              <span
-                className={[
-                  "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
-                ].join(" ")}
-              >
-                {directoryView.count}
-              </span>
-            </Link>
-          );
-        })
-      }}
-    >
-      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        {helperCards.map((card) => (
-          <article key={card.label} className="border border-[#dde3eb] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">{card.label}</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{card.description}</p>
-          </article>
-        ))}
-      </section>
+      {/* Search bar */}
+      <div className="flex items-center gap-3 border-b border-[#e2dcd5] bg-white px-4 py-2.5 sm:px-6">
+        <form action="/directory" className="relative flex-1">
+          {view !== "all" ? <input type="hidden" name="view" value={view} /> : null}
+          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-[#8a7a6c]">
+            <SearchIcon />
+          </span>
+          <input
+            type="search"
+            name="q"
+            defaultValue={query}
+            placeholder="Search for Contacts"
+            className="w-full border-0 bg-transparent py-1.5 pl-9 pr-3 text-[13px] text-[#221a14] outline-none placeholder:text-[#8a7a6c]"
+          />
+        </form>
+        <button className="text-[#8a7a6c] transition hover:text-[#221a14]">
+          <ExportIcon />
+        </button>
+        <button className="text-[#8a7a6c] transition hover:text-[#221a14]">
+          <FilterIcon />
+        </button>
+      </div>
 
-      <section className="border border-[#dde3eb] bg-white">
-        <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Canonical record index
-              </p>
-              <p className="mt-1 text-sm leading-6 text-slate-500">
-                Scan mixed record types here, then jump into the linked canonical workspace for the
-                actual work. Customer-contact rows route back to the parent customer detail page,
-                where related contacts, linked portal grants, and contact-level permissions are
-                managed.
-              </p>
+      {/* Main content area */}
+      <div className="bg-[#f0ebe6] p-4 sm:p-6">
+        {/* Three card panels */}
+        <div className="mb-4 grid gap-4 lg:grid-cols-3">
+          {/* Contacts by Type card */}
+          <section className="border border-[#e2dcd5] bg-white">
+            <div className="flex items-center justify-between border-b border-[#e2dcd5] px-4 py-2.5">
+              <h3 className="text-[13px] font-semibold text-[#221a14]">Contacts by Type</h3>
+              <button className="text-[#8a7a6c] transition hover:text-[#221a14]">
+                <RefreshIcon />
+              </button>
             </div>
-            <div className="hidden grid-cols-[160px_minmax(0,1.2fr)_220px_180px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
-              <span>Type</span>
-              <span>Record</span>
-              <span>Context</span>
-              <span className="text-right">Status</span>
+            <div className="p-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <table className="w-full text-[12px]">
+                    <thead>
+                      <tr className="text-left text-[#8a7a6c]">
+                        <th className="pb-2 font-medium">Type</th>
+                        <th className="pb-2 text-right font-medium">Count</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#f0ebe6]">
+                      {contactTypeCounts.map((item) => (
+                        <tr key={item.type} className="group cursor-pointer hover:bg-[#faf8f6]">
+                          <td className="py-1.5 text-[#221a14]">{item.type}</td>
+                          <td className="py-1.5 text-right text-[#5f564d]">{item.count}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div>
+                  <table className="w-full text-[12px]">
+                    <thead>
+                      <tr className="text-left text-[#8a7a6c]">
+                        <th className="pb-2 font-medium">Type</th>
+                        <th className="pb-2 text-right font-medium">Count</th>
+                        <th className="w-6"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#f0ebe6]">
+                      {vendorCounts.map((item) => (
+                        <tr key={item.type} className="group cursor-pointer hover:bg-[#faf8f6]">
+                          <td className="py-1.5 text-[#221a14]">{item.type}</td>
+                          <td className="py-1.5 text-right text-[#5f564d]">{item.count}</td>
+                          <td className="py-1.5 text-center text-[#8a7a6c]">
+                            <MoreIcon />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <button className="mt-3 w-full bg-[#ef7d32] px-3 py-2 text-[11px] font-semibold text-white transition hover:bg-[#d86b28]">
+                    Import Contacts from QuickBooks
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="md:hidden">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                Directory records
-              </p>
-            </div>
-            <p className="text-sm leading-6 text-slate-500">{filteredRows.length} visible</p>
-          </div>
-        </div>
+          </section>
 
-        <div className="divide-y divide-slate-200">
-          {filteredRows.length > 0 ? (
-            filteredRows.map((row) => (
-              <Link
-                key={`${row.typeGroup}-${row.id}`}
-                href={row.href}
-                className="group block px-5 py-4 transition hover:bg-slate-50/70 sm:px-6"
-              >
-                <div className="grid gap-4 md:grid-cols-[160px_minmax(0,1.2fr)_220px_180px] md:items-start">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                      Type
-                    </p>
-                    <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
-                      {row.typeLabel}
-                    </span>
+          {/* Certificates Expiring card */}
+          <section className="border border-[#e2dcd5] bg-white">
+            <div className="flex items-center justify-between border-b border-[#e2dcd5] px-4 py-2.5">
+              <h3 className="text-[13px] font-semibold text-[#221a14]">Certificates Expiring (Within 60 Days)</h3>
+              <div className="flex items-center gap-2">
+                <button className="text-[#8a7a6c] transition hover:text-[#221a14]">
+                  <ExportIcon />
+                </button>
+                <button className="text-[#8a7a6c] transition hover:text-[#221a14]">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </button>
+                <button className="text-[#8a7a6c] transition hover:text-[#221a14]">
+                  <RefreshIcon />
+                </button>
+              </div>
+            </div>
+            <div className="p-4">
+              <table className="w-full text-[12px]">
+                <thead>
+                  <tr className="text-left text-[#8a7a6c]">
+                    <th className="pb-2 font-medium">Type</th>
+                    <th className="pb-2 text-center font-medium">Contact</th>
+                    <th className="pb-2 font-medium">Expires</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#f0ebe6]">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <tr key={i} className="group cursor-pointer hover:bg-[#faf8f6]">
+                      <td className="py-1.5 text-[#221a14]">Fit Test Report</td>
+                      <td className="py-1.5 text-center">
+                        <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#ef7d32] text-[10px] font-semibold text-white">
+                          FT
+                        </span>
+                      </td>
+                      <td className="py-1.5">
+                        <span className="inline-flex items-center gap-1 text-[#5f564d]">
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          06/25/2026
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* Upcoming Days Off card */}
+          <section className="border border-[#e2dcd5] bg-white">
+            <div className="flex items-center justify-between border-b border-[#e2dcd5] px-4 py-2.5">
+              <h3 className="text-[13px] font-semibold text-[#221a14]">Upcoming Days Off</h3>
+              <button className="text-[#8a7a6c] transition hover:text-[#221a14]">
+                <RefreshIcon />
+              </button>
+            </div>
+            <div className="divide-y divide-[#f0ebe6] p-4">
+              {people.slice(0, 2).map((person, i) => (
+                <div key={person.id} className={`flex items-start gap-3 ${i > 0 ? "pt-3" : ""}`}>
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#1a2536] text-[11px] font-semibold text-white">
+                    {person.displayName.split(" ").map(n => n[0]).join("").slice(0, 2)}
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                      Record
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12px] font-semibold text-[#221a14]">{person.displayName}</p>
+                    <p className="text-[11px] text-[#5f564d]">
+                      <span className="inline-flex items-center gap-1">
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        18 May @07:00 AM
+                      </span>
+                      <span className="ml-2">-</span>
+                      <span className="ml-2 inline-flex items-center gap-1">
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        22 May @03:30 PM
+                      </span>
                     </p>
-                    <h3 className="text-base font-semibold text-slate-950 transition group-hover:text-brand-700">
-                      {row.name}
-                    </h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">{row.detail}</p>
-                    {row.typeLabel === "Customer Contact" ? (
-                      <p className="mt-2 text-xs leading-5 text-slate-500">
-                        {buildCustomerContactPortalNote()}.
-                      </p>
-                    ) : null}
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                      Context
-                    </p>
-                    <p className="text-sm font-medium text-slate-700">{row.context}</p>
-                  </div>
-                  <div className="md:text-right">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
-                      Status
-                    </p>
-                    <span
-                      className={[
-                        "inline-flex rounded-[4px] border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]",
-                        getStatusTone(row.status)
-                      ].join(" ")}
-                    >
-                      {row.status ?? "No status"}
-                    </span>
                   </div>
                 </div>
-              </Link>
-            ))
-          ) : (
-            <div className="px-6 py-8 sm:px-8">
-              <AppEmptyState
-                eyebrow={directoryRows.length > 0 ? "No matching directory records" : "No directory records yet"}
-                title={directoryRows.length > 0 ? "Adjust the directory filters" : "Directory is waiting on canonical records"}
-                description={
-                  directoryRows.length > 0
-                    ? "Try a broader search or switch filters to review customer accounts, customer contacts, workforce records, vendors, and leads."
-                    : "Directory stays read-only in this phase and only surfaces existing canonical customer, customer-contact, workforce, vendor, and lead records."
-                }
-              />
+              ))}
+              {people.length === 0 && (
+                <p className="py-4 text-center text-[12px] text-[#8a7a6c]">No upcoming days off</p>
+              )}
             </div>
-          )}
+          </section>
         </div>
-      </section>
-    </ContractorWorkspacePage>
+
+        {/* Filter dropdown */}
+        <div className="mb-2 flex justify-end">
+          <select
+            value={view}
+            onChange={(e) => {
+              window.location.href = buildDirectoryHref({ q: query, view: e.target.value });
+            }}
+            className="border border-[#e2dcd5] bg-white px-3 py-1.5 text-[12px] text-[#221a14] outline-none focus:border-[#ef7d32]"
+          >
+            {directoryViews.map((v) => (
+              <option key={v.key} value={v.key}>
+                {v.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Main data table */}
+        <section className="border border-[#e2dcd5] bg-white">
+          <div className="overflow-x-auto">
+            <table className="w-full text-[12px]">
+              <thead className="border-b border-[#e2dcd5] bg-[#f8f6f4]">
+                <tr className="text-left text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a7a6c]">
+                  <th className="px-4 py-2.5">Company</th>
+                  <th className="px-4 py-2.5">Name</th>
+                  <th className="px-4 py-2.5">Employee ID</th>
+                  <th className="px-4 py-2.5">Phone</th>
+                  <th className="px-4 py-2.5">Cell</th>
+                  <th className="px-4 py-2.5">Address</th>
+                  <th className="px-4 py-2.5">Type</th>
+                  <th className="w-10 px-4 py-2.5"></th>
+                  <th className="w-10 px-4 py-2.5"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#f0ebe6]">
+                {filteredRows.length > 0 ? (
+                  filteredRows.map((row) => (
+                    <tr
+                      key={`${row.typeGroup}-${row.id}`}
+                      className="group transition hover:bg-[#faf8f6]"
+                    >
+                      <td className="px-4 py-2.5">
+                        <Link
+                          href={row.href}
+                          className="font-medium text-[#221a14] transition hover:text-[#ef7d32]"
+                        >
+                          {row.company}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-2.5 text-[#5f564d]">{row.name}</td>
+                      <td className="px-4 py-2.5 text-[#5f564d]">{row.employeeId || "-"}</td>
+                      <td className="px-4 py-2.5 text-[#5f564d]">{row.phone || "-"}</td>
+                      <td className="px-4 py-2.5 text-[#5f564d]">{row.cell || "-"}</td>
+                      <td className="px-4 py-2.5 text-[#5f564d]">{row.address}</td>
+                      <td className="px-4 py-2.5">
+                        <span
+                          className={`inline-flex px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.05em] ${getTypeBadgeStyle(row.typeLabel)}`}
+                        >
+                          {row.typeLabel}
+                        </span>
+                      </td>
+                      <td className="px-2 py-2.5 text-center text-[#c5bdb3] transition group-hover:text-[#8a7a6c]">
+                        <StarIcon />
+                      </td>
+                      <td className="px-2 py-2.5 text-center text-[#c5bdb3] transition group-hover:text-[#8a7a6c]">
+                        <MoreIcon />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={9} className="px-6 py-8">
+                      <AppEmptyState
+                        eyebrow={directoryRows.length > 0 ? "No matching directory records" : "No directory records yet"}
+                        title={directoryRows.length > 0 ? "Adjust the directory filters" : "Directory is waiting on canonical records"}
+                        description={
+                          directoryRows.length > 0
+                            ? "Try a broader search or switch filters to review customer accounts, customer contacts, workforce records, vendors, and leads."
+                            : "Directory stays read-only in this phase and only surfaces existing canonical customer, customer-contact, workforce, vendor, and lead records."
+                        }
+                      />
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
   );
 }
