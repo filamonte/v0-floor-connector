@@ -17,17 +17,17 @@ export function AuthField({
 
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-medium text-slate-800">
+      <span className="mb-1.5 block text-[13px] font-medium text-[#221a14]">
         {label}
       </span>
       <input
         id={inputId}
         aria-describedby={hintId}
-        className={`h-9 w-full border border-[#cfd6e0] bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#d8731f] ${className ?? ""}`.trim()}
+        className={`h-10 w-full border border-[#e2dcd5] bg-white px-3 text-[13px] text-[#221a14] outline-none transition placeholder:text-[#8a7a6c] focus:border-[#ef7d32] ${className ?? ""}`.trim()}
         {...props}
       />
       {hint ? (
-        <span id={hintId} className="mt-2 block text-xs leading-5 text-slate-500">
+        <span id={hintId} className="mt-1.5 block text-[12px] leading-4 text-[#5f564d]">
           {hint}
         </span>
       ) : null}

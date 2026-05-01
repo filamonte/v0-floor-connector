@@ -20,8 +20,8 @@ export function AuthSubmitButton({
 
   const buttonClassName =
     variant === "secondary"
-      ? "inline-flex h-9 w-full items-center justify-center gap-2 border border-[#cfd6e0] bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-      : "inline-flex h-9 w-full items-center justify-center gap-2 border border-[#d8731f] bg-[#d8731f] px-3 text-sm font-medium text-white transition hover:bg-[#bf6519] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
+      ? "inline-flex h-10 w-full items-center justify-center gap-2 border border-[#e2dcd5] bg-white px-4 text-[13px] font-medium text-[#5f564d] transition hover:border-[#ef7d32] hover:text-[#221a14] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+      : "inline-flex h-10 w-full items-center justify-center gap-2 bg-[#ef7d32] px-4 text-[13px] font-semibold text-white transition hover:bg-[#d86b28] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
 
   return (
     <button

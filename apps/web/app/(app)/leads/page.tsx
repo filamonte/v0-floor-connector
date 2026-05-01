@@ -179,28 +179,28 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
       title={`Lead manager for ${organizationContext.organization.displayName}`}
       description="Run intake and sales follow-up from one board: all leads, assigned leads, new leads to contact, upcoming tasks, and a real stage funnel grounded in canonical opportunities and appointments."
       summary={
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">All leads</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+        <div className="grid gap-px border border-[#3d4e41] bg-[#3d4e41] sm:grid-cols-2 xl:grid-cols-4">
+          <div className="bg-[#2f3d33] px-3 py-2.5">
+            <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a9c8f]">All leads</p>
+            <p className="mt-1 text-[18px] font-semibold text-white">
               {opportunities.length}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">My leads</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+          <div className="bg-[#2f3d33] px-3 py-2.5">
+            <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a9c8f]">My leads</p>
+            <p className="mt-1 text-[18px] font-semibold text-white">
               {myLeads.length}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">New to contact</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+          <div className="bg-[#2f3d33] px-3 py-2.5">
+            <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a9c8f]">New to contact</p>
+            <p className="mt-1 text-[18px] font-semibold text-white">
               {newLeads.length}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Proposal sent</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+          <div className="bg-[#2f3d33] px-3 py-2.5">
+            <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a9c8f]">Proposal sent</p>
+            <p className="mt-1 text-[18px] font-semibold text-[#ef7d32]">
               {proposalSentLeads.length}
             </p>
           </div>
@@ -221,18 +221,18 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
               name="q"
               defaultValue={query}
               placeholder="Search lead, contact, company, source, job type, or site"
-              className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+              className="min-w-0 flex-1 border border-[#e2dcd5] bg-white px-4 py-2.5 text-[13px] text-[#221a14] outline-none transition placeholder:text-[#8a7a6c] focus:border-[#ef7d32]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center border border-[#e2dcd5] bg-white px-4 py-2.5 text-[13px] font-medium text-[#5f564d] transition hover:border-[#ef7d32] hover:text-[#221a14]"
             >
               Search
             </button>
             {query.length > 0 || view !== "all" || showComposer ? (
               <Link
                 href="/leads"
-                className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
+                className="inline-flex items-center justify-center px-4 py-2.5 text-[13px] font-medium text-[#8a7a6c] transition hover:text-[#221a14]"
               >
                 Clear
               </Link>
@@ -254,17 +254,17 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                 compose: showComposer ? "1" : undefined
               })}
               className={[
-                "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
+                "inline-flex items-center gap-2 px-3 py-2 text-[13px] font-medium transition",
                 isActive
-                  ? "bg-[#233a64] text-white"
-                  : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
+                  ? "bg-[#ef7d32] text-white"
+                  : "border border-[#e2dcd5] bg-white text-[#5f564d] hover:border-[#ef7d32] hover:text-[#221a14]"
               ].join(" ")}
             >
               <span>{item.label}</span>
               <span
                 className={[
-                  "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                  "px-2 py-0.5 text-[11px] font-semibold",
+                  isActive ? "bg-white/20 text-white" : "bg-[#f0ebe6] text-[#8a7a6c]"
                 ].join(" ")}
               >
                 {item.count}
@@ -275,7 +275,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
         actionSlot: (
           <Link
             href={buildLeadsHref({ q: query, view, compose: "1" }) + "#lead-create"}
-            className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
+            className="inline-flex items-center bg-[#ef7d32] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#d86b28]"
           >
             New lead
           </Link>
@@ -347,28 +347,28 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
             emptyDescription="When more scheduled lead work is on the calendar, it will appear here."
           />
 
-          <section className="border border-[#dde3eb] bg-white">
-            <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+          <section className="border border-[#e2dcd5] bg-white">
+            <div className="border-b border-[#e2dcd5] bg-[#f8f6f4] px-5 py-3 sm:px-6">
+              <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a7a6c]">
                 Funnel
               </p>
-              <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
+              <h3 className="mt-1 text-[16px] font-semibold text-[#221a14]">
                 Lead stage funnel
               </h3>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
+              <p className="mt-1 text-[12px] leading-5 text-[#5f564d]">
                 Real opportunity stages only, so the sales view stays honest to the canonical workflow.
               </p>
             </div>
-            <div className="space-y-3 px-5 py-4 sm:px-6">
+            <div className="space-y-2.5 px-5 py-3 sm:px-6">
               {stageFunnel.map((stage, index) => (
-                <div key={stage.key} className="space-y-2">
-                  <div className="flex items-center justify-between gap-4 text-sm">
-                    <span className="font-medium text-slate-900">{stage.label}</span>
-                    <span className="text-slate-500">{stage.count}</span>
+                <div key={stage.key} className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-4 text-[13px]">
+                    <span className="font-medium text-[#221a14]">{stage.label}</span>
+                    <span className="text-[#5f564d]">{stage.count}</span>
                   </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-[#eef2f7]">
+                  <div className="h-2.5 overflow-hidden bg-[#f0ebe6]">
                     <div
-                      className="h-full rounded-full bg-[#233a64]"
+                      className="h-full bg-[#ef7d32]"
                       style={{
                         width: `${Math.max(
                           8,
@@ -385,38 +385,38 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
           </section>
         </section>
 
-        <section className="overflow-hidden border border-[#dde3eb] bg-white">
-          <div className="flex items-end justify-between gap-4 border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
+        <section className="overflow-hidden border border-[#e2dcd5] bg-white">
+          <div className="flex items-end justify-between gap-4 border-b border-[#e2dcd5] bg-[#f8f6f4] px-5 py-3 sm:px-6">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+              <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a7a6c]">
                 Lead records
               </p>
-              <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+              <h3 className="mt-1 text-[16px] font-semibold text-[#221a14]">
                 {view === "mine" ? "Assigned leads" : "All leads"}
               </h3>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
+              <p className="mt-1 text-[12px] leading-5 text-[#5f564d]">
                 Keep first contact, follow-up, and the next start-estimate handoff visible from the same manager page.
               </p>
             </div>
-            <p className="text-sm leading-6 text-slate-500">
+            <p className="text-[12px] text-[#5f564d]">
               {visibleOpportunities.length} visible
             </p>
           </div>
 
           {visibleOpportunities.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 text-sm">
-                <thead className="bg-[#f8fafc] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <table className="min-w-full divide-y divide-[#f0ebe6] text-[13px]">
+                <thead className="bg-[#f8f6f4] text-left text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a7a6c]">
                   <tr>
-                    <th className="px-5 py-3 sm:px-6">Lead</th>
-                    <th className="px-5 py-3 sm:px-6">Primary contact</th>
-                    <th className="px-5 py-3 sm:px-6">Stage</th>
-                    <th className="px-5 py-3 sm:px-6">Next step</th>
-                    <th className="px-5 py-3 sm:px-6">Assigned</th>
-                    <th className="px-5 py-3 text-right sm:px-6">Action</th>
+                    <th className="px-5 py-2.5 sm:px-6">Lead</th>
+                    <th className="px-5 py-2.5 sm:px-6">Primary contact</th>
+                    <th className="px-5 py-2.5 sm:px-6">Stage</th>
+                    <th className="px-5 py-2.5 sm:px-6">Next step</th>
+                    <th className="px-5 py-2.5 sm:px-6">Assigned</th>
+                    <th className="px-5 py-2.5 text-right sm:px-6">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 bg-white">
+                <tbody className="divide-y divide-[#f0ebe6] bg-white">
                   {visibleOpportunities.map((opportunity) => {
                     const nextActivity = nextActivityByOpportunity.get(opportunity.id);
                     const actionHref =

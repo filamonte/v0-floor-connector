@@ -116,34 +116,34 @@ export default async function CustomersPage({
       title={`Customer records for ${organizationContext.organization.displayName}`}
       description="Customers anchor the shared external relationship, project continuity, billing defaults, and estimate-recipient contact details across the contractor operating system."
       summary={
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Total</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+        <div className="grid gap-px border border-[#3d4e41] bg-[#3d4e41] sm:grid-cols-2 xl:grid-cols-4">
+          <div className="bg-[#2f3d33] px-3 py-2.5">
+            <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a9c8f]">Total</p>
+            <p className="mt-1 text-[18px] font-semibold text-white">
               {customers.length}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+          <div className="bg-[#2f3d33] px-3 py-2.5">
+            <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a9c8f]">
               Tax exempt
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-[18px] font-semibold text-white">
               {taxExemptCustomers.length}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
-              Direct contact saved
+          <div className="bg-[#2f3d33] px-3 py-2.5">
+            <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a9c8f]">
+              Direct contact
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-[18px] font-semibold text-white">
               {customersWithDirectContact.length}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+          <div className="bg-[#2f3d33] px-3 py-2.5">
+            <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a9c8f]">
               Saved address
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-[18px] font-semibold text-[#ef7d32]">
               {customersWithSavedAddress.length}
             </p>
           </div>
@@ -163,18 +163,18 @@ export default async function CustomersPage({
               name="q"
               defaultValue={query}
               placeholder="Search customer, company, email, phone, or location"
-              className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+              className="min-w-0 flex-1 border border-[#e2dcd5] bg-white px-4 py-2.5 text-[13px] text-[#221a14] outline-none transition placeholder:text-[#8a7a6c] focus:border-[#ef7d32]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center border border-[#e2dcd5] bg-white px-4 py-2.5 text-[13px] font-medium text-[#5f564d] transition hover:border-[#ef7d32] hover:text-[#221a14]"
             >
               Search
             </button>
             {query.length > 0 || showComposer ? (
               <Link
                 href="/customers"
-                className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
+                className="inline-flex items-center justify-center px-4 py-2.5 text-[13px] font-medium text-[#8a7a6c] transition hover:text-[#221a14]"
               >
                 Clear
               </Link>
@@ -184,7 +184,7 @@ export default async function CustomersPage({
         actionSlot: (
           <Link
             href={buildCustomersHref({ q: query, compose: "1" })}
-            className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
+            className="inline-flex items-center bg-[#ef7d32] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#d86b28]"
           >
             New customer
           </Link>
@@ -281,68 +281,68 @@ export default async function CustomersPage({
           />
         </section>
 
-        <section className="overflow-hidden border border-[#dde3eb] bg-white">
-          <div className="flex items-end justify-between gap-4 border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
+        <section className="overflow-hidden border border-[#e2dcd5] bg-white">
+          <div className="flex items-end justify-between gap-4 border-b border-[#e2dcd5] bg-[#f8f6f4] px-5 py-3 sm:px-6">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+              <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a7a6c]">
                 Recent records
               </p>
-              <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+              <h3 className="mt-1 text-[16px] font-semibold text-[#221a14]">
                 Latest customer updates
               </h3>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
+              <p className="mt-1 text-[12px] leading-5 text-[#5f564d]">
                 Customer email and phone live here as the canonical recipient contact details for estimates, projects, invoices, and portal access.
               </p>
             </div>
-            <p className="text-sm leading-6 text-slate-500">
+            <p className="text-[12px] text-[#5f564d]">
               {recentCustomers.length} visible
             </p>
           </div>
 
           {recentCustomers.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 text-sm">
-                <thead className="bg-[#f8fafc] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <table className="min-w-full divide-y divide-[#f0ebe6] text-[13px]">
+                <thead className="bg-[#f8f6f4] text-left text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a7a6c]">
                   <tr>
-                    <th className="px-5 py-3 sm:px-6">Customer</th>
-                    <th className="px-5 py-3 sm:px-6">Company / location</th>
-                    <th className="px-5 py-3 sm:px-6">Financial defaults</th>
-                    <th className="px-5 py-3 text-right sm:px-6">Updated</th>
+                    <th className="px-5 py-2.5 sm:px-6">Customer</th>
+                    <th className="px-5 py-2.5 sm:px-6">Company / location</th>
+                    <th className="px-5 py-2.5 sm:px-6">Financial defaults</th>
+                    <th className="px-5 py-2.5 text-right sm:px-6">Updated</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 bg-white">
+                <tbody className="divide-y divide-[#f0ebe6] bg-white">
                   {recentCustomers.map((customer) => (
-                    <tr key={customer.id} className="hover:bg-slate-50/70">
-                      <td className="px-5 py-4 sm:px-6">
+                    <tr key={customer.id} className="transition hover:bg-[#faf8f6]">
+                      <td className="px-5 py-3 sm:px-6">
                         <Link
                           href={`/customers/${customer.id}`}
-                          className="font-semibold text-slate-950 transition hover:text-brand-700"
+                          className="font-semibold text-[#221a14] transition hover:text-[#ef7d32]"
                         >
                           {customer.name}
                         </Link>
-                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                        <p className="mt-0.5 text-[12px] text-[#5f564d]">
                           {customer.email ?? customer.phone ?? "No direct contact saved"}
                         </p>
                       </td>
-                      <td className="px-5 py-4 sm:px-6">
-                        <p className="font-medium text-slate-700">
+                      <td className="px-5 py-3 sm:px-6">
+                        <p className="font-medium text-[#221a14]">
                           {customer.companyName ?? "Individual customer"}
                         </p>
-                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                        <p className="mt-0.5 text-[12px] text-[#5f564d]">
                           {[customer.city, customer.stateRegion, customer.postalCode]
                             .filter(Boolean)
                             .join(", ") || "No location saved"}
                         </p>
                       </td>
-                      <td className="px-5 py-4 sm:px-6">
-                        <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                      <td className="px-5 py-3 sm:px-6">
+                        <span className="inline-flex bg-[#ef7d32] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-white">
                           {customer.isTaxExempt ? "Tax exempt" : "Taxable"}
                         </span>
-                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                        <p className="mt-1.5 text-[12px] text-[#5f564d]">
                           Retainage {customer.retainagePercentageDefault}%
                         </p>
                       </td>
-                      <td className="px-5 py-4 text-right text-slate-500 sm:px-6">
+                      <td className="px-5 py-3 text-right text-[#5f564d] sm:px-6">
                         {formatDateLabel(customer.updatedAt)}
                       </td>
                     </tr>

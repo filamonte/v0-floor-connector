@@ -16,19 +16,19 @@ export function QuickCreateFormShell({
   footer
 }: QuickCreateFormShellProps) {
   return (
-    <div className="space-y-5">
-      <div className="space-y-2 border-b border-[#eadfce] pb-4">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+    <div className="space-y-4">
+      <div className="space-y-1.5 border-b border-[#e2dcd5] pb-4">
+        <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#ef7d32]">
           {eyebrow}
         </p>
-        <h3 className="text-xl font-semibold text-[#2b2118]">{title}</h3>
-        <p className="text-[14px] leading-6 text-[#665446]">{description}</p>
+        <h3 className="text-[16px] font-semibold text-[#221a14]">{title}</h3>
+        <p className="text-[13px] leading-5 text-[#5f564d]">{description}</p>
       </div>
 
       {children}
 
       {footer ? (
-        <div className="rounded-[1rem] border border-[#eadfce] bg-[#fbf5ee] px-4 py-3 text-[13px] leading-6 text-[#786454]">
+        <div className="border border-[#e2dcd5] bg-[#f8f6f4] px-4 py-3 text-[12px] leading-5 text-[#5f564d]">
           {footer}
         </div>
       ) : null}

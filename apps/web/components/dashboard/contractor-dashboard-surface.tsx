@@ -191,10 +191,10 @@ function TopLink({
   return (
     <Link
       href={href}
-      className="inline-flex h-8 items-center gap-2 border border-[#cfd6e0] bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4d5f79] transition hover:bg-[#f8fafc]"
+      className="inline-flex h-10 items-center gap-2 border border-[#3d4e41] bg-[#253029] px-3 text-[11px] font-medium text-[#c5d1c8] transition hover:border-[#ef7d32] hover:text-white"
     >
       <span>{label}</span>
-      {metric ? <span className="text-[#7a889d]">{metric}</span> : null}
+      {metric ? <span className="text-[#8a9c8f]">{metric}</span> : null}
     </Link>
   );
 }
@@ -213,17 +213,17 @@ function BoardPanel({
   children: ReactNode;
 }) {
   return (
-    <section className="border border-[#d7dce4] bg-white">
-      <div className="flex items-start justify-between gap-3 border-b border-[#dfe4ec] px-4 py-3">
+    <section className="border border-[#e2dcd5] bg-white">
+      <div className="flex items-start justify-between gap-3 border-b border-[#e2dcd5] bg-[#f8f6f4] px-4 py-2.5">
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
+          <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a7a6c]">
             {eyebrow}
           </p>
-          <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#17243b]">
+          <h3 className="mt-0.5 text-[15px] font-semibold text-[#221a14]">
             {title}
           </h3>
           {description ? (
-            <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+            <p className="mt-1 text-[12px] leading-4 text-[#5f564d]">{description}</p>
           ) : null}
         </div>
         {action}
@@ -235,21 +235,21 @@ function BoardPanel({
 
 function PriorityGrid({ metrics }: { metrics: DashboardMetric[] }) {
   return (
-    <section className="border border-[#d7dce4] bg-white">
-      <div className="grid gap-px bg-[#dfe4ec] md:grid-cols-5">
+    <section className="border border-[#e2dcd5] bg-white">
+      <div className="grid gap-px bg-[#e2dcd5] md:grid-cols-5">
         {metrics.map((metric) => (
           <Link
             key={metric.key}
             href={metric.href}
-            className="bg-white px-3 py-2.5 transition hover:bg-[#f8fafc]"
+            className="bg-white px-3 py-3 transition hover:bg-[#faf8f6]"
           >
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7a889d]">
+            <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a7a6c]">
               {metric.label}
             </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-[22px] font-semibold text-[#221a14]">
               {metric.value}
             </p>
-            <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-500">
+            <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-[#5f564d]">
               {metric.detail}
             </p>
           </Link>
@@ -274,38 +274,38 @@ function QueueRows({
       action={
         <Link
           href={widget.href}
-          className="inline-flex items-center border border-[#cfd6e0] bg-[#f7f8fa] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4d5f79] transition hover:bg-white"
+          className="inline-flex items-center border border-[#e2dcd5] bg-white px-2.5 py-1.5 text-[11px] font-medium text-[#5f564d] transition hover:border-[#ef7d32] hover:text-[#221a14]"
         >
           {widget.actionLabel}
         </Link>
       }
     >
-      <div className="divide-y divide-[#e7ebf1]">
+      <div className="divide-y divide-[#f0ebe6]">
         {items.length > 0 ? (
           items.map((item) => (
-            <article key={item.id} className="px-4 py-3">
+            <article key={item.id} className="px-4 py-2.5 transition hover:bg-[#faf8f6]">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <Link
                       href={item.href}
-                      className="truncate text-sm font-semibold text-[#17243b] transition hover:text-brand-700"
+                      className="truncate text-[13px] font-semibold text-[#221a14] transition hover:text-[#ef7d32]"
                     >
                       {item.title}
                     </Link>
                     {item.badge ? (
-                      <span className="border border-[#dde3eb] bg-[#f8fafc] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                      <span className="bg-[#ef7d32] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-white">
                         {item.badge}
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-1 text-sm leading-5 text-slate-600">{item.subtitle}</p>
-                  <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-[#7a889d]">
+                  <p className="mt-1 text-[12px] leading-4 text-[#5f564d]">{item.subtitle}</p>
+                  <p className="mt-1 text-[10px] uppercase tracking-[0.1em] text-[#8a7a6c]">
                     {item.meta}
                   </p>
                 </div>
                 {item.trailing ? (
-                  <p className="shrink-0 text-sm font-semibold text-slate-900">
+                  <p className="shrink-0 text-[13px] font-semibold text-[#221a14]">
                     {item.trailing}
                   </p>
                 ) : null}
@@ -313,9 +313,9 @@ function QueueRows({
             </article>
           ))
         ) : (
-          <div className="px-4 py-5">
-            <p className="text-sm font-semibold text-[#17243b]">{widget.emptyTitle}</p>
-            <p className="mt-2 text-sm leading-5 text-slate-500">{widget.emptyDescription}</p>
+          <div className="px-4 py-4">
+            <p className="text-[13px] font-semibold text-[#221a14]">{widget.emptyTitle}</p>
+            <p className="mt-1.5 text-[12px] leading-5 text-[#5f564d]">{widget.emptyDescription}</p>
           </div>
         )}
       </div>
@@ -332,48 +332,48 @@ function OnboardingGuide({ steps }: { steps: DashboardOnboardingStep[] }) {
   }
 
   return (
-    <section className="border border-[#d7c7b4] bg-white">
-      <div className="flex flex-col gap-4 border-b border-[#eadfd4] bg-[#fff8f1] px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
+    <section className="border border-[#e2dcd5] bg-white">
+      <div className="flex flex-col gap-4 border-b border-[#e2dcd5] bg-[#2f3d33] px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+          <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#ef7d32]">
             Start here
           </p>
-          <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#2b2118]">
+          <h3 className="mt-1 text-[16px] font-semibold text-white">
             Finish the first setup path
           </h3>
-          <p className="mt-1 max-w-3xl text-sm leading-6 text-[#665446]">
+          <p className="mt-1 max-w-3xl text-[13px] leading-5 text-[#c5d1c8]">
             Create the first customer, project, and estimate from the existing quick-create paths.
             Those records become the canonical chain for contracts, jobs, invoices, and payments.
           </p>
         </div>
         <Link
           href={nextStep.href}
-          className="inline-flex items-center justify-center border border-[#d8731f] bg-[#d8731f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#bf6519]"
+          className="inline-flex items-center justify-center bg-[#ef7d32] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#d86b28]"
         >
           {nextStep.actionLabel}
         </Link>
       </div>
-      <div className="grid gap-px bg-[#eadfd4] md:grid-cols-4">
+      <div className="grid gap-px bg-[#e2dcd5] md:grid-cols-4">
         {steps.map((step) => (
           <Link
             key={step.key}
             href={step.href}
-            className="bg-white px-4 py-3 transition hover:bg-[#fffaf5]"
+            className="bg-white px-4 py-3 transition hover:bg-[#faf8f6]"
           >
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-[#17243b]">{step.label}</p>
+              <p className="text-[13px] font-semibold text-[#221a14]">{step.label}</p>
               <span
                 className={[
-                  "shrink-0 border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                  "shrink-0 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]",
                   step.complete
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                    : "border-amber-200 bg-amber-50 text-amber-900"
+                    ? "bg-[#2f6a3e] text-white"
+                    : "bg-[#ef7d32] text-white"
                 ].join(" ")}
               >
                 {step.complete ? "Done" : "Next step"}
               </span>
             </div>
-            <p className="mt-2 text-sm leading-5 text-slate-500">{step.description}</p>
+            <p className="mt-1.5 text-[12px] leading-5 text-[#5f564d]">{step.description}</p>
           </Link>
         ))}
       </div>
@@ -396,7 +396,7 @@ function FinanceTable({
       action={
         <Link
           href={widget.href}
-          className="inline-flex items-center border border-[#cfd6e0] bg-[#f7f8fa] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4d5f79] transition hover:bg-white"
+          className="inline-flex items-center border border-[#e2dcd5] bg-white px-2.5 py-1.5 text-[11px] font-medium text-[#5f564d] transition hover:border-[#ef7d32] hover:text-[#221a14]"
         >
           {widget.actionLabel}
         </Link>
@@ -404,33 +404,32 @@ function FinanceTable({
     >
       {items.length > 0 ? (
         <div>
-          <div className="grid grid-cols-[minmax(0,1.45fr)_minmax(0,0.9fr)_auto] gap-3 border-b border-[#dfe4ec] bg-[#f7f8fa] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7a889d]">
+          <div className="grid grid-cols-[minmax(0,1.45fr)_minmax(0,0.9fr)_auto] gap-3 border-b border-[#e2dcd5] bg-[#f8f6f4] px-4 py-2 text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a7a6c]">
             <span>Record</span>
             <span>Status</span>
             <span>Amount</span>
           </div>
-          <div className="divide-y divide-[#e7ebf1]">
+          <div className="divide-y divide-[#f0ebe6]">
             {items.map((item) => (
-              <article key={item.id} className="px-4 py-3">
+              <article key={item.id} className="px-4 py-2.5 transition hover:bg-[#faf8f6]">
                 <div className="grid grid-cols-[minmax(0,1.45fr)_minmax(0,0.9fr)_auto] gap-3">
                   <div className="min-w-0">
                     <Link
                       href={item.href}
-                      className="truncate text-sm font-semibold text-[#17243b] transition hover:text-brand-700"
+                      className="truncate text-[13px] font-semibold text-[#221a14] transition hover:text-[#ef7d32]"
                     >
                       {item.title}
                     </Link>
-                    <p className="mt-1 truncate text-xs text-slate-500">{item.subtitle}</p>
+                    <p className="mt-0.5 truncate text-[11px] text-[#5f564d]">{item.subtitle}</p>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7a889d]">
+                    <span className="inline-block bg-[#ef7d32] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-white">
                       {item.badge ?? item.meta}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">{item.meta}</p>
+                    </span>
                   </div>
                   <div className="text-right">
                     {item.trailing ? (
-                      <p className="text-sm font-semibold text-slate-900">{item.trailing}</p>
+                      <p className="text-[13px] font-semibold text-[#221a14]">{item.trailing}</p>
                     ) : null}
                   </div>
                 </div>
@@ -439,9 +438,9 @@ function FinanceTable({
           </div>
         </div>
       ) : (
-        <div className="px-4 py-5">
-          <p className="text-sm font-semibold text-[#17243b]">{widget.emptyTitle}</p>
-          <p className="mt-2 text-sm leading-5 text-slate-500">{widget.emptyDescription}</p>
+        <div className="px-4 py-4">
+          <p className="text-[13px] font-semibold text-[#221a14]">{widget.emptyTitle}</p>
+          <p className="mt-1.5 text-[12px] leading-5 text-[#5f564d]">{widget.emptyDescription}</p>
         </div>
       )}
     </BoardPanel>
@@ -496,44 +495,44 @@ export function ContractorDashboardSurface({
   ].filter(Boolean) as DashboardShortcut[];
 
   return (
-    <div className="-mx-5 bg-[#f3eee8] sm:-mx-8">
-      <section className="border-b border-[#d7c7b4] bg-[#fbf7f1] px-4 py-3 sm:px-6">
+    <div className="-mx-5 bg-[#f0ebe6] sm:-mx-8">
+      <section className="border-b border-[#e2dcd5] bg-[#2f3d33] px-4 py-4 sm:px-6">
         <div className="space-y-3">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+              <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#ef7d32]">
                 Contractor dashboard
               </p>
-              <h2 className="mt-1 text-[22px] font-semibold tracking-tight text-[#2b2118]">
+              <h2 className="mt-1 text-[20px] font-semibold text-white">
                 {header.organizationName}
               </h2>
-              <p className="mt-1 text-[13px] leading-5 text-[#665446]">
+              <p className="mt-1 text-[13px] leading-5 text-[#c5d1c8]">
                 Operational queues and recent records in one working surface.
               </p>
             </div>
 
-            <div className="grid gap-px border border-[#d7dce4] bg-[#d7dce4] sm:grid-cols-3">
-              <div className="bg-white px-3 py-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7a889d]">
+            <div className="grid gap-px border border-[#3d4e41] bg-[#3d4e41] sm:grid-cols-3">
+              <div className="bg-[#2f3d33] px-3 py-2.5">
+                <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a9c8f]">
                   Role
                 </p>
-                <p className="mt-1 text-sm font-semibold text-[#17243b]">
+                <p className="mt-1 text-[13px] font-semibold text-white">
                   {header.roleLabel}
                 </p>
               </div>
-              <div className="bg-white px-3 py-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7a889d]">
+              <div className="bg-[#2f3d33] px-3 py-2.5">
+                <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a9c8f]">
                   Active projects
                 </p>
-                <p className="mt-1 text-sm font-semibold text-[#17243b]">
+                <p className="mt-1 text-[13px] font-semibold text-white">
                   {header.activeProjectCount}
                 </p>
               </div>
-              <div className="bg-white px-3 py-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7a889d]">
+              <div className="bg-[#2f3d33] px-3 py-2.5">
+                <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a9c8f]">
                   Open receivables
                 </p>
-                <p className="mt-1 text-sm font-semibold text-[#17243b]">
+                <p className="mt-1 text-[13px] font-semibold text-[#ef7d32]">
                   {header.openReceivablesLabel}
                 </p>
               </div>
@@ -555,7 +554,7 @@ export function ContractorDashboardSurface({
                   });
                 }}
                 placeholder="Search dashboard queues by project, customer, estimate, contract, invoice, status, or priority"
-                className="h-10 w-full border border-[#cfd6e0] bg-white pl-9 pr-3 text-sm text-[#22344d] outline-none placeholder:text-[#8b96a8] focus:border-[#d8731f]"
+                className="h-10 w-full border border-[#3d4e41] bg-[#253029] pl-9 pr-3 text-[13px] text-white outline-none placeholder:text-[#8a9c8f] focus:border-[#ef7d32]"
               />
             </label>
 
@@ -563,8 +562,8 @@ export function ContractorDashboardSurface({
               <UniversalCreateMenu
                 idBase="dashboard-universal-create-menu"
                 buttonLabel="Universal create"
-                buttonClassName="inline-flex h-10 items-center border border-[#d8731f] bg-[#d8731f] px-4 text-[12px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[#bf6519]"
-                panelClassName="border-[#cfd6e0]"
+                buttonClassName="inline-flex h-10 items-center bg-[#ef7d32] px-4 text-[12px] font-semibold text-white transition hover:bg-[#d86b28]"
+                panelClassName="border-[#e2dcd5]"
               />
               {topLinks.map((link) => (
                 <TopLink

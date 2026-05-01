@@ -206,22 +206,22 @@ export default async function EstimatesPage({
       title={`Estimates for ${organizationContext.organization.displayName}`}
       description="A dense estimating module for draft build work, sent follow-up, customer responses, and approved handoff. New estimates start from customer and project context, then open the full estimate workspace."
       summary={
-        <div className="grid gap-px border border-[#d7dce4] bg-[#d7dce4] sm:grid-cols-2 xl:grid-cols-4">
-          <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Build</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">{draftCount}</p>
+        <div className="grid gap-px border border-[#3d4e41] bg-[#3d4e41] sm:grid-cols-2 xl:grid-cols-4">
+          <div className="bg-[#2f3d33] px-3 py-2.5">
+            <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a9c8f]">Build</p>
+            <p className="mt-1 text-[18px] font-semibold text-white">{draftCount}</p>
           </div>
-          <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Sent</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">{sentCount}</p>
+          <div className="bg-[#2f3d33] px-3 py-2.5">
+            <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a9c8f]">Sent</p>
+            <p className="mt-1 text-[18px] font-semibold text-white">{sentCount}</p>
           </div>
-          <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Approved</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">{approvedCount}</p>
+          <div className="bg-[#2f3d33] px-3 py-2.5">
+            <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a9c8f]">Approved</p>
+            <p className="mt-1 text-[18px] font-semibold text-white">{approvedCount}</p>
           </div>
-          <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Pipeline value</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">
+          <div className="bg-[#2f3d33] px-3 py-2.5">
+            <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a9c8f]">Pipeline value</p>
+            <p className="mt-1 text-[18px] font-semibold text-[#ef7d32]">
               {formatMoney(totalPipelineValue)}
             </p>
           </div>
@@ -242,18 +242,18 @@ export default async function EstimatesPage({
               name="q"
               defaultValue={query}
               placeholder="Search estimate, opportunity, customer, project, or status"
-              className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+              className="min-w-0 flex-1 border border-[#e2dcd5] bg-white px-4 py-2.5 text-[13px] text-[#221a14] outline-none transition placeholder:text-[#8a7a6c] focus:border-[#ef7d32]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center border border-[#e2dcd5] bg-white px-4 py-2.5 text-[13px] font-medium text-[#5f564d] transition hover:border-[#ef7d32] hover:text-[#221a14]"
             >
               Search
             </button>
             {query.length > 0 || statusFilter !== "all" || showComposer ? (
               <Link
                 href="/estimates"
-                className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
+                className="inline-flex items-center justify-center px-4 py-2.5 text-[13px] font-medium text-[#8a7a6c] transition hover:text-[#221a14]"
               >
                 Clear
               </Link>
@@ -275,17 +275,17 @@ export default async function EstimatesPage({
                 projectId: resolvedSearchParams.projectId
               })}
               className={[
-                "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
+                "inline-flex items-center gap-2 px-3 py-2 text-[13px] font-medium transition",
                 isActive
-                  ? "bg-[#233a64] text-white"
-                  : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
+                  ? "bg-[#ef7d32] text-white"
+                  : "border border-[#e2dcd5] bg-white text-[#5f564d] hover:border-[#ef7d32] hover:text-[#221a14]"
               ].join(" ")}
             >
               <span>{view.label}</span>
               <span
                 className={[
-                  "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                  "px-2 py-0.5 text-[11px] font-semibold",
+                  isActive ? "bg-white/20 text-white" : "bg-[#f0ebe6] text-[#8a7a6c]"
                 ].join(" ")}
               >
                 {view.count}
@@ -307,7 +307,7 @@ export default async function EstimatesPage({
                   projectId: resolvedSearchParams.projectId
                 }) + "#estimate-create"
               }
-              className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
+              className="inline-flex items-center bg-[#ef7d32] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#d86b28]"
             >
               Add estimate
             </Link>
@@ -372,19 +372,19 @@ export default async function EstimatesPage({
               emptyDescription="Sent estimates will appear here when customer follow-up is needed."
             />
 
-            <section className="border border-[#cfd6e0] bg-white">
-              <div className="border-b border-[#dfe4ec] bg-[#f7f8fa] px-4 py-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
+            <section className="border border-[#e2dcd5] bg-white">
+              <div className="border-b border-[#e2dcd5] bg-[#f8f6f4] px-4 py-2.5">
+                <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a7a6c]">
                   Status
                 </p>
-                <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#17243b]">
+                <h3 className="mt-0.5 text-[15px] font-semibold text-[#221a14]">
                   Estimates by status
                 </h3>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
+                <p className="mt-1 text-[12px] leading-4 text-[#5f564d]">
                   Current-state status mix from canonical estimate records.
                 </p>
               </div>
-              <div className="divide-y divide-[#e7ebf1]">
+              <div className="divide-y divide-[#f0ebe6]">
                 {statusBreakdown.map((status) => (
                   <Link
                     key={status.key}
@@ -396,18 +396,18 @@ export default async function EstimatesPage({
                       customerId: resolvedSearchParams.customerId,
                       projectId: resolvedSearchParams.projectId
                     })}
-                    className="grid grid-cols-[minmax(0,1fr)_120px_48px] items-center gap-3 px-4 py-3 text-sm transition hover:bg-slate-50"
+                    className="grid grid-cols-[minmax(0,1fr)_120px_48px] items-center gap-3 px-4 py-2.5 text-[13px] transition hover:bg-[#faf8f6]"
                   >
-                    <span className="font-semibold text-[#17243b]">
+                    <span className="font-semibold text-[#221a14]">
                       {status.label} ({status.count})
                     </span>
-                    <span className="h-2 overflow-hidden rounded-full bg-[#e7ebf1]">
+                    <span className="h-2 overflow-hidden bg-[#f0ebe6]">
                       <span
-                        className="block h-full rounded-full bg-[#233a64]"
+                        className="block h-full bg-[#ef7d32]"
                         style={{ width: `${status.percent}%` }}
                       />
                     </span>
-                    <span className="text-right text-xs font-semibold text-slate-500">
+                    <span className="text-right text-[11px] font-semibold text-[#8a7a6c]">
                       {status.percent}%
                     </span>
                   </Link>

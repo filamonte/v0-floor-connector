@@ -70,17 +70,17 @@ function ChoiceButton({
       type="button"
       onClick={onClick}
       className={[
-        "rounded-[4px] border px-3 py-2 text-left transition",
+        "border px-3 py-2 text-left transition",
         active
-          ? "border-[#233a64] bg-[#233a64] text-white"
-          : "border-[#d9dee8] bg-white text-slate-700 hover:bg-slate-50"
+          ? "border-[#ef7d32] bg-[#ef7d32] text-white"
+          : "border-[#e2dcd5] bg-white text-[#221a14] hover:border-[#ef7d32]"
       ].join(" ")}
     >
-      <span className="block text-sm font-semibold">{label}</span>
+      <span className="block text-[13px] font-semibold">{label}</span>
       <span
         className={[
-          "mt-1 block text-xs leading-5",
-          active ? "text-white/75" : "text-slate-500"
+          "mt-1 block text-[11px] leading-4",
+          active ? "text-white/80" : "text-[#5f564d]"
         ].join(" ")}
       >
         {description}
@@ -107,15 +107,15 @@ function SelectionCard({
       type="button"
       onClick={onClick}
       className={[
-        "w-full rounded-[4px] border px-3 py-3 text-left transition",
+        "w-full border px-3 py-2.5 text-left transition",
         active
-          ? "border-[#233a64] bg-white"
-          : "border-transparent bg-white/70 hover:border-[#d9dee8] hover:bg-white"
+          ? "border-[#ef7d32] bg-white"
+          : "border-transparent bg-white/70 hover:border-[#e2dcd5] hover:bg-white"
       ].join(" ")}
     >
-      <p className="text-sm font-semibold text-slate-950">{title}</p>
-      <p className="mt-1 text-sm leading-6 text-slate-600">{subtitle}</p>
-      <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-500">{meta}</p>
+      <p className="text-[13px] font-semibold text-[#221a14]">{title}</p>
+      <p className="mt-0.5 text-[12px] leading-4 text-[#5f564d]">{subtitle}</p>
+      <p className="mt-1 text-[10px] uppercase tracking-[0.1em] text-[#8a7a6c]">{meta}</p>
     </button>
   );
 }
@@ -136,21 +136,21 @@ function SearchPanel({
   empty: boolean;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <label className="block">
-        <span className="mb-2 block text-sm font-medium text-slate-800">{label}</span>
+        <span className="mb-1.5 block text-[13px] font-medium text-[#221a14]">{label}</span>
         <input
           type="search"
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
-          className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+          className="w-full border border-[#e2dcd5] bg-white px-3 py-2.5 text-[13px] text-[#221a14] outline-none transition placeholder:text-[#8a7a6c] focus:border-[#ef7d32]"
         />
       </label>
 
-      <div className="max-h-[220px] space-y-2 overflow-y-auto rounded-[4px] border border-[#dde3eb] bg-[#fbfcfe] p-2">
+      <div className="max-h-[220px] space-y-1.5 overflow-y-auto border border-[#e2dcd5] bg-[#faf8f6] p-2">
         {empty ? (
-          <div className="rounded-[4px] bg-white px-3 py-4 text-sm leading-6 text-slate-500">
+          <div className="bg-white px-3 py-3 text-[13px] leading-5 text-[#5f564d]">
             No matching records found.
           </div>
         ) : (
@@ -200,7 +200,7 @@ function CustomerCombobox({
 
   return (
     <div className="relative">
-      <span className="mb-2 block text-sm font-medium text-slate-800">
+      <span className="mb-1.5 block text-[13px] font-medium text-[#221a14]">
         Customer / account
       </span>
       <input
@@ -214,21 +214,21 @@ function CustomerCombobox({
         placeholder="Search name, email, or phone"
         aria-invalid={error}
         className={[
-          "w-full rounded-[4px] border bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]",
-          error ? "border-rose-300 ring-4 ring-rose-50" : "border-[#d9dee8]"
+          "w-full border bg-white px-3 py-2.5 text-[13px] text-[#221a14] outline-none transition placeholder:text-[#8a7a6c] focus:border-[#ef7d32]",
+          error ? "border-rose-300 ring-4 ring-rose-50" : "border-[#e2dcd5]"
         ].join(" ")}
       />
       {selectedCustomer ? (
-        <p className="mt-2 text-xs leading-5 text-slate-500">
+        <p className="mt-1.5 text-[11px] leading-4 text-[#5f564d]">
           Selected: {selectedCustomer.name}
           {selectedCustomer.email ? ` / ${selectedCustomer.email}` : ""}
           {selectedCustomer.phone ? ` / ${selectedCustomer.phone}` : ""}
         </p>
       ) : null}
       {isOpen ? (
-        <div className="absolute z-20 mt-2 max-h-[240px] w-full overflow-y-auto rounded-[4px] border border-[#dde3eb] bg-white p-1 shadow-[0_18px_50px_-28px_rgba(15,23,42,0.45)]">
+        <div className="absolute z-20 mt-2 max-h-[240px] w-full overflow-y-auto border border-[#e2dcd5] bg-white p-1 shadow-[0_18px_50px_-28px_rgba(34,26,20,0.4)]">
           {visibleCustomers.length === 0 ? (
-            <div className="px-3 py-4 text-sm leading-6 text-slate-500">
+            <div className="px-3 py-3 text-[13px] leading-5 text-[#5f564d]">
               No matching customer accounts found.
             </div>
           ) : (
@@ -243,17 +243,17 @@ function CustomerCombobox({
                   setIsOpen(false);
                 }}
                 className={[
-                  "w-full rounded-[4px] px-3 py-2.5 text-left text-sm transition",
+                  "w-full px-3 py-2 text-left text-[13px] transition",
                   selectedCustomerId === customer.id
-                    ? "bg-[#233a64] text-white"
-                    : "text-slate-700 hover:bg-slate-50"
+                    ? "bg-[#ef7d32] text-white"
+                    : "text-[#221a14] hover:bg-[#faf8f6]"
                 ].join(" ")}
               >
                 <span className="block font-semibold">{customer.name}</span>
                 <span
                   className={[
-                    "mt-1 block text-xs leading-5",
-                    selectedCustomerId === customer.id ? "text-white/75" : "text-slate-500"
+                    "mt-0.5 block text-[11px] leading-4",
+                    selectedCustomerId === customer.id ? "text-white/80" : "text-[#5f564d]"
                   ].join(" ")}
                 >
                   {[customer.companyName, customer.email, customer.phone]
