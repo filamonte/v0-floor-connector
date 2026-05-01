@@ -25,17 +25,18 @@ export function ContractorWorkspacePage({
   children
 }: ContractorWorkspacePageProps) {
   return (
-    <div className="space-y-3">
-      <section className="border border-[#d7c7b4] bg-[#fbf7f1] px-4 py-3 sm:px-5">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+    <div className="space-y-2">
+      {/* Page header - matches CF clean white panel pattern */}
+      <section className="border border-[#e2dcd5] bg-white px-4 py-3 sm:px-5">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#a4581a]">
+            <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a7a6c]">
               {eyebrow}
             </p>
-            <h2 className="mt-1 text-[22px] font-semibold tracking-tight text-[#2b2118] sm:text-[24px]">
+            <h2 className="mt-1 text-[20px] font-semibold tracking-tight text-[#221a14] sm:text-[22px]">
               {title}
             </h2>
-            <p className="mt-1 max-w-3xl text-[13px] leading-5 text-[#665446]">
+            <p className="mt-1 max-w-3xl text-[13px] leading-5 text-[#5f564d]">
               {description}
             </p>
           </div>

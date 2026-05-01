@@ -39,9 +39,10 @@ export async function ContractorAppShell({
     : Promise.resolve({ totalCount: 0, sections: [], visibleItems: [] }));
 
   return (
-    <div className="min-h-screen bg-[#f3eee8] text-slate-950">
+    <div className="min-h-screen bg-[#f5f3f0] text-[#221a14]">
       <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-30 border-b border-[#d9cdc2] bg-white">
+        {/* Sticky header - matches CF visual hierarchy */}
+        <header className="sticky top-0 z-30 border-b border-[#e2dcd5] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
           <div className="hidden lg:block">
             <ProtectedAppTopNav
               currentRole={organizationContext?.membership.role}
@@ -55,24 +56,24 @@ export async function ContractorAppShell({
             />
           </div>
 
-          <div className="border-b border-[#d9cdc2] bg-white px-5 py-3 lg:hidden">
-            <div className="flex items-start justify-between gap-3">
+          {/* Mobile header - matches CF compact mobile pattern */}
+          <div className="border-b border-[#e2dcd5] bg-white px-4 py-2.5 lg:hidden">
+            <div className="flex items-center justify-between gap-3">
               <OrganizationBrandLink
                 href="/dashboard"
                 organizationName={organizationName}
                 logoUrl={organizationContext?.organization.logoUrl}
-                supportingLabel="Shared contractor workspace"
                 navigationLabel="Dashboard home"
                 className="min-w-0 flex-1"
               />
-              <div className="flex shrink-0 items-center gap-2 pt-1">
+              <div className="flex shrink-0 items-center gap-2">
                 <AppShellMobileNav currentRole={organizationContext?.membership.role} />
-                <SignOutForm className="border-[#17120f] bg-[#17120f] px-3 py-2 text-[#ffd7bb] hover:border-[#17120f] hover:bg-[#2a1c13]" />
+                <SignOutForm className="border-[#2f3d33] bg-[#2f3d33] px-3 py-2 text-white hover:bg-[#3d4d41]" />
               </div>
             </div>
-            <div className="mt-3 space-y-3 border-t border-[#ebe0d6] pt-3">
+            <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-[#e2dcd5] pt-2.5">
               <ProtectedAppBreadcrumbs organizationName={organizationName} />
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="ml-auto flex items-center gap-2">
                 <ContractorNotificationsCenter
                   notifications={notifications}
                   compact
@@ -82,10 +83,11 @@ export async function ContractorAppShell({
           </div>
         </header>
 
-        <main className="flex-1 px-5 py-4 sm:px-8 sm:py-5">
-          <div className="mx-auto w-full max-w-[1500px]">
+        {/* Main content area - matches CF padding and max-width */}
+        <main className="flex-1 px-4 py-4 sm:px-6 sm:py-5">
+          <div className="mx-auto w-full max-w-[1400px]">
             {!organizationContext ? (
-              <section className="mb-4 rounded-[4px] border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
+              <section className="mb-4 border border-amber-300 bg-amber-50 px-4 py-3 text-[13px] leading-5 text-amber-900">
                 Your account is authenticated, but no active organization context is
                 available yet. If this is a brand-new account, sign out and sign back in
                 once to refresh the app against the newly created tenant records.
@@ -96,12 +98,16 @@ export async function ContractorAppShell({
           </div>
         </main>
 
-        <footer className="border-t border-[#d9cdc2] bg-white px-5 py-3 sm:px-8">
-          <div className="mx-auto flex w-full max-w-[1500px] justify-end">
+        {/* Footer bar - matches CF minimal footer with global search */}
+        <footer className="border-t border-[#e2dcd5] bg-white px-5 py-2.5 sm:px-8">
+          <div className="mx-auto flex w-full max-w-[1500px] items-center justify-between gap-4">
+            <p className="hidden text-[11px] text-[#8a7a6c] sm:block">
+              FloorConnector
+            </p>
             <GlobalSearch
               compact
-              buttonLabel="Global Search"
-              buttonClassName="inline-flex h-10 min-w-[220px] max-w-full items-center justify-between rounded-[4px] border border-[#dbcfc4] bg-[#fbf7f2] px-3.5 text-[13px] font-medium text-[#55473b] transition hover:border-[#ef7d32] hover:bg-white hover:text-[#221a14] xl:min-w-[280px]"
+              buttonLabel="Search"
+              buttonClassName="inline-flex h-9 min-w-[180px] max-w-full items-center justify-between gap-2 border border-[#e2dcd5] bg-white px-3 text-[12px] font-medium text-[#5f564d] transition hover:border-[#ef7d32] hover:bg-[#faf8f6] hover:text-[#221a14] xl:min-w-[240px]"
             />
           </div>
         </footer>

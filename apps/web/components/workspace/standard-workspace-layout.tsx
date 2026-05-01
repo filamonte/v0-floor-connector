@@ -127,20 +127,21 @@ export function StandardWorkspaceLayout<TView extends string>({
   const activeView = currentView ?? hashView;
 
   return (
-    <div className="space-y-3">
-      <section className="border border-[#d7c7b4] bg-[#fbf7f1] px-4 py-3 sm:px-5">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+    <div className="space-y-2">
+      {/* Page header bar - matches CF white panel with eyebrow/title/description pattern */}
+      <section className="border border-[#e2dcd5] bg-white px-4 py-3 sm:px-5">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0">
             {header.eyebrow ? (
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+              <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a7a6c]">
                 {header.eyebrow}
               </p>
             ) : null}
-            <h2 className="mt-1 whitespace-normal break-words text-[22px] font-semibold leading-tight tracking-tight text-[#2b2118] [overflow-wrap:anywhere] sm:text-[24px]">
+            <h2 className="mt-1 whitespace-normal break-words text-[20px] font-semibold leading-tight tracking-tight text-[#221a14] [overflow-wrap:anywhere] sm:text-[22px]">
               {header.title}
             </h2>
             {header.description ? (
-              <p className="mt-1 max-w-3xl text-[13px] leading-5 text-[#665446]">
+              <p className="mt-1 max-w-3xl text-[13px] leading-5 text-[#5f564d]">
                 {header.description}
               </p>
             ) : null}
@@ -154,24 +155,26 @@ export function StandardWorkspaceLayout<TView extends string>({
       {summaryBand}
       {commandBar}
 
-      <section className="overflow-hidden border border-[#d7dce4] bg-white">
+      {/* Main content area with optional left sidebar - matches CF icon sidebar pattern */}
+      <section className="overflow-hidden border border-[#e2dcd5] bg-white">
         <div
           className={[
-            "grid min-h-[620px] bg-white",
-            hasSidebar ? "grid-cols-1 lg:grid-cols-[184px_minmax(0,1fr)]" : "grid-cols-1"
+            "grid min-h-[580px] bg-white",
+            hasSidebar ? "grid-cols-1 lg:grid-cols-[52px_minmax(0,1fr)]" : "grid-cols-1"
           ].join(" ")}
         >
+          {/* Left icon sidebar - matches CF vertical icon-only nav pattern */}
           {hasSidebar ? (
-            <aside className="border-b border-[#dfe4ec] bg-[#f6f7f9] px-2 py-2 lg:border-b-0 lg:border-r">
-              <div className="flex gap-1.5 overflow-x-auto lg:flex-col lg:overflow-visible">
+            <aside className="border-b border-[#e2dcd5] bg-[#2f3d33] px-1 py-2 lg:border-b-0 lg:border-r lg:border-[#3d4d41]">
+              <div className="flex justify-center gap-1 overflow-x-auto lg:flex-col lg:items-center lg:gap-0.5 lg:overflow-visible">
                 {sidebar?.map((item) => {
                   const Icon = iconMap[item.iconName];
                   const active = item.id === activeView;
                   const className = [
-                    "inline-flex h-10 min-w-[44px] items-center justify-center gap-2 border px-3 text-[#4d5f79] transition lg:w-full lg:justify-start",
+                    "group relative inline-flex h-10 w-10 items-center justify-center text-white transition",
                     active
-                      ? "border-[#d8731f] bg-[#d8731f] text-white"
-                      : "border-[#d4dbe5] bg-white hover:border-[#c6d0dd] hover:bg-[#f0f3f7]"
+                      ? "bg-[#ef7d32]"
+                      : "hover:bg-[#3d4d41]"
                   ].join(" ");
 
                   if (item.href && !item.disabled) {
@@ -193,8 +196,8 @@ export function StandardWorkspaceLayout<TView extends string>({
                         aria-label={item.label}
                         className={className}
                       >
-                        <Icon className="h-[15px] w-[15px]" />
-                        <span className="hidden whitespace-normal break-words text-left text-[12px] font-semibold leading-4 [overflow-wrap:anywhere] lg:inline">
+                        <Icon className="h-[18px] w-[18px]" />
+                        <span className="pointer-events-none absolute left-full ml-2 hidden whitespace-nowrap rounded bg-[#221a14] px-2 py-1 text-[11px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 lg:block">
                           {item.label}
                         </span>
                       </Link>
@@ -220,11 +223,11 @@ export function StandardWorkspaceLayout<TView extends string>({
                         item.disabled ? "cursor-not-allowed opacity-50" : ""
                       ].join(" ")}
                     >
-                      <Icon className="h-[15px] w-[15px]" />
-                      <span className="hidden whitespace-normal break-words text-left text-[12px] font-semibold leading-4 [overflow-wrap:anywhere] lg:inline">
-                        {item.label}
-                      </span>
-                    </button>
+                      <Icon className="h-[18px] w-[18px]" />
+                        <span className="pointer-events-none absolute left-full ml-2 hidden whitespace-nowrap rounded bg-[#221a14] px-2 py-1 text-[11px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 lg:block">
+                          {item.label}
+                        </span>
+                      </button>
                   );
                 })}
               </div>

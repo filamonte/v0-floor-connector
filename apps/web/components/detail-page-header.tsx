@@ -19,31 +19,31 @@ export function DetailPageHeader({
   actions
 }: DetailPageHeaderProps) {
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-7 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0 max-w-3xl space-y-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#a4581a]">
+    <div className="space-y-3">
+      {/* Matches CF detail page header - clean, minimal, white background */}
+      <div className="flex flex-col gap-4 border border-[#e2dcd5] bg-white px-4 py-4 lg:flex-row lg:items-start lg:justify-between sm:px-5">
+        <div className="min-w-0 max-w-3xl">
+          <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#8a7a6c]">
             {eyebrow}
           </p>
-          <div className="space-y-3">
-            <h2 className="text-3xl font-semibold tracking-tight text-[#2b2118] sm:text-[2.4rem]">
-              {title}
-            </h2>
-            <p className="max-w-[65ch] text-sm leading-6 text-[#665446] sm:text-[0.95rem]">
-              {description}
-            </p>
-          </div>
+          <h2 className="mt-1 text-[22px] font-semibold tracking-tight text-[#221a14] sm:text-[24px]">
+            {title}
+          </h2>
+          <p className="mt-2 max-w-[65ch] text-[13px] leading-5 text-[#5f564d]">
+            {description}
+          </p>
         </div>
 
-        <div className="flex flex-col items-start gap-3 lg:max-w-[26rem] lg:items-end">
+        <div className="flex flex-col items-start gap-2 lg:items-end lg:flex-shrink-0">
           <Link
             href={backHref}
-            className="inline-flex items-center rounded-full border border-[#e2d4c5] bg-[#fbf5ee] px-3.5 py-2 text-sm font-medium text-[#5f4d40] transition hover:border-[#caac88] hover:bg-white hover:text-[#2b2118]"
+            className="inline-flex items-center gap-1.5 border border-[#e2dcd5] bg-white px-3 py-2 text-[13px] font-medium text-[#5f564d] transition hover:border-[#d0c4b8] hover:bg-[#faf8f6] hover:text-[#221a14]"
           >
+            <span>&larr;</span>
             {backLabel}
           </Link>
           {actions ? (
-            <div className="flex flex-wrap items-start gap-2.5 lg:justify-end">{actions}</div>
+            <div className="flex flex-wrap items-start gap-2 lg:justify-end">{actions}</div>
           ) : null}
         </div>
       </div>

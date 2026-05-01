@@ -176,13 +176,14 @@ export function ProtectedAppTopNav({
 
   return (
     <div ref={shellRef} className="relative border-b border-[#d9cdc2] bg-white">
-      <div className="grid items-center gap-4 bg-[#2f3d33] px-5 py-1.5 text-white xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+      {/* Sub-header band - matches CF pattern with breadcrumb left, org name center, utility icons right */}
+      <div className="grid items-center gap-4 bg-[#2f3d33] px-5 py-2 text-white xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
         <div className="min-w-0 text-[12px] font-medium text-[#f3e7dc]">
           <ProtectedAppBreadcrumbs organizationName={organizationName} variant="dark" />
         </div>
 
         <div className="hidden min-w-0 justify-center xl:flex">
-          <p className="truncate text-[13px] font-semibold tracking-[0.03em] text-white">
+          <p className="truncate text-[14px] font-semibold tracking-[0.02em] text-white">
             {organizationName}
           </p>
         </div>
@@ -194,12 +195,13 @@ export function ProtectedAppTopNav({
               href={item.href}
               aria-current={isItemActive(item) ? "page" : undefined}
               className={[
-                "inline-flex h-8 items-center rounded-[4px] border px-3 text-[11px] font-semibold uppercase tracking-[0.14em] transition",
+                "inline-flex h-7 items-center gap-1.5 border px-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition",
                 isItemActive(item)
-                  ? "border-[#ef7d32] bg-[#ef7d32]/20 text-white"
-                  : "border-white/14 bg-white/8 text-[#f7e8db] hover:border-[#ef7d32] hover:bg-white/12 hover:text-white"
+                  ? "border-[#ef7d32] bg-[#ef7d32] text-white"
+                  : "border-white/20 bg-white/10 text-[#f7e8db] hover:border-[#ef7d32] hover:bg-[#ef7d32]/20 hover:text-white"
               ].join(" ")}
             >
+              <span className="text-[#ef7d32]">&#9733;</span>
               {item.label}
             </Link>
           ))}
@@ -227,134 +229,105 @@ export function ProtectedAppTopNav({
         </div>
       </div>
 
-      <div className="flex border-t border-white/5 border-b border-[#ebe0d6] 2xl:items-stretch">
-        <div className="flex min-w-0 flex-1 items-center px-6 py-3 2xl:py-0">
+      {/* Main header row - matches CF: Logo | Project Selector | MENU | Quick Links | User */}
+      <div className="flex border-b border-[#ebe0d6] bg-white 2xl:items-stretch">
+        <div className="flex min-w-0 shrink-0 items-center border-r border-[#ebe0d6] px-4 py-2 2xl:py-0">
           <OrganizationBrandLink
             href={homeHref}
             organizationName={organizationName}
             logoUrl={organizationLogoUrl}
             navigationLabel="Dashboard home"
-            className="w-full max-w-[360px] 2xl:max-w-[400px]"
+            className="w-full max-w-[200px] 2xl:max-w-[220px]"
           />
         </div>
 
-        <div className="flex shrink-0 flex-col border-l border-[#ebe0d6] 2xl:min-w-[920px]">
-          <div className="flex flex-wrap items-stretch">
-            <Link
-              href={projectLauncherHref}
-              aria-current={pathname.startsWith("/projects") ? "page" : undefined}
-              className={[
-                "flex min-h-[64px] min-w-[220px] flex-1 items-center justify-between px-4 text-[#221a14] transition 2xl:min-w-[198px] 2xl:flex-none",
-                pathname.startsWith("/projects")
-                  ? "bg-[#fff4e8]"
-                  : "hover:bg-[#fff7f0]"
-              ].join(" ")}
-            >
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a65b25]">
-                  Select a Project
-                </p>
-                <p className="mt-1 text-[13px] font-medium">
-                  {projectLauncherHref === "/projects"
-                    ? "Open project queue"
-                    : "Return to recent project"}
-                </p>
-              </div>
-              <Chevron open={false} />
-            </Link>
-
-            <button
-              type="button"
-              onClick={() => setMenuOpen((open) => !open)}
-              aria-expanded={menuOpen}
-              aria-controls={menuId}
-              className={[
-                "flex min-h-[64px] min-w-[186px] flex-1 items-center justify-between border-l border-[#ebe0d6] px-4 text-left transition 2xl:min-w-[166px] 2xl:flex-none",
-                menuOpen ? "bg-[#f2ebe4] text-[#221a14]" : "text-[#221a14] hover:bg-[#fff7f0]"
-              ].join(" ")}
-            >
-              <div>
-                <p
-                  className={[
-                    "text-[10px] font-semibold uppercase tracking-[0.18em]",
-                    menuOpen ? "text-[#8f5b32]" : "text-[#a65b25]"
-                  ].join(" ")}
-                >
-                  {activeSection ? `Menu - ${activeSection.label}` : "Menu"}
-                </p>
-                <p className="mt-1 text-[13px] font-medium">
-                  {activeItem?.label ?? "Dashboard"}
-                </p>
-              </div>
-              <Chevron open={menuOpen} />
-            </button>
+        {/* Project selector - matches CF pattern */}
+        <Link
+          href={projectLauncherHref}
+          aria-current={pathname.startsWith("/projects") ? "page" : undefined}
+          className={[
+            "flex min-h-[56px] min-w-[180px] shrink-0 items-center justify-between gap-3 border-r border-[#ebe0d6] px-4 text-[#221a14] transition 2xl:min-w-[200px]",
+            pathname.startsWith("/projects")
+              ? "bg-[#fff4e8]"
+              : "hover:bg-[#faf6f2]"
+          ].join(" ")}
+        >
+          <div>
+            <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#8a7a6c]">
+              Select a Project
+            </p>
+            <p className="mt-0.5 text-[13px] font-medium text-[#221a14]">
+              {projectLauncherHref === "/projects"
+                ? "Open project queue"
+                : "Return to project"}
+            </p>
           </div>
+          <Chevron open={false} />
+        </Link>
 
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-[#ebe0d6] px-4 py-2.5">
-            <div className="flex min-w-0 flex-wrap items-center gap-3">
-              <UniversalCreateMenu
-                idBase="top-nav-universal-create-menu"
-                buttonLabel="Quick create"
-                buttonClassName="inline-flex h-10 items-center rounded-[4px] border border-[#ef7d32] bg-[#ef7d32] px-4 py-2 text-[13px] font-semibold text-[#1f140d] transition hover:bg-[#f08b47]"
-              />
-              <ContractorNotificationsCenter notifications={notifications} />
+        {/* MENU dropdown trigger - matches CF pattern */}
+        <button
+          type="button"
+          onClick={() => setMenuOpen((open) => !open)}
+          aria-expanded={menuOpen}
+          aria-controls={menuId}
+          className={[
+            "flex min-h-[56px] min-w-[140px] shrink-0 items-center justify-between gap-3 border-r border-[#ebe0d6] px-4 text-left transition 2xl:min-w-[160px]",
+            menuOpen ? "bg-[#f5f0eb] text-[#221a14]" : "text-[#221a14] hover:bg-[#faf6f2]"
+          ].join(" ")}
+        >
+          <div>
+            <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#8a7a6c]">
+              Menu
+            </p>
+            <p className="mt-0.5 text-[13px] font-medium text-[#221a14]">
+              {activeItem?.label ?? "Dashboard"}
+            </p>
+          </div>
+          <Chevron open={menuOpen} />
+        </button>
+
+        {/* Right side: Quick create, notifications, user info */}
+        <div className="flex flex-1 items-center justify-end gap-4 px-4 py-2">
+          <UniversalCreateMenu
+            idBase="top-nav-universal-create-menu"
+            buttonLabel="Quick create"
+            buttonClassName="inline-flex h-9 items-center gap-1.5 border border-[#ef7d32] bg-[#ef7d32] px-3 text-[12px] font-semibold text-white transition hover:bg-[#d86b28]"
+          />
+          <ContractorNotificationsCenter notifications={notifications} />
+
+          <div className="hidden items-center gap-3 border-l border-[#ebe0d6] pl-4 lg:flex">
+            <div className="min-w-0 text-right">
+              <p className="truncate text-[13px] font-medium text-[#221a14]">{userEmail}</p>
+              <p className="mt-0.5 text-[11px] text-[#9a8b80]">{timestampLabel}</p>
             </div>
-
-            <div className="flex items-center gap-3 border-l border-[#ebe0d6] pl-3">
-              <div className="min-w-0 text-right">
-                <p className="truncate text-[13px] font-semibold text-[#221a14]">{userEmail}</p>
-                <p className="mt-1 text-[11px] text-[#9a8b80]">{timestampLabel}</p>
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#17120f] text-[15px] font-semibold text-[#ffd7bb]">
-                {organizationStatus.charAt(0).toUpperCase()}
-              </div>
+            <div className="flex h-9 w-9 items-center justify-center bg-[#2f3d33] text-[14px] font-semibold text-white">
+              {organizationStatus.charAt(0).toUpperCase()}
             </div>
           </div>
         </div>
       </div>
 
+      {/* Menu mega-dropdown panel - matches CF grouped columns layout */}
       <div
         id={menuId}
         aria-hidden={!menuOpen}
         className={[
-          "overflow-hidden border-t border-[#d9cdc2] bg-white text-[#221a14] shadow-[0_30px_60px_-40px_rgba(34,26,20,0.28)] transition-[max-height,opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          "absolute left-0 right-0 top-full z-50 overflow-hidden border-t border-[#d9cdc2] bg-white text-[#221a14] shadow-[0_20px_40px_-20px_rgba(34,26,20,0.25)] transition-[max-height,opacity,transform] duration-200 ease-out",
           menuOpen
-            ? "max-h-[720px] opacity-100"
-            : "pointer-events-none max-h-0 -translate-y-3 opacity-0"
+            ? "max-h-[600px] opacity-100"
+            : "pointer-events-none max-h-0 -translate-y-2 opacity-0"
         ].join(" ")}
       >
         <div
           className={[
-            "transition duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-            menuOpen ? "translate-y-0" : "-translate-y-2"
+            "transition duration-200 ease-out",
+            menuOpen ? "translate-y-0" : "-translate-y-1"
           ].join(" ")}
         >
-          <div className="border-b border-[#eee2d7] bg-[#fbf6f0] px-6 py-4">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#a65b25]">
-                  Contractor control panel
-                </p>
-                <h3 className="mt-1 text-lg font-semibold text-[#221a14]">
-                  {activeItem ? `${activeItem.label} is active` : "Open a module"}
-                </h3>
-                <p className="mt-1 max-w-3xl text-sm text-[#6f6256]">
-                  Grouped navigation stays aligned across the dashboard launcher,
-                  header menu, and any contextual sidebar.
-                </p>
-              </div>
-              <div className="rounded-[4px] border border-[#e6d9cc] bg-white px-3 py-2 text-right">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#9b6d45]">
-                  Current section
-                </p>
-                <p className="mt-1 text-sm font-semibold text-[#221a14]">
-                  {activeSection?.label ?? "Dashboard"}
-                </p>
-              </div>
-            </div>
-          </div>
 
-          <div className="grid gap-0 xl:grid-cols-5">
+          {/* Grid of grouped module columns - matches CF mega menu */}
+          <div className="grid gap-0 md:grid-cols-3 xl:grid-cols-5">
             {menuSections.map((section, index) => {
               const isSectionActive = activeSection?.id === section.id;
 
@@ -362,33 +335,16 @@ export function ProtectedAppTopNav({
                 <section
                   key={section.id}
                   className={[
-                    "border-b border-[#eee2d7] px-6 py-6 transition-colors xl:min-h-[280px] xl:border-b-0",
-                    index < menuSections.length - 1 ? "xl:border-r xl:border-[#eee2d7]" : "",
+                    "border-b border-[#eee2d7] px-5 py-5 transition-colors md:border-b-0",
+                    index < menuSections.length - 1 ? "md:border-r md:border-[#eee2d7]" : "",
                     isSectionActive ? "bg-[#fffaf5]" : "bg-white"
                   ].join(" ")}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[#8f5b32]">
-                        {section.label}
-                      </h3>
-                      <p className="mt-2 text-xs leading-5 text-[#6f6256]">
-                        {section.description}
-                      </p>
-                    </div>
-                    <span
-                      className={[
-                        "rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]",
-                        isSectionActive
-                          ? "bg-[#221a14] text-[#ffd7bb]"
-                          : "bg-[#f2e7dc] text-[#8f5b32]"
-                      ].join(" ")}
-                    >
-                      {section.items.length} modules
-                    </span>
-                  </div>
+                  <h3 className="text-[13px] font-semibold text-[#221a14]">
+                    {section.label}
+                  </h3>
 
-                  <div className="mt-4 space-y-2">
+                  <div className="mt-3 space-y-0.5">
                     {section.items.map((item) => {
                       const isActive = isItemActive(item);
 
@@ -399,37 +355,21 @@ export function ProtectedAppTopNav({
                           onClick={() => setMenuOpen(false)}
                           aria-current={isActive ? "page" : undefined}
                           className={[
-                            "group block rounded-[8px] border px-3 py-3 transition",
+                            "group flex items-center gap-2 px-2 py-2 text-[13px] transition",
                             isActive
-                              ? "border-[#ef7d32] bg-[#fff4e8] shadow-[inset_0_0_0_1px_rgba(239,125,50,0.16)]"
-                              : "border-transparent text-[#3d342d] hover:border-[#edd9c7] hover:bg-[#fff8f2] hover:text-[#221a14]"
+                              ? "bg-[#fff4e8] font-medium text-[#221a14]"
+                              : "text-[#4d4139] hover:bg-[#faf6f2] hover:text-[#221a14]"
                           ].join(" ")}
                         >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <p
-                                className={[
-                                  "text-[13px] font-semibold",
-                                  isActive ? "text-[#221a14]" : ""
-                                ].join(" ")}
-                              >
-                                {item.label}
-                              </p>
-                              <p className="mt-1 text-xs leading-5 text-[#6f6256]">
-                                {item.description}
-                              </p>
-                            </div>
-                            <span
-                              className={[
-                                "shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]",
-                                item.status === "live"
-                                  ? "bg-[#ecf7ef] text-[#2f6a3e]"
-                                  : "bg-[#f3ebe4] text-[#8f5b32]"
-                              ].join(" ")}
-                            >
-                              {item.status === "live" ? "Live" : "Coming soon"}
-                            </span>
-                          </div>
+                          {isActive ? (
+                            <span className="text-[#ef7d32]">&#9733;</span>
+                          ) : (
+                            <span className="text-[#c5b8ab]">&#8226;</span>
+                          )}
+                          <span>{item.label}</span>
+                          {item.status !== "live" && (
+                            <span className="ml-auto text-[10px] text-[#9a8b80]">Soon</span>
+                          )}
                         </Link>
                       );
                     })}
