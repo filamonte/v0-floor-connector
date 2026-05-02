@@ -76,7 +76,7 @@ export function ChangeOrderQuickCreateForm({
               required
               value={projectId}
               onChange={(event) => setProjectId(event.target.value)}
-              className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+              className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
             >
               <option value="">Select project</option>
               {projects.map((project) => (
@@ -111,7 +111,7 @@ export function ChangeOrderQuickCreateForm({
             <select
               name="contractId"
               defaultValue={defaultContractId ?? ""}
-              className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+              className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
             >
               <option value="">No linked contract</option>
               {visibleContracts.map((contract) => (
@@ -129,7 +129,7 @@ export function ChangeOrderQuickCreateForm({
             <select
               name="invoiceId"
               defaultValue={defaultInvoiceId ?? ""}
-              className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+              className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
             >
               <option value="">No linked invoice</option>
               {visibleInvoices.map((invoice) => (

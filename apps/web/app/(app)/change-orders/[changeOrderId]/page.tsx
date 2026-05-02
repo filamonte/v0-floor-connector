@@ -350,7 +350,7 @@ export default async function ChangeOrderDetailPage({
                   name="projectId"
                   defaultValue={changeOrder.projectId}
                   disabled={!editable}
-                  className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition disabled:bg-slate-50 disabled:text-slate-500 focus:border-[#91a5c6]"
+                  className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition disabled:bg-slate-50 disabled:text-slate-500 focus:border-[#ef7d32]"
                   required
                 >
                   {projects.map((project) => (
@@ -372,7 +372,7 @@ export default async function ChangeOrderDetailPage({
                   defaultValue={changeOrder.priceAdjustment}
                   disabled={!editable}
                   required
-                  className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition disabled:bg-slate-50 disabled:text-slate-500 focus:border-[#91a5c6]"
+                  className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition disabled:bg-slate-50 disabled:text-slate-500 focus:border-[#ef7d32]"
                 />
               </label>
             </div>
@@ -384,7 +384,7 @@ export default async function ChangeOrderDetailPage({
                 defaultValue={changeOrder.title}
                 disabled={!editable}
                 required
-                className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition disabled:bg-slate-50 disabled:text-slate-500 focus:border-[#91a5c6]"
+                className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition disabled:bg-slate-50 disabled:text-slate-500 focus:border-[#ef7d32]"
               />
             </label>
 
@@ -397,7 +397,7 @@ export default async function ChangeOrderDetailPage({
                   name="contractId"
                   defaultValue={changeOrder.contractId ?? ""}
                   disabled={!editable}
-                  className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition disabled:bg-slate-50 disabled:text-slate-500 focus:border-[#91a5c6]"
+                  className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition disabled:bg-slate-50 disabled:text-slate-500 focus:border-[#ef7d32]"
                 >
                   <option value="">No linked contract</option>
                   {visibleContracts.map((contract) => (
@@ -416,7 +416,7 @@ export default async function ChangeOrderDetailPage({
                   name="invoiceId"
                   defaultValue={changeOrder.invoiceId ?? ""}
                   disabled={!editable}
-                  className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition disabled:bg-slate-50 disabled:text-slate-500 focus:border-[#91a5c6]"
+                  className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition disabled:bg-slate-50 disabled:text-slate-500 focus:border-[#ef7d32]"
                 >
                   <option value="">No linked invoice</option>
                   {visibleInvoices.map((invoice) => (
@@ -435,7 +435,7 @@ export default async function ChangeOrderDetailPage({
                 defaultValue={changeOrder.description ?? ""}
                 disabled={!editable}
                 rows={4}
-                className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition disabled:bg-slate-50 disabled:text-slate-500 focus:border-[#91a5c6]"
+                className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition disabled:bg-slate-50 disabled:text-slate-500 focus:border-[#ef7d32]"
                 placeholder="Summarize the commercial intent of the change order."
               />
             </label>
@@ -449,7 +449,7 @@ export default async function ChangeOrderDetailPage({
                 defaultValue={changeOrder.scopeChangeNotes ?? ""}
                 disabled={!editable}
                 rows={7}
-                className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition disabled:bg-slate-50 disabled:text-slate-500 focus:border-[#91a5c6]"
+                className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition disabled:bg-slate-50 disabled:text-slate-500 focus:border-[#ef7d32]"
                 placeholder="Capture the added work, removed work, or field condition shift that changed scope."
               />
             </label>

@@ -59,7 +59,7 @@ Downstream pages should support that hub, not compete with it.
 
 ### D-011 Shared Contractor UI Baseline Is Locked Enough To Build On
 
-The contractor shell now follows the newer top-nav-first, charcoal/orange/light-neutral direction with shared manager wrappers and command bars.
+The contractor shell now follows the newer top-nav-first, black/gray/orange/white direction with shared manager wrappers and command bars.
 Future work should preserve this baseline instead of reopening shell-level styling decisions.
 
 ### D-012 Do Not Reintroduce Module Silos Or Duplicate Entities

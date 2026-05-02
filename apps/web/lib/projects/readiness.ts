@@ -341,6 +341,24 @@ export async function assertProjectContractSigned(input: {
   throw new Error(input.errorMessage);
 }
 
+export async function assertProjectReadinessGate(input: {
+  organizationId: string;
+  projectId: string;
+  errorMessage: string;
+}) {
+  const snapshot = await getProjectFinancialReadinessSnapshot(input);
+
+  if (!snapshot) {
+    throw new Error("Project readiness could not be resolved for this operation.");
+  }
+
+  if (snapshot.isReadyToSchedule) {
+    return snapshot;
+  }
+
+  throw new Error(input.errorMessage);
+}
+
 export async function assertInvoiceCommercialReadiness(
   input: StandardInvoiceReadinessInput
 ) {
@@ -378,3 +396,7 @@ export async function assertStandardInvoiceCommercialReadiness(
     "Standard invoices must follow the commercial handoff. Complete contract, signature, and deposit or financing readiness from the project hub before creating a standard invoice without a job."
   );
 }
+
+// IMPORTANT:
+// Any new project/job-attributed execution workflows MUST enforce this gate.
+// Do not create execution records without passing assertProjectReadinessGate().

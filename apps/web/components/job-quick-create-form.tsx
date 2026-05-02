@@ -33,7 +33,7 @@ export function JobQuickCreateForm({
           <select
             name="projectId"
             defaultValue={initialProjectId ?? ""}
-            className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+            className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
             required
           >
             <option value="" disabled>

@@ -164,31 +164,31 @@ export default async function ChangeOrdersPage({
       description="Track post-contract scope shifts on the same canonical project chain, move them through customer review, and keep approved price adjustments connected to downstream billing."
       summary={
         <div className="grid gap-2 sm:grid-cols-4 xl:grid-cols-4">
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Draft</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Draft</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {draftCount}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Sent</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Sent</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {sentCount}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Approved
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {approvedCount}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Rejected
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {rejectedCount}
             </p>
           </div>
@@ -212,11 +212,11 @@ export default async function ChangeOrdersPage({
               name="q"
               defaultValue={query}
               placeholder="Search title, project, customer, contract, or invoice"
-              className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+              className="min-w-0 flex-1 rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               Search
             </button>
@@ -244,8 +244,8 @@ export default async function ChangeOrdersPage({
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
-                  ? "bg-[#233a64] text-white"
-                  : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
+                  ? "bg-[#171717] text-white"
+                  : "border border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"
               ].join(" ")}
             >
               <span>{view.label}</span>
@@ -269,7 +269,7 @@ export default async function ChangeOrdersPage({
                 compose: "1"
               }) + "#change-order-create"
             }
-            className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
+            className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
           >
             New change order
           </Link>
@@ -290,8 +290,8 @@ export default async function ChangeOrdersPage({
             </div>
           ) : null}
 
-          <section className="border border-[#dde3eb] bg-white">
-            <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
+          <section className="border border-[#d6d6d6] bg-white">
+            <div className="border-b border-[#e5e5e5] px-5 py-4 sm:px-6">
               <div className="flex items-end justify-between gap-4">
                 <div className="hidden grid-cols-[minmax(0,1.2fr)_1fr_150px_190px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
                   <span>Change order</span>

@@ -111,9 +111,9 @@ export function InventoryOperationsView({
         <SummaryStrip label="Recent adjustments" value={inventoryTransactions.length} />
       </section>
 
-      <section className="border border-[#dde3eb] bg-white">
-        <div className="border-b border-[#e5ebf2] px-5 py-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
+      <section className="border border-[#d6d6d6] bg-white">
+        <div className="border-b border-[#e5e5e5] px-5 py-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
             Inventory operations
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-500">
@@ -125,7 +125,7 @@ export function InventoryOperationsView({
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse">
             <thead>
-              <tr className="border-b border-[#e6ebf2] bg-[#f8fafc] text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              <tr className="border-b border-[#e5e5e5] bg-[#f8f8f8] text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                 <th className="px-4 py-3">Item</th>
                 <th className="px-4 py-3">On hand</th>
                 <th className="px-4 py-3">Reorder point</th>
@@ -187,7 +187,7 @@ export function InventoryOperationsView({
                         setSelectedItem(row.catalogItem);
                         setDrawerOpen(true);
                       }}
-                      className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
+                      className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
                     >
                       {row.catalogItem ? "Adjust" : "Missing item"}
                     </button>
@@ -237,11 +237,11 @@ export function InventoryOperationsView({
 
 function SummaryStrip({ label, value }: { label: string; value: number }) {
   return (
-    <div className="border border-[#dde3eb] bg-white px-4 py-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#75859f]">
+    <div className="border border-[#d6d6d6] bg-white px-4 py-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
         {label}
       </p>
-      <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{value}</p>
+      <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">{value}</p>
     </div>
   );
 }

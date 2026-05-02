@@ -51,10 +51,10 @@ export function FinancialSummaryBar({
               <FileSpreadsheet className="h-5 w-5" />
             </span>
             <div>
-              <span className="block text-[15px] font-semibold text-[#23395d]">
+              <span className="block text-[15px] font-semibold text-[#171717]">
                 Financial Summary
               </span>
-              <span className="text-[12px] text-[#7c8ba3]">
+              <span className="text-[12px] text-[#666666]">
                 {visibleItemCount} visible estimate item{visibleItemCount === 1 ? "" : "s"}
               </span>
             </div>
@@ -76,52 +76,52 @@ export function FinancialSummaryBar({
             <span className={`${ICON_WRAPPER_CLASS} bg-[#ffe5dc] text-[#ef7d32]`}>
               <CalendarDays className="h-4 w-4" />
             </span>
-            <span className={`${ICON_WRAPPER_CLASS} bg-[#f1f4f8] text-[#607492]`}>
+            <span className={`${ICON_WRAPPER_CLASS} bg-[#f1f4f8] text-[#5f5f5f]`}>
               <Settings2 className="h-4 w-4" />
             </span>
           </div>
 
-          <div className="text-right text-[16px] font-semibold text-[#23395d]">
+          <div className="text-right text-[16px] font-semibold text-[#171717]">
             {totalLabel}
           </div>
         </div>
 
         <div className="grid gap-3 text-[12px] text-[#6d7d95] md:grid-cols-3 xl:grid-cols-7">
-          <div className="rounded-[8px] bg-[#f7f8fb] px-3 py-2">
+          <div className="rounded-[8px] bg-[#f8f8f8] px-3 py-2">
             <div className="uppercase tracking-[0.12em] text-[#8a98ad]">Subtotal</div>
-            <div className="mt-1 text-[16px] font-semibold text-[#23395d]">{subtotalAmount}</div>
+            <div className="mt-1 text-[16px] font-semibold text-[#171717]">{subtotalAmount}</div>
           </div>
-          <div className="rounded-[8px] bg-[#f7f8fb] px-3 py-2">
+          <div className="rounded-[8px] bg-[#f8f8f8] px-3 py-2">
             <div className="uppercase tracking-[0.12em] text-[#8a98ad]">Markup</div>
-            <div className="mt-1 text-[16px] font-semibold text-[#23395d]">
+            <div className="mt-1 text-[16px] font-semibold text-[#171717]">
               {showMarkup ? markupAmount : "Hidden"}
             </div>
           </div>
-          <div className="rounded-[8px] bg-[#f7f8fb] px-3 py-2">
+          <div className="rounded-[8px] bg-[#f8f8f8] px-3 py-2">
             <div className="uppercase tracking-[0.12em] text-[#8a98ad]">Taxable</div>
-            <div className="mt-1 text-[16px] font-semibold text-[#23395d]">
+            <div className="mt-1 text-[16px] font-semibold text-[#171717]">
               {taxableSubtotal}
             </div>
           </div>
-          <div className="rounded-[8px] bg-[#f7f8fb] px-3 py-2">
+          <div className="rounded-[8px] bg-[#f8f8f8] px-3 py-2">
             <div className="uppercase tracking-[0.12em] text-[#8a98ad]">Exempt</div>
-            <div className="mt-1 text-[16px] font-semibold text-[#23395d]">
+            <div className="mt-1 text-[16px] font-semibold text-[#171717]">
               {exemptSubtotal}
             </div>
           </div>
-          <div className="rounded-[8px] bg-[#f7f8fb] px-3 py-2">
+          <div className="rounded-[8px] bg-[#f8f8f8] px-3 py-2">
             <div className="uppercase tracking-[0.12em] text-[#8a98ad]">Tax</div>
-            <div className="mt-1 text-[16px] font-semibold text-[#23395d]">{taxAmount}</div>
+            <div className="mt-1 text-[16px] font-semibold text-[#171717]">{taxAmount}</div>
           </div>
-          <div className="rounded-[8px] bg-[#f7f8fb] px-3 py-2">
+          <div className="rounded-[8px] bg-[#f8f8f8] px-3 py-2">
             <div className="uppercase tracking-[0.12em] text-[#8a98ad]">Discount</div>
-            <div className="mt-1 text-[16px] font-semibold text-[#23395d]">
+            <div className="mt-1 text-[16px] font-semibold text-[#171717]">
               {renderAdjustment(discountAmount)}
             </div>
           </div>
           <div className="rounded-[8px] bg-[#fff1e4] px-3 py-2">
             <div className="uppercase tracking-[0.12em] text-[#b26a32]">Total</div>
-            <div className="mt-1 text-[16px] font-semibold text-[#23395d]">{totalAmount}</div>
+            <div className="mt-1 text-[16px] font-semibold text-[#171717]">{totalAmount}</div>
           </div>
         </div>
       </div>

@@ -235,7 +235,7 @@ function ReadonlyValue({
   return (
     <div className={className}>
       <span className="mb-1 block text-sm font-medium text-slate-800">{label}</span>
-      <div className="min-h-9 border border-[#d7dce4] bg-[#f7f8fa] px-3 py-2 text-sm text-slate-900">
+      <div className="min-h-9 border border-[#d6d6d6] bg-[#f7f8fa] px-3 py-2 text-sm text-slate-900">
         {value}
       </div>
     </div>
@@ -509,10 +509,10 @@ function WorkspaceSection({
   return (
     <section
       id={id}
-      className="border-t border-[#dfe4ec] bg-white px-4 py-2.5"
+      className="border-t border-[#d6d6d6] bg-white px-4 py-2.5"
     >
-      <div className="border-b border-[#e5ebf2] pb-1.5">
-        <h2 className="text-[16px] font-semibold tracking-tight text-[#17243b]">{title}</h2>
+      <div className="border-b border-[#e5e5e5] pb-1.5">
+        <h2 className="text-[16px] font-semibold tracking-tight text-[#171717]">{title}</h2>
         {description ? (
           <p className="mt-1 max-w-3xl text-sm leading-5 text-slate-500">{description}</p>
         ) : null}
@@ -755,7 +755,7 @@ export function InvoiceForm({
                 name="projectId"
                 value={selectedProjectId}
                 onChange={(event) => handleProjectChange(event.target.value)}
-                className="h-9 w-full border border-[#cfd6e0] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+                className="h-9 w-full border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
                 required
               >
                 <option value="" disabled>
@@ -780,7 +780,7 @@ export function InvoiceForm({
                 onChange={(event) =>
                   handleWorkflowRoleChange(event.target.value as InvoiceWorkflowRole)
                 }
-                className="h-9 w-full border border-[#cfd6e0] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+                className="h-9 w-full border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
                 required
               >
                 {invoiceWorkflowRolesList.map((role) => (
@@ -794,11 +794,11 @@ export function InvoiceForm({
             {invoice && isDerivedStatus(invoice.status) ? (
               <>
                 <input type="hidden" name="status" value={invoice.status} />
-                <div className="border border-[#d7dce4] bg-[#f7f8fa] px-3 py-2.5">
+                <div className="border border-[#d6d6d6] bg-[#f7f8fa] px-3 py-2.5">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                     Current status
                   </p>
-                  <p className="mt-1 text-[15px] font-semibold capitalize text-[#17243b]">
+                  <p className="mt-1 text-[15px] font-semibold capitalize text-[#171717]">
                     {formatStatusLabel(derivedStatus)}
                   </p>
                 </div>
@@ -809,7 +809,7 @@ export function InvoiceForm({
                 <select
                   name="status"
                   defaultValue={invoice?.status ?? "draft"}
-                  className="h-9 w-full border border-[#cfd6e0] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+                  className="h-9 w-full border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
                   required
                 >
                   {editableInvoiceStatusesList.map((status) => (
@@ -841,7 +841,7 @@ export function InvoiceForm({
                     )
                   );
                 }}
-                className="h-9 w-full border border-[#cfd6e0] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+                className="h-9 w-full border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
               >
                 <option value="">No linked estimate</option>
                 {visibleEstimates.map((estimate) => (
@@ -860,7 +860,7 @@ export function InvoiceForm({
                 value={selectedJobId}
                 onChange={(event) => setSelectedJobId(event.target.value)}
                 disabled={workflowRole === "deposit"}
-                className="h-9 w-full border border-[#cfd6e0] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+                className="h-9 w-full border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
               >
                 <option value="">No linked job</option>
                 {visibleJobs.map((job) => (
@@ -893,7 +893,7 @@ export function InvoiceForm({
           </div>
 
           <div className="space-y-3">
-            <div className="border border-[#d7dce4] bg-[#f7f8fa] px-3 py-2.5">
+            <div className="border border-[#d6d6d6] bg-[#f7f8fa] px-3 py-2.5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Financial defaults
               </p>
@@ -917,7 +917,7 @@ export function InvoiceForm({
               </dl>
             </div>
 
-            <div className="border border-[#d7dce4] bg-[#f7f8fa] px-3 py-2.5">
+            <div className="border border-[#d6d6d6] bg-[#f7f8fa] px-3 py-2.5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Calculated totals
               </p>
@@ -961,7 +961,7 @@ export function InvoiceForm({
       >
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_320px]">
           <div className="space-y-4">
-            <div className="border border-[#d7dce4] bg-[#f7f8fa] px-3 py-3">
+            <div className="border border-[#d6d6d6] bg-[#f7f8fa] px-3 py-3">
               <div className="grid gap-3 md:grid-cols-2">
                 <label className="block">
                   <span className="mb-2 block text-sm font-medium text-slate-800">
@@ -972,7 +972,7 @@ export function InvoiceForm({
                     onChange={(event) =>
                       setBaseSourceType(event.target.value as BaseSourceType)
                     }
-                    className="h-9 w-full border border-[#cfd6e0] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+                    className="h-9 w-full border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
                   >
                     {invoiceBaseSourceTypesList.map((sourceType) => (
                       <option key={sourceType} value={sourceType}>
@@ -1005,7 +1005,7 @@ export function InvoiceForm({
             ) : null}
 
             {baseSourceType === "sov_items" ? (
-              <div className="space-y-3 border border-[#dfe4ec] bg-white p-3">
+              <div className="space-y-3 border border-[#d6d6d6] bg-white p-3">
                 <div>
                   <h3 className="text-base font-semibold text-slate-950">Selected SOV lines</h3>
                   <p className="mt-1 text-sm leading-5 text-slate-600">
@@ -1048,7 +1048,7 @@ export function InvoiceForm({
             ) : null}
 
             {baseSourceType === "change_order_snapshot_items" ? (
-              <div className="space-y-3 border border-[#dfe4ec] bg-white p-3">
+              <div className="space-y-3 border border-[#d6d6d6] bg-white p-3">
                 <div>
                   <h3 className="text-base font-semibold text-slate-950">
                     Approved change-order items
@@ -1092,7 +1092,7 @@ export function InvoiceForm({
               </div>
             ) : null}
 
-            <div className="space-y-3 border border-[#dfe4ec] bg-white p-3">
+            <div className="space-y-3 border border-[#d6d6d6] bg-white p-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <h3 className="text-base font-semibold text-slate-950">
@@ -1107,7 +1107,7 @@ export function InvoiceForm({
                   <select
                     value={catalogItemToAdd}
                     onChange={(event) => setCatalogItemToAdd(event.target.value)}
-                    className="h-9 min-w-0 flex-1 border border-[#cfd6e0] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+                    className="h-9 min-w-0 flex-1 border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
                   >
                     <option value="">Select a catalog item</option>
                     {manualCatalogItemOptions.map((item) => (
@@ -1120,7 +1120,7 @@ export function InvoiceForm({
                   <button
                     type="button"
                     onClick={addManualCatalogItem}
-                    className="inline-flex h-9 items-center justify-center border border-[#cfd6e0] bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-[#f0f3f7]"
+                    className="inline-flex h-9 items-center justify-center border border-[#d6d6d6] bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-[#f8f8f8]"
                   >
                     Add manual item
                   </button>
@@ -1163,7 +1163,7 @@ export function InvoiceForm({
                                 )
                               )
                             }
-                            className="h-9 w-full border border-[#cfd6e0] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+                            className="h-9 w-full border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
                           />
                         </label>
                         <button
@@ -1173,7 +1173,7 @@ export function InvoiceForm({
                               current.filter((entry) => entry.key !== item.key)
                             )
                           }
-                          className="inline-flex h-9 items-center justify-center border border-[#cfd6e0] bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-[#f0f3f7]"
+                          className="inline-flex h-9 items-center justify-center border border-[#d6d6d6] bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-[#f8f8f8]"
                         >
                           Remove
                         </button>
@@ -1188,7 +1188,7 @@ export function InvoiceForm({
               )}
             </div>
 
-            <div className="space-y-3 border border-[#dfe4ec] bg-white p-3">
+            <div className="space-y-3 border border-[#d6d6d6] bg-white p-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h3 className="text-base font-semibold text-slate-950">
@@ -1201,7 +1201,7 @@ export function InvoiceForm({
                 <button
                   type="button"
                   onClick={addExplicitAdjustment}
-                  className="inline-flex h-9 items-center justify-center border border-[#cfd6e0] bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-[#f0f3f7]"
+                  className="inline-flex h-9 items-center justify-center border border-[#d6d6d6] bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-[#f8f8f8]"
                 >
                   Add adjustment
                 </button>
@@ -1224,7 +1224,7 @@ export function InvoiceForm({
                           )
                         }
                         placeholder="Adjustment name"
-                        className="h-9 border border-[#cfd6e0] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+                        className="h-9 border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
                       />
                       <input
                         type="number"
@@ -1240,7 +1240,7 @@ export function InvoiceForm({
                           )
                         }
                         placeholder="Amount"
-                        className="h-9 border border-[#cfd6e0] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+                        className="h-9 border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
                       />
                       <textarea
                         value={item.description}
@@ -1255,7 +1255,7 @@ export function InvoiceForm({
                         }
                         rows={3}
                         placeholder="Optional adjustment note"
-                        className="md:col-span-2 w-full border border-[#cfd6e0] bg-white px-3 py-2 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#d8731f]"
+                        className="md:col-span-2 w-full border border-[#d6d6d6] bg-white px-3 py-2 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#d8731f]"
                       />
                       <div className="md:col-span-2">
                         <button
@@ -1265,7 +1265,7 @@ export function InvoiceForm({
                               current.filter((entry) => entry.key !== item.key)
                             )
                           }
-                          className="inline-flex h-9 items-center justify-center border border-[#cfd6e0] bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-[#f0f3f7]"
+                          className="inline-flex h-9 items-center justify-center border border-[#d6d6d6] bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-[#f8f8f8]"
                         >
                           Remove adjustment
                         </button>
@@ -1290,7 +1290,7 @@ export function InvoiceForm({
               <button
                 type="button"
                 disabled
-                className="inline-flex h-8 items-center justify-center border border-[#cfd6e0] bg-white px-3 text-sm font-medium text-slate-700"
+                className="inline-flex h-8 items-center justify-center border border-[#d6d6d6] bg-white px-3 text-sm font-medium text-slate-700"
               >
                 Snapshot review
               </button>
@@ -1299,11 +1299,11 @@ export function InvoiceForm({
             <div className="space-y-3">
               {invoice?.lineItems && invoice.lineItems.length > 0 ? (
                 invoice.lineItems.map((lineItem, index) => (
-                  <div key={lineItem.id} className="border border-[#dfe4ec] bg-white p-2.5">
+                  <div key={lineItem.id} className="border border-[#d6d6d6] bg-white p-2.5">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <p className="text-sm font-semibold text-slate-900">Line item {index + 1}</p>
                       <div className="flex items-center gap-3">
-                        <span className="inline-flex border border-[#d7dce4] bg-[#f7f8fa] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                        <span className="inline-flex border border-[#d6d6d6] bg-[#f7f8fa] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600">
                           {getLineageBadge(lineItem)}
                         </span>
                         <span className="text-sm font-medium text-slate-600">
@@ -1350,7 +1350,7 @@ export function InvoiceForm({
           </div>
 
           <div className="space-y-3">
-            <div className="border border-[#d7dce4] bg-[#f7f8fa] px-3 py-2.5">
+            <div className="border border-[#d6d6d6] bg-[#f7f8fa] px-3 py-2.5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Totals
               </p>
@@ -1384,7 +1384,7 @@ export function InvoiceForm({
               </dl>
             </div>
 
-            <div className="border border-[#dfe4ec] bg-white px-3 py-2.5 text-sm leading-5 text-slate-500">
+            <div className="border border-[#d6d6d6] bg-white px-3 py-2.5 text-sm leading-5 text-slate-500">
               Stored totals are recalculated on the server from canonical line items, tax snapshots, retainage, and payment records.
             </div>
 
@@ -1394,7 +1394,7 @@ export function InvoiceForm({
               </div>
             ) : null}
 
-            <div className="border border-[#dfe4ec] bg-white px-3 py-2.5 text-sm leading-5 text-slate-500">
+            <div className="border border-[#d6d6d6] bg-white px-3 py-2.5 text-sm leading-5 text-slate-500">
               Current builder state: {formatBaseSourceLabel(baseSourceType)} plus{" "}
               {manualCatalogItems.length} manual item
               {manualCatalogItems.length === 1 ? "" : "s"} and {explicitAdjustments.length} explicit
@@ -1420,7 +1420,7 @@ export function InvoiceForm({
             onChange={(event) => setDiscountAmount(event.target.value)}
             required
           />
-          <div className="border border-[#d7dce4] bg-[#f7f8fa] px-3 py-2.5 text-sm leading-5 text-slate-600">
+          <div className="border border-[#d6d6d6] bg-[#f7f8fa] px-3 py-2.5 text-sm leading-5 text-slate-600">
             Tax comes from organization settings unless the customer is exempt. Retainage defaults come from the customer profile and remain part of the same canonical invoice record.
           </div>
         </div>
@@ -1441,7 +1441,7 @@ export function InvoiceForm({
         title="Payments"
         description="Payment history remains canonical and downstream, but it should not overshadow invoice building."
       >
-        <div className="border border-[#d7dce4] bg-[#f7f8fa] px-3 py-3">
+        <div className="border border-[#d6d6d6] bg-[#f7f8fa] px-3 py-3">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-medium text-slate-900">Recorded payments</p>
             <p className="text-base font-semibold text-slate-950">
@@ -1465,7 +1465,7 @@ export function InvoiceForm({
             name="notes"
             defaultValue={getValue(invoice?.notes)}
             rows={6}
-            className="w-full border border-[#cfd6e0] bg-white px-3 py-2 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#d8731f]"
+            className="w-full border border-[#d6d6d6] bg-white px-3 py-2 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#d8731f]"
             placeholder="Optional notes for the invoice"
           />
         </label>

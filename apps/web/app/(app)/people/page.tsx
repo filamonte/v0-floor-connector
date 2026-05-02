@@ -144,17 +144,17 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
       description="Manage the shared workforce directory for employees and vendor-linked subcontractor workers before time, compliance, and assignment workflows deepen. Customer recipient contacts stay on customer records, not here."
       summary={
         <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-3">
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Employees</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{employeeCount}</p>
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Employees</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">{employeeCount}</p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Subcontractors</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{subcontractorCount}</p>
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Subcontractors</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">{subcontractorCount}</p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Active</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">{activeCount}</p>
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Active</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">{activeCount}</p>
           </div>
         </div>
       }
@@ -173,11 +173,11 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
               name="q"
               defaultValue={query}
               placeholder="Search workforce person, title, trade, vendor, or contact"
-              className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+              className="min-w-0 flex-1 rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               Search
             </button>
@@ -201,8 +201,8 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
-                  ? "bg-[#233a64] text-white"
-                  : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
+                  ? "bg-[#171717] text-white"
+                  : "border border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"
               ].join(" ")}
             >
               <span>{peopleView.label}</span>
@@ -220,7 +220,7 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
         actionSlot: (
           <Link
             href={buildPeopleHref({ q: query, view, compose: "1" }) + "#person-create"}
-            className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
+            className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
           >
             New workforce person
           </Link>
@@ -241,8 +241,8 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
             </div>
           ) : null}
 
-          <section className="border border-[#dde3eb] bg-white">
-            <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
+          <section className="border border-[#d6d6d6] bg-white">
+            <div className="border-b border-[#e5e5e5] px-5 py-4 sm:px-6">
               <div className="flex items-end justify-between gap-4">
                 <div className="hidden grid-cols-[minmax(0,1.2fr)_220px_180px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
                   <span>Person</span>
@@ -295,7 +295,7 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
                         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
                           Compliance
                         </p>
-                        <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                        <span className="inline-flex rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
                           {complianceCountByPersonId.get(person.id) ?? 0} record
                           {(complianceCountByPersonId.get(person.id) ?? 0) === 1 ? "" : "s"}
                         </span>

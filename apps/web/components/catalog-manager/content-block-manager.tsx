@@ -81,16 +81,16 @@ export function ContentBlockManager({
   }
 
   return (
-    <section className="space-y-4 rounded-[22px] border border-[#d8e0eb] bg-white p-5 shadow-[0_18px_50px_-45px_rgba(15,23,42,0.35)]">
+    <section className="space-y-4 rounded-[22px] border border-[#d6d6d6] bg-white p-5 shadow-[0_18px_50px_-45px_rgba(15,23,42,0.35)]">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#607492]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5f5f5f]">
             Reusable Content Blocks
           </p>
-          <h3 className="mt-2 text-[1.5rem] font-semibold tracking-tight text-[#17243b]">
+          <h3 className="mt-2 text-[1.5rem] font-semibold tracking-tight text-[#171717]">
             Scope, terms, inclusions, and exclusions
           </h3>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#5f7190]">
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#5f5f5f]">
             Keep estimate language reusable without building a second template system. These blocks
             are insertable estimating content, while workflow settings remain the source for default
             starting content.
@@ -100,28 +100,28 @@ export function ContentBlockManager({
           <button
             type="button"
             onClick={() => openDrawer(null, "terms")}
-            className="rounded-full border border-[#d7deea] bg-white px-4 py-2 text-sm font-medium text-[#28456f]"
+            className="rounded-full border border-[#d6d6d6] bg-white px-4 py-2 text-sm font-medium text-[#2a2a2a]"
           >
             New Terms Block
           </button>
           <button
             type="button"
             onClick={() => openDrawer(null, "scope")}
-            className="rounded-full bg-[#1f5fd6] px-4 py-2 text-sm font-medium text-white"
+            className="rounded-full bg-[#ef7d32] px-4 py-2 text-sm font-medium text-white"
           >
             New Scope Block
           </button>
           <button
             type="button"
             onClick={() => openDrawer(null, "inclusion")}
-            className="rounded-full border border-[#d7deea] bg-white px-4 py-2 text-sm font-medium text-[#28456f]"
+            className="rounded-full border border-[#d6d6d6] bg-white px-4 py-2 text-sm font-medium text-[#2a2a2a]"
           >
             New Inclusion Block
           </button>
           <button
             type="button"
             onClick={() => openDrawer(null, "exclusion")}
-            className="rounded-full border border-[#d7deea] bg-white px-4 py-2 text-sm font-medium text-[#28456f]"
+            className="rounded-full border border-[#d6d6d6] bg-white px-4 py-2 text-sm font-medium text-[#2a2a2a]"
           >
             New Exclusion Block
           </button>
@@ -161,10 +161,10 @@ export function ContentBlockManager({
         </select>
       </div>
 
-      <div className="overflow-hidden rounded-[18px] border border-[#d8e0eb]">
+      <div className="overflow-hidden rounded-[18px] border border-[#d6d6d6]">
         <table className="min-w-full border-collapse">
           <thead>
-            <tr className="bg-[#f6f8fc] text-left text-[11px] uppercase tracking-[0.12em] text-[#7c8ba3]">
+            <tr className="bg-[#f8f8f8] text-left text-[11px] uppercase tracking-[0.12em] text-[#666666]">
               <th className="px-3 py-3">Type</th>
               <th className="px-3 py-3">Title</th>
               <th className="px-3 py-3">Status</th>
@@ -174,11 +174,11 @@ export function ContentBlockManager({
           </thead>
           <tbody>
             {filteredBlocks.map((block) => (
-              <tr key={block.id} className="border-t border-[#edf1f6] text-sm text-[#334a70]">
+              <tr key={block.id} className="border-t border-[#e5e5e5] text-sm text-[#2a2a2a]">
                 <td className="px-3 py-3 capitalize">{block.blockType}</td>
                 <td className="px-3 py-3 font-medium">{block.title}</td>
                 <td className="px-3 py-3 capitalize">{block.status}</td>
-                <td className="px-3 py-3 text-[#6f8098]">
+                <td className="px-3 py-3 text-[#666666]">
                   <div
                     className="line-clamp-2 max-w-[420px]"
                     dangerouslySetInnerHTML={{ __html: block.contentHtml }}
@@ -189,7 +189,7 @@ export function ContentBlockManager({
                     <button
                       type="button"
                       onClick={() => openDrawer(block)}
-                      className="rounded-full border border-[#d7deea] bg-white px-3 py-2 text-xs font-medium text-[#28456f]"
+                      className="rounded-full border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-medium text-[#2a2a2a]"
                     >
                       Edit
                     </button>
@@ -207,7 +207,7 @@ export function ContentBlockManager({
                       <input type="hidden" name="sortOrder" value={block.sortOrder} />
                       <button
                         type="submit"
-                        className="rounded-full border border-[#d7deea] bg-white px-3 py-2 text-xs font-medium text-[#28456f]"
+                        className="rounded-full border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-medium text-[#2a2a2a]"
                       >
                         {block.status === "active" ? "Archive" : "Reactivate"}
                       </button>
@@ -221,27 +221,27 @@ export function ContentBlockManager({
       </div>
 
       {drawerState ? (
-        <div className="fixed inset-0 z-50 flex justify-end bg-[#122033]/55">
+        <div className="fixed inset-0 z-50 flex justify-end bg-[#0f0f0f]/55">
           <button
             type="button"
             onClick={closeDrawer}
             className="absolute inset-0"
             aria-label="Close content block drawer"
           />
-          <aside className="relative z-10 flex h-full w-full max-w-[860px] flex-col overflow-y-auto border-l border-[#d6dce6] bg-[#f8fbff] shadow-[-32px_0_80px_-48px_rgba(15,23,42,0.6)]">
-            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-[#dde5ef] bg-white px-6 py-5">
+          <aside className="relative z-10 flex h-full w-full max-w-[860px] flex-col overflow-y-auto border-l border-[#d6d6d6] bg-[#f8f8f8] shadow-[-32px_0_80px_-48px_rgba(15,23,42,0.6)]">
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-[#d6d6d6] bg-white px-6 py-5">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#486180]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                   Content Block
                 </p>
-                <h3 className="mt-2 text-[1.85rem] font-semibold tracking-[-0.02em] text-[#183153]">
+                <h3 className="mt-2 text-[1.85rem] font-semibold tracking-[-0.02em] text-[#171717]">
                   {drawerState.block ? `Edit ${drawerState.block.title}` : "Create reusable content"}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={closeDrawer}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#d7e0ea] bg-white text-[13px] font-medium text-[#4b5d75]"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#d6d6d6] bg-white text-[13px] font-medium text-[#4f4f4f]"
               >
                 X
               </button>
@@ -257,7 +257,7 @@ export function ContentBlockManager({
                 value={drawerState.block?.sortOrder ?? 0}
               />
 
-              <div className="rounded-[22px] border border-[#dde5ef] bg-white p-5">
+              <div className="rounded-[22px] border border-[#d6d6d6] bg-white p-5">
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="block">
                     <span className="mb-2 block text-sm font-medium text-slate-800">Type</span>
@@ -295,7 +295,7 @@ export function ContentBlockManager({
                 </div>
               </div>
 
-              <div className="rounded-[22px] border border-[#dde5ef] bg-white p-5">
+              <div className="rounded-[22px] border border-[#d6d6d6] bg-white p-5">
                 <p className="mb-3 text-sm font-medium text-slate-800">Shared editor</p>
                 <RichTextEditor
                   label="Content"
@@ -309,13 +309,13 @@ export function ContentBlockManager({
                 <button
                   type="button"
                   onClick={closeDrawer}
-                  className="rounded-full border border-[#d7deea] bg-white px-4 py-2 text-sm font-medium text-[#28456f]"
+                  className="rounded-full border border-[#d6d6d6] bg-white px-4 py-2 text-sm font-medium text-[#2a2a2a]"
                 >
                   Close
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full bg-[#1f5fd6] px-4 py-2 text-sm font-medium text-white"
+                  className="rounded-full bg-[#ef7d32] px-4 py-2 text-sm font-medium text-white"
                 >
                   Save Block
                 </button>

@@ -74,15 +74,15 @@ export function FilesSection({
 
   return (
     <section className="border-t border-[#e6e9ef] bg-white">
-      <div className="border-b border-[#e6e9ef] bg-[#f7f8fb] px-4 py-3">
-        <div className="flex items-center gap-3 text-[15px] font-semibold text-[#23395d]">
-          <FolderOpen className="h-4 w-4 text-[#607492]" />
+      <div className="border-b border-[#e6e9ef] bg-[#f8f8f8] px-4 py-3">
+        <div className="flex items-center gap-3 text-[15px] font-semibold text-[#171717]">
+          <FolderOpen className="h-4 w-4 text-[#5f5f5f]" />
           <h2>Files</h2>
         </div>
       </div>
 
       <div className="p-4">
-        <label className="flex h-[102px] w-[130px] cursor-pointer items-center justify-center border border-dashed border-[#d4dae5] bg-[#fbfcfe] text-[#b8c1d2] transition hover:border-[#f4812a] hover:text-[#f4812a]">
+        <label className="flex h-[102px] w-[130px] cursor-pointer items-center justify-center border border-dashed border-[#d4dae5] bg-[#f8f8f8] text-[#b8c1d2] transition hover:border-[#f4812a] hover:text-[#f4812a]">
           <Plus className="h-8 w-8" />
           <input
             ref={fileInputRef}
@@ -101,7 +101,7 @@ export function FilesSection({
           {visibleExistingAttachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="relative flex h-[110px] w-[140px] flex-col justify-between border border-[#e3e7ee] bg-white p-3 text-xs text-slate-500"
+              className="relative flex h-[110px] w-[140px] flex-col justify-between border border-[#d6d6d6] bg-white p-3 text-xs text-slate-500"
             >
               <div className="flex items-start justify-between gap-2">
                 {isImageMimeType(attachment.mimeType) ? (
@@ -112,7 +112,7 @@ export function FilesSection({
                 <button
                   type="button"
                   onClick={() => onRemoveExistingAttachment(attachment.id)}
-                  className="text-[#8b99b0] hover:text-rose-600"
+                  className="text-[#777777] hover:text-rose-600"
                   aria-label={`Remove ${attachment.fileName}`}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -124,7 +124,7 @@ export function FilesSection({
                   href={attachment.downloadUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-[#1f5fd6] hover:underline"
+                  className="inline-flex items-center gap-1 text-[#ef7d32] hover:underline"
                 >
                   <Download className="h-3.5 w-3.5" />
                   <span>Open</span>
@@ -138,7 +138,7 @@ export function FilesSection({
           {pendingAttachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="relative flex h-[110px] w-[140px] flex-col justify-between border border-[#d9e6ff] bg-[#f8fbff] p-3 text-xs text-slate-500"
+              className="relative flex h-[110px] w-[140px] flex-col justify-between border border-[#d9e6ff] bg-[#f8f8f8] p-3 text-xs text-slate-500"
             >
               <div className="flex items-start justify-between gap-2">
                 {isImageMimeType(attachment.file.type) ? (
@@ -149,7 +149,7 @@ export function FilesSection({
                 <button
                   type="button"
                   onClick={() => onRemovePendingAttachment(attachment.id)}
-                  className="text-[#8b99b0] hover:text-rose-600"
+                  className="text-[#777777] hover:text-rose-600"
                   aria-label={`Remove ${attachment.file.name}`}
                 >
                   <Trash2 className="h-4 w-4" />

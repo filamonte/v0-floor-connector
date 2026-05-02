@@ -23,7 +23,7 @@ The pass is about clarity, layout, and interaction patterns only. It must not ch
 ## Design Goals
 
 - Preserve the top-nav-first contractor shell while making it work with more modules.
-- Keep the dashboard/header visual direction: charcoal or dark-neutral framing, orange action emphasis, white/warm-neutral work surfaces, compact operational density.
+- Keep the dashboard/header visual direction: black or near-black framing, orange action emphasis, white/warm-neutral work surfaces, compact operational density.
 - Improve project-centered continuity without turning Project into a separate app shell.
 - Make project quick create and estimate quick create scale past small test data.
 - Make project detail easier to scan by introducing contextual workspace navigation inside the project page.
@@ -348,7 +348,8 @@ Visual guidance:
 - no nested cards inside cards.
 - no marketing hero layouts.
 - no blue-heavy manager chrome.
-- preserve FloorConnector charcoal/orange/light-neutral direction.
+- preserve FloorConnector black/gray/orange/white direction.
+- reserve green/emerald for semantic status only, not primary chrome.
 
 ## What Should Be Included In A v0 Prompt
 
@@ -359,7 +360,7 @@ Design a production SaaS contractor app UI cleanup for FloorConnector, a multi-t
 
 Keep the existing top-nav-first contractor shell. Do not introduce a permanent app-wide left sidebar. Create responsive overflow handling for many modules: inline primary nav on wide desktop, grouped More menu for overflow, grouped mobile navigation, and clear active state for routes inside overflow. Preserve global search, notifications, universal create, organization identity, and account actions.
 
-Use the existing FloorConnector visual direction: compact operational SaaS, charcoal/dark-neutral framing, orange action accents, white or warm light-neutral work surfaces, practical typography, dense but readable layouts. Avoid marketing hero sections, decorative gradients, blue-heavy chrome, and fake data-heavy dashboards.
+Use the existing FloorConnector visual direction: compact operational SaaS, black/near-black framing, gray secondary chrome, orange action accents, white or warm light-neutral work surfaces, practical typography, dense but readable layouts. Avoid marketing hero sections, decorative gradients, blue-heavy chrome, green primary chrome, and fake data-heavy dashboards.
 
 Design these screens:
 1. Contractor header/top navigation with responsive overflow and grouped More menu.

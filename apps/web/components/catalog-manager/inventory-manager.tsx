@@ -466,17 +466,17 @@ export function InventoryManager({
   const directAddType = visibleTypeSet?.size === 1 ? [...visibleTypeSet][0] as CatalogItem["itemType"] : null;
 
   return (
-    <div className="border border-[#d7dce4] bg-white">
-      <div className="border-b border-[#dfe4ec] bg-[#f7f8fa] px-3 py-2.5">
+    <div className="border border-[#d6d6d6] bg-white">
+      <div className="border-b border-[#d6d6d6] bg-[#f7f8fa] px-3 py-2.5">
         <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-1 flex-wrap items-center gap-2">
             <label className="relative min-w-[260px] flex-1 xl:max-w-[360px]">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8391a7]" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#777777]" />
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder={searchPlaceholder}
-                className="h-8 w-full border border-[#cfd6e0] bg-white pl-9 pr-3 text-sm text-[#22344d] outline-none transition focus:border-[#d8731f]"
+                className="h-8 w-full border border-[#d6d6d6] bg-white pl-9 pr-3 text-sm text-[#2a2a2a] outline-none transition focus:border-[#d8731f]"
               />
             </label>
 
@@ -485,14 +485,14 @@ export function InventoryManager({
               onChange={(event) =>
                 setStatusFilter(event.target.value as "all" | "active" | "archived")
               }
-              className="h-8 border border-[#cfd6e0] bg-white px-3 text-sm text-slate-700 outline-none"
+              className="h-8 border border-[#d6d6d6] bg-white px-3 text-sm text-slate-700 outline-none"
             >
               <option value="active">Active</option>
               <option value="archived">Archived</option>
               <option value="all">All</option>
             </select>
 
-            <div className="inline-flex h-8 items-center border border-[#d7dde7] bg-white px-3 text-xs font-medium text-slate-500">
+            <div className="inline-flex h-8 items-center border border-[#d6d6d6] bg-white px-3 text-xs font-medium text-slate-500">
               {formatRowsPerViewVisibleCount(
                 filteredItems.length,
                 visibleItems.length,
@@ -503,17 +503,17 @@ export function InventoryManager({
 
           <div className="flex flex-wrap items-center gap-2">
             <details className="relative">
-              <summary className="flex h-8 cursor-pointer list-none items-center gap-2 border border-[#cfd6e0] bg-white px-3 text-sm font-medium text-slate-700">
+              <summary className="flex h-8 cursor-pointer list-none items-center gap-2 border border-[#d6d6d6] bg-white px-3 text-sm font-medium text-slate-700">
                 Actions <ChevronDown className="h-4 w-4" />
               </summary>
-              <div className="absolute right-0 top-[calc(100%+4px)] z-20 min-w-[220px] border border-[#cfd6e0] bg-white p-1">
+              <div className="absolute right-0 top-[calc(100%+4px)] z-20 min-w-[220px] border border-[#d6d6d6] bg-white p-1">
                 <button
                   type="button"
                   onClick={() => {
                     setStatusFilter("all");
                     setSelectedIds([]);
                   }}
-                  className="block w-full px-3 py-1.5 text-left text-sm text-[#22344d] hover:bg-[#f0f3f7]"
+                  className="block w-full px-3 py-1.5 text-left text-sm text-[#2a2a2a] hover:bg-[#f8f8f8]"
                 >
                   Show all items
                 </button>
@@ -521,7 +521,7 @@ export function InventoryManager({
                   <button
                     type="button"
                     onClick={() => setWorkspaceView("groups")}
-                    className="block w-full px-3 py-1.5 text-left text-sm text-[#22344d] hover:bg-[#f0f3f7]"
+                    className="block w-full px-3 py-1.5 text-left text-sm text-[#2a2a2a] hover:bg-[#f8f8f8]"
                   >
                     Open item groups
                   </button>
@@ -529,7 +529,7 @@ export function InventoryManager({
                 <button
                   type="button"
                   onClick={() => toggleSort("updatedAt")}
-                  className="block w-full px-3 py-1.5 text-left text-sm text-[#22344d] hover:bg-[#f0f3f7]"
+                  className="block w-full px-3 py-1.5 text-left text-sm text-[#2a2a2a] hover:bg-[#f8f8f8]"
                 >
                   Sort by date
                 </button>
@@ -549,13 +549,13 @@ export function InventoryManager({
                 <summary className="flex h-8 cursor-pointer list-none items-center gap-2 border border-[#d8731f] bg-[#d8731f] px-3 text-sm font-medium text-white">
                   Add item <ChevronDown className="h-4 w-4" />
                 </summary>
-                <div className="absolute right-0 top-[calc(100%+4px)] z-20 min-w-[220px] border border-[#cfd6e0] bg-white p-1">
+                <div className="absolute right-0 top-[calc(100%+4px)] z-20 min-w-[220px] border border-[#d6d6d6] bg-white p-1">
                   {quickAddItemTypes.map((itemType) => (
                     <button
                       key={itemType}
                       type="button"
                       onClick={() => openDrawer(null, itemType)}
-                      className="block w-full px-3 py-1.5 text-left text-sm text-[#22344d] hover:bg-[#f0f3f7]"
+                      className="block w-full px-3 py-1.5 text-left text-sm text-[#2a2a2a] hover:bg-[#f8f8f8]"
                     >
                       Add {formatTypeLabel(itemType)}
                     </button>
@@ -567,7 +567,7 @@ export function InventoryManager({
         </div>
       </div>
 
-      <div className="border-b border-[#dfe4ec] bg-white px-3 py-2 text-xs font-medium text-slate-500">
+      <div className="border-b border-[#d6d6d6] bg-white px-3 py-2 text-xs font-medium text-slate-500">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <span>{inventoryView === "tracked" ? "Inventory view" : "Cost item grid"}</span>
           {inventoryEnabled ? <span>{activeTrackedCount} tracked</span> : null}
@@ -587,7 +587,7 @@ export function InventoryManager({
         ].join(" ")}
       >
         {!lockedSidebarView ? (
-          <aside className="border-r border-[#dfe4ec] bg-[#f6f7f9] py-2">
+          <aside className="border-r border-[#d6d6d6] bg-[#f6f7f9] py-2">
             <div className="flex flex-col items-center gap-1.5">
               {visibleSidebarViews.map((view) => {
                 const Icon = view.icon;
@@ -601,10 +601,10 @@ export function InventoryManager({
                     aria-label={view.label}
                     onClick={() => setWorkspaceView(view.id)}
                     className={[
-                      "inline-flex h-9 w-9 items-center justify-center border text-[#4d5f79] transition",
+                      "inline-flex h-9 w-9 items-center justify-center border text-[#4f4f4f] transition",
                       active
                         ? "border-[#d8731f] bg-[#d8731f] text-white"
-                        : "border-[#d4dbe5] bg-white hover:border-[#c6d0dd] hover:bg-[#f0f3f7]"
+                        : "border-[#d6d6d6] bg-white hover:border-[#bdbdbd] hover:bg-[#f8f8f8]"
                     ].join(" ")}
                   >
                     <Icon className="h-[15px] w-[15px]" />
@@ -621,7 +621,7 @@ export function InventoryManager({
             <div className="overflow-x-auto">
               <table className="min-w-full border-collapse">
                 <thead>
-                  <tr className="border-b border-[#dfe4ec] bg-[#f7f8fa] text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  <tr className="border-b border-[#d6d6d6] bg-[#f7f8fa] text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                     <th className="px-3 py-2">Name</th>
                     <th className="px-3 py-2"># Items</th>
                     <th className="px-3 py-2">Added By</th>
@@ -631,19 +631,19 @@ export function InventoryManager({
                 </thead>
                 <tbody>
                   {groups.map((group) => (
-                    <tr key={group.name} className="border-b border-[#e7ebf1] text-sm text-[#22344d]">
+                    <tr key={group.name} className="border-b border-[#e5e5e5] text-sm text-[#2a2a2a]">
                       <td className="px-3 py-2 font-medium">{group.name}</td>
                       <td className="px-3 py-2">{group.itemCount}</td>
                       <td className="px-3 py-2">{group.addedBy ?? "-"}</td>
                       <td className="px-3 py-2">
                         {group.addedAt ? new Date(group.addedAt).toLocaleDateString() : "-"}
                       </td>
-                      <td className="px-3 py-2 text-right text-[#8b96a8]">...</td>
+                      <td className="px-3 py-2 text-right text-[#777777]">...</td>
                     </tr>
                   ))}
                   {groups.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-3 py-10 text-center text-sm text-[#7d8aa0]">
+                      <td colSpan={5} className="px-3 py-10 text-center text-sm text-[#777777]">
                         No category-based item groups exist yet. Save categories on catalog items to populate this view.
                       </td>
                     </tr>
@@ -655,7 +655,7 @@ export function InventoryManager({
             <div className="overflow-x-auto">
               <table className="min-w-full border-collapse">
                 <thead>
-                  <tr className="border-b border-[#dfe4ec] bg-[#f7f8fa] text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  <tr className="border-b border-[#d6d6d6] bg-[#f7f8fa] text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                     <th className="min-w-[220px] px-3 py-2">
                       <div className="flex flex-col gap-1.5">
                         <label className="inline-flex items-center gap-2">
@@ -664,7 +664,7 @@ export function InventoryManager({
                             checked={allVisibleSelected}
                             onChange={toggleSelectAll}
                             aria-label={selectAllVisibleLabel}
-                            className="h-4 w-4 rounded border-[#b7c2d2]"
+                            className="h-4 w-4 rounded border-[#bdbdbd]"
                           />
                           <span>{selectAllVisibleLabel}</span>
                         </label>
@@ -674,7 +674,7 @@ export function InventoryManager({
                             disabled
                             aria-disabled="true"
                             title="Selection still applies to currently visible rows only."
-                            className="w-fit text-left text-[10px] font-semibold normal-case tracking-normal text-[#8b96a8] disabled:cursor-not-allowed"
+                            className="w-fit text-left text-[10px] font-semibold normal-case tracking-normal text-[#777777] disabled:cursor-not-allowed"
                           >
                             Select all {filteredItems.length} results
                           </button>
@@ -687,7 +687,7 @@ export function InventoryManager({
                       <button
                         type="button"
                         onClick={() => toggleSort("name")}
-                        className="font-semibold text-[#445978]"
+                        className="font-semibold text-[#3f3f3f]"
                       >
                         Name
                       </button>
@@ -705,7 +705,7 @@ export function InventoryManager({
                     <th className="px-3 py-2">Status</th>
                     <th className="px-3 py-2 text-right">Actions</th>
                   </tr>
-                  <tr className="border-b border-[#dfe4ec] bg-[#fbfcfe]">
+                  <tr className="border-b border-[#d6d6d6] bg-[#f8f8f8]">
                     <th className="px-3 py-2" />
                     <th className="px-3 py-2" />
                     <th className="px-3 py-2">
@@ -713,7 +713,7 @@ export function InventoryManager({
                         value={skuFilter}
                         onChange={(event) => setSkuFilter(event.target.value)}
                         placeholder="Search SKU"
-                        className="h-7 w-full border border-[#cfd6e0] px-2 text-sm outline-none"
+                        className="h-7 w-full border border-[#d6d6d6] px-2 text-sm outline-none"
                       />
                     </th>
                     <th className="px-3 py-2">
@@ -721,7 +721,7 @@ export function InventoryManager({
                         value={nameFilter}
                         onChange={(event) => setNameFilter(event.target.value)}
                         placeholder="Search Name"
-                        className="h-7 w-full border border-[#cfd6e0] px-2 text-sm outline-none"
+                        className="h-7 w-full border border-[#d6d6d6] px-2 text-sm outline-none"
                       />
                     </th>
                     <th className="px-3 py-2" />
@@ -730,7 +730,7 @@ export function InventoryManager({
                         value={unitFilter}
                         onChange={(event) => setUnitFilter(event.target.value)}
                         placeholder="Search Unit"
-                        className="h-7 w-full border border-[#cfd6e0] px-2 text-sm outline-none"
+                        className="h-7 w-full border border-[#d6d6d6] px-2 text-sm outline-none"
                       />
                     </th>
                     {inventoryEnabled ? <th className="px-3 py-2" /> : null}
@@ -741,7 +741,7 @@ export function InventoryManager({
                         value={markupFilter}
                         onChange={(event) => setMarkupFilter(event.target.value)}
                         placeholder="Search MU %"
-                        className="h-7 w-full border border-[#cfd6e0] px-2 text-sm outline-none"
+                        className="h-7 w-full border border-[#d6d6d6] px-2 text-sm outline-none"
                       />
                     </th>
                     <th className="px-3 py-2" />
@@ -751,7 +751,7 @@ export function InventoryManager({
                         value={costCodeFilter}
                         onChange={(event) => setCostCodeFilter(event.target.value)}
                         placeholder="Cost Code"
-                        className="h-7 w-full border border-[#cfd6e0] px-2 text-sm outline-none"
+                        className="h-7 w-full border border-[#d6d6d6] px-2 text-sm outline-none"
                       />
                     </th>
                     <th className="px-3 py-2" />
@@ -792,32 +792,32 @@ export function InventoryManager({
                           openDrawer(item, item.itemType);
                         }}
                         tabIndex={0}
-                        className="cursor-pointer border-b border-[#e7ebf1] text-sm text-[#22344d] hover:bg-[#fbfcfe] focus:bg-[#fbfcfe] focus:outline-none"
+                        className="cursor-pointer border-b border-[#e5e5e5] text-sm text-[#2a2a2a] hover:bg-[#f8f8f8] focus:bg-[#f8f8f8] focus:outline-none"
                       >
                         <td className="px-3 py-2" onClick={stopRowAction}>
                           <input
                             type="checkbox"
                             checked={selectedIds.includes(item.id)}
                             onChange={() => toggleSelect(item.id)}
-                            className="h-4 w-4 rounded border-[#b7c2d2]"
+                            className="h-4 w-4 rounded border-[#bdbdbd]"
                           />
                         </td>
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-2">
-                            <div className="flex h-6 w-6 items-center justify-center border border-[#d8dee7] bg-[#f6f7f9] text-[#4d5f79]">
+                            <div className="flex h-6 w-6 items-center justify-center border border-[#d8dee7] bg-[#f6f7f9] text-[#4f4f4f]">
                               <TypeIcon className="h-4 w-4" />
                             </div>
                             <div className="min-w-0">
-                              <div className="font-medium text-[#22344d]">
+                              <div className="font-medium text-[#2a2a2a]">
                                 {formatTypeLabel(item.itemType)}
                               </div>
-                              <div className="mt-0.5 max-w-[140px] truncate text-xs text-[#8b96a8]">
+                              <div className="mt-0.5 max-w-[140px] truncate text-xs text-[#777777]">
                                 {item.category ?? "Uncategorized"}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-3 py-2 text-[#667a97]">{item.sku ?? "-"}</td>
+                        <td className="px-3 py-2 text-[#666666]">{item.sku ?? "-"}</td>
                         <td className="px-3 py-2">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-medium">{item.name}</span>
@@ -827,17 +827,17 @@ export function InventoryManager({
                               </span>
                             ) : null}
                           </div>
-                          <div className="mt-0.5 max-w-[340px] truncate text-xs text-[#8b96a8]">
+                          <div className="mt-0.5 max-w-[340px] truncate text-xs text-[#777777]">
                             {item.description ?? "Reusable cost item for catalog-backed planning."}
                           </div>
                         </td>
                         <td className="px-3 py-2">${item.defaultUnitCost}</td>
                         <td className="px-3 py-2">{item.unit}</td>
                         {inventoryEnabled ? (
-                          <td className="px-3 py-2 text-[#667a97]">{getInventoryLabel(inventoryItem)}</td>
+                          <td className="px-3 py-2 text-[#666666]">{getInventoryLabel(inventoryItem)}</td>
                         ) : null}
                         {inventoryEnabled ? (
-                          <td className="px-3 py-2 text-[#667a97]">{reorderPointLabel}</td>
+                          <td className="px-3 py-2 text-[#666666]">{reorderPointLabel}</td>
                         ) : null}
                         {inventoryEnabled ? (
                           <td className="px-3 py-2">
@@ -853,7 +853,7 @@ export function InventoryManager({
                                 {isLowStock ? "Low" : "OK"}
                               </span>
                             ) : (
-                              <span className="text-[#8b96a8]">-</span>
+                              <span className="text-[#777777]">-</span>
                             )}
                           </td>
                         ) : null}
@@ -868,7 +868,7 @@ export function InventoryManager({
                             `$${item.defaultUnitPrice}`
                           )}
                         </td>
-                        <td className="px-3 py-2 text-[#667a97]">{item.costCode ?? "-"}</td>
+                        <td className="px-3 py-2 text-[#666666]">{item.costCode ?? "-"}</td>
                         <td className="px-3 py-2">
                           <span
                             className={[
@@ -898,7 +898,7 @@ export function InventoryManager({
                             <button
                               type="button"
                               onClick={() => openDrawer(item, item.itemType)}
-                              className="inline-flex h-7 items-center border border-[#cfd6e0] bg-white px-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4d5f79] hover:bg-[#f0f3f7]"
+                              className="inline-flex h-7 items-center border border-[#d6d6d6] bg-white px-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f] hover:bg-[#f8f8f8]"
                             >
                               Edit
                             </button>
@@ -970,20 +970,20 @@ export function InventoryManager({
                               {item.taxable ? <input type="hidden" name="taxable" value="on" /> : null}
                               <button
                                 type="submit"
-                                className="inline-flex h-7 items-center border border-[#cfd6e0] bg-white px-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4d5f79] hover:bg-[#f0f3f7]"
+                                className="inline-flex h-7 items-center border border-[#d6d6d6] bg-white px-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f] hover:bg-[#f8f8f8]"
                               >
                                 {item.status === "active" ? "Archive" : "Reactivate"}
                               </button>
                             </form>
                             <details className="relative inline-block text-left">
-                              <summary className="cursor-pointer list-none border border-[#cfd6e0] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4d5f79]">
+                              <summary className="cursor-pointer list-none border border-[#d6d6d6] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f]">
                                 More
                               </summary>
-                              <div className="absolute right-0 z-10 mt-1 min-w-[140px] border border-[#cfd6e0] bg-white p-1">
+                              <div className="absolute right-0 z-10 mt-1 min-w-[140px] border border-[#d6d6d6] bg-white p-1">
                                 <button
                                   type="button"
                                   onClick={() => openDrawer(item, item.itemType)}
-                                  className="block w-full px-3 py-1.5 text-left text-sm text-[#22344d] hover:bg-[#f0f3f7]"
+                                  className="block w-full px-3 py-1.5 text-left text-sm text-[#2a2a2a] hover:bg-[#f8f8f8]"
                                 >
                                   Edit details
                                 </button>
@@ -998,10 +998,10 @@ export function InventoryManager({
                     <tr>
                       <td
                         colSpan={inventoryEnabled ? 16 : 13}
-                        className="px-3 py-12 text-center text-sm text-[#7d8aa0]"
+                        className="px-3 py-12 text-center text-sm text-[#777777]"
                       >
                         <div className="mx-auto max-w-2xl">
-                          <p className="font-medium text-[#22344d]">
+                          <p className="font-medium text-[#2a2a2a]">
                             {items.length === 0
                               ? "No reusable cost items yet."
                               : "No cost items match the current filters."}

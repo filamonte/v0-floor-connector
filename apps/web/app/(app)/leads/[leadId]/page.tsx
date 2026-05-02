@@ -53,10 +53,10 @@ function getStatusClasses(status: string) {
     case "contacted":
     case "site_assessment_scheduled":
     case "proposal_sent":
-      return "border-sky-200 bg-sky-50 text-sky-900";
+      return "border-[#d6d6d6] bg-[#f8f8f8] text-[#2a2a2a]";
     case "won":
     case "converted":
-      return "border-violet-200 bg-violet-50 text-violet-900";
+      return "border-emerald-200 bg-emerald-50 text-emerald-900";
     case "lost":
       return "border-rose-200 bg-rose-50 text-rose-900";
     default:

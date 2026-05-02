@@ -34,7 +34,7 @@ export function CommunicationNotificationTriageForm({
       <button
         type="button"
         disabled
-        className="inline-flex h-9 items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400"
+        className="inline-flex h-9 items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400"
       >
         {mode === "thread" ? "Mark thread read" : "Mark all read"}
       </button>

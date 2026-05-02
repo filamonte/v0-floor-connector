@@ -15,10 +15,7 @@ import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getEstimateById } from "@/lib/estimates/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getProjectById } from "@/lib/projects/data";
-import {
-  assertProjectContractSigned,
-  getProjectFinancialReadinessSnapshot
-} from "@/lib/projects/readiness";
+import { assertProjectReadinessGate } from "@/lib/projects/readiness";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 type JobRow = {
@@ -689,21 +686,6 @@ async function ensureScopedAssignablePerson(organizationId: string, personId: st
   return data;
 }
 
-async function assertProjectReadyToSchedule(
-  organizationId: string,
-  projectId: string,
-  errorMessage: string
-) {
-  const readinessSnapshot = await getProjectFinancialReadinessSnapshot({
-    organizationId,
-    projectId
-  });
-
-  if (!readinessSnapshot?.isReadyToSchedule) {
-    throw new Error(errorMessage);
-  }
-}
-
 function getScheduleUpdateFromInput(input: JobScheduleInput) {
   return {
     scheduled_date: input.scheduledDate,
@@ -713,23 +695,35 @@ function getScheduleUpdateFromInput(input: JobScheduleInput) {
   };
 }
 
+function isSchedulingOrExecutionUpdate(
+  currentJob: JobRow,
+  input: JobInput,
+  isReassigningProject: boolean
+) {
+  return (
+    isReassigningProject ||
+    input.dispatchStatus === "scheduled" ||
+    input.dispatchStatus === "in_progress" ||
+    input.dispatchStatus === "completed" ||
+    (currentJob.dispatch_status === "unscheduled" &&
+      (input.scheduledDate !== null ||
+        input.scheduledStartAt !== null ||
+        input.scheduledEndAt !== null))
+  );
+}
+
 export async function createJob(input: JobInput) {
   const scope = await requireJobScope("/jobs");
   const project = await resolveScopedProject(input.projectId, "/jobs");
   const estimate = await resolveApprovedEstimate(input.estimateId, input.projectId, "/jobs");
 
   await Promise.all([
-    assertProjectContractSigned({
+    assertProjectReadinessGate({
       organizationId: scope.organizationId,
       projectId: project.id,
       errorMessage:
-        "Jobs stay downstream of the signed contract. Complete the contract handoff from the project hub before creating a job."
+        "Project is not ready for job creation yet. Complete contract, financial, and workflow readiness from the project hub before creating a job."
     }),
-    assertProjectReadyToSchedule(
-      scope.organizationId,
-      project.id,
-      "Project is not ready for downstream scheduling yet. Review the project readiness hub before creating a job."
-    ),
     ensureScopedCrewVendor(scope.organizationId, input.crewVendorId)
   ]);
 
@@ -782,20 +776,13 @@ export async function updateJob(jobId: string, input: JobInput) {
   );
   const isReassigningProject = currentJob.project_id !== project.id;
 
-  if (isReassigningProject) {
-    await Promise.all([
-      assertProjectContractSigned({
-        organizationId: scope.organizationId,
-        projectId: project.id,
-        errorMessage:
-          "Jobs stay downstream of the signed contract. Complete the contract handoff from the project hub before moving a job onto this project."
-      }),
-      assertProjectReadyToSchedule(
-        scope.organizationId,
-        project.id,
-        "Project is not ready for downstream scheduling yet. Review the project readiness hub before moving a job onto this project."
-      )
-    ]);
+  if (isSchedulingOrExecutionUpdate(currentJob, input, isReassigningProject)) {
+    await assertProjectReadinessGate({
+      organizationId: scope.organizationId,
+      projectId: project.id,
+      errorMessage:
+        "Project is not ready for job, scheduling, or execution changes yet. Complete contract, financial, and workflow readiness from the project hub first."
+    });
   }
 
   await ensureScopedCrewVendor(scope.organizationId, input.crewVendorId);
@@ -846,17 +833,12 @@ export async function scheduleJob(jobId: string, input: JobScheduleInput) {
   }
 
   await Promise.all([
-    assertProjectContractSigned({
+    assertProjectReadinessGate({
       organizationId: scope.organizationId,
       projectId: currentJob.project_id,
       errorMessage:
-        "Scheduling stays downstream of the signed contract. Complete the contract handoff from the project hub before scheduling this job."
-    }),
-    assertProjectReadyToSchedule(
-      scope.organizationId,
-      currentJob.project_id,
-      "Project is not ready for downstream scheduling yet. Review the project readiness hub before scheduling this job."
-    )
+        "Project is not ready for scheduling yet. Complete contract, financial, and workflow readiness from the project hub before scheduling this job."
+    })
   ]);
 
   const nextDispatchStatus =

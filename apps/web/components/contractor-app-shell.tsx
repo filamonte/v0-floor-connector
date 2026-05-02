@@ -9,6 +9,7 @@ import { OrganizationBrandLink } from "@/components/organization-brand-link";
 import { ProtectedAppBreadcrumbs } from "@/components/protected-app-breadcrumbs";
 import { ProtectedAppTopNav } from "@/components/protected-app-top-nav";
 import { SignOutForm } from "@/components/sign-out-form";
+import { signOutAction } from "@/lib/auth/actions";
 import { listContractorNotifications } from "@/lib/notifications/data";
 
 type ContractorAppShellProps = {
@@ -39,7 +40,7 @@ export async function ContractorAppShell({
     : Promise.resolve({ totalCount: 0, sections: [], visibleItems: [] }));
 
   return (
-    <div className="min-h-screen bg-[#f3eee8] text-slate-950">
+    <div className="min-h-screen bg-[#f4f1ed] text-[#211b16]">
       <div className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-30 border-b border-[#d9cdc2] bg-white">
           <div className="hidden lg:block">
@@ -52,6 +53,7 @@ export async function ContractorAppShell({
               userEmail={user.email ?? "Authenticated user"}
               timestampLabel={timestampLabel}
               homeHref="/dashboard"
+              signOutAction={signOutAction}
             />
           </div>
 
@@ -67,7 +69,7 @@ export async function ContractorAppShell({
               />
               <div className="flex shrink-0 items-center gap-2 pt-1">
                 <AppShellMobileNav currentRole={organizationContext?.membership.role} />
-                <SignOutForm className="border-[#17120f] bg-[#17120f] px-3 py-2 text-[#ffd7bb] hover:border-[#17120f] hover:bg-[#2a1c13]" />
+                <SignOutForm className="border-[#111111] bg-[#111111] px-3 py-2 text-white hover:border-[#2b2b2b] hover:bg-[#2b2b2b]" />
               </div>
             </div>
             <div className="mt-3 space-y-3 border-t border-[#ebe0d6] pt-3">
@@ -82,8 +84,8 @@ export async function ContractorAppShell({
           </div>
         </header>
 
-        <main className="flex-1 px-5 py-4 sm:px-8 sm:py-5">
-          <div className="mx-auto w-full max-w-[1500px]">
+        <main className="flex-1 px-3 py-3 sm:px-5 sm:py-4">
+          <div className="mx-auto w-full max-w-[1680px]">
             {!organizationContext ? (
               <section className="mb-4 rounded-[4px] border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
                 Your account is authenticated, but no active organization context is
@@ -96,8 +98,8 @@ export async function ContractorAppShell({
           </div>
         </main>
 
-        <footer className="border-t border-[#d9cdc2] bg-white px-5 py-3 sm:px-8">
-          <div className="mx-auto flex w-full max-w-[1500px] justify-end">
+        <footer className="border-t border-[#d9cdc2] bg-white px-3 py-2 sm:px-5">
+          <div className="mx-auto flex w-full max-w-[1680px] justify-end">
             <GlobalSearch
               compact
               buttonLabel="Global Search"

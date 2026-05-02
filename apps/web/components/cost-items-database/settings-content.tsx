@@ -52,13 +52,13 @@ export function CostItemsSettingsContent({
         <div className="flex flex-wrap gap-2">
           <Link
             href="/cost-items-database"
-            className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
           >
             Open Cost Items Database
           </Link>
           <Link
             href="/settings/financial"
-            className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
           >
             Open Financial Settings
           </Link>
@@ -117,7 +117,7 @@ export function CostItemsSettingsContent({
 
             <button
               type="submit"
-              className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
+              className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
             >
               Save inventory setting
             </button>
@@ -149,7 +149,7 @@ export function CostItemsSettingsContent({
 
           <Link
             href="/settings/financial"
-            className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
+            className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
           >
             Go to Financial Settings
           </Link>
@@ -241,7 +241,7 @@ export function CostItemsSettingsContent({
                 <input type="hidden" name="seedId" value={seed.id} />
                 <button
                   type="submit"
-                  className="rounded-[4px] border border-[#d6deea] bg-white px-3 py-1.5 text-xs font-medium text-[#36527a]"
+                  className="rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-1.5 text-xs font-medium text-[#3f3f3f]"
                 >
                   Adopt {seed.name}
                 </button>

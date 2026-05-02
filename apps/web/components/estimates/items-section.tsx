@@ -90,9 +90,9 @@ type ItemsSectionProps = {
   onSelectedCatalogItemIdChange: (value: string) => void;
   onSelectedSystemIdChange: (value: string) => void;
   onSystemMeasurementChange: (field: string, value: string) => void;
-  onAddCatalogItem: () => void;
-  onQuickAddCatalogItem: (catalogItemId: string) => void;
-  onAddPreviewCatalogItem: (catalogItemId: string) => void;
+  onAddCatalogItem: (targetGroupId?: string | null) => void;
+  onQuickAddCatalogItem: (catalogItemId: string, targetGroupId?: string | null) => void;
+  onAddPreviewCatalogItem: (catalogItemId: string, targetGroupId?: string | null) => void;
   onImportLineItemsFromEstimate: (
     sourceEstimateId: string
   ) => Promise<{ ok: boolean; message: string }>;
@@ -344,6 +344,8 @@ export function ItemsSection({
 }: ItemsSectionProps) {
   const catalogSearchInputRef = useRef<HTMLInputElement | null>(null);
   const [itemSearch, setItemSearch] = useState("");
+  const [showAddItemTools, setShowAddItemTools] = useState(false);
+  const [selectedAddItemGroupId, setSelectedAddItemGroupId] = useState<string | null>(null);
   const [showCreateItemForm, setShowCreateItemForm] = useState(false);
   const [showImportTools, setShowImportTools] = useState(false);
   const [quickItemName, setQuickItemName] = useState("");
@@ -434,6 +436,10 @@ export function ItemsSection({
     quickItemName.trim().length > 0 &&
     quickItemUnit.trim().length > 0 &&
     quickItemCost.trim().length > 0;
+  const selectedAddItemGroup =
+    selectedAddItemGroupId == null
+      ? null
+      : itemGroups.find((group) => group.id === selectedAddItemGroupId) ?? null;
 
   return (
     <section className="border-t border-[#e6e9ef] bg-white">
@@ -450,11 +456,36 @@ export function ItemsSection({
         visibleItemCount={visibleItemCount}
       />
 
-      <div className="grid gap-4 border-b border-[#e6e9ef] px-4 py-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
+      <details
+        open={showAddItemTools}
+        onToggle={(event) => setShowAddItemTools(event.currentTarget.open)}
+        className="border-b border-[#e6e9ef] bg-[#f8f8f8]"
+        data-testid="estimate-add-item-tools"
+      >
+        <summary
+          onClick={() => setSelectedAddItemGroupId(null)}
+          className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[13px] font-semibold text-[#2a2a2a] marker:hidden"
+          data-testid="estimate-add-item-tools-summary"
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <Package className="h-4 w-4 text-[#d8731f]" />
+            <span>Add item sources</span>
+            <span className="hidden text-[12px] font-medium text-[#666666] sm:inline">
+              {selectedAddItemGroup
+                ? `Adding catalog items into ${selectedAddItemGroup.label}`
+                : "Catalog, manual catalog-backed item, system expansion, or previous estimate import"}
+            </span>
+          </span>
+          <span className="rounded-full border border-[#d6d6d6] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#666666]">
+            {showAddItemTools ? "Hide tools" : "Show tools"}
+          </span>
+        </summary>
+
+        <div className="grid gap-4 px-4 pb-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
         <div className="order-3 rounded-[12px] border border-[#dfe5ef] bg-white p-4 xl:col-span-2">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <div className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
+              <div className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#5f5f5f]">
                 Catalog Items
               </div>
               <p className="mt-1 max-w-3xl text-[13px] leading-5 text-[#6b7c96]">
@@ -473,13 +504,14 @@ export function ItemsSection({
               <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_220px]">
                 <label className="text-[12px] font-medium text-[#5d6f8a]">
                   Search by name
-                  <div className="mt-1.5 flex h-10 items-center rounded-[8px] border border-[#d7deea] bg-white px-3">
+                  <div className="mt-1.5 flex h-10 items-center rounded-[8px] border border-[#d6d6d6] bg-white px-3">
                     <Search className="h-4 w-4 text-[#7b8aa3]" />
                     <input
                       value={catalogPreviewSearch}
                       onChange={(event) => setCatalogPreviewSearch(event.target.value)}
                       placeholder="Search catalog items"
-                      className="h-full w-full border-0 bg-transparent px-3 text-[14px] text-[#334a70] outline-none"
+                      className="h-full w-full border-0 bg-transparent px-3 text-[14px] text-[#2a2a2a] outline-none"
+                      data-testid="estimate-catalog-preview-search"
                     />
                   </div>
                 </label>
@@ -488,7 +520,7 @@ export function ItemsSection({
                   <select
                     value={catalogPreviewType}
                     onChange={(event) => setCatalogPreviewType(event.target.value)}
-                    className="mt-1.5 h-10 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
+                    className="mt-1.5 h-10 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
                   >
                     <option value="all">All types</option>
                     {catalogPreviewTypeOptions.map((itemType) => (
@@ -503,7 +535,7 @@ export function ItemsSection({
                   <select
                     value={catalogPreviewCategory}
                     onChange={(event) => setCatalogPreviewCategory(event.target.value)}
-                    className="mt-1.5 h-10 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
+                    className="mt-1.5 h-10 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
                   >
                     <option value="all">All categories</option>
                     {catalogPreviewCategoryOptions.map((category) => (
@@ -518,7 +550,7 @@ export function ItemsSection({
               <div className="mt-4 overflow-hidden rounded-[10px] border border-[#e1e7f0]">
                 <div className="overflow-x-auto">
                   <div className="min-w-[760px]">
-                    <div className="grid grid-cols-[minmax(0,1.35fr)_minmax(120px,0.55fr)_88px_120px_82px_92px] bg-[#f6f8fc] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7c8ba3]">
+                    <div className="grid grid-cols-[minmax(0,1.35fr)_minmax(120px,0.55fr)_88px_120px_82px_92px] bg-[#f8f8f8] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#666666]">
                       <span>Name</span>
                       <span>Type / Category</span>
                       <span>Unit</span>
@@ -536,12 +568,16 @@ export function ItemsSection({
                             type="button"
                             onClick={() => setSelectedCatalogPreviewId(item.id)}
                             className={[
-                              "grid w-full grid-cols-[minmax(0,1.35fr)_minmax(120px,0.55fr)_88px_120px_82px_92px] items-center gap-0 border-t border-[#edf1f6] px-3 py-3 text-left text-[13px] transition",
-                              isSelected ? "bg-[#fff7ef]" : "bg-white hover:bg-[#fbfcfe]"
+                              "grid w-full grid-cols-[minmax(0,1.35fr)_minmax(120px,0.55fr)_88px_120px_82px_92px] items-center gap-0 border-t border-[#e5e5e5] px-3 py-3 text-left text-[13px] transition",
+                              isSelected ? "bg-[#fff7ef]" : "bg-white hover:bg-[#f8f8f8]"
                             ].join(" ")}
+                            data-testid="estimate-catalog-preview-row"
+                            data-catalog-item-name={item.name}
+                            data-catalog-item-status={item.status}
+                            data-catalog-item-type={item.itemType}
                           >
                             <span className="min-w-0">
-                              <span className="block truncate font-semibold text-[#23395d]">
+                              <span className="block truncate font-semibold text-[#171717]">
                                 {item.name}
                               </span>
                               <span className="mt-0.5 block truncate text-[11px] text-[#8a98ad]">
@@ -556,8 +592,8 @@ export function ItemsSection({
                                 {getCatalogCategoryLabel(item)}
                               </span>
                             </span>
-                            <span className="text-[#334a70]">{formatUnitLabel(item.unit)}</span>
-                            <span className="text-right font-semibold text-[#23395d]">
+                            <span className="text-[#2a2a2a]">{formatUnitLabel(item.unit)}</span>
+                            <span className="text-right font-semibold text-[#171717]">
                               {formatCatalogCurrency(item.defaultUnitPrice)}
                             </span>
                             <span className="text-center text-[#5d6f8a]">
@@ -579,7 +615,7 @@ export function ItemsSection({
                         );
                       })}
                       {filteredCatalogPreviewItems.length === 0 ? (
-                        <div className="border-t border-[#edf1f6] bg-[#fbfcfe] px-4 py-8 text-center text-[14px] leading-6 text-[#7c8ba3]">
+                        <div className="border-t border-[#e5e5e5] bg-[#f8f8f8] px-4 py-8 text-center text-[14px] leading-6 text-[#666666]">
                           No catalog items match this search yet. Catalog items are reusable cost
                           items for estimates, invoices, and materials planning.
                         </div>
@@ -590,15 +626,15 @@ export function ItemsSection({
               </div>
             </div>
 
-            <aside className="rounded-[10px] border border-[#dfe5ef] bg-[#fbfcfe] p-4">
+            <aside className="rounded-[10px] border border-[#dfe5ef] bg-[#f8f8f8] p-4">
               {selectedCatalogPreviewItem ? (
                 <div>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#7a8aa3]">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#666666]">
                         Preview
                       </p>
-                      <h3 className="mt-1 break-words text-[17px] font-semibold leading-6 text-[#23395d]">
+                      <h3 className="mt-1 break-words text-[17px] font-semibold leading-6 text-[#171717]">
                         {selectedCatalogPreviewItem.name}
                       </h3>
                     </div>
@@ -622,7 +658,7 @@ export function ItemsSection({
                       <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
                         Type
                       </dt>
-                      <dd className="mt-1 text-[14px] font-semibold text-[#23395d]">
+                      <dd className="mt-1 text-[14px] font-semibold text-[#171717]">
                         {formatCatalogTypeLabel(selectedCatalogPreviewItem.itemType)}
                       </dd>
                     </div>
@@ -630,7 +666,7 @@ export function ItemsSection({
                       <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
                         Category
                       </dt>
-                      <dd className="mt-1 text-[14px] font-semibold text-[#23395d]">
+                      <dd className="mt-1 text-[14px] font-semibold text-[#171717]">
                         {getCatalogCategoryLabel(selectedCatalogPreviewItem)}
                       </dd>
                     </div>
@@ -638,7 +674,7 @@ export function ItemsSection({
                       <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
                         Unit
                       </dt>
-                      <dd className="mt-1 text-[14px] font-semibold text-[#23395d]">
+                      <dd className="mt-1 text-[14px] font-semibold text-[#171717]">
                         {formatUnitLabel(selectedCatalogPreviewItem.unit)}
                       </dd>
                     </div>
@@ -646,7 +682,7 @@ export function ItemsSection({
                       <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
                         Default Price
                       </dt>
-                      <dd className="mt-1 text-[14px] font-semibold text-[#23395d]">
+                      <dd className="mt-1 text-[14px] font-semibold text-[#171717]">
                         {formatCatalogCurrency(selectedCatalogPreviewItem.defaultUnitPrice)}
                       </dd>
                     </div>
@@ -654,7 +690,7 @@ export function ItemsSection({
                       <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
                         Taxable
                       </dt>
-                      <dd className="mt-1 text-[14px] font-semibold text-[#23395d]">
+                      <dd className="mt-1 text-[14px] font-semibold text-[#171717]">
                         {selectedCatalogPreviewItem.taxable ? "Yes" : "No"}
                       </dd>
                     </div>
@@ -662,7 +698,7 @@ export function ItemsSection({
                       <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
                         Code
                       </dt>
-                      <dd className="mt-1 truncate text-[14px] font-semibold text-[#23395d]">
+                      <dd className="mt-1 truncate text-[14px] font-semibold text-[#171717]">
                         {selectedCatalogPreviewItem.sku ||
                           selectedCatalogPreviewItem.costCode ||
                           "Not set"}
@@ -677,15 +713,19 @@ export function ItemsSection({
                         return;
                       }
 
-                      onAddPreviewCatalogItem(selectedCatalogPreviewItem.id);
+                      onAddPreviewCatalogItem(
+                        selectedCatalogPreviewItem.id,
+                        selectedAddItemGroupId
+                      );
                     }}
                     className={[
                       "mt-4 inline-flex h-10 w-full items-center justify-center rounded-[8px] border px-4 text-[13px] font-semibold transition",
                       canAddSelectedCatalogPreviewItem && !isCatalogPreviewAddPending
                         ? "border-[#d8731f] bg-[#d8731f] text-white hover:bg-[#bf6519]"
-                        : "border-[#d7deea] bg-white text-[#8a98ad]"
+                        : "border-[#d6d6d6] bg-white text-[#8a98ad]"
                     ].join(" ")}
                     title={selectedCatalogPreviewAddTitle}
+                    data-testid="estimate-catalog-preview-add"
                   >
                     {selectedCatalogPreviewAddLabel}
                   </button>
@@ -696,7 +736,7 @@ export function ItemsSection({
                   ) : null}
                 </div>
               ) : (
-                <div className="flex min-h-[260px] items-center justify-center rounded-[8px] border border-dashed border-[#d7deea] bg-white px-4 text-center text-[13px] leading-6 text-[#7c8ba3]">
+                <div className="flex min-h-[260px] items-center justify-center rounded-[8px] border border-dashed border-[#d6d6d6] bg-white px-4 text-center text-[13px] leading-6 text-[#666666]">
                   Select a catalog item to preview reusable cost, unit, taxability, and status
                   details before adding an active direct item to this estimate.
                 </div>
@@ -706,14 +746,14 @@ export function ItemsSection({
         </div>
 
         <div className="order-2 rounded-[12px] border border-[#dfe5ef] bg-white p-4 xl:order-2">
-          <div className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
+          <div className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#5f5f5f]">
             More ways to add items
           </div>
           <div className="mb-4 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setShowCreateItemForm((current) => !current)}
-              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d7deea] bg-white px-4 text-[14px] font-medium text-[#607492]"
+              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d6d6d6] bg-white px-4 text-[14px] font-medium text-[#5f5f5f]"
             >
               <Plus className="h-4 w-4" />
               <span>Add manual item</span>
@@ -724,7 +764,7 @@ export function ItemsSection({
                 setShowCreateItemForm(false);
                 catalogSearchInputRef.current?.focus();
               }}
-              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d7deea] bg-white px-4 text-[14px] font-medium text-[#28456f]"
+              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d6d6d6] bg-white px-4 text-[14px] font-medium text-[#2a2a2a]"
             >
               <Package className="h-4 w-4" />
               <span>Add from catalog</span>
@@ -735,7 +775,7 @@ export function ItemsSection({
                 setShowCreateItemForm(false);
                 setShowImportTools((current) => !current);
               }}
-              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d7deea] bg-white px-4 text-[14px] font-medium text-[#607492]"
+              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d6d6d6] bg-white px-4 text-[14px] font-medium text-[#5f5f5f]"
             >
               <FileDown className="h-4 w-4" />
               <span>Import</span>
@@ -744,7 +784,7 @@ export function ItemsSection({
           <details
             open={showImportTools}
             onToggle={(event) => setShowImportTools(event.currentTarget.open)}
-            className="mb-4 rounded-[10px] border border-[#d7deea] bg-[#fbfcfe] px-3 py-3"
+            className="mb-4 rounded-[10px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-3"
           >
             <summary className="cursor-pointer text-[13px] font-medium text-[#48617f]">
               Import from another estimate
@@ -761,7 +801,7 @@ export function ItemsSection({
           <div className="mb-3">
             <label className="text-[12px] font-medium text-[#5d6f8a]">
               Add from catalog / cost database
-              <div className="mt-1.5 flex h-11 items-center rounded-[8px] border border-[#d7deea] bg-white px-3">
+              <div className="mt-1.5 flex h-11 items-center rounded-[8px] border border-[#d6d6d6] bg-white px-3">
                 <Search className="h-4 w-4 text-[#7b8aa3]" />
                 <input
                   ref={catalogSearchInputRef}
@@ -773,17 +813,18 @@ export function ItemsSection({
                     }
 
                     event.preventDefault();
-                    onQuickAddCatalogItem(firstQuickAddItem.id);
+                    onQuickAddCatalogItem(firstQuickAddItem.id, selectedAddItemGroupId);
                   }}
                   placeholder="Search reusable items and systems"
-                  className="h-full w-full border-0 bg-transparent px-3 text-[14px] text-[#334a70] outline-none"
+                  className="h-full w-full border-0 bg-transparent px-3 text-[14px] text-[#2a2a2a] outline-none"
+                  data-testid="estimate-catalog-search"
                 />
               </div>
             </label>
           </div>
           {firstQuickAddItem ? (
             <div className="mb-3 text-[12px] text-[#6b7c96]">
-              Press Enter to add <span className="font-medium text-[#334a70]">{firstQuickAddItem.name}</span> as an estimate item.
+              Press Enter to add <span className="font-medium text-[#2a2a2a]">{firstQuickAddItem.name}</span> as an estimate item.
             </div>
           ) : null}
           <div className="flex flex-wrap items-end gap-3">
@@ -792,7 +833,8 @@ export function ItemsSection({
               <select
                 value={selectedCatalogItemId}
                 onChange={(event) => onSelectedCatalogItemIdChange(event.target.value)}
-                className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
+                className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
+                data-testid="estimate-catalog-item-select"
               >
                 <option value="">Select catalog item</option>
                 {directCatalogItems.map((item) => (
@@ -804,9 +846,10 @@ export function ItemsSection({
             </label>
             <button
               type="button"
-              onClick={onAddCatalogItem}
+              onClick={() => onAddCatalogItem(selectedAddItemGroupId)}
               disabled={!selectedCatalogItemId}
-              className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-[#1f5fd6] px-4 text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:bg-[#9fb7ea]"
+              className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-[#ef7d32] px-4 text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:bg-[#9fb7ea]"
+              data-testid="estimate-catalog-add-selected"
             >
               <Package className="h-4 w-4" />
               <span>Add from catalog</span>
@@ -814,7 +857,7 @@ export function ItemsSection({
           </div>
           {quickAddItems.length > 0 ? (
             <div className="mt-3">
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7a8aa3]">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#666666]">
                 Catalog quick matches
               </div>
               <div className="flex flex-wrap gap-2">
@@ -822,8 +865,10 @@ export function ItemsSection({
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => onQuickAddCatalogItem(item.id)}
-                    className="inline-flex items-center gap-2 rounded-full border border-[#d7deea] bg-white px-3 py-1.5 text-[13px] font-medium text-[#28456f]"
+                    onClick={() => onQuickAddCatalogItem(item.id, selectedAddItemGroupId)}
+                    className="inline-flex items-center gap-2 rounded-full border border-[#d6d6d6] bg-white px-3 py-1.5 text-[13px] font-medium text-[#2a2a2a]"
+                    data-testid="estimate-catalog-quick-add"
+                    data-catalog-item-name={item.name}
                   >
                     <Package className="h-3.5 w-3.5" />
                     <span>{item.name}</span>
@@ -833,7 +878,7 @@ export function ItemsSection({
             </div>
           ) : null}
           {showCreateItemForm ? (
-            <div className="mt-3 rounded-[10px] border border-[#d7deea] bg-white p-3">
+            <div className="mt-3 rounded-[10px] border border-[#d6d6d6] bg-white p-3">
               <div className="mb-2 text-[12px] leading-5 text-[#6b7c96]">
                 Add a manual one-off estimate item by creating the reusable catalog item first, then
                 adding it to this estimate immediately.
@@ -844,7 +889,7 @@ export function ItemsSection({
                   <input
                     value={quickItemName}
                     onChange={(event) => setQuickItemName(event.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] px-3 text-[14px] text-[#334a70] outline-none"
+                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
                   />
                 </label>
                 <label className="text-[12px] font-medium text-[#5d6f8a]">
@@ -852,7 +897,7 @@ export function ItemsSection({
                   <select
                     value={quickItemType}
                     onChange={(event) => setQuickItemType(event.target.value as CatalogItemType)}
-                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] px-3 text-[14px] text-[#334a70] outline-none"
+                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
                   >
                     <option value="material">Material</option>
                     <option value="labor">Labor</option>
@@ -867,7 +912,7 @@ export function ItemsSection({
                   <input
                     value={quickItemUnit}
                     onChange={(event) => setQuickItemUnit(event.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] px-3 text-[14px] text-[#334a70] outline-none"
+                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
                   />
                 </label>
                 <label className="text-[12px] font-medium text-[#5d6f8a]">
@@ -875,7 +920,7 @@ export function ItemsSection({
                   <select
                     value={quickItemCategory}
                     onChange={(event) => setQuickItemCategory(event.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] px-3 text-[14px] text-[#334a70] outline-none"
+                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
                   >
                     <option value="">Catalog Item</option>
                     <option value="Add-ons / Options">Add-ons / Options</option>
@@ -886,7 +931,7 @@ export function ItemsSection({
                   <input
                     value={quickItemCost}
                     onChange={(event) => setQuickItemCost(event.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] px-3 text-[14px] text-[#334a70] outline-none"
+                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
                   />
                 </label>
                 <label className="text-[12px] font-medium text-[#5d6f8a]">
@@ -894,7 +939,7 @@ export function ItemsSection({
                   <input
                     value={quickItemPrice}
                     onChange={(event) => setQuickItemPrice(event.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] px-3 text-[14px] text-[#334a70] outline-none"
+                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
                   />
                 </label>
               </div>
@@ -905,7 +950,7 @@ export function ItemsSection({
                 <button
                   type="button"
                   onClick={() => setShowCreateItemForm(false)}
-                  className="rounded-[8px] border border-[#d7deea] px-4 py-2 text-[14px] font-medium text-[#28456f]"
+                  className="rounded-[8px] border border-[#d6d6d6] px-4 py-2 text-[14px] font-medium text-[#2a2a2a]"
                 >
                   Cancel
                 </button>
@@ -932,7 +977,7 @@ export function ItemsSection({
                     })();
                   }}
                   disabled={!canSubmitQuickCreate}
-                  className="rounded-[8px] bg-[#1f5fd6] px-4 py-2 text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:bg-[#9fb7ea]"
+                  className="rounded-[8px] bg-[#ef7d32] px-4 py-2 text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:bg-[#9fb7ea]"
                 >
                   Create item and add to estimate
                 </button>
@@ -962,7 +1007,7 @@ export function ItemsSection({
               <select
                 value={selectedSystemId}
                 onChange={(event) => onSelectedSystemIdChange(event.target.value)}
-                className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
+                className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
               >
                 <option value="">Select system</option>
                 {systemCatalogItems.map((item) => (
@@ -973,18 +1018,18 @@ export function ItemsSection({
               </select>
             </label>
             <div className="w-full">
-              <div className="mb-2 inline-flex overflow-hidden rounded-[8px] border border-[#d7deea] bg-white text-[13px] font-medium">
+              <div className="mb-2 inline-flex overflow-hidden rounded-[8px] border border-[#d6d6d6] bg-white text-[13px] font-medium">
                 <button
                   type="button"
                   onClick={() => onSystemMeasurementChange("inputMode", "dimensions")}
-                  className={systemInputMode === "dimensions" ? "bg-[#23395d] px-3 py-2 text-white" : "px-3 py-2 text-[#5d6f8a]"}
+                  className={systemInputMode === "dimensions" ? "bg-[#171717] px-3 py-2 text-white" : "px-3 py-2 text-[#5d6f8a]"}
                 >
                   Length x Width
                 </button>
                 <button
                   type="button"
                   onClick={() => onSystemMeasurementChange("inputMode", "direct")}
-                  className={systemInputMode === "direct" ? "bg-[#23395d] px-3 py-2 text-white" : "px-3 py-2 text-[#5d6f8a]"}
+                  className={systemInputMode === "direct" ? "bg-[#171717] px-3 py-2 text-white" : "px-3 py-2 text-[#5d6f8a]"}
                 >
                   Direct Area + LF
                 </button>
@@ -996,7 +1041,7 @@ export function ItemsSection({
                     <input
                       value={systemLength}
                       onChange={(event) => onSystemMeasurementChange("length", event.target.value)}
-                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
+                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
                     />
                   </label>
                   <label className="text-[12px] font-medium text-[#5d6f8a]">
@@ -1004,7 +1049,7 @@ export function ItemsSection({
                     <input
                       value={systemWidth}
                       onChange={(event) => onSystemMeasurementChange("width", event.target.value)}
-                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
+                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
                     />
                   </label>
                   <label className="text-[12px] font-medium text-[#5d6f8a]">
@@ -1012,7 +1057,7 @@ export function ItemsSection({
                     <input
                       value={systemSquareFootage}
                       readOnly
-                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-[#f5f7fb] px-3 text-[14px] text-[#334a70] outline-none"
+                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-[#f5f7fb] px-3 text-[14px] text-[#2a2a2a] outline-none"
                     />
                   </label>
                   <label className="text-[12px] font-medium text-[#5d6f8a]">
@@ -1020,7 +1065,7 @@ export function ItemsSection({
                     <input
                       value={systemLinearFootage}
                       readOnly
-                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-[#f5f7fb] px-3 text-[14px] text-[#334a70] outline-none"
+                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-[#f5f7fb] px-3 text-[14px] text-[#2a2a2a] outline-none"
                     />
                   </label>
                 </div>
@@ -1031,7 +1076,7 @@ export function ItemsSection({
                     <input
                       value={systemSquareFootage}
                       onChange={(event) => onSystemMeasurementChange("area", event.target.value)}
-                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
+                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
                     />
                   </label>
                   <label className="text-[12px] font-medium text-[#5d6f8a]">
@@ -1039,7 +1084,7 @@ export function ItemsSection({
                     <input
                       value={systemLinearFootage}
                       onChange={(event) => onSystemMeasurementChange("linearFootage", event.target.value)}
-                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
+                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
                     />
                   </label>
                   <label className="text-[12px] font-medium text-[#5d6f8a]">
@@ -1047,7 +1092,7 @@ export function ItemsSection({
                     <input
                       value={systemCount}
                       onChange={(event) => onSystemMeasurementChange("count", event.target.value)}
-                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
+                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
                     />
                   </label>
                 </div>
@@ -1073,18 +1118,18 @@ export function ItemsSection({
             </button>
           </div>
           {systemPreviewMessage ? (
-            <div className="mt-3 rounded-[8px] border border-[#d7deea] bg-white px-3 py-2 text-[13px] text-[#48617f]">
+            <div className="mt-3 rounded-[8px] border border-[#d6d6d6] bg-white px-3 py-2 text-[13px] text-[#48617f]">
               {systemPreviewMessage}
             </div>
           ) : null}
           {systemPreview ? (
-            <div className="mt-4 rounded-[10px] border border-[#d7deea] bg-white">
-              <div className="grid gap-3 border-b border-[#e6e9ef] px-3 py-3 text-[12px] text-[#607492] sm:grid-cols-4">
+            <div className="mt-4 rounded-[10px] border border-[#d6d6d6] bg-white">
+              <div className="grid gap-3 border-b border-[#e6e9ef] px-3 py-3 text-[12px] text-[#5f5f5f] sm:grid-cols-4">
                 <div>
                   <span className="block font-semibold uppercase tracking-[0.08em]">
                     Catalog Items
                   </span>
-                  <span className="mt-1 block text-[15px] font-semibold text-[#23395d]">
+                  <span className="mt-1 block text-[15px] font-semibold text-[#171717]">
                     {systemPreview.rows.length}
                   </span>
                 </div>
@@ -1092,7 +1137,7 @@ export function ItemsSection({
                   <span className="block font-semibold uppercase tracking-[0.08em]">
                     Cost
                   </span>
-                  <span className="mt-1 block text-[15px] font-semibold text-[#23395d]">
+                  <span className="mt-1 block text-[15px] font-semibold text-[#171717]">
                     ${systemPreview.totalCost}
                   </span>
                 </div>
@@ -1100,7 +1145,7 @@ export function ItemsSection({
                   <span className="block font-semibold uppercase tracking-[0.08em]">
                     Price
                   </span>
-                  <span className="mt-1 block text-[15px] font-semibold text-[#23395d]">
+                  <span className="mt-1 block text-[15px] font-semibold text-[#171717]">
                     ${systemPreview.totalPrice}
                   </span>
                 </div>
@@ -1108,7 +1153,7 @@ export function ItemsSection({
                   <span className="block font-semibold uppercase tracking-[0.08em]">
                     Tax Mix
                   </span>
-                  <span className="mt-1 block text-[13px] font-semibold text-[#23395d]">
+                  <span className="mt-1 block text-[13px] font-semibold text-[#171717]">
                     T ${systemPreview.taxablePrice} / E ${systemPreview.exemptPrice}
                   </span>
                 </div>
@@ -1116,7 +1161,7 @@ export function ItemsSection({
               <div className="max-h-[220px] overflow-auto">
                 <table className="min-w-full border-collapse">
                   <thead>
-                    <tr className="border-b border-[#e6e9ef] bg-[#f6f8fc] text-[11px] uppercase tracking-[0.08em] text-[#7c8ba3]">
+                    <tr className="border-b border-[#e6e9ef] bg-[#f8f8f8] text-[11px] uppercase tracking-[0.08em] text-[#666666]">
                       <th className="px-3 py-2 text-left">Catalog Item</th>
                       <th className="px-3 py-2 text-right">Qty</th>
                       <th className="px-3 py-2 text-right">Cost</th>
@@ -1126,7 +1171,7 @@ export function ItemsSection({
                   </thead>
                   <tbody>
                     {systemPreview.rows.map((row) => (
-                      <tr key={row.componentId} className="border-b border-[#edf1f6] text-[13px] text-[#334a70]">
+                      <tr key={row.componentId} className="border-b border-[#e5e5e5] text-[13px] text-[#2a2a2a]">
                         <td className="px-3 py-2">
                           <div className="font-medium">{row.name}</div>
                           <div className="text-[11px] text-[#8694ab]">{row.unit}</div>
@@ -1145,18 +1190,19 @@ export function ItemsSection({
             </div>
           ) : null}
         </div>
-      </div>
+        </div>
+      </details>
 
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#e6e9ef] px-4 py-3">
-        <div className="space-y-1 text-[13px] text-[#6f8098]">
-          <div>
-            Tax is derived from line-item taxability, org defaults, and customer exemption.
+        <div className="space-y-1 text-[13px] text-[#666666]">
+          <div className="font-semibold uppercase tracking-[0.08em] text-[#171717]">
+            Estimate groups
           </div>
           <div>
-            Behavior: <span className="font-medium text-[#23395d]">{taxBehaviorLabel}</span> | Rate:{" "}
-            <span className="font-medium text-[#23395d]">{taxRateLabel}</span>
+            Tax: <span className="font-medium text-[#171717]">{taxBehaviorLabel}</span> | Rate:{" "}
+            <span className="font-medium text-[#171717]">{taxRateLabel}</span>
             {customerTaxExempt ? (
-              <span className="ml-2 rounded-full bg-[#eef3fb] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
+              <span className="ml-2 rounded-full bg-[#eef3fb] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#5f5f5f]">
                 Customer exempt
               </span>
             ) : null}
@@ -1171,7 +1217,7 @@ export function ItemsSection({
               "inline-flex items-center gap-2 rounded-[6px] border px-3 py-2",
               showMarkup
                 ? "border-[#2d67e0] bg-[#eef4ff] text-[#2d67e0]"
-                : "border-[#d7deea] text-[#697995]"
+                : "border-[#d6d6d6] text-[#697995]"
             ].join(" ")}
           >
             <Eye className="h-4 w-4" />
@@ -1184,24 +1230,24 @@ export function ItemsSection({
               "inline-flex items-center gap-2 rounded-[6px] border px-3 py-2",
               !showMarkup
                 ? "border-[#2d67e0] bg-[#eef4ff] text-[#2d67e0]"
-                : "border-[#d7deea] text-[#697995]"
+                : "border-[#d6d6d6] text-[#697995]"
             ].join(" ")}
           >
             <EyeOff className="h-4 w-4" />
             <span>Hide Markup</span>
           </button>
-          <div className="inline-flex overflow-hidden rounded-[6px] bg-[#edf1f6] font-medium">
+          <div className="inline-flex overflow-hidden rounded-[6px] bg-[#e5e5e5] font-medium">
             <button
               type="button"
               onClick={() => onToggleShowOnlyZeroItems(true)}
-              className={showOnlyZeroItems ? "bg-[#1f5fd6] px-3 py-1.5 text-white" : "px-3 py-1.5 text-[#8b99b0]"}
+              className={showOnlyZeroItems ? "bg-[#ef7d32] px-3 py-1.5 text-white" : "px-3 py-1.5 text-[#777777]"}
             >
               $0 Only
             </button>
             <button
               type="button"
               onClick={() => onToggleShowOnlyZeroItems(false)}
-              className={!showOnlyZeroItems ? "bg-[#1f5fd6] px-3 py-1.5 text-white" : "px-3 py-1.5 text-[#8b99b0]"}
+              className={!showOnlyZeroItems ? "bg-[#ef7d32] px-3 py-1.5 text-white" : "px-3 py-1.5 text-[#777777]"}
             >
               All
             </button>
@@ -1209,7 +1255,8 @@ export function ItemsSection({
           <button
             type="button"
             onClick={onAddGroup}
-            className="inline-flex items-center gap-2 rounded-[6px] border border-[#d7deea] px-4 py-2.5 text-[15px] font-medium text-[#28456f]"
+            className="inline-flex items-center gap-2 rounded-[6px] bg-[#ef7d32] px-4 py-2.5 text-[15px] font-semibold text-white"
+            data-testid="estimate-add-group"
           >
             <FolderTree className="h-4 w-4" />
             <span>Add Group</span>
@@ -1217,48 +1264,75 @@ export function ItemsSection({
         </div>
       </div>
 
-      <div className="border-b border-[#e6e9ef] bg-[#fbfcfe] px-4 py-3 text-[12px] leading-6 text-[#7c8ba3]">
-        Estimate items are locked commercial snapshots from catalog entries or server-expanded
-        systems. Only quantity, grouping, and assignment remain editable here, and downstream
-        billing does not read live estimate editing rows.
+      <div className="border-b border-[#e6e9ef] bg-white px-4 py-2.5 text-[12px] leading-5 text-[#666666]">
+        Build the estimate by section first. Line items remain locked commercial snapshots from
+        catalog entries or server-expanded systems, and downstream billing does not read live draft
+        editing rows.
       </div>
 
-      <div className="min-h-[720px] bg-[#f8f9fc] p-4">
-        <div className="space-y-4">
+      <div className="min-h-[360px] bg-[#f8f9fc] p-3">
+        <div className="space-y-3">
           {visibleGroups.map((group) => (
             <section
               key={group.id ?? "ungrouped"}
-              className="overflow-hidden rounded-[14px] border border-[#dfe5ef] bg-white shadow-[0_16px_38px_-30px_rgba(15,23,42,0.45)]"
+              className="overflow-hidden rounded-[10px] border border-[#d6d6d6] bg-white shadow-[0_10px_28px_-26px_rgba(15,15,15,0.65)]"
+              data-testid="estimate-item-group"
+              data-group-id={group.id ?? "ungrouped"}
+              data-group-label={group.label}
             >
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#e6e9ef] bg-[#fbfcfe] px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e6e9ef] bg-[#f8f8f8] px-3 py-2.5">
                 <div className="flex min-w-0 items-center gap-3">
                   <GripVertical className="h-4 w-4 text-[#8e9cb2]" />
                   {group.id ? (
                     <input
                       value={group.label}
                       onChange={(event) => onGroupLabelChange(group.id as string, event.target.value)}
-                      className="h-9 min-w-[220px] border border-[#d7deea] bg-white px-3 text-[16px] font-semibold text-[#23395d] outline-none focus:border-[#9aaecc]"
+                      className="h-8 min-w-[220px] rounded-[6px] border border-[#d6d6d6] bg-white px-3 text-[15px] font-semibold text-[#171717] outline-none focus:border-[#d8731f]"
+                      data-testid="estimate-group-name-input"
                     />
                   ) : (
-                    <span className="text-[18px] font-semibold text-[#23395d]">{group.label}</span>
+                    <span
+                      className="text-[15px] font-semibold text-[#171717]"
+                      data-testid="estimate-group-name"
+                    >
+                      {group.label}
+                    </span>
                   )}
-                  <span className="rounded-full bg-[#eef3fb] px-3 py-1 text-[12px] font-medium text-[#607492]">
+                  <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#5f5f5f]">
                     {group.rows.length} item{group.rows.length === 1 ? "" : "s"}
                   </span>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-[15px] font-semibold text-[#23395d]">
-                    {renderGroupSubtotal(group.rows)}
-                  </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="rounded-[8px] border border-[#e5e5e5] bg-white px-3 py-1.5 text-right">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#777777]">
+                      Subtotal
+                    </div>
+                    <div className="text-[15px] font-semibold text-[#171717]">
+                      {renderGroupSubtotal(group.rows)}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                        setSelectedAddItemGroupId(group.id);
+                        setShowAddItemTools(true);
+                      window.setTimeout(() => catalogSearchInputRef.current?.focus(), 0);
+                    }}
+                    className="inline-flex h-9 items-center gap-2 rounded-[6px] border border-[#d8731f] bg-white px-3 text-[13px] font-semibold text-[#a4581a]"
+                    data-testid="estimate-group-add-item"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Add Item</span>
+                  </button>
                   {group.id ? (
                     <button
                       type="button"
                       onClick={() => onDeleteGroup(group.id as string)}
-                      className="inline-flex items-center gap-2 rounded-[6px] border border-[#ebd3d3] px-3 py-2 text-[14px] text-[#8f4b4b]"
+                      className="inline-flex h-9 items-center gap-2 rounded-[6px] border border-[#ebd3d3] px-3 text-[13px] text-[#8f4b4b]"
                     >
                       <Trash2 className="h-4 w-4" />
-                      <span>Delete Group</span>
+                      <span>Delete</span>
                     </button>
                   ) : null}
                 </div>
@@ -1267,24 +1341,24 @@ export function ItemsSection({
               <div className="overflow-x-auto">
                 <table className="min-w-full border-collapse">
                   <thead>
-                    <tr className="border-b border-[#e6e9ef] bg-[#f6f8fc] text-[12px] uppercase tracking-[0.08em] text-[#7c8ba3]">
-                      <th className="w-8 px-2 py-3 text-left"></th>
-                      <th className="w-[64px] px-2 py-3 text-left">Type</th>
-                      <th className="min-w-[280px] px-2 py-3 text-left">Item Name</th>
-                      <th className="w-[140px] px-2 py-3 text-left">Group</th>
-                      <th className="w-[84px] px-2 py-3 text-right">Qty</th>
-                      <th className="w-[88px] px-2 py-3 text-left">Unit</th>
-                      <th className="w-[120px] px-2 py-3 text-right">Snapshot Cost</th>
+                    <tr className="border-b border-[#e6e9ef] bg-white text-[11px] uppercase tracking-[0.08em] text-[#666666]">
+                      <th className="w-8 px-2 py-2 text-left"></th>
+                      <th className="w-[64px] px-2 py-2 text-left">Type</th>
+                      <th className="min-w-[280px] px-2 py-2 text-left">Item Name</th>
+                      <th className="w-[140px] px-2 py-2 text-left">Group</th>
+                      <th className="w-[84px] px-2 py-2 text-right">Qty</th>
+                      <th className="w-[88px] px-2 py-2 text-left">Unit</th>
+                      <th className="w-[120px] px-2 py-2 text-right">Snapshot Cost</th>
                       {showMarkup ? (
-                        <th className="w-[96px] px-2 py-3 text-right">Snapshot MU%</th>
+                        <th className="w-[96px] px-2 py-2 text-right">Snapshot MU%</th>
                       ) : null}
-                      <th className="w-[96px] px-2 py-3 text-right">Hidden%</th>
-                      <th className="w-[136px] px-2 py-3 text-right">
+                      <th className="w-[96px] px-2 py-2 text-right">Hidden%</th>
+                      <th className="w-[136px] px-2 py-2 text-right">
                         {showMarkup ? "Locked Sell Price" : "Locked Price"}
                       </th>
-                      <th className="w-[120px] px-2 py-3 text-right">Total</th>
-                      <th className="w-[72px] px-2 py-3 text-center">Tax</th>
-                      <th className="w-[118px] px-2 py-3 text-left">Assigned To</th>
+                      <th className="w-[120px] px-2 py-2 text-right">Total</th>
+                      <th className="w-[72px] px-2 py-2 text-center">Tax</th>
+                      <th className="w-[118px] px-2 py-2 text-left">Assigned To</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1292,11 +1366,15 @@ export function ItemsSection({
                       <tr
                         key={lineItem.rowKey}
                         className={[
-                          "border-b border-[#edf1f6] align-top text-[15px] text-[#334a70]",
+                          "border-b border-[#e5e5e5] align-top text-[14px] text-[#2a2a2a]",
                           index % 2 === 0 ? "bg-white" : "bg-[#fcfcfd]"
                         ].join(" ")}
+                        data-testid="estimate-line-item-row"
+                        data-line-item-name={lineItem.name}
+                        data-group-id={group.id ?? "ungrouped"}
+                        data-group-label={group.label}
                       >
-                        <td className="px-2 py-3 text-[#a5b1c4]">
+                        <td className="px-2 py-2 text-[#a5b1c4]">
               <div className="flex flex-col items-center gap-1">
                 <button
                   type="button"
@@ -1322,7 +1400,7 @@ export function ItemsSection({
                 </button>
               </div>
             </td>
-                        <td className="px-2 py-3">
+                        <td className="px-2 py-2">
                           <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#e8f0ff] text-[#2f66d7]">
                             <Package className="h-4 w-4" />
                           </div>
@@ -1332,25 +1410,25 @@ export function ItemsSection({
                         </td>
                         <td className="px-2 py-2">
                           <div className="flex flex-col gap-1">
-                            <div className="min-h-8 px-0 text-[15px] font-medium text-[#334a70]">
+                            <div className="min-h-7 px-0 text-[14px] font-medium text-[#2a2a2a]">
                               {lineItem.name}
                             </div>
                             <div className="min-h-7 px-0 text-[12px] text-[#8694ab]">
                               {lineItem.description || "Estimate item snapshot from catalog"}
                             </div>
-                            <div className="inline-flex w-fit items-center gap-1 rounded-full bg-[#eef3fb] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
+                            <div className="inline-flex w-fit items-center gap-1 rounded-full bg-[#eef3fb] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#5f5f5f]">
                               <Lock className="h-3 w-3" />
                               <span>Locked Estimate Snapshot</span>
                             </div>
                           </div>
                         </td>
-                        <td className="px-2 py-3">
+                        <td className="px-2 py-2">
                           <select
                             value={lineItem.groupId ?? ""}
                             onChange={(event) =>
                               onLineItemChange(lineItem.rowKey, "groupId", event.target.value)
                             }
-                            className="h-9 w-full rounded-[6px] border border-[#d7deea] bg-white px-2 text-[14px] text-[#334a70] outline-none"
+                            className="h-9 w-full rounded-[6px] border border-[#d6d6d6] bg-white px-2 text-[14px] text-[#2a2a2a] outline-none"
                           >
                             <option value="">Ungrouped Items</option>
                             {itemGroups.map((itemGroup) => (
@@ -1360,36 +1438,36 @@ export function ItemsSection({
                             ))}
                           </select>
                         </td>
-                        <td className="px-2 py-3">
+                        <td className="px-2 py-2">
                           <input
                             value={lineItem.quantity}
                             onChange={(event) =>
                               onLineItemChange(lineItem.rowKey, "quantity", event.target.value)
                             }
-                            className="h-9 w-full rounded-[6px] border border-[#d7deea] bg-white px-2 text-right text-[15px] text-[#334a70] outline-none"
+                            className="h-9 w-full rounded-[6px] border border-[#d6d6d6] bg-white px-2 text-right text-[15px] text-[#2a2a2a] outline-none"
                           />
                         </td>
-                        <td className="px-2 py-3">
-                          <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2 text-[15px] font-semibold text-[#334a70]">
+                        <td className="px-2 py-2">
+                          <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2 text-[15px] font-semibold text-[#2a2a2a]">
                             {formatUnitLabel(lineItem.unit)}
                             <div className="mt-1 text-[11px] font-normal uppercase tracking-[0.08em] text-[#8c99ad]">
                               Unit
                             </div>
                           </div>
                         </td>
-                        <td className="px-2 py-3">
-                          <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2 text-right text-[15px] text-[#334a70]">
+                        <td className="px-2 py-2">
+                          <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2 text-right text-[15px] text-[#2a2a2a]">
                             {lineItem.baseUnitCost}
                           </div>
                         </td>
                         {showMarkup ? (
-                          <td className="px-2 py-3">
-                            <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2 text-right text-[15px] text-[#334a70]">
+                          <td className="px-2 py-2">
+                            <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2 text-right text-[15px] text-[#2a2a2a]">
                               {lineItem.markupPercent}%
                             </div>
                           </td>
                         ) : null}
-                        <td className="px-2 py-3 text-right">
+                        <td className="px-2 py-2 text-right">
                           <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2 text-[15px] text-[#8694ab]">
                             {lineItem.hiddenMarkupPercent}%
                             <div className="mt-1 text-[11px] text-[#a2aec0]">
@@ -1397,15 +1475,15 @@ export function ItemsSection({
                             </div>
                           </div>
                         </td>
-                        <td className="px-2 py-3 text-right">
+                        <td className="px-2 py-2 text-right">
                           <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2">
-                            <div className="text-[15px] text-[#334a70]">
+                            <div className="text-[15px] text-[#2a2a2a]">
                               <input
                                 value={lineItem.unitPrice}
                                 onChange={(event) =>
                                   onLineItemChange(lineItem.rowKey, "unitPrice", event.target.value)
                                 }
-                                className="h-8 w-full rounded-[6px] border border-[#d7deea] bg-white px-2 text-right text-[15px] text-[#334a70] outline-none"
+                                className="h-8 w-full rounded-[6px] border border-[#d6d6d6] bg-white px-2 text-right text-[15px] text-[#2a2a2a] outline-none"
                               />
                             </div>
                             <div className="mt-1 text-[12px] text-[#8694ab]">
@@ -1418,11 +1496,11 @@ export function ItemsSection({
                             ) : null}
                           </div>
                         </td>
-                        <td className="px-2 py-3 text-right text-[15px] font-semibold text-[#334a70]">
+                        <td className="px-2 py-2 text-right text-[14px] font-semibold text-[#2a2a2a]">
                           {lineItem.lineTotal}
                         </td>
-                        <td className="px-2 py-3 text-center">
-                          <label className="inline-flex cursor-pointer flex-col items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
+                        <td className="px-2 py-2 text-center">
+                          <label className="inline-flex cursor-pointer flex-col items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#5f5f5f]">
                             <input
                               type="checkbox"
                               checked={lineItem.taxCode === "taxable"}
@@ -1443,9 +1521,9 @@ export function ItemsSection({
                             </div>
                           ) : null}
                         </td>
-                        <td className="px-2 py-3 text-[#8694ab]">
+                        <td className="px-2 py-2 text-[#8694ab]">
                           <div className="flex items-center gap-2">
-                            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#eef2f7] text-[#7485a0]">
+                            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f8f8f8] text-[#7485a0]">
                               <UserRound className="h-4 w-4" />
                             </span>
                             <input
@@ -1458,7 +1536,7 @@ export function ItemsSection({
                                 )
                               }
                               placeholder="Assign"
-                              className="h-9 w-full rounded-[6px] border border-[#d7deea] bg-white px-2 text-[14px] text-[#6f8098] outline-none placeholder:text-[#a9b5c8]"
+                              className="h-9 w-full rounded-[6px] border border-[#d6d6d6] bg-white px-2 text-[14px] text-[#666666] outline-none placeholder:text-[#a9b5c8]"
                             />
                           </div>
                         </td>
@@ -1468,9 +1546,10 @@ export function ItemsSection({
                       <tr>
                         <td
                           colSpan={showMarkup ? 13 : 12}
-                          className="px-4 py-8 text-center text-[14px] text-[#93a0b5]"
+                          className="px-4 py-7 text-center text-[14px] text-[#777777]"
                         >
-                          No visible items in this group yet. Add an inventory item or expand a system above to keep building the estimate.
+                          This estimate section is ready. Use Add Item to open the existing catalog,
+                          manual item, system, or import tools.
                         </td>
                       </tr>
                     ) : null}

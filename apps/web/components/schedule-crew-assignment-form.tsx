@@ -77,7 +77,7 @@ export function ScheduleCrewAssignmentForm({
               <select
                 name="personId"
                 defaultValue=""
-                className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+                className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
               >
                 <option value="">No person selected</option>
                 {people.map((person) => (
@@ -95,7 +95,7 @@ export function ScheduleCrewAssignmentForm({
               <select
                 name="vendorId"
                 defaultValue=""
-                className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+                className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
               >
                 <option value="">No vendor selected</option>
                 {vendors.map((vendor) => (
@@ -111,7 +111,7 @@ export function ScheduleCrewAssignmentForm({
               <select
                 name="role"
                 defaultValue="crew"
-                className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+                className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
               >
                 <option value="lead">Lead</option>
                 <option value="crew">Crew</option>
@@ -127,7 +127,7 @@ export function ScheduleCrewAssignmentForm({
                 <input
                   type="datetime-local"
                   name="assignedStartAt"
-                  className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+                  className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
                 />
               </label>
 
@@ -138,7 +138,7 @@ export function ScheduleCrewAssignmentForm({
                 <input
                   type="datetime-local"
                   name="assignedEndAt"
-                  className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+                  className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
                 />
               </label>
             </div>
@@ -150,8 +150,8 @@ export function ScheduleCrewAssignmentForm({
         </AuthSubmitButton>
       </form>
 
-      <div className="rounded-[4px] border border-[#d9dee8] bg-[#fbfcfe]">
-        <div className="border-b border-[#e5ebf2] px-4 py-3">
+      <div className="rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8]">
+        <div className="border-b border-[#e5e5e5] px-4 py-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
             Current crew
           </p>
@@ -160,7 +160,7 @@ export function ScheduleCrewAssignmentForm({
           </p>
         </div>
 
-        <div className="divide-y divide-[#e5ebf2]">
+        <div className="divide-y divide-[#e5e5e5]">
           {assignments.length > 0 ? (
             assignments.map((assignment) => (
               <div
@@ -200,7 +200,7 @@ export function ScheduleCrewAssignmentForm({
                   ) : null}
                   <button
                     type="submit"
-                    className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#41536f] transition hover:bg-slate-50"
+                    className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
                   >
                     Unassign
                   </button>

@@ -9,6 +9,9 @@
   "scripts": {
     "dev": "turbo run dev --filter=@floorconnector/web",
     "build": "turbo run build",
+    "e2e": "playwright test",
+    "e2e:auth": "playwright test e2e/auth.setup.js",
+    "e2e:headed": "playwright test --headed",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "format": "prettier --check .",
@@ -22,6 +25,7 @@
   "devDependencies": {
     "@eslint/js": "^9.24.0",
     "@next/eslint-plugin-next": "^15.2.4",
+    "@playwright/test": "^1.51.1",
     "@types/node": "^22.14.0",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",

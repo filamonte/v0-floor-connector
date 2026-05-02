@@ -129,13 +129,13 @@ export function CostItemsDashboardContent({
 
   return (
     <div className="space-y-3">
-      <section className="grid gap-px border border-[#d6dde7] bg-[#d6dde7] md:grid-cols-3 xl:grid-cols-6">
+      <section className="grid gap-px border border-[#d6d6d6] bg-[#d6d6d6] md:grid-cols-3 xl:grid-cols-6">
         {summaryCards.map((card) => (
           <div key={card.label} className="bg-white px-3 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#75859f]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
               {card.label}
             </p>
-            <p className="mt-1 text-xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-xl font-semibold tracking-tight text-[#171717]">
               {card.value}
             </p>
           </div>
@@ -143,9 +143,9 @@ export function CostItemsDashboardContent({
       </section>
 
       <section className="grid gap-3 xl:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)]">
-        <div className="border border-[#dde3eb] bg-white">
-          <div className="border-b border-[#e5ebf2] px-4 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
+        <div className="border border-[#d6d6d6] bg-white">
+          <div className="border-b border-[#e5e5e5] px-4 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
               Quick Actions
             </p>
           </div>
@@ -154,7 +154,7 @@ export function CostItemsDashboardContent({
               <Link
                 key={action.label}
                 href={action.href}
-                className="inline-flex h-8 items-center border border-[#d6dde7] bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-700 transition hover:bg-slate-50"
+                className="inline-flex h-8 items-center border border-[#d6d6d6] bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-700 transition hover:bg-slate-50"
               >
                 {action.label}
               </Link>
@@ -162,9 +162,9 @@ export function CostItemsDashboardContent({
           </div>
         </div>
 
-        <div className="border border-[#dde3eb] bg-white">
-          <div className="border-b border-[#e5ebf2] px-4 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
+        <div className="border border-[#d6d6d6] bg-white">
+          <div className="border-b border-[#e5e5e5] px-4 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
               Recently Updated
             </p>
           </div>
@@ -208,9 +208,9 @@ export function CostItemsDashboardContent({
       </section>
 
       <section className="grid gap-3 xl:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)]">
-        <div className="border border-[#dde3eb] bg-white">
-          <div className="border-b border-[#e5ebf2] px-4 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
+        <div className="border border-[#d6d6d6] bg-white">
+          <div className="border-b border-[#e5e5e5] px-4 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
               Work Queues
             </p>
           </div>
@@ -228,9 +228,9 @@ export function CostItemsDashboardContent({
           </div>
         </div>
 
-        <div className="border border-[#dde3eb] bg-white">
-          <div className="border-b border-[#e5ebf2] px-4 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
+        <div className="border border-[#d6d6d6] bg-white">
+          <div className="border-b border-[#e5e5e5] px-4 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
               Category Entry Points
             </p>
           </div>

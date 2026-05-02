@@ -157,7 +157,7 @@ export function UniversalCreateMenu({
         aria-controls={menuId}
         onClick={() => setOpen((currentValue) => !currentValue)}
         className={[
-          "inline-flex items-center gap-2 rounded-[4px] border border-[#ef7d32] bg-[#ef7d32] px-4 py-2.5 text-sm font-medium text-[#1f140d] transition hover:bg-[#f08b47]",
+          "inline-flex items-center gap-2 rounded-[4px] border border-[#ef7d32] bg-[#ef7d32] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#de6c22]",
           buttonClassName ?? ""
         ]
           .filter(Boolean)

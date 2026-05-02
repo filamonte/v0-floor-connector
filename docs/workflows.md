@@ -173,6 +173,23 @@ Examples:
 - deposit paid -> scheduling allowed
 - job complete -> standard invoice allowed
 
+## Project Readiness Gate
+
+Project readiness is a hard server-side gate, not guidance.
+
+Readiness derives from:
+- contract status
+- financial readiness, including deposit or financing requirements where configured
+- organization workflow settings
+
+Project readiness is required before:
+- job creation
+- scheduling
+- job updates that move work into scheduled or execution states
+- execution workflows, including daily logs, field notes, execution attachments, punchlist items, and project-attributed time punches
+
+All enforcement happens at the server boundary through the centralized project readiness gate. Module-specific flows must not bypass or reinterpret readiness independently.
+
 ## Current Implemented Workflows
 
 The current app already supports the following live workflows:
@@ -324,6 +341,7 @@ Implemented flow:
 - approved estimates can create jobs
 - jobs track operational execution states such as `unscheduled`, `scheduled`, `in_progress`, and `completed`
 - job detail provides progression-oriented actions
+- job creation, scheduling, and job updates into scheduled or execution states are blocked unless the project passes the centralized server-side readiness gate
 
 Current canonical records involved:
 - project
@@ -343,7 +361,8 @@ Implemented flow:
   - approved change-order snapshot item
   - invoice-only adjustment
 - direct billing from live `estimate_line_items` is not canonical
-- direct invoice insertion from live `catalog_items` is not implemented; any future catalog-backed invoice adjustment should be scoped separately and preserve invoice snapshot lineage
+- general-purpose invoice insertion from live `catalog_items` is not implemented or allowed
+- limited catalog-backed invoice usage exists only as invoice-only adjustments / manual catalog-backed rows, where the catalog item provides starting snapshot values and cannot bypass approved estimate, SOV, or approved change-order billing lineage
 
 Current canonical records involved:
 - project
@@ -409,6 +428,7 @@ Implemented flow:
 - workforce participants now live on shared canonical people records, with vendors modeling external labor companies and compliance records attaching to either subject type
 - auditable time capture now flows through canonical time punch events and derived time cards
 - daily execution now flows through canonical daily logs, field notes, and lightweight execution attachments
+- daily logs, field notes, execution attachments, punchlist items, and project-attributed time punches require project readiness at the server boundary
 - project and job workspaces now surface linked labor and field-execution context through those same shared records
 
 Current canonical records involved:
@@ -445,7 +465,7 @@ The best current product direction for the contractor revenue workflow is:
 
 How this should be interpreted today:
 - some of these steps already map cleanly to canonical records in the app
-- some are operational stages that still need stronger UX guidance, status handling, or readiness logic
+- some are operational stages that still need stronger UX guidance or status handling around the implemented readiness gate
 - the system should preserve one continuous path rather than forcing users to decide between disconnected modules
 
 ## Intended Workflow Direction
@@ -512,7 +532,8 @@ Today, the app should be understood this way:
 - jobs represent execution
 - workforce time and field execution now support the same project-centered operating chain through shared people, vendor, time-card, and daily-log records
 - invoices and payments complete the financial path, with invoice rows sourced from approved estimate snapshot items, SOV items, approved change-order snapshot items, or invoice-only adjustments
-- invoice catalog insertion remains intentionally deferred; invoice rows should continue to come from approved commercial lineage or explicit invoice-only adjustments, not live catalog item selection
+- invoice catalog insertion is intentionally limited: invoice rows should continue to come from approved commercial lineage or explicit invoice-only adjustments, not free catalog selection as normal invoice scope
+- invoice-only manual catalog-backed rows may use `catalog_items` as starting snapshots for explicit adjustments, but they remain invoice-only lineage and do not replace approved commercial billing sources
 - notifications and communications now have stored canonical foundations rather than shell-only placeholder behavior
 - Financials is now starting to read as one sectioned system:
   - `/financials` is the cross-project control panel

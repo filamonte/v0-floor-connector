@@ -74,6 +74,7 @@ What contractor teams can do now:
 - navigate organization-aware modules
 - use project detail as the main readiness and workflow hub
 - use estimate, contract, invoice, and job detail pages as connected workspaces
+- rely on server-side readiness enforcement before scheduling and execution workflows proceed
 - manage organization-level settings and admin foundations
 - use super-admin configuration foundations at the platform layer
 
@@ -116,6 +117,7 @@ What teams can do now:
 - review project-centered execution continuity
 - use labor summaries derived from time cards
 - review project and job execution context from the same shared system
+- block scheduling and execution workflows until the project satisfies readiness requirements
 
 Field execution is therefore part of the same operating chain. It is not a disconnected field-reporting silo.
 

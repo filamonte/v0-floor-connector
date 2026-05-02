@@ -1,6 +1,7 @@
 import { DocumentTemplateSettingsCard } from "@/components/document-template-settings-card";
 import { SettingsFeedback } from "@/components/settings-feedback";
 import { SettingsSectionCard } from "@/components/settings-section-card";
+import { requireOrganizationAdminScope } from "@/lib/organizations/admin";
 import { listDocumentTemplates, listPlatformTemplateSeeds } from "@/lib/templates/data";
 
 type PageProps = {
@@ -12,6 +13,7 @@ type PageProps = {
 
 export default async function SettingsTemplatesPage({ searchParams }: PageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
+  await requireOrganizationAdminScope("/settings/templates");
   const [allTemplates, platformSeeds] = await Promise.all([
     listDocumentTemplates(),
     listPlatformTemplateSeeds()

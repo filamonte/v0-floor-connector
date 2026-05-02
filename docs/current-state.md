@@ -156,7 +156,7 @@ Current shell behavior:
 - wider main workspace and calmer dashboard-first shell framing
 - flattened shell/header chrome with one shared contractor header system instead of competing stacked header layers
 - shared breadcrumb and page-context continuity now live inside the unified top header structure instead of a separate colored band beneath navigation
-- the contractor shell and shared manager-page wrappers now use the same warmer charcoal/orange/light-neutral theme direction as the dashboard instead of the older blue-heavy overview styling
+- the contractor shell and shared manager-page wrappers now use the same black/gray/orange/white theme direction as the dashboard instead of the older blue-heavy overview styling
 - shared contractor manager-page wrapper and command-bar pattern now drive the main overview surfaces
 - the always-on left sidebar is no longer the primary navigation pattern
 - left-side navigation is now reserved for contextual workspace use where needed inside deeper screens
@@ -219,7 +219,7 @@ Current contractor UI design notes:
   - shared settings and linked-record cards
   - shared overview/detail typography and surface treatment
 - the active contractor-app theme direction is now:
-  - charcoal or dark-neutral framing where framing helps
+  - black or near-black framing where framing helps
   - orange for actions, emphasis, and UI identity
   - white or light-neutral surfaces for primary reading and work areas
   - tighter, more practical spacing and typography across manager screens
@@ -388,6 +388,7 @@ Implemented:
 - project commercial-readiness sync foundation derived from contract, invoice, payment, financing, and workflow-setting state
 - stored project readiness fields now refresh from upstream opportunity and estimate mutations instead of waiting for later downstream changes to resync them
 - project detail now acts as the upstream sales-to-production readiness hub with blocker visibility, next-best-action guidance, and a derived ready-to-schedule handoff state
+- project readiness is now enforced server-side through a centralized readiness gate before job creation, scheduling, and execution workflows can proceed
 - project detail next-action guidance now distinguishes draft/sent/rejected/approved estimate states, contract draft/signature states, deposit readiness, pending change orders, job scheduling, completed-work invoicing, and open invoice/payment follow-up using existing canonical records only
 - project detail completed-job invoice actions now preserve the canonical `jobId` when handing off to invoice quick-create, and active job follow-up routes through `/jobs?projectId=...` so the project context is not lost
 - estimate, contract, and invoice detail pages now point users back to the project readiness hub when the upstream handoff state matters
@@ -615,6 +616,7 @@ Implemented:
 - protected time-card review list and detail flow
 - project and job detail pages now surface basic linked labor and time context
 - project/date time-card query helpers now support field-execution labor continuity without duplicating time persistence
+- project-attributed time punches are blocked server-side unless the connected project passes the centralized readiness gate
 
 Supported punch event types currently include:
 - `punch_in`
@@ -656,6 +658,7 @@ Implemented:
 - protected daily-log detail/edit page using the shared contractor workspace pattern
 - project and job detail surfaces now show linked daily execution context where useful
 - lightweight execution-attachment visibility on the daily-log detail workflow
+- daily-log creation is blocked server-side unless the connected project passes the centralized readiness gate
 
 Daily log statuses currently implemented:
 - `draft`
@@ -695,6 +698,7 @@ Implemented:
 - structured note type and simple status foundation for blockers, issues, and punch-list-ready observations without separate subsystem tables
 - field-note create and edit UX inside the daily-log detail workflow
 - field-note attachment visibility and add-attachment flow inside the same daily-log workflow
+- field-note creation is blocked server-side unless the connected project passes the centralized readiness gate
 
 Supported field note types currently include:
 - `general`
@@ -745,6 +749,7 @@ Implemented:
   - `field_note`
 - tenant-safe list/create data access foundation
 - protected daily-log and field-note attachment visibility inside the daily-log workspace
+- execution-attachment creation is blocked server-side unless the connected project passes the centralized readiness gate
 
 Supported attachment subject types currently include:
 - `daily_log`
@@ -848,6 +853,8 @@ Implemented:
 - create-job flow from approved estimate
 - create-job enforcement now requires the connected project to be ready to schedule before downstream work can be created
 - job reassignment now applies the same ready-to-schedule gate before an existing job can be moved onto a different project
+- scheduling actions now require project readiness before server-side schedule changes are accepted
+- job updates that move work into scheduled or execution states are blocked unless the connected project passes the centralized readiness gate
 - first-pass scheduling fields on the canonical `jobs` record:
   - `scheduled_date`
   - optional `scheduled_start_at`
@@ -917,6 +924,8 @@ Current invoice design notes:
 - standard invoices without downstream job context are now blocked until the project completes contract, signature, and deposit or financing readiness through the commercial handoff
 - invoice tax, exemption, and retainage values are snapshotted on the invoice so later customer/org setting changes do not break reporting history
 - downstream invoice rows now use one explicit lineage path only: approved estimate snapshot item, selected SOV item, approved change-order snapshot item, or invoice-only adjustment
+- limited catalog-backed invoice usage exists only inside invoice-only adjustments / manual catalog-backed rows, where the catalog item is used as a starting snapshot for an explicit adjustment
+- free catalog insertion as normal invoice scope is not implemented or allowed; approved estimate, SOV, approved change-order, or explicit invoice-only adjustment lineage must remain the billing source
 - downstream billing must not read directly from `estimate_line_items`; those rows remain estimate authoring state only
 - contractor-side invoice manager quick create now captures only the minimum project and workflow-role context, creates the canonical draft invoice, and routes into the full invoice workspace for complete editing
 - contractor-side project, customer, lead, contract, and daily-log managers now also use quick create overlays that capture only minimum required fields before handing off to the full record workspace
@@ -1168,7 +1177,8 @@ Current design notes:
 - inventory availability is now controlled through the shared platform / organization feature policy key `inventory_enabled`
 - linked inventory rows currently use the default location in the contractor UI, while the schema allows additional locations later without splitting the item master
 - item-level tax UX is intentionally simplified to a taxable on or off checkbox, with tax rates remaining in organization and platform financial settings and optional `tax_code_id` retained as advanced infrastructure
-- estimate item sourcing snapshots from `catalog_items` for active non-system catalog items through the estimate editor panel; deeper invoice catalog insertion and materials execution workflows remain future work
+- estimate item sourcing snapshots from `catalog_items` for active non-system catalog items through the estimate editor panel; general-purpose invoice catalog insertion and materials execution workflows remain future work
+- limited invoice-only manual catalog-backed rows may use `catalog_items` as a starting snapshot for explicit invoice-only adjustments, but they do not create approved-scope invoice billing from live catalog rows
 - invoice pricing remains snapshot-based through approved estimate, SOV, change-order, or invoice-only lineage; inventory quantity is operational context only and does not drive pricing
 - `system` remains the canonical reusable assembly concept, with component rows designed to scale immediately by sqft in estimates
 - current systems are reusable catalog assemblies; they are not yet the planned System Templates with required inputs, formulas beyond current sqft expansion, grouping rules, Quick Build, Detailed Build, or share-back review
@@ -1293,6 +1303,7 @@ The current implemented workflow foundation supports:
 - project-detail readiness hub for the upstream commercial chain with blockers, next action, and ready-to-schedule handoff visibility
 - downstream job creation now respects the canonical ready-to-schedule gate instead of relying only on estimate approval
 - downstream job reassignment now respects the same canonical ready-to-schedule gate instead of allowing a later project move to bypass the handoff rule
+- centralized server-side project readiness enforcement now blocks job creation, scheduling, scheduled/execution job transitions, daily logs, field notes, execution attachments, punchlist items, and project-attributed time punches until readiness conditions pass
 - appointment creation and review on the same lead, customer, and project chain for site visits, estimate meetings, and follow-up coordination
 - conversion of approved or project-based work into jobs/work orders
 - job progression through execution states
@@ -1447,7 +1458,7 @@ The system is functionally correct but has UI clarity gaps.
 ### Identified Issues:
 - Header navigation overcrowding
 - Project detail lacks strong contextual navigation
-- Estimate creation not consistently context-aware
+- Estimate creation context is now implemented: project-launched estimates pre-populate and lock the project and derived customer, global estimate creation requires customer plus existing-or-new project selection, and validation redirects preserve entered values
 - Financial readiness not clearly surfaced
 
 ### Direction:

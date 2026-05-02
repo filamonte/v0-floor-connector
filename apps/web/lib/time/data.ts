@@ -11,6 +11,7 @@ import type {
 import type { TimePunchEventInput } from "./schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { assertProjectReadinessGate } from "@/lib/projects/readiness";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 type TimeScope = {
@@ -413,7 +414,9 @@ async function resolveScopedProject(organizationId: string, projectId: string | 
     throw new Error("Project not found for this organization.");
   }
 
-  return data;
+  return {
+    id: data.id
+  };
 }
 
 async function resolveScopedJob(organizationId: string, jobId: string | null) {
@@ -640,6 +643,15 @@ async function resolveAttributionForPunch(
 
   if (scopedJob && scopedProject && scopedJob.projectId !== scopedProject.id) {
     throw new Error("Job must belong to the selected project.");
+  }
+
+  if (scopedProject) {
+    await assertProjectReadinessGate({
+      organizationId,
+      projectId: scopedProject.id,
+      errorMessage:
+        "Project is not ready for execution workflows yet. Complete contract, financial, and workflow readiness from the project hub before recording project time."
+    });
   }
 
   switch (input.eventType) {

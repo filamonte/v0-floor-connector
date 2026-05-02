@@ -1,6 +1,7 @@
 import { CostItemsSettingsContent } from "@/components/cost-items-database/settings-content";
 import { SettingsSectionCard } from "@/components/settings-section-card";
 import { getCostItemsSettingsData } from "@/lib/cost-items-database/module-data";
+import { requireOrganizationAdminScope } from "@/lib/organizations/admin";
 
 type PageProps = {
   searchParams?: Promise<{
@@ -11,6 +12,7 @@ type PageProps = {
 
 export default async function SettingsCatalogsPage({ searchParams }: PageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
+  await requireOrganizationAdminScope("/settings/catalogs");
   const data = await getCostItemsSettingsData("/settings/catalogs");
 
   return (

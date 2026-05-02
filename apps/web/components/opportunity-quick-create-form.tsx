@@ -2,6 +2,7 @@
 
 import { AuthField } from "@/components/auth-field";
 import { AuthSubmitButton } from "@/components/auth-submit-button";
+import { CountryComboboxField } from "@/components/country-combobox-field";
 import { QuickCreateFormShell } from "@/components/quick-create-form-shell";
 
 type OpportunityQuickCreateFormProps = {
@@ -82,17 +83,19 @@ export function OpportunityQuickCreateForm({
             placeholder="01085"
             required
           />
-          <AuthField label="Country" name="countryCode" placeholder="US" />
+          <CountryComboboxField name="countryCode" />
           <AuthField
             label="Phone Number"
             name="phoneNumber"
             placeholder="(555) 555-0100"
+            hint="Example: (555) 555-5555. Common phone formats are okay."
             required
           />
           <AuthField
             label="Cell Phone"
             name="cellPhone"
             placeholder="(555) 555-0101"
+            hint="Example: (555) 555-5555. Common phone formats are okay."
             required
           />
           <AuthField

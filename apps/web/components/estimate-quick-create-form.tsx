@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useState } from "react";
+import Link from "next/link";
 
 import { AuthField } from "@/components/auth-field";
 import { AuthSubmitButton } from "@/components/auth-submit-button";
@@ -72,8 +73,8 @@ function ChoiceButton({
       className={[
         "rounded-[4px] border px-3 py-2 text-left transition",
         active
-          ? "border-[#233a64] bg-[#233a64] text-white"
-          : "border-[#d9dee8] bg-white text-slate-700 hover:bg-slate-50"
+          ? "border-[#171717] bg-[#171717] text-white"
+          : "border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"
       ].join(" ")}
     >
       <span className="block text-sm font-semibold">{label}</span>
@@ -109,8 +110,8 @@ function SelectionCard({
       className={[
         "w-full rounded-[4px] border px-3 py-3 text-left transition",
         active
-          ? "border-[#233a64] bg-white"
-          : "border-transparent bg-white/70 hover:border-[#d9dee8] hover:bg-white"
+          ? "border-[#171717] bg-white"
+          : "border-transparent bg-white/70 hover:border-[#d6d6d6] hover:bg-white"
       ].join(" ")}
     >
       <p className="text-sm font-semibold text-slate-950">{title}</p>
@@ -144,11 +145,11 @@ function SearchPanel({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
-          className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+          className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
         />
       </label>
 
-      <div className="max-h-[220px] space-y-2 overflow-y-auto rounded-[4px] border border-[#dde3eb] bg-[#fbfcfe] p-2">
+      <div className="max-h-[220px] space-y-2 overflow-y-auto rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] p-2">
         {empty ? (
           <div className="rounded-[4px] bg-white px-3 py-4 text-sm leading-6 text-slate-500">
             No matching records found.
@@ -214,8 +215,8 @@ function CustomerCombobox({
         placeholder="Search name, email, or phone"
         aria-invalid={error}
         className={[
-          "w-full rounded-[4px] border bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]",
-          error ? "border-rose-300 ring-4 ring-rose-50" : "border-[#d9dee8]"
+          "w-full rounded-[4px] border bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]",
+          error ? "border-rose-300 ring-4 ring-rose-50" : "border-[#d6d6d6]"
         ].join(" ")}
       />
       {selectedCustomer ? (
@@ -226,10 +227,16 @@ function CustomerCombobox({
         </p>
       ) : null}
       {isOpen ? (
-        <div className="absolute z-20 mt-2 max-h-[240px] w-full overflow-y-auto rounded-[4px] border border-[#dde3eb] bg-white p-1 shadow-[0_18px_50px_-28px_rgba(15,23,42,0.45)]">
+        <div className="absolute z-20 mt-2 max-h-[240px] w-full overflow-y-auto rounded-[4px] border border-[#d6d6d6] bg-white p-1 shadow-[0_18px_50px_-28px_rgba(15,23,42,0.45)]">
           {visibleCustomers.length === 0 ? (
             <div className="px-3 py-4 text-sm leading-6 text-slate-500">
-              No matching customer accounts found.
+              <p>No matching customer accounts found.</p>
+              <Link
+                href="/customers?compose=1#customer-create"
+                className="mt-3 inline-flex rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-[#ef7d32] hover:text-slate-950"
+              >
+                Create new customer
+              </Link>
             </div>
           ) : (
             visibleCustomers.map((customer) => (
@@ -245,7 +252,7 @@ function CustomerCombobox({
                 className={[
                   "w-full rounded-[4px] px-3 py-2.5 text-left text-sm transition",
                   selectedCustomerId === customer.id
-                    ? "bg-[#233a64] text-white"
+                    ? "bg-[#171717] text-white"
                     : "text-slate-700 hover:bg-slate-50"
                 ].join(" ")}
               >
@@ -407,7 +414,7 @@ export function EstimateQuickCreateForm({
           ) : null}
 
           {isProjectContextLocked ? (
-            <div className="rounded-[4px] border border-[#d9dee8] bg-[#f8fafc] px-4 py-3">
+            <div className="rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-4 py-3">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Project context
               </p>
@@ -508,7 +515,7 @@ export function EstimateQuickCreateForm({
           )}
 
           {activeCustomerId ? (
-            <details className="rounded-[4px] border border-[#d9dee8] bg-[#f8fafc] px-4 py-3">
+            <details className="rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-4 py-3">
               <summary className="cursor-pointer text-sm font-medium text-slate-700">
                 Linked opportunity (optional)
               </summary>
@@ -561,7 +568,7 @@ export function EstimateQuickCreateForm({
             />
 
             <div className="grid gap-4 md:grid-cols-2 md:col-span-1">
-              <div className="rounded-[4px] border border-[#d9dee8] bg-[#f8fafc] px-4 py-3">
+              <div className="rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-4 py-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                   EST. #
                 </p>
@@ -569,14 +576,14 @@ export function EstimateQuickCreateForm({
                   {estimateNumberLabel}
                 </p>
               </div>
-              <div className="rounded-[4px] border border-[#d9dee8] bg-[#f8fafc] px-4 py-3">
+              <div className="rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-4 py-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                   Estimate date
                 </p>
                 <p className="mt-2 text-sm font-medium text-slate-900">{estimateDateLabel}</p>
               </div>
             </div>
-            <div className="md:col-span-2 rounded-[4px] border border-[#d9dee8] bg-[#f8fafc] px-4 py-3">
+            <div className="md:col-span-2 rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-4 py-3">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Estimator / sales person
               </p>

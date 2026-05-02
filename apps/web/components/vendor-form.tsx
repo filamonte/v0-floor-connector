@@ -2,6 +2,7 @@ import type { Vendor } from "@floorconnector/types";
 
 import { AuthField } from "@/components/auth-field";
 import { AuthSubmitButton } from "@/components/auth-submit-button";
+import { CountryComboboxField } from "@/components/country-combobox-field";
 
 type VendorFormProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -66,6 +67,7 @@ export function VendorForm({
           type="tel"
           defaultValue={getValue(vendor?.phone)}
           placeholder="(555) 555-0188"
+          hint="Example: (555) 555-5555. Common phone formats are okay."
         />
         <AuthField
           label="Tax identifier last four"
@@ -98,17 +100,14 @@ export function VendorForm({
           placeholder="NC"
         />
         <AuthField
-          label="Postal code"
+          label="ZIP / postal code"
           name="postalCode"
           defaultValue={getValue(vendor?.postalCode)}
           placeholder="28202"
         />
-        <AuthField
-          label="Country code"
+        <CountryComboboxField
           name="countryCode"
           defaultValue={getValue(vendor?.countryCode)}
-          placeholder="US"
-          hint="Use a two-letter country code when available."
         />
       </div>
 

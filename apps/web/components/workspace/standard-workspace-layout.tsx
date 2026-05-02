@@ -128,7 +128,7 @@ export function StandardWorkspaceLayout<TView extends string>({
 
   return (
     <div className="space-y-3">
-      <section className="border border-[#d7c7b4] bg-[#fbf7f1] px-4 py-3 sm:px-5">
+      <section className="border border-[#d9cdc2] bg-white px-4 py-3 sm:px-5">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
           <div className="min-w-0">
             {header.eyebrow ? (
@@ -154,7 +154,7 @@ export function StandardWorkspaceLayout<TView extends string>({
       {summaryBand}
       {commandBar}
 
-      <section className="overflow-hidden border border-[#d7dce4] bg-white">
+      <section className="overflow-hidden border border-[#d9cdc2] bg-white">
         <div
           className={[
             "grid min-h-[620px] bg-white",
@@ -162,16 +162,16 @@ export function StandardWorkspaceLayout<TView extends string>({
           ].join(" ")}
         >
           {hasSidebar ? (
-            <aside className="border-b border-[#dfe4ec] bg-[#f6f7f9] px-2 py-2 lg:border-b-0 lg:border-r">
+            <aside className="border-b border-[#171717] bg-[#171717] px-2 py-2 text-white lg:border-b-0 lg:border-r">
               <div className="flex gap-1.5 overflow-x-auto lg:flex-col lg:overflow-visible">
                 {sidebar?.map((item) => {
                   const Icon = iconMap[item.iconName];
                   const active = item.id === activeView;
                   const className = [
-                    "inline-flex h-10 min-w-[44px] items-center justify-center gap-2 border px-3 text-[#4d5f79] transition lg:w-full lg:justify-start",
+                    "inline-flex h-10 min-w-[44px] items-center justify-center gap-2 border px-3 transition lg:w-full lg:justify-start",
                     active
-                      ? "border-[#d8731f] bg-[#d8731f] text-white"
-                      : "border-[#d4dbe5] bg-white hover:border-[#c6d0dd] hover:bg-[#f0f3f7]"
+                      ? "border-[#ef7d32] bg-[#ef7d32] text-white"
+                      : "border-white/10 bg-white/5 text-[#f4f4f4] hover:border-[#ef7d32] hover:bg-white/10 hover:text-white"
                   ].join(" ");
 
                   if (item.href && !item.disabled) {

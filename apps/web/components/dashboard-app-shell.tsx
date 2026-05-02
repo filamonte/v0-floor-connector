@@ -25,7 +25,7 @@ export function DashboardAppShell({
     : "Initialization pending";
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#f3efe6_0%,#eef2f7_42%,#e6ebf2_100%)] text-slate-950">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#f3efe6_0%,#f8f8f8_42%,#e5e5e5_100%)] text-slate-950">
       <div className="flex min-h-screen">
         <aside className="hidden w-72 flex-col border-r border-slate-800/80 bg-[#171b21] text-slate-100 lg:flex">
           <div className="border-b border-white/10 px-6 py-7">

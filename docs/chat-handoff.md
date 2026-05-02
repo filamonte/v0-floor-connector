@@ -43,11 +43,11 @@ Current stage:
 - Catalog item hardening follow-up is documented in [docs/catalog-items-hardening-test-plan.md](C:/FloorConnector/docs/catalog-items-hardening-test-plan.md), and a read-only duplicate-name report lives at [scripts/catalog-items-duplicate-normalized-name-report.sql](C:/FloorConnector/scripts/catalog-items-duplicate-normalized-name-report.sql). No automated test harness exists yet, so no new framework was introduced.
 - Cost Items Database UI was safely tightened on the existing catalog item grid: rows now surface type/category, unit, default cost, default price behavior, taxable state, active/archived state, and the default item marker; duplicate name/SKU save errors now return clearer organization-scoped guidance.
 - Documentation is now aligned that `catalog_items` is the canonical cost item database and Phase 1 inventory/cost item foundation; deeper estimate/invoice integration is intentionally deferred to future workflow work and should preserve snapshot lineage.
-- Catalog-to-estimate/invoice integration is now designed in [docs/catalog-to-estimate-invoice-integration-spec.md](C:/FloorConnector/docs/catalog-to-estimate-invoice-integration-spec.md). It is planning only: catalog items provide reusable defaults, estimate and invoice line items must snapshot selected values, custom one-off lines remain valid, invoice billing should continue to prefer approved estimate/SOV/change-order lineage, and direct catalog use in invoices should be limited to carefully scoped invoice-only adjustments if implemented later.
+- Catalog-to-estimate/invoice integration is now designed in [docs/catalog-to-estimate-invoice-integration-spec.md](C:/FloorConnector/docs/catalog-to-estimate-invoice-integration-spec.md). It is planning plus current-status alignment: catalog items provide reusable defaults, estimate and invoice line items must snapshot selected values, custom one-off lines remain valid, invoice billing should continue to prefer approved estimate/SOV/change-order lineage, and direct catalog use in invoices is limited to explicit invoice-only manual catalog-backed adjustments.
 - Estimate edit includes a `Catalog Items` panel on the Items workspace. It lists organization-scoped `catalog_items`, supports name search plus type/category filters, shows unit, default price, taxable state, and active/archived status, and previews selected items before insertion.
 - Estimate Catalog Selection Phase 2B is now implemented from the estimate editor Catalog Items panel. Active non-system catalog items can be previewed and added to estimates through the existing `insertCatalogItemToEstimateAction` path, creating server-owned estimate line-item snapshots. Archived items remain visible for review but are disabled in the panel and rejected server-side; systems still use the existing system expansion flow. No migrations, invoice behavior, or estimate calculation formulas were changed.
 - Phase 2B estimate catalog insertion QA checklist now lives at [docs/qa-estimate-catalog-item-insertion.md](C:/FloorConnector/docs/qa-estimate-catalog-item-insertion.md). It covers active insertion, archived blocking, system-flow preservation, snapshot fields, quantity default, editability, catalog-change immutability, custom one-off items, totals, and `pnpm typecheck` / `pnpm lint`.
-- Documentation alignment after catalog-to-estimate work is complete across current-state, developer source of truth, roadmap, workflows, and supporting catalog docs. Current truth: `catalog_items` remains canonical, estimate catalog insertion is implemented for active non-system items with server-owned snapshots, the manual QA checklist exists, and invoice catalog insertion remains intentionally deferred.
+- Documentation alignment after catalog-to-estimate work is complete across current-state, developer source of truth, roadmap, workflows, and supporting catalog docs. Current truth: `catalog_items` remains canonical, estimate catalog insertion is implemented for active non-system items with server-owned snapshots, the manual QA checklist exists, and invoice catalog usage is intentionally limited to explicit invoice-only manual catalog-backed adjustments rather than free catalog insertion as normal invoice scope.
 - current recommendation is to pause feature expansion and run internal validation before contractor beta; use [docs/phase-b-internal-validation-runbook.md](C:/FloorConnector/docs/phase-b-internal-validation-runbook.md)
 - contractor UI system is stabilized and normalized
 - contractor app and portal both run on shared canonical records
@@ -87,6 +87,8 @@ Implemented on the current branch:
 - approved estimate commercial snapshots as the downstream commercial baseline
 - canonical contracts with signer routing and portal signature actions
 - canonical change orders with contractor + portal workflow, immutable approved snapshots, and SOV or invoice integration
+- server-side Project Readiness Gate is implemented
+- jobs, scheduling, and execution workflows are blocked until readiness conditions are met
 - canonical jobs with first-pass scheduling fields and crew assignment foundation
 - canonical appointments for site visits, estimate meetings, follow-up visits, and internal coordination on the same lead/customer/project chain
 - invoices, payments, immutable payment events, and portal payment initiation
@@ -151,7 +153,7 @@ Implemented on the current branch:
   - direct `/estimates` creation with an existing customer project now reuses an opportunity already linked to that project when present, instead of creating duplicate upstream opportunity context
   - seed-free estimate QA fixed customer-detail blockers from older schema caches around related contacts/contact permissions and now shows connected estimates on the customer workspace
 - contractor shell/header now carry breadcrumb and page-context continuity inside the unified top header instead of a separate blue-style page band
-- shared contractor shell, manager-page wrappers, quick-create surfaces, and common overview cards now broadly follow the newer charcoal/orange/light-neutral contractor theme instead of the older blue-heavy manager styling
+- shared contractor shell, manager-page wrappers, quick-create surfaces, and common overview cards now broadly follow the newer black/gray/orange/white contractor theme instead of the older blue-heavy manager styling
 - first real contractor-side module dashboards for payments and schedule on top of the shared manager-page system
 - the schedule manager now includes review-first summary metrics, next actions, crew-state continuity, and a real week/day/board calendar-planner layer on the same canonical jobs
 - the board layout now groups the filtered canonical job set into operational timing lanes: unscheduled ready work, today, tomorrow, next 7 days, later scheduled, and in progress
@@ -185,7 +187,7 @@ Treat these as current implementation guardrails:
 - shared record-workspace pattern for detail pages; do not invent new page structures
 - reuse existing context-card patterns and make every workflow page answer "What do I do next?"
 - dashboard/header visual direction is now the styling reference point for the broader contractor app
-- charcoal/orange/light-neutral contractor theme across shared shell and manager surfaces
+- black/gray/orange/white contractor theme across shared shell and manager surfaces; orange is the default primary action/active accent, blue is not a default contractor-app accent, and green/emerald is reserved for semantic statuses
 - global search now lives at the shell level instead of as a dashboard placeholder
 - punchlists are now real canonical execution records, not a dashboard placeholder
 - appointments are now real canonical coordination records, not a dashboard placeholder
@@ -236,6 +238,94 @@ Long-term Estimate Editor workflow planning now lives at [docs/estimate-editor-g
 ## v0 UI Cleanup Brief
 
 The next header/project/estimate UI cleanup brief now lives at [docs/v0-ui-cleanup-brief-header-project-estimate.md](C:/FloorConnector/docs/v0-ui-cleanup-brief-header-project-estimate.md). This is design/documentation only: no code, schema, estimate calculation, invoice behavior, catalog insertion behavior, or workflow changes. The brief covers responsive top-nav overflow while preserving the top-nav-first shell, searchable project quick-create customer selection, project detail contextual workspace navigation with financing status in readiness/financial context, context-aware estimate creation, long-term group-first estimate editor direction, input formatting guidance, a ready-to-use v0 prompt, non-goals, and follow-up Codex implementation phases after design approval.
+
+## Header Rollback Note
+
+The attempted Phase 1 header/navigation implementation was rolled back because the result was not acceptable. The rollback removed the new inline primary-tabs/overflow behavior in `apps/web/components/protected-app-top-nav.tsx` and removed the added `Customers` item from `apps/web/lib/navigation/navigation-config.ts`, restoring the prior header menu behavior as closely as possible.
+
+The rollback intentionally preserved the non-header Phase 1 improvements: project detail sectioning and readiness/financial placement, project quick-create searchable customer picker and validation-preservation, estimate quick-create context cleanup and create-new handoff, country combobox, phone helper copy, and `ZIP / postal code` labels. No schema, workflow, estimate calculation, invoice logic, or catalog behavior changed.
+
+## v0 Visual Redesign Implementation Pass
+
+The protected contractor app has a visual-only CF-inspired v0 pass implemented across the shared app shell, shared manager-page primitives, leads/opportunities, estimates, invoices, quick-create sheets, and shared record/workspace chrome. The pass keeps the top-nav-first architecture, uses the grouped header menu instead of a permanent global sidebar, widens the working canvas, and moves the active visual language toward black/dark-gray framing, orange primary actions, white work surfaces, warm-neutral borders, flatter panels, denser registers, and calmer table/list styling.
+
+Behavior intentionally unchanged: routes, data loading, auth, permissions, create/update actions, opportunity/customer/project/estimate/invoice workflow rules, estimate calculations, invoice calculations, catalog insertion logic, schemas, migrations, and persistence. Existing quick-create flows still create canonical records first and hand off into full workspaces.
+
+Non-visual follow-up items discovered: several lower-traffic manager pages still contain older blue-accent utility styling and should be visually normalized in a separate scoped pass; no new behavior should be added to close that gap.
+
+## Visual Bugfix Review Follow-Ups
+
+Latest v0/CF-inspired visual review pass stayed visual/UI-only. No schema, migration, auth, workflow, estimate calculation, invoice calculation, or catalog insertion behavior was changed.
+
+Directory visual audit completed:
+- `/directory` render path was traced to `apps/web/app/(app)/directory/page.tsx`, `apps/web/components/contractor-workspace-page.tsx`, `apps/web/components/workspace-command-bar.tsx`, and the empty-state fallback in `apps/web/components/app-empty-state.tsx`.
+- `/directory` now opts into the shared workspace header's dark FloorConnector/CF-inspired header tone, keeps the page read-only, and uses existing customer, related-contact, workforce, vendor, and opportunity data only.
+- Confirmed stale accent cleanup in the active Directory render path: `AppEmptyState` no longer uses the older `brand-*` empty-state accent when Directory filters return no records.
+- Directory search, filters, summary panels, helper panels, status badges, and register rows were visually tightened with warm neutral, black/gray, and orange accents. No routes, actions, permissions, data loading, workflows, or canonical models changed.
+
+Confirmed non-visual follow-up:
+- Invoice creation can still be blocked by the existing commercial-readiness guard when the project does not have the required signed-contract and deposit/financing readiness state. This is expected business behavior, not a visual regression. Next validation should use a project that has completed the signed-contract/readiness prerequisites, then verify deposit, completed-job, approved-estimate, and approved-change-order invoice creation paths end to end.
+
+Confirmed behavior issue addressed in this pass:
+- Change-order invoice quick-create context could be lost when entering `/invoices` with only `changeOrderId` or while moving through invoice manager filters. The UI now resolves the change order's project context and preserves `changeOrderId` across the invoice create sheet and manager links.
+
+## Account Menu / Profile Settings Follow-Up
+
+Profile / Account Settings surface added:
+- `/settings/profile` now provides a protected personal account settings surface using the existing Supabase auth user, canonical `public.users` profile extension, and active organization membership context.
+- The top-right account menu now links to `Profile / Account settings` while preserving Organization settings, Settings home, and the existing sign-out action.
+- The profile page is read-only because this pass found the canonical profile table and self-update RLS, but no existing app-level personal profile update action/helper wired for safe editing.
+- Existing organization settings remain admin-gated; the settings layout can render the personal profile page for active members, and admin-only settings pages continue to require organization owner/admin scope.
+
+Confirmed non-visual follow-up:
+- Add an explicit personal profile update action only after the intended editable fields, validation rules, and auth/profile sync behavior are approved.
+
+## Black / Gray / Orange Palette Direction
+
+Visual-only contractor-app palette update completed:
+- FloorConnector's preferred contractor-app palette is black / gray / orange / white.
+- Shared brand tokens now point to the warm orange action palette instead of green/teal, so existing `brand-*` buttons, links, checkboxes, and focus rings resolve to the approved accent direction.
+- Shared shell, workspace/sidebar chrome, settings navigation, empty states, and manager headings were normalized away from prior dark-green and bluish heading values.
+- Blue remains disallowed as a default contractor-app accent. Green/emerald remains allowed only for semantic success, approved, paid, or completed statuses.
+- This pass was visual-only: no workflow, route, schema, auth, permission, estimate, invoice, catalog, calculation, or persistence behavior changed.
+
+## System-Wide Palette Standardization
+
+Visual-only system-wide palette standardization completed:
+- Official contractor-app palette is black / gray / orange / white.
+- Shared contractor shell, top navigation, workspace/page wrappers, command bars, manager cards, tables/registers, composer sheets, settings surfaces, forms, inputs, empty states, and document rendering styles were audited for stale blue/green/teal/violet utility accents.
+- Confirmed non-semantic blue, sky, cyan, indigo, teal, violet, navy, and blue-tinted neutral accents were removed from the protected app/shared contractor component scan.
+- Orange is the default primary action, active, highlight, and focus accent. Near-black/dark gray drives chrome and strong headings. White/off-white and warm gray drive work surfaces, borders, and dividers.
+- Green/emerald is reserved for semantic success, approved, paid, or completed states. Red/rose remains destructive/error/blocked. Amber remains warning/pending/prerequisite-needed.
+- This pass was visual-only: no workflow, route, schema, auth, permission, estimate, invoice, catalog, calculation, or persistence behavior changed.
+
+## Post Visual System Audit
+
+Documentation + functionality checkpoint completed in [docs/post-visual-system-audit.md](C:/FloorConnector/docs/post-visual-system-audit.md). The audit confirms the canonical lifecycle, `catalog_items` source-of-truth rule, estimate catalog snapshot insertion, invoice readiness guardrails, read-only `/settings/profile`, account menu wiring, and visual/layout passes remain aligned with the current implementation. Audit-only changes were made; no app code, schema, workflow, auth, permission, estimate, invoice, catalog, calculation, styling, or data behavior changed in this pass.
+
+Confirmed follow-up from that audit has now been completed: stale current-state wording around estimate creation context was corrected, and invoice catalog wording now distinguishes implemented invoice-only manual catalog-backed adjustments from forbidden normal-scope catalog-to-invoice billing.
+
+## Audit Documentation Corrections
+
+Post-audit documentation corrections are complete. [docs/current-state.md](C:/FloorConnector/docs/current-state.md) now reflects the implemented estimate creation behavior: project-launched estimates pre-populate and lock the project and derived customer, global estimate creation requires customer plus project selection or creation, and validation preserves entered values. Invoice catalog language was clarified across current-state, developer source of truth, workflows, and the catalog-to-estimate/invoice spec: `catalog_items` remains canonical, estimate catalog insertion is implemented, invoice catalog usage is limited to explicit invoice-only manual catalog-backed adjustments, and free catalog insertion as normal invoice scope remains disallowed.
+
+## Playwright E2E Browser QA Path
+
+Focused Playwright browser QA infrastructure was added for protected contractor flows, starting with Phase B estimate-editor group-targeted catalog insertion. This is test infrastructure only: no app behavior, schema, auth/RLS, workflow, estimate calculation, invoice behavior, or catalog insertion logic changed.
+
+- Playwright config now lives at [playwright.config.js](C:/FloorConnector/playwright.config.js).
+- Auth setup lives at [e2e/auth.setup.js](C:/FloorConnector/e2e/auth.setup.js) and uses a real local contractor account through the normal `/login` flow when `FLOORCONNECTOR_E2E_EMAIL` and `FLOORCONNECTOR_E2E_PASSWORD` are provided. Credentials are not hardcoded.
+- The focused estimate spec lives at [e2e/estimate-group-catalog-insertion.spec.js](C:/FloorConnector/e2e/estimate-group-catalog-insertion.spec.js). It requires a safe draft estimate id/path and active non-system catalog item names supplied via environment variables.
+- Minimal non-user-facing test ids were added to the estimate editor group, group add-item, catalog search/select/add, catalog preview, and line-item row surfaces so browser QA can use DOM selectors instead of fragile coordinate clicks.
+- Running instructions live at [docs/e2e-browser-qa.md](C:/FloorConnector/docs/e2e-browser-qa.md).
+
+Dependency repair / validation status:
+- The previous install issue was caused by stale running FloorConnector dev-server processes locking native `next` and `turbo` files while pnpm tried to reconcile `node_modules`.
+- The local dependency tree was repaired by stopping only those FloorConnector dev-server process trees, removing workspace `node_modules` artifacts, and rerunning `pnpm install --config.offline=false --reporter=append-only`.
+- Playwright is installed (`pnpm exec playwright --version` reports 1.59.1), and Chromium was installed with `pnpm exec playwright install chromium`.
+- Validation now passes: `pnpm typecheck`, `pnpm lint`, and `git diff --check` all complete successfully. `git diff --check` reports line-ending warnings only.
+- Playwright spec discovery works with the web server disabled: `PLAYWRIGHT_SKIP_WEB_SERVER=1 pnpm exec playwright test --list` lists the two focused estimate group-catalog tests.
+- Authenticated e2e execution still requires local-only setup: saved auth state or `FLOORCONNECTOR_E2E_EMAIL` / `FLOORCONNECTOR_E2E_PASSWORD`, plus `FLOORCONNECTOR_E2E_DRAFT_ESTIMATE_ID` or path and active non-system catalog item names.
 
 ## System Rules
 

@@ -182,8 +182,8 @@ export function EstimateImportChooser({
   }
 
   return (
-    <div className="rounded-[10px] border border-[#d7deea] bg-white p-3">
-      <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
+    <div className="rounded-[10px] border border-[#d6d6d6] bg-white p-3">
+      <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#5f5f5f]">
         Import from another estimate
       </p>
       <p className="mt-2 text-[12px] leading-5 text-[#6b7c96]">
@@ -196,7 +196,7 @@ export function EstimateImportChooser({
           Only draft estimates can import from another estimate.
         </div>
       ) : importSourceEstimates.length === 0 ? (
-        <div className="mt-3 rounded-[8px] border border-[#d7deea] bg-[#f7f8fb] px-3 py-2 text-[12px] leading-5 text-[#6b7c96]">
+        <div className="mt-3 rounded-[8px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-2 text-[12px] leading-5 text-[#6b7c96]">
           No other estimates in this organization are available to import from yet.
         </div>
       ) : (
@@ -204,7 +204,7 @@ export function EstimateImportChooser({
           <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_180px]">
             <label className="block text-[12px] font-medium text-[#5d6f8a]">
               Search estimates
-              <div className="mt-1.5 flex h-11 items-center rounded-[8px] border border-[#d7deea] bg-white px-3">
+              <div className="mt-1.5 flex h-11 items-center rounded-[8px] border border-[#d6d6d6] bg-white px-3">
                 <Search className="h-4 w-4 text-[#7b8aa3]" />
                 <input
                   value={searchQuery}
@@ -213,7 +213,7 @@ export function EstimateImportChooser({
                     setImportMessage(null);
                   }}
                   placeholder="Number, name, customer, project, status"
-                  className="h-full w-full border-0 bg-transparent px-3 text-[14px] text-[#334a70] outline-none"
+                  className="h-full w-full border-0 bg-transparent px-3 text-[14px] text-[#2a2a2a] outline-none"
                 />
               </div>
             </label>
@@ -225,7 +225,7 @@ export function EstimateImportChooser({
                   setStatusFilter(event.target.value as EstimateStatus | "all");
                   setImportMessage(null);
                 }}
-                className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
+                className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
               >
                 <option value="all">All statuses</option>
                 <option value="draft">Draft</option>
@@ -236,7 +236,7 @@ export function EstimateImportChooser({
             </label>
           </div>
           {hasActiveFilters ? (
-            <div className="mt-2 flex items-center justify-between gap-3 rounded-[8px] border border-[#d7deea] bg-[#f7f8fb] px-3 py-2 text-[12px] leading-5 text-[#6b7c96]">
+            <div className="mt-2 flex items-center justify-between gap-3 rounded-[8px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-2 text-[12px] leading-5 text-[#6b7c96]">
               <span>Filters are narrowing the available source estimates.</span>
               <button
                 type="button"
@@ -245,7 +245,7 @@ export function EstimateImportChooser({
                   setStatusFilter("all");
                   setImportMessage(null);
                 }}
-                className="font-medium text-[#28456f]"
+                className="font-medium text-[#2a2a2a]"
               >
                 Clear filters
               </button>
@@ -259,7 +259,7 @@ export function EstimateImportChooser({
                 setSelectedImportEstimateId(event.target.value);
                 setImportMessage(null);
               }}
-              className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d7deea] bg-white px-3 text-[14px] text-[#334a70] outline-none"
+              className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
             >
               <option value="">Select estimate</option>
               {filteredImportSourceEstimates.map((estimate) => (
@@ -271,13 +271,13 @@ export function EstimateImportChooser({
             </select>
           </label>
           {filteredImportSourceEstimates.length === 0 ? (
-            <div className="mt-3 rounded-[8px] border border-[#d7deea] bg-[#f7f8fb] px-3 py-2 text-[12px] leading-5 text-[#6b7c96]">
+            <div className="mt-3 rounded-[8px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-2 text-[12px] leading-5 text-[#6b7c96]">
               No source estimates match the current search or status filter.
             </div>
           ) : null}
           {quickPickEstimates.length > 0 ? (
             <div className="mt-3">
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7a8aa3]">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#666666]">
                 Recent matches
               </div>
               <div className="grid gap-2">
@@ -295,12 +295,12 @@ export function EstimateImportChooser({
                       }}
                       className={`rounded-[8px] border px-3 py-2 text-left ${
                         isSelected
-                          ? "border-[#1f5fd6] bg-[#eef4ff]"
-                          : "border-[#d7deea] bg-white"
+                          ? "border-[#ef7d32] bg-[#eef4ff]"
+                          : "border-[#d6d6d6] bg-white"
                       }`}
                     >
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px]">
-                        <span className="font-semibold text-[#334a70]">
+                        <span className="font-semibold text-[#2a2a2a]">
                           {estimate.referenceNumber}
                         </span>
                         {estimate.title ? (
@@ -312,7 +312,7 @@ export function EstimateImportChooser({
                           .filter(Boolean)
                           .join(" - ")}
                       </div>
-                      <div className="mt-1 text-[11px] leading-5 text-[#7a8aa3]">
+                      <div className="mt-1 text-[11px] leading-5 text-[#666666]">
                         Reusable: {buildReusableAvailabilityLabel(estimate)}
                       </div>
                     </button>
@@ -325,7 +325,7 @@ export function EstimateImportChooser({
             <div className="mt-3 rounded-[10px] border border-[#cfdaf0] bg-[#eef4ff] px-3 py-3 text-[12px] leading-5 text-[#4d6283]">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#5f5f5f]">
                     Selected source estimate
                   </div>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -343,7 +343,7 @@ export function EstimateImportChooser({
                     setSelectedImportEstimateId("");
                     setImportMessage(null);
                   }}
-                  className="shrink-0 text-[12px] font-medium text-[#28456f]"
+                  className="shrink-0 text-[12px] font-medium text-[#2a2a2a]"
                 >
                   Clear selected source
                 </button>
@@ -358,24 +358,24 @@ export function EstimateImportChooser({
                   .filter(Boolean)
                   .join(" - ")}
               </div>
-              <div className="mt-1 text-[11px] leading-5 text-[#607492]">
+              <div className="mt-1 text-[11px] leading-5 text-[#5f5f5f]">
                 Available to import: {buildSelectionAvailabilityLabel(selectedImportEstimate)}
               </div>
             </div>
           ) : null}
           {selectedImportEstimate && !selectedEstimateHasReusableContent ? (
-            <div className="mt-3 rounded-[8px] border border-[#d7deea] bg-[#f7f8fb] px-3 py-2 text-[12px] leading-5 text-[#6b7c96]">
+            <div className="mt-3 rounded-[8px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-2 text-[12px] leading-5 text-[#6b7c96]">
               This estimate has no reusable Scope / SOW, Terms, Inclusions, or Exclusions yet.
             </div>
           ) : null}
           <div
             className={`mt-3 rounded-[10px] border px-3 py-3 ${
               selectedImportEstimate
-                ? "border-[#cfdaf0] bg-[#f7fbff]"
-                : "border-[#d7deea] bg-[#fbfcfe]"
+                ? "border-[#cfdaf0] bg-[#f8f8f8]"
+                : "border-[#d6d6d6] bg-[#f8f8f8]"
             }`}
           >
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#5f5f5f]">
               Import actions
             </div>
             <div className="flex flex-wrap gap-2">
@@ -383,7 +383,7 @@ export function EstimateImportChooser({
                 type="button"
                 disabled={isImportPending || !selectedImportEstimate}
                 onClick={() => runImport({ type: "line-items" })}
-                className="inline-flex h-9 items-center gap-2 rounded-[8px] border border-[#d7deea] bg-white px-3 text-[12px] font-medium text-[#28456f] disabled:cursor-not-allowed disabled:bg-[#f4f6fa] disabled:text-[#8b99b0]"
+                className="inline-flex h-9 items-center gap-2 rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[12px] font-medium text-[#2a2a2a] disabled:cursor-not-allowed disabled:bg-[#f8f8f8] disabled:text-[#777777]"
               >
                 <FileDown className="h-3.5 w-3.5" />
                 <span>Import line items</span>
@@ -396,7 +396,7 @@ export function EstimateImportChooser({
                   !selectedImportEstimate.hasScopeContent
                 }
                 onClick={() => runImport({ type: "reusable", section: "scope" })}
-                className="inline-flex h-9 items-center rounded-[8px] border border-[#d7deea] bg-white px-3 text-[12px] font-medium text-[#28456f] disabled:cursor-not-allowed disabled:bg-[#f4f6fa] disabled:text-[#8b99b0]"
+                className="inline-flex h-9 items-center rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[12px] font-medium text-[#2a2a2a] disabled:cursor-not-allowed disabled:bg-[#f8f8f8] disabled:text-[#777777]"
               >
                 Import Scope / SOW
               </button>
@@ -408,7 +408,7 @@ export function EstimateImportChooser({
                   !selectedImportEstimate.hasTermsContent
                 }
                 onClick={() => runImport({ type: "reusable", section: "terms" })}
-                className="inline-flex h-9 items-center rounded-[8px] border border-[#d7deea] bg-white px-3 text-[12px] font-medium text-[#28456f] disabled:cursor-not-allowed disabled:bg-[#f4f6fa] disabled:text-[#8b99b0]"
+                className="inline-flex h-9 items-center rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[12px] font-medium text-[#2a2a2a] disabled:cursor-not-allowed disabled:bg-[#f8f8f8] disabled:text-[#777777]"
               >
                 Import Terms
               </button>
@@ -420,7 +420,7 @@ export function EstimateImportChooser({
                   !selectedImportEstimate.hasInclusionsContent
                 }
                 onClick={() => runImport({ type: "reusable", section: "inclusions" })}
-                className="inline-flex h-9 items-center rounded-[8px] border border-[#d7deea] bg-white px-3 text-[12px] font-medium text-[#28456f] disabled:cursor-not-allowed disabled:bg-[#f4f6fa] disabled:text-[#8b99b0]"
+                className="inline-flex h-9 items-center rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[12px] font-medium text-[#2a2a2a] disabled:cursor-not-allowed disabled:bg-[#f8f8f8] disabled:text-[#777777]"
               >
                 Import Inclusions
               </button>
@@ -432,7 +432,7 @@ export function EstimateImportChooser({
                   !selectedImportEstimate.hasExclusionsContent
                 }
                 onClick={() => runImport({ type: "reusable", section: "exclusions" })}
-                className="inline-flex h-9 items-center rounded-[8px] border border-[#d7deea] bg-white px-3 text-[12px] font-medium text-[#28456f] disabled:cursor-not-allowed disabled:bg-[#f4f6fa] disabled:text-[#8b99b0]"
+                className="inline-flex h-9 items-center rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[12px] font-medium text-[#2a2a2a] disabled:cursor-not-allowed disabled:bg-[#f8f8f8] disabled:text-[#777777]"
               >
                 Import Exclusions
               </button>
@@ -443,7 +443,7 @@ export function EstimateImportChooser({
               className={`mt-3 rounded-[8px] px-3 py-2 text-[12px] leading-5 ${
                 importMessage.startsWith("Imported ")
                   ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
-                  : "border border-[#d7deea] bg-[#f7f8fb] text-[#5d6f8a]"
+                  : "border border-[#d6d6d6] bg-[#f8f8f8] text-[#5d6f8a]"
               }`}
             >
               {importMessage}

@@ -41,7 +41,7 @@ function getReadinessPlanClasses(status: AutomationPlanningReadinessStatus) {
     case "planning_ready":
       return "border border-emerald-200 bg-emerald-50 text-emerald-800";
     case "needs_preferences":
-      return "border border-sky-200 bg-sky-50 text-sky-800";
+      return "border border-[#d6d6d6] bg-[#f8f8f8] text-[#2a2a2a]";
     case "needs_sample_context":
       return "border border-amber-200 bg-amber-50 text-amber-800";
     default:

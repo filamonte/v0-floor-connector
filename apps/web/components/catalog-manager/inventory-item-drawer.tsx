@@ -155,23 +155,23 @@ export function InventoryItemDrawer({
       />
 
         <aside className="relative z-10 flex h-full w-full max-w-[780px] flex-col overflow-hidden border-l border-[#d5dce7] bg-white shadow-[-32px_0_90px_-44px_rgba(7,16,30,0.75)]">
-          <div className="border-b border-[#dce3ee] bg-[#fbfcfe] px-4 py-3">
+          <div className="border-b border-[#dce3ee] bg-[#f8f8f8] px-4 py-3">
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6a7f9d]">
                 Cost Item
               </div>
-                <h3 className="mt-1 text-[1.25rem] font-semibold tracking-tight text-[#17243b]">
+                <h3 className="mt-1 text-[1.25rem] font-semibold tracking-tight text-[#171717]">
                 {item ? `Edit ${item.name}` : `Add ${initialItemType}`}
               </h3>
-              <p className="mt-1 max-w-2xl text-sm leading-5 text-[#60738f]">
+              <p className="mt-1 max-w-2xl text-sm leading-5 text-[#666666]">
                 This drawer writes to the shared cost item master. Inventory tracking is optional and stays attached to this same item record.
               </p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-[4px] border border-[#d6deea] bg-white px-3 py-1.5 text-sm font-medium text-[#36527a]"
+              className="rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-1.5 text-sm font-medium text-[#3f3f3f]"
             >
               Close
             </button>
@@ -186,8 +186,8 @@ export function InventoryItemDrawer({
                 className={[
                     "rounded-[4px] px-2.5 py-1.5 text-sm font-medium capitalize transition",
                   activeTab === tab
-                    ? "bg-[#264a7a] text-white"
-                    : "border border-[#d6deea] bg-white text-[#36527a]"
+                    ? "bg-[#171717] text-white"
+                    : "border border-[#d6d6d6] bg-white text-[#3f3f3f]"
                 ].join(" ")}
               >
                 {tab}
@@ -364,7 +364,7 @@ export function InventoryItemDrawer({
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
-                <label className="flex items-center gap-3 rounded-[4px] border border-[#e2e8f0] bg-[#f8fafc] px-3 py-2.5 text-sm text-slate-700">
+                <label className="flex items-center gap-3 rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-2.5 text-sm text-slate-700">
                   <input
                     type="checkbox"
                     name="taxable"
@@ -373,7 +373,7 @@ export function InventoryItemDrawer({
                   />
                   Taxable
                 </label>
-                <label className="flex items-center gap-3 rounded-[4px] border border-[#e2e8f0] bg-[#f8fafc] px-3 py-2.5 text-sm text-slate-700">
+                <label className="flex items-center gap-3 rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-2.5 text-sm text-slate-700">
                   <input
                     type="checkbox"
                     name="isDefault"
@@ -384,12 +384,12 @@ export function InventoryItemDrawer({
                 </label>
               </div>
 
-              <details className="rounded-[4px] border border-[#e2e8f0] bg-[#f8fafc] px-3 py-3">
-                <summary className="cursor-pointer text-sm font-medium text-[#22344d]">
+              <details className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-3">
+                <summary className="cursor-pointer text-sm font-medium text-[#2a2a2a]">
                   Advanced tax override
                 </summary>
                 <div className="mt-4 space-y-3">
-                  <p className="text-sm leading-6 text-[#60738f]">
+                  <p className="text-sm leading-6 text-[#666666]">
                     Keep item tax simple with the taxable checkbox above. Use an optional tax code only when the organization needs an advanced saved default.
                   </p>
                   <label className="block">
@@ -440,16 +440,16 @@ export function InventoryItemDrawer({
                 activeTab === "inventory" ? "block" : "hidden"
               ].join(" ")}
             >
-              <div className="flex items-center justify-between gap-3 rounded-[4px] border border-[#e2e8f0] bg-[#f8fafc] px-3 py-3">
+              <div className="flex items-center justify-between gap-3 rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-3">
                 <div>
-                  <div className="text-sm font-medium text-[#22344d]">Inventory tracking</div>
-                  <p className="mt-1 text-sm leading-6 text-[#60738f]">
+                  <div className="text-sm font-medium text-[#2a2a2a]">Inventory tracking</div>
+                  <p className="mt-1 text-sm leading-6 text-[#666666]">
                     {inventoryEnabled
                       ? "Inventory is optional for this cost item. Quantity on hand is read-only here and only changes through inventory transactions."
                       : "Inventory tracking is currently disabled for this organization. Existing linked inventory data is preserved, but new inventory controls stay hidden until the module setting is turned back on."}
                   </p>
                 </div>
-                <label className="flex items-center gap-3 text-sm font-medium text-[#36527a]">
+                <label className="flex items-center gap-3 text-sm font-medium text-[#3f3f3f]">
                   <input
                     type="checkbox"
                     name="trackInventory"
@@ -518,42 +518,42 @@ export function InventoryItemDrawer({
               </div>
 
               {!inventoryEnabled ? (
-                <div className="rounded-[4px] border border-[#d8dfe9] bg-[#fbfcfe] px-3 py-3 text-sm text-[#60738f]">
+                <div className="rounded-[4px] border border-[#d8dfe9] bg-[#f8f8f8] px-3 py-3 text-sm text-[#666666]">
                   Inventory controls are disabled in Cost Items settings. Existing inventory records remain attached to their cost items and can be reactivated later without data loss.
                 </div>
               ) : null}
 
               {!editableItem.id && trackInventory ? (
-                <div className="rounded-[4px] border border-[#d8dfe9] bg-[#fbfcfe] px-3 py-3 text-sm text-[#60738f]">
+                <div className="rounded-[4px] border border-[#d8dfe9] bg-[#f8f8f8] px-3 py-3 text-sm text-[#666666]">
                   Save the cost item first. That will create the linked inventory record at the default location, then you can reopen the drawer to record stock adjustments.
                 </div>
               ) : null}
 
-              <div className="rounded-[4px] border border-[#e2e8f0] bg-[#fbfcfe] px-3 py-3">
-                <div className="font-medium text-[#22344d]">Recent transactions</div>
+              <div className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-3">
+                <div className="font-medium text-[#2a2a2a]">Recent transactions</div>
                 <div className="mt-3 space-y-3">
                   {inventoryTransactions.slice(0, 8).map((transaction) => (
                     <div
                       key={transaction.id}
-                      className="flex items-center justify-between gap-3 rounded-[4px] border border-[#eef2f7] bg-white px-3 py-2.5 text-sm text-[#60738f]"
+                      className="flex items-center justify-between gap-3 rounded-[4px] border border-[#f8f8f8] bg-white px-3 py-2.5 text-sm text-[#666666]"
                     >
                       <div>
-                        <div className="font-medium text-[#22344d]">{transaction.transactionType}</div>
-                        <div className="text-xs text-[#8b96a8]">{transaction.notes ?? "No note"}</div>
+                        <div className="font-medium text-[#2a2a2a]">{transaction.transactionType}</div>
+                        <div className="text-xs text-[#777777]">{transaction.notes ?? "No note"}</div>
                       </div>
                       <div className="text-right">
-                        <div className="font-medium text-[#22344d]">
+                        <div className="font-medium text-[#2a2a2a]">
                           {Number(transaction.quantityChange) > 0 ? "+" : ""}
                           {formatInventoryQuantity(transaction.quantityChange)}
                         </div>
-                        <div className="text-xs text-[#8b96a8]">
+                        <div className="text-xs text-[#777777]">
                           {new Date(transaction.createdAt).toLocaleString()}
                         </div>
                       </div>
                     </div>
                   ))}
                   {inventoryTransactions.length === 0 ? (
-                    <div className="rounded-[4px] border border-dashed border-[#d8dfe9] px-3 py-3 text-sm text-[#7d8aa0]">
+                    <div className="rounded-[4px] border border-dashed border-[#d8dfe9] px-3 py-3 text-sm text-[#777777]">
                       No inventory transactions yet for this item.
                     </div>
                   ) : null}
@@ -592,26 +592,26 @@ export function InventoryItemDrawer({
                 </label>
               </div>
 
-              <div className="rounded-[4px] border border-[#e2e8f0] bg-[#f8fafc] px-3 py-3 text-sm text-[#60738f]">
-                <div className="font-medium text-[#22344d]">Current photo path</div>
+              <div className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-3 text-sm text-[#666666]">
+                <div className="font-medium text-[#2a2a2a]">Current photo path</div>
                 <div className="mt-1 break-all">
                   {editableItem.photoStoragePath ?? "No photo uploaded yet."}
                 </div>
               </div>
 
               {existingFiles.length > 0 ? (
-                <div className="space-y-3 rounded-[4px] border border-[#e2e8f0] bg-[#fbfcfe] px-3 py-3">
-                  <div className="font-medium text-[#22344d]">Stored files</div>
+                <div className="space-y-3 rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-3">
+                  <div className="font-medium text-[#2a2a2a]">Stored files</div>
                   <div className="space-y-3">
                     {existingFiles.map((file) => (
                       <div
                         key={file.path}
-                        className="rounded-[4px] border border-[#eef2f7] bg-white px-3 py-2.5 text-sm text-[#60738f]"
+                        className="rounded-[4px] border border-[#f8f8f8] bg-white px-3 py-2.5 text-sm text-[#666666]"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div>
-                            <div className="font-medium text-[#22344d]">{file.name}</div>
-                            <div className="text-xs text-[#8b96a8]">{file.path}</div>
+                            <div className="font-medium text-[#2a2a2a]">{file.name}</div>
+                            <div className="text-xs text-[#777777]">{file.path}</div>
                           </div>
                           <div className="flex items-center gap-2">
                             {file.downloadUrl ? (
@@ -619,7 +619,7 @@ export function InventoryItemDrawer({
                                 href={file.downloadUrl}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="rounded-[4px] border border-[#d6deea] px-3 py-1.5 text-sm text-[#36527a]"
+                                className="rounded-[4px] border border-[#d6d6d6] px-3 py-1.5 text-sm text-[#3f3f3f]"
                               >
                                 Preview
                               </a>
@@ -629,7 +629,7 @@ export function InventoryItemDrawer({
                               formAction={deleteCatalogItemFileAction}
                               name="filePath"
                               value={file.path}
-                              className="rounded-[4px] border border-[#d6deea] px-3 py-1.5 text-sm text-[#36527a]"
+                              className="rounded-[4px] border border-[#d6d6d6] px-3 py-1.5 text-sm text-[#3f3f3f]"
                             >
                               Delete
                             </button>
@@ -642,7 +642,7 @@ export function InventoryItemDrawer({
                             width={320}
                             height={160}
                             unoptimized
-                            className="mt-3 max-h-40 rounded-[4px] border border-[#eef2f7] object-cover"
+                            className="mt-3 max-h-40 rounded-[4px] border border-[#f8f8f8] object-cover"
                           />
                         ) : null}
                       </div>
@@ -675,7 +675,7 @@ export function InventoryItemDrawer({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-[4px] border border-[#d6deea] bg-white px-3 py-2 text-sm font-medium text-[#36527a]"
+                className="rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm font-medium text-[#3f3f3f]"
               >
                 Cancel
               </button>
@@ -684,7 +684,7 @@ export function InventoryItemDrawer({
                   type="submit"
                   name="submitMode"
                   value="adjust"
-                className="rounded-[4px] border border-[#264a7a] bg-white px-3 py-2 text-sm font-medium text-[#264a7a]"
+                className="rounded-[4px] border border-[#171717] bg-white px-3 py-2 text-sm font-medium text-[#171717]"
                 >
                   Record Adjustment
                 </button>
@@ -693,7 +693,7 @@ export function InventoryItemDrawer({
                 type="submit"
                 name="submitMode"
                 value="save"
-                className="rounded-[4px] bg-[#264a7a] px-3 py-2 text-sm font-medium text-white"
+                className="rounded-[4px] bg-[#171717] px-3 py-2 text-sm font-medium text-white"
               >
                 Save Item
               </button>
@@ -712,7 +712,7 @@ export function InventoryItemDrawer({
           ) : null}
 
           {editableItem.itemType === "system" && !editableItem.id ? (
-            <div className="mt-4 rounded-[4px] border border-dashed border-[#d6deea] bg-[#fbfcfe] px-4 py-4 text-sm leading-6 text-[#60738f]">
+            <div className="mt-4 rounded-[4px] border border-dashed border-[#d6d6d6] bg-[#f8f8f8] px-4 py-4 text-sm leading-6 text-[#666666]">
               Save the system/package item first, then reopen it to add, reorder, and preview real component rows by square footage.
             </div>
           ) : null}

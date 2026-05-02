@@ -64,7 +64,9 @@ export function CustomerPickerField({
       : null;
 
   let buttonTitle = "Choose a customer";
-  let buttonMeta = "Search existing customers or create a new one from the same control.";
+  let buttonMeta = allowCreate
+    ? "Search existing customers or create a new one from the same control."
+    : "Search existing customer accounts in this organization.";
 
   if (selectedCustomer) {
     buttonTitle = formatCustomerTitle(selectedCustomer);

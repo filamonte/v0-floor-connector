@@ -26,6 +26,7 @@ type ProjectsPageProps = {
     compose?: string;
     error?: string;
     message?: string;
+    projectName?: string;
     q?: string;
     status?: ProjectView;
   }>;
@@ -154,33 +155,33 @@ export default async function ProjectsPage({
       description="Projects are the operational root connecting customer context to estimating, contracts, execution, billing, and closeout."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Lead</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Lead</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {leadProjects.length}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Estimating
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {estimatingProjects.length}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Scheduled
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {scheduledProjects.length}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               In progress
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {inProgressProjects.length}
             </p>
           </div>
@@ -212,11 +213,11 @@ export default async function ProjectsPage({
               name="q"
               defaultValue={query}
               placeholder="Search projects, customers, or locations"
-              className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+              className="min-w-0 flex-1 rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               Search
             </button>
@@ -248,8 +249,8 @@ export default async function ProjectsPage({
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
-                  ? "bg-[#233a64] text-white"
-                  : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
+                  ? "bg-[#171717] text-white"
+                  : "border border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"
               ].join(" ")}
             >
               <span>{view.label}</span>
@@ -272,14 +273,14 @@ export default async function ProjectsPage({
               compose: "1",
               customerId: resolvedSearchParams.customerId
             })}
-            className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
+            className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
           >
             New project
           </Link>
         )
       }}
     >
-      <div className="space-y-6">
+      <div className="flex flex-col gap-3">
         {resolvedSearchParams.error ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
             {resolvedSearchParams.error}
@@ -292,7 +293,7 @@ export default async function ProjectsPage({
           </div>
         ) : null}
 
-        <section className="grid gap-4 xl:grid-cols-2 2xl:grid-cols-4">
+        <section className="order-2 grid gap-3 xl:grid-cols-2 2xl:grid-cols-4">
           <ManagerDashboardCard
             eyebrow="Workflow queue"
             title="Lead"
@@ -359,13 +360,13 @@ export default async function ProjectsPage({
           />
         </section>
 
-        <section className="overflow-hidden border border-[#dde3eb] bg-white">
-          <div className="flex items-end justify-between gap-4 border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
+        <section className="order-1 overflow-hidden border border-[#d6d6d6] bg-white">
+          <div className="flex items-center justify-between gap-4 border-b border-[#e5e5e5] px-4 py-2.5">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                 Recent records
               </p>
-              <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+              <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-slate-950">
                 Latest project updates
               </h3>
             </div>
@@ -377,48 +378,48 @@ export default async function ProjectsPage({
           {recentProjects.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-200 text-sm">
-                <thead className="bg-[#f8fafc] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <thead className="bg-[#f8f8f8] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                   <tr>
-                    <th className="px-5 py-3 sm:px-6">Project</th>
-                    <th className="px-5 py-3 sm:px-6">Customer</th>
-                    <th className="px-5 py-3 sm:px-6">Status</th>
-                    <th className="px-5 py-3 sm:px-6">Commercial state</th>
-                    <th className="px-5 py-3 text-right sm:px-6">Updated</th>
+                    <th className="px-4 py-2.5">Project</th>
+                    <th className="px-4 py-2.5">Customer</th>
+                    <th className="px-4 py-2.5">Status</th>
+                    <th className="px-4 py-2.5">Commercial state</th>
+                    <th className="px-4 py-2.5 text-right">Updated</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
                   {recentProjects.map((project) => (
                     <tr key={project.id} className="hover:bg-slate-50/70">
-                      <td className="px-5 py-4 sm:px-6">
+                      <td className="px-4 py-2.5">
                         <Link
                           href={`/projects/${project.id}`}
                           className="font-semibold text-slate-950 transition hover:text-brand-700"
                         >
                           {project.name}
                         </Link>
-                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                        <p className="mt-0.5 text-sm leading-5 text-slate-500">
                           {[project.city, project.stateRegion, project.postalCode]
                             .filter(Boolean)
                             .join(", ") || "No location saved"}
                         </p>
                       </td>
-                      <td className="px-5 py-4 sm:px-6">
+                      <td className="px-4 py-2.5">
                         <p className="font-medium text-slate-700">
                           {project.customer?.name ?? "Unlinked customer"}
                         </p>
-                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                        <p className="mt-0.5 text-sm leading-5 text-slate-500">
                           {project.customer?.companyName ?? "No company name"}
                         </p>
                       </td>
-                      <td className="px-5 py-4 sm:px-6">
-                        <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                      <td className="px-4 py-2.5">
+                        <span className="inline-flex rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
                           {formatStatusLabel(project.status)}
                         </span>
                       </td>
-                      <td className="px-5 py-4 sm:px-6 text-slate-500">
+                      <td className="px-4 py-2.5 text-slate-500">
                         {project.commercialReadinessStatus.replaceAll("_", " ")}
                       </td>
-                      <td className="px-5 py-4 text-right text-slate-500 sm:px-6">
+                      <td className="px-4 py-2.5 text-right text-slate-500">
                         {formatDateLabel(project.updatedAt)}
                       </td>
                     </tr>
@@ -475,6 +476,7 @@ export default async function ProjectsPage({
           action={quickCreateProjectAction}
           customers={customers}
           initialCustomerId={resolvedSearchParams.customerId}
+          initialProjectName={resolvedSearchParams.projectName}
         />
       </WorkspaceComposerSheet>
     </ContractorWorkspacePage>

@@ -2,6 +2,7 @@ import type { Customer } from "@floorconnector/types";
 
 import { AuthField } from "@/components/auth-field";
 import { AuthSubmitButton } from "@/components/auth-submit-button";
+import { CountryComboboxField } from "@/components/country-combobox-field";
 
 type CustomerFormProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -48,7 +49,7 @@ export function CustomerForm({
           type="tel"
           defaultValue={getValue(customer?.phone)}
           placeholder="(555) 555-0123"
-          hint="Use the main customer coordination number for this canonical account."
+          hint="Example: (555) 555-5555. Common phone formats are okay."
         />
         <AuthField
           label="Email"
@@ -83,17 +84,14 @@ export function CustomerForm({
           placeholder="NC"
         />
         <AuthField
-          label="Postal code"
+          label="ZIP / postal code"
           name="postalCode"
           defaultValue={getValue(customer?.postalCode)}
           placeholder="28202"
         />
-        <AuthField
-          label="Country code"
+        <CountryComboboxField
           name="countryCode"
           defaultValue={getValue(customer?.countryCode)}
-          placeholder="US"
-          hint="Use a two-letter country code when available."
         />
       </div>
 

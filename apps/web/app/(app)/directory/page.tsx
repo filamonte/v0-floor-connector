@@ -31,11 +31,6 @@ type DirectoryRow = {
   searchText: string;
 };
 
-type DirectoryHelperCard = {
-  label: string;
-  description: string;
-};
-
 function buildDirectoryHref(input: { q?: string; view?: string }) {
   const searchParams = new URLSearchParams();
 
@@ -190,7 +185,7 @@ function buildLeadDetail(input: {
 
 function getStatusTone(status: string | null) {
   if (!status) {
-    return "border-[#dde3eb] bg-[#f8fafc] text-slate-600";
+    return "border-[#d9cdc2] bg-[#fbf7f2] text-[#6f6256]";
   }
 
   const normalizedStatus = status.toLowerCase();
@@ -202,7 +197,7 @@ function getStatusTone(status: string | null) {
     normalizedStatus === "won" ||
     normalizedStatus === "converted"
   ) {
-    return "border-emerald-200 bg-emerald-50 text-emerald-800";
+    return "border-[#d6d6d6] bg-[#f8f8f8] text-[#3f3f3f]";
   }
 
   if (
@@ -210,7 +205,7 @@ function getStatusTone(status: string | null) {
     normalizedStatus === "lost" ||
     normalizedStatus === "revoked"
   ) {
-    return "border-slate-200 bg-slate-100 text-slate-700";
+    return "border-[#d7d0c8] bg-[#f1ede8] text-[#6f6256]";
   }
 
   if (
@@ -222,10 +217,10 @@ function getStatusTone(status: string | null) {
     normalizedStatus === "site_assessment_scheduled" ||
     normalizedStatus === "site_assessment_complete"
   ) {
-    return "border-amber-200 bg-amber-50 text-amber-800";
+    return "border-[#e8c7a8] bg-[#fff3e8] text-[#8b4a18]";
   }
 
-  return "border-[#dde3eb] bg-[#f8fafc] text-slate-600";
+  return "border-[#d9cdc2] bg-[#fbf7f2] text-[#6f6256]";
 }
 
 export default async function DirectoryPage({ searchParams }: DirectoryPageProps) {
@@ -429,68 +424,43 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
     { key: "vendors", label: "Vendors", count: vendors.length },
     { key: "leads", label: "Leads", count: opportunities.length }
   ] as const;
-  const helperCards: DirectoryHelperCard[] = [
-    {
-      label: "Customers",
-      description:
-        "Canonical account and billing records used by commercial and financial workflows."
-    },
-    {
-      label: "Customer Contacts",
-      description:
-        "Related contacts beneath canonical customer accounts, routed back to the customer detail workspace for management."
-    },
-    {
-      label: "Workforce",
-      description: "Operational people records for employees and subcontractor workers."
-    },
-    {
-      label: "Vendors",
-      description:
-        "Vendor and company records for external businesses, suppliers, and labor providers."
-    },
-    {
-      label: "Leads",
-      description: "Pre-customer opportunities that route into the canonical commercial path."
-    }
-  ];
-
   return (
     <ContractorWorkspacePage
       eyebrow="Directory"
       title={`Unified contractor directory for ${organizationContext.organization.displayName}`}
       description="Review customer accounts, related customer contacts, workforce people, vendors, and leads together in one read-only workspace while each row still routes back to its existing canonical record."
+      headerTone="dark"
       summary={
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Customers</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+        <div className="grid gap-px border border-white/10 bg-white/10 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="bg-white/8 px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#e7c8ae]">Customers</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-white">
               {customers.length}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+          <div className="bg-white/8 px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#e7c8ae]">
               Customer Contacts
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-white">
               {customerContacts.length}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Workforce</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+          <div className="bg-white/8 px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#e7c8ae]">Workforce</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-white">
               {people.length}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Vendors</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+          <div className="bg-white/8 px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#e7c8ae]">Vendors</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-white">
               {vendors.length}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Leads</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+          <div className="bg-white/8 px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#e7c8ae]">Leads</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-white">
               {opportunities.length}
             </p>
           </div>
@@ -512,18 +482,18 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
               name="q"
               defaultValue={query}
               placeholder="Search customer, customer contact, workforce person, vendor, or lead"
-              className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+              className="min-w-0 flex-1 rounded-[4px] border border-[#d9cdc2] bg-white px-4 py-2.5 text-sm text-[#221a14] outline-none transition placeholder:text-[#9a8b80] focus:border-[#c59a6b] focus:shadow-[0_0_0_3px_rgba(239,125,50,0.16)]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9cdc2] bg-white px-4 py-2.5 text-sm font-medium text-[#594839] transition hover:border-[#ef7d32] hover:bg-[#fbf7f2]"
             >
               Search
             </button>
             {query.length > 0 || view !== "all" ? (
               <Link
                 href="/directory"
-                className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
+                className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-[#75675b] transition hover:text-[#221a14]"
               >
                 Clear
               </Link>
@@ -540,15 +510,15 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
-                  ? "bg-[#233a64] text-white"
-                  : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
+                  ? "bg-[#171717] text-white"
+                  : "border border-[#d9cdc2] bg-white text-[#594839] hover:bg-[#fbf7f2]"
               ].join(" ")}
             >
               <span>{directoryView.label}</span>
               <span
                 className={[
                   "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                  isActive ? "bg-white/15 text-white" : "bg-[#f2e7dc] text-[#8f5b32]"
                 ].join(" ")}
               >
                 {directoryView.count}
@@ -558,83 +528,71 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
         })
       }}
     >
-      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        {helperCards.map((card) => (
-          <article key={card.label} className="border border-[#dde3eb] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">{card.label}</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{card.description}</p>
-          </article>
-        ))}
-      </section>
-
-      <section className="border border-[#dde3eb] bg-white">
-        <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+      <section className="border border-[#d9cdc2] bg-white">
+        <div className="border-b border-[#e8ded5] bg-[#fffaf5] px-4 py-2.5 sm:px-5">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
                 Canonical record index
               </p>
-              <p className="mt-1 text-sm leading-6 text-slate-500">
-                Scan mixed record types here, then jump into the linked canonical workspace for the
-                actual work. Customer-contact rows route back to the parent customer detail page,
-                where related contacts, linked portal grants, and contact-level permissions are
-                managed.
-              </p>
-            </div>
-            <div className="hidden grid-cols-[160px_minmax(0,1.2fr)_220px_180px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
-              <span>Type</span>
-              <span>Record</span>
-              <span>Context</span>
-              <span className="text-right">Status</span>
             </div>
             <div className="md:hidden">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#8f7f72]">
                 Directory records
               </p>
             </div>
-            <p className="text-sm leading-6 text-slate-500">{filteredRows.length} visible</p>
+            <p className="shrink-0 border border-[#e3d7cb] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#7a6656]">
+              {filteredRows.length} visible
+            </p>
           </div>
         </div>
 
-        <div className="divide-y divide-slate-200">
+        <div className="hidden grid-cols-[140px_minmax(0,1.2fr)_220px_150px] gap-3 border-b border-[#eee4dc] bg-[#fbf7f2] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8f7f72] md:grid">
+          <span>Type</span>
+          <span>Record</span>
+          <span>Context</span>
+          <span className="text-right">Status</span>
+        </div>
+
+        <div className="divide-y divide-[#eee4dc]">
           {filteredRows.length > 0 ? (
             filteredRows.map((row) => (
               <Link
                 key={`${row.typeGroup}-${row.id}`}
                 href={row.href}
-                className="group block px-5 py-4 transition hover:bg-slate-50/70 sm:px-6"
+                className="group block px-4 py-2.5 transition hover:bg-[#fbf7f2]"
               >
-                <div className="grid gap-4 md:grid-cols-[160px_minmax(0,1.2fr)_220px_180px] md:items-start">
+                <div className="grid gap-2.5 md:grid-cols-[140px_minmax(0,1.2fr)_220px_150px] md:items-start">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#a7998d] md:hidden">
                       Type
                     </p>
-                    <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                    <span className="inline-flex rounded-[4px] border border-[#d9cdc2] bg-[#fbf7f2] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#594839]">
                       {row.typeLabel}
                     </span>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#a7998d] md:hidden">
                       Record
                     </p>
-                    <h3 className="text-base font-semibold text-slate-950 transition group-hover:text-brand-700">
+                    <h3 className="text-sm font-semibold text-[#221a14] transition group-hover:text-[#a4581a]">
                       {row.name}
                     </h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">{row.detail}</p>
+                    <p className="mt-0.5 text-sm leading-5 text-[#6f6256]">{row.detail}</p>
                     {row.typeLabel === "Customer Contact" ? (
-                      <p className="mt-2 text-xs leading-5 text-slate-500">
+                      <p className="mt-0.5 text-xs leading-5 text-[#7c6e62]">
                         {buildCustomerContactPortalNote()}.
                       </p>
                     ) : null}
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#a7998d] md:hidden">
                       Context
                     </p>
-                    <p className="text-sm font-medium text-slate-700">{row.context}</p>
+                    <p className="text-sm font-medium text-[#4d4036]">{row.context}</p>
                   </div>
                   <div className="md:text-right">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#a7998d] md:hidden">
                       Status
                     </p>
                     <span

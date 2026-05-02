@@ -62,8 +62,8 @@ export function RecordWorkspaceShell({
   children
 }: RecordWorkspaceShellProps) {
   return (
-    <div className="grid min-h-[calc(100vh-8rem)] grid-cols-1 bg-[#f5f7fa] xl:grid-cols-[200px_minmax(0,1fr)]">
-      <aside className="flex flex-col bg-[#1e3a5f] text-white">
+    <div className="grid min-h-[calc(100vh-8rem)] grid-cols-1 bg-[#f4f1ed] xl:grid-cols-[200px_minmax(0,1fr)]">
+      <aside className="flex flex-col bg-[#171717] text-white">
         <div className="border-b border-white/10 px-4 py-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/65">Home / Estimates</p>
           <Link href={backHref} className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-white/85 transition hover:text-white">
@@ -108,14 +108,14 @@ export function RecordWorkspaceShell({
       </aside>
 
       <div className="flex min-w-0 flex-col">
-        <header className="border-b border-slate-200 bg-white px-6 py-5 shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
+        <header className="border-b border-[#e8ded5] bg-white px-6 py-5 shadow-[0_1px_2px_rgba(34,26,20,0.05)]">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex min-w-0 items-start gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-full border-4 border-orange-100 bg-[#ef7d32] text-white">
                 <FileText className="h-5 w-5" />
               </div>
               <div className="min-w-0">
-                <h1 className="truncate text-xl font-semibold text-slate-900">{title}</h1>
+                <h1 className="truncate text-xl font-semibold text-[#221a14]">{title}</h1>
                 <p className="mt-1 text-sm text-slate-400">{subtitle}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                   {statusBadge ? (
@@ -173,7 +173,7 @@ export function RecordWorkspaceShell({
           {actionSlot ? <div className="mt-4">{actionSlot}</div> : null}
         </header>
 
-        <main className="flex-1 px-6 py-6">{children}</main>
+        <main className="flex-1 px-5 py-5">{children}</main>
 
         <footer className="flex h-12 flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 text-sm text-slate-600">
           <div className="flex flex-wrap items-center gap-4">
@@ -195,7 +195,7 @@ export function RecordWorkspaceShell({
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <label className="inline-flex items-center gap-2">
-              <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-[#1e3a5f]" />
+              <input type="checkbox" className="h-4 w-4 rounded border-[#d9cdc2] text-[#d8731f] focus:ring-[#f1b180]" />
               Save Estimate as Template
             </label>
             <button type="button" className="inline-flex items-center gap-2 font-medium text-slate-700">

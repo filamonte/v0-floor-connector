@@ -2,54 +2,69 @@ export type SettingsNavItem = {
   href: string;
   label: string;
   description: string;
+  adminOnly?: boolean;
 };
 
 export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
   {
+    href: "/settings/profile",
+    label: "Profile",
+    description: "Personal account identity and current organization context."
+  },
+  {
     href: "/settings",
     label: "Overview",
-    description: "Review the current organization configuration footprint."
+    description: "Review the current organization configuration footprint.",
+    adminOnly: true
   },
   {
     href: "/settings/organization",
     label: "Organization",
-    description: "Profile, identity, and tenant-level organization details."
+    description: "Profile, identity, and tenant-level organization details.",
+    adminOnly: true
   },
   {
     href: "/settings/templates",
     label: "Document Templates",
-    description: "Organization-owned estimate, invoice, and contract templates."
+    description: "Organization-owned estimate, invoice, and contract templates.",
+    adminOnly: true
   },
   {
     href: "/settings/catalogs",
     label: "Catalog Items",
-    description: "Catalog Items, Systems, Add-ons / Options, and inventory behavior."
+    description: "Catalog Items, Systems, Add-ons / Options, and inventory behavior.",
+    adminOnly: true
   },
   {
     href: "/settings/financial",
     label: "Financial",
-    description: "Tax, retainage, billing defaults, and tax-code settings."
+    description: "Tax, retainage, billing defaults, and tax-code settings.",
+    adminOnly: true
   },
   {
     href: "/settings/workflows",
     label: "Workflows",
-    description: "Contract generation and commercial readiness defaults."
+    description: "Contract generation and commercial readiness defaults.",
+    adminOnly: true
   },
   {
     href: "/settings/automation",
     label: "Automation",
     description:
-      "Automation readiness plus future notification-only preferences on canonical settings."
+      "Automation readiness plus future notification-only preferences on canonical settings.",
+    adminOnly: true
   },
   {
     href: "/settings/admin",
     label: "Admin",
-    description: "Organization members, roles, and admin-facing controls."
+    description: "Organization members, roles, and admin-facing controls.",
+    adminOnly: true
   },
   {
     href: "/settings/modules",
     label: "Modules",
-    description: "Organization-level feature overrides within platform policy."
+    description: "Organization-level feature overrides within platform policy.",
+    adminOnly: true
   }
 ] as const;
 

@@ -36,7 +36,7 @@ export function AppShellMobileNav({ currentRole }: AppShellMobileNavProps) {
               idBase="mobile-universal-create-menu"
               align="left"
               buttonLabel="Quick create"
-              buttonClassName="w-full justify-center rounded-[4px] border-[#ef7d32] bg-[#ef7d32] px-4 py-2.5 text-sm font-semibold text-[#1f140d] hover:bg-[#f08b47]"
+              buttonClassName="w-full justify-center rounded-[4px] border-[#ef7d32] bg-[#ef7d32] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#de6c22]"
               panelClassName="left-0 right-0 w-full"
             />
           </div>

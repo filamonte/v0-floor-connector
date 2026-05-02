@@ -137,35 +137,35 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
       description="Use jobs as the operational link between project readiness, crew scheduling, time, daily logs, and invoice-ready completion."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Unscheduled
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {unscheduledJobs.length}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Scheduled
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {scheduledJobs.length}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               In progress
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {inProgressJobs.length}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Completed
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {completedJobs.length}
             </p>
           </div>
@@ -189,11 +189,11 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               name="q"
               defaultValue={query}
               placeholder="Search project, customer, estimate, or status"
-              className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+              className="min-w-0 flex-1 rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               Search
             </button>
@@ -222,8 +222,8 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
-                  ? "bg-[#233a64] text-white"
-                  : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
+                  ? "bg-[#171717] text-white"
+                  : "border border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"
               ].join(" ")}
             >
               <span>{jobView.label}</span>
@@ -246,7 +246,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               compose: "1",
               projectId: projectFilterId || undefined
             })}
-            className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
+            className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
           >
             New job
           </Link>
@@ -267,7 +267,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
         ) : null}
 
         {projectFilterId ? (
-          <div className="flex flex-col gap-3 border border-[#dde3eb] bg-white px-5 py-4 text-sm leading-6 text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 border border-[#d6d6d6] bg-white px-5 py-4 text-sm leading-6 text-slate-600 sm:flex-row sm:items-center sm:justify-between">
             <p>
               Showing jobs for{" "}
               <span className="font-semibold text-slate-900">
@@ -281,7 +281,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                 view,
                 compose: showComposer ? "1" : undefined
               })}
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
             >
               Clear project
             </Link>
@@ -373,10 +373,10 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           />
         </section>
 
-        <section className="overflow-hidden border border-[#dde3eb] bg-white">
-          <div className="flex items-end justify-between gap-4 border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
+        <section className="overflow-hidden border border-[#d6d6d6] bg-white">
+          <div className="flex items-end justify-between gap-4 border-b border-[#e5e5e5] px-5 py-4 sm:px-6">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                 Recent records
               </p>
               <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
@@ -389,7 +389,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           {recentJobs.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-200 text-sm">
-                <thead className="bg-[#f8fafc] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <thead className="bg-[#f8f8f8] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                   <tr>
                     <th className="px-5 py-3 sm:px-6">Job</th>
                     <th className="px-5 py-3 sm:px-6">Customer</th>
@@ -423,7 +423,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                         </p>
                       </td>
                       <td className="px-5 py-4 sm:px-6">
-                        <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                        <span className="inline-flex rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
                           {formatStatusLabel(job.dispatchStatus)}
                         </span>
                       </td>

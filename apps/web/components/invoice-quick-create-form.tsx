@@ -51,12 +51,12 @@ type InvoiceSourceType = "" | "deposit" | "job" | "estimate" | "changeOrder";
 type InvoiceErrorTarget = "project" | "source" | "job" | "estimate" | "changeOrder" | null;
 
 const baseSelectClassName =
-  "w-full rounded-[4px] border bg-white px-4 py-3 text-sm text-slate-900 outline-none transition";
+  "w-full rounded-[4px] border bg-white px-4 py-3 text-sm text-[#221a14] outline-none transition";
 
 function getSelectClassName(isInvalid: boolean) {
   return isInvalid
     ? `${baseSelectClassName} border-rose-300 bg-rose-50 focus:border-rose-500 focus:ring-2 focus:ring-rose-100`
-    : `${baseSelectClassName} border-[#d9dee8] focus:border-[#91a5c6]`;
+    : `${baseSelectClassName} border-[#d9cdc2] focus:border-[#c59a6b]`;
 }
 
 function resolveInitialSourceType(input: {
@@ -267,7 +267,7 @@ export function InvoiceQuickCreateForm({
       >
         <div className="grid gap-4">
           <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-800">Project</span>
+            <span className="mb-2 block text-sm font-medium text-[#221a14]">Project</span>
             <select
               ref={projectSelectRef}
               name="projectId"
@@ -296,7 +296,7 @@ export function InvoiceQuickCreateForm({
           </label>
 
           <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-800">
+            <span className="mb-2 block text-sm font-medium text-[#221a14]">
               Billing trigger
             </span>
             <select
@@ -324,7 +324,7 @@ export function InvoiceQuickCreateForm({
 
           {sourceType === "job" ? (
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-800">
+              <span className="mb-2 block text-sm font-medium text-[#221a14]">
                 Completed job
               </span>
               <select
@@ -358,7 +358,7 @@ export function InvoiceQuickCreateForm({
 
           {sourceType === "estimate" ? (
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-800">
+              <span className="mb-2 block text-sm font-medium text-[#221a14]">
                 Approved estimate
               </span>
               <select
@@ -392,7 +392,7 @@ export function InvoiceQuickCreateForm({
 
           {sourceType === "changeOrder" ? (
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-800">
+              <span className="mb-2 block text-sm font-medium text-[#221a14]">
                 Approved change order
               </span>
               <select
@@ -428,7 +428,7 @@ export function InvoiceQuickCreateForm({
           <span>Create invoice</span>
         </AuthSubmitButton>
         {contextualHint ? (
-          <p className="text-xs leading-5 text-slate-500">{contextualHint}</p>
+          <p className="text-xs leading-5 text-[#6f6256]">{contextualHint}</p>
         ) : null}
       </div>
     </form>

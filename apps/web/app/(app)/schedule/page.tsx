@@ -391,7 +391,7 @@ function getPrimaryScheduleAction(job: {
     return {
       label: "Schedule job",
       action: "schedule" as const,
-      toneClass: "border-[#233a64] bg-[#233a64] text-white hover:bg-[#1b2d4d]"
+      toneClass: "border-[#171717] bg-[#171717] text-white hover:bg-[#2a2a2a]"
     };
   }
 
@@ -406,7 +406,7 @@ function getPrimaryScheduleAction(job: {
   return {
     label: "Refine schedule",
     action: "schedule" as const,
-    toneClass: "border-[#dde3eb] bg-white text-[#41536f] hover:bg-slate-50"
+    toneClass: "border-[#d6d6d6] bg-white text-[#3f3f3f] hover:bg-slate-50"
   };
 }
 
@@ -456,7 +456,7 @@ function getBoardPrimaryAction(job: {
     return {
       ...primaryAction,
       label: "Reschedule",
-      toneClass: "border-[#c9d7ea] bg-[#eef4fb] text-[#23486d] hover:bg-[#e2ecf8]"
+      toneClass: "border-[#d6d6d6] bg-[#f8f8f8] text-[#3f3f3f] hover:bg-[#ffffff]"
     };
   }
 
@@ -510,7 +510,7 @@ function getBoardCardSurfaceClass(job: {
   assignmentCount: number;
 }) {
   if (job.dispatchStatus === "in_progress") {
-    return "border-violet-200 bg-violet-50/35";
+    return "border-[#ef7d32] bg-[#fff4ec]/55";
   }
 
   if (job.dispatchStatus === "unscheduled") {
@@ -565,7 +565,7 @@ function getScheduleSurfaceClass(job: {
   assignmentCount: number;
 }) {
   if (job.dispatchStatus === "in_progress") {
-    return "border-violet-200 bg-violet-50/30";
+    return "border-[#ef7d32] bg-[#fff4ec]/50";
   }
 
   if (job.dispatchStatus === "unscheduled") {
@@ -636,12 +636,12 @@ function ScheduleJobActionLinks(input: {
 
   const projectClassName =
     input.projectVariant === "bordered"
-      ? `inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-white ${secondaryPadding} ${secondaryText} text-[#41536f] transition hover:bg-slate-50`
+      ? `inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white ${secondaryPadding} ${secondaryText} text-[#3f3f3f] transition hover:bg-slate-50`
       : `inline-flex items-center rounded-[4px] ${secondaryPadding} ${secondaryText} text-slate-500 transition hover:text-slate-900`;
 
   const jobClassName =
     input.jobVariant === "bordered"
-      ? `inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-white ${secondaryPadding} ${secondaryText} text-[#41536f] transition hover:bg-slate-50`
+      ? `inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white ${secondaryPadding} ${secondaryText} text-[#3f3f3f] transition hover:bg-slate-50`
       : `inline-flex items-center rounded-[4px] ${secondaryPadding} ${secondaryText} text-slate-500 transition hover:text-slate-900`;
 
   return (
@@ -712,9 +712,9 @@ function formatScheduleTimeWindow(job: {
 function getDispatchStatusBadgeClass(status: string) {
   switch (status) {
     case "in_progress":
-      return "border-violet-200 bg-violet-50 text-violet-700";
+      return "border-[#ef7d32] bg-[#fff4ec] text-[#8b4a18]";
     case "scheduled":
-      return "border-sky-200 bg-sky-50 text-sky-700";
+      return "border-[#d6d6d6] bg-[#f8f8f8] text-[#2a2a2a]";
     case "completed":
       return "border-emerald-200 bg-emerald-50 text-emerald-700";
     default:
@@ -815,7 +815,7 @@ function ScheduleFilterChip(input: {
   clearHref: string;
 }) {
   return (
-    <div className="inline-flex flex-wrap items-center gap-2 rounded-full border border-[#d7dde6] bg-white px-3 py-2 text-sm text-slate-700">
+    <div className="inline-flex flex-wrap items-center gap-2 rounded-full border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-slate-700">
       <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
         {input.label}
       </span>
@@ -1071,7 +1071,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
       emptyTitle: "No jobs are scheduled for today.",
       emptyDescription:
         "Today's committed work will appear here once the canonical job schedule fields are set.",
-      surfaceClass: "border-[#d7e5f2] bg-[#f7fbff]"
+      surfaceClass: "border-[#d6d6d6] bg-[#f8f8f8]"
     },
     {
       key: "tomorrow",
@@ -1082,7 +1082,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
       emptyTitle: "Nothing is lined up for tomorrow yet.",
       emptyDescription:
         "As soon as tomorrow's timing is captured on shared jobs, they will appear here.",
-      surfaceClass: "border-[#d9e6db] bg-[#f5fbf6]"
+      surfaceClass: "border-[#d6d6d6] bg-[#f8f8f8]"
     },
     {
       key: "next-seven-days",
@@ -1093,7 +1093,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
       emptyTitle: "No near-term scheduled work is queued after tomorrow.",
       emptyDescription:
         "The next week of scheduled jobs will gather here once the board moves beyond tomorrow.",
-      surfaceClass: "border-[#dfe3f0] bg-[#fbfcff]"
+      surfaceClass: "border-[#d6d6d6] bg-[#f8f8f8]"
     },
     {
       key: "later-scheduled",
@@ -1104,7 +1104,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
       emptyTitle: "No later scheduled work is on the board.",
       emptyDescription:
         "Farther-out commitments will appear here once the calendar extends past the next seven days.",
-      surfaceClass: "border-[#e6deef] bg-[#fcf8ff]"
+      surfaceClass: "border-[#d6d6d6] bg-[#f8f8f8]"
     },
     {
       key: "in-progress",
@@ -1115,7 +1115,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
       emptyTitle: "No jobs are marked in progress.",
       emptyDescription:
         "Once crews are actively executing work on canonical jobs, those records will surface here.",
-      surfaceClass: "border-[#e3daf3] bg-[#faf7ff]"
+      surfaceClass: "border-[#d6d6d6] bg-[#f8f8f8]"
     }
   ] as const;
 
@@ -1292,10 +1292,10 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
         date: plannerDateKey
       }),
       active: view === "today",
-      borderClass: "border-[#d7e5f2]",
+      borderClass: "border-[#d6d6d6]",
       bgClass: "bg-[#f4f8fc]",
-      labelClass: "text-[#55779a]",
-      valueClass: "text-[#20486c]"
+      labelClass: "text-[#666666]",
+      valueClass: "text-[#3f3f3f]"
     },
     {
       key: "in-progress",
@@ -1310,10 +1310,10 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
         date: plannerDateKey
       }),
       active: view === "in_progress",
-      borderClass: "border-[#e3daf3]",
+      borderClass: "border-[#d6d6d6]",
       bgClass: "bg-[#f7f3ff]",
-      labelClass: "text-[#71609d]",
-      valueClass: "text-[#553f8f]"
+      labelClass: "text-[#666666]",
+      valueClass: "text-[#3f3f3f]"
     },
     {
       key: "upcoming",
@@ -1328,10 +1328,10 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
         date: plannerDateKey
       }),
       active: view === "upcoming",
-      borderClass: "border-[#d9e6db]",
-      bgClass: "bg-[#f3faf4]",
-      labelClass: "text-[#5f7f65]",
-      valueClass: "text-[#29523c]"
+      borderClass: "border-[#d6d6d6]",
+      bgClass: "bg-[#f8f8f8]",
+      labelClass: "text-[#666666]",
+      valueClass: "text-[#3f3f3f]"
     }
   ] as const;
   const nextActions = [
@@ -1440,7 +1440,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                 "border px-4 py-3 transition hover:shadow-[0_10px_30px_rgba(15,23,42,0.08)]",
                 item.borderClass,
                 item.bgClass,
-                item.active ? "ring-1 ring-inset ring-[#233a64]" : ""
+                item.active ? "ring-1 ring-inset ring-[#171717]" : ""
               ].join(" ")}
             >
               <p className={`text-[11px] uppercase tracking-[0.14em] ${item.labelClass}`}>
@@ -1478,11 +1478,11 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
               name="q"
               defaultValue={query}
               placeholder="Search project, customer, estimate, crew, vendor, or date"
-              className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+              className="min-w-0 flex-1 rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               Search
             </button>
@@ -1522,8 +1522,8 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                   className={[
                     "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                     isActive
-                      ? "bg-[#233a64] text-white"
-                      : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
+                      ? "bg-[#171717] text-white"
+                      : "border border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"
                   ].join(" ")}
                 >
                   <span>{scheduleView.label}</span>
@@ -1560,8 +1560,8 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                   className={[
                     "inline-flex items-center rounded-[4px] px-3 py-2 text-sm font-medium transition",
                     isActive
-                      ? "bg-[#17243b] text-white"
-                      : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
+                      ? "bg-[#171717] text-white"
+                      : "border border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"
                   ].join(" ")}
                 >
                   {crewView.label}
@@ -1573,7 +1573,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
         actionSlot: (
           <Link
             href="/jobs?view=unscheduled"
-            className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
+            className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
           >
             Open jobs manager
           </Link>
@@ -1583,7 +1583,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
       <div className={showComposer ? "grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_420px]" : "space-y-4"}>
         <section className="space-y-6">
           {showActiveFilters ? (
-            <section className="border border-[#dde3eb] bg-[#fbfcfe] px-5 py-4 sm:px-6">
+            <section className="border border-[#d6d6d6] bg-[#f8f8f8] px-5 py-4 sm:px-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -1601,7 +1601,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                   {activeProjectFilter ? (
                     <Link
                       href={`/projects/${activeProjectFilter.id}`}
-                      className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#41536f] transition hover:bg-slate-50"
+                      className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
                     >
                       Open project
                     </Link>
@@ -1659,8 +1659,8 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
             </section>
           ) : null}
 
-          <section className="border border-[#dde3eb] bg-white">
-            <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
+          <section className="border border-[#d6d6d6] bg-white">
+            <div className="border-b border-[#e5e5e5] px-5 py-4 sm:px-6">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -1676,7 +1676,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
               </div>
             </div>
 
-            <div className="grid gap-px bg-[#e5ebf2] lg:grid-cols-2">
+            <div className="grid gap-px bg-[#e5e5e5] lg:grid-cols-2">
               {nextActions.map((action) => (
                 <div key={action.key} className="bg-white px-5 py-4 sm:px-6">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
@@ -1691,7 +1691,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                   <div className="mt-4 flex flex-wrap items-center gap-3">
                     <Link
                       href={action.href}
-                      className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#41536f] transition hover:bg-slate-50"
+                      className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
                     >
                       {action.ctaLabel}
                     </Link>
@@ -1708,7 +1708,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                         return (
                           <div
                             key={`${action.key}-${job.id}`}
-                            className="flex flex-wrap items-center justify-between gap-3 rounded-[4px] border border-[#e5ebf2] bg-[#fbfcfe] px-3 py-2.5"
+                            className="flex flex-wrap items-center justify-between gap-3 rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-2.5"
                           >
                             <div className="min-w-0">
                               <Link
@@ -1875,8 +1875,8 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
             />
           </section>
 
-          <section className="border border-[#dde3eb] bg-white">
-            <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
+          <section className="border border-[#d6d6d6] bg-white">
+            <div className="border-b border-[#e5e5e5] px-5 py-4 sm:px-6">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -1904,8 +1904,8 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                         className={[
                           "inline-flex items-center rounded-[4px] px-3 py-2 text-sm font-medium transition",
                           isActive
-                            ? "bg-[#233a64] text-white"
-                            : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
+                            ? "bg-[#171717] text-white"
+                            : "border border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"
                         ].join(" ")}
                       >
                         {option.label}
@@ -1917,7 +1917,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
 
               <div className="mt-4 flex flex-col gap-3 border-t border-[#eef2f6] pt-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="inline-flex items-center rounded-full border border-[#d7e5f2] bg-[#f4f8fc] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#20486c]">
+                  <span className="inline-flex items-center rounded-full border border-[#d6d6d6] bg-[#f4f8fc] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#3f3f3f]">
                     {scheduleLayout === "board" ? visibleJobs.length : plannerJobCount}{" "}
                     {scheduleLayout === "board" ? "visible" : "scheduled"}
                   </span>
@@ -1940,19 +1940,19 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                   <div className="flex flex-wrap items-center gap-2">
                     <Link
                       href={plannerPrevHref}
-                      className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#41536f] transition hover:bg-slate-50"
+                      className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
                     >
                       Previous
                     </Link>
                     <Link
                       href={plannerTodayHref}
-                      className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#41536f] transition hover:bg-slate-50"
+                      className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
                     >
                       Today
                     </Link>
                     <Link
                       href={plannerNextHref}
-                      className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#41536f] transition hover:bg-slate-50"
+                      className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
                     >
                       Next
                     </Link>
@@ -1974,14 +1974,14 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                       </p>
                     </div>
                     {plannerAnchorDate.getTime() === today.getTime() ? (
-                      <span className="inline-flex items-center rounded-full border border-[#d7e5f2] bg-[#eff6fd] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#55779a]">
+                      <span className="inline-flex items-center rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
                         Today
                       </span>
                     ) : null}
                   </div>
 
                   {untimedDayJobs.length > 0 ? (
-                    <div className="mt-4 rounded-[4px] border border-dashed border-[#d7dde6] bg-[#fafcfe] p-4">
+                    <div className="mt-4 rounded-[4px] border border-dashed border-[#d6d6d6] bg-[#f8f8f8] p-4">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                         Time not set
                       </p>
@@ -2048,13 +2048,13 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                     </div>
                   ) : null}
 
-                  <div className="mt-4 grid gap-px bg-[#e5ebf2]">
+                  <div className="mt-4 grid gap-px bg-[#e5e5e5]">
                     {dayTimelineBuckets.map((bucket) => (
                       <div
                         key={bucket.hour}
-                        className="grid grid-cols-[92px_minmax(0,1fr)] gap-px bg-[#e5ebf2]"
+                        className="grid grid-cols-[92px_minmax(0,1fr)] gap-px bg-[#e5e5e5]"
                       >
-                        <div className="bg-[#fbfcfe] px-4 py-4 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                        <div className="bg-[#f8f8f8] px-4 py-4 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                           {formatHourLabel(bucket.hour)}
                         </div>
                         <div className="bg-white px-4 py-3">
@@ -2127,7 +2127,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                               })}
                             </div>
                           ) : (
-                            <div className="min-h-16 rounded-[4px] border border-dashed border-[#edf1f6] bg-[#fbfcfe]" />
+                            <div className="min-h-16 rounded-[4px] border border-dashed border-[#e5e5e5] bg-[#f8f8f8]" />
                           )}
                         </div>
                       </div>
@@ -2135,7 +2135,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                   </div>
                 </div>
               ) : scheduleLayout === "week" ? (
-                <div className="grid gap-px bg-[#e5ebf2] xl:grid-cols-7">
+                <div className="grid gap-px bg-[#e5e5e5] xl:grid-cols-7">
                   {plannerDays.map((day) => {
                     const dayJobs = visibleScheduledJobs.filter(
                       (job) => job.scheduledDate === day.dateKey
@@ -2147,7 +2147,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                         key={day.dateKey}
                         className={[
                           "bg-white px-4 py-4",
-                          day.dateKey === todayDateKey ? "bg-[#f7fbff]" : ""
+                          day.dateKey === todayDateKey ? "bg-[#f8f8f8]" : ""
                         ].join(" ")}
                       >
                         <div className="flex items-start justify-between gap-3 border-b border-[#eef2f6] pb-3">
@@ -2160,11 +2160,11 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                             </p>
                           </div>
                           <div className="flex flex-col items-end gap-1">
-                            <span className="inline-flex items-center rounded-full border border-[#dde3eb] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                            <span className="inline-flex items-center rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                               {dayJobs.length} job{dayJobs.length === 1 ? "" : "s"}
                             </span>
                             {day.dateKey === todayDateKey ? (
-                              <span className="inline-flex items-center rounded-full border border-[#d7e5f2] bg-[#eff6fd] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#55779a]">
+                              <span className="inline-flex items-center rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
                                 Today
                               </span>
                             ) : null}
@@ -2238,7 +2238,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                               );
                             })
                           ) : (
-                            <div className="rounded-[4px] border border-dashed border-[#edf1f6] bg-[#fbfcfe] px-3 py-8 text-center text-xs uppercase tracking-[0.14em] text-slate-400">
+                            <div className="rounded-[4px] border border-dashed border-[#e5e5e5] bg-[#f8f8f8] px-3 py-8 text-center text-xs uppercase tracking-[0.14em] text-slate-400">
                               Open day
                             </div>
                           )}
@@ -2254,7 +2254,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                       key={group.key}
                       className={`flex flex-col border ${group.surfaceClass}`}
                     >
-                      <div className="border-b border-[#e5ebf2] px-4 py-4">
+                      <div className="border-b border-[#e5e5e5] px-4 py-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-slate-950">{group.title}</p>
@@ -2265,7 +2265,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                               {getBoardLaneMeta(group)}
                             </p>
                           </div>
-                          <span className="inline-flex items-center rounded-full border border-[#dde3eb] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                          <span className="inline-flex items-center rounded-full border border-[#d6d6d6] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                             {group.jobs.length} job{group.jobs.length === 1 ? "" : "s"}
                           </span>
                         </div>
@@ -2360,7 +2360,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                             );
                           })
                         ) : (
-                          <div className="rounded-[4px] border border-dashed border-[#d7dde6] bg-white px-4 py-5">
+                          <div className="rounded-[4px] border border-dashed border-[#d6d6d6] bg-white px-4 py-5">
                             <p className="text-sm font-semibold text-slate-900">
                               {group.emptyTitle}
                             </p>
@@ -2407,8 +2407,8 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
             </div>
           ) : null}
 
-          <section className="border border-[#dde3eb] bg-white">
-            <div className="border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
+          <section className="border border-[#d6d6d6] bg-white">
+            <div className="border-b border-[#e5e5e5] px-5 py-4 sm:px-6">
               <div className="flex items-end justify-between gap-4">
                 <div className="hidden grid-cols-[minmax(0,1.3fr)_1fr_170px_170px_150px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
                   <span>Scheduled work</span>
@@ -2574,7 +2574,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
         >
           {selectedJob ? (
             <div className="space-y-4">
-              <div className="rounded-[4px] border border-[#e5ebf2] bg-[#fbfcfe] px-4 py-3 text-sm leading-6 text-slate-600">
+              <div className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-4 py-3 text-sm leading-6 text-slate-600">
                 <p className="font-semibold text-slate-950">
                   {selectedJob.project?.name ?? "Untitled job"}
                 </p>
@@ -2594,19 +2594,19 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
               <div className="flex flex-wrap gap-2">
                 <Link
                   href={`/projects/${selectedJob.projectId}`}
-                  className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#41536f] transition hover:bg-slate-50"
+                  className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
                 >
                   Open project
                 </Link>
                 <Link
                   href={`/jobs/${selectedJob.id}`}
-                  className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#41536f] transition hover:bg-slate-50"
+                  className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
                 >
                   Open job
                 </Link>
               </div>
               {selectedJobCrewState ? (
-                <div className="rounded-[4px] border border-[#e5ebf2] bg-white px-4 py-3 text-sm leading-6 text-slate-600">
+                <div className="rounded-[4px] border border-[#e5e5e5] bg-white px-4 py-3 text-sm leading-6 text-slate-600">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                     Crew continuity
                   </p>
@@ -2635,7 +2635,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                             jobId: selectedJob.id
                           }) + "#schedule-action"
                         }
-                        className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-[#1b2d4d]"
+                        className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-[#2a2a2a]"
                       >
                         Set schedule first
                       </Link>
@@ -2684,13 +2684,13 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                     <div className="flex flex-wrap gap-2">
                       <Link
                         href="/people"
-                        className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#41536f] transition hover:bg-slate-50"
+                        className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
                       >
                         Open people
                       </Link>
                       <Link
                         href="/vendors"
-                        className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#41536f] transition hover:bg-slate-50"
+                        className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
                       >
                         Open vendors
                       </Link>
@@ -2714,7 +2714,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
               )}
             </div>
           ) : (
-            <div className="rounded-[4px] border border-[#e5ebf2] bg-[#fbfcfe] px-4 py-3 text-sm leading-6 text-slate-600">
+            <div className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-4 py-3 text-sm leading-6 text-slate-600">
               Select a job from the unscheduled, today, upcoming, or crew queues to schedule work or attach crew without leaving the schedule dashboard.
             </div>
           )}

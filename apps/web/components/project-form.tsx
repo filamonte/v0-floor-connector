@@ -1,14 +1,14 @@
 import type {
   Customer,
-  FinancingStatus,
   Project,
   ProjectStatus
 } from "@floorconnector/types";
 
 import { AuthField } from "@/components/auth-field";
 import { AuthSubmitButton } from "@/components/auth-submit-button";
+import { CountryComboboxField } from "@/components/country-combobox-field";
 import { CustomerPickerField } from "@/components/customer-picker-field";
-import { financingStatusesList, projectStatusesList } from "@/lib/projects/schemas";
+import { projectStatusesList } from "@/lib/projects/schemas";
 
 type ProjectFormProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -25,10 +25,6 @@ function getValue(value: string | null | undefined) {
 }
 
 function formatStatusLabel(status: ProjectStatus) {
-  return status.replaceAll("_", " ");
-}
-
-function formatFinancingStatusLabel(status: FinancingStatus) {
   return status.replaceAll("_", " ");
 }
 
@@ -50,6 +46,11 @@ export function ProjectForm({
   return (
     <form action={action} className="space-y-5">
       {project ? <input type="hidden" name="projectId" value={project.id} /> : null}
+      <input
+        type="hidden"
+        name="financingStatus"
+        value={project?.financingStatus ?? "not_applicable"}
+      />
 
       <div className="grid gap-4 md:grid-cols-2">
         <AuthField
@@ -92,27 +93,6 @@ export function ProjectForm({
           ) : null}
         </label>
 
-        <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-800">
-            Financing status
-          </span>
-          <select
-            name="financingStatus"
-            defaultValue={project?.financingStatus ?? "not_applicable"}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
-            required
-          >
-            {financingStatusesList.map((status) => (
-              <option key={status} value={status}>
-                {formatFinancingStatusLabel(status)}
-              </option>
-            ))}
-          </select>
-          <span className="mt-2 block text-xs leading-5 text-slate-500">
-            Use this only for commercial readiness. Financing remains on the same project record.
-          </span>
-        </label>
-
         <AuthField
           label="Address line 1"
           name="addressLine1"
@@ -138,17 +118,14 @@ export function ProjectForm({
           placeholder="NC"
         />
         <AuthField
-          label="Postal code"
+          label="ZIP / postal code"
           name="postalCode"
           defaultValue={getValue(project?.postalCode)}
           placeholder="28202"
         />
-        <AuthField
-          label="Country code"
+        <CountryComboboxField
           name="countryCode"
           defaultValue={getValue(project?.countryCode)}
-          placeholder="US"
-          hint="Use a two-letter country code when available."
         />
       </div>
 

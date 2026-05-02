@@ -9,11 +9,11 @@ export default function AccountsReceivablePage() {
       title="Accounts Receivable"
       description="Accounts Receivable is defined here as the future module-home workspace for money owed to the business, collections follow-up, and receivable-specific visibility built on the same canonical invoice and payment records."
       summary={
-        <div className="rounded-[8px] border border-[#d7dce4] bg-white px-4 py-3">
-          <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+        <div className="rounded-[8px] border border-[#d6d6d6] bg-white px-4 py-3">
+          <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
             Status
           </p>
-          <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">
+          <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
             Structure defined
           </p>
         </div>
@@ -30,13 +30,13 @@ export default function AccountsReceivablePage() {
           <>
             <Link
               href="/financials"
-              className="inline-flex items-center rounded-[4px] border border-[#cfd6e0] bg-white px-3 py-2 text-sm font-medium text-[#334155] transition hover:bg-slate-50"
+              className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm font-medium text-[#334155] transition hover:bg-slate-50"
             >
               Back to Financials Home
             </Link>
             <Link
               href="/invoices"
-              className="inline-flex items-center rounded-[4px] border border-[#cfd6e0] bg-white px-3 py-2 text-sm font-medium text-[#334155] transition hover:bg-slate-50"
+              className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm font-medium text-[#334155] transition hover:bg-slate-50"
             >
               Open invoices
             </Link>
@@ -45,11 +45,11 @@ export default function AccountsReceivablePage() {
       }}
     >
       <div className="grid gap-4 xl:grid-cols-2">
-        <section className="border border-[#d7dce4] bg-white px-4 py-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
+        <section className="border border-[#d6d6d6] bg-white px-4 py-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
             Intended purpose
           </p>
-          <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#17243b]">
+          <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]">
             What this module home will own
           </h3>
           <div className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
@@ -62,11 +62,11 @@ export default function AccountsReceivablePage() {
           </div>
         </section>
 
-        <section className="border border-[#d7dce4] bg-white px-4 py-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
+        <section className="border border-[#d6d6d6] bg-white px-4 py-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
             Not built yet
           </p>
-          <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#17243b]">
+          <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]">
             Out of scope for this pass
           </h3>
           <div className="mt-3 space-y-2 text-sm leading-6 text-slate-600">

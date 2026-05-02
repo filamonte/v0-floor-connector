@@ -47,7 +47,7 @@ export function ScheduleJobForm({
                 type="date"
                 name="scheduledDate"
                 defaultValue={job.scheduledDate ?? ""}
-                className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+                className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
                 required
               />
             </label>
@@ -61,7 +61,7 @@ export function ScheduleJobForm({
                   type="datetime-local"
                   name="scheduledStartAt"
                   defaultValue={job.scheduledStartAt ? job.scheduledStartAt.slice(0, 16) : ""}
-                  className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+                  className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
                 />
               </label>
 
@@ -73,7 +73,7 @@ export function ScheduleJobForm({
                   type="datetime-local"
                   name="scheduledEndAt"
                   defaultValue={job.scheduledEndAt ? job.scheduledEndAt.slice(0, 16) : ""}
-                  className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+                  className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
                 />
               </label>
             </div>
@@ -86,7 +86,7 @@ export function ScheduleJobForm({
                 name="scheduleNotes"
                 defaultValue={job.scheduleNotes ?? ""}
                 rows={4}
-                className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+                className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
                 placeholder="Access reminders, sequencing notes, or day-of-work details"
               />
             </label>
@@ -104,7 +104,7 @@ export function ScheduleJobForm({
           {redirectTo ? <input type="hidden" name="redirectTo" value={redirectTo} /> : null}
           <button
             type="submit"
-            className="inline-flex w-full items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex w-full items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
           >
             Move back to unscheduled
           </button>

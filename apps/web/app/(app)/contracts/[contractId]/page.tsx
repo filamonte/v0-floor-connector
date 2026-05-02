@@ -80,7 +80,7 @@ function getStatusBadgeClassName(status: string) {
     case "sent":
       return "border-amber-200 bg-amber-50 text-amber-900";
     case "viewed":
-      return "border-sky-200 bg-sky-50 text-sky-900";
+      return "border-[#d6d6d6] bg-[#f8f8f8] text-[#2a2a2a]";
     case "signed":
       return "border-emerald-200 bg-emerald-50 text-emerald-900";
     case "void":

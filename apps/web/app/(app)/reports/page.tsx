@@ -105,16 +105,16 @@ function StatusSummaryGrid<TStatus extends string>({
   amountLabel?: string;
 }) {
   return (
-    <div className="grid gap-px border border-[#d7dce4] bg-[#d7dce4] sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-px border border-[#d6d6d6] bg-[#d6d6d6] sm:grid-cols-2 xl:grid-cols-4">
       {statuses.map((status) => {
         const count = getCount(counts, status);
 
         return (
           <div key={status} className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               {labelize(status)}
             </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
               {count.count}
             </p>
             {amountLabel ? (
@@ -141,12 +141,12 @@ function ReportSection({
   children: ReactNode;
 }) {
   return (
-    <section className="overflow-hidden border border-[#d7dce4] bg-white">
-      <div className="border-b border-[#e2e8f0] px-4 py-3">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
+    <section className="overflow-hidden border border-[#d6d6d6] bg-white">
+      <div className="border-b border-[#e5e5e5] px-4 py-3">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
           {eyebrow}
         </p>
-        <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#17243b]">
+        <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]">
           {title}
         </h3>
         <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
@@ -191,20 +191,20 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       title={`Reporting basics for ${organizationContext.organization.displayName}`}
       description="Read-only internal beta reporting over canonical records. These summaries route back to the operational workspaces instead of creating a separate reporting truth."
       summary={
-        <div className="grid gap-px border border-[#d7dce4] bg-[#d7dce4] sm:grid-cols-2">
+        <div className="grid gap-px border border-[#d6d6d6] bg-[#d6d6d6] sm:grid-cols-2">
           <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Activity window
             </p>
-            <p className="mt-1 text-sm font-semibold text-[#17243b]">
+            <p className="mt-1 text-sm font-semibold text-[#171717]">
               {formatDate(from)} to {formatDate(to)}
             </p>
           </div>
           <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Data model
             </p>
-            <p className="mt-1 text-sm font-semibold text-[#17243b]">
+            <p className="mt-1 text-sm font-semibold text-[#171717]">
               Canonical records only
             </p>
           </div>
@@ -220,33 +220,33 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
         ),
         searchSlot: (
           <form action="/reports" className="flex flex-col gap-2 sm:flex-row">
-            <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#6f7d92]">
+            <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#666666]">
               From
               <input
                 type="date"
                 name="from"
                 defaultValue={dateInputValue(from)}
-                className="rounded-[4px] border border-[#d9dee8] bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-slate-900 outline-none focus:border-[#91a5c6]"
+                className="rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-slate-900 outline-none focus:border-[#ef7d32]"
               />
             </label>
-            <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#6f7d92]">
+            <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#666666]">
               To
               <input
                 type="date"
                 name="to"
                 defaultValue={dateInputValue(to)}
-                className="rounded-[4px] border border-[#d9dee8] bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-slate-900 outline-none focus:border-[#91a5c6]"
+                className="rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-slate-900 outline-none focus:border-[#ef7d32]"
               />
             </label>
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d] sm:self-end"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a] sm:self-end"
             >
               Apply
             </button>
             <Link
               href="/reports"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 sm:self-end"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 sm:self-end"
             >
               Reset
             </Link>
@@ -297,12 +297,12 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             <Link
               key={card.label}
               href={card.href}
-              className="border border-[#e2e7ef] bg-white px-4 py-3 transition hover:bg-[#f8fafc]"
+              className="border border-[#e5e5e5] bg-white px-4 py-3 transition hover:bg-[#f8f8f8]"
             >
-              <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+              <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
                 {card.label}
               </p>
-              <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+              <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
                 {card.value}
               </p>
               <p className="mt-1 text-xs text-slate-500">{card.detail}</p>
@@ -316,7 +316,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
           description="Filing-prep visibility from canonical invoice tax snapshots using invoice issue date. This does not file returns, remit tax, call a provider, or recalculate historical invoices."
         >
           <div id="sales-tax-summary" className="space-y-4 p-4">
-            <div className="grid gap-px border border-[#d7dce4] bg-[#d7dce4] sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-px border border-[#d6d6d6] bg-[#d6d6d6] sm:grid-cols-2 xl:grid-cols-4">
               {[
                 {
                   label: "Taxable sales",
@@ -340,10 +340,10 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
                 }
               ].map((item) => (
                 <div key={item.label} className="bg-white px-3 py-2.5">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
                     {item.label}
                   </p>
-                  <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">
+                  <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
                     {item.value}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">{item.detail}</p>
@@ -419,13 +419,13 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             title="Invoice aging"
             description="Open invoice balances grouped by due date, falling back to issue date where due date is missing."
           >
-            <div className="divide-y divide-[#e7ebf1]">
+            <div className="divide-y divide-[#e5e5e5]">
               {report.invoices.aging.map((bucket) => (
                 <div
                   key={bucket.status}
                   className="grid grid-cols-[1fr_80px_140px] gap-3 px-4 py-3 text-sm"
                 >
-                  <span className="font-semibold capitalize text-[#17243b]">
+                  <span className="font-semibold capitalize text-[#171717]">
                     {labelize(bucket.status)}
                   </span>
                   <span className="text-right text-slate-600">{bucket.count}</span>
@@ -481,8 +481,8 @@ function TaxExceptionList({
   rows: Awaited<ReturnType<typeof loadSalesTaxSummary>>["rows"];
 }) {
   return (
-    <section className="border border-[#e2e7ef] bg-[#f8fafc] px-4 py-3">
-      <p className="text-sm font-semibold text-[#17243b]">{title}</p>
+    <section className="border border-[#e5e5e5] bg-[#f8f8f8] px-4 py-3">
+      <p className="text-sm font-semibold text-[#171717]">{title}</p>
       <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
       <div className="mt-3 space-y-2">
         {rows.length > 0 ? (
@@ -490,7 +490,7 @@ function TaxExceptionList({
             <Link
               key={`${title}:${row.invoiceId}`}
               href={`/invoices/${row.invoiceId}`}
-              className="block border border-[#e2e7ef] bg-white px-3 py-2 text-sm transition hover:bg-slate-50"
+              className="block border border-[#e5e5e5] bg-white px-3 py-2 text-sm transition hover:bg-slate-50"
             >
               <span className="font-semibold text-slate-950">{row.referenceNumber}</span>
               <span className="mt-1 block text-xs text-slate-500">
@@ -669,8 +669,8 @@ function SimpleTable({
 }) {
   if (rows.length === 0) {
     return (
-      <div className="border-t border-[#e7ebf1] px-4 py-5">
-        <p className="text-sm font-semibold text-[#17243b]">{emptyTitle}</p>
+      <div className="border-t border-[#e5e5e5] px-4 py-5">
+        <p className="text-sm font-semibold text-[#171717]">{emptyTitle}</p>
         <p className="mt-2 text-sm leading-5 text-slate-500">
           Matching canonical records will appear here as teams move work through the
           shared lifecycle.
@@ -680,9 +680,9 @@ function SimpleTable({
   }
 
   return (
-    <div className="overflow-x-auto border-t border-[#e7ebf1]">
+    <div className="overflow-x-auto border-t border-[#e5e5e5]">
       <table className="min-w-full divide-y divide-slate-200 text-sm">
-        <thead className="bg-[#f8fafc] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+        <thead className="bg-[#f8f8f8] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
           <tr>
             {headers.map((header) => (
               <th key={header} className="px-4 py-3">

@@ -37,7 +37,7 @@ function getStatusButtonStyles(status: ContractStatus) {
     case "sent":
       return "border-amber-300 bg-amber-50 text-amber-900 hover:border-amber-400 hover:bg-amber-100";
     case "viewed":
-      return "border-sky-300 bg-sky-50 text-sky-900 hover:border-sky-400 hover:bg-sky-100";
+      return "border-[#d6d6d6] bg-[#f8f8f8] text-[#2a2a2a] hover:border-[#bdbdbd] hover:bg-white";
     case "signed":
       return "border-emerald-300 bg-emerald-50 text-emerald-900 hover:border-emerald-400 hover:bg-emerald-100";
     case "void":

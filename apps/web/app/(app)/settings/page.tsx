@@ -51,25 +51,25 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
         message={resolvedSearchParams.message}
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
-          <p className="text-sm font-medium text-slate-950">Document templates</p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+      <div className="grid gap-px border border-[#d9cdc2] bg-[#d9cdc2] md:grid-cols-3">
+        <div className="bg-white px-5 py-4">
+          <p className="text-sm font-semibold text-[#221a14]">Document templates</p>
+          <p className="mt-2 text-sm leading-6 text-[#6f6256]">
             {allTemplates.length} organization-owned template
             {allTemplates.length === 1 ? "" : "s"} across estimate, invoice, and contract workflows.
           </p>
         </div>
-        <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
-          <p className="text-sm font-medium text-slate-950">Financial baseline</p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+        <div className="bg-white px-5 py-4">
+          <p className="text-sm font-semibold text-[#221a14]">Financial baseline</p>
+          <p className="mt-2 text-sm leading-6 text-[#6f6256]">
             {financialSettings.defaultTaxBehavior} tax at{" "}
             {formatPercentFromRate(financialSettings.defaultTaxRate)}% with{" "}
             {financialSettings.defaultRetainagePercentage}% retainage baseline.
           </p>
         </div>
-        <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
-          <p className="text-sm font-medium text-slate-950">Workflow readiness</p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+        <div className="bg-white px-5 py-4">
+          <p className="text-sm font-semibold text-[#221a14]">Workflow readiness</p>
+          <p className="mt-2 text-sm leading-6 text-[#6f6256]">
             {workflowSettings.approvedEstimateContractTemplateId
               ? "Approved-estimate contract template assigned."
               : "Using default contract template resolution."}
@@ -84,8 +84,8 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           href="/settings/organization"
           ctaLabel="Manage organization"
         >
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
-            <p className="font-medium text-slate-950">{scope.organization.legalName}</p>
+          <div className="border border-[#d9cdc2] bg-[#fbf7f2] px-4 py-4 text-sm leading-6 text-[#6f6256]">
+            <p className="font-medium text-[#221a14]">{scope.organization.legalName}</p>
             <p>{scope.organization.displayName} · `{scope.organization.slug}`</p>
           </div>
         </SettingsOverviewCard>
@@ -105,9 +105,9 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               return (
                 <div
                   key={templateType}
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600"
+                  className="border border-[#d9cdc2] bg-[#fbf7f2] px-4 py-3 text-sm text-[#6f6256]"
                 >
-                  <p className="font-medium capitalize text-slate-950">{templateType}</p>
+                  <p className="font-medium capitalize text-[#221a14]">{templateType}</p>
                   <p className="mt-1">{count} template{count === 1 ? "" : "s"}</p>
                 </div>
               );
@@ -128,9 +128,9 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               return (
                 <div
                   key={itemType}
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600"
+                  className="border border-[#d9cdc2] bg-[#fbf7f2] px-4 py-3 text-sm text-[#6f6256]"
                 >
-                  <p className="font-medium capitalize text-slate-950">{itemType}s</p>
+                  <p className="font-medium capitalize text-[#221a14]">{itemType}s</p>
                   <p className="mt-1">{count} item{count === 1 ? "" : "s"}</p>
                 </div>
               );
@@ -144,14 +144,14 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           href="/settings/templates"
           ctaLabel="Review document templates"
         >
-          <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+          <div className="space-y-3 border border-[#d9cdc2] bg-[#fbf7f2] px-4 py-4 text-sm leading-6 text-[#6f6256]">
             <p>
-              <span className="font-medium text-slate-950">{allTemplates.length}</span>{" "}
+              <span className="font-medium text-[#221a14]">{allTemplates.length}</span>{" "}
               Document Templates support estimate, invoice, and contract output.
             </p>
             <p>
-              <span className="font-medium text-slate-950">{systemCount}</span> Systems
-              and <span className="font-medium text-slate-950">{addOnOptionCount}</span>{" "}
+              <span className="font-medium text-[#221a14]">{systemCount}</span> Systems
+              and <span className="font-medium text-[#221a14]">{addOnOptionCount}</span>{" "}
               Add-ons / Options are managed as Catalog Items today.
             </p>
             <p>
@@ -160,13 +160,13 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             <div className="flex flex-wrap gap-2 pt-1">
               <Link
                 href="/settings/catalogs"
-                className="inline-flex rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400"
+                className="inline-flex border border-[#d9cdc2] bg-white px-3 py-1.5 text-xs font-medium text-[#594839] transition hover:border-[#ef7d32]"
               >
                 Catalog settings
               </Link>
               <Link
                 href="/cost-items-database/systems"
-                className="inline-flex rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400"
+                className="inline-flex border border-[#d9cdc2] bg-white px-3 py-1.5 text-xs font-medium text-[#594839] transition hover:border-[#ef7d32]"
               >
                 Systems workspace
               </Link>
@@ -180,8 +180,8 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           href="/settings/financial"
           ctaLabel="Manage financial defaults"
         >
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
-            <p className="font-medium text-slate-950">Default tax behavior</p>
+          <div className="border border-[#d9cdc2] bg-[#fbf7f2] px-4 py-4 text-sm leading-6 text-[#6f6256]">
+            <p className="font-medium text-[#221a14]">Default tax behavior</p>
             <p>
               {financialSettings.defaultTaxBehavior} at{" "}
               {formatPercentFromRate(financialSettings.defaultTaxRate)}%
@@ -195,16 +195,16 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           href="/settings/workflows"
           ctaLabel="Manage workflow defaults"
         >
-          <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+          <div className="space-y-2 border border-[#d9cdc2] bg-[#fbf7f2] px-4 py-4 text-sm leading-6 text-[#6f6256]">
             <p>
               Internal approval:{" "}
-              <span className="font-medium text-slate-950">
+              <span className="font-medium text-[#221a14]">
                 {workflowSettings.requireContractInternalApproval ? "required" : "not required"}
               </span>
             </p>
             <p>
               Deposit before scheduling:{" "}
-              <span className="font-medium text-slate-950">
+              <span className="font-medium text-[#221a14]">
                 {workflowSettings.requireDepositBeforeJobScheduling ? "required" : "optional"}
               </span>
             </p>
@@ -217,7 +217,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           href="/settings/automation"
           ctaLabel="Open automation planning"
         >
-          <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+          <div className="space-y-2 border border-[#d9cdc2] bg-[#fbf7f2] px-4 py-4 text-sm leading-6 text-[#6f6256]">
             <p>
               Communications and payment failures already expose live visibility on canonical records.
             </p>
@@ -234,8 +234,8 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           ctaLabel="Open admin controls"
         >
           <div className="space-y-3">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              <p className="font-medium text-slate-950">{members.length} members</p>
+            <div className="border border-[#d9cdc2] bg-[#fbf7f2] px-4 py-3 text-sm text-[#6f6256]">
+              <p className="font-medium text-[#221a14]">{members.length} members</p>
               <p className="mt-1">
                 {featureOverrides.length} organization-specific feature override
                 {featureOverrides.length === 1 ? "" : "s"}

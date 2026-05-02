@@ -130,7 +130,7 @@ export function AppointmentForm({
           <select
             name="appointmentType"
             defaultValue={appointment.appointmentType}
-            className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+            className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
           >
             {appointmentTypeOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -162,7 +162,7 @@ export function AppointmentForm({
           <select
             name="status"
             defaultValue={appointment.status}
-            className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+            className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
           >
             {appointmentStatusOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -179,7 +179,7 @@ export function AppointmentForm({
           <select
             name="assignedPersonId"
             defaultValue={appointment.assignedPersonId ?? ""}
-            className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+            className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
           >
             <option value="">Unassigned</option>
             {people.map((person) => (
@@ -204,7 +204,7 @@ export function AppointmentForm({
           <select
             name="opportunityId"
             defaultValue={appointment.opportunityId ?? ""}
-            className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+            className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
           >
             <option value="">No linked lead</option>
             {opportunities.map((opportunity) => (
@@ -223,7 +223,7 @@ export function AppointmentForm({
             name="customerId"
             value={customerId}
             onChange={(event) => setCustomerId(event.target.value)}
-            className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+            className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
           >
             <option value="">No linked customer</option>
             {customers.map((customer) => (
@@ -241,7 +241,7 @@ export function AppointmentForm({
           <select
             name="projectId"
             defaultValue={appointment.projectId ?? ""}
-            className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+            className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
           >
             <option value="">No linked project</option>
             {filteredProjects.map((project) => (
@@ -259,7 +259,7 @@ export function AppointmentForm({
           name="notes"
           defaultValue={appointment.notes ?? ""}
           rows={8}
-          className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+          className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
           placeholder="Capture meeting context, prep notes, site observations, or follow-up items that should stay with the appointment."
         />
       </label>

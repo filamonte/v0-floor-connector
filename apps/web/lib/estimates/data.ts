@@ -3044,6 +3044,7 @@ export async function quickCreateEstimateFromContext(input: {
 export async function insertCatalogItemToEstimate(input: {
   estimateId: string;
   catalogItemId: string;
+  groupName?: string | null;
 }) {
   const scope = await requireEstimateScope(`/estimates/${input.estimateId}/edit`);
   const estimate = await getEstimateRecordById(scope.organizationId, input.estimateId);
@@ -3072,7 +3073,8 @@ export async function insertCatalogItemToEstimate(input: {
   const lineItemSnapshot = buildCatalogItemPricingSnapshot({
     catalogItem,
     quantity: "1.00",
-    sourceType: "catalog_item"
+    sourceType: "catalog_item",
+    groupName: input.groupName ?? null
   });
 
   await appendEstimateLineItemSnapshots(scope.organizationId, scope.userId, input.estimateId, [

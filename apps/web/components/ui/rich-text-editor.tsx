@@ -43,7 +43,7 @@ type ToolbarAction = {
 };
 
 const TOOLBAR_BUTTON_CLASS =
-  "inline-flex items-center justify-center rounded-[4px] border border-transparent text-[#72829b] transition hover:bg-[#f4f6fa] hover:text-[#243a5f]";
+  "inline-flex items-center justify-center rounded-[4px] border border-transparent text-[#72829b] transition hover:bg-[#f8f8f8] hover:text-[#2a2a2a]";
 
 function cx(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
@@ -186,19 +186,19 @@ export function RichTextEditor({
   const showPlaceholder = !isFocused && !isMeaningfulHtml(html);
 
   return (
-    <div className={cx("border border-[#e3e7ee] bg-white", className)}>
+    <div className={cx("border border-[#d6d6d6] bg-white", className)}>
       {label ? (
-        <div className="border-b border-[#e3e7ee] bg-[#f7f8fb] px-4 py-3 text-[15px] font-semibold text-[#23395d]">
+        <div className="border-b border-[#d6d6d6] bg-[#f8f8f8] px-4 py-3 text-[15px] font-semibold text-[#171717]">
           {label}
         </div>
       ) : null}
 
       {!readOnly ? (
-        <div className="flex flex-wrap items-center gap-1 border-b border-[#e3e7ee] bg-white px-2 py-1.5">
+        <div className="flex flex-wrap items-center gap-1 border-b border-[#d6d6d6] bg-white px-2 py-1.5">
           <select
             defaultValue="Arial"
             onChange={(event) => runCommand("fontName", event.target.value)}
-            className="h-8 rounded-[4px] border border-[#e3e7ee] px-2 text-[12px] text-[#243a5f]"
+            className="h-8 rounded-[4px] border border-[#d6d6d6] px-2 text-[12px] text-[#2a2a2a]"
           >
             <option value="Arial">Arial</option>
             <option value="Georgia">Georgia</option>
@@ -208,7 +208,7 @@ export function RichTextEditor({
           <select
             defaultValue="3"
             onChange={(event) => runCommand("fontSize", event.target.value)}
-            className="h-8 rounded-[4px] border border-[#e3e7ee] px-2 text-[12px] text-[#243a5f]"
+            className="h-8 rounded-[4px] border border-[#d6d6d6] px-2 text-[12px] text-[#2a2a2a]"
           >
             <option value="2">Small</option>
             <option value="3">Body</option>
@@ -256,7 +256,7 @@ export function RichTextEditor({
             "w-full outline-none",
             modeDefaults.contentPaddingClass,
             modeDefaults.contentTextClass,
-            readOnly ? "cursor-default text-[#2d4368]" : "text-[#2d4368]"
+            readOnly ? "cursor-default text-[#2a2a2a]" : "text-[#2a2a2a]"
           )}
           style={{ minHeight: resolvedMinHeight }}
           contentEditable={!readOnly}
@@ -275,7 +275,7 @@ export function RichTextEditor({
       {name ? <input type="hidden" name={name} value={html} /> : null}
 
       {showStats ? (
-        <div className="border-t border-[#e3e7ee] px-4 py-2 text-right text-[12px] font-medium text-[#8b99b0]">
+        <div className="border-t border-[#d6d6d6] px-4 py-2 text-right text-[12px] font-medium text-[#777777]">
           Words: {words} Characters: {characters}
         </div>
       ) : null}

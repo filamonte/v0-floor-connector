@@ -56,7 +56,7 @@ export function PunchlistQuickCreateForm({
               required
               value={projectId}
               onChange={(event) => setProjectId(event.target.value)}
-              className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+              className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
             >
               <option value="">Select project</option>
               {projects.map((project) => (
@@ -74,7 +74,7 @@ export function PunchlistQuickCreateForm({
             <select
               name="jobId"
               defaultValue={defaultJobId ?? ""}
-              className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+              className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
             >
               <option value="">Project-level punchlist</option>
               {filteredJobs.map((job) => (

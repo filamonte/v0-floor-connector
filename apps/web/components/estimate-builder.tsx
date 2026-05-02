@@ -109,7 +109,7 @@ export function EstimateBuilder({
         <div
           className={[
             "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between",
-            embedded ? "border-b border-[#e5ebf2] pb-5" : "border-b border-slate-200 pb-6"
+            embedded ? "border-b border-[#e5e5e5] pb-5" : "border-b border-slate-200 pb-6"
           ].join(" ")}
         >
           <div>
@@ -117,7 +117,7 @@ export function EstimateBuilder({
               className={[
                 "font-semibold uppercase",
                 embedded
-                  ? "text-[10px] tracking-[0.18em] text-[#6f7d92]"
+                  ? "text-[10px] tracking-[0.18em] text-[#666666]"
                   : "text-sm tracking-[0.24em] text-brand-700"
               ].join(" ")}
             >
@@ -141,7 +141,7 @@ export function EstimateBuilder({
             className={[
               "min-w-[220px] px-5 py-4",
               embedded
-                ? "rounded-[4px] border border-[#e5ebf2] bg-[#fbfcfe]"
+                ? "rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8]"
                 : "rounded-2xl border border-slate-200 bg-slate-50"
             ].join(" ")}
           >
@@ -188,7 +188,7 @@ export function EstimateBuilder({
                 className={[
                   "border p-5",
                   embedded
-                    ? "rounded-[4px] border-[#e5ebf2] bg-[#fbfcfe]"
+                    ? "rounded-[4px] border-[#e5e5e5] bg-[#f8f8f8]"
                     : "rounded-2xl border-slate-200 bg-slate-50/70"
                 ].join(" ")}
               >
@@ -276,7 +276,7 @@ export function EstimateBuilder({
                     className={[
                       "border bg-white px-4 py-3",
                       embedded
-                        ? "rounded-[4px] border-[#e5ebf2]"
+                        ? "rounded-[4px] border-[#e5e5e5]"
                         : "rounded-2xl border-slate-200"
                     ].join(" ")}
                   >
@@ -303,7 +303,7 @@ export function EstimateBuilder({
             className={[
               "inline-flex items-center justify-center border px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50",
               embedded
-                ? "rounded-[4px] border-[#dde3eb] bg-white hover:border-[#cfd8e4]"
+                ? "rounded-[4px] border-[#d6d6d6] bg-white hover:border-[#cfd8e4]"
                 : "rounded-full border-slate-300 hover:border-slate-400"
             ].join(" ")}
           >

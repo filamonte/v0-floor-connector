@@ -4,7 +4,7 @@ Status:
 - living design and implementation alignment note
 - this document does not itself change code, migrations, routes, UI, tests, or behavior
 - estimate-side active catalog item insertion is now partially implemented through the estimate editor Catalog Items panel
-- invoice catalog insertion remains design-only and intentionally deferred
+- invoice catalog insertion is intentionally limited: explicit invoice-only manual catalog-backed rows can snapshot catalog defaults, but general-purpose catalog insertion as normal invoice scope remains deferred and disallowed
 
 Related docs:
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth
@@ -36,10 +36,11 @@ Implemented today:
 - system catalog items continue through the existing system expansion flow.
 - `invoice_line_items` stores billing snapshots.
 - invoices use explicit lineage from approved estimate snapshots, selected schedule-of-values rows, approved change-order snapshots, or invoice-only adjustments.
+- limited invoice-only manual catalog-backed rows can use `catalog_items` as starting snapshots for explicit adjustments.
 - organization and customer tax settings already participate in estimate and invoice tax behavior.
 - catalog items can carry default cost, default price, unit, taxable flag, category/type, SKU/code, and optional inventory links.
 
-This spec does not change that baseline. It should be read as design guidance plus current-status alignment; invoice catalog insertion is not implemented.
+This spec does not change that baseline. It should be read as design guidance plus current-status alignment; general-purpose catalog insertion as normal invoice scope is not implemented or allowed.
 
 ## Design Principles
 
@@ -92,7 +93,7 @@ Preferred paths:
 - invoice from approved change-order snapshot item
 - invoice-only adjustment
 
-Future direct catalog selection in invoices should be limited to invoice-only adjustments, not a replacement for approved estimate or SOV lineage.
+Direct catalog selection in invoices is limited to invoice-only adjustments / manual catalog-backed rows, not a replacement for approved estimate, SOV, or approved change-order lineage.
 
 Recommended user flow for invoice-only catalog-backed adjustment:
 1. User opens an editable invoice.
@@ -536,4 +537,4 @@ This spec does not design or implement:
 
 ## Planning-Only Summary
 
-`catalog_items` should act as the reusable source of item defaults. Estimate and invoice line items should act as immutable commercial snapshots. Custom lines remain valid. Catalog duplicate prevention stays in the item master, not in line items. Invoices should continue to rely on approved snapshot lineage, with direct catalog selection limited to carefully scoped invoice-only adjustments if implemented later.
+`catalog_items` should act as the reusable source of item defaults. Estimate and invoice line items should act as immutable commercial snapshots. Custom lines remain valid. Catalog duplicate prevention stays in the item master, not in line items. Invoices should continue to rely on approved snapshot lineage, with direct catalog selection limited to explicit invoice-only manual catalog-backed adjustments and never used as free normal-scope invoice insertion.

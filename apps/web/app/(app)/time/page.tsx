@@ -431,11 +431,11 @@ export default async function TimePage({ searchParams }: TimePageProps) {
               name="q"
               defaultValue={query}
               placeholder="Search worker, project, job, or time-card status"
-              className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+              className="min-w-0 flex-1 rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               Search
             </button>
@@ -463,8 +463,8 @@ export default async function TimePage({ searchParams }: TimePageProps) {
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
-                  ? "bg-[#233a64] text-white"
-                  : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
+                  ? "bg-[#171717] text-white"
+                  : "border border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"
               ].join(" ")}
             >
               <span>{timeView.label}</span>
@@ -613,7 +613,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
               <section className="space-y-4">
                 <div className="flex items-end justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                       Active sessions
                     </p>
                     <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
@@ -627,7 +627,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                     openStates.slice(0, 6).map((state) => (
                       <div
                         key={state.id}
-                        className="rounded-[4px] border border-[#e5ebf2] bg-[#fbfcfe] px-4 py-4"
+                        className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-4 py-4"
                       >
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div>
@@ -641,7 +641,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                                 : " / Project-level time"}
                             </p>
                           </div>
-                          <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                          <span className="inline-flex rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
                             {state.currentPunchState === "on_break" ? "On break" : "Clocked in"}
                           </span>
                         </div>
@@ -663,7 +663,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
               <section className="space-y-4">
                 <div className="flex items-end justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                       Today
                     </p>
                     <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
@@ -797,7 +797,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
               <section className="space-y-4">
                 <div className="flex items-end justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                       Active team
                     </p>
                     <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
@@ -813,7 +813,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                     openSessionsExcludingCurrentUser.slice(0, 5).map((state) => (
                       <div
                         key={state.id}
-                        className="rounded-[4px] border border-[#e5ebf2] bg-[#fbfcfe] px-4 py-4"
+                        className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-4 py-4"
                       >
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                           <div>
@@ -825,7 +825,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                               {state.job ? ` / Job ${state.job.id.slice(0, 8)}` : ""}
                             </p>
                           </div>
-                          <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                          <span className="inline-flex rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
                             {state.currentPunchState === "on_break" ? "Break" : "Live"}
                           </span>
                         </div>
@@ -845,7 +845,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
               <section className="space-y-4">
                 <div className="flex items-end justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                       Recent cards
                     </p>
                     <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
@@ -888,7 +888,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                   <Link
                     key={timeCard.id}
                     href={`/time-cards/${timeCard.id}`}
-                    className="group block rounded-[4px] border border-[#e5ebf2] bg-white px-5 py-4 transition hover:bg-slate-50/70"
+                    className="group block rounded-[4px] border border-[#e5e5e5] bg-white px-5 py-4 transition hover:bg-slate-50/70"
                   >
                     <div className="grid gap-4 md:grid-cols-[minmax(0,1.25fr)_220px_180px_150px] md:items-start">
                       <div className="min-w-0">

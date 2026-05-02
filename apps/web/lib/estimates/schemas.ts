@@ -365,7 +365,8 @@ function rejectClientOwnedEstimateInsertPayload(
 export const estimateCatalogInsertInputSchema = z
   .object({
     estimateId: z.string().uuid("Estimate id is required."),
-    catalogItemId: z.string().uuid("Select a valid catalog item.")
+    catalogItemId: z.string().uuid("Select a valid catalog item."),
+    groupName: optionalTrimmedString(120)
   })
   .strict()
   .superRefine(rejectClientOwnedEstimateInsertPayload);

@@ -127,29 +127,29 @@ export default async function SettingsFinancialPage({ searchParams }: PageProps)
               placeholder="Jurisdiction"
               className="h-9 rounded-[4px] border border-[#d8dfe9] px-3 text-sm outline-none"
             />
-            <label className="flex items-center gap-2 rounded-[4px] border border-[#d8dfe9] px-3 text-sm text-[#36527a]">
+            <label className="flex items-center gap-2 rounded-[4px] border border-[#d8dfe9] px-3 text-sm text-[#3f3f3f]">
               <input
                 type="checkbox"
                 name="active"
                 defaultChecked
-                className="h-4 w-4 rounded border-[#b7c2d2]"
+                className="h-4 w-4 rounded border-[#bdbdbd]"
               />
               Active
             </label>
             <div className="md:col-span-5">
               <button
                 type="submit"
-                className="rounded-[4px] border border-[#233a64] bg-[#233a64] px-3 py-2 text-sm font-medium text-white"
+                className="rounded-[4px] border border-[#171717] bg-[#171717] px-3 py-2 text-sm font-medium text-white"
               >
                 Save tax code
               </button>
             </div>
           </form>
 
-          <div className="overflow-x-auto border border-[#e6ebf2]">
+          <div className="overflow-x-auto border border-[#e5e5e5]">
             <table className="min-w-full border-collapse">
               <thead>
-                <tr className="border-b border-[#e6ebf2] bg-[#f8fafc] text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                <tr className="border-b border-[#e5e5e5] bg-[#f8f8f8] text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                   <th className="px-3 py-2.5">Name</th>
                   <th className="px-3 py-2.5">Rate</th>
                   <th className="px-3 py-2.5">Jurisdiction</th>
@@ -159,14 +159,14 @@ export default async function SettingsFinancialPage({ searchParams }: PageProps)
               </thead>
               <tbody>
                 {taxCodes.map((taxCode) => (
-                  <tr key={taxCode.id} className="border-b border-[#eef2f7] text-sm text-[#22344d]">
+                  <tr key={taxCode.id} className="border-b border-[#f8f8f8] text-sm text-[#2a2a2a]">
                     <td className="px-3 py-2.5">{taxCode.name}</td>
                     <td className="px-3 py-2.5">{formatPercentFromRate(taxCode.rate)}%</td>
                     <td className="px-3 py-2.5">{taxCode.jurisdiction ?? "-"}</td>
                     <td className="px-3 py-2.5">{taxCode.active ? "Yes" : "No"}</td>
                     <td className="px-3 py-2.5 text-right">
                       <details className="inline-block text-left">
-                        <summary className="cursor-pointer rounded-[4px] border border-[#d6deea] px-3 py-1.5 text-sm text-[#36527a]">
+                        <summary className="cursor-pointer rounded-[4px] border border-[#d6d6d6] px-3 py-1.5 text-sm text-[#3f3f3f]">
                           Edit
                         </summary>
                         <form
@@ -194,18 +194,18 @@ export default async function SettingsFinancialPage({ searchParams }: PageProps)
                             defaultValue={taxCode.jurisdiction ?? ""}
                             className="h-9 rounded-[4px] border border-[#d8dfe9] px-3 text-sm outline-none"
                           />
-                          <label className="flex items-center gap-2 text-sm text-[#36527a]">
+                          <label className="flex items-center gap-2 text-sm text-[#3f3f3f]">
                             <input
                               type="checkbox"
                               name="active"
                               defaultChecked={taxCode.active}
-                              className="h-4 w-4 rounded border-[#b7c2d2]"
+                              className="h-4 w-4 rounded border-[#bdbdbd]"
                             />
                             Active
                           </label>
                           <button
                             type="submit"
-                            className="rounded-[4px] bg-[#264a7a] px-3 py-2 text-sm font-medium text-white"
+                            className="rounded-[4px] bg-[#171717] px-3 py-2 text-sm font-medium text-white"
                           >
                             Save
                           </button>
@@ -216,7 +216,7 @@ export default async function SettingsFinancialPage({ searchParams }: PageProps)
                 ))}
                 {taxCodes.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-3 py-6 text-center text-sm text-[#7d8aa0]">
+                    <td colSpan={5} className="px-3 py-6 text-center text-sm text-[#777777]">
                       No tax codes yet.
                     </td>
                   </tr>

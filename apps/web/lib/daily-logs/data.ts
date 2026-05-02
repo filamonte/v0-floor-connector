@@ -11,6 +11,7 @@ import type {
 import type { DailyLogInput } from "./schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { assertProjectReadinessGate } from "@/lib/projects/readiness";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { listTimeCardsByProjectAndWorkDate } from "@/lib/time/data";
 
@@ -244,7 +245,16 @@ async function validateDailyLogInput(
   organizationId: string,
   input: DailyLogInput
 ) {
-  await ensureScopedProject(organizationId, input.projectId);
+  await Promise.all([
+    ensureScopedProject(organizationId, input.projectId),
+    assertProjectReadinessGate({
+      organizationId,
+      projectId: input.projectId,
+      errorMessage:
+        "Project is not ready for execution workflows yet. Complete contract, financial, and workflow readiness from the project hub before creating daily logs."
+    })
+  ]);
+
   const scopedJob = await ensureScopedJob(organizationId, input.jobId);
 
   if (scopedJob && scopedJob.projectId !== input.projectId) {

@@ -117,7 +117,7 @@ export function AppointmentQuickCreateForm({
             <select
               name="appointmentType"
               defaultValue="site_visit"
-              className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+              className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
             >
               {appointmentTypeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -143,7 +143,7 @@ export function AppointmentQuickCreateForm({
               name="opportunityId"
               value={opportunityId}
               onChange={(event) => setOpportunityId(event.target.value)}
-              className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+              className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
             >
               <option value="">No linked lead</option>
               {opportunities.map((opportunity) => (
@@ -162,7 +162,7 @@ export function AppointmentQuickCreateForm({
               name="customerId"
               value={customerId}
               onChange={(event) => setCustomerId(event.target.value)}
-              className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+              className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
             >
               <option value="">No linked customer</option>
               {customers.map((customer) => (
@@ -180,7 +180,7 @@ export function AppointmentQuickCreateForm({
             <select
               name="projectId"
               defaultValue={defaultProjectId ?? ""}
-              className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+              className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
             >
               <option value="">No linked project</option>
               {filteredProjects.map((project) => (
@@ -198,7 +198,7 @@ export function AppointmentQuickCreateForm({
             <select
               name="assignedPersonId"
               defaultValue=""
-              className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+              className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
             >
               <option value="">Unassigned</option>
               {people.map((person) => (

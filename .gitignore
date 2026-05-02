@@ -7,6 +7,9 @@ dist
 .next
 coverage
 *.tsbuildinfo
+playwright/.auth/
+playwright-report/
+test-results/
 
 # env
 .env

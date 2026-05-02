@@ -71,9 +71,9 @@ function formatDuration(minutes: number) {
 function getStatusClasses(status: string) {
   switch (status) {
     case "scheduled":
-      return "border-sky-200 bg-sky-50 text-sky-900";
+      return "border-[#d6d6d6] bg-[#f8f8f8] text-[#2a2a2a]";
     case "in_progress":
-      return "border-violet-200 bg-violet-50 text-violet-900";
+      return "border-[#ef7d32] bg-[#fff4ec] text-[#8b4a18]";
     case "completed":
       return "border-emerald-200 bg-emerald-50 text-emerald-900";
     case "unscheduled":

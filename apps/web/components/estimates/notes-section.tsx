@@ -12,9 +12,9 @@ type NotesSectionProps = {
 export function NotesSection({ value, onChange }: NotesSectionProps) {
   return (
     <section className="border-t border-[#e6e9ef] bg-white">
-      <div className="border-b border-[#e6e9ef] bg-[#f7f8fb] px-4 py-3">
-        <div className="flex items-center gap-3 text-[15px] font-semibold text-[#23395d]">
-          <NotebookText className="h-4 w-4 text-[#607492]" />
+      <div className="border-b border-[#e6e9ef] bg-[#f8f8f8] px-4 py-3">
+        <div className="flex items-center gap-3 text-[15px] font-semibold text-[#171717]">
+          <NotebookText className="h-4 w-4 text-[#5f5f5f]" />
           <h2>Notes</h2>
         </div>
       </div>

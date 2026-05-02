@@ -31,6 +31,7 @@ import { updateProjectAction } from "@/lib/projects/actions";
 import { getProjectById } from "@/lib/projects/data";
 import type { ProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
+import { financingStatusesList } from "@/lib/projects/schemas";
 import { buildScheduleHref } from "@/lib/schedule/links";
 import {
   formatScheduleSummaryWindow,
@@ -1370,7 +1371,48 @@ export default async function ProjectDetailPage({
             </div>
           ) : null}
 
-          <div className="mt-10 space-y-5">
+          <section className="mt-8 rounded-[1.4rem] border border-[#e7d7c5] bg-[#fffaf4] px-5 py-5">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  {renderStatusBadge(formatStatusLabel(project.status))}
+                  <span
+                    className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getReadinessBadgeClassName(
+                      Boolean(readinessSnapshot?.isReadyToSchedule)
+                    )}`}
+                  >
+                    {readinessSnapshot?.isReadyToSchedule
+                      ? "Ready to schedule"
+                      : formatStatusLabel(readinessStatus)}
+                  </span>
+                </div>
+                <h2 className="mt-3 text-xl font-semibold tracking-tight text-[#221a14]">
+                  {project.name}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-[#665446]">
+                  {project.customer?.name ?? "Unknown customer"} /{" "}
+                  {formatLocation([
+                    project.addressLine1,
+                    project.city,
+                    project.stateRegion,
+                    project.postalCode
+                  ])}
+                </p>
+              </div>
+              <Link
+                href={nextAction.primaryHref ?? buildProjectEstimateCreateHref(
+                  project.id,
+                  project.customerId,
+                  projectOpportunity?.id
+                )}
+                className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#ef7d32] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_14px_30px_-18px_rgba(239,125,50,0.9)] transition hover:bg-[#d96d27]"
+              >
+                {nextAction.primaryLabel ?? "Create estimate"}
+              </Link>
+            </div>
+          </section>
+
+          <div className="mt-6 space-y-5">
             <section className="rounded-[1.9rem] border border-[#e3d6c7] bg-[linear-gradient(180deg,#fdf7ef,#ffffff)] px-6 py-6 shadow-[0_24px_70px_-46px_rgba(57,43,30,0.28)]">
               <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
                 <div className="space-y-5">
@@ -2020,6 +2062,103 @@ export default async function ProjectDetailPage({
               </div>
             </section>
           </div>
+          </div>
+        </DetailPanel>
+
+        <DetailPanel
+          title="Readiness / Financial"
+          description="Financing lives with commercial readiness, deposit state, and scheduling blockers. Basic project identity stays separate below."
+        >
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.72fr)]">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                {
+                  label: "Financing status",
+                  value: formatStatusLabel(
+                    readinessSnapshot?.financingStatus ?? project.financingStatus
+                  ),
+                  detail: "Stored on the canonical project and used only as readiness context."
+                },
+                {
+                  label: "Deposit readiness",
+                  value: readinessSnapshot?.depositRequired
+                    ? readinessSnapshot.depositSatisfied
+                      ? "Deposit satisfied"
+                      : "Deposit required"
+                    : "No deposit requirement",
+                  detail: "Deposit behavior continues to use the existing financial chain."
+                },
+                {
+                  label: "Commercial readiness",
+                  value: formatStatusLabel(readinessStatus),
+                  detail: readinessSnapshot?.isReadyToSchedule
+                    ? "Commercial gates are clear."
+                    : "Resolve blockers before operational handoff."
+                },
+                {
+                  label: "Ready to schedule",
+                  value: formatDateTime(readyToScheduleAt),
+                  detail: "Readiness is derived from existing project, contract, deposit, and financing state."
+                }
+              ].map((item) => (
+                <section
+                  key={item.label}
+                  className="rounded-[1.45rem] border border-slate-200 bg-slate-50/85 px-4 py-4"
+                >
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                    {item.label}
+                  </p>
+                  <p className="mt-3 text-base font-semibold capitalize text-slate-950">
+                    {item.value}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.detail}</p>
+                </section>
+              ))}
+            </div>
+
+            <form
+              action={updateProjectAction}
+              className="rounded-[1.65rem] border border-[#e3d6c7] bg-white px-5 py-5"
+            >
+              <input type="hidden" name="projectId" value={project.id} />
+              <input type="hidden" name="name" value={project.name} />
+              <input type="hidden" name="customerId" value={project.customerId} />
+              <input type="hidden" name="status" value={project.status} />
+              <input type="hidden" name="description" value={project.description ?? ""} />
+              <input type="hidden" name="addressLine1" value={project.addressLine1 ?? ""} />
+              <input type="hidden" name="addressLine2" value={project.addressLine2 ?? ""} />
+              <input type="hidden" name="city" value={project.city ?? ""} />
+              <input type="hidden" name="stateRegion" value={project.stateRegion ?? ""} />
+              <input type="hidden" name="postalCode" value={project.postalCode ?? ""} />
+              <input type="hidden" name="countryCode" value={project.countryCode ?? ""} />
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-800">
+                  Edit financing status
+                </span>
+                <select
+                  name="financingStatus"
+                  defaultValue={project.financingStatus}
+                  className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+                  required
+                >
+                  {financingStatusesList.map((status) => (
+                    <option key={status} value={status}>
+                      {formatStatusLabel(status)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p className="mt-3 text-xs leading-5 text-slate-500">
+                This updates the existing project readiness field only. It does not change
+                estimate, invoice, catalog, or contract behavior.
+              </p>
+              <button
+                type="submit"
+                className="mt-4 inline-flex rounded-full bg-[#ef7d32] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#d96d27]"
+              >
+                Save financing status
+              </button>
+            </form>
           </div>
         </DetailPanel>
 

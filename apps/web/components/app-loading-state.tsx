@@ -24,7 +24,7 @@ export function AppLoadingState({
         {[0, 1, 2].map((item) => (
           <div
             key={item}
-            className="h-32 animate-pulse rounded-[1.5rem] border border-slate-200 bg-[linear-gradient(180deg,#f8fafc_0%,#eef2f7_100%)]"
+            className="h-32 animate-pulse rounded-[1.5rem] border border-slate-200 bg-[linear-gradient(180deg,#f8f8f8_0%,#f8f8f8_100%)]"
           />
         ))}
       </div>

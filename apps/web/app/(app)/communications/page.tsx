@@ -304,35 +304,35 @@ export default async function CommunicationsPage({ searchParams }: Communication
       description="Review canonical message threads, replies, and unread workflow alerts from one contractor-side queue without creating a second inbox, provider integration, or portal-only copy."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Needs response
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {summary.needsResponseCount}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Unread threads
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {summary.unreadCount}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Workflow alerts
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {notifications.totalCount}
             </p>
           </div>
-          <div className="border border-[#e2e7ef] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Linked projects
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {summary.linkedProjectCount}
             </p>
           </div>
@@ -356,11 +356,11 @@ export default async function CommunicationsPage({ searchParams }: Communication
               name="q"
               defaultValue={query}
               placeholder="Search customer, project, source record, or latest message preview"
-              className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+              className="min-w-0 flex-1 rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               Search
             </button>
@@ -388,8 +388,8 @@ export default async function CommunicationsPage({ searchParams }: Communication
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
-                  ? "bg-[#233a64] text-white"
-                  : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
+                  ? "bg-[#171717] text-white"
+                  : "border border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"
               ].join(" ")}
             >
               <span>{threadView.label}</span>
@@ -442,10 +442,10 @@ export default async function CommunicationsPage({ searchParams }: Communication
         ) : null}
 
         {hasSourceContext ? (
-          <section className="border border-[#dde3eb] bg-[#fbfcfe] px-5 py-4 sm:px-6">
+          <section className="border border-[#d6d6d6] bg-[#f8f8f8] px-5 py-4 sm:px-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                   Source context
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.14em]">
@@ -455,7 +455,7 @@ export default async function CommunicationsPage({ searchParams }: Communication
                         "inline-flex items-center rounded-full px-2.5 py-1",
                         unsupportedSource
                           ? "border border-amber-200 bg-amber-50 text-amber-800"
-                          : "border border-[#d9dee8] bg-white text-slate-700"
+                          : "border border-[#d6d6d6] bg-white text-slate-700"
                       ].join(" ")}
                     >
                       Source: {sourceContextSourceLabel}
@@ -486,7 +486,7 @@ export default async function CommunicationsPage({ searchParams }: Communication
                 {selectedThread ? (
                   <Link
                     href={selectedThread.subject.href}
-                    className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#41536f] transition hover:bg-slate-50"
+                    className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
                   >
                     Open source record
                   </Link>
@@ -503,10 +503,10 @@ export default async function CommunicationsPage({ searchParams }: Communication
         ) : null}
 
         <section className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(340px,0.75fr)]">
-          <section className="overflow-hidden border border-[#dde3eb] bg-white">
-            <div className="flex items-end justify-between gap-4 border-b border-[#e5ebf2] px-5 py-4 sm:px-6">
+          <section className="overflow-hidden border border-[#d6d6d6] bg-white">
+            <div className="flex items-end justify-between gap-4 border-b border-[#e5e5e5] px-5 py-4 sm:px-6">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                   Thread queue
                 </p>
                 <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
@@ -522,7 +522,7 @@ export default async function CommunicationsPage({ searchParams }: Communication
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-2 border-b border-[#e5ebf2] bg-[#fbfcfe] px-5 py-3 sm:px-6">
+            <div className="flex flex-wrap gap-2 border-b border-[#e5e5e5] bg-[#f8f8f8] px-5 py-3 sm:px-6">
               {sourceCounts.map((filterOption) => {
                 const isActive = source === filterOption.key;
 
@@ -538,8 +538,8 @@ export default async function CommunicationsPage({ searchParams }: Communication
                     className={[
                       "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                       isActive
-                        ? "bg-[#233a64] text-white"
-                        : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
+                        ? "bg-[#171717] text-white"
+                        : "border border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"
                     ].join(" ")}
                   >
                     <span>{filterOption.label}</span>
@@ -609,7 +609,7 @@ export default async function CommunicationsPage({ searchParams }: Communication
                               </span>
                             ) : null}
                             {thread.unreadCount > 0 ? (
-                              <span className="inline-flex rounded-full border border-[#d9dee8] bg-[#f8fafc] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-700">
+                              <span className="inline-flex rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-700">
                                 {thread.unreadCount} unread
                               </span>
                             ) : null}
@@ -673,9 +673,9 @@ export default async function CommunicationsPage({ searchParams }: Communication
           </section>
 
           <div className="space-y-6">
-            <section className="border border-[#dde3eb] bg-white">
-              <div className="border-b border-[#e5ebf2] px-5 py-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+            <section className="border border-[#d6d6d6] bg-white">
+              <div className="border-b border-[#e5e5e5] px-5 py-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                   Thread preview
                 </p>
                 <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
@@ -696,22 +696,22 @@ export default async function CommunicationsPage({ searchParams }: Communication
 
               {selectedThread ? (
                 <div className="space-y-4 px-5 py-4">
-                  <div className="rounded-[4px] border border-[#e5ebf2] bg-[#fbfcfe] px-4 py-3 text-sm leading-6 text-slate-600">
+                  <div className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-4 py-3 text-sm leading-6 text-slate-600">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                           Source context
                         </p>
                         <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.14em]">
                           <Link
                             href={selectedThread.customer.href}
-                            className="inline-flex items-center rounded-full border border-[#d9dee8] bg-white px-2.5 py-1 text-slate-700 transition hover:text-slate-950"
+                            className="inline-flex items-center rounded-full border border-[#d6d6d6] bg-white px-2.5 py-1 text-slate-700 transition hover:text-slate-950"
                           >
                             {selectedThread.customer.label}
                           </Link>
                           <Link
                             href={selectedThread.project.href}
-                            className="inline-flex items-center rounded-full border border-[#d9dee8] bg-white px-2.5 py-1 text-slate-700 transition hover:text-slate-950"
+                            className="inline-flex items-center rounded-full border border-[#d6d6d6] bg-white px-2.5 py-1 text-slate-700 transition hover:text-slate-950"
                           >
                             {selectedThread.project.label}
                           </Link>
@@ -724,7 +724,7 @@ export default async function CommunicationsPage({ searchParams }: Communication
                           {selectedThread.subjectSecondaryLink ? (
                             <Link
                               href={selectedThread.subjectSecondaryLink.href}
-                              className="inline-flex items-center rounded-full border border-[#d9dee8] bg-white px-2.5 py-1 text-slate-700 transition hover:text-slate-950"
+                              className="inline-flex items-center rounded-full border border-[#d6d6d6] bg-white px-2.5 py-1 text-slate-700 transition hover:text-slate-950"
                             >
                               {selectedThread.subjectSecondaryLink.label}
                             </Link>
@@ -746,7 +746,7 @@ export default async function CommunicationsPage({ searchParams }: Communication
                         </div>
                       </div>
                       <div className="space-y-2 text-right">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6f7d92]">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
                           Notification triage
                         </p>
                         <div className="flex flex-wrap justify-end gap-2">
@@ -771,11 +771,11 @@ export default async function CommunicationsPage({ searchParams }: Communication
                   </div>
 
                   {selectedMessages.length > 0 ? (
-                    <section className="rounded-[4px] border border-[#e5ebf2] bg-white">
-                      <div className="border-b border-[#e5ebf2] px-4 py-3">
+                    <section className="rounded-[4px] border border-[#e5e5e5] bg-white">
+                      <div className="border-b border-[#e5e5e5] px-4 py-3">
                         <div className="flex flex-wrap items-end justify-between gap-3">
                           <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                               Conversation history
                             </p>
                             <h4 className="mt-2 text-base font-semibold text-slate-950">
@@ -796,11 +796,11 @@ export default async function CommunicationsPage({ searchParams }: Communication
                           return (
                             <article key={message.id} className="relative pl-8">
                               {!isLast ? (
-                                <div className="absolute bottom-0 left-[11px] top-8 w-px bg-[#e3e8f1]" />
+                                <div className="absolute bottom-0 left-[11px] top-8 w-px bg-[#d6d6d6]" />
                               ) : null}
-                              <div className="absolute left-0 top-1.5 h-[22px] w-[22px] rounded-full border border-[#d9dee8] bg-white" />
+                              <div className="absolute left-0 top-1.5 h-[22px] w-[22px] rounded-full border border-[#d6d6d6] bg-white" />
                               <div className={["pb-5", isLast ? "pb-0" : ""].join(" ")}>
-                                <div className="rounded-[4px] border border-[#e5ebf2] bg-[#fcfdff] px-4 py-3">
+                                <div className="rounded-[4px] border border-[#e5e5e5] bg-[#ffffff] px-4 py-3">
                                   <div className="flex flex-wrap items-start justify-between gap-3">
                                     <div className="min-w-0">
                                       <div className="flex flex-wrap items-center gap-2">
@@ -821,7 +821,7 @@ export default async function CommunicationsPage({ searchParams }: Communication
                                       </p>
                                     </div>
                                     <div className="shrink-0 text-left sm:text-right">
-                                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6f7d92]">
+                                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
                                         Sent
                                       </p>
                                       <p className="mt-1 text-xs text-slate-500">
@@ -837,8 +837,8 @@ export default async function CommunicationsPage({ searchParams }: Communication
                       </div>
                     </section>
                   ) : (
-                    <section className="rounded-[4px] border border-dashed border-[#d7dde6] bg-white px-4 py-5">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+                    <section className="rounded-[4px] border border-dashed border-[#d6d6d6] bg-white px-4 py-5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                         Conversation history
                       </p>
                       <p className="mt-2 text-sm font-semibold text-slate-900">
@@ -852,10 +852,10 @@ export default async function CommunicationsPage({ searchParams }: Communication
                     </section>
                   )}
 
-                  <section className="rounded-[4px] border border-[#e5ebf2] bg-[#fbfcfe] px-4 py-4">
+                  <section className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-4 py-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                           Thread reply
                         </p>
                         <h4 className="mt-2 text-base font-semibold text-slate-950">
@@ -883,13 +883,13 @@ export default async function CommunicationsPage({ searchParams }: Communication
                   <div className="flex flex-wrap gap-2">
                     <Link
                       href={selectedThread.subject.href}
-                      className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-[#1b2d4d]"
+                      className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-[#2a2a2a]"
                     >
                       Open source record
                     </Link>
                     <Link
                       href={selectedThread.project.href}
-                      className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#41536f] transition hover:bg-slate-50"
+                      className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
                     >
                       Open project
                     </Link>
@@ -908,8 +908,8 @@ export default async function CommunicationsPage({ searchParams }: Communication
                     drafts, duplicate portal-side conversations, provider sends, or reply actions
                     outside the shared communications workspace.
                   </div>
-                  <section className="rounded-[4px] border border-dashed border-[#d7dde6] bg-[#fbfcfe] px-4 py-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+                  <section className="rounded-[4px] border border-dashed border-[#d6d6d6] bg-[#f8f8f8] px-4 py-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                       Thread reply
                     </p>
                     <p className="mt-2 text-sm leading-6 text-slate-500">
@@ -921,13 +921,13 @@ export default async function CommunicationsPage({ searchParams }: Communication
                       rows={4}
                       disabled
                       placeholder="Select a thread to reply."
-                      className="mt-4 min-h-[120px] w-full rounded-[4px] border border-[#e0e6ee] bg-slate-100 px-4 py-3 text-sm leading-6 text-slate-500"
+                      className="mt-4 min-h-[120px] w-full rounded-[4px] border border-[#d6d6d6] bg-slate-100 px-4 py-3 text-sm leading-6 text-slate-500"
                     />
                     <div className="mt-3 flex justify-end">
                       <button
                         type="button"
                         disabled
-                        className="inline-flex h-9 items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 text-sm font-medium text-slate-400"
+                        className="inline-flex h-9 items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-4 text-sm font-medium text-slate-400"
                       >
                         Send reply
                       </button>
@@ -937,11 +937,11 @@ export default async function CommunicationsPage({ searchParams }: Communication
               )}
             </section>
 
-            <section className="border border-[#dde3eb] bg-white">
-              <div className="border-b border-[#e5ebf2] px-5 py-4">
+            <section className="border border-[#d6d6d6] bg-white">
+              <div className="border-b border-[#e5e5e5] px-5 py-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f7d92]">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                       Unread workflow alerts
                     </p>
                     <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
@@ -979,7 +979,7 @@ export default async function CommunicationsPage({ searchParams }: Communication
                   {notifications.visibleItems.map((item) => (
                     <article
                       key={item.notificationId}
-                      className="rounded-[4px] border border-[#e5ebf2] bg-[#fffcf7] px-4 py-3"
+                      className="rounded-[4px] border border-[#e5e5e5] bg-[#fffcf7] px-4 py-3"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -1001,7 +1001,7 @@ export default async function CommunicationsPage({ searchParams }: Communication
                         <p className="text-xs text-slate-500">{formatDateTime(item.occurredAt)}</p>
                         <Link
                           href={item.href}
-                          className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#41536f] transition hover:bg-slate-50"
+                          className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
                         >
                           Open record
                         </Link>

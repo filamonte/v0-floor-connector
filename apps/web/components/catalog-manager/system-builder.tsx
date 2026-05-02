@@ -232,20 +232,20 @@ export function SystemBuilder({
   }
 
   return (
-    <div className="space-y-4 rounded-[20px] border border-[#d8e0eb] bg-[#fbfcfe] p-4">
+    <div className="space-y-4 rounded-[20px] border border-[#d6d6d6] bg-[#f8f8f8] p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#607492]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5f5f5f]">
             Systems Builder
           </p>
-          <p className="mt-2 text-sm leading-6 text-[#5f7190]">
+          <p className="mt-2 text-sm leading-6 text-[#5f5f5f]">
             Core Catalog Items and Add-ons / Options both expand through the same estimate generation logic. Optional toggles are not stored on system components yet; classify add-ons with the Catalog Item category when they should read as optional scope.
           </p>
         </div>
         <button
           type="button"
           onClick={addRow}
-          className="rounded-full border border-[#d7deea] bg-white px-4 py-2 text-sm font-medium text-[#28456f]"
+          className="rounded-full border border-[#d6d6d6] bg-white px-4 py-2 text-sm font-medium text-[#2a2a2a]"
         >
           Add Component
         </button>
@@ -261,10 +261,10 @@ export function SystemBuilder({
           </div>
         ) : null}
 
-        <div className="overflow-hidden rounded-[16px] border border-[#d8e0eb] bg-white">
+        <div className="overflow-hidden rounded-[16px] border border-[#d6d6d6] bg-white">
           <table className="min-w-full border-collapse">
             <thead>
-              <tr className="bg-[#f6f8fc] text-left text-[11px] uppercase tracking-[0.12em] text-[#7c8ba3]">
+              <tr className="bg-[#f8f8f8] text-left text-[11px] uppercase tracking-[0.12em] text-[#666666]">
                 <th className="px-3 py-3">Catalog Item</th>
                 <th className="px-3 py-3">Role</th>
                 <th className="px-3 py-3">Qty / Unit</th>
@@ -275,7 +275,7 @@ export function SystemBuilder({
             </thead>
             <tbody>
               {rows.map((row, index) => (
-                <tr key={row.key} className="border-t border-[#edf1f6] text-sm text-[#334a70]">
+                <tr key={row.key} className="border-t border-[#e5e5e5] text-sm text-[#2a2a2a]">
                   <td className="px-3 py-3">
                     {(() => {
                       const selectedItem =
@@ -292,7 +292,7 @@ export function SystemBuilder({
                       onChange={(event) =>
                         updateRow(row.key, "componentCatalogItemId", event.target.value)
                       }
-                      className="w-full rounded-[10px] border border-[#d7deea] bg-white px-3 py-2 text-sm text-[#334a70] outline-none"
+                      className="w-full rounded-[10px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-[#2a2a2a] outline-none"
                     >
                       <option value="">Select component item</option>
                       {componentOptions.map((item) => (
@@ -302,7 +302,7 @@ export function SystemBuilder({
                       ))}
                     </select>
                           {selectedItem?.category ? (
-                            <p className="mt-1 text-[11px] text-[#7a8aa3]">
+                            <p className="mt-1 text-[11px] text-[#666666]">
                               Category: {selectedItem.category}
                             </p>
                           ) : null}
@@ -324,7 +324,7 @@ export function SystemBuilder({
                             "inline-flex rounded-[4px] border px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.1em]",
                             isAddOn
                               ? "border-amber-200 bg-amber-50 text-amber-800"
-                              : "border-[#d7deea] bg-[#f6f8fc] text-[#607492]"
+                              : "border-[#d6d6d6] bg-[#f8f8f8] text-[#5f5f5f]"
                           ].join(" ")}
                         >
                           {isAddOn ? "Add-on / Option" : "Core"}
@@ -339,7 +339,7 @@ export function SystemBuilder({
                       onChange={(event) =>
                         updateRow(row.key, "quantityPerUnit", event.target.value)
                       }
-                      className="w-full rounded-[10px] border border-[#d7deea] bg-white px-3 py-2 text-sm text-[#334a70] outline-none"
+                      className="w-full rounded-[10px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-[#2a2a2a] outline-none"
                     />
                   </td>
                   <td className="px-3 py-3">
@@ -349,7 +349,7 @@ export function SystemBuilder({
                       onChange={(event) =>
                         updateRow(row.key, "basisUnit", event.target.value)
                       }
-                      className="w-full rounded-[10px] border border-[#d7deea] bg-white px-3 py-2 text-sm text-[#334a70] outline-none"
+                      className="w-full rounded-[10px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-[#2a2a2a] outline-none"
                     >
                       <option value="sqft">Area / sqft</option>
                       <option value="lf">Perimeter / LF</option>
@@ -362,14 +362,14 @@ export function SystemBuilder({
                       <button
                         type="button"
                         onClick={() => moveRow(row.key, -1)}
-                        className="rounded-full border border-[#d7deea] px-3 py-2 text-xs font-medium text-[#28456f]"
+                        className="rounded-full border border-[#d6d6d6] px-3 py-2 text-xs font-medium text-[#2a2a2a]"
                       >
                         Up
                       </button>
                       <button
                         type="button"
                         onClick={() => moveRow(row.key, 1)}
-                        className="rounded-full border border-[#d7deea] px-3 py-2 text-xs font-medium text-[#28456f]"
+                        className="rounded-full border border-[#d6d6d6] px-3 py-2 text-xs font-medium text-[#2a2a2a]"
                       >
                         Down
                       </button>
@@ -392,34 +392,34 @@ export function SystemBuilder({
 
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-[#334a70]">
+            <label className="text-sm font-medium text-[#2a2a2a]">
               Preview sqft
               <input
                 value={previewSquareFootage}
                 onChange={(event) => setPreviewSquareFootage(event.target.value)}
-                className="ml-3 w-[120px] rounded-[10px] border border-[#d7deea] bg-white px-3 py-2 text-sm text-[#334a70] outline-none"
+                className="ml-3 w-[120px] rounded-[10px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-[#2a2a2a] outline-none"
               />
             </label>
-            <label className="text-sm font-medium text-[#334a70]">
+            <label className="text-sm font-medium text-[#2a2a2a]">
               Preview LF
               <input
                 value={previewLinearFootage}
                 onChange={(event) => setPreviewLinearFootage(event.target.value)}
-                className="ml-3 w-[120px] rounded-[10px] border border-[#d7deea] bg-white px-3 py-2 text-sm text-[#334a70] outline-none"
+                className="ml-3 w-[120px] rounded-[10px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-[#2a2a2a] outline-none"
               />
             </label>
-            <label className="text-sm font-medium text-[#334a70]">
+            <label className="text-sm font-medium text-[#2a2a2a]">
               Count
               <input
                 value={previewCount}
                 onChange={(event) => setPreviewCount(event.target.value)}
-                className="ml-3 w-[90px] rounded-[10px] border border-[#d7deea] bg-white px-3 py-2 text-sm text-[#334a70] outline-none"
+                className="ml-3 w-[90px] rounded-[10px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-[#2a2a2a] outline-none"
               />
             </label>
           </div>
           <button
             type="submit"
-            className="rounded-full bg-[#1f5fd6] px-4 py-2 text-sm font-medium text-white"
+            className="rounded-full bg-[#ef7d32] px-4 py-2 text-sm font-medium text-white"
           >
             Save Components
           </button>
@@ -427,30 +427,30 @@ export function SystemBuilder({
       </form>
 
       {preview ? (
-        <div className="overflow-hidden rounded-[16px] border border-[#d8e0eb] bg-white">
-          <div className="grid gap-3 border-b border-[#edf1f6] px-4 py-3 sm:grid-cols-4">
+        <div className="overflow-hidden rounded-[16px] border border-[#d6d6d6] bg-white">
+          <div className="grid gap-3 border-b border-[#e5e5e5] px-4 py-3 sm:grid-cols-4">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.12em] text-[#7c8ba3]">Rows</p>
-              <p className="mt-1 text-lg font-semibold text-[#23395d]">{preview.rows.length}</p>
+              <p className="text-[11px] uppercase tracking-[0.12em] text-[#666666]">Rows</p>
+              <p className="mt-1 text-lg font-semibold text-[#171717]">{preview.rows.length}</p>
             </div>
             <div>
-              <p className="text-[11px] uppercase tracking-[0.12em] text-[#7c8ba3]">Cost</p>
-              <p className="mt-1 text-lg font-semibold text-[#23395d]">${preview.totalCost}</p>
+              <p className="text-[11px] uppercase tracking-[0.12em] text-[#666666]">Cost</p>
+              <p className="mt-1 text-lg font-semibold text-[#171717]">${preview.totalCost}</p>
             </div>
             <div>
-              <p className="text-[11px] uppercase tracking-[0.12em] text-[#7c8ba3]">Price</p>
-              <p className="mt-1 text-lg font-semibold text-[#23395d]">${preview.totalPrice}</p>
+              <p className="text-[11px] uppercase tracking-[0.12em] text-[#666666]">Price</p>
+              <p className="mt-1 text-lg font-semibold text-[#171717]">${preview.totalPrice}</p>
             </div>
             <div>
-              <p className="text-[11px] uppercase tracking-[0.12em] text-[#7c8ba3]">Tax Mix</p>
-              <p className="mt-1 text-sm font-semibold text-[#23395d]">
+              <p className="text-[11px] uppercase tracking-[0.12em] text-[#666666]">Tax Mix</p>
+              <p className="mt-1 text-sm font-semibold text-[#171717]">
                 T ${preview.taxablePrice} / E ${preview.exemptPrice}
               </p>
             </div>
           </div>
           <table className="min-w-full border-collapse">
             <thead>
-              <tr className="bg-[#f6f8fc] text-left text-[11px] uppercase tracking-[0.12em] text-[#7c8ba3]">
+              <tr className="bg-[#f8f8f8] text-left text-[11px] uppercase tracking-[0.12em] text-[#666666]">
                 <th className="px-3 py-2">Catalog Item</th>
                 <th className="px-3 py-2 text-right">Qty</th>
                 <th className="px-3 py-2 text-right">Cost</th>
@@ -460,7 +460,7 @@ export function SystemBuilder({
             </thead>
             <tbody>
               {preview.rows.map((row) => (
-                <tr key={row.componentId} className="border-t border-[#edf1f6] text-sm text-[#334a70]">
+                <tr key={row.componentId} className="border-t border-[#e5e5e5] text-sm text-[#2a2a2a]">
                   <td className="px-3 py-2">{row.name}</td>
                   <td className="px-3 py-2 text-right">
                     {row.quantity} {row.unit}

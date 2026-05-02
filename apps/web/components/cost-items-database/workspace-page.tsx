@@ -141,7 +141,7 @@ export function CostItemsWorkspacePage({
               ) : null}
               <Link
                 href="/cost-items-database"
-                className="inline-flex h-8 items-center border border-[#cfd6e0] bg-white px-3 text-sm font-medium text-[#4d5f79] transition hover:bg-[#f0f3f7]"
+                className="inline-flex h-8 items-center border border-[#d6d6d6] bg-white px-3 text-sm font-medium text-[#4f4f4f] transition hover:bg-[#f8f8f8]"
               >
                 Open dashboard
               </Link>
@@ -153,7 +153,7 @@ export function CostItemsWorkspacePage({
               </Link>
               <Link
                 href="/settings/catalogs"
-                className="inline-flex h-8 items-center border border-[#cfd6e0] bg-white px-3 text-sm font-medium text-[#4d5f79] transition hover:bg-[#f0f3f7]"
+                className="inline-flex h-8 items-center border border-[#d6d6d6] bg-white px-3 text-sm font-medium text-[#4f4f4f] transition hover:bg-[#f8f8f8]"
               >
                 Open settings
               </Link>

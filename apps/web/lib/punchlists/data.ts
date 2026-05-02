@@ -10,6 +10,7 @@ import type {
 import type { PunchlistItemInput } from "./schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { assertProjectReadinessGate } from "@/lib/projects/readiness";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 type PunchlistScope = {
@@ -322,10 +323,16 @@ async function validatePunchlistItemInput(
   organizationId: string,
   input: PunchlistItemInput
 ) {
-  await ensureScopedProject(organizationId, input.projectId);
-  const [scopedJob] = await Promise.all([
+  const [, scopedJob] = await Promise.all([
+    ensureScopedProject(organizationId, input.projectId),
     ensureScopedJob(organizationId, input.jobId),
-    ensureScopedActivePerson(organizationId, input.assigneePersonId)
+    ensureScopedActivePerson(organizationId, input.assigneePersonId),
+    assertProjectReadinessGate({
+      organizationId,
+      projectId: input.projectId,
+      errorMessage:
+        "Project is not ready for execution workflows yet. Complete contract, financial, and workflow readiness from the project hub before creating punchlist work."
+    })
   ]);
 
   if (scopedJob && scopedJob.projectId !== input.projectId) {

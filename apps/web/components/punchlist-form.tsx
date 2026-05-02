@@ -78,7 +78,7 @@ export function PunchlistForm({
             required
             value={projectId}
             onChange={(event) => setProjectId(event.target.value)}
-            className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+            className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
           >
             {projects.map((project) => (
               <option key={project.id} value={project.id}>
@@ -95,7 +95,7 @@ export function PunchlistForm({
           <select
             name="jobId"
             defaultValue={punchlistItem.jobId ?? ""}
-            className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+            className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
           >
             <option value="">Project-level punchlist</option>
             {filteredJobs.map((job) => (
@@ -118,7 +118,7 @@ export function PunchlistForm({
           <select
             name="status"
             defaultValue={punchlistItem.status}
-            className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+            className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
           >
             {statusOptions.map((status) => (
               <option key={status.value} value={status.value}>
@@ -133,7 +133,7 @@ export function PunchlistForm({
           <select
             name="assigneePersonId"
             defaultValue={punchlistItem.assigneePersonId ?? ""}
-            className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
+            className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
           >
             <option value="">Unassigned</option>
             {assignees.map((assignee) => (
@@ -159,7 +159,7 @@ export function PunchlistForm({
           name="details"
           defaultValue={punchlistItem.details ?? ""}
           rows={8}
-          className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+          className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
           placeholder="Describe the corrective work, finish issue, open detail, or closeout note that still needs follow-through."
         />
       </label>

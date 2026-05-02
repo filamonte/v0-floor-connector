@@ -8,7 +8,7 @@ import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { RowsPerViewControl } from "@/components/rows-per-view-control";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
-import { listChangeOrders } from "@/lib/change-orders/data";
+import { getChangeOrderById, listChangeOrders } from "@/lib/change-orders/data";
 import { quickCreateInvoiceAction } from "@/lib/invoices/actions";
 import { listInvoices } from "@/lib/invoices/data";
 import { getEstimateById, listEstimates } from "@/lib/estimates/data";
@@ -107,18 +107,21 @@ function buildInvoicesHref(input: {
 async function getInitialInvoiceState(
   estimateId?: string,
   jobId?: string,
+  changeOrderId?: string,
   workflowRole?: string
 ): Promise<{
   projectId: string | null;
   estimateId: string | null;
   jobId: string | null;
+  changeOrderId: string | null;
   workflowRole: InvoiceWorkflowRole;
 }> {
   const resolvedWorkflowRole: InvoiceWorkflowRole =
     workflowRole === "deposit" ? "deposit" : "standard";
-  const [estimate, job] = await Promise.all([
+  const [estimate, job, changeOrder] = await Promise.all([
     estimateId ? getEstimateById(estimateId, "/invoices") : Promise.resolve(null),
-    jobId ? getJobById(jobId, "/invoices") : Promise.resolve(null)
+    jobId ? getJobById(jobId, "/invoices") : Promise.resolve(null),
+    changeOrderId ? getChangeOrderById(changeOrderId, "/invoices") : Promise.resolve(null)
   ]);
 
   const sourceEstimate =
@@ -126,9 +129,10 @@ async function getInitialInvoiceState(
     (job?.estimateId ? await getEstimateById(job.estimateId, "/invoices") : null);
 
   return {
-    projectId: sourceEstimate?.projectId ?? job?.projectId ?? null,
+    projectId: sourceEstimate?.projectId ?? job?.projectId ?? changeOrder?.projectId ?? null,
     estimateId: sourceEstimate?.id ?? null,
     jobId: job?.id ?? null,
+    changeOrderId: changeOrder?.id ?? null,
     workflowRole: resolvedWorkflowRole
   };
 }
@@ -164,6 +168,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
     getInitialInvoiceState(
       resolvedSearchParams.estimateId,
       resolvedSearchParams.jobId,
+      resolvedSearchParams.changeOrderId,
       resolvedSearchParams.workflowRole
     ),
     getOrganizationFinancialSettings(organizationContext.organization.id)
@@ -230,7 +235,8 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
   const projectFilterId = resolvedSearchParams.projectId?.trim() ?? initialState.projectId ?? "";
   const estimateFilterId = resolvedSearchParams.estimateId?.trim() ?? initialState.estimateId ?? "";
   const jobFilterId = resolvedSearchParams.jobId?.trim() ?? initialState.jobId ?? "";
-  const changeOrderFilterId = resolvedSearchParams.changeOrderId?.trim() ?? "";
+  const changeOrderFilterId =
+    resolvedSearchParams.changeOrderId?.trim() ?? initialState.changeOrderId ?? "";
   const projectFilter = projectFilterId
     ? projects.find((project) => project.id === projectFilterId) ?? null
     : null;
@@ -314,22 +320,22 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       title={`Invoice manager for ${organizationContext.organization.displayName}`}
       description="Create the invoice, finish billing details, review it, send it, and then manage collections. This manager keeps the billing workflow clearer instead of jumping straight into payment detail."
       summary={
-        <div className="grid gap-px border border-[#d7dce4] bg-[#d7dce4] sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-px border border-[#d9cdc2] bg-[#d9cdc2] sm:grid-cols-2 xl:grid-cols-4">
           <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Draft</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">{draftCount}</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">Draft</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#221a14]">{draftCount}</p>
           </div>
           <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Sent</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">{sentCount}</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">Sent</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#221a14]">{sentCount}</p>
           </div>
           <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Overdue</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">{overdueCount}</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">Overdue</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#221a14]">{overdueCount}</p>
           </div>
           <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Open balance</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">{openCount}</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">Open balance</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#221a14]">{openCount}</p>
           </div>
         </div>
       }
@@ -353,11 +359,11 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               name="q"
               defaultValue={query}
               placeholder="Search invoice, project, customer, or role"
-              className="min-w-0 flex-1 rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+              className="min-w-0 flex-1 rounded-[4px] border border-[#d9cdc2] bg-white px-4 py-2.5 text-sm text-[#221a14] outline-none transition placeholder:text-[#9a8b80] focus:border-[#c59a6b]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9cdc2] bg-white px-4 py-2.5 text-sm font-medium text-[#594839] transition hover:border-[#ef7d32] hover:bg-[#fbf7f2]"
             >
               Search
             </button>
@@ -384,20 +390,21 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                 projectId: projectFilterId || undefined,
                 estimateId: estimateFilterId || undefined,
                 jobId: jobFilterId || undefined,
+                changeOrderId: changeOrderFilterId || undefined,
                 workflowRole: workflowRoleFilter
               })}
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
-                  ? "bg-[#233a64] text-white"
-                  : "border border-[#dde3eb] bg-white text-slate-700 hover:bg-slate-50"
+                  ? "bg-[#171717] text-white"
+                  : "border border-[#d9cdc2] bg-white text-[#594839] hover:bg-[#fbf7f2]"
               ].join(" ")}
             >
               <span>{view.label}</span>
               <span
                 className={[
                   "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                  isActive ? "bg-white/15 text-white" : "bg-[#f2e7dc] text-[#8f5b32]"
                 ].join(" ")}
               >
                 {view.count}
@@ -417,10 +424,11 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                   projectId: projectFilterId || undefined,
                   estimateId: estimateFilterId || undefined,
                   jobId: jobFilterId || undefined,
+                  changeOrderId: changeOrderFilterId || undefined,
                   workflowRole: workflowRoleFilter
                 }) + "#invoice-create"
               }
-              className="inline-flex items-center rounded-[4px] border border-[#233a64] bg-[#233a64] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b2d4d]"
+              className="inline-flex items-center rounded-[3px] border border-[#ef7d32] bg-[#ef7d32] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#de6c22]"
             >
               New invoice
             </Link>
@@ -429,8 +437,16 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       }}
     >
     <div className={showComposer ? "grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px]" : "space-y-3"}>
-      <section className="space-y-3">
-        <section className="grid gap-3 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)_minmax(0,0.92fr)]">
+      <section className="flex flex-col gap-3">
+        <div className="order-1">
+          <InvoiceRecordsPanel
+            invoices={filteredInvoices}
+            totalInvoiceCount={scopedInvoices.length}
+            storageKey={INVOICES_ROWS_PER_VIEW_STORAGE_KEY}
+          />
+        </div>
+
+        <section className="order-3 grid gap-3 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)_minmax(0,0.92fr)]">
           <ManagerDashboardCard
               eyebrow="Collections"
             title="Sent invoices awaiting payment"
@@ -442,6 +458,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               projectId: projectFilterId || undefined,
               estimateId: estimateFilterId || undefined,
               jobId: jobFilterId || undefined,
+              changeOrderId: changeOrderFilterId || undefined,
               workflowRole: workflowRoleFilter
             })}
             actionLabel="View open"
@@ -468,6 +485,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               projectId: projectFilterId || undefined,
               estimateId: estimateFilterId || undefined,
               jobId: jobFilterId || undefined,
+              changeOrderId: changeOrderFilterId || undefined,
               workflowRole: workflowRoleFilter
             })}
             actionLabel="Review overdue"
@@ -494,6 +512,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               projectId: projectFilterId || undefined,
               estimateId: estimateFilterId || undefined,
               jobId: jobFilterId || undefined,
+              changeOrderId: changeOrderFilterId || undefined,
               workflowRole: workflowRoleFilter
             })}
             actionLabel="View drafts"
@@ -509,12 +528,12 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             emptyDescription="Draft invoices waiting to be finished or sent will appear here."
           />
 
-          <section className="flex h-full flex-col border border-[#d7dce4] bg-white">
-            <div className="border-b border-[#dfe4ec] px-4 py-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
+          <section className="flex h-full flex-col border border-[#d9cdc2] bg-white">
+            <div className="border-b border-[#e8ded5] px-4 py-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
                 Billing context
               </p>
-              <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#17243b]">
+              <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#221a14]">
                 Billing posture
               </h3>
               <p className="mt-1 text-xs leading-5 text-slate-500">
@@ -524,20 +543,20 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
 
             <div className="flex flex-1 flex-col space-y-3 px-4 py-3">
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="border border-[#e2e7ef] bg-[#fbfcfe] px-3 py-2.5">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Tax default</p>
+                <div className="border border-[#e8ded5] bg-[#fbf7f2] px-3 py-2.5">
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">Tax default</p>
                   <p className="mt-1 text-sm font-medium text-slate-800">
                     {financialSettings.defaultTaxBehavior.replaceAll("_", " ")}
                   </p>
                 </div>
-                <div className="border border-[#e2e7ef] bg-[#fbfcfe] px-3 py-2.5">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Tax rate</p>
+                <div className="border border-[#e8ded5] bg-[#fbf7f2] px-3 py-2.5">
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">Tax rate</p>
                   <p className="mt-1 text-sm font-medium text-slate-800">
                     {formatRate(financialSettings.defaultTaxRate)}
                   </p>
                 </div>
-                <div className="border border-[#e2e7ef] bg-[#fbfcfe] px-3 py-2.5">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">Partially paid</p>
+                <div className="border border-[#e8ded5] bg-[#fbf7f2] px-3 py-2.5">
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">Partially paid</p>
                   <p className="mt-1 text-sm font-medium text-slate-800">{partialCount} invoices</p>
                 </div>
               </div>
@@ -553,30 +572,31 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                       projectId: projectFilterId || undefined,
                       estimateId: estimateFilterId || undefined,
                       jobId: jobFilterId || undefined,
+                      changeOrderId: changeOrderFilterId || undefined,
                       workflowRole: workflowRoleFilter
                     })}
-                    className="inline-flex items-center rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#41536f] transition hover:bg-white"
+                    className="inline-flex items-center rounded-[3px] border border-[#d9cdc2] bg-[#fbf7f2] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#594839] transition hover:border-[#ef7d32] hover:bg-white"
                   >
                     View paid
                   </Link>
                 </div>
 
-                <div className="divide-y divide-slate-200 border border-[#e5ebf2] bg-white">
+                <div className="divide-y divide-[#eee4dc] border border-[#e8ded5] bg-white">
                   {recentlyPaidQueue.length > 0 ? (
                     recentlyPaidQueue.map((invoice) => (
                       <Link
                         key={invoice.id}
                         href={`/invoices/${invoice.id}/edit`}
-                        className="group flex items-start justify-between gap-4 px-4 py-3 transition hover:bg-slate-50/80"
+                        className="group flex items-start justify-between gap-4 px-4 py-3 transition hover:bg-[#fbf7f2]"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-slate-950 transition group-hover:text-brand-700">
+                          <p className="truncate text-sm font-semibold text-[#221a14] transition group-hover:text-[#a4581a]">
                             {invoice.referenceNumber}
                           </p>
                           <p className="mt-1 text-sm leading-6 text-slate-600">
                             {invoice.customer?.name ?? "Unknown customer"} - {invoice.project?.name ?? "Unknown project"}
                           </p>
-                          <p className="mt-1 text-xs font-medium uppercase tracking-[0.16em] text-[#7a889d]">
+                          <p className="mt-1 text-xs font-medium uppercase tracking-[0.16em] text-[#8f7f72]">
                             Paid - updated {formatDate(invoice.updatedAt)}
                           </p>
                         </div>
@@ -611,30 +631,25 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           </div>
         ) : null}
 
-        {projectFilterId || estimateFilterId || jobFilterId || workflowRoleFilter ? (
-          <div className="flex flex-col gap-3 border border-[#dde3eb] bg-white px-5 py-4 text-sm leading-6 text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+        {projectFilterId || estimateFilterId || jobFilterId || changeOrderFilterId || workflowRoleFilter ? (
+          <div className="order-2 flex flex-col gap-3 border border-[#d9cdc2] bg-white px-4 py-3 text-sm leading-6 text-[#6f6256] sm:flex-row sm:items-center sm:justify-between">
             <p>
               Billing context is scoped to{" "}
               <span className="font-semibold text-slate-900">
                 {projectFilter?.name ?? "the selected canonical source"}
               </span>
-              . Quick create will keep the same project, estimate, job, and workflow role where
-              those were provided.
+              . Quick create will keep the same project, estimate, job, change order, and workflow
+              role where those were provided.
             </p>
             <Link
               href="/invoices"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9dee8] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9cdc2] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#594839] transition hover:border-[#ef7d32] hover:bg-[#fbf7f2] hover:text-[#221a14]"
             >
               Clear context
             </Link>
           </div>
         ) : null}
 
-        <InvoiceRecordsPanel
-          invoices={filteredInvoices}
-          totalInvoiceCount={scopedInvoices.length}
-          storageKey={INVOICES_ROWS_PER_VIEW_STORAGE_KEY}
-        />
       </section>
         <WorkspaceComposerSheet
           id="invoice-create"

@@ -5,6 +5,7 @@ import type { FieldNote as FieldNoteRecord } from "@floorconnector/types";
 
 import type { FieldNoteInput } from "./schemas";
 import { getDailyLogById, requireDailyLogScope } from "@/lib/daily-logs/data";
+import { assertProjectReadinessGate } from "@/lib/projects/readiness";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 type FieldNoteRow = {
@@ -312,7 +313,13 @@ async function validateFieldNoteInput(
 
   const [scopedJob, scopedTimeCard] = await Promise.all([
     ensureScopedJob(organizationId, input.jobId),
-    ensureScopedTimeCard(organizationId, input.timeCardId)
+    ensureScopedTimeCard(organizationId, input.timeCardId),
+    assertProjectReadinessGate({
+      organizationId,
+      projectId: input.projectId,
+      errorMessage:
+        "Project is not ready for execution workflows yet. Complete contract, financial, and workflow readiness from the project hub before creating field notes."
+    })
   ]);
 
   await ensureScopedPerson(organizationId, input.personId);

@@ -1165,8 +1165,8 @@ export default async function CustomerDetailPage({
         />
 
         <DetailPanel title="Customer Summary">
-          <div className="mb-4 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm leading-6 text-sky-900">
-            <p className="font-medium text-sky-950">Canonical recipient details</p>
+          <div className="mb-4 rounded-2xl border border-[#d6d6d6] bg-[#f8f8f8] px-4 py-4 text-sm leading-6 text-[#2a2a2a]">
+            <p className="font-medium text-[#171717]">Canonical recipient details</p>
             <p className="mt-2">
               This customer record owns the external billing and estimate-recipient contact
               details. Estimate send uses <span className="font-semibold">customer.email</span>,

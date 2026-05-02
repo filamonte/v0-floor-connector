@@ -27,17 +27,17 @@ export function SettingsNav({ items }: SettingsNavProps) {
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={[
-              "block rounded-[1.5rem] border px-4 py-4 transition",
+              "block border px-4 py-3 transition",
               active
-                ? "border-slate-950 bg-slate-950 text-white shadow-[0_18px_40px_-28px_rgba(15,23,42,0.55)]"
-                : "border-slate-200 bg-white/88 text-slate-700 hover:border-slate-300 hover:bg-white"
+                ? "border-[#171717] bg-[#171717] text-white shadow-[0_18px_40px_-30px_rgba(23,23,23,0.5)]"
+                : "border-[#d9cdc2] bg-white text-[#594839] hover:border-[#ef7d32] hover:bg-[#fbf7f2]"
             ].join(" ")}
           >
             <p className="text-sm font-semibold tracking-tight">{item.label}</p>
             <p
               className={[
                 "mt-2 text-xs leading-5",
-                active ? "text-slate-300" : "text-slate-500"
+                active ? "text-[#f3e7dc]" : "text-[#8f7f72]"
               ].join(" ")}
             >
               {item.description}

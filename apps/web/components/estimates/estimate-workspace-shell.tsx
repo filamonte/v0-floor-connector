@@ -101,11 +101,11 @@ export function EstimateWorkspaceShell({
       }))}
       currentView={activeSection}
     >
-      <div className="flex min-h-[620px] min-w-0 flex-col bg-white">
-        <header className="border-b border-[#e6e9ef]">
+          <div className="flex min-h-[620px] min-w-0 flex-col bg-white">
+        <header className="border-b border-[#e8ded5]">
           <div className="flex flex-col gap-4 px-4 py-3 xl:flex-row xl:items-start xl:justify-between">
             <div className="flex min-w-0 items-start gap-3">
-              <div className="flex h-10 w-10 items-center justify-center border border-[#f0c7a5] bg-[#fff1e4] text-[#d8731f]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#ffcfaa] bg-[#ef7d32] text-white">
                 <FileText className="h-4 w-4" />
               </div>
               <div className="min-w-0">
@@ -115,10 +115,10 @@ export function EstimateWorkspaceShell({
                       value={title}
                       onChange={(event) => onTitleChange?.(event.target.value)}
                       onBlur={onTitleBlur}
-                      className="h-9 min-w-[260px] max-w-[460px] border border-[#cfd6e0] px-3 text-[18px] font-semibold text-[#23395d] outline-none"
+                      className="h-9 min-w-[260px] max-w-[460px] border border-[#d6d6d6] px-3 text-[18px] font-semibold text-[#171717] outline-none"
                     />
                   ) : (
-                    <h1 className="whitespace-normal break-words text-[18px] font-semibold leading-6 text-[#23395d] [overflow-wrap:anywhere]">
+                    <h1 className="whitespace-normal break-words text-[18px] font-semibold leading-6 text-[#221a14] [overflow-wrap:anywhere]">
                       {title}
                     </h1>
                   )}
@@ -127,8 +127,8 @@ export function EstimateWorkspaceShell({
                       type="button"
                       onClick={onTitleEditToggle}
                       className={[
-                        "inline-flex h-8 w-8 items-center justify-center border border-[#cfd6e0] text-[#6b7c96] hover:bg-[#f0f3f7]",
-                        titleEditing ? "bg-[#f0f3f7]" : ""
+                        "inline-flex h-8 w-8 items-center justify-center border border-[#d6d6d6] text-[#6b7c96] hover:bg-[#f8f8f8]",
+                        titleEditing ? "bg-[#f8f8f8]" : ""
                       ].join(" ")}
                       title="Edit estimate title"
                     >
@@ -136,10 +136,10 @@ export function EstimateWorkspaceShell({
                     </button>
                   ) : null}
                 </div>
-                <p className="mt-0.5 text-[13px] text-[#70819c]">
+                <p className="mt-0.5 text-[13px] text-[#8a7b6e]">
                   {subtitle ?? "Project/Opportunity"}
                 </p>
-                <p className="mt-1 text-[12px] text-[#8694ab]">
+                <p className="mt-1 text-[12px] text-[#8f7f72]">
                   Build items, review scope, then open the customer-facing estimate.
                 </p>
               </div>
@@ -157,9 +157,9 @@ export function EstimateWorkspaceShell({
 
         <main className="flex-1 bg-white">{children}</main>
 
-        <footer className="border-t border-[#e6e9ef] bg-white px-4 py-2.5">
+        <footer className="border-t border-[#e8ded5] bg-white px-4 py-2.5">
           <div className="flex items-center justify-between gap-4">
-            <p className="text-[12px] font-medium text-[#70819c]">
+            <p className="text-[12px] font-medium text-[#6f6256]">
               {saveStateLabel ?? "All changes saved."}
             </p>
             <button

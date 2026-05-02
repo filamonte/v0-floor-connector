@@ -39,7 +39,7 @@ function getStatusClasses(status: string) {
     case "open":
       return "border-amber-200 bg-amber-50 text-amber-900";
     case "in_progress":
-      return "border-sky-200 bg-sky-50 text-sky-900";
+      return "border-[#d6d6d6] bg-[#f8f8f8] text-[#2a2a2a]";
     case "resolved":
       return "border-emerald-200 bg-emerald-50 text-emerald-900";
     case "closed":

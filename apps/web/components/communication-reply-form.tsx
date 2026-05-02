@@ -32,7 +32,7 @@ export function CommunicationReplyForm({
       <div className="space-y-2">
         <label
           htmlFor={`communication-reply-${threadId}`}
-          className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6f7d92]"
+          className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#666666]"
         >
           Reply
         </label>
@@ -43,7 +43,7 @@ export function CommunicationReplyForm({
           maxLength={5000}
           required
           placeholder="Write a reply on this canonical communication thread."
-          className="min-h-[132px] w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#91a5c6]"
+          className="min-h-[132px] w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
         />
         <p className="text-xs leading-5 text-slate-500">
           This posts one internal reply to the selected communication thread. It does not send

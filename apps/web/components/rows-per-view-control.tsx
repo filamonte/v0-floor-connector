@@ -115,15 +115,15 @@ export function RowsPerViewControl({ storageKey }: RowsPerViewControlProps) {
   const { rowsPerView, setRowsPerView } = useRowsPerViewPreference(storageKey);
 
   return (
-    <label className="inline-flex h-8 items-center gap-2 border border-[#cfd6e0] bg-white px-3 text-sm text-slate-700">
-      <span className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Show</span>
+    <label className="inline-flex h-8 items-center gap-2 border border-[#d9cdc2] bg-white px-3 text-sm text-[#594839]">
+      <span className="text-xs font-medium uppercase tracking-[0.14em] text-[#8f7f72]">Show</span>
       <select
         value={String(rowsPerView)}
         onChange={(event) =>
           setRowsPerView(normalizeRowsPerViewOption(event.target.value))
         }
         aria-label="Rows per view"
-        className="bg-transparent text-sm font-medium text-slate-700 outline-none"
+        className="bg-transparent text-sm font-medium text-[#594839] outline-none"
       >
         {ROWS_PER_VIEW_OPTIONS.map((option) => (
           <option key={option} value={option}>

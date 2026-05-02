@@ -62,6 +62,7 @@ export function CustomerContactForm({
           type="tel"
           defaultValue={getValue(contact?.phone)}
           placeholder="(555) 555-0123"
+          hint="Example: (555) 555-5555. Common phone formats are okay."
         />
       </div>
 

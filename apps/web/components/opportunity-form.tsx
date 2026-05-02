@@ -9,6 +9,7 @@ import type {
 
 import { AuthField } from "@/components/auth-field";
 import { AuthSubmitButton } from "@/components/auth-submit-button";
+import { CountryComboboxField } from "@/components/country-combobox-field";
 import { OpportunityStructuredIntakeFields } from "@/components/opportunity-structured-intake-fields";
 import { opportunityStatusesList } from "@/lib/opportunities/schemas";
 
@@ -165,6 +166,7 @@ export function OpportunityForm({
               opportunity?.primaryContact?.phone ?? opportunity?.phone ?? ""
             }
             placeholder="(555) 555-0123"
+            hint="Example: (555) 555-5555. Common phone formats are okay."
           />
         </div>
       </section>
@@ -233,17 +235,14 @@ export function OpportunityForm({
             placeholder="NC"
           />
           <AuthField
-            label="Postal code"
+            label="ZIP / postal code"
             name="postalCode"
             defaultValue={getValue(opportunity?.postalCode)}
             placeholder="28202"
           />
-          <AuthField
-            label="Country code"
+          <CountryComboboxField
             name="countryCode"
             defaultValue={getValue(opportunity?.countryCode)}
-            placeholder="US"
-            hint="Use a two-letter country code when available."
           />
           <AuthField
             label="Assessment scheduled"

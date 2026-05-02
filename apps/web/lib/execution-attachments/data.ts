@@ -5,6 +5,7 @@ import type { ExecutionAttachment as ExecutionAttachmentRecord } from "@floorcon
 import type { ExecutionAttachmentInput } from "./schemas";
 import { getDailyLogById, requireDailyLogScope } from "@/lib/daily-logs/data";
 import { getFieldNoteById } from "@/lib/field-notes/data";
+import { assertProjectReadinessGate } from "@/lib/projects/readiness";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 type ExecutionAttachmentRow = {
@@ -94,6 +95,13 @@ async function validateExecutionAttachmentInput(
       throw new Error("Daily log not found for this organization.");
     }
 
+    await assertProjectReadinessGate({
+      organizationId,
+      projectId: dailyLog.projectId,
+      errorMessage:
+        "Project is not ready for execution workflows yet. Complete contract, financial, and workflow readiness from the project hub before adding execution attachments."
+    });
+
     return;
   }
 
@@ -102,6 +110,13 @@ async function validateExecutionAttachmentInput(
   if (!fieldNote || fieldNote.organizationId !== organizationId) {
     throw new Error("Field note not found for this organization.");
   }
+
+  await assertProjectReadinessGate({
+    organizationId,
+    projectId: fieldNote.projectId,
+    errorMessage:
+      "Project is not ready for execution workflows yet. Complete contract, financial, and workflow readiness from the project hub before adding execution attachments."
+  });
 }
 
 export async function listExecutionAttachmentsBySubject(

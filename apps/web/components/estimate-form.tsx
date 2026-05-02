@@ -95,6 +95,7 @@ type EstimateFormProps = {
   insertCatalogItemAction: (input: {
     estimateId: string;
     catalogItemId: string;
+    groupName?: string | null;
   }) => Promise<EstimateInsertResult>;
   insertSystemAction: (input: {
     estimateId: string;
@@ -498,8 +499,8 @@ function renderDetailsSection(input: {
 
   return (
     <section className="border-t border-[#e6e9ef] bg-white">
-      <div className="border-b border-[#e6e9ef] bg-[#f7f8fb] px-4 py-3">
-        <div className="flex items-center gap-3 text-[15px] font-semibold text-[#23395d]">
+      <div className="border-b border-[#e6e9ef] bg-[#f8f8f8] px-4 py-3">
+        <div className="flex items-center gap-3 text-[15px] font-semibold text-[#171717]">
           <span>Project details and estimate context</span>
         </div>
         <p className="mt-2 text-[13px] leading-5 text-[#6b7c96]">
@@ -516,12 +517,12 @@ function renderDetailsSection(input: {
             <input
               onChange={(event) => onTitleChange(event.target.value)}
               value={title}
-              className="mt-1.5 h-11 w-full border border-[#d8deea] px-3 text-[14px] text-[#243a5f] outline-none focus:border-[#8ca0bf]"
+              className="mt-1.5 h-11 w-full border border-[#d8deea] px-3 text-[14px] text-[#2a2a2a] outline-none focus:border-[#8ca0bf]"
             />
           </div>
           <div>
             <label className="text-[12px] font-medium text-[#5d6f8a]">Customer</label>
-            <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#fbfcfe] px-3 py-3 text-[14px] text-[#243a5f]">
+            <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#f8f8f8] px-3 py-3 text-[14px] text-[#2a2a2a]">
               {customerName ?? "No customer linked"}
             </div>
           </div>
@@ -529,7 +530,7 @@ function renderDetailsSection(input: {
             <label className="text-[12px] font-medium text-[#5d6f8a]">
               Project / Opportunity
             </label>
-            <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#fbfcfe] px-3 py-3 text-[14px] text-[#243a5f]">
+            <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#f8f8f8] px-3 py-3 text-[14px] text-[#2a2a2a]">
               {projectName ?? opportunityTitle ?? "Opportunity continuity linked"}
             </div>
           </div>
@@ -537,7 +538,7 @@ function renderDetailsSection(input: {
             <label className="text-[12px] font-medium text-[#5d6f8a]">
               Project Service Address
             </label>
-            <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#fbfcfe] px-3 py-3 text-[14px] leading-5 text-[#243a5f]">
+            <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#f8f8f8] px-3 py-3 text-[14px] leading-5 text-[#2a2a2a]">
               {projectServiceAddressLabel}
             </div>
             <p className="mt-1.5 text-[12px] leading-5 text-[#7b8ba5]">
@@ -551,7 +552,7 @@ function renderDetailsSection(input: {
                 type="date"
                 value={estimateDate}
                 onChange={(event) => onEstimateDateChange(event.target.value)}
-                className="mt-1.5 h-11 w-full border border-[#d8deea] px-3 text-[14px] text-[#243a5f] outline-none focus:border-[#8ca0bf]"
+                className="mt-1.5 h-11 w-full border border-[#d8deea] px-3 text-[14px] text-[#2a2a2a] outline-none focus:border-[#8ca0bf]"
               />
             </div>
             <div>
@@ -560,7 +561,7 @@ function renderDetailsSection(input: {
                 type="date"
                 value={expirationDate}
                 onChange={(event) => onExpirationDateChange(event.target.value)}
-                className="mt-1.5 h-11 w-full border border-[#d8deea] px-3 text-[14px] text-[#243a5f] outline-none focus:border-[#8ca0bf]"
+                className="mt-1.5 h-11 w-full border border-[#d8deea] px-3 text-[14px] text-[#2a2a2a] outline-none focus:border-[#8ca0bf]"
               />
             </div>
           </div>
@@ -569,7 +570,7 @@ function renderDetailsSection(input: {
         <div className="space-y-4">
           <div>
             <label className="text-[12px] font-medium text-[#5d6f8a]">Status</label>
-            <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#fbfcfe] px-3 py-3 text-[14px] capitalize text-[#243a5f]">
+            <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#f8f8f8] px-3 py-3 text-[14px] capitalize text-[#2a2a2a]">
               {formatStatusLabel(currentStatus)}
             </div>
           </div>
@@ -580,7 +581,7 @@ function renderDetailsSection(input: {
                 value={projectType}
                 onChange={(event) => onProjectTypeChange(event.target.value)}
                 placeholder="Select type"
-                className="mt-1.5 h-11 w-full border border-[#d8deea] px-3 text-[14px] text-[#243a5f] outline-none focus:border-[#8ca0bf]"
+                className="mt-1.5 h-11 w-full border border-[#d8deea] px-3 text-[14px] text-[#2a2a2a] outline-none focus:border-[#8ca0bf]"
               />
             </div>
             <div>
@@ -589,7 +590,7 @@ function renderDetailsSection(input: {
                 value={sector}
                 onChange={(event) => onSectorChange(event.target.value)}
                 placeholder="Select sector"
-                className="mt-1.5 h-11 w-full border border-[#d8deea] px-3 text-[14px] text-[#243a5f] outline-none focus:border-[#8ca0bf]"
+                className="mt-1.5 h-11 w-full border border-[#d8deea] px-3 text-[14px] text-[#2a2a2a] outline-none focus:border-[#8ca0bf]"
               />
             </div>
           </div>
@@ -601,12 +602,12 @@ function renderDetailsSection(input: {
               <input
                 value={discountAmount}
                 onChange={(event) => onDiscountAmountChange(event.target.value)}
-                className="mt-1.5 h-11 w-full border border-[#d8deea] px-3 text-[14px] text-[#243a5f] outline-none focus:border-[#8ca0bf]"
+                className="mt-1.5 h-11 w-full border border-[#d8deea] px-3 text-[14px] text-[#2a2a2a] outline-none focus:border-[#8ca0bf]"
               />
             </div>
             <div>
               <label className="text-[12px] font-medium text-[#5d6f8a]">Tax Rule</label>
-              <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#fbfcfe] px-3 py-3 text-[14px] text-[#243a5f]">
+              <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#f8f8f8] px-3 py-3 text-[14px] text-[#2a2a2a]">
                 {taxBehaviorLabel} at {taxRateLabel}
                 {customerTaxExempt ? " | Customer exempt" : ""}
               </div>
@@ -615,19 +616,19 @@ function renderDetailsSection(input: {
           <div className="grid gap-4 md:grid-cols-3">
             <div>
               <label className="text-[12px] font-medium text-[#5d6f8a]">Taxable Sales</label>
-              <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#fbfcfe] px-3 py-3 text-[14px] text-[#243a5f]">
+              <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#f8f8f8] px-3 py-3 text-[14px] text-[#2a2a2a]">
                 {taxableSalesLabel}
               </div>
             </div>
             <div>
               <label className="text-[12px] font-medium text-[#5d6f8a]">Exempt Sales</label>
-              <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#fbfcfe] px-3 py-3 text-[14px] text-[#243a5f]">
+              <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#f8f8f8] px-3 py-3 text-[14px] text-[#2a2a2a]">
                 {exemptSalesLabel}
               </div>
             </div>
             <div>
               <label className="text-[12px] font-medium text-[#5d6f8a]">Derived Tax</label>
-              <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#fbfcfe] px-3 py-3 text-[14px] text-[#243a5f]">
+              <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#f8f8f8] px-3 py-3 text-[14px] text-[#2a2a2a]">
                 {derivedTaxLabel}
               </div>
             </div>
@@ -641,10 +642,10 @@ function renderDetailsSection(input: {
 function renderBiddingStub() {
   return (
     <section className="border-t border-[#e6e9ef] bg-white">
-      <div className="border-b border-[#e6e9ef] bg-[#f7f8fb] px-4 py-3 text-[15px] font-semibold text-[#23395d]">
+      <div className="border-b border-[#e6e9ef] bg-[#f8f8f8] px-4 py-3 text-[15px] font-semibold text-[#171717]">
         Bidding
       </div>
-      <div className="px-5 py-6 text-[14px] leading-6 text-[#5f7190]">
+      <div className="px-5 py-6 text-[14px] leading-6 text-[#5f5f5f]">
         Bidding remains limited in this run. The workspace is preserving the section and estimate
         continuity, but full bid-package behavior is still outside scope.
       </div>
@@ -951,7 +952,7 @@ export function EstimateForm({
     );
   }
 
-  async function insertCatalogItem(catalogItem: CatalogItem) {
+  async function insertCatalogItem(catalogItem: CatalogItem, targetGroupId?: string | null) {
     if (!estimate?.id) {
       return false;
     }
@@ -965,9 +966,13 @@ export function EstimateForm({
       return false;
     }
 
+    const targetGroupName = targetGroupId
+      ? itemGroups.find((group) => group.id === targetGroupId)?.label.trim() || null
+      : null;
     const result = await insertCatalogItemAction({
       estimateId: estimate.id,
-      catalogItemId: catalogItem.id
+      catalogItemId: catalogItem.id,
+      groupName: targetGroupName
     });
 
     if (!result.ok) {
@@ -980,7 +985,7 @@ export function EstimateForm({
     return true;
   }
 
-  function handleAddCatalogItem() {
+  function handleAddCatalogItem(targetGroupId?: string | null) {
     const catalogItem = filteredCatalogItems.find((item) => item.id === selectedCatalogItemId);
 
     if (!catalogItem) {
@@ -988,12 +993,12 @@ export function EstimateForm({
     }
 
     startSaveTransition(async () => {
-      await insertCatalogItem(catalogItem);
+      await insertCatalogItem(catalogItem, targetGroupId);
       setSelectedCatalogItemId("");
     });
   }
 
-  function handleQuickAddCatalogItem(catalogItemId: string) {
+  function handleQuickAddCatalogItem(catalogItemId: string, targetGroupId?: string | null) {
     const catalogItem = filteredCatalogItems.find((item) => item.id === catalogItemId);
 
     if (!catalogItem) {
@@ -1001,12 +1006,12 @@ export function EstimateForm({
     }
 
     startSaveTransition(async () => {
-      await insertCatalogItem(catalogItem);
+      await insertCatalogItem(catalogItem, targetGroupId);
       setSelectedCatalogItemId("");
     });
   }
 
-  function handleAddPreviewCatalogItem(catalogItemId: string) {
+  function handleAddPreviewCatalogItem(catalogItemId: string, targetGroupId?: string | null) {
     const catalogItem = filteredCatalogItems.find(
       (item) => item.id === catalogItemId && item.itemType !== "system"
     );
@@ -1016,13 +1021,19 @@ export function EstimateForm({
       return;
     }
 
-    setCatalogPreviewAddMessage(`Adding ${catalogItem.name} to this estimate...`);
+    const targetGroupName = targetGroupId
+      ? itemGroups.find((group) => group.id === targetGroupId)?.label.trim() || null
+      : null;
+
+    setCatalogPreviewAddMessage(
+      `Adding ${catalogItem.name}${targetGroupName ? ` to ${targetGroupName}` : ""}...`
+    );
     startSaveTransition(async () => {
-      const wasInserted = await insertCatalogItem(catalogItem);
+      const wasInserted = await insertCatalogItem(catalogItem, targetGroupId);
 
       setCatalogPreviewAddMessage(
         wasInserted
-          ? `${catalogItem.name} was added as a locked estimate snapshot.`
+          ? `${catalogItem.name} was added${targetGroupName ? ` to ${targetGroupName}` : ""} as a locked estimate snapshot.`
           : "Catalog item could not be added. Review the save message above and try again."
       );
       setSelectedCatalogItemId("");
@@ -1569,8 +1580,8 @@ export function EstimateForm({
                   isCurrent
                     ? "border-[#d8731f] bg-[#d8731f] text-white"
                     : canSelect
-                      ? "border-[#cfd6e0] bg-white text-[#d8731f]"
-                      : "border-[#d9dee8] bg-white text-[#d9dee8]"
+                      ? "border-[#d6d6d6] bg-white text-[#d8731f]"
+                      : "border-[#d6d6d6] bg-white text-[#d6d6d6]"
                 ].join(" ")}
               >
                 {isCurrent ? (
@@ -1584,7 +1595,7 @@ export function EstimateForm({
               </span>
             </button>
             {index < statuses.length - 1 ? (
-              <div className="mt-[-14px] h-px w-[34px] bg-[#d9dee8]" />
+              <div className="mt-[-14px] h-px w-[34px] bg-[#d6d6d6]" />
             ) : null}
           </div>
         );
@@ -1606,18 +1617,18 @@ export function EstimateForm({
         <button
           type="button"
           onClick={() => setMenuOpen((current) => !current)}
-          className="flex h-9 w-9 items-center justify-center border border-[#cfd6e0] hover:bg-[#f0f3f7]"
+          className="flex h-9 w-9 items-center justify-center border border-[#d6d6d6] hover:bg-[#f8f8f8]"
           title="More estimate actions"
         >
           <MoreVertical className="h-4 w-4" />
         </button>
 
         {menuOpen ? (
-          <div className="absolute right-0 top-[40px] z-20 min-w-[220px] border border-[#cfd6e0] bg-white p-1">
+          <div className="absolute right-0 top-[40px] z-20 min-w-[220px] border border-[#d6d6d6] bg-white p-1">
             {status === "approved" ? (
               <Link
                 href={`/contracts?estimateId=${estimate?.id ?? ""}`}
-                className="block px-3 py-1.5 text-[13px] text-[#334a70] hover:bg-[#f0f3f7]"
+                className="block px-3 py-1.5 text-[13px] text-[#2a2a2a] hover:bg-[#f8f8f8]"
               >
                 Generate Contract
               </Link>
@@ -1633,7 +1644,7 @@ export function EstimateForm({
             )}
             <Link
               href={`/projects/${estimate?.projectId ?? ""}`}
-              className="block px-3 py-1.5 text-[13px] text-[#334a70] hover:bg-[#f0f3f7]"
+              className="block px-3 py-1.5 text-[13px] text-[#2a2a2a] hover:bg-[#f8f8f8]"
             >
               Open Project
             </Link>
@@ -1984,7 +1995,7 @@ export function EstimateForm({
 
         <div className={activeSection === "review-submit" ? "block" : "hidden"}>
           <div className="border-t border-[#e6e9ef] bg-white px-4 py-4">
-            <div className="border border-[#d7dce4] bg-[#f7f8fa] px-4 py-4">
+            <div className="border border-[#d6d6d6] bg-[#f7f8fa] px-4 py-4">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">

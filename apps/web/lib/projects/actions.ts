@@ -89,6 +89,7 @@ export async function createProjectAction(formData: FormData) {
 
 export async function quickCreateProjectAction(formData: FormData) {
   const customerId = getFieldValue(formData, "customerId");
+  const projectName = getFieldValue(formData, "name");
   const result = parseProjectQuickCreateInput(formData);
 
   if (!result.success) {
@@ -96,6 +97,7 @@ export async function quickCreateProjectAction(formData: FormData) {
       buildRedirect("/projects", {
         compose: "1",
         customerId,
+        projectName,
         error: result.error.issues[0]?.message ?? "Unable to create project."
       })
     );
@@ -122,6 +124,7 @@ export async function quickCreateProjectAction(formData: FormData) {
       buildRedirect("/projects", {
         compose: "1",
         customerId,
+        projectName,
         error:
           error instanceof Error ? error.message : "Unable to create project."
       })

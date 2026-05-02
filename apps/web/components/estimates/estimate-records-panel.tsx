@@ -68,18 +68,15 @@ export function EstimateRecordsPanel({
   const visibleEstimates = applyRowsPerView(estimates, rowsPerView);
 
   return (
-    <section className="border border-[#cfd6e0] bg-white">
-      <div className="border-b border-[#dfe4ec] bg-[#f7f8fa] px-4 py-3">
+    <section className="border border-[#d9cdc2] bg-white">
+      <div className="border-b border-[#e8ded5] bg-[#fbf7f2] px-4 py-2.5">
         <div className="flex items-end justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
               Estimate records
             </p>
-            <p className="mt-1 text-xs leading-5 text-slate-500">
-              Primary estimate register.
-            </p>
           </div>
-          <div className="hidden grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
+          <div className="hidden grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8f7f72] md:grid md:flex-1">
             <span>EST. #</span>
             <span>Title / customer</span>
             <span>Project</span>
@@ -102,15 +99,15 @@ export function EstimateRecordsPanel({
         </div>
       </div>
 
-      <div className="divide-y divide-slate-200">
+      <div className="divide-y divide-[#eee4dc]">
         {estimates.length > 0 ? (
           visibleEstimates.map((estimate) => (
             <Link
               key={estimate.id}
               href={`/estimates/${estimate.id}`}
-              className="group block px-4 py-3 transition hover:bg-slate-50/70"
+              className="group block px-4 py-2.5 transition hover:bg-[#fbf7f2]"
             >
-              <div className="grid gap-4 md:grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px] md:items-center">
+              <div className="grid gap-3 md:grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px] md:items-center">
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
                     EST. #
@@ -123,10 +120,10 @@ export function EstimateRecordsPanel({
                   <p className="text-sm font-semibold text-slate-950">
                     {estimate.title ?? estimate.opportunity?.title ?? "Untitled estimate"}
                   </p>
-                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                  <p className="mt-0.5 text-sm leading-5 text-slate-500">
                     {estimate.customer?.name ?? "Unknown customer"}
                   </p>
-                  <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-400">
+                  <p className="mt-0.5 text-xs uppercase tracking-[0.16em] text-slate-400">
                     {estimate.opportunity?.title ?? "Opportunity linked"}
                   </p>
                 </div>
@@ -150,7 +147,7 @@ export function EstimateRecordsPanel({
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
                     Status
                   </p>
-                  <span className="inline-flex rounded-[4px] border border-[#dde3eb] bg-[#f8fafc] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                  <span className="inline-flex rounded-[3px] border border-[#d9cdc2] bg-[#fbf7f2] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#594839]">
                     {formatStatusLabel(estimate.status)}
                   </span>
                 </div>

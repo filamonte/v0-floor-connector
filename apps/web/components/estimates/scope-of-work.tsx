@@ -34,9 +34,9 @@ export function ScopeOfWork({
         </div>
 
         <div>
-          <div className="border-b border-[#e6e9ef] bg-[#f7f8fb] px-4 py-3">
-            <div className="flex items-center gap-3 text-[15px] font-semibold text-[#23395d]">
-              <FileText className="h-4 w-4 text-[#607492]" />
+          <div className="border-b border-[#e6e9ef] bg-[#f8f8f8] px-4 py-3">
+            <div className="flex items-center gap-3 text-[15px] font-semibold text-[#171717]">
+              <FileText className="h-4 w-4 text-[#5f5f5f]" />
               <h2>Scope / SOW output items</h2>
             </div>
             <p className="mt-2 text-[13px] leading-5 text-[#6b7c96]">
@@ -50,7 +50,7 @@ export function ScopeOfWork({
               <div
                 key={item.id}
                 className={[
-                  "grid grid-cols-[24px_24px_minmax(0,1fr)] items-center gap-3 border-b border-[#edf1f6] px-4 py-3",
+                  "grid grid-cols-[24px_24px_minmax(0,1fr)] items-center gap-3 border-b border-[#e5e5e5] px-4 py-3",
                   index % 2 === 0 ? "bg-white" : "bg-[#fcfcfd]"
                 ].join(" ")}
               >
@@ -59,13 +59,13 @@ export function ScopeOfWork({
                   type="checkbox"
                   checked={item.includeInOutput}
                   onChange={(event) => onItemIncludeChange(item.id, event.target.checked)}
-                  className="h-5 w-5 rounded-[3px] border-[#a9b5c8] text-[#28456f]"
+                  className="h-5 w-5 rounded-[3px] border-[#a9b5c8] text-[#2a2a2a]"
                 />
                 <input
                   value={item.text}
                   onChange={(event) => onItemTextChange(item.id, event.target.value)}
                   placeholder="Add scope / SOW output item (max 2000 characters)."
-                  className="h-8 border-0 bg-transparent px-0 text-[14px] text-[#334a70] placeholder:text-[#a9b5c8] focus:outline-none"
+                  className="h-8 border-0 bg-transparent px-0 text-[14px] text-[#2a2a2a] placeholder:text-[#a9b5c8] focus:outline-none"
                 />
               </div>
             ))}

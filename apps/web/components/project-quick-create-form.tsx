@@ -4,18 +4,21 @@ import type { Customer } from "@floorconnector/types";
 
 import { AuthField } from "@/components/auth-field";
 import { AuthSubmitButton } from "@/components/auth-submit-button";
+import { CustomerPickerField } from "@/components/customer-picker-field";
 import { QuickCreateFormShell } from "@/components/quick-create-form-shell";
 
 type ProjectQuickCreateFormProps = {
   action: (formData: FormData) => void | Promise<void>;
   customers: Customer[];
   initialCustomerId?: string | null;
+  initialProjectName?: string | null;
 };
 
 export function ProjectQuickCreateForm({
   action,
   customers,
-  initialCustomerId
+  initialCustomerId,
+  initialProjectName
 }: ProjectQuickCreateFormProps) {
   return (
     <form action={action} className="space-y-5">
@@ -31,28 +34,16 @@ export function ProjectQuickCreateForm({
             name="name"
             placeholder="Smith Garage Coating"
             hint="Use a short, descriptive project name."
+            defaultValue={initialProjectName ?? ""}
             required
           />
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-800">Customer</span>
-            <select
-              name="customerId"
-              defaultValue={initialCustomerId ?? ""}
-              className="w-full rounded-[4px] border border-[#d9dee8] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#91a5c6]"
-              required
-            >
-              <option value="" disabled>
-                Select a customer
-              </option>
-              {customers.map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.name}
-                  {customer.companyName ? ` - ${customer.companyName}` : ""}
-                </option>
-              ))}
-            </select>
-          </label>
+          <CustomerPickerField
+            customers={customers}
+            initialCustomerId={initialCustomerId ?? ""}
+            allowCreate={false}
+            required
+          />
         </div>
       </QuickCreateFormShell>
 

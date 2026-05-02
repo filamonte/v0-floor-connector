@@ -111,6 +111,7 @@ type ProtectedAppTopNavProps = {
   userEmail: string;
   timestampLabel: string;
   homeHref: string;
+  signOutAction: (formData: FormData) => void | Promise<void>;
 };
 
 export function ProtectedAppTopNav({
@@ -121,7 +122,8 @@ export function ProtectedAppTopNav({
   organizationStatus,
   userEmail,
   timestampLabel,
-  homeHref
+  homeHref,
+  signOutAction
 }: ProtectedAppTopNavProps) {
   const {
     pathname,
@@ -132,8 +134,10 @@ export function ProtectedAppTopNav({
     isItemActive
   } = useProtectedNavigationState(currentRole);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const shellRef = useRef<HTMLDivElement | null>(null);
   const menuId = "protected-app-top-nav-menu";
+  const accountMenuId = "protected-app-account-menu";
   const quickLinks = useMemo(
     () =>
       ["/projects", "/cost-items-database", "/time-cards"]
@@ -146,22 +150,25 @@ export function ProtectedAppTopNav({
 
   useEffect(() => {
     setMenuOpen(false);
+    setAccountMenuOpen(false);
   }, [pathname]);
 
   useEffect(() => {
-    if (!menuOpen) {
+    if (!menuOpen && !accountMenuOpen) {
       return;
     }
 
     function handlePointerDown(event: PointerEvent) {
       if (!shellRef.current?.contains(event.target as Node)) {
         setMenuOpen(false);
+        setAccountMenuOpen(false);
       }
     }
 
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setMenuOpen(false);
+        setAccountMenuOpen(false);
       }
     }
 
@@ -172,11 +179,11 @@ export function ProtectedAppTopNav({
       window.removeEventListener("pointerdown", handlePointerDown);
       window.removeEventListener("keydown", handleEscape);
     };
-  }, [menuOpen]);
+  }, [accountMenuOpen, menuOpen]);
 
   return (
     <div ref={shellRef} className="relative border-b border-[#d9cdc2] bg-white">
-      <div className="grid items-center gap-4 bg-[#2f3d33] px-5 py-1.5 text-white xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+      <div className="grid items-center gap-3 bg-[#111111] px-4 py-1.5 text-white xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
         <div className="min-w-0 text-[12px] font-medium text-[#f3e7dc]">
           <ProtectedAppBreadcrumbs organizationName={organizationName} variant="dark" />
         </div>
@@ -194,7 +201,7 @@ export function ProtectedAppTopNav({
               href={item.href}
               aria-current={isItemActive(item) ? "page" : undefined}
               className={[
-                "inline-flex h-8 items-center rounded-[4px] border px-3 text-[11px] font-semibold uppercase tracking-[0.14em] transition",
+                "inline-flex h-8 items-center rounded-[3px] border px-3 text-[11px] font-semibold uppercase tracking-[0.14em] transition",
                 isItemActive(item)
                   ? "border-[#ef7d32] bg-[#ef7d32]/20 text-white"
                   : "border-white/14 bg-white/8 text-[#f7e8db] hover:border-[#ef7d32] hover:bg-white/12 hover:text-white"
@@ -227,8 +234,8 @@ export function ProtectedAppTopNav({
         </div>
       </div>
 
-      <div className="flex border-t border-white/5 border-b border-[#ebe0d6] 2xl:items-stretch">
-        <div className="flex min-w-0 flex-1 items-center px-6 py-3 2xl:py-0">
+      <div className="flex border-b border-[#d9cdc2] bg-white 2xl:items-stretch">
+        <div className="flex min-w-0 flex-1 items-center px-5 py-3 2xl:py-0">
           <OrganizationBrandLink
             href={homeHref}
             organizationName={organizationName}
@@ -244,9 +251,9 @@ export function ProtectedAppTopNav({
               href={projectLauncherHref}
               aria-current={pathname.startsWith("/projects") ? "page" : undefined}
               className={[
-                "flex min-h-[64px] min-w-[220px] flex-1 items-center justify-between px-4 text-[#221a14] transition 2xl:min-w-[198px] 2xl:flex-none",
+                "flex min-h-[58px] min-w-[200px] flex-1 items-center justify-between px-4 text-[#221a14] transition 2xl:min-w-[210px] 2xl:flex-none",
                 pathname.startsWith("/projects")
-                  ? "bg-[#fff4e8]"
+                  ? "bg-[#f8f1ea]"
                   : "hover:bg-[#fff7f0]"
               ].join(" ")}
             >
@@ -269,7 +276,7 @@ export function ProtectedAppTopNav({
               aria-expanded={menuOpen}
               aria-controls={menuId}
               className={[
-                "flex min-h-[64px] min-w-[186px] flex-1 items-center justify-between border-l border-[#ebe0d6] px-4 text-left transition 2xl:min-w-[166px] 2xl:flex-none",
+                "flex min-h-[58px] min-w-[174px] flex-1 items-center justify-between border-l border-[#ebe0d6] px-4 text-left transition 2xl:min-w-[184px] 2xl:flex-none",
                 menuOpen ? "bg-[#f2ebe4] text-[#221a14]" : "text-[#221a14] hover:bg-[#fff7f0]"
               ].join(" ")}
             >
@@ -295,20 +302,87 @@ export function ProtectedAppTopNav({
               <UniversalCreateMenu
                 idBase="top-nav-universal-create-menu"
                 buttonLabel="Quick create"
-                buttonClassName="inline-flex h-10 items-center rounded-[4px] border border-[#ef7d32] bg-[#ef7d32] px-4 py-2 text-[13px] font-semibold text-[#1f140d] transition hover:bg-[#f08b47]"
+                buttonClassName="inline-flex h-10 items-center rounded-[3px] border border-[#ef7d32] bg-[#ef7d32] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[#de6c22]"
               />
               <ContractorNotificationsCenter notifications={notifications} />
             </div>
 
-            <div className="flex items-center gap-3 border-l border-[#ebe0d6] pl-3">
-              <div className="min-w-0 text-right">
-                <p className="truncate text-[13px] font-semibold text-[#221a14]">{userEmail}</p>
-                <p className="mt-1 text-[11px] text-[#9a8b80]">{timestampLabel}</p>
+            <div className="relative border-l border-[#ebe0d6] pl-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setAccountMenuOpen((open) => !open);
+                  setMenuOpen(false);
+                }}
+                aria-haspopup="menu"
+                aria-expanded={accountMenuOpen}
+                aria-controls={accountMenuId}
+                className={[
+                  "flex items-center gap-3 rounded-[4px] border px-2 py-1.5 text-left transition",
+                  accountMenuOpen
+                    ? "border-[#ef7d32] bg-[#fff7f0]"
+                    : "border-transparent hover:border-[#edd9c7] hover:bg-[#fffaf5]"
+                ].join(" ")}
+              >
+                <span className="min-w-0 text-right">
+                  <span className="block max-w-[230px] truncate text-[13px] font-semibold text-[#221a14]">
+                    {userEmail}
+                  </span>
+                  <span className="mt-1 block text-[11px] text-[#9a8b80]">{timestampLabel}</span>
+                </span>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[2px] bg-[#111111] text-[15px] font-semibold text-white">
+                  {organizationStatus.charAt(0).toUpperCase()}
+                </span>
+                <Chevron open={accountMenuOpen} />
+              </button>
+
+              {accountMenuOpen ? (
+                <div
+                  id={accountMenuId}
+                  className="absolute right-0 top-[calc(100%+0.5rem)] z-40 w-[280px] border border-[#d9cdc2] bg-white p-2 text-[#221a14] shadow-[0_24px_70px_-36px_rgba(34,26,20,0.55)]"
+                >
+                  <div className="border-b border-[#eee2d7] px-3 py-2.5">
+                    <p className="truncate text-sm font-semibold text-[#221a14]">{userEmail}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-[#7a6656]">
+                      {organizationName} - {organizationStatus}
+                    </p>
+                  </div>
+
+                  <div className="py-2">
+                    <Link
+                      href="/settings/profile"
+                      onClick={() => setAccountMenuOpen(false)}
+                      className="block rounded-[4px] px-3 py-2 text-sm font-medium text-[#3d342d] transition hover:bg-[#fff7f0] hover:text-[#221a14]"
+                    >
+                      Profile / Account settings
+                    </Link>
+                    <Link
+                      href="/settings/organization"
+                      onClick={() => setAccountMenuOpen(false)}
+                      className="block rounded-[4px] px-3 py-2 text-sm font-medium text-[#3d342d] transition hover:bg-[#fff7f0] hover:text-[#221a14]"
+                    >
+                      Organization settings
+                    </Link>
+                    <Link
+                      href="/settings"
+                      onClick={() => setAccountMenuOpen(false)}
+                      className="block rounded-[4px] px-3 py-2 text-sm font-medium text-[#3d342d] transition hover:bg-[#fff7f0] hover:text-[#221a14]"
+                    >
+                      Settings home
+                    </Link>
+                  </div>
+
+                  <form action={signOutAction} className="border-t border-[#eee2d7] pt-2">
+                    <button
+                      type="submit"
+                      className="block w-full rounded-[4px] px-3 py-2 text-left text-sm font-semibold text-[#8b3f16] transition hover:bg-[#fff1e7] hover:text-[#5c260b]"
+                    >
+                      Sign out
+                    </button>
+                  </form>
+                </div>
+              ) : null}
               </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#17120f] text-[15px] font-semibold text-[#ffd7bb]">
-                {organizationStatus.charAt(0).toUpperCase()}
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -319,7 +393,7 @@ export function ProtectedAppTopNav({
         className={[
           "overflow-hidden border-t border-[#d9cdc2] bg-white text-[#221a14] shadow-[0_30px_60px_-40px_rgba(34,26,20,0.28)] transition-[max-height,opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
           menuOpen
-            ? "max-h-[720px] opacity-100"
+            ? "max-h-[min(620px,calc(100vh-7rem))] overflow-y-auto opacity-100"
             : "pointer-events-none max-h-0 -translate-y-3 opacity-0"
         ].join(" ")}
       >
@@ -329,21 +403,14 @@ export function ProtectedAppTopNav({
             menuOpen ? "translate-y-0" : "-translate-y-2"
           ].join(" ")}
         >
-          <div className="border-b border-[#eee2d7] bg-[#fbf6f0] px-6 py-4">
+          <div className="border-b border-[#eee2d7] bg-[#fbf7f2] px-5 py-3">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#a65b25]">
-                  Contractor control panel
-                </p>
-                <h3 className="mt-1 text-lg font-semibold text-[#221a14]">
-                  {activeItem ? `${activeItem.label} is active` : "Open a module"}
+                <h3 className="text-[15px] font-semibold text-[#221a14]">
+                  {activeItem ? activeItem.label : "Open a module"}
                 </h3>
-                <p className="mt-1 max-w-3xl text-sm text-[#6f6256]">
-                  Grouped navigation stays aligned across the dashboard launcher,
-                  header menu, and any contextual sidebar.
-                </p>
               </div>
-              <div className="rounded-[4px] border border-[#e6d9cc] bg-white px-3 py-2 text-right">
+              <div className="border border-[#e6d9cc] bg-white px-3 py-2 text-right">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#9b6d45]">
                   Current section
                 </p>
@@ -362,7 +429,7 @@ export function ProtectedAppTopNav({
                 <section
                   key={section.id}
                   className={[
-                    "border-b border-[#eee2d7] px-6 py-6 transition-colors xl:min-h-[280px] xl:border-b-0",
+                    "border-b border-[#eee2d7] px-4 py-4 transition-colors xl:min-h-[248px] xl:border-b-0",
                     index < menuSections.length - 1 ? "xl:border-r xl:border-[#eee2d7]" : "",
                     isSectionActive ? "bg-[#fffaf5]" : "bg-white"
                   ].join(" ")}
@@ -378,9 +445,9 @@ export function ProtectedAppTopNav({
                     </div>
                     <span
                       className={[
-                        "rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                        "px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]",
                         isSectionActive
-                          ? "bg-[#221a14] text-[#ffd7bb]"
+                          ? "bg-[#111111] text-[#ffd7bb]"
                           : "bg-[#f2e7dc] text-[#8f5b32]"
                       ].join(" ")}
                     >
@@ -399,9 +466,9 @@ export function ProtectedAppTopNav({
                           onClick={() => setMenuOpen(false)}
                           aria-current={isActive ? "page" : undefined}
                           className={[
-                            "group block rounded-[8px] border px-3 py-3 transition",
+                            "group block border px-3 py-2.5 transition",
                             isActive
-                              ? "border-[#ef7d32] bg-[#fff4e8] shadow-[inset_0_0_0_1px_rgba(239,125,50,0.16)]"
+                              ? "border-[#ef7d32] bg-[#fbf1e6]"
                               : "border-transparent text-[#3d342d] hover:border-[#edd9c7] hover:bg-[#fff8f2] hover:text-[#221a14]"
                           ].join(" ")}
                         >
@@ -415,20 +482,12 @@ export function ProtectedAppTopNav({
                               >
                                 {item.label}
                               </p>
-                              <p className="mt-1 text-xs leading-5 text-[#6f6256]">
-                                {item.description}
-                              </p>
                             </div>
-                            <span
-                              className={[
-                                "shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]",
-                                item.status === "live"
-                                  ? "bg-[#ecf7ef] text-[#2f6a3e]"
-                                  : "bg-[#f3ebe4] text-[#8f5b32]"
-                              ].join(" ")}
-                            >
-                              {item.status === "live" ? "Live" : "Coming soon"}
-                            </span>
+                            {item.status === "foundation" ? (
+                              <span className="shrink-0 px-2 py-1 text-[10px] font-medium text-[#9a8c80]">
+                                Soon
+                              </span>
+                            ) : null}
                           </div>
                         </Link>
                       );

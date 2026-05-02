@@ -6,6 +6,7 @@ type ContractorWorkspacePageProps = {
   eyebrow: string;
   title: string;
   description: string;
+  headerTone?: "default" | "dark";
   summary?: ReactNode;
   commandBar?: {
     searchSlot?: ReactNode;
@@ -20,27 +21,52 @@ export function ContractorWorkspacePage({
   eyebrow,
   title,
   description,
+  headerTone = "default",
   summary,
   commandBar,
   children
 }: ContractorWorkspacePageProps) {
+  const darkHeader = headerTone === "dark";
+
   return (
-    <div className="space-y-3">
-      <section className="border border-[#d7c7b4] bg-[#fbf7f1] px-4 py-3 sm:px-5">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+    <div className="space-y-2">
+      <section
+        className={[
+          "border px-4 py-2.5 sm:px-5",
+          darkHeader
+            ? "border-[#111111] bg-[#111111] text-white"
+            : "border-[#d9cdc2] bg-white"
+        ].join(" ")}
+      >
+        <div className="flex flex-col gap-2 xl:flex-row xl:items-end xl:justify-between">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#a4581a]">
+            <p
+              className={[
+                "text-[10px] font-semibold uppercase tracking-[0.22em]",
+                darkHeader ? "text-[#f2b078]" : "text-[#a4581a]"
+              ].join(" ")}
+            >
               {eyebrow}
             </p>
-            <h2 className="mt-1 text-[22px] font-semibold tracking-tight text-[#2b2118] sm:text-[24px]">
+            <h2
+              className={[
+                "mt-1 text-[20px] font-semibold tracking-tight sm:text-[22px]",
+                darkHeader ? "text-white" : "text-[#221a14]"
+              ].join(" ")}
+            >
               {title}
             </h2>
-            <p className="mt-1 max-w-3xl text-[13px] leading-5 text-[#665446]">
+            <p
+              className={[
+                "mt-1 max-w-4xl text-[13px] leading-5",
+                darkHeader ? "text-[#f3e7dc]" : "text-[#665446]"
+              ].join(" ")}
+            >
               {description}
             </p>
           </div>
           {summary ? (
-            <div className="xl:max-w-[520px] xl:flex-shrink-0">{summary}</div>
+            <div className="xl:max-w-[560px] xl:flex-shrink-0">{summary}</div>
           ) : null}
         </div>
       </section>

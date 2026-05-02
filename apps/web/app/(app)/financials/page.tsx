@@ -88,36 +88,36 @@ export default async function FinancialsHomePage() {
       title={`Financial control panel for ${organizationContext.organization.displayName}`}
       description="Use Financials Home to scan cross-project billing pressure, confirm recent cash movement, and route into the existing invoice and payment managers without creating a second finance dashboard."
       summary={
-        <div className="grid gap-px border border-[#d7dce4] bg-[#d7dce4] sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-px border border-[#d6d6d6] bg-[#d6d6d6] sm:grid-cols-2 xl:grid-cols-4">
           <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Overdue invoices
             </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
               {overdueInvoices.length}
             </p>
           </div>
           <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Overdue amount
             </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
               {formatMoney(overdueInvoiceAmount)}
             </p>
           </div>
           <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Open receivables
             </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
               {formatMoney(openReceivableAmount)}
             </p>
           </div>
           <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#75859f]">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Recent cash in
             </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#17243b]">
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
               {formatMoney(recentPaymentsAmount)}
             </p>
           </div>
@@ -135,13 +135,13 @@ export default async function FinancialsHomePage() {
           <>
             <Link
               href="/invoices"
-              className="inline-flex items-center rounded-[4px] border border-[#cfd6e0] bg-white px-3 py-2 text-sm font-medium text-[#334155] transition hover:bg-slate-50"
+              className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm font-medium text-[#334155] transition hover:bg-slate-50"
             >
               Open invoices
             </Link>
             <Link
               href="/payments"
-              className="inline-flex items-center rounded-[4px] border border-[#cfd6e0] bg-white px-3 py-2 text-sm font-medium text-[#334155] transition hover:bg-slate-50"
+              className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm font-medium text-[#334155] transition hover:bg-slate-50"
             >
               Open payments
             </Link>
@@ -189,13 +189,13 @@ export default async function FinancialsHomePage() {
         </section>
 
         <section className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,1fr)]">
-          <section className="border border-[#d7dce4] bg-white">
-            <div className="flex items-start justify-between gap-4 border-b border-[#e2e8f0] px-4 py-3">
+          <section className="border border-[#d6d6d6] bg-white">
+            <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-4 py-3">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                   Receivables
                 </p>
-                <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#17243b]">
+                <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]">
                   Open receivables
                 </h3>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
@@ -206,32 +206,32 @@ export default async function FinancialsHomePage() {
               </div>
               <Link
                 href="/financials/accounts-receivable"
-                className="inline-flex shrink-0 items-center border border-[#cfd6e0] bg-[#f7f8fa] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4d5f79] transition hover:bg-white"
+                className="inline-flex shrink-0 items-center border border-[#d6d6d6] bg-[#f7f8fa] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f] transition hover:bg-white"
               >
                 AR definition
               </Link>
             </div>
 
-            <div className="hidden grid-cols-[minmax(0,1.2fr)_1fr_120px_130px] gap-4 border-b border-[#e7ebf1] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7a889d] md:grid">
+            <div className="hidden grid-cols-[minmax(0,1.2fr)_1fr_120px_130px] gap-4 border-b border-[#e5e5e5] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#666666] md:grid">
               <span>Invoice</span>
               <span>Customer / project</span>
               <span className="text-right">Due</span>
               <span className="text-right">Balance</span>
             </div>
 
-            <div className="divide-y divide-[#e7ebf1]">
+            <div className="divide-y divide-[#e5e5e5]">
               {openReceivables.length > 0 ? (
                 openReceivables.slice(0, 8).map((invoice) => (
                   <Link
                     key={invoice.id}
                     href={`/invoices/${invoice.id}/edit`}
-                    className="grid gap-2 px-4 py-3 transition hover:bg-[#f8fafc] md:grid-cols-[minmax(0,1.2fr)_1fr_120px_130px] md:items-center md:gap-4"
+                    className="grid gap-2 px-4 py-3 transition hover:bg-[#f8f8f8] md:grid-cols-[minmax(0,1.2fr)_1fr_120px_130px] md:items-center md:gap-4"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-[#17243b]">
+                      <p className="truncate text-sm font-semibold text-[#171717]">
                         {invoice.referenceNumber}
                       </p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.12em] text-[#7a889d] md:hidden">
+                      <p className="mt-1 text-xs uppercase tracking-[0.12em] text-[#666666] md:hidden">
                         {formatStatusLabel(invoice.status)}
                       </p>
                     </div>
@@ -253,7 +253,7 @@ export default async function FinancialsHomePage() {
                 ))
               ) : (
                 <div className="px-4 py-5">
-                  <p className="text-sm font-semibold text-[#17243b]">
+                  <p className="text-sm font-semibold text-[#171717]">
                     No open receivables are waiting right now.
                   </p>
                   <p className="mt-2 text-sm leading-5 text-slate-500">
@@ -265,12 +265,12 @@ export default async function FinancialsHomePage() {
             </div>
           </section>
 
-          <section className="border border-[#d7dce4] bg-white">
-            <div className="border-b border-[#e2e8f0] px-4 py-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a889d]">
+          <section className="border border-[#d6d6d6] bg-white">
+            <div className="border-b border-[#e5e5e5] px-4 py-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                 Section map
               </p>
-              <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#17243b]">
+              <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]">
                 Quick links
               </h3>
               <p className="mt-1 text-xs leading-5 text-slate-500">
@@ -279,7 +279,7 @@ export default async function FinancialsHomePage() {
               </p>
             </div>
 
-            <div className="divide-y divide-[#e7ebf1]">
+            <div className="divide-y divide-[#e5e5e5]">
               {[
                 {
                   href: "/invoices",
@@ -310,16 +310,16 @@ export default async function FinancialsHomePage() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="block px-4 py-3 transition hover:bg-[#f8fafc]"
+                  className="block px-4 py-3 transition hover:bg-[#f8f8f8]"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-[#17243b]">{item.title}</p>
+                      <p className="text-sm font-semibold text-[#171717]">{item.title}</p>
                       <p className="mt-1 text-sm leading-5 text-slate-600">
                         {item.description}
                       </p>
                     </div>
-                    <span className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7a889d]">
+                    <span className="text-xs font-semibold uppercase tracking-[0.12em] text-[#666666]">
                       Open
                     </span>
                   </div>

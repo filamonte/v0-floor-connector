@@ -210,7 +210,7 @@ Important workflow rules:
 - the first major contractor workspace UI normalization pass is complete enough to stop; remaining issues should be treated as normal iterative polish rather than structural layout-system repair
 - the contractor shell now uses top-level navigation as the primary app navigation, with a wider workspace, integrated breadcrumb/page-context header row, and command-bar-driven manager pages
 - dashboard, projects, leads, invoices, contracts, customers, estimates, daily logs, time, people, vendors, and jobs now follow that newer manager-surface direction; avoid reintroducing a full-time left sidebar as the primary navigation model
-- the protected contractor app now shares one warmer charcoal/orange/light-neutral UI direction across the shell, manager pages, quick-create surfaces, and common cards; do not reintroduce blue-heavy overview chrome on new or updated contractor pages
+- the protected contractor app now shares one black/gray/orange/white UI direction across the shell, manager pages, quick-create surfaces, and common cards; do not reintroduce blue-heavy overview chrome on new or updated contractor pages
 - dashboards are entry surfaces into the same lifecycle, not separate product worlds
 - quick create must create canonical records first and then route into the full workspace
 - creation must remain context-aware: project-launched creation auto-links the project, customer-launched creation requires project selection or creation, and global creation requires explicit customer and project selection
@@ -229,7 +229,8 @@ Important workflow rules:
 - `catalog_items` is the only canonical cost item model and the one shared item master across material, labor, service, equipment, subcontractor, other, and system records
 - do not create duplicate cost item tables such as `contractor_cost_items`, module-specific catalog tables, or separate estimate/invoice/materials item masters
 - estimate line items can snapshot selected active non-system catalog item data through the canonical estimate insertion path; do not bypass snapshot lineage or mutate historical records when catalog items change
-- invoice catalog insertion remains deferred and conservative: invoices should continue to use approved estimate snapshot, SOV, approved change-order snapshot, or invoice-only lineage rather than live catalog rows unless a future scoped invoice-only catalog adjustment flow is explicitly implemented
+- invoice catalog insertion is not general-purpose: invoices must continue to use approved estimate snapshot, SOV, approved change-order snapshot, or invoice-only lineage rather than live catalog rows
+- limited catalog-backed invoice usage exists only for explicit invoice-only adjustments / manual catalog-backed rows, where `catalog_items` provide starting snapshot values without becoming approved-scope invoice billing
 - future catalog/cost item markup should be treated as internal cost/profitability behavior: defaults can come from the item database, estimate-level overrides can be intentional, and customer-facing estimate output should not expose markup controls
 - future catalog/cost item defaults for cost, markup, price, labor, production, and tax behavior are internal; customer-facing estimate output should show customer-facing description, quantity, unit price, and total only
 - one-off estimate-line price overrides should not mutate catalog defaults, catalog updates should affect future estimates only, imported estimate lines should preserve snapshot price/markup/override behavior, and past estimates should not mutate when catalog defaults change
@@ -250,7 +251,7 @@ Do:
 - keep the contractor shell flat and unified: top navigation with integrated breadcrumb/page context, thin command/search strip, then workspace
 - treat the dashboard as the visual reference for contractor manager surfaces
 - use the current contractor theme direction consistently:
-  - charcoal or dark-neutral framing
+  - black or near-black framing
   - orange for actions, emphasis, and identity
   - white or warm light-neutral surfaces for working areas
   - tighter, practical typography and spacing over roomy marketing-style composition
@@ -300,6 +301,9 @@ The normalization phase is complete enough to stop; further contractor-page work
 - share files intentionally, scope project/job access explicitly, and keep admin controls around inviting external collaborators
 - use real Supabase-backed persistence for canonical workflows
 - preserve snapshot lineage in financial flows; do not bypass approved estimate snapshots, SOV lineage, or approved change-order snapshots when adding downstream billing behavior
+- all execution workflows MUST pass `assertProjectReadinessGate`
+- do not bypass project readiness with module-specific logic
+- all future execution-related features must enforce the same centralized readiness gate
 - keep current route architecture unless the task explicitly calls for route changes
 - prefer small, reviewable changes over broad rewrites
 - when refining contractor UI, prefer the shared workspace pattern over one-off page layouts

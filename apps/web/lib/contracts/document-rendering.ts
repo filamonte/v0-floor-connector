@@ -285,18 +285,18 @@ export function buildContractPdfHtmlDocument(input: {
     <meta charset="utf-8" />
     <title>${safeTitle}</title>
     <style>
-      body { color: #17243b; font-family: Arial, sans-serif; margin: 42px; }
+      body { color: #171717; font-family: Arial, sans-serif; margin: 42px; }
       article { display: block; }
-      h1, h2, h3 { color: #17243b; margin: 0 0 12px; }
+      h1, h2, h3 { color: #171717; margin: 0 0 12px; }
       h1 { font-size: 28px; }
-      h2 { border-bottom: 1px solid #d9dee8; font-size: 18px; margin-top: 28px; padding-bottom: 8px; }
+      h2 { border-bottom: 1px solid #d6d6d6; font-size: 18px; margin-top: 28px; padding-bottom: 8px; }
       p, li, td, th, div, span, blockquote { font-size: 14px; line-height: 1.65; }
       table { border-collapse: collapse; margin-top: 8px; width: 100%; }
-      th, td { border: 1px solid #d9dee8; padding: 8px 10px; vertical-align: top; }
+      th, td { border: 1px solid #d6d6d6; padding: 8px 10px; vertical-align: top; }
       ul, ol { padding-left: 24px; }
-      blockquote { border-left: 4px solid #d9dee8; margin: 16px 0; padding-left: 16px; }
-      hr { border: 0; border-top: 1px solid #d9dee8; margin: 24px 0; }
-      a { color: #1f5fd6; text-decoration: underline; }
+      blockquote { border-left: 4px solid #d6d6d6; margin: 16px 0; padding-left: 16px; }
+      hr { border: 0; border-top: 1px solid #d6d6d6; margin: 24px 0; }
+      a { color: #ef7d32; text-decoration: underline; }
     </style>
   </head>
   <body>

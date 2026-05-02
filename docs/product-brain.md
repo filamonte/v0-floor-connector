@@ -52,7 +52,7 @@ The active contractor UI baseline is already established:
 - dashboard as the visual reference point for manager surfaces
 - shared manager-page wrapper and command-bar rhythm
 - quick-create -> canonical record -> full workspace
-- charcoal/dark-neutral framing, orange emphasis, and light-neutral work surfaces
+- black/near-black framing, gray secondary chrome, orange emphasis, and light-neutral work surfaces
 
 Do not reintroduce:
 - blue-heavy contractor chrome

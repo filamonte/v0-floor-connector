@@ -20,7 +20,7 @@ export function ContractEditForm({ action, contract }: ContractEditFormProps) {
 
       <section
         id="details"
-        className="rounded-[24px] border border-[#d8e0eb] bg-white px-5 py-5 shadow-[0_18px_50px_-45px_rgba(15,23,42,0.35)]"
+        className="rounded-[24px] border border-[#d6d6d6] bg-white px-5 py-5 shadow-[0_18px_50px_-45px_rgba(15,23,42,0.35)]"
       >
         <div className="grid gap-4 md:grid-cols-2">
           <AuthField
@@ -40,7 +40,7 @@ export function ContractEditForm({ action, contract }: ContractEditFormProps) {
 
       <section
         id="terms"
-        className="rounded-[24px] border border-[#d8e0eb] bg-white px-5 py-5 shadow-[0_18px_50px_-45px_rgba(15,23,42,0.35)]"
+        className="rounded-[24px] border border-[#d6d6d6] bg-white px-5 py-5 shadow-[0_18px_50px_-45px_rgba(15,23,42,0.35)]"
       >
         <label className="block">
           <span className="mb-2 block text-sm font-medium text-slate-800">
@@ -61,7 +61,7 @@ export function ContractEditForm({ action, contract }: ContractEditFormProps) {
 
       <section
         id="signers-approval"
-        className="rounded-[24px] border border-[#d8e0eb] bg-white px-5 py-5 shadow-[0_18px_50px_-45px_rgba(15,23,42,0.35)]"
+        className="rounded-[24px] border border-[#d6d6d6] bg-white px-5 py-5 shadow-[0_18px_50px_-45px_rgba(15,23,42,0.35)]"
       >
         <p className="text-sm font-semibold text-slate-900">Signers / Approval</p>
         <p className="mt-2 text-sm leading-6 text-slate-500">
@@ -71,7 +71,7 @@ export function ContractEditForm({ action, contract }: ContractEditFormProps) {
 
       <section
         id="files"
-        className="rounded-[24px] border border-[#d8e0eb] bg-white px-5 py-5 shadow-[0_18px_50px_-45px_rgba(15,23,42,0.35)]"
+        className="rounded-[24px] border border-[#d6d6d6] bg-white px-5 py-5 shadow-[0_18px_50px_-45px_rgba(15,23,42,0.35)]"
       >
         <p className="text-sm font-semibold text-slate-900">Files</p>
         <p className="mt-2 text-sm leading-6 text-slate-500">
@@ -81,7 +81,7 @@ export function ContractEditForm({ action, contract }: ContractEditFormProps) {
 
       <section
         id="notes"
-        className="rounded-[24px] border border-[#d8e0eb] bg-white px-5 py-5 shadow-[0_18px_50px_-45px_rgba(15,23,42,0.35)]"
+        className="rounded-[24px] border border-[#d6d6d6] bg-white px-5 py-5 shadow-[0_18px_50px_-45px_rgba(15,23,42,0.35)]"
       >
         <label className="block">
           <span className="mb-2 block text-sm font-medium text-slate-800">
@@ -102,7 +102,7 @@ export function ContractEditForm({ action, contract }: ContractEditFormProps) {
 
       <section
         id="review-send"
-        className="rounded-[24px] border border-[#d8e0eb] bg-white px-5 py-5 shadow-[0_18px_50px_-45px_rgba(15,23,42,0.35)]"
+        className="rounded-[24px] border border-[#d6d6d6] bg-white px-5 py-5 shadow-[0_18px_50px_-45px_rgba(15,23,42,0.35)]"
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <AuthSubmitButton pendingLabel="Saving contract..." className="sm:min-w-[220px]">

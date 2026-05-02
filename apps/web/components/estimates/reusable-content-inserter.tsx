@@ -72,11 +72,11 @@ export function ReusableContentInserter({
   ];
 
   return (
-    <div className="border-t border-[#e6e9ef] bg-[#fbfcfe] px-4 py-3">
-      <div className="rounded-[10px] border border-[#d7deea] bg-white px-3 py-3 text-[12px] leading-5 text-[#6b7c96]">
-        <p className="font-semibold text-[#28456f]">Estimate default source</p>
+    <div className="border-t border-[#e6e9ef] bg-[#f8f8f8] px-4 py-3">
+      <div className="rounded-[10px] border border-[#d6d6d6] bg-white px-3 py-3 text-[12px] leading-5 text-[#6b7c96]">
+        <p className="font-semibold text-[#2a2a2a]">Estimate default source</p>
         <p className="mt-1.5">
-          Empty-estimate defaults currently resolve from <span className="font-medium text-[#28456f]">{defaultsSourceLabel}</span>.
+          Empty-estimate defaults currently resolve from <span className="font-medium text-[#2a2a2a]">{defaultsSourceLabel}</span>.
           {workspaceDefaultsApplied
             ? " This estimate loaded those starter defaults because the reusable-content areas were empty."
             : " This estimate did not auto-apply them on load because reusable-content areas already had estimate text."}
@@ -93,8 +93,8 @@ export function ReusableContentInserter({
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         {groups.map((group) => (
-          <div key={group.key} className="rounded-[10px] border border-[#d7deea] bg-white p-3">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#607492]">
+          <div key={group.key} className="rounded-[10px] border border-[#d6d6d6] bg-white p-3">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#5f5f5f]">
               {group.title}
             </p>
             {group.blocks.length > 0 ? (
@@ -104,7 +104,7 @@ export function ReusableContentInserter({
                     key={block.id}
                     type="button"
                     onClick={() => group.onApply(block.contentHtml)}
-                    className="h-8 border border-[#cfd6e0] bg-white px-3 text-[12px] font-medium text-[#28456f]"
+                    className="h-8 border border-[#d6d6d6] bg-white px-3 text-[12px] font-medium text-[#2a2a2a]"
                   >
                     {block.title}
                   </button>
