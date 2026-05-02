@@ -44,7 +44,7 @@ Expected:
 2. Verify the customer record exists in `/customers`.
 3. Confirm the canonical customer/account email is populated. This remains the estimate, contract, invoice, and payment continuity source for this phase.
 4. On customer detail, add at least one related customer contact with a real email.
-5. Confirm `/directory` shows the related contact as a read-only `Customer Contact` row that links back to the customer workspace.
+5. Confirm `/directory` shows the related contact as a read-only `Customer Contact` row that links back to the Customer Workspace.
 
 Expected:
 - One canonical customer exists.
@@ -56,7 +56,7 @@ Expected:
 1. Return to the opportunity detail page.
 2. Use the existing `Start estimate` path.
 3. Confirm the workflow creates or links the canonical customer and project.
-4. Open the estimate workspace.
+4. Open the Estimate Workspace.
 
 Expected:
 - The estimate belongs to the same customer/project chain.
@@ -65,7 +65,7 @@ Expected:
 
 ### 4. Add Estimate Items
 
-1. In estimate edit, add at least one catalog-backed estimate item.
+1. In Estimate Editoror, add at least one catalog-backed estimate item.
 2. If no suitable catalog item exists, use the sanctioned manual/one-off flow that creates a minimal catalog item first, then adds it to the estimate.
 3. Confirm estimate line items and totals update.
 4. Confirm tax behavior follows current customer exemption, item taxable, and organization settings behavior.

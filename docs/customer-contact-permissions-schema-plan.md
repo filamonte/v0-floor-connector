@@ -268,7 +268,7 @@ Recommended UI guardrails:
 - preserve existing create/revoke/reactivate/project visibility flows
 
 UI implementation plan checks:
-- reuse the existing customer detail record-workspace pattern
+- reuse the existing customer detail Record Workspace pattern
 - do not add a new shell or layout wrapper
 - preserve settings/work/super-admin boundaries
 - keep pricing, estimate, invoice, and portal business logic untouched in the schema/UI-only implementation pass

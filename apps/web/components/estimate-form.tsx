@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { startTransition, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   CheckCircle2,
   Circle,
@@ -32,6 +32,7 @@ import { NotesSection } from "@/components/estimates/notes-section";
 import { ScopeOfWork } from "@/components/estimates/scope-of-work";
 import { ReusableContentInserter } from "@/components/estimates/reusable-content-inserter";
 import { TermsEditor } from "@/components/estimates/terms-editor";
+import { SaveStatusButton } from "@/components/save-feedback/save-status-button";
 import {
   calculateDiscountedTaxableSales,
   calculateLineTotal,
@@ -40,7 +41,7 @@ import {
 } from "@/lib/catalogs/pricing";
 import type {
   EstimateInsertResult,
-  EstimateAutosaveResult,
+  EstimateSaveResult,
   EstimateLineItemImportResult,
   EstimateReusableContentImportResult,
   ExpandedSystemPreviewResult,
@@ -48,6 +49,7 @@ import type {
 } from "@/lib/estimates/actions";
 import type { EstimateApprovalOrchestrationState } from "@/lib/estimates/approval-orchestration";
 import { stripHtmlToPlainText } from "@/lib/estimates/workspace";
+import { useDirtySaveState } from "@/lib/save-feedback/use-dirty-save-state";
 
 type EditableEstimate = Estimate & {
   lineItems?: EstimateLineItem[];
@@ -81,7 +83,7 @@ type EstimateFormProps = {
     "defaultTaxRate" | "defaultTaxBehavior"
   >;
   contentBlocks?: EstimateContentBlock[];
-  autosaveAction: (formData: FormData) => Promise<EstimateAutosaveResult>;
+  saveEstimateAction: (formData: FormData) => Promise<EstimateSaveResult>;
   updateStatusAction: (formData: FormData) => Promise<EstimateStatusTransitionResult>;
   previewExpandedSystemAction: (input: {
     systemCatalogItemId: string;
@@ -134,8 +136,6 @@ type EstimateFormProps = {
   contractAction: (formData: FormData) => void | Promise<void>;
   scheduleOfValuesAction: (formData: FormData) => void | Promise<void>;
 };
-
-type SaveState = "saved" | "saving" | "error" | "conflict" | "dirty";
 
 type PendingAttachment = {
   id: string;
@@ -663,7 +663,7 @@ export function EstimateForm({
   customerTaxExempt,
   organizationFinancialSettings,
   contentBlocks = [],
-  autosaveAction,
+  saveEstimateAction,
   updateStatusAction,
   previewExpandedSystemAction,
   insertCatalogItemAction,
@@ -681,7 +681,6 @@ export function EstimateForm({
     useState<EstimateWorkspaceSectionId>("items");
   const formRef = useRef<HTMLFormElement | null>(null);
   const statusInputRef = useRef<HTMLInputElement | null>(null);
-  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedSnapshotRef = useRef("");
   const [status, setStatus] = useState<EstimateStatus>(estimate?.status ?? "draft");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -735,12 +734,19 @@ export function EstimateForm({
     useState<ExpandedSystemPreviewResult | null>(null);
   const [systemPreviewMessage, setSystemPreviewMessage] = useState<string | null>(null);
   const [expectedUpdatedAt, setExpectedUpdatedAt] = useState(estimate?.updatedAt ?? "");
-  const [saveState, setSaveState] = useState<SaveState>("saved");
-  const [saveMessage, setSaveMessage] = useState(
-    estimate?.workspaceDefaultsApplied
-      ? "Defaults loaded. Your edits will save automatically."
+  const {
+    status: saveFeedbackStatus,
+    message: saveFeedbackMessage,
+    isDirty,
+    markDirty,
+    beginSave,
+    markSaved,
+    markSaveFailed
+  } = useDirtySaveState({
+    initialMessage: estimate?.workspaceDefaultsApplied
+      ? "Defaults loaded. Save when ready."
       : "All changes saved."
-  );
+  });
   const [titleEditing, setTitleEditing] = useState(false);
   const [inventoryCreateError, setInventoryCreateError] = useState<string | null>(null);
   const [catalogPreviewAddMessage, setCatalogPreviewAddMessage] = useState<string | null>(null);
@@ -821,11 +827,6 @@ export function EstimateForm({
       ? systemPreviewResult.preview
       : null;
 
-  function markDirty() {
-    setSaveState("dirty");
-    setSaveMessage("Unsaved changes");
-  }
-
   function buildEstimateFormData() {
     const form = formRef.current;
 
@@ -845,20 +846,18 @@ export function EstimateForm({
     return formData;
   }
 
-  async function persistEstimate(reason: "manual" | "autosave" = "autosave") {
+  async function persistEstimate() {
     const formData = buildEstimateFormData();
 
     if (!formData) {
       return null;
     }
 
-    setSaveState("saving");
-    setSaveMessage("Saving...");
-    const result = await autosaveAction(formData);
+    const saveVersion = beginSave();
+    const result = await saveEstimateAction(formData);
 
     if (!result.ok) {
-      setSaveState(result.type === "conflict" ? "conflict" : "error");
-      setSaveMessage(result.message);
+      markSaveFailed(result.message);
       return result;
     }
 
@@ -880,13 +879,10 @@ export function EstimateForm({
       discountAmount,
       scopeItems,
       retainedAttachmentIds,
-      pendingAttachmentCount: pendingAttachments.length
+      pendingAttachmentCount: 0
     });
     setPendingAttachments([]);
-    setSaveState("saved");
-    setSaveMessage(
-      reason === "manual" ? "Saved." : `Saved ${new Date(result.updatedAt).toLocaleTimeString()}`
-    );
+    markSaved(saveVersion);
     return result;
   }
 
@@ -918,8 +914,7 @@ export function EstimateForm({
     setItemGroups(nextGroups);
     setLineItems(nextDrafts);
     setExpectedUpdatedAt(updatedAt);
-    setSaveState("saved");
-    setSaveMessage(`Saved ${new Date(updatedAt).toLocaleTimeString()}`);
+    markSaved();
   }
 
   function handleLineItemChange(
@@ -957,10 +952,7 @@ export function EstimateForm({
       return false;
     }
 
-    const saveResult =
-      saveState === "dirty" || saveState === "error" || saveState === "conflict"
-        ? await persistEstimate("manual")
-        : null;
+    const saveResult = isDirty ? await persistEstimate() : null;
 
     if (saveResult && !saveResult.ok) {
       return false;
@@ -976,8 +968,7 @@ export function EstimateForm({
     });
 
     if (!result.ok) {
-      setSaveState("error");
-      setSaveMessage(result.message);
+      markSaveFailed(result.message);
       return false;
     }
 
@@ -1168,10 +1159,7 @@ export function EstimateForm({
     }
 
     startSaveTransition(async () => {
-      const saveResult =
-        saveState === "dirty" || saveState === "error" || saveState === "conflict"
-          ? await persistEstimate("manual")
-          : null;
+      const saveResult = isDirty ? await persistEstimate() : null;
 
       if (saveResult && !saveResult.ok) {
         return;
@@ -1186,8 +1174,7 @@ export function EstimateForm({
       });
 
       if (!result.ok) {
-        setSaveState("error");
-        setSaveMessage(result.message);
+        markSaveFailed(result.message);
         return;
       }
 
@@ -1214,10 +1201,7 @@ export function EstimateForm({
       };
     }
 
-    const saveResult =
-      saveState === "dirty" || saveState === "error" || saveState === "conflict"
-        ? await persistEstimate("manual")
-        : null;
+    const saveResult = isDirty ? await persistEstimate() : null;
 
     if (saveResult && !saveResult.ok) {
       return { ok: false as const, message: saveResult.message };
@@ -1229,8 +1213,7 @@ export function EstimateForm({
     });
 
     if (!result.ok) {
-      setSaveState("error");
-      setSaveMessage(result.message);
+      markSaveFailed(result.message);
       return { ok: false as const, message: result.message };
     }
 
@@ -1269,8 +1252,7 @@ export function EstimateForm({
     });
 
     if (!result.ok) {
-      setSaveState("error");
-      setSaveMessage(result.message);
+      markSaveFailed(result.message);
       return { ok: false as const, message: result.message };
     }
 
@@ -1482,45 +1464,10 @@ export function EstimateForm({
       return;
     }
 
-    if (currentSnapshot !== lastSavedSnapshotRef.current && saveState !== "conflict") {
-      setSaveState("dirty");
-      setSaveMessage("Unsaved changes");
+    if (currentSnapshot !== lastSavedSnapshotRef.current) {
+      markDirty();
     }
-  }, [currentSnapshot, saveState]);
-
-  useEffect(() => {
-    if (saveState !== "dirty") {
-      return;
-    }
-
-    if (autosaveTimerRef.current) {
-      clearTimeout(autosaveTimerRef.current);
-    }
-
-    autosaveTimerRef.current = setTimeout(() => {
-      startSaveTransition(() => {
-        void persistEstimate("autosave");
-      });
-    }, 1200);
-
-    return () => {
-      if (autosaveTimerRef.current) {
-        clearTimeout(autosaveTimerRef.current);
-      }
-    };
-  }, [currentSnapshot, saveState]);
-
-  useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (saveState === "dirty" || saveState === "error" || saveState === "conflict") {
-        event.preventDefault();
-        event.returnValue = "";
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [saveState]);
+  }, [currentSnapshot, markDirty]);
 
   const statusStrip = (
     <div className="flex items-start gap-4">
@@ -1545,13 +1492,11 @@ export function EstimateForm({
                     formData.set("currentStatus", status);
                     formData.set("nextStatus", candidateStatus);
                     formData.set("expectedUpdatedAt", expectedUpdatedAt);
-                    setSaveState("saving");
-                    setSaveMessage("Saving...");
+                    const saveVersion = beginSave();
                     const result = await updateStatusAction(formData);
 
                     if (!result.ok) {
-                      setSaveState(result.type);
-                      setSaveMessage(result.message);
+                      markSaveFailed(result.message);
                       setStatus(status);
                       return;
                     }
@@ -1561,8 +1506,7 @@ export function EstimateForm({
                     if (result.status === "approved") {
                       setApprovalPanelInitialOpen(true);
                     }
-                    setSaveState("saved");
-                    setSaveMessage(`Saved ${new Date(result.updatedAt).toLocaleTimeString()}`);
+                    markSaved(saveVersion);
                   }
                 })();
               }}
@@ -1679,7 +1623,7 @@ export function EstimateForm({
         onSubmit={(event) => {
           event.preventDefault();
           startSaveTransition(() => {
-            void persistEstimate("manual");
+            void persistEstimate();
           });
         }}
       >
@@ -1774,7 +1718,14 @@ export function EstimateForm({
         }}
         statusStrip={statusStrip}
         headerActions={headerActions}
-        saveStateLabel={isPending || saveState === "saving" ? "Saving..." : saveMessage}
+        saveAction={
+          <SaveStatusButton
+            type="submit"
+            status={isPending ? "saving" : saveFeedbackStatus}
+            isDirty={isDirty}
+            statusMessage={saveFeedbackMessage}
+          />
+        }
         titleEditing={titleEditing}
         onTitleEditToggle={() => setTitleEditing((current) => !current)}
         onTitleChange={(value) => {
@@ -1783,11 +1734,6 @@ export function EstimateForm({
         }}
         onTitleBlur={() => {
           setTitleEditing(false);
-          if (saveState === "dirty") {
-            startTransition(() => {
-              void persistEstimate("manual");
-            });
-          }
         }}
       >
         <div className={activeSection === "items" ? "block" : "hidden"}>
@@ -2026,7 +1972,7 @@ export function EstimateForm({
                     Save state
                   </p>
                   <p className="mt-1 text-sm font-medium text-slate-900">
-                    {isPending || saveState === "saving" ? "Saving..." : saveMessage}
+                    {isPending ? "Saving..." : saveFeedbackMessage}
                   </p>
                 </div>
                 <div className="border border-slate-200 bg-white px-3 py-3">

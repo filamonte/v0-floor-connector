@@ -39,7 +39,7 @@ Business data should exist once and be reused across the platform.
 
 Projects are intended to become the operational root of core delivery workflows.
 
-In contractor UX terms, project detail should be the primary workflow and readiness hub, while other record pages should support the connected workflow and point back to the project workspace when broader handoff state matters.
+In contractor UX terms, project detail should be the primary workflow and readiness hub, while other record pages should support the connected workflow and point back to the Project Workspace when broader handoff state matters.
 
 ### Cross-Module Data Flow
 
@@ -240,7 +240,7 @@ This boundary matters because:
 
 ## Contractor Workspace Direction
 
-The target contractor app should use a shared record-workspace pattern rather than unrelated page-by-page layouts.
+The target contractor app should use a shared Record Workspace pattern rather than unrelated page-by-page layouts.
 
 Target page-shape rules:
 - detail pages should separate header, workflow summary, primary workspace, context rail, and secondary sections

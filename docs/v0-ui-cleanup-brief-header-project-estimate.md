@@ -25,12 +25,12 @@ The pass is about clarity, layout, and interaction patterns only. It must not ch
 - Preserve the top-nav-first contractor shell while making it work with more modules.
 - Keep the dashboard/header visual direction: black or near-black framing, orange action emphasis, white/warm-neutral work surfaces, compact operational density.
 - Improve project-centered continuity without turning Project into a separate app shell.
-- Make project quick create and estimate quick create scale past small test data.
+- Make Project Quick-Create and Estimate Quick-Create scale past small test data.
 - Make project detail easier to scan by introducing contextual workspace navigation inside the project page.
 - Keep estimate creation context-aware: project-launched estimates should not ask users to reselect the same project/customer.
-- Move the long-term estimate editor toward group-first item authoring without touching current insertion behavior.
+- Move the long-term Estimate Editoror toward group-first item authoring without touching current insertion behavior.
 - Improve input formatting expectations for country, phone, ZIP/postal code, and validation recovery.
-- Keep all cleanup compatible with the existing shared manager-page and record-workspace patterns.
+- Keep all cleanup compatible with the existing shared Manager Page and Record Workspace patterns.
 
 ## Screens Affected
 
@@ -38,18 +38,18 @@ Primary affected surfaces:
 - shared contractor app header / top navigation
 - mobile app navigation
 - `/projects`
-- project quick-create sheet/form
+- Project Quick-Create sheet/form
 - `/projects/[projectId]`
 - project edit/detail sections
 - `/estimates`
-- estimate quick-create sheet/form
+- Estimate Quick-Create sheet/form
 - `/estimates/[estimateId]/edit`
 
 Secondary surfaces to keep consistent:
 - global search and universal create in the shell
 - customer picker fields
 - shared composer sheets
-- shared record workspace layout
+- shared Record Workspace layout
 - future module-home and workspace-sidebar patterns
 
 ## 1. Header / Navigation Cleanup
@@ -99,13 +99,13 @@ v0 should not design:
 - a different dashboard shell.
 - marketing-style hero navigation.
 
-## 2. Project Quick Create
+## 2. Project Quick-Create
 
 Current concern:
-- project quick create uses a customer select that will become unwieldy as customer count grows.
+- Project Quick-Create uses a customer select that will become unwieldy as customer count grows.
 
 Design requirements:
-- preserve quick-create -> canonical project -> full project workspace.
+- preserve Quick-Create -> canonical project -> full Project Workspace.
 - collect minimum required project data only.
 - avoid giant dropdowns.
 - preserve data when validation fails.
@@ -116,7 +116,7 @@ Recommended pattern:
 - support keyboard search and clear selected state.
 - when launched from a customer, lock/preselect that customer and show it as context rather than making users reselect it.
 - allow `Create new customer` inline only if the existing canonical customer-create action path can be reused safely in implementation.
-- inline create-new-customer should capture minimum safe fields only:
+- Inline Customer Quick-Create should capture minimum safe fields only:
   - customer/account name
   - optional company name
   - email
@@ -125,7 +125,7 @@ Recommended pattern:
 - after inline customer creation, select that new customer in the project form and keep the user in the project create flow.
 
 v0 should design:
-- searchable customer picker inside the project quick-create sheet.
+- searchable customer picker inside the Project Quick-Create sheet.
 - empty search state with `Create new customer`.
 - selected customer summary row.
 - validation errors that keep all entered project and customer data visible.
@@ -144,12 +144,12 @@ Current concern:
 
 Design requirements:
 - keep top nav as primary app navigation.
-- use contextual left navigation only inside the project workspace.
+- use contextual left navigation only inside the Project Workspace.
 - do not create a new project app shell.
-- preserve the shared record-workspace pattern.
+- preserve the shared Record Workspace pattern.
 - keep project as the readiness and continuity hub.
 
-Recommended project workspace structure:
+Recommended Project Workspace structure:
 - left contextual nav inside project detail:
   - Overview
   - Details
@@ -222,7 +222,7 @@ Recommended customer-launched flow:
 - avoid showing a full unrelated project list.
 
 v0 should design:
-- one shared estimate quick-create sheet that adapts to launch context.
+- one shared Estimate Quick-Create sheet that adapts to launch context.
 - searchable customer/project selectors where global selection is required.
 - locked context pills/cards when customer/project are known.
 - validation errors that keep selected customer/project and typed estimate details intact.
@@ -233,10 +233,10 @@ v0 should not design:
 - project/customer reselection when launched from project context.
 - changes to estimate numbering, status, or creation rules.
 
-## 5. Estimate Editor Long-Term Layout
+## 5. Estimate Editoror Long-Term Layout
 
 Current concern:
-- the estimate editor is too long.
+- the Estimate Editoror is too long.
 - the permanent Catalog Items panel is not the right final UI.
 
 Design requirements:
@@ -332,9 +332,9 @@ Use or adapt existing FloorConnector patterns:
 - shared contractor top nav with responsive overflow
 - shared mobile nav
 - `StandardWorkspaceLayout` for data-heavy module workspaces where applicable
-- record-workspace detail pattern for project and estimate detail
-- contextual left workspace navigation inside project detail and future estimate editor
-- composer sheet / side sheet for quick-create and bounded editing
+- Record Workspace detail pattern for project and estimate detail
+- contextual left workspace navigation inside project detail and future Estimate Editoror
+- composer sheet / side sheet for Quick-Create and bounded editing
 - searchable combobox/picker for customer and project selection
 - grouped overflow menu for secondary actions
 - compact status/readiness bands
@@ -364,10 +364,10 @@ Use the existing FloorConnector visual direction: compact operational SaaS, blac
 
 Design these screens:
 1. Contractor header/top navigation with responsive overflow and grouped More menu.
-2. Project quick-create sheet with searchable customer picker, selected customer summary, optional safe inline create-new-customer state, validation errors that preserve entered data, and no giant customer dropdown.
-3. Project detail workspace with compact header, next-best-action/readiness summary, contextual left navigation inside the project workspace, clearer edit controls, and financing status placed in a readiness/financial section rather than the basic details form.
-4. Estimate quick-create sheet that adapts to launch context: project-launched locks/preselects project and customer; global launch requires searchable customer and project selection; customer-launched locks customer and requires project selection or safe project create. Avoid duplicate customer/project search UI.
-5. Long-term estimate editor Items workspace with group-first item authoring. Each group has name, item count, subtotal, add action, and overflow menu. Add Item drawer has sources: Cost Item Database, Template/System, Previous Estimate, Custom Item. De-emphasize the permanent Catalog Items panel into the drawer.
+2. Project Quick-Create sheet with searchable customer picker, selected customer summary, optional safe Inline Customer Quick-Create state, validation errors that preserve entered data, and no giant customer dropdown.
+3. Project detail workspace with compact header, next-best-action/readiness summary, contextual left navigation inside the Project Workspace, clearer edit controls, and financing status placed in a readiness/financial section rather than the basic details form.
+4. Estimate Quick-Create sheet that adapts to launch context: project-launched locks/preselects project and customer; global launch requires searchable customer and project selection; customer-launched locks customer and requires project selection or safe project create. Avoid duplicate customer/project search UI.
+5. Long-term Estimate Editoror Items workspace with group-first item authoring. Each group has name, item count, subtotal, add action, and overflow menu. Add Item drawer has sources: Cost Item Database, Template/System, Previous Estimate, Custom Item. De-emphasize the permanent Catalog Items panel into the drawer.
 6. Reusable address/contact input states with country dropdown, US and Canada pinned at top, phone and ZIP/postal formatting guidance, and validation states that preserve user input.
 
 Use realistic labels only. Do not invent fake workflows. Do not show internal cost/markup to customers. Keep all records tied to canonical customers, projects, estimates, catalog items, and line-item snapshots.
@@ -424,11 +424,11 @@ Validation:
 - `pnpm typecheck`
 - `pnpm lint`
 
-### Phase 2: Project Quick Create Picker
+### Phase 2: Project Quick-Create Picker
 
 Scope:
 - replace customer select with searchable picker.
-- add inline create-new-customer only if it reuses safe canonical customer creation.
+- add Inline Customer Quick-Create only if it reuses safe canonical customer creation.
 - preserve validation state.
 
 Validation:
@@ -440,7 +440,7 @@ Validation:
 ### Phase 3: Project Detail Sectioning
 
 Scope:
-- introduce contextual project workspace navigation.
+- introduce contextual Project Workspace navigation.
 - move financing status presentation to readiness/financial section.
 - clarify edit controls.
 - preserve current project data and actions.
@@ -450,7 +450,7 @@ Validation:
 - update basic project details.
 - verify readiness/financial copy remains display/UX only unless an existing action already supports it.
 
-### Phase 4: Estimate Quick Create Context Cleanup
+### Phase 4: Estimate Quick-Create Context Cleanup
 
 Scope:
 - unify customer/project selection patterns.
@@ -464,7 +464,7 @@ Validation:
 - create estimate globally.
 - validation errors preserve selected context.
 
-### Phase 5: Estimate Editor Group-First UI Preparation
+### Phase 5: Estimate Editoror Group-First UI Preparation
 
 Scope:
 - UI-only regrouping/layout cleanup from the group-first refactor plan.

@@ -53,9 +53,9 @@ Do not reuse old `.tmp-auth-cookies*.txt` files. Expired Supabase refresh tokens
 - Create or edit customers, projects, estimates, approvals, contracts, and related workflow records through the UI being tested.
 - If signup is used for a new local QA user, complete the supported confirmation flow required by Supabase before continuing.
 
-## Estimate Edit To Contract QA Preconditions
+## Estimate Editor To Contract QA Preconditions
 
-For the contractor-side estimate edit -> send/approval -> contract generation slice:
+For the contractor-side Estimate Editoror -> send/approval -> contract generation slice:
 
 - Sign in as a real contractor user with organization access.
 - Use or create a real customer through the UI.

@@ -14,7 +14,7 @@ Use this with:
 
 Scope Intake is the structured capture step that happens around a lead site visit or inspection. Its job is to record what the contractor saw, measured, photographed, and learned before estimating begins.
 
-Scope Intake should help estimators avoid re-entry, preserve site context, and prepare a cleaner handoff into the estimate plan and estimate editor. It is not the customer-facing commercial quote, and it is not a replacement for the estimate.
+Scope Intake should help estimators avoid re-entry, preserve site context, and prepare a cleaner handoff into the estimate plan and Estimate Editoror. It is not the customer-facing commercial quote, and it is not a replacement for the estimate.
 
 The intended workflow placement is:
 

@@ -14,9 +14,9 @@ Canonical lifecycle:
 Original audit note: no app code, schema, route, workflow, calculation, financial logic, script, or env-var change was made by the audit document.
 
 Implementation follow-up:
-- The high-risk freeform invoice findings are now enforced in the app: invoice quick-create requires project context plus a billing source of completed job, approved estimate scope, approved change order, or explicit deposit role.
+- The high-risk freeform invoice findings are now enforced in the app: Invoice Quick-Create requires project context plus a billing source of completed job, approved estimate scope, approved change order, or explicit deposit role.
 - The shared `createInvoice` path rejects project-only standard invoices without a real billing source.
-- Approved change-order quick-create routes through the existing approved change-order invoice path instead of creating disconnected invoice headers.
+- Approved change-order Quick-Create routes through the existing approved change-order invoice path instead of creating disconnected invoice headers.
 - Progress billing now uses the same invoice commercial readiness guard as `createInvoice`.
 - Estimate approval next steps no longer present full estimate-based invoice creation as the primary action; they route users back to contract or project readiness.
 - No schema, calculation, payment-system, script, or env-var changes were introduced for this enforcement pass.
@@ -34,15 +34,15 @@ The audit checks each path against:
 Most UI entry points route into `/invoices` and submit `quickCreateInvoiceAction`, which calls `createInvoice`.
 
 Relevant implementation points:
-- [apps/web/app/(app)/invoices/page.tsx](C:/FloorConnector/apps/web/app/(app)/invoices/page.tsx): reads `projectId`, `estimateId`, `jobId`, and `workflowRole` from the query string and opens the invoice quick-create composer.
+- [apps/web/app/(app)/invoices/page.tsx](C:/FloorConnector/apps/web/app/(app)/invoices/page.tsx): reads `projectId`, `estimateId`, `jobId`, and `workflowRole` from the query string and opens the Invoice Quick-Create composer.
 - [apps/web/components/invoice-quick-create-form.tsx](C:/FloorConnector/apps/web/components/invoice-quick-create-form.tsx): requires a project and workflow role; carries hidden `estimateId` and non-deposit `jobId` when provided.
-- [apps/web/lib/invoices/actions.ts](C:/FloorConnector/apps/web/lib/invoices/actions.ts): `quickCreateInvoiceAction` creates a draft invoice, derives discount from the estimate when provided, and redirects to the invoice edit workspace.
+- [apps/web/lib/invoices/actions.ts](C:/FloorConnector/apps/web/lib/invoices/actions.ts): `quickCreateInvoiceAction` creates a draft invoice, derives discount from the estimate when provided, and redirects to the Invoice Editoror Workspace.
 - [apps/web/lib/invoices/data.ts](C:/FloorConnector/apps/web/lib/invoices/data.ts): `createInvoice` resolves project, approved estimate, optional job, validates connected records, and calls `assertInvoiceCommercialReadiness`.
 - [apps/web/lib/projects/readiness.ts](C:/FloorConnector/apps/web/lib/projects/readiness.ts): `assertInvoiceCommercialReadiness` requires a signed contract for all invoice creation and additionally requires ready-to-schedule state for standard invoices without a job.
 
 ## Entry Points
 
-### 1. Invoice Manager Quick Create
+### 1. Invoice Manager Quick-Create
 
 Where it exists:
 - `/invoices` page, `New invoice` button and composer.
@@ -75,7 +75,7 @@ Issues:
 - MEDIUM: project-only deposit invoice can be created from the manager if the contract is signed, even when the UI has not established an explicit deposit requirement.
 
 Recommended fixes:
-- Require a source type at quick create for global invoice creation: completed/billable job, approved estimate snapshot/SOV, approved change order, or deposit requirement.
+- Require a source type at Quick-Create for global invoice creation: completed/billable job, approved estimate snapshot/SOV, approved change order, or deposit requirement.
 - If `workflowRole=deposit`, require the selected project to have a deposit-readiness requirement or show a clear override/reason before creation.
 
 ### 2. Global Universal Create
@@ -89,11 +89,11 @@ Starting context:
 - Global action with no project, estimate, job, or workflow role preselected.
 
 Records linked:
-- User must select a project in the invoice quick-create form.
+- User must select a project in the Invoice Quick-Create form.
 - No source record is selected by default.
 
 Required conditions:
-- Same server-side requirements as invoice manager quick create.
+- Same server-side requirements as invoice manager Quick-Create.
 
 Rule alignment:
 - Billing Trigger Rule: partially aligned through server signed-contract/readiness checks, but the global entry does not ask for the billing trigger.
@@ -102,7 +102,7 @@ Rule alignment:
 - Readiness Vs Billing Rule: server catches standard no-job readiness, but the user experience does not explain the readiness source.
 
 Issues:
-- HIGH: same project-only freeform risk as invoice manager quick create, amplified because this is a broad global entry point.
+- HIGH: same project-only freeform risk as invoice manager Quick-Create, amplified because this is a broad global entry point.
 
 Recommended fixes:
 - Treat global invoice creation as a routing chooser rather than immediate invoice creation: pick project, then require billing source/trigger before submitting.
@@ -136,7 +136,7 @@ Issues:
 - LOW: the link may include an empty `estimateId` if no approved estimate is available, though the server still derives project and checks contract signature.
 
 Recommended fixes:
-- Keep this path but make the deposit requirement visible in the invoice quick-create composer when opened from project context.
+- Keep this path but make the deposit requirement visible in the Invoice Quick-Create composer when opened from project context.
 
 ### 4. Contract Detail Deposit Invoice
 
@@ -239,7 +239,7 @@ Recommended fixes:
 ### 7. Estimate Approval Next-Steps Invoice
 
 Where it exists:
-- Estimate detail and estimate edit approval next-steps panel.
+- Estimate detail and Estimate Editoror approval next-steps panel.
 - [apps/web/app/(app)/estimates/[estimateId]/page.tsx](C:/FloorConnector/apps/web/app/(app)/estimates/[estimateId]/page.tsx)
 - [apps/web/app/(app)/estimates/[estimateId]/edit/page.tsx](C:/FloorConnector/apps/web/app/(app)/estimates/[estimateId]/edit/page.tsx)
 - [apps/web/components/estimates/approval-next-steps-panel.tsx](C:/FloorConnector/apps/web/components/estimates/approval-next-steps-panel.tsx)
@@ -357,7 +357,7 @@ These routes link to invoice lists or existing invoices but do not create invoic
 ## Issues Summary
 
 High-risk issues:
-1. Project-only standard invoice quick create can produce draft invoices without job, estimate items, change order, or deposit requirement as the selected source.
+1. Project-only standard Invoice Quick-Create can produce draft invoices without job, estimate items, change order, or deposit requirement as the selected source.
 2. Global universal invoice creation exposes the same project-only freeform risk from a broad entry point.
 3. Estimate approval next-steps presents full estimate-based invoice creation as if approved scope is enough, even though billing requires signed contract/readiness or billable work.
 4. Progress-billing invoice creation bypasses the shared invoice readiness guard.
@@ -370,12 +370,12 @@ Low/medium-risk issues:
 ## Recommended Fix Backlog
 
 Do not implement these in this audit. Recommended follow-up work:
-1. Add an invoice-source chooser before quick-create submit for global and invoice-manager invoice creation.
+1. Add an invoice-source chooser before Quick-Create submit for global and invoice-manager invoice creation.
 2. Require one of job, approved estimate/SOV source, approved change order, or deposit requirement before draft invoice creation.
 3. Update estimate approval next-step copy/actions so approved estimate alone does not imply billable scope.
 4. Add a shared readiness guard or equivalent guard for progress-billing invoice creation.
 5. Add a change-order-specific invoice creation/readiness path so approved change orders are treated as their own valid billing trigger.
-6. Make deposit requirement context visible in invoice quick create when `workflowRole=deposit`.
+6. Make deposit requirement context visible in Invoice Quick-Create when `workflowRole=deposit`.
 
 ## Audit Totals
 

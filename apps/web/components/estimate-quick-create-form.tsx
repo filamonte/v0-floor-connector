@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { useState } from "react";
-import Link from "next/link";
 
 import { AuthField } from "@/components/auth-field";
 import { AuthSubmitButton } from "@/components/auth-submit-button";
@@ -35,13 +34,16 @@ type EstimateQuickCreateProjectOption = {
 
 type EstimateQuickCreateFormProps = {
   action: (formData: FormData) => void | Promise<void>;
+  inlineCustomerAction: (formData: FormData) => void | Promise<void>;
   opportunities: EstimateQuickCreateOpportunityOption[];
   customers: EstimateQuickCreateCustomerOption[];
   projects: EstimateQuickCreateProjectOption[];
   estimatorLabel: string;
   estimateDateLabel: string;
   estimateNumberLabel?: string;
+  defaultRetainagePercentage: string;
   errorMessage?: string | null;
+  inlineCustomerErrorMessage?: string | null;
   initialCreationMode?: "opportunity" | "customer" | "standalone" | null;
   initialOpportunityId?: string | null;
   initialCustomerId?: string | null;
@@ -49,6 +51,14 @@ type EstimateQuickCreateFormProps = {
   initialProjectName?: string | null;
   initialTitle?: string | null;
   errorField?: string | null;
+  inlineCustomerErrorField?: string | null;
+  inlineCustomerDefaults?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    companyName: string;
+  };
 };
 
 function formatStatusLabel(status: string) {
@@ -167,6 +177,10 @@ function CustomerCombobox({
   selectedCustomerId,
   query,
   error,
+  inlineCustomerAction,
+  inlineCustomerErrorField,
+  inlineCustomerErrorMessage,
+  inlineCustomerDefaults,
   onQueryChange,
   onSelect
 }: {
@@ -174,10 +188,23 @@ function CustomerCombobox({
   selectedCustomerId: string | null;
   query: string;
   error: boolean;
+  inlineCustomerAction: (formData: FormData) => void | Promise<void>;
+  inlineCustomerErrorField?: string | null;
+  inlineCustomerErrorMessage?: string | null;
+  inlineCustomerDefaults: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    companyName: string;
+  };
   onQueryChange: (nextValue: string) => void;
   onSelect: (customerId: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showInlineCustomerCreate, setShowInlineCustomerCreate] = useState(
+    Boolean(inlineCustomerErrorMessage)
+  );
   const normalizedQuery = query.trim().toLowerCase();
   const selectedCustomer =
     customers.find((customer) => customer.id === selectedCustomerId) ?? null;
@@ -231,12 +258,16 @@ function CustomerCombobox({
           {visibleCustomers.length === 0 ? (
             <div className="px-3 py-4 text-sm leading-6 text-slate-500">
               <p>No matching customer accounts found.</p>
-              <Link
-                href="/customers?compose=1#customer-create"
+              <button
+                type="button"
+                onClick={() => {
+                  setShowInlineCustomerCreate(true);
+                  setIsOpen(false);
+                }}
                 className="mt-3 inline-flex rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-[#ef7d32] hover:text-slate-950"
               >
-                Create new customer
-              </Link>
+                Add customer
+              </button>
             </div>
           ) : (
             visibleCustomers.map((customer) => (
@@ -272,20 +303,150 @@ function CustomerCombobox({
           )}
         </div>
       ) : null}
+      <div className="mt-3">
+        {showInlineCustomerCreate ? (
+          <div className="space-y-4 rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-950">
+                  Inline Customer Quick-Create
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Add the primary customer contact, then continue this estimate.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowInlineCustomerCreate(false)}
+                className="rounded-[4px] border border-[#d6d6d6] bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+            </div>
+
+            {inlineCustomerErrorMessage ? (
+              <div
+                role="alert"
+                className="rounded-[4px] border border-rose-200 bg-rose-50 px-3 py-2 text-sm leading-6 text-rose-900"
+              >
+                <p className="font-semibold">Customer was not created</p>
+                <p className="mt-1">{inlineCustomerErrorMessage}</p>
+              </div>
+            ) : null}
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <AuthField
+                label="First name"
+                name="inlineCustomerFirstName"
+                defaultValue={inlineCustomerDefaults.firstName}
+                placeholder="Jane"
+                aria-invalid={inlineCustomerErrorField === "inlineCustomerFirstName"}
+                className={
+                  inlineCustomerErrorField === "inlineCustomerFirstName"
+                    ? "border-rose-300 ring-4 ring-rose-50"
+                    : undefined
+                }
+              />
+              <AuthField
+                label="Last name"
+                name="inlineCustomerLastName"
+                defaultValue={inlineCustomerDefaults.lastName}
+                placeholder="Doe"
+                aria-invalid={inlineCustomerErrorField === "inlineCustomerLastName"}
+                className={
+                  inlineCustomerErrorField === "inlineCustomerLastName"
+                    ? "border-rose-300 ring-4 ring-rose-50"
+                    : undefined
+                }
+              />
+              <AuthField
+                label="Email"
+                name="inlineCustomerEmail"
+                type="email"
+                defaultValue={inlineCustomerDefaults.email}
+                placeholder="jane@example.com"
+                hint="Used for estimate communication and future portal invitation."
+                aria-invalid={inlineCustomerErrorField === "inlineCustomerEmail"}
+                className={
+                  inlineCustomerErrorField === "inlineCustomerEmail"
+                    ? "border-rose-300 ring-4 ring-rose-50"
+                    : undefined
+                }
+              />
+              <AuthField
+                label="Phone"
+                name="inlineCustomerPhone"
+                type="tel"
+                defaultValue={inlineCustomerDefaults.phone}
+                placeholder="(555) 555-5555"
+                hint="Stored on the existing customer phone field."
+                aria-invalid={inlineCustomerErrorField === "inlineCustomerPhone"}
+                className={
+                  inlineCustomerErrorField === "inlineCustomerPhone"
+                    ? "border-rose-300 ring-4 ring-rose-50"
+                    : undefined
+                }
+              />
+              <div className="md:col-span-2">
+                <AuthField
+                  label="Company name"
+                  name="inlineCustomerCompanyName"
+                  defaultValue={inlineCustomerDefaults.companyName}
+                  placeholder="Doe Properties"
+                  aria-invalid={inlineCustomerErrorField === "inlineCustomerCompanyName"}
+                  className={
+                    inlineCustomerErrorField === "inlineCustomerCompanyName"
+                      ? "border-rose-300 ring-4 ring-rose-50"
+                      : undefined
+                  }
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              formAction={inlineCustomerAction}
+              formNoValidate
+              className="inline-flex h-9 w-full items-center justify-center gap-2 border border-[#171717] bg-[#171717] px-3 text-sm font-medium text-white transition hover:bg-[#2b2b2b] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            >
+              Add customer
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowInlineCustomerCreate(true)}
+            className="inline-flex rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-[#ef7d32] hover:text-slate-950"
+          >
+            Add customer
+          </button>
+        )}
+      </div>
     </div>
   );
 }
 
 export function EstimateQuickCreateForm({
   action,
+  inlineCustomerAction,
   opportunities,
   customers,
   projects,
   estimatorLabel,
   estimateDateLabel,
   estimateNumberLabel = "Assigned on create",
+  defaultRetainagePercentage,
   errorMessage,
+  inlineCustomerErrorMessage,
   errorField,
+  inlineCustomerErrorField,
+  inlineCustomerDefaults = {
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    companyName: ""
+  },
   initialOpportunityId,
   initialCustomerId,
   initialProjectId,
@@ -383,6 +544,11 @@ export function EstimateQuickCreateForm({
   return (
     <form action={action} className="space-y-5">
       <input type="hidden" name="creationMode" value="customer" />
+      <input
+        type="hidden"
+        name="inlineCustomerRetainagePercentageDefault"
+        value={defaultRetainagePercentage}
+      />
       <input type="hidden" name="opportunityId" value={selectedOpportunityId} />
       <input type="hidden" name="customerId" value={activeCustomerId ?? ""} />
       <input
@@ -431,6 +597,10 @@ export function EstimateQuickCreateForm({
               selectedCustomerId={activeCustomerId}
               query={customerQuery}
               error={isCustomerError}
+              inlineCustomerAction={inlineCustomerAction}
+              inlineCustomerErrorField={inlineCustomerErrorField}
+              inlineCustomerErrorMessage={inlineCustomerErrorMessage}
+              inlineCustomerDefaults={inlineCustomerDefaults}
               onQueryChange={setCustomerQuery}
               onSelect={(customerId) => {
                 setSelectedCustomerId(customerId);

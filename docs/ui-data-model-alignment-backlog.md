@@ -81,9 +81,9 @@ Management direction:
 Guardrail:
 - avoid duplicate contact models and module-specific person/customer/vendor/project-contact records that cannot reconcile back to the shared foundation
 
-## 4. Estimate Editor Improvements
+## 4. Estimate Editoror Improvements
 
-The estimate editor needs clearer commercial editing controls and workflow navigation.
+The Estimate Editoror needs clearer commercial editing controls and workflow navigation.
 
 Editor direction:
 - support internal markup adjustment per estimate line where allowed
@@ -172,7 +172,7 @@ Guidance rules:
 
 ### Now / Demo Polish
 
-- estimate editor navigation and review actions
+- Estimate Editoror navigation and review actions
 - project service address display
 - line taxable toggle planning
 - UI consistency audit across module pages, detail pages, tables, cards, action hierarchy, and workflow guidance

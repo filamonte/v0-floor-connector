@@ -292,13 +292,13 @@ Audit-style timeline of important system and workflow events.
 ## Standalone Global Routes That Should Still Exist
 
 Even in a project-centered system, these should still exist as global list pages or work queues:
-- `/customers`
-- `/projects`
-- `/estimates`
-- `/jobs`
-- `/invoices`
-- `/documents`
-- `/people`
+- Customers Manager Page (`/customers`)
+- Projects Manager Page (`/projects`)
+- Estimates Manager Page (`/estimates`)
+- Jobs Manager Page (`/jobs`)
+- Invoices Manager Page (`/invoices`)
+- Documents Manager Page (`/documents`)
+- People Manager Page (`/people`)
 
 These routes are still useful because users often need:
 - cross-project filtering
@@ -365,9 +365,9 @@ They should **not** create duplicate models or parallel architecture.
 ## Current Implementation Note
 
 Today the contractor app still includes parallel top-level routes such as:
-- `/customers`
-- `/projects`
-- `/estimates`
-- `/jobs`
+- Customers Manager Page (`/customers`)
+- Projects Manager Page (`/projects`)
+- Estimates Manager Page (`/estimates`)
+- Jobs Manager Page (`/jobs`)
 
 That is acceptable for the current phase. This document defines the target direction so future implementation decisions can move toward a more project-centered contractor experience without discarding the existing foundation.

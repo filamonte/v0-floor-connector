@@ -25,7 +25,7 @@ Canonical lifecycle remains:
 - The first pass should calculate summaries at request time from canonical rows.
 - Do not create reporting snapshot tables in the first pass unless a measured performance problem proves they are necessary.
 - Dashboard cards should remain operational attention cues, not a separate analytics product.
-- Dedicated reports should explain where each number comes from and link back to canonical record workspaces.
+- Dedicated reports should explain where each number comes from and link back to canonical Record Workspaces.
 
 ## 1. Existing Reporting And Partial Reporting
 
@@ -36,26 +36,26 @@ Implemented or partially available today:
 - Dashboard command center:
   - operational metrics and queues over leads, estimates, contracts, projects, schedule/jobs, invoices, payments, notifications, and communication activity
   - useful as a start-here surface, but not a dedicated reports module
-- `/financials`:
+- Financials Home (`/financials`):
   - summary-first financial control panel
   - overdue invoices
   - recent payments
   - open receivables
   - routes into invoices, payments, and progress billing
   - reads the existing canonical invoice and payment chain rather than a finance shadow model
-- `/invoices`:
+- Invoices Manager Page (`/invoices`):
   - billing manager over canonical invoices and invoice line items
   - invoice status, balances, retainage-aware totals, tax-aware totals, and lineage context
-- `/payments`:
+- Payments Manager Page (`/payments`):
   - payment manager over canonical payments and immutable payment events
   - useful for posted payment review, failed/void activity, and open collections context
-- `/progress-billing`:
+- Progress Billing Manager Page (`/progress-billing`):
   - schedule-of-values and progress billing continuity from approved estimate snapshots and invoice lineage
-- `/projects` and project detail:
+- Projects Manager Page (`/projects`) and project detail:
   - readiness blockers, next actions, linked estimate/contract/job/invoice/payment context, and scheduling readiness
-- `/schedule` and `/jobs`:
+- Schedule Manager Page (`/schedule`) and Jobs Manager Page (`/jobs`):
   - operational job state, crew assignment, scheduled work, and production readiness visibility
-- Notifications and `/communications`:
+- Notifications and Communications Manager Page (`/communications`):
   - communication and notification activity exist as canonical operational records, but are not yet reporting outputs
 - Tax foundation:
   - invoice calculations and tax snapshots are present, but tax reporting is not yet a complete reporting workflow
@@ -262,20 +262,20 @@ Recommended role:
 - use existing contractor manager/page patterns
 
 The dedicated reporting page should not:
-- replace `/financials`, `/invoices`, `/payments`, `/projects`, `/leads`, or `/estimates`
+- replace Financials Home (`/financials`), Invoices Manager Page (`/invoices`), Payments Manager Page (`/payments`), Projects Manager Page (`/projects`), Leads Manager Page (`/leads`), or Estimates Manager Page (`/estimates`)
 - create operational actions that mutate records
 - become a custom BI builder
 - introduce reporting tables in V1
 
 ### Manager Pages
 
-Existing manager pages should remain the operational homes:
-- `/leads` for opportunity management
-- `/estimates` for estimate work
-- `/projects` for project readiness and workflow continuity
-- `/invoices` for invoice management
-- `/payments` for payment review and recording
-- `/financials` for finance section entry and routing
+Existing Manager Pages should remain the operational homes:
+- Leads Manager Page (`/leads`) for opportunity management
+- Estimates Manager Page (`/estimates`) for estimate work
+- Projects Manager Page (`/projects`) for project readiness and workflow continuity
+- Invoices Manager Page (`/invoices`) for invoice management
+- Payments Manager Page (`/payments`) for payment review and recording
+- Financials Home (`/financials`) for finance section entry and routing
 
 Reports should summarize and route back to these pages, not fork them.
 
@@ -307,7 +307,7 @@ Build one read-only reporting basics surface after Phase B validation starts.
 
 Recommended implementation shape:
 
-1. Add or activate a contractor-facing reports home using the existing protected app shell and manager-page pattern.
+1. Add or activate a contractor-facing reports home using the existing protected app shell and Manager Page pattern.
 2. Create one server-side report data boundary that reads tenant-scoped canonical records.
 3. Compose from existing canonical loaders where practical; use direct tenant-scoped queries only where existing loaders are not suitable.
 4. Add a simple date range control:
@@ -336,7 +336,7 @@ Acceptance criteria for the first implementation pass:
 - no schema change is required
 - no reporting tables are created
 - every displayed number can be traced back to canonical records
-- invoice and payment totals reconcile with `/financials`, `/invoices`, and `/payments`
+- invoice and payment totals reconcile with Financials Home (`/financials`), Invoices Manager Page (`/invoices`), and Payments Manager Page (`/payments`)
 - estimate summaries do not imply billing truth
 - project readiness summaries agree with project detail next-action guidance
 - dashboard cards remain entry cues rather than separate analytics truth
@@ -346,13 +346,13 @@ Acceptance criteria for the first implementation pass:
 ### Duplicate Aggregates
 
 Risk:
-- dashboard, reports, `/financials`, and manager pages compute the same totals differently.
+- dashboard, reports, `/financials`, and Manager Pages compute the same totals differently.
 
 Controls:
 - centralize first-pass reporting calculations in one report data boundary.
 - reuse existing invoice/payment and readiness helpers where practical.
 - keep calculations simple and documented.
-- compare financial report totals against `/financials`, `/invoices`, and `/payments` during QA.
+- compare financial report totals against Financials Home (`/financials`), Invoices Manager Page (`/invoices`), and Payments Manager Page (`/payments`) during QA.
 
 ### Stale Snapshot Tables
 

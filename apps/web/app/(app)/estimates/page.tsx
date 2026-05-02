@@ -8,9 +8,13 @@ import { RowsPerViewControl } from "@/components/rows-per-view-control";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { listCustomers } from "@/lib/customers/data";
-import { quickCreateEstimateAction } from "@/lib/estimates/actions";
+import {
+  quickCreateEstimateAction,
+  quickCreateEstimateCustomerAction
+} from "@/lib/estimates/actions";
 import { listEstimates } from "@/lib/estimates/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { listOpportunities } from "@/lib/opportunities/data";
 import { listProjects } from "@/lib/projects/data";
@@ -27,8 +31,14 @@ type EstimatesPageProps = {
     projectName?: string;
     title?: string;
     errorField?: string;
+    errorScope?: string;
     error?: string;
     message?: string;
+    inlineCustomerFirstName?: string;
+    inlineCustomerLastName?: string;
+    inlineCustomerEmail?: string;
+    inlineCustomerPhone?: string;
+    inlineCustomerCompanyName?: string;
   }>;
 };
 
@@ -95,12 +105,20 @@ export default async function EstimatesPage({
     );
   }
 
-  const [estimates, opportunities, customers, projects, workflowSettings] = await Promise.all([
+  const [
+    estimates,
+    opportunities,
+    customers,
+    projects,
+    workflowSettings,
+    financialSettings
+  ] = await Promise.all([
     listEstimates(),
     listOpportunities(),
     listCustomers(),
     listProjects(),
-    getOrganizationWorkflowSettings(organizationContext.organization.id)
+    getOrganizationWorkflowSettings(organizationContext.organization.id),
+    getOrganizationFinancialSettings(organizationContext.organization.id)
   ]);
   const opportunityOptions = opportunities.map((opportunity) => ({
     id: opportunity.id,
@@ -545,10 +563,12 @@ export default async function EstimatesPage({
         >
           <EstimateQuickCreateForm
             action={quickCreateEstimateAction}
+            inlineCustomerAction={quickCreateEstimateCustomerAction}
             opportunities={opportunityOptions}
             customers={customerOptions}
             projects={projectOptions}
             estimatorLabel={user.email ?? user.id}
+            defaultRetainagePercentage={financialSettings.defaultRetainagePercentage}
             estimateNumberLabel={String(workflowSettings.nextEstimateNumber)}
             estimateDateLabel={new Intl.DateTimeFormat("en-US", {
               month: "2-digit",
@@ -561,8 +581,33 @@ export default async function EstimatesPage({
             initialProjectId={resolvedSearchParams.projectId}
             initialProjectName={resolvedSearchParams.projectName}
             initialTitle={resolvedSearchParams.title}
-            errorField={resolvedSearchParams.errorField}
-            errorMessage={showComposer ? resolvedSearchParams.error ?? null : null}
+            errorField={
+              resolvedSearchParams.errorScope === "inlineCustomer"
+                ? null
+                : resolvedSearchParams.errorField
+            }
+            errorMessage={
+              showComposer && resolvedSearchParams.errorScope !== "inlineCustomer"
+                ? resolvedSearchParams.error ?? null
+                : null
+            }
+            inlineCustomerErrorField={
+              resolvedSearchParams.errorScope === "inlineCustomer"
+                ? resolvedSearchParams.errorField
+                : null
+            }
+            inlineCustomerErrorMessage={
+              showComposer && resolvedSearchParams.errorScope === "inlineCustomer"
+                ? resolvedSearchParams.error ?? null
+                : null
+            }
+            inlineCustomerDefaults={{
+              firstName: resolvedSearchParams.inlineCustomerFirstName ?? "",
+              lastName: resolvedSearchParams.inlineCustomerLastName ?? "",
+              email: resolvedSearchParams.inlineCustomerEmail ?? "",
+              phone: resolvedSearchParams.inlineCustomerPhone ?? "",
+              companyName: resolvedSearchParams.inlineCustomerCompanyName ?? ""
+            }}
           />
         </WorkspaceComposerSheet>
       </div>

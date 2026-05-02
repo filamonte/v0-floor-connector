@@ -44,7 +44,7 @@ Remote intake remains staging before canonical promotion. Websites and the mobil
 - Contract generation, internal approval/readiness, signer routing, customer portal sign/decline, optional countersign, and immutable signature events on canonical contracts.
 - Change orders with portal decision workflow, approved snapshots, and SOV/invoice integration.
 - Snapshot-based invoice lineage, retainage-aware balances, tax-aware invoice calculations, and canonical payments/payment events.
-- Customer portal shell, project workspace, estimate/contract/change-order/invoice review, and payment initiation.
+- Customer portal shell, Project Workspace, estimate/contract/change-order/invoice review, and payment initiation.
 - Directory read-only workspace over canonical customers, related customer contacts, people, vendors, and leads.
 - Customer related contacts, linked-contact portal grants, stored customer-contact portal permissions, and first-pass enforcement for estimate/change-order/contract decisions.
 - Communication and notification foundations, contractor notifications, and first `/communications` surface.
@@ -55,7 +55,7 @@ Remote intake remains staging before canonical promotion. Websites and the mobil
 ### Partially Built
 
 - Portal permission enforcement is incomplete for view permissions, invoice/payment actions, quote requests, main-contact self-service, and legacy null-contact grant cleanup.
-- Project workflow is real but still needs tighter next-best-action guidance, blocker language, and consistent continuity across every major record workspace.
+- Project workflow is real but still needs tighter next-best-action guidance, blocker language, and consistent continuity across every major Record Workspace.
 - Communications now have a hardened contractor baseline for internal testing: canonical inbox/reply, source filters, selected-thread handling, unsupported-source guidance, and notification triage exist, while broader customer messaging, channel delivery, and workflow communication depth are not complete.
 - Automation now has the first manual notification-only runner with `automation_runs` audit/idempotency, but no cron/background execution, provider sending, customer-facing automation, or workflow mutation.
 - Reporting basics now exist at `/reports` over canonical records, but accuracy still needs internal validation before contractor beta.
@@ -122,7 +122,7 @@ Primary outcome:
 - Existing `customer_contact_portal_permissions`.
 - Existing canonical communication threads/messages.
 - Existing project readiness and schedule/payment/contract handoff data.
-- Current top-nav contractor UI and shared record-workspace pattern.
+- Current top-nav contractor UI and shared Record Workspace pattern.
 
 ### Acceptance Criteria
 
@@ -521,7 +521,7 @@ Risk:
 - new modules reintroduce inconsistent shells, old page patterns, or module-local dashboards.
 
 Controls:
-- use current contractor shell and record-workspace baseline.
+- use current contractor shell and Record Workspace baseline.
 - dashboards remain entry surfaces into canonical records.
 - no new module app shell unless explicitly approved.
 

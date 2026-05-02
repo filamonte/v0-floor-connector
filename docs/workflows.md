@@ -26,7 +26,7 @@ This workflow document assumes the supporting configuration model now has two la
 In practical terms:
 - a lead should not become a second disconnected customer-like record later
 - an approved estimate should feed downstream contract, job, and invoice workflows instead of being re-entered
-- downstream financial records should always inherit from immutable approved snapshots rather than live estimate editing rows
+- downstream financial records should always inherit from immutable approved snapshots rather than live Estimate Editoror rows
 - canonical records should stay linked so teams can follow the same job from intake through payment
 - the app should guide users toward the next best action instead of presenting every downstream action as equally primary
 - a future contractor-facing `Directory` may unify how contact-like records are browsed and managed, but it must remain a view over canonical records rather than a replacement business model
@@ -244,11 +244,11 @@ Current customer-account interpretation:
 Implemented flow:
 - estimates are created from project context
 - estimate authoring is cost-item-first:
-  - active non-system `catalog_items` can be added from the estimate editor Catalog Items panel
+  - active non-system `catalog_items` can be added from the Estimate Editoror Catalog Items panel
   - inserted catalog items become editable commercial `estimate_line_items` snapshots rather than live-bound catalog rows
   - archived catalog items remain visible for review where surfaced but are blocked from insertion
   - reusable systems expand through shared system logic from length x width or direct area plus linear footage
-  - quick create from the estimate workspace saves a minimal new `catalog_items` record first, then adds it to the estimate
+  - Quick-Create from the Estimate Workspace saves a minimal new `catalog_items` record first, then adds it to the estimate
 - `catalog_items` are the canonical reusable sellable cost item database; physical stock now belongs in `inventory_items`
 - inventory remains optional per organization and never blocks cost item selection in estimates
 - item-level tax stays simple:
@@ -257,7 +257,7 @@ Implemented flow:
   - otherwise organization or platform financial defaults determine the rate
 - estimate line items, totals, tax, and discount handling are live
 - `estimate_line_items` is the authoritative pricing-row source; legacy `estimates.content.itemRows` should not be used for new behavior
-- estimate edits autosave with validation and stale-write conflict protection
+- Estimate Editoror edits autosave with validation and stale-write conflict protection
 - estimate defaults apply only when the estimate content is initially empty, resolving platform defaults first and contractor overrides second
 - estimates move through status progression such as `draft`, `sent`, `approved`, and `rejected`
 
@@ -382,7 +382,7 @@ Implemented flow:
 - invoice status updates into `partially_paid` and `paid` based on recorded payments
 - customer-facing payment workflow foundations now exist on the same canonical invoice and payment chain
 - payment request, checkout-start, success, failure, and void events now write immutable payment events instead of introducing a second checkout or portal-payment model
-- contractor-side invoice and project workspaces now surface payment continuity and next-step guidance from the same canonical invoice and payment state
+- contractor-side Invoice Workspace and Project Workspace now surface payment continuity and next-step guidance from the same canonical invoice and payment state
 
 Current canonical records involved:
 - invoice
@@ -429,7 +429,7 @@ Implemented flow:
 - auditable time capture now flows through canonical time punch events and derived time cards
 - daily execution now flows through canonical daily logs, field notes, and lightweight execution attachments
 - daily logs, field notes, execution attachments, punchlist items, and project-attributed time punches require project readiness at the server boundary
-- project and job workspaces now surface linked labor and field-execution context through those same shared records
+- Project Workspace and Job Workspace now surface linked labor and field-execution context through those same shared records
 
 Current canonical records involved:
 - person
@@ -515,11 +515,11 @@ Today, the app should be understood this way:
 - customer estimate approval is portal-based and writes to the same canonical estimate record
 - estimate approval creates an immutable commercial snapshot and does not auto-run contract, SOV, invoice, or payment actions
 - Cost Items Database is the reusable item master module backed by canonical `catalog_items`; it is the Phase 1 foundation for estimate authoring, systems, optional inventory, future invoice reuse, and materials planning
-- active non-system catalog items can now be inserted into estimates from the estimate editor Catalog Items panel as editable commercial snapshots; archived items are blocked from insertion, and systems continue through the existing system expansion flow
+- active non-system catalog items can now be inserted into estimates from the Estimate Editoror Catalog Items panel as editable commercial snapshots; archived items are blocked from insertion, and systems continue through the existing system expansion flow
 - future catalog/cost item design should treat default cost, markup, labor, production, price, and tax behavior as internal cost behavior that can be overridden intentionally on an estimate and kept out of customer-facing output
 - customer-facing estimates should show only customer-facing descriptions, quantities, unit prices, and totals; markup and internal cost should not appear on customer-facing estimate output
 - one-off estimate-line price overrides should affect that estimate line, while catalog/cost item updates should affect future estimates only
-- quick system generation now supports V1 manual measurements inside the existing estimate editor:
+- quick system generation now supports V1 manual measurements inside the existing Estimate Editoror:
   - length x width calculates floor area and perimeter
   - direct area and direct linear footage are accepted when the contractor already knows field quantities
   - area-based system components use sqft, perimeter-based components use LF, and count-based components use count
@@ -536,9 +536,9 @@ Today, the app should be understood this way:
 - invoice-only manual catalog-backed rows may use `catalog_items` as starting snapshots for explicit adjustments, but they remain invoice-only lineage and do not replace approved commercial billing sources
 - notifications and communications now have stored canonical foundations rather than shell-only placeholder behavior
 - Financials is now starting to read as one sectioned system:
-  - `/financials` is the cross-project control panel
-  - `/invoices` remains the billing-record manager
-  - `/payments` remains the collections and posted-payment manager
+  - Financials Home (`/financials`) is the cross-project control panel
+  - Invoices Manager Page (`/invoices`) remains the billing-record manager
+  - Payments Manager Page (`/payments`) remains the collections and posted-payment manager
   - `/financials/accounts-receivable` and `/financials/accounts-payable` are present only as structure/spec placeholders in this pass
 - `/people` remains the current workforce-oriented route, while a future `Directory` workspace is intended to unify contractor-facing account and contact browsing without changing the canonical data model underneath
 

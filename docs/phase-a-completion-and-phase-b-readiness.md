@@ -59,7 +59,7 @@ The branch now has the core contractor OS, customer portal, contact-linked porta
 - Project detail now acts as the main readiness and next-action hub.
 - Project next-action guidance distinguishes no estimate, draft/sent/rejected/approved estimate states, contract generation/signature readiness, deposit readiness, pending change orders, job scheduling, completed-work invoicing, and open invoice/payment follow-up.
 - Project handoffs preserve canonical context into `/jobs`, `/schedule`, and `/invoices`.
-- `/jobs?projectId=...` now filters canonical jobs by project and preserves the project handoff across search, status filters, and quick create.
+- `/jobs?projectId=...` now filters canonical jobs by project and preserves the project handoff across search, status filters, and Quick-Create.
 - `/invoices` now preserves project, estimate, job, and deposit workflow query context across filters/search so invoice creation stays tied to the source chain.
 
 ### Communications Baseline
@@ -82,7 +82,7 @@ The branch now has the core contractor OS, customer portal, contact-linked porta
 The Phase A internal QA integrity fix pass found and fixed these concrete issues:
 
 - `/jobs?projectId=...` accepted a project handoff but did not actually filter the jobs list.
-- Project completed-job invoice actions did not always preserve the completed job into invoice quick-create.
+- Project completed-job invoice actions did not always preserve the completed job into invoice Quick-Create.
 - `/invoices` could drop project, estimate, job, or deposit workflow context while filtering or searching.
 - Directory customer-contact copy still implied linked portal permissions were future-only.
 - Estimate send missing-email copy did not clearly name canonical `customer.email`.

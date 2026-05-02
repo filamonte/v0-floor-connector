@@ -42,6 +42,8 @@ import {
   estimateSendToCustomerInputSchema,
   estimateSystemInsertInputSchema
 } from "./schemas";
+import { createCustomer } from "@/lib/customers/data";
+import { customerInputSchema } from "@/lib/customers/schemas";
 
 function getFieldValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -205,6 +207,36 @@ function parseEstimateQuickCreateInput(formData: FormData) {
   });
 }
 
+const estimateInlineCustomerQuickCreateInputSchema = z
+  .object({
+    firstName: z.string().trim().min(1, "First name is required.").max(80),
+    lastName: z.string().trim().min(1, "Last name is required.").max(80),
+    email: z.string().trim().min(1, "Email is required.").email("Enter a valid email address."),
+    phone: z.string().trim().min(1, "Phone is required.").max(40),
+    companyName: z
+      .string()
+      .trim()
+      .max(120, "Company name must be 120 characters or fewer.")
+      .transform((value) => (value.length > 0 ? value : null)),
+    retainagePercentageDefault: customerInputSchema.shape.retainagePercentageDefault
+  })
+  .transform((value) => ({
+    ...value,
+    name: [value.firstName, value.lastName].join(" ")
+  }));
+
+function parseEstimateInlineCustomerQuickCreateInput(formData: FormData) {
+  return estimateInlineCustomerQuickCreateInputSchema.safeParse({
+    firstName: getFieldValue(formData, "inlineCustomerFirstName"),
+    lastName: getFieldValue(formData, "inlineCustomerLastName"),
+    email: getFieldValue(formData, "inlineCustomerEmail"),
+    phone: getFieldValue(formData, "inlineCustomerPhone"),
+    companyName: getFieldValue(formData, "inlineCustomerCompanyName"),
+    retainagePercentageDefault:
+      getFieldValue(formData, "inlineCustomerRetainagePercentageDefault") || "0.00"
+  });
+}
+
 function getQuickCreateEstimateFailureMessage(message: string) {
   if (/duplicate key|violates|foreign key|null value|invalid input/i.test(message)) {
     return "Estimate could not be created from that selection. Choose a customer, then select one of that customer's projects or enter a new project name before trying again.";
@@ -327,7 +359,7 @@ const expandedSystemPreviewInputSchema = z.object({
     })
 });
 
-export type EstimateAutosaveResult =
+export type EstimateSaveResult =
   | { ok: true; estimateId: string; updatedAt: string; referenceNumber: string }
   | { ok: false; type: "validation"; message: string }
   | { ok: false; type: "conflict"; message: string }
@@ -385,9 +417,9 @@ export type EstimateReusableContentImportResult =
     }
   | { ok: false; message: string };
 
-export async function autosaveEstimateAction(
+export async function saveEstimateAction(
   formData: FormData
-): Promise<EstimateAutosaveResult> {
+): Promise<EstimateSaveResult> {
   const estimateId = getFieldValue(formData, "estimateId");
   const expectedUpdatedAt = getFieldValue(formData, "expectedUpdatedAt");
   const result = parseEstimateInput(formData);
@@ -397,14 +429,14 @@ export async function autosaveEstimateAction(
     .filter((value): value is File => value instanceof File && value.size > 0);
 
   if (!estimateId) {
-    return { ok: false, type: "error", message: "Estimate id is required for autosave." };
+    return { ok: false, type: "error", message: "Estimate id is required to save." };
   }
 
   if (!result.success) {
     return {
       ok: false,
       type: "validation",
-      message: result.error.issues[0]?.message ?? "Unable to autosave estimate."
+      message: result.error.issues[0]?.message ?? "Unable to save estimate."
     };
   }
 
@@ -433,7 +465,7 @@ export async function autosaveEstimateAction(
     return {
       ok: false,
       type: "error",
-      message: error instanceof Error ? error.message : "Unable to autosave estimate."
+      message: error instanceof Error ? error.message : "Unable to save estimate."
     };
   }
 
@@ -456,7 +488,7 @@ export async function autosaveEstimateAction(
   };
 }
 
-export async function updateEstimateStatusAutosaveAction(formData: FormData) {
+export async function updateEstimateStatusSaveAction(formData: FormData) {
   const estimateId = getFieldValue(formData, "estimateId");
   const currentStatus = getFieldValue(formData, "currentStatus");
   const nextStatus = getFieldValue(formData, "nextStatus");
@@ -885,6 +917,99 @@ export async function quickCreateEstimateAction(formData: FormData) {
   redirect(
     buildRedirect(`/estimates/${estimate.id}/edit`, {
       message: `${estimate.referenceNumber} was created. Finish the full scope in this workspace.`
+    })
+  );
+}
+
+export async function quickCreateEstimateCustomerAction(formData: FormData) {
+  const creationMode = getFieldValue(formData, "creationMode");
+  const opportunityId = getFieldValue(formData, "opportunityId");
+  const currentCustomerId = getFieldValue(formData, "customerId");
+  const projectId = getFieldValue(formData, "projectId");
+  const projectName = getFieldValue(formData, "projectName");
+  const title = getFieldValue(formData, "title");
+  const firstName = getFieldValue(formData, "inlineCustomerFirstName");
+  const lastName = getFieldValue(formData, "inlineCustomerLastName");
+  const email = getFieldValue(formData, "inlineCustomerEmail");
+  const phone = getFieldValue(formData, "inlineCustomerPhone");
+  const companyName = getFieldValue(formData, "inlineCustomerCompanyName");
+  const result = parseEstimateInlineCustomerQuickCreateInput(formData);
+
+  const baseParams = {
+    compose: "1",
+    creationMode,
+    opportunityId,
+    customerId: currentCustomerId,
+    projectId,
+    projectName,
+    title,
+    inlineCustomerFirstName: firstName,
+    inlineCustomerLastName: lastName,
+    inlineCustomerEmail: email,
+    inlineCustomerPhone: phone,
+    inlineCustomerCompanyName: companyName
+  };
+
+  if (!result.success) {
+    const issue = result.error.issues[0];
+
+    redirect(
+      buildRedirect("/estimates", {
+        ...baseParams,
+        errorScope: "inlineCustomer",
+        errorField: issue?.path[0]
+          ? `inlineCustomer${String(issue.path[0]).slice(0, 1).toUpperCase()}${String(issue.path[0]).slice(1)}`
+          : "inlineCustomer",
+        error: issue?.message ?? "Unable to create customer."
+      })
+    );
+  }
+
+  let customer;
+
+  try {
+    customer = await createCustomer({
+      name: result.data.name,
+      companyName: result.data.companyName,
+      phone: result.data.phone,
+      email: result.data.email,
+      addressLine1: null,
+      addressLine2: null,
+      city: null,
+      stateRegion: null,
+      postalCode: null,
+      countryCode: null,
+      isTaxExempt: false,
+      taxExemptionReason: null,
+      taxExemptionReference: null,
+      taxExemptionExpiresOn: null,
+      retainagePercentageDefault: result.data.retainagePercentageDefault,
+      notes: null
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/estimates", {
+        ...baseParams,
+        errorScope: "inlineCustomer",
+        error:
+          error instanceof Error ? error.message : "Unable to create customer."
+      })
+    );
+  }
+
+  revalidatePath("/customers");
+  revalidatePath(`/customers/${customer.id}`);
+  revalidatePath("/estimates");
+
+  redirect(
+    buildRedirect("/estimates", {
+      compose: "1",
+      creationMode,
+      opportunityId,
+      customerId: customer.id,
+      projectName,
+      title,
+      message: `${customer.name} was created and selected for this estimate.`
     })
   );
 }

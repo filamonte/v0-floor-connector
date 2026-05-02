@@ -30,7 +30,7 @@ Supporting records such as appointments, punchlists, time, daily logs, and progr
 
 Interpretation:
 - projects should be the main contractor workspace for connected delivery work
-- global routes can still exist as cross-project manager surfaces and queues
+- global routes can still exist as cross-project Manager Page surfaces and queues
 - downstream records should point back to project continuity instead of becoming separate workflow homes
 
 ## Non-Negotiable Continuity
@@ -49,15 +49,15 @@ Do not break these:
 The active contractor UI baseline is already established:
 - top-nav-first contractor shell
 - flattened unified header with breadcrumb and page context
-- dashboard as the visual reference point for manager surfaces
-- shared manager-page wrapper and command-bar rhythm
-- quick-create -> canonical record -> full workspace
+- dashboard as the visual reference point for Manager Page surfaces
+- shared Manager Page wrapper and command-bar rhythm
+- Quick-Create -> canonical record -> full workspace
 - black/near-black framing, gray secondary chrome, orange emphasis, and light-neutral work surfaces
 
 Do not reintroduce:
 - blue-heavy contractor chrome
 - always-on left-nav as the primary app model
-- permanently open create forms on manager pages
+- permanently open create forms on Manager Pages
 - module-specific visual systems
 
 ## Module Behavior Rules
@@ -66,9 +66,9 @@ Modules are work surfaces, not separate products.
 
 Modules should:
 - use shared canonical entities
-- expose cross-project queues or manager surfaces where helpful
-- link back into project and record workspaces
-- use shared quick-create and shared workspace language where practical
+- expose cross-project queues or Manager Page surfaces where helpful
+- link back into project and Record Workspaces
+- use shared Quick-Create and shared workspace language where practical
 
 Modules must not:
 - invent duplicate business models

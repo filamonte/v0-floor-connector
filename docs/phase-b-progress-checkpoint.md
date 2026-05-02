@@ -27,8 +27,8 @@ Phase B has moved from planning into first-pass internal-beta foundations. These
 Complete:
 - Dashboard now shows a lightweight `Start here` setup guide for first-login readiness.
 - Setup guidance checks for organization settings, first customer, first project, and first estimate.
-- Leads, customers, projects, and estimates have clearer first-record empty states and direct quick-create actions.
-- Quick-create remains the existing canonical-record-first flow and hands off into full record workspaces.
+- Leads, customers, projects, and estimates have clearer first-record empty states and direct Quick-Create actions.
+- Quick-Create remains the existing canonical-record-first flow and hands off into full record workspaces.
 
 What this means:
 - A fresh contractor organization has a clearer path into real setup without seed/demo data.

@@ -17,7 +17,7 @@ Use these docs together:
 - [docs/estimate-builder-build-plan.md](C:/FloorConnector/docs/estimate-builder-build-plan.md): long-term Estimate Builder blueprint
 - [docs/estimate-builder-v1-scope.md](C:/FloorConnector/docs/estimate-builder-v1-scope.md): constrained Estimate Builder V1 scope
 - [docs/estimate-builder-system-generation-spec.md](C:/FloorConnector/docs/estimate-builder-system-generation-spec.md): future system-generation planning detail
-- [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): future/planned UI, directory/contact, tax, estimate editor, project-address, and workflow-guidance alignment backlog
+- [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): future/planned UI, directory/contact, tax, Estimate Editoror, project-address, and workflow-guidance alignment backlog
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
 - [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md): mandatory UI and module implementation rules
 
@@ -156,18 +156,18 @@ Current shell behavior:
 - wider main workspace and calmer dashboard-first shell framing
 - flattened shell/header chrome with one shared contractor header system instead of competing stacked header layers
 - shared breadcrumb and page-context continuity now live inside the unified top header structure instead of a separate colored band beneath navigation
-- the contractor shell and shared manager-page wrappers now use the same black/gray/orange/white theme direction as the dashboard instead of the older blue-heavy overview styling
-- shared contractor manager-page wrapper and command-bar pattern now drive the main overview surfaces
+- the contractor shell and shared Manager Page wrappers now use the same black/gray/orange/white theme direction as the dashboard instead of the older blue-heavy overview styling
+- shared contractor Manager Page wrapper and command-bar pattern now drive the main overview surfaces
 - the always-on left sidebar is no longer the primary navigation pattern
 - left-side navigation is now reserved for contextual workspace use where needed inside deeper screens
 - the first major contractor workspace UI normalization and polish pass is now complete enough to stop and move on from
 - dashboard, projects, leads, invoices, contracts, customers, estimates, appointments, daily logs, time, people, vendors, and jobs now follow the shared contractor manager rhythm closely enough that it should be treated as the active UI baseline
-- a first shared universal-create launcher now exists in the shell and dashboard, routing into the existing module quick-create managers so new canonical records can be started broadly without creating a second creation system
+- a first shared universal-create launcher now exists in the shell and dashboard, routing into the existing module Quick-Create managers so new canonical records can be started broadly without creating a second creation system
 - a first real contractor-side global search now exists at the shared shell level:
   - one shared search entry point for contractor users
   - rendered in the shared contractor shell footer instead of the top header
 - tenant-safe search across canonical opportunities, customers, projects, appointments, estimates, contracts, invoices, jobs, punchlist items, payments, people, and vendors
-  - grouped result sets that route straight into the existing record workspaces or linked invoice workspace for payment activity
+  - grouped result sets that route straight into the existing Record Workspaces or linked Invoice Workspace for payment activity
 - a first real contractor-side notifications layer now exists in the shared shell and dashboard:
   - derived from canonical jobs, invoices, contracts, appointments, punchlists, progress billing, estimate customer activity, and communication activity
   - backed by stored `notification_events`, per-user `notifications`, and channel-aware `notification_deliveries`
@@ -179,43 +179,43 @@ Current shell behavior:
 - first-login onboarding readiness has been polished without adding schema or new workflow logic:
   - dashboard now shows a lightweight `Start here` setup guide until settings, the first customer, the first project, and the first estimate are present
   - dashboard links now route to the current canonical `/leads` and `/appointments` surfaces
-  - first-empty states on leads, customers, projects, and estimates now include direct quick-create actions and clearer "create your first..." guidance
-  - quick-create remains the existing canonical-record-first path and still hands off into the full workspace
+  - first-empty states on leads, customers, projects, and estimates now include direct Quick-Create actions and clearer "create your first..." guidance
+  - Quick-Create remains the existing canonical-record-first path and still hands off into the full workspace
 
 ### Contractor UI System
 
 Implemented contractor UI direction now includes:
 - top-nav-first navigation as the default contractor app model
 - one flattened shell/header system with breadcrumb and page context folded into the same top header instead of a permanent left-nav-plus-header stack
-- thinner command/search strips beneath page identity on manager surfaces
-- dashboard as a denser and more curated operational command-center surface with modular queue widgets, stronger quick-create entry, and continuity back into shared records instead of a loose summary page
+- thinner command/search strips beneath page identity on Manager Page surfaces
+- dashboard as a denser and more curated operational command-center surface with modular queue widgets, stronger Quick-Create entry, and continuity back into shared records instead of a loose summary page
 - dashboard validation polish now promotes canonical attention items, open estimates, unpaid invoices, upcoming appointments, leads, active projects, and today/live jobs near the top of the home board without introducing fake dashboard data
-- early module-dashboard direction on top of the same shared manager-page system, with estimates and invoices now reading more like operational entry surfaces than plain lists
-- manager pages built around:
+- early module-dashboard direction on top of the same shared Manager Page system, with estimates and invoices now reading more like operational entry surfaces than plain lists
+- Manager Pages built around:
   - page identity
   - command bar
   - overview/list workspace
-- shared composer-sheet pattern for create flows on the main contractor manager pages instead of permanently open create forms
-- quick-create overlays are now the default contractor manager create behavior where appropriate:
+- shared composer-sheet pattern for create flows on the main contractor Manager Pages instead of permanently open create forms
+- Quick-Create overlays are now the default contractor manager create behavior where appropriate:
   - collect minimum required fields only
   - create the canonical record first
-  - route directly into the full record workspace for complete editing
-- estimate quick-create now starts from customer/account and project context; optional opportunity selection is treated as upstream continuity, and project-launched handoff derives the customer before creating the estimate
+  - route directly into the full Record Workspace for complete editing
+- estimate Quick-Create now starts from customer/account and project context; optional opportunity selection is treated as upstream continuity, and project-launched handoff derives the customer before creating the estimate
 - lead and project estimate handoff links now preserve an existing linked opportunity id when available so Add Estimate can reuse upstream continuity instead of creating duplicate opportunity context
-- estimate quick-create now also reuses an existing opportunity already linked to the selected customer project when `/estimates` starts from a customer/project selection without an explicit opportunity, preventing duplicate upstream opportunity context for the same project
-- seed-free estimate QA tightened the customer workspace so related contacts and portal access reads degrade safely against older local schema caches, and customer detail now shows connected estimate rows in addition to the estimate count
-- the shell and dashboard now expose a shared universal-create launcher that deep-links into those existing quick-create overlays across the canonical workflow
+- estimate Quick-Create now also reuses an existing opportunity already linked to the selected customer project when `/estimates` starts from a customer/project selection without an explicit opportunity, preventing duplicate upstream opportunity context for the same project
+- seed-free estimate QA tightened the Customer Workspace so related contacts and portal access reads degrade safely against older local schema caches, and customer detail now shows connected estimate rows in addition to the estimate count
+- the shell and dashboard now expose a shared universal-create launcher that deep-links into those existing Quick-Create overlays across the canonical workflow
 
 Current contractor UI design notes:
-- the dashboard is now the visual reference point for the contractor app shell and manager-surface language
+- the dashboard is now the visual reference point for the contractor app shell and Manager Page surface language
 - the dashboard now reads more like a contractor home base than a light summary page:
   - compact priority metrics
   - modular commercial, operations, and finance queues
-  - local quick-create studio using canonical short-form create flows
+  - local Quick-Create studio using canonical short-form create flows
   - stronger black/orange-inspired contractor styling scoped to the dashboard surface
 - that dashboard/header direction is now pushed more broadly through the protected contractor app:
-  - shared manager-page headers and command bars
-  - shared quick-create/composer surfaces
+  - shared Manager Page headers and command bars
+  - shared Quick-Create/composer surfaces
   - shared settings and linked-record cards
   - shared overview/detail typography and surface treatment
 - the active contractor-app theme direction is now:
@@ -228,34 +228,34 @@ Current contractor UI design notes:
 - deeper record pages may still use contextual side navigation where it helps, but overview navigation should remain top-nav-first
 - dashboards should act as entry surfaces into the shared lifecycle, not as separate module worlds
 - the current contractor UI direction should now be treated as implemented truth, not as an experimental branch of the product
-- the contractor UI normalization phase is now complete enough to stop; future contractor UI work should start from this baseline instead of reopening the core shell and manager-page system
+- the contractor UI normalization phase is now complete enough to stop; future contractor UI work should start from this baseline instead of reopening the core shell and Manager Page system
 - the contractor-facing app is now coherent enough for broader testing, with remaining issues understood as polish and density work rather than structural UI drift
 
 Current protected routes include:
-- `/dashboard`
-- `/financials`
-- `/leads`
-- `/customers`
-- `/projects`
-- `/estimates`
-- `/change-orders`
-- `/contracts`
-- `/invoices`
-- `/payments`
-- `/reports`
-- `/progress-billing`
-- `/schedule`
-- `/communications`
-- `/appointments`
-- `/jobs`
-- `/punchlists`
-- `/daily-logs`
-- `/directory`
-- `/people`
-- `/vendors`
-- `/time`
-- `/materials`
-- `/settings`
+- Dashboard (`/dashboard`)
+- Financials Home (`/financials`)
+- Leads Manager Page (`/leads`)
+- Customers Manager Page (`/customers`)
+- Projects Manager Page (`/projects`)
+- Estimates Manager Page (`/estimates`)
+- Change Orders Manager Page (`/change-orders`)
+- Contracts Manager Page (`/contracts`)
+- Invoices Manager Page (`/invoices`)
+- Payments Manager Page (`/payments`)
+- Reports Home (`/reports`)
+- Progress Billing Manager Page (`/progress-billing`)
+- Schedule Manager Page (`/schedule`)
+- Communications Manager Page (`/communications`)
+- Appointments Manager Page (`/appointments`)
+- Jobs Manager Page (`/jobs`)
+- Punchlists Manager Page (`/punchlists`)
+- Daily Logs Manager Page (`/daily-logs`)
+- Directory Workspace (`/directory`)
+- People Manager Page (`/people`)
+- Vendors Manager Page (`/vendors`)
+- Time Manager Page (`/time`)
+- Materials Manager Page (`/materials`)
+- Settings (`/settings`)
 
 Current route-language note:
 - `/people` is still the implemented workforce-oriented route today
@@ -390,9 +390,9 @@ Implemented:
 - project detail now acts as the upstream sales-to-production readiness hub with blocker visibility, next-best-action guidance, and a derived ready-to-schedule handoff state
 - project readiness is now enforced server-side through a centralized readiness gate before job creation, scheduling, and execution workflows can proceed
 - project detail next-action guidance now distinguishes draft/sent/rejected/approved estimate states, contract draft/signature states, deposit readiness, pending change orders, job scheduling, completed-work invoicing, and open invoice/payment follow-up using existing canonical records only
-- project detail completed-job invoice actions now preserve the canonical `jobId` when handing off to invoice quick-create, and active job follow-up routes through `/jobs?projectId=...` so the project context is not lost
+- project detail completed-job invoice actions now preserve the canonical `jobId` when handing off to invoice Quick-Create, and active job follow-up routes through `/jobs?projectId=...` so the project context is not lost
 - estimate, contract, and invoice detail pages now point users back to the project readiness hub when the upstream handoff state matters
-- the contractor app now has a defined reusable record-workspace direction: header, workflow summary, primary workspace, context rail, and lower-priority secondary sections
+- the contractor app now has a defined reusable Record Workspace direction: header, workflow summary, primary workspace, context rail, and lower-priority secondary sections
 - project, estimate, contract, invoice, and job detail now all use that shared workspace pattern closely enough that the first major UI layout-system polish pass is considered complete
 - dashboard, leads, estimate detail, and project detail now normalize the phase-one lead-to-invoice CTA vocabulary around `Start estimate`, `Send estimate`, `Approve estimate`, `Generate contract`, `Open progress billing`, and `Create invoice` without changing workflow logic
 - project detail now surfaces linked appointments so project-facing visits and customer coordination stay visible on the same operational root without becoming a second scheduler
@@ -459,15 +459,15 @@ Current portal access design notes:
 - the customer-facing portal now has a real protected shell, portal home workspace, and project-detail workspace built on that same scoped read layer
 - customer-facing estimate, contract, and invoice review pages now exist inside the portal on top of the same tenant-safe canonical record loaders
 - portal review remains customer-safe and canonical-record-based in this pass, with contract signing now live on the shared contract record and portal invoice review now able to start customer payment activity on the same canonical invoice and payment chain without introducing a duplicate portal billing model
-- portal home and project workspaces now reflect payment-requested, payment-in-progress, partially-paid, and paid outcomes as part of the same shared project workflow guidance
+- portal home and Project Workspaces now reflect payment-requested, payment-in-progress, partially-paid, and paid outcomes as part of the same shared project workflow guidance
 
 ### Change Orders
 
 Implemented:
 - organization-scoped canonical change order schema
 - change order linkage to the shared project record and optional linkage to the shared contract and invoice records
-- contractor-side change-order manager page using the shared manager-page and command-bar pattern
-- contractor-side quick-create overlay that captures minimum required fields before routing into the full workspace
+- contractor-side change-order Manager Page using the shared Manager Page and command-bar pattern
+- contractor-side Quick-Create overlay that captures minimum required fields before routing into the full workspace
 - contractor-side change-order detail/workspace page for draft editing, send-for-review, and review-state visibility
 - customer-facing portal review page for viewing, approving, and rejecting sent change orders
 - immutable approved change-order commercial snapshot creation on approval
@@ -492,7 +492,7 @@ Change orders currently link to:
 Current change-order design notes:
 - change orders are canonical shared records, not report-only records and not a portal-specific approval object
 - change orders extend the existing project, contract, and invoice chain instead of creating a separate scope-change subsystem
-- contractor-side quick create captures only the minimum project, title, price-adjustment, and optional linked-record context before handing off to the full change-order workspace
+- contractor-side Quick-Create captures only the minimum project, title, price-adjustment, and optional linked-record context before handing off to the full change-order workspace
 - customer approval and rejection now happen against the same canonical change-order record through the scoped portal surface
 - approved change orders create immutable downstream billing lineage instead of mutating prior approved estimate scope
 - approved change-order snapshots are append-only and can extend SOV or invoice workflows from the same canonical record chain
@@ -791,7 +791,7 @@ Implemented:
 - project-to-estimate relationship
 - customer derived from project
 - proposal-style estimate detail page
-- dedicated estimate edit page
+- dedicated Estimate Editoror page
 - status transition actions
 - estimate detail now surfaces project-level readiness context and a clearer preferred next action instead of implying older parallel downstream shortcuts
 - contractor-side customer send flow for estimates
@@ -831,7 +831,7 @@ Planned but not implemented in the current estimate system:
 
 Implemented:
 - estimate line item schema
-- line-item-based estimate editor
+- line-item-based Estimate Editoror
 - add/edit/remove line items
 - database-calculated subtotal and total logic
 - tax and discount support
@@ -893,7 +893,7 @@ Implemented:
 - create-invoice flow from project
 - create-invoice flow from approved estimate
 - create-invoice flow from job
-- line-item-based invoice editor
+- line-item-based Invoice Editoror
 - invoice-linked payment recording foundation
 - org financial setting aware tax and retainage scaffolding
 - reporting-ready taxable/exempt/tax-collected foundations
@@ -927,19 +927,19 @@ Current invoice design notes:
 - limited catalog-backed invoice usage exists only inside invoice-only adjustments / manual catalog-backed rows, where the catalog item is used as a starting snapshot for an explicit adjustment
 - free catalog insertion as normal invoice scope is not implemented or allowed; approved estimate, SOV, approved change-order, or explicit invoice-only adjustment lineage must remain the billing source
 - downstream billing must not read directly from `estimate_line_items`; those rows remain estimate authoring state only
-- contractor-side invoice manager quick create now captures only the minimum project and workflow-role context, creates the canonical draft invoice, and routes into the full invoice workspace for complete editing
-- contractor-side project, customer, lead, contract, and daily-log managers now also use quick create overlays that capture only minimum required fields before handing off to the full record workspace
+- contractor-side invoice manager Quick-Create now captures only the minimum project and workflow-role context, creates the canonical draft invoice, and routes into the full Invoice Workspace for complete editing
+- contractor-side project, customer, lead, contract, and daily-log managers now also use Quick-Create overlays that capture only minimum required fields before handing off to the full Record Workspace
 - invoice overview now follows the early module-dashboard direction: summary, actionable queues, and continuity back into the shared project and billing chain
-- invoice manager now preserves project, estimate, job, and deposit workflow context in URL-driven handoffs so project/job invoice quick-create stays anchored to the same canonical chain
-- a dedicated payments manager page now exists as a finance-side module dashboard:
+- invoice manager now preserves project, estimate, job, and deposit workflow context in URL-driven handoffs so project/job invoice Quick-Create stays anchored to the same canonical chain
+- a dedicated payments Manager Page now exists as a finance-side module dashboard:
   - review-first summary of recorded, pending, failed, and open collection activity
   - continuity back into the same canonical invoice, customer, and project chain
   - immutable payment-event visibility without replacing invoice detail as billing truth
-- a first contractor-side schedule manager page now exists on top of the canonical job model:
+- a first contractor-side schedule Manager Page now exists on top of the canonical job model:
   - review-first summary of unscheduled, today, in-progress, and upcoming work
   - explicit schedule-view and crew-filter state normalization on the same `/schedule` surface
   - optional `projectId` URL filtering for project-scoped schedule handoff, applied directly against canonical `jobs.project_id` while still allowing `q` text search to narrow the same result set
-  - optional `projectId` URL filtering on `/jobs`, applied directly against canonical `jobs.project_id` while preserving view, search, and quick-create handoff state
+  - optional `projectId` URL filtering on `/jobs`, applied directly against canonical `jobs.project_id` while preserving view, search, and Quick-Create handoff state
   - compact active-filter banner on `/schedule` for project, search, crew, and selected job/action handoff state, with per-filter clear links that preserve the remaining query context
   - next-actions guidance for jobs that need scheduling, crew assignment, or immediate attention
   - cross-job visibility into crew assignment state using canonical `job_assignments`
@@ -951,16 +951,16 @@ Current invoice design notes:
   - scheduled jobs render from the same canonical job scheduling fields without introducing a separate scheduling model
 - inline schedule and crew-assignment action panel that reuses the existing job scheduling and assignment server actions
 - crew assignment can now be reviewed and unassigned directly from the same `/schedule` action panel, without leaving the canonical job and `job_assignments` chain
-- the `/schedule` action panel now blocks crew attachment until the job has a real date commitment and points users back to people, vendors, job, and project workspaces when the next prerequisite is elsewhere
-- quick links back into the same canonical job and project workspaces instead of a separate dispatch subsystem
+- the `/schedule` action panel now blocks crew attachment until the job has a real date commitment and points users back to people, vendors, job, and Project Workspaces when the next prerequisite is elsewhere
+- quick links back into the same canonical job and Project Workspaces instead of a separate dispatch subsystem
 
 ### Appointments
 
 Implemented:
 - canonical appointment schema linked to required organization plus optional opportunity, customer, and project continuity
 - optional assigned-person linkage to the shared people model
-- contractor-side appointments manager/list page using the shared manager-page pattern
-- contractor-side quick-create overlay that captures minimum visit or meeting context before routing into the full workspace
+- contractor-side appointments manager/list page using the shared Manager Page pattern
+- contractor-side Quick-Create overlay that captures minimum visit or meeting context before routing into the full workspace
 - contractor-side appointment detail/workspace page for timing, linked-record continuity, assignment, notes, and status progression
 - dashboard shortcut and priority visibility replacing the old appointment-management placeholder
 - lead, customer, and project continuity links into the same appointment workflow
@@ -1021,10 +1021,10 @@ Implemented:
 - successful customer-facing payment workflow events now create or finalize canonical `payments` rows instead of introducing a second checkout or portal-payment model
 - verified Stripe webhook/callback handling now finalizes or voids the same canonical pending payment rows idempotently using provider event identifiers and canonical payment references
 - project commercial-readiness sync continues to flow from canonical invoice/payment status after successful payment finalization or payment voiding
-- contractor-side invoice detail now surfaces online-payment readiness, recent payment-event signals, and customer-facing payment continuity without leaving the canonical invoice workspace
+- contractor-side invoice detail now surfaces online-payment readiness, recent payment-event signals, and customer-facing payment continuity without leaving the canonical Invoice Workspace
 - contractor-side project detail now reflects deposit and invoice payment outcomes more clearly in readiness guidance and linked invoice summaries
 - portal invoice review now surfaces customer-safe payment state, recent immutable payment activity, and a real customer-facing checkout-session handoff on the same canonical invoice/payment chain
-- portal home and portal project workspaces now carry forward the latest canonical invoice payment progress so payment requests, in-progress checkout, partial payment, and settled outcomes read as part of one connected customer-facing workflow
+- portal home and portal Project Workspaces now carry forward the latest canonical invoice payment progress so payment requests, in-progress checkout, partial payment, and settled outcomes read as part of one connected customer-facing workflow
 - contractor and portal payment guidance now distinguish real provider-backed completion, failure, void, pending, partial, and paid outcomes without introducing any separate billing model or checkout record
 
 Payment design notes:
@@ -1041,8 +1041,8 @@ Payment design notes:
 Implemented:
 - canonical punchlist item schema linked to the shared project record and optional shared job record
 - optional assignee linkage to the shared people model
-- contractor-side punchlist manager/list page using the shared manager-page pattern
-- contractor-side quick-create overlay that captures minimum required closeout context before routing into the full workspace
+- contractor-side punchlist manager/list page using the shared Manager Page pattern
+- contractor-side Quick-Create overlay that captures minimum required closeout context before routing into the full workspace
 - contractor-side punchlist detail/workspace page for details, due date, assignee, and status progression
 - project and job continuity sections now surface linked punchlist items on the same shared execution chain
 
@@ -1161,8 +1161,8 @@ Implemented:
 - optional linked inventory tracking on catalog items through `inventory_items`
 - linked inventory tracking now exposes quantity on hand, reorder point, default location, manual adjustments, and recent transaction history from the same cost item workflow
 - canonical `catalog_system_components` foundation for system / assembly rows attached to `catalog_items`
-- estimate line item authoring can add active non-system `catalog_items` from the estimate editor Catalog Items panel, with server-owned snapshot creation
-- archived catalog items remain visible for review in the estimate editor panel but are blocked from insertion and rejected server-side
+- estimate line item authoring can add active non-system `catalog_items` from the Estimate Editoror Catalog Items panel, with server-owned snapshot creation
+- archived catalog items remain visible for review in the Estimate Editoror panel but are blocked from insertion and rejected server-side
 - system catalog items continue to use the existing system expansion flow instead of direct single-line catalog insertion
 - sqft-expanded systems continue to generate normal canonical estimate line item snapshots through the existing system flow
 - organization-scoped reusable `estimate_content_blocks` foundation for scope, inclusion, exclusion, and terms snippets
@@ -1177,7 +1177,7 @@ Current design notes:
 - inventory availability is now controlled through the shared platform / organization feature policy key `inventory_enabled`
 - linked inventory rows currently use the default location in the contractor UI, while the schema allows additional locations later without splitting the item master
 - item-level tax UX is intentionally simplified to a taxable on or off checkbox, with tax rates remaining in organization and platform financial settings and optional `tax_code_id` retained as advanced infrastructure
-- estimate item sourcing snapshots from `catalog_items` for active non-system catalog items through the estimate editor panel; general-purpose invoice catalog insertion and materials execution workflows remain future work
+- estimate item sourcing snapshots from `catalog_items` for active non-system catalog items through the Estimate Editoror panel; general-purpose invoice catalog insertion and materials execution workflows remain future work
 - limited invoice-only manual catalog-backed rows may use `catalog_items` as a starting snapshot for explicit invoice-only adjustments, but they do not create approved-scope invoice billing from live catalog rows
 - invoice pricing remains snapshot-based through approved estimate, SOV, change-order, or invoice-only lineage; inventory quantity is operational context only and does not drive pricing
 - `system` remains the canonical reusable assembly concept, with component rows designed to scale immediately by sqft in estimates
@@ -1236,7 +1236,7 @@ Current contract design notes:
 - send-for-signature now creates signer routing and immutable signature-request events instead of relying only on manual status changes
 - customer view, sign, decline, and optional contractor countersign now progress through signer-state validation and immutable signature events before the canonical contract reaches final `signed` state
 - contractor-side contract detail now includes explicit send-for-signature controls with customer portal signer selection and optional contractor countersigner assignment
-- contractor-side contract detail now surfaces canonical signature-state timestamps, signer routing/status visibility, and recent immutable signature events inside the existing contract workspace
+- contractor-side contract detail now surfaces canonical signature-state timestamps, signer routing/status visibility, and recent immutable signature events inside the existing Contract Workspace
 - contractor-side countersign now has a dedicated workspace action when the signed customer contract is waiting on the assigned organization signer
 - portal contract review now supports customer-facing signature-state visibility, signer visibility, and customer sign/decline actions on the same canonical contract record through tenant-safe portal scope
 - linked-contact customer-contact portal permissions now enforce estimate, change-order, and contract decision authority in the following limited first-pass ways:
@@ -1249,7 +1249,7 @@ Current contract design notes:
   - null-contact customer-level grants continue to use legacy behavior in this first pass
 - project readiness and portal project continuity now react to canonical signed-contract outcomes so signature completion changes the next visible commercial step instead of staying isolated on the contract page
 - contractor project detail now surfaces latest contract signature handoff summary alongside the readiness hub
-- portal project workspace now reflects signed-contract completion in project guidance and contract summaries before later payment work is introduced
+- portal Project Workspace now reflects signed-contract completion in project guidance and contract summaries before later payment work is introduced
 - future e-sign integrations are expected to attach provider metadata and provider lifecycle events to the same contract foundation rather than creating a separate signed-document silo
 
 ## Current Workflow Coverage
@@ -1270,29 +1270,29 @@ The current implemented workflow foundation supports:
 - project management
 - estimate authoring with line items and totals
 - estimate line items are now the authoritative estimate item-row source of truth; `estimates.content.itemRows` remains legacy read/migration-only
-- estimate workspace item sourcing is now catalog/cost-item-first, using active catalog items and sqft-scaled system expansion into canonical estimate line items
-- Estimate Builder V1 quick system generation is now implemented inside the existing estimate editor:
-  - contractors can add active non-system catalog items from the estimate editor Catalog Items panel; insertion uses the existing server action path to create immutable estimate line-item snapshots for name, description, unit, pricing, taxability, source metadata, and supported cost fields
+- Estimate Workspace item sourcing is now catalog/cost-item-first, using active catalog items and sqft-scaled system expansion into canonical estimate line items
+- Estimate Builder V1 quick system generation is now implemented inside the existing Estimate Editoror:
+  - contractors can add active non-system catalog items from the Estimate Editoror Catalog Items panel; insertion uses the existing server action path to create immutable estimate line-item snapshots for name, description, unit, pricing, taxability, source metadata, and supported cost fields
   - archived catalog items are visible in the Catalog Items panel for review but cannot be inserted, and server-side insertion rejects archived/inactive catalog items
   - system catalog items remain routed through the system expansion flow instead of direct single-line catalog insertion
   - contractors can select an existing catalog system, enter length x width or direct area plus linear footage, preview area/perimeter-derived quantities, and append grouped canonical estimate line items
   - existing catalog system components map `sqft`/area basis rows to area, `lf`/perimeter basis rows to linear footage, and count basis rows to count input
-  - the estimate editor now uses clearer V1 terminology for Catalog Items, Systems, Add-ons / Options, and Document Templates; Add-ons / Options reuse the existing catalog item `category` field instead of introducing a separate schema
+  - the Estimate Editoror now uses clearer V1 terminology for Catalog Items, Systems, Add-ons / Options, and Document Templates; Add-ons / Options reuse the existing catalog item `category` field instead of introducing a separate schema
   - Catalog Items categorized as Add-ons / Options can be inserted directly or included in Systems with existing `sqft`, `lf`, count/ea, or fixed/project basis behavior; dedicated optional-component toggles remain a future Templates & Systems decision
   - generated lines remain normal editable estimate line items with catalog pricing snapshotted at insertion
   - one-off estimate-line unit price overrides are supported in the existing item table and persist on the estimate line without mutating catalog defaults
   - customer-facing portal estimate review groups line items by the existing generated group snapshot and continues to hide internal cost, markup, hidden markup, and labor/cost internals
-- estimate edit now groups item insertion into one clearer estimating-tools cluster: `Add manual item`, `Add from catalog`, and `Import from another estimate`, while keeping manual entry catalog-backed and non-billing-authoritative
+- Estimate Editoror now groups item insertion into one clearer estimating-tools cluster: `Add manual item`, `Add from catalog`, and `Import from another estimate`, while keeping manual entry catalog-backed and non-billing-authoritative
 - estimate line-item import from another estimate is now live for same-organization source estimates into draft destination estimates only; imported rows are reseeded as new destination `estimate_line_items` and do not create invoice rows, SOV rows, contracts, or payments
-- estimate edit and detail now use clearer reusable-content language for scope / SOW, project details, terms, inclusions, and exclusions, and they distinguish insertable content blocks from defaults that only prefill empty estimates
-- estimate edit now also uses one shared reusable-content insertion area for scope / SOW, terms, inclusions, and exclusions, reusing the existing content-block system while preserving append behavior into the live estimate
-- reusable content import from another estimate is now live for same-organization source estimates into draft destination estimates only; Scope / SOW, Terms, Inclusions, and Exclusions append into the live destination estimate workspace without changing defaults, line items, or downstream billing records
+- Estimate Editoror and detail now use clearer reusable-content language for scope / SOW, project details, terms, inclusions, and exclusions, and they distinguish insertable content blocks from defaults that only prefill empty estimates
+- Estimate Editoror now also uses one shared reusable-content insertion area for scope / SOW, terms, inclusions, and exclusions, reusing the existing content-block system while preserving append behavior into the live estimate
+- reusable content import from another estimate is now live for same-organization source estimates into draft destination estimates only; Scope / SOW, Terms, Inclusions, and Exclusions append into the live destination Estimate Workspace without changing defaults, line items, or downstream billing records
 - estimate import now uses one shared source-estimate chooser in the estimating tools area so users pick a source once, then choose `Import line items`, `Import Scope / SOW`, `Import Terms`, `Import Inclusions`, or `Import Exclusions` without changing any import behavior
-- estimate workspace edits now use autosave with validation, dirty/error state handling, and stale-write conflict protection
+- Estimate Workspace edits now use autosave with validation, dirty/error state handling, and stale-write conflict protection
 - estimate defaults now hydrate only when the estimate content is initially empty, using platform defaults first and organization overrides second
 - contractor workflow settings now explain estimate defaults more explicitly: Scope / SOW, Terms, Inclusions, and Exclusions are organization-owned starting defaults for empty estimates only, while reusable blocks append on demand and estimate import copies from a selected prior estimate
 - estimate customer send, email tracking, portal review, and status progression
-- estimate detail, customer portal-access setup, portal project visibility, portal estimate approval, and contract quick-create now include compact prerequisite guidance for the current send -> approval -> approved-snapshot -> contract generation path without weakening canonical guards
+- estimate detail, customer portal-access setup, portal project visibility, portal estimate approval, and contract Quick-Create now include compact prerequisite guidance for the current send -> approval -> approved-snapshot -> contract generation path without weakening canonical guards
 - estimate create, update, and status transitions now refresh the linked project's stored commercial-readiness fields, including project reassignment during estimate updates
 - approved estimate commercial snapshot creation on approval for downstream lineage
 - approved-estimate-to-contract generation and pre-sign contract editing
@@ -1309,7 +1309,7 @@ The current implemented workflow foundation supports:
 - job progression through execution states
 - invoice creation and maintenance from connected project, estimate, and job records
 - standard invoice creation without a job now respects the commercial handoff gate instead of bypassing contract-signature and deposit or financing readiness
-- invoice quick-create now requires a real billing source before draft creation: completed job, approved estimate scope, approved change order, or explicit deposit role
+- invoice Quick-Create now requires a real billing source before draft creation: completed job, approved estimate scope, approved change order, or explicit deposit role
 - approved estimate next steps no longer present full estimate-based invoice creation as a primary action; approval routes users toward contract or project readiness before billing
 - progress billing invoice preparation now uses the same invoice commercial readiness guard as standard invoice creation while staying on the approved-estimate -> schedule-of-values -> invoice chain
 - snapshot-based invoice lineage across direct estimate billing, SOV billing, approved change-order billing, and invoice-only adjustments
@@ -1329,16 +1329,16 @@ The current implemented workflow foundation supports:
 ## What Exists But Is Still Minimal
 
 These surfaces exist but are still foundational rather than production-complete:
-- dashboard command-center surface, including modular queue composition and quick-create studio direction
+- dashboard command-center surface, including modular queue composition and Quick-Create studio direction
 - early module-dashboard pattern on overview pages
 - Financials Home control-panel structure, with AR and AP still defined only as placeholders
-- payments manager surface on the same shared manager-page system
+- payments manager surface on the same shared Manager Page system
 - first universal-create launcher foundation in the shared shell and dashboard
-- broader contractor-app theming consistency is now established through shared shell and manager-page components, but page-level cleanup still remains iterative on some deeper or lower-traffic surfaces
+- broader contractor-app theming consistency is now established through shared shell and Manager Page components, but page-level cleanup still remains iterative on some deeper or lower-traffic surfaces
 - materials
 - jobs/work-order execution UX
 - proposal review/share UX
-- project workspace structure
+- Project Workspace structure
 - customer portal review workflows
 
 ### Contractor Settings / Admin
@@ -1442,7 +1442,7 @@ Not implemented yet:
 - external tax provider integration
 - rich template editing UI
 - e-sign integration workflows on top of the canonical contract record
-- broader alignment from [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md), including stronger module-page UI consistency, directory/contact unification, estimate editor navigation/review improvements, line taxable-toggle planning, structured project/service address display, configurable tax-rate direction, and fuller workflow-guidance states
+- broader alignment from [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md), including stronger module-page UI consistency, directory/contact unification, Estimate Editoror navigation/review improvements, line taxable-toggle planning, structured project/service address display, configurable tax-rate direction, and fuller workflow-guidance states
 
 Future-looking note:
 - the current vendors, people, compliance, jobs, daily logs, time, communication, notification, and portal access foundations could support future scoped collaboration, but no contractor network, marketplace, open contractor chat, or external subcontractor/vendor collaboration surface is implemented today.

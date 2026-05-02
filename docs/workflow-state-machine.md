@@ -319,7 +319,7 @@ Primary path:
 
 Secondary path:
 - direct invoice creation from project
-- finance queue-driven invoice editing
+- finance queue-driven Invoice Editoror work
 
 ## Fallback Rules
 
@@ -329,7 +329,7 @@ Fallback examples:
 - create invoice directly from project
 - create job directly from project
 - edit invoice manually from global finance pages
-- open records from module queues instead of the project workspace
+- open records from module queues instead of the Project Workspace
 
 The rule is:
 - keep flexibility for real operations

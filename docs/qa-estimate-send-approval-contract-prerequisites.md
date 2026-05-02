@@ -1,6 +1,6 @@
 # QA Estimate Send, Approval, And Contract Prerequisites
 
-Use this checklist before rerunning the estimate edit -> send/approval -> contract generation QA slice.
+Use this checklist before rerunning the Estimate Editoror -> send/approval -> contract generation QA slice.
 
 This note does not authorize database patching, fake snapshots, auth bypasses, or relaxed validation. The goal is to prepare the real UI path so the canonical workflow can run end to end.
 
@@ -8,7 +8,7 @@ This note does not authorize database patching, fake snapshots, auth bypasses, o
 
 1. Sign in as a contractor admin or owner.
 2. Create or open one real customer/project/estimate chain.
-3. Add estimate items and verify totals in the estimate editor.
+3. Add estimate items and verify totals in the Estimate Editoror.
 4. Confirm the canonical customer has `customers.email`.
 5. Grant portal access on the customer record to an authenticated portal user.
 6. Add active project visibility for the estimate's project on that portal grant.

@@ -3,7 +3,7 @@
 Status:
 - living design and implementation alignment note
 - this document does not itself change code, migrations, routes, UI, tests, or behavior
-- estimate-side active catalog item insertion is now partially implemented through the estimate editor Catalog Items panel
+- estimate-side active catalog item insertion is now partially implemented through the Estimate Editoror Catalog Items panel
 - invoice catalog insertion is intentionally limited: explicit invoice-only manual catalog-backed rows can snapshot catalog defaults, but general-purpose catalog insertion as normal invoice scope remains deferred and disallowed
 
 Related docs:
@@ -31,7 +31,7 @@ Future changes to a catalog item must not retroactively change historical estima
 Implemented today:
 - `catalog_items` is the canonical organization-scoped reusable cost item database.
 - `estimate_line_items` is the authoritative estimate row table.
-- the estimate editor can add active non-system catalog items to `estimate_line_items` using server-owned snapshot behavior.
+- the Estimate Editoror can add active non-system catalog items to `estimate_line_items` using server-owned snapshot behavior.
 - archived catalog items can be visible for review but are blocked from estimate insertion.
 - system catalog items continue through the existing system expansion flow.
 - `invoice_line_items` stores billing snapshots.
@@ -54,9 +54,9 @@ This spec does not change that baseline. It should be read as design guidance pl
 
 ## Selection Behavior
 
-### Estimate Editor
+### Estimate Editoror
 
-The estimate editor now exposes a first safe catalog item selection path for active non-system catalog items through the Catalog Items panel. The richer selection behavior below remains partly implemented and partly future work.
+The Estimate Editoror now exposes a first safe catalog item selection path for active non-system catalog items through the Catalog Items panel. The richer selection behavior below remains partly implemented and partly future work.
 
 Recommended user flow:
 1. User opens a draft estimate from project or estimate context.
@@ -83,7 +83,7 @@ Default filters:
 
 Archived catalog items may remain visible for review in implemented estimate catalog visibility surfaces, but they should be blocked from new insertion. If a draft estimate already contains a snapshot from an archived item, the line remains valid and editable as a historical/customized snapshot.
 
-### Invoice Editor
+### Invoice Editoror
 
 Invoice behavior should stay more conservative than estimate behavior because invoices are downstream billing records.
 

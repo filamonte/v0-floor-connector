@@ -10,7 +10,7 @@ Use it to decide what should usually come next and what should not be built out 
 Already implemented on the branch:
 - auth, org bootstrap, tenant isolation
 - canonical lead/customer/project/estimate/contract/job/invoice/payment chain
-- contractor shell and shared manager-page baseline
+- contractor shell and shared Manager Page baseline
 - portal continuity on canonical contracts and payments
 - global search in the shell
 - scheduling/calendar depth on canonical jobs
@@ -27,7 +27,7 @@ Recent work has already moved several former placeholders into real workflows:
 - punchlists
 - appointments
 - progress billing / SOV
-- stronger project workspace direction
+- stronger Project Workspace direction
 
 Interpretation:
 - the branch is no longer mainly about missing-core-feature coverage

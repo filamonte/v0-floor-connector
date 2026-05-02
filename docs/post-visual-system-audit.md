@@ -38,7 +38,7 @@ Status: review checkpoint after recent catalog, estimate, profile/account, palet
 - `catalog_items` remains the canonical reusable cost item database. No `contractor_cost_items` table or module-specific cost item model was found in active app code.
 - `inventory_items` is an optional operational stock extension linked to catalog items; it is not a duplicate sellable cost item master.
 - Estimate catalog insertion is implemented through `insertCatalogItemToEstimateAction`, which accepts only `estimateId` and `catalogItemId`, rejects client-owned pricing payloads, rejects archived/inactive items, rejects `system` items, and creates server-owned `estimate_line_items` snapshots.
-- The estimate editor group-first refactor is still planning, not fully implemented. Current code has item groups and grouped output, but catalog/system/import insertion is not yet a fully group-scoped Add Item drawer workflow.
+- The Estimate Editoror group-first refactor is still planning, not fully implemented. Current code has item groups and grouped output, but catalog/system/import insertion is not yet a fully group-scoped Add Item drawer workflow.
 - Invoice creation remains guarded by billing source and commercial readiness checks. Quick create requires project context plus deposit, job, approved estimate, or approved change-order source; standard job invoices require completed work.
 - Invoice rows continue to use explicit lineage paths: approved estimate snapshot item, selected SOV item, approved change-order snapshot item, or invoice-only adjustment.
 - `/settings/profile` exists, is protected, reads existing Supabase auth and `public.users` profile data, shows current organization context, and is read-only because no app-level personal profile update action is wired.
@@ -48,8 +48,8 @@ Status: review checkpoint after recent catalog, estimate, profile/account, palet
 
 ## Doc Inconsistencies Found
 
-- [docs/current-state.md](C:/FloorConnector/docs/current-state.md) still ends with a `UI DIRECTION UPDATE (LATEST)` section that lists "Estimate creation not consistently context-aware" as an identified issue. That appears stale relative to the later docs and implementation, where estimate quick create preserves project/customer context and global creation requires customer plus project or new project name.
-- Invoice catalog wording is slightly inconsistent. Several docs say invoice catalog insertion is deferred or not implemented, while [apps/web/components/invoice-form.tsx](C:/FloorConnector/apps/web/components/invoice-form.tsx) and [apps/web/lib/invoices/data.ts](C:/FloorConnector/apps/web/lib/invoices/data.ts) support catalog-backed rows only as `invoice_only_adjustment` / `manual_catalog_item` snapshots. This is not free catalog-to-invoice billing for normal project scope, but docs should be clarified so "deferred invoice catalog insertion" means "no normal-scope catalog billing shortcut; only explicit invoice-only catalog adjustments exist if enabled by the current invoice editor."
+- [docs/current-state.md](C:/FloorConnector/docs/current-state.md) still ends with a `UI DIRECTION UPDATE (LATEST)` section that lists "Estimate creation not consistently context-aware" as an identified issue. That appears stale relative to the later docs and implementation, where estimate Quick-Create preserves project/customer context and global creation requires customer plus project or new project name.
+- Invoice catalog wording is slightly inconsistent. Several docs say invoice catalog insertion is deferred or not implemented, while [apps/web/components/invoice-form.tsx](C:/FloorConnector/apps/web/components/invoice-form.tsx) and [apps/web/lib/invoices/data.ts](C:/FloorConnector/apps/web/lib/invoices/data.ts) support catalog-backed rows only as `invoice_only_adjustment` / `manual_catalog_item` snapshots. This is not free catalog-to-invoice billing for normal project scope, but docs should be clarified so "deferred invoice catalog insertion" means "no normal-scope catalog billing shortcut; only explicit invoice-only catalog adjustments exist if enabled by the current Invoice Editoror."
 
 ## Functional Risks Found
 
@@ -74,7 +74,7 @@ Status: review checkpoint after recent catalog, estimate, profile/account, palet
 
 - Add focused QA coverage or manual checklist entries for invoice-only catalog adjustments, including quantity > 0, lineage type, tax snapshot, and no approved-scope bypass.
 - Add editable personal profile settings only after the intended profile fields, validation, auth metadata sync, and server action contract are approved.
-- Continue incremental visual/layout polish on lower-traffic manager pages while preserving the locked black / gray / orange / white system.
+- Continue incremental visual/layout polish on lower-traffic Manager Pages while preserving the locked black / gray / orange / white system.
 
 ### Do Not Touch Yet
 

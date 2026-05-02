@@ -10,7 +10,7 @@ If a decision here conflicts with [docs/current-state.md](C:/FloorConnector/docs
 ### D-001 Project Is The Operational Root
 
 Project is the main contractor workspace for connected delivery work.
-Global routes still exist, but they are cross-project queues and manager surfaces, not replacement workflow homes.
+Global routes still exist, but they are cross-project queues and Manager Page surfaces, not replacement workflow homes.
 
 ### D-002 Contractor App And Portal Share Canonical Records
 
@@ -47,7 +47,7 @@ They are not daily log narrative and should not become a separate field-quality 
 Progress billing works from approved estimate -> schedule of values -> invoice.
 Do not introduce detached pay-app records, spreadsheet shadow models, or invoice replacement workflows.
 
-### D-009 Quick Create Must Create Canonical Records First
+### D-009 Quick-Create Must Create Canonical Records First
 
 Quick create exists to start real records quickly, then hand off into the full workspace.
 It must not become a draft silo or alternate authoring system.

@@ -49,6 +49,29 @@ Applies to:
 
 ---
 
+## NAMING CONVENTIONS (REQUIRED)
+
+Use consistent page terminology across the system:
+
+- `/<resource>` routes = `<Resource> Manager Page`
+- Record detail pages = `<Resource> Workspace`
+- Focused editing surfaces = `<Resource> Editor`
+- Top-level create flows = `<Resource> Quick-Create`
+- Nested create flows = `Inline <Resource> Quick-Create`
+
+Do not introduce alternate naming such as:
+- page
+- screen
+- edit page
+- form
+
+Consistency here is required for:
+- developer communication
+- Codex prompts
+- documentation alignment
+
+---
+
 ## SYSTEM MAP
 
 Core:
@@ -105,7 +128,7 @@ Use these docs together:
 - [docs/estimate-builder-v1-scope.md](C:/FloorConnector/docs/estimate-builder-v1-scope.md): current Estimate Builder execution scope
 - [docs/estimate-builder-system-generation-spec.md](C:/FloorConnector/docs/estimate-builder-system-generation-spec.md): future system-generation planning detail
 - [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md): canonical UI standardization and interaction guardrails
-- [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): planning backlog for UI, directory/contact, tax, estimate editor, project-address, and workflow-guidance alignment
+- [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): planning backlog for UI, directory/contact, tax, Estimate Editor, project-address, and workflow-guidance alignment
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): doc maintenance and archival rules
 
 ## What Is Implemented Now
@@ -128,8 +151,8 @@ The current branch already includes a real multi-tenant contractor app with:
 - contractor-side progress billing / schedule-of-values workflow on the canonical estimate and invoice chain
 - notifications, notification deliveries, and communication thread/message foundations
 - customer-facing payment foundation on the canonical invoice/payment chain
-- dedicated contractor-side payments manager surface on the shared manager-page system
-- dedicated contractor-side schedule manager surface on the shared manager-page system
+- dedicated contractor-side payments manager surface on the shared Manager Page system
+- dedicated contractor-side schedule manager surface on the shared Manager Page system
   - review-first summary, next actions, crew-state continuity, week/day planner views, and a retained date-grouped board all stay on the same canonical job chain
 - shared contractor-side global search at the shell level
   - searches canonical tenant-scoped records including appointments, routes back into real workspaces, and is rendered in the shared shell footer rather than the top header
@@ -144,14 +167,14 @@ The current branch already includes a real multi-tenant contractor app with:
 - shared templates
 - reusable catalog / cost item database foundations on canonical `catalog_items`, including estimate-side active catalog item insertion through server-owned line-item snapshots
 - shared commercial numbering through the existing workflow settings model
-- quick-create -> canonical record -> full workspace pattern across core contractor manager pages
+- Quick-Create -> canonical record -> `<Resource> Workspace` pattern across core contractor Manager Pages
 - first shared universal-create launcher in the contractor shell and dashboard
 - denser contractor dashboard command-center surface:
   - compact operational metrics
   - modular commercial, operations, and finance queue widgets
-  - dashboard-local quick-create studio using canonical short-form create flows
+  - dashboard-local Quick-Create studio using canonical short-form create flows
 - first-pass job scheduling and crew assignment foundation
-- early module-dashboard pattern on top of the shared manager-page system
+- early module-dashboard pattern on top of the shared Manager Page system
 - contractor settings / admin
 - super-admin configuration foundations
 
@@ -205,14 +228,14 @@ Important workflow rules:
 - future contractor network collaboration must extend canonical projects, jobs, vendors, people, invoices, and payments rather than creating a separate social, marketplace, or partner-work data silo
 - contractor network communication should be record-based over free-floating chat, with messages tied to projects, jobs, change orders, invoices, daily logs, field notes, or other canonical workflow records
 - project detail is the primary workflow/readiness hub for the connected contractor flow
-- estimate, contract, invoice, and job pages should use one shared record-workspace pattern and point back to the project hub when broader workflow state matters
+- Estimate Workspace, Contract Workspace, Invoice Workspace, and Job Workspace surfaces should use one shared Record Workspace pattern and point back to the project hub when broader workflow state matters
 - invoice detail should be treated as review-first in layout direction, even when edit controls remain available
 - the first major contractor workspace UI normalization pass is complete enough to stop; remaining issues should be treated as normal iterative polish rather than structural layout-system repair
-- the contractor shell now uses top-level navigation as the primary app navigation, with a wider workspace, integrated breadcrumb/page-context header row, and command-bar-driven manager pages
-- dashboard, projects, leads, invoices, contracts, customers, estimates, daily logs, time, people, vendors, and jobs now follow that newer manager-surface direction; avoid reintroducing a full-time left sidebar as the primary navigation model
-- the protected contractor app now shares one black/gray/orange/white UI direction across the shell, manager pages, quick-create surfaces, and common cards; do not reintroduce blue-heavy overview chrome on new or updated contractor pages
+- the contractor shell now uses top-level navigation as the primary app navigation, with a wider workspace, integrated breadcrumb/page-context header row, and command-bar-driven Manager Pages
+- dashboard, projects, leads, invoices, contracts, customers, estimates, daily logs, time, people, vendors, and jobs now follow that newer Manager Page surface direction; avoid reintroducing a full-time left sidebar as the primary navigation model
+- the protected contractor app now shares one black/gray/orange/white UI direction across the shell, Manager Pages, Quick-Create surfaces, and common cards; do not reintroduce blue-heavy overview chrome on new or updated contractor pages
 - dashboards are entry surfaces into the same lifecycle, not separate product worlds
-- quick create must create canonical records first and then route into the full workspace
+- Quick-Create must create canonical records first and then route into the relevant `<Resource> Workspace`
 - creation must remain context-aware: project-launched creation auto-links the project, customer-launched creation requires project selection or creation, and global creation requires explicit customer and project selection
 - global search should stay shell-level, tenant-safe, and canonical-record-based; do not invent search-only records, search-only summaries, or disconnected module search systems
 - scheduling depth should stay on the canonical job model; add planner or calendar UI on `/schedule`, but do not invent schedule-only records or a disconnected dispatch subsystem
@@ -249,28 +272,28 @@ Use [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnecto
 Do:
 - keep top-level navigation as the primary contractor app navigation
 - keep the contractor shell flat and unified: top navigation with integrated breadcrumb/page context, thin command/search strip, then workspace
-- treat the dashboard as the visual reference for contractor manager surfaces
+- treat the dashboard as the visual reference for contractor Manager Page surfaces
 - use the current contractor theme direction consistently:
   - black or near-black framing
   - orange for actions, emphasis, and identity
   - white or warm light-neutral surfaces for working areas
   - tighter, practical typography and spacing over roomy marketing-style composition
 - treat the dashboard as an operational command center, not as a light stats page and not as a separate module world
-- build manager pages around page identity, command bar, and overview/list workspace
-- use shared composer-sheet or modal patterns for create flows on manager pages
-- prefer quick-create overlays that capture only minimum required fields, create the canonical record, and then route into the full record workspace
+- build Manager Pages around page identity, command bar, and overview/list workspace
+- use shared composer-sheet or modal patterns for create flows on Manager Pages
+- prefer Quick-Create overlays that capture only minimum required fields, create the canonical record, and then route into the relevant `<Resource> Workspace`
 - treat module dashboards as operational entry surfaces with summary, queues, create entry, and continuity links back to shared records
 - keep change orders canonical and workflow-linked: contractor authoring, portal approval, and downstream invoice impact must stay on the same shared record chain
 - reserve left-side rails for contextual deeper-screen navigation only when they materially help
 
 Do not:
 - do not return to a full-time left sidebar as the primary contractor navigation
-- do not reintroduce blue page bands, blue-heavy command bars, or blue-accented manager-page chrome on contractor surfaces
+- do not reintroduce blue page bands, blue-heavy command bars, or blue-accented Manager Page chrome on contractor surfaces
 - do not reintroduce dense stacked-panel dashboards as the main contractor dashboard pattern
-- do not leave permanently open create forms on contractor manager pages
-- do not let manager pages drift back into mixed old/new command-bar or chrome patterns
-- do not treat dashboard and manager pages as separate visual systems
-- do not try to complete full record authoring inside a manager-page quick-create overlay
+- do not leave permanently open Quick-Create surfaces on contractor Manager Pages
+- do not let Manager Pages drift back into mixed old/new command-bar or chrome patterns
+- do not treat dashboard and Manager Pages as separate visual systems
+- do not try to complete full record authoring inside a Manager Page Quick-Create overlay
 - do not implement change orders as report-only artifacts, detached approvals, or portal-only records
 - do not build direct takeoff-to-invoice behavior or customer-facing AI takeoff output that bypasses human-reviewed estimate line items
 - do not let module dashboards become separate module apps with their own private worldview
@@ -307,9 +330,9 @@ The normalization phase is complete enough to stop; further contractor-page work
 - keep current route architecture unless the task explicitly calls for route changes
 - prefer small, reviewable changes over broad rewrites
 - when refining contractor UI, prefer the shared workspace pattern over one-off page layouts
-- for contractor overview/list pages, prefer the newer top-nav manager pattern: clear page identity, command bar, wide workspace, overview/list-first composition, and contextual secondary navigation only when it truly helps
-- preserve the shared lifecycle language: continuity over silos, project/record chain over module isolation, and quick create over local-only scaffolding
-- use the UI/data-model alignment backlog as planning context for demo-polish tasks, especially estimate editor navigation/review actions, project service-address display, line taxable-toggle planning, module-page consistency, directory/contact unification, tax settings/rates direction, and workflow guidance
+- for contractor Manager Pages, prefer the newer top-nav manager pattern: clear page identity, command bar, wide workspace, overview/list-first composition, and contextual secondary navigation only when it truly helps
+- preserve the shared lifecycle language: continuity over silos, project/record chain over module isolation, and Quick-Create over local-only scaffolding
+- use the UI/data-model alignment backlog as planning context for demo-polish tasks, especially Estimate Editor navigation/review actions, project service-address display, line taxable-toggle planning, module-page consistency, directory/contact unification, tax settings/rates direction, and workflow guidance
 
 ## Documentation Update Rules
 

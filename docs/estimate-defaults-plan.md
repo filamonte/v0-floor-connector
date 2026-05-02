@@ -74,13 +74,13 @@ Current estimate load behavior:
   - `scopeSummaryHtml`
 - [apps/web/lib/estimates/workspace.ts](/C:/FloorConnector/apps/web/lib/estimates/workspace.ts) applies defaults only when `hasMeaningfulEstimateWorkspaceContent(...)` is false
 
-That means defaults apply only when the estimate workspace is effectively empty.
+That means defaults apply only when the Estimate Workspace is effectively empty.
 
 ### Reusable content blocks already differ correctly
 Reusable content blocks already exist separately:
 - tenant-owned
 - insertable on demand
-- append into the live estimate workspace
+- append into the live Estimate Workspace
 
 They are not the same as defaults.
 
@@ -107,7 +107,7 @@ This is already close to the right architecture:
 ## Gaps Compared With The CF Workflow
 
 ### 1. Default origin is too invisible
-Today the estimate workspace does not clearly answer:
+Today the Estimate Workspace does not clearly answer:
 - did this text come from platform starter defaults?
 - did it come from contractor workflow settings?
 - did the user type or edit it already?
@@ -189,7 +189,7 @@ For the next implementation layer, origin should be surfaced in UI rather than r
 Recommended first-pass interpretation:
 - if the organization row has never been explicitly customized for estimate defaults, show “Platform starter default”
 - if tenant defaults are present and saved, show “Organization default”
-- if the estimate workspace already has user-edited content, show “Edited in this estimate” or equivalent non-destructive language
+- if the Estimate Workspace already has user-edited content, show “Edited in this estimate” or equivalent non-destructive language
 
 ## How Defaults Should Differ From Other Content Systems
 
@@ -211,7 +211,7 @@ Recommended first-pass interpretation:
 - trigger: explicit user import
 - behavior: append
 
-This distinction should stay extremely explicit in settings and estimate edit UX.
+This distinction should stay extremely explicit in settings and Estimate Editoror UX.
 
 ## UI Plan For Contractor Settings
 
@@ -258,13 +258,13 @@ Again, UI clarity first:
 - no per-tenant override engine
 - no shared mutable runtime records
 
-## How Estimate Edit Should Show Default Origin
+## How Estimate Editor Should Show Default Origin
 
 ### Route / surface
-- estimate edit workspace
+- Estimate Editoror Workspace
 
 ### Recommended UX
-Inside estimate edit, add a small default-origin summary near the reusable-content areas.
+Inside Estimate Editoror, add a small default-origin summary near the reusable-content areas.
 
 It should answer:
 - where did this default starting content come from?
@@ -299,7 +299,7 @@ Status:
 - this pass clarifies Scope / SOW, Terms, Inclusions, and Exclusions as platform seed values for organization-owned defaults without changing any data, contractor settings behavior, or estimate prefill behavior
 
 ### Phase 3
-Show default origin inside estimate edit:
+Show default origin inside Estimate Editoror:
 - platform starter default
 - organization default
 - edited in this estimate

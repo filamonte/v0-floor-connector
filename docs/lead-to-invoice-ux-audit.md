@@ -58,17 +58,17 @@ FloorConnector is safer and more canonical, but it still makes users work harder
 
 Current routes:
 - `/dashboard`
-- `/leads`
+- Leads Manager Page (`/leads`)
 - `/leads/[leadId]`
 
 Current behavior:
-- Dashboard is a manager-style command center with quick-create actions for opportunities, estimates, contracts, invoices, jobs, and more.
-- Leads manager uses the shared manager-page pattern with queue summaries, funnel metrics, search, and quick create.
-- Lead quick create creates the canonical opportunity first, then routes into fuller workflow later.
+- Dashboard is a Manager Page-style command center with Quick-Create actions for opportunities, estimates, contracts, invoices, jobs, and more.
+- Leads manager uses the shared Manager Page pattern with queue summaries, funnel metrics, search, and Quick-Create.
+- Lead Quick-Create creates the canonical opportunity first, then routes into fuller workflow later.
 
 What works:
-- Strong manager-page baseline.
-- Canonical opportunity creation already follows the quick-create -> real record -> deeper workspace pattern.
+- Strong Manager Page baseline.
+- Canonical opportunity creation already follows the Quick-Create -> real record -> deeper workspace pattern.
 - Dashboard and leads are on the shared contractor UI system instead of becoming separate mini-apps.
 
 CF-inspired gap:
@@ -79,7 +79,7 @@ CF-inspired gap:
 
 Current routes:
 - `/leads/[leadId]`
-- `/estimates?projectId=...`
+- Estimates Manager Page (`/estimates?projectId=...`)
 - server handoff via `startEstimateFromOpportunityAction`
 
 Current behavior:
@@ -99,19 +99,19 @@ CF-inspired gap:
 ### 3. Estimate builder usability
 
 Current routes:
-- `/estimates`
+- Estimates Manager Page (`/estimates`)
 - `/estimates/[estimateId]`
 - `/estimates/[estimateId]/edit`
 
 Current behavior:
 - Estimate detail is review-first.
-- Estimate edit uses `EstimateWorkspaceShell` with sections for items, details, terms, scope, bidding, and files.
+- Estimate Editor uses `EstimateWorkspaceShell` with sections for items, details, terms, scope, bidding, and files.
 - Approved estimates surface `EstimateApprovalNextStepsPanel` for contract, SOV, and invoice follow-on work.
 - Autosave, stale-write protection, and shared workflow guidance already exist.
 
 What works:
 - Stronger than CF in canonical continuity.
-- Shared record-workspace pattern is real.
+- Shared Record Workspace pattern is real.
 - Approval next steps stay on the same estimate chain instead of fragmenting the workflow.
 
 CF-inspired gap:
@@ -135,7 +135,7 @@ Gap:
 
 Recommendation:
 - Do not add disconnected manual estimate rows.
-- Reframe the existing quick-create item path as the sanctioned "manual one-off item" workflow.
+- Reframe the existing Quick-Create item path as the sanctioned "manual one-off item" workflow.
 
 ### 5. Catalog / cost database item insertion
 
@@ -198,7 +198,7 @@ Content types requested:
 Current behavior:
 - Reusable content blocks already exist for scope, terms, inclusions, and exclusions.
 - Contractor settings already expose default estimate terms, inclusions, and exclusions.
-- Estimate edit page already offers reusable scope and reusable terms/inclusions/exclusions buttons.
+- Estimate Editor page already offers reusable scope and reusable terms/inclusions/exclusions buttons.
 
 What works:
 - Stronger than CF structurally because reusable content is canonical and tenant-scoped.
@@ -206,7 +206,7 @@ What works:
 
 Gaps:
 - Reuse exists, but the affordance is fragmented.
-- There is no single "Import reusable content" action model inside the estimate workspace.
+- There is no single "Import reusable content" action model inside the Estimate Workspace.
 - Project-details import is not currently framed as an explicit estimating tool.
 
 ### 9. Estimate defaults from contractor settings
@@ -228,7 +228,7 @@ What works:
 - Better than CF because defaults are explicit, tenant-scoped, and designed not to silently overwrite user work later.
 
 Gap:
-- Defaults are configured well, but their origin is not surfaced clearly enough inside the estimate workspace.
+- Defaults are configured well, but their origin is not surfaced clearly enough inside the Estimate Workspace.
 
 ### 10. Super-admin seeded starter defaults
 
@@ -247,7 +247,7 @@ What works:
 - No shared mutable tenant records.
 
 Gap:
-- The handoff from platform default -> organization adoption -> estimate workspace effect is still too invisible from the contractor user's perspective.
+- The handoff from platform default -> organization adoption -> Estimate Workspace effect is still too invisible from the contractor user's perspective.
 
 ### 11. Manual contractor approval
 
@@ -283,8 +283,8 @@ Gap:
 ### 13. Contract generation after approval
 
 Current routes:
-- `/contracts`
-- `/contracts?estimateId=...`
+- Contracts Manager Page (`/contracts`)
+- Contracts Manager Page (`/contracts?estimateId=...`)
 - approval next-step actions on approved estimate
 
 Current behavior:
@@ -320,8 +320,8 @@ Gap:
 ### 15. Invoice creation and billing handoff
 
 Current routes:
-- `/invoices`
-- project readiness links into `/invoices`
+- Invoices Manager Page (`/invoices`)
+- project readiness links into Invoices Manager Page (`/invoices`)
 - progress billing workspace -> invoice creation
 
 Current behavior:
@@ -369,18 +369,18 @@ Gap:
 
 ## Where UI Is Inconsistent
 
-1. Lead manager is a manager-page, but lead detail still reads more like a legacy polished detail surface than the stronger shared record-workspace baseline.
-2. Estimate detail is review-first while estimate edit is workspace-first; the jump is powerful but not yet perfectly unified.
+1. Lead manager is a Manager Page, but lead detail still reads more like a legacy polished detail surface than the stronger shared Record Workspace baseline.
+2. Estimate detail is review-first while Estimate Editoror is workspace-first; the jump is powerful but not yet perfectly unified.
 3. Approved estimate next steps appear in multiple places:
    - estimate detail
-   - estimate edit approval panel
+   - Estimate Editoror approval panel
    - project readiness
    - contracts manager
    - progress billing manager
 4. Reusable content is split across:
    - contractor workflow defaults
    - content-block management
-   - estimate edit section-level buttons
+   - Estimate Editoror section-level buttons
 5. Item insertion terminology mixes inventory, catalog, systems, and estimating language in ways that may be correct internally but feel less direct externally.
 
 ## Where Next-Step Handoff Is Weak
@@ -389,25 +389,25 @@ Gap:
 2. `/leads` list does not make `Start estimate` feel as immediate as CF.
 3. `/estimates/[estimateId]` explains status well, but the next step after approval still depends on the user recognizing several downstream modules.
 4. `/progress-billing` is logically right, but semantically farther from the user mental model than "bill approved scope."
-5. `/invoices` manager is strong operationally, but not yet explicit enough about when the user should come from standard invoicing versus SOV billing versus deposit collection.
+5. Invoices Manager Page (`/invoices`) is strong operationally, but not yet explicit enough about when the user should come from standard invoicing versus SOV billing versus deposit collection.
 
 ## Safe UI-Only Changes
 
 These can be implemented without changing canonical models or downstream logic.
 
 1. Add stronger lead-row and lead-card primary actions that deep-link into the existing estimate handoff.
-2. Standardize estimate-related CTA wording across dashboard, leads, lead detail, project readiness, estimate detail, and estimate edit.
-3. Add one shared "Add to estimate" tool group in estimate edit:
+2. Standardize estimate-related CTA wording across dashboard, leads, lead detail, project readiness, estimate detail, and Estimate Editoror.
+3. Add one shared "Add to estimate" tool group in Estimate Editoror:
    - add reusable item
    - create and add item
    - expand system
    - import reusable content
-4. Add one shared "After approval" summary strip on estimate detail and estimate edit that mirrors the same ordered handoff:
+4. Add one shared "After approval" summary strip on estimate detail and Estimate Editoror that mirrors the same ordered handoff:
    - contract
    - SOV
    - invoice
-5. Reframe quick-create item as "Create one-off reusable item" to make the sanctioned path obvious.
-6. Surface default-origin messaging inside estimate edit:
+5. Reframe Quick-Create item as "Create one-off reusable item" to make the sanctioned path obvious.
+6. Surface default-origin messaging inside Estimate Editoror:
    - contractor defaults applied
    - platform starter adopted into org copy
 7. Group reusable scope / terms / inclusions / exclusions under one visible "Insert reusable content" pattern while keeping the current sections.
@@ -464,7 +464,7 @@ Scope:
 ### Phase 2: Estimating action consolidation
 
 Goal:
-- make estimate edit feel like one tool area
+- make Estimate Editoror feel like one tool area
 
 Scope:
 - grouped add-item actions
@@ -518,7 +518,7 @@ Outcome:
 
 ### Pass 2
 
-Refactor estimate edit action grouping inside the existing shared estimate workspace:
+Refactor Estimate Editoror action grouping inside the existing shared Estimate Workspace:
 - consolidate add-item actions
 - make `Create and Add` read as sanctioned one-off reusable item creation
 - standardize labels for catalog item vs system expansion
@@ -528,7 +528,7 @@ Outcome:
 
 ### Pass 3
 
-Add a unified reusable-content insertion surface inside estimate edit using existing content blocks:
+Add a unified reusable-content insertion surface inside Estimate Editoror using existing content blocks:
 - scope
 - terms
 - inclusions
@@ -541,7 +541,7 @@ Outcome:
 
 Align approved-estimate downstream guidance across:
 - estimate detail
-- estimate edit approval panel
+- Estimate Editoror approval panel
 - project readiness
 
 Outcome:
@@ -569,8 +569,8 @@ Outcome:
 3. Group estimate insertion actions under one obvious estimating tool cluster in the existing items section.
 4. Reframe quick catalog creation as the official one-off manual item workflow.
 5. Add one visible reusable-content insert pattern for scope, terms, inclusions, and exclusions.
-6. Surface default origin inside estimate edit so users understand contractor defaults versus platform starter seeds.
-7. Unify approved-estimate downstream guidance across estimate detail, estimate edit, and project readiness.
+6. Surface default origin inside Estimate Editoror so users understand contractor defaults versus platform starter seeds.
+7. Unify approved-estimate downstream guidance across estimate detail, Estimate Editoror, and project readiness.
 8. Make progress billing read more clearly as "approved scope billing" before exposing deeper SOV language.
 9. Tighten invoice-path guidance so deposit, standard, and SOV billing are easier to distinguish.
 10. Add safe import-from-another-estimate as the first major estimating-depth workflow after UI-only cleanup.
@@ -580,7 +580,7 @@ Outcome:
 FloorConnector does not need a new workflow model here.
 
 It needs:
-- stronger reuse of the existing manager-page and record-workspace patterns
+- stronger reuse of the existing Manager Page and Record Workspace patterns
 - tighter next-step guidance
 - clearer estimating tools
 - safer CF-inspired speed improvements layered on top of the already-better canonical system

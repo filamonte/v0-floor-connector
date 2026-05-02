@@ -2,7 +2,7 @@
 
 Status:
 - planning document retained for implementation context
-- Phase 2B has since been implemented in the app: active non-system catalog items can be added from the estimate editor Catalog Items panel through server-owned snapshot behavior
+- Phase 2B has since been implemented in the app: active non-system catalog items can be added from the Estimate Editoror Catalog Items panel through server-owned snapshot behavior
 - this document does not itself change code, migrations, UI behavior, estimate calculations, invoice behavior, or tests
 - invoice catalog insertion remains out of scope
 
@@ -14,7 +14,7 @@ Related docs:
 
 ## Goal
 
-Phase 2B turned the estimate editor `Catalog Items` panel into a safe catalog-backed estimate item insertion surface.
+Phase 2B turned the Estimate Editoror `Catalog Items` panel into a safe catalog-backed estimate item insertion surface.
 
 The implementation should reuse the existing estimate catalog insertion path wherever possible:
 
@@ -26,7 +26,7 @@ Catalog Items panel
   -> insertCatalogItemToEstimate
   -> buildCatalogItemPricingSnapshot
   -> estimate_line_items snapshot row
-  -> reload/sync estimate editor line items
+  -> reload/sync Estimate Editoror line items
 ```
 
 It must not make estimate rows live-bound to `catalog_items`. The estimate line item remains the commercial snapshot.
@@ -44,12 +44,12 @@ Pre-implementation behavior:
 - selecting a row only sets `selectedCatalogPreviewId`
 - preview action was intentionally disabled with `Add to estimate (coming soon)`
 
-The estimate editor already has a separate active catalog insertion flow in the same component:
+The Estimate Editoror already has a separate active catalog insertion flow in the same component:
 - `visibleCatalogItems` is passed from [apps/web/components/estimate-form.tsx](C:/FloorConnector/apps/web/components/estimate-form.tsx) as active-only catalog items
 - `directCatalogItems` excludes `system` items
 - `onAddCatalogItem` inserts the selected active catalog item
 - `onQuickAddCatalogItem(catalogItemId)` inserts quick matched active catalog items
-- quick-created catalog items are created and then inserted through the same server path
+- Quick-Created catalog items are created and then inserted through the same server path
 
 This means Phase 2B was not a new estimating engine. It was a safe UI bridge from the visibility panel to the existing insertion path, plus one server-side hardening check.
 
@@ -252,7 +252,7 @@ pnpm lint
 ```
 
 Recommended optional smoke checks after validation:
-- open a draft estimate edit page
+- open a draft Estimate Editoror page
 - search the Catalog Items panel
 - preview an active non-system catalog item
 - add it to the estimate

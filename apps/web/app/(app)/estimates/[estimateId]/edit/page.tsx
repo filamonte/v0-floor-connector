@@ -4,15 +4,15 @@ import { EstimateForm } from "@/components/estimate-form";
 import { listCatalogItems } from "@/lib/catalogs/data";
 import { listEstimateContentBlocks } from "@/lib/estimate-content-blocks/data";
 import {
-  autosaveEstimateAction,
   importEstimateLineItemsAction,
   importEstimateReusableContentAction,
   insertCatalogItemToEstimateAction,
   openOrCreateScheduleOfValuesAction,
+  saveEstimateAction,
   insertSystemToEstimateAction,
   previewExpandedSystemAction,
   quickCreateEstimateCatalogItemAction,
-  updateEstimateStatusAutosaveAction
+  updateEstimateStatusSaveAction
 } from "@/lib/estimates/actions";
 import { resolveEstimateApprovalOrchestration } from "@/lib/estimates/approval-orchestration";
 import { quickCreateContractFromEstimateAction } from "@/lib/contracts/actions";
@@ -107,8 +107,8 @@ export default async function EstimateEditPage({
         contentBlocks={contentBlocks}
         customerTaxExempt={estimate.customer?.isTaxExempt ?? false}
         organizationFinancialSettings={organizationFinancialSettings}
-        autosaveAction={autosaveEstimateAction}
-        updateStatusAction={updateEstimateStatusAutosaveAction}
+        saveEstimateAction={saveEstimateAction}
+        updateStatusAction={updateEstimateStatusSaveAction}
         previewExpandedSystemAction={previewExpandedSystemAction}
         insertCatalogItemAction={insertCatalogItemToEstimateAction}
         insertSystemAction={insertSystemToEstimateAction}

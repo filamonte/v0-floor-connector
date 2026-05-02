@@ -17,7 +17,7 @@ FloorConnector already has a strong canonical foundation:
 - one shared multi-tenant data model
 - real auth and organization context
 - real workflow entities across the core commercial and operational chain
-- shared manager-page shell and quick-create system
+- shared Manager Page shell and Quick-Create system
 - real contractor-facing dashboard, schedule, invoices, contracts, jobs, time, appointments, punchlists, and progress-billing foundations
 - shared template seeds, shared catalog seeds, platform defaults, and module-policy foundations
 
@@ -32,7 +32,7 @@ The largest convergence gaps are:
 6. Template/default coverage is too narrow for customer-facing document control and reusable business content.
 7. Financing exists as readiness state, but not yet as a practical contractor workflow.
 8. Reports and forms/checklists are not yet real system modules.
-9. Some manager pages are strong, but system completion across all major modules is still uneven.
+9. Some Manager Pages are strong, but system completion across all major modules is still uneven.
 
 ## Current Strengths
 
@@ -77,7 +77,7 @@ Evidence:
 - route coverage under `apps/web/app/(app)`
 - route coverage under `apps/web/app/(portal)`
 
-### 3. Manager-page and quick-create foundations are strong
+### 3. Manager-page and Quick-Create foundations are strong
 The app already has a real contractor operating shell and a shared create pattern.
 
 Evidence:
@@ -88,8 +88,8 @@ Evidence:
 - `apps/web/components/dashboard/contractor-dashboard-surface.tsx`
 
 What is already working:
-- manager pages are summary-and-routing surfaces rather than mini workflow engines
-- quick-create is already moving toward one shared system
+- Manager Pages are summary-and-routing surfaces rather than mini workflow engines
+- Quick-Create is already moving toward one shared system
 - the dashboard already acts like a real contractor command surface
 
 ### 4. Commercial and execution detail surfaces are materially real
@@ -290,7 +290,7 @@ This is one of the most important convergence issues in the whole system.
 Status: one of the strongest current areas, but still incomplete for go-live
 
 Current strengths:
-- strong manager page
+- strong Manager Page
 - strong review/detail workspace
 - estimate status progression exists
 - strong continuity into contract/project readiness
@@ -303,7 +303,7 @@ Evidence:
 
 Remaining gaps:
 - workspace/editor still does not fully match CF’s sectioned estimate-authoring behavior
-- no complete left-nav-driven estimate editor system across all sections
+- no complete left-nav-driven Estimate Editoror system across all sections
 - template/default integration is too limited
 - items database integration is incomplete
 - send/accept/protection behavior is still lighter than needed for go-live commercial rigor
@@ -323,7 +323,7 @@ Current strengths:
 - signature readiness exists
 - internal approval exists
 - financing status exists and already influences commercial readiness
-- contract manager page is real
+- contract Manager Page is real
 
 Evidence:
 - `packages/types/src/index.ts`
@@ -343,7 +343,7 @@ Status: strong and credible, but not complete enough for full contractor operati
 
 Current strengths:
 - invoice manager is strong
-- invoice workspace/detail page is strong
+- Invoice Workspace/detail page is strong
 - payment continuity is real
 - deposit/progress invoice roles are real
 - progress billing continuity exists
@@ -356,7 +356,7 @@ Evidence:
 - `apps/web/lib/payments/data.ts`
 
 Remaining gaps:
-- invoice editor behavior still needs fuller CF-style sectioned authoring
+- Invoice Editoror behavior still needs fuller CF-style sectioned authoring
 - item sourcing and item reuse are not complete enough
 - automation around contract-signature-triggered invoice creation is not yet fully productized
 - receipt/auto-send/default behavior is not fully complete
@@ -481,7 +481,7 @@ Remaining gaps:
 ### J. Page / Manager Completion
 Status: improving, but incomplete
 
-Strong manager pages:
+Strong Manager Pages:
 - dashboard
 - leads
 - customers
@@ -530,14 +530,14 @@ Status: much better than before, but still not fully converged
 Where FloorConnector is already aligned well:
 - shell direction
 - top-nav contractor shell
-- summary-and-routing manager pages
-- quick-create direction
+- summary-and-routing Manager Pages
+- Quick-Create direction
 - invoice/estimate/project/dashboard tone
 
 Where it should copy CF more closely:
-- dense manager-page composition on every major module
+- dense Manager Page composition on every major module
 - richer left-side section navigation on full workspaces where appropriate
-- estimate/invoice editor composition
+- estimate/Invoice Editoror composition
 - reusable inventory/item entry behavior
 - forms/checklists/report operating surfaces
 - module settings and defaults ergonomics
@@ -569,9 +569,9 @@ Where it must intentionally differ:
 ## Contractor Foreman Alignment Summary
 
 ### Where FloorConnector should copy CF more closely
-- manager page density
+- Manager Page density
 - top summary / middle queues / bottom recent table as a universal module pattern
-- full estimate/invoice editor composition
+- full estimate/Invoice Editoror composition
 - item-add flows and item-source ergonomics
 - forms/checklists operating surfaces
 - report-builder and report-dashboard direction
@@ -616,8 +616,8 @@ Why third:
 - estimates, contracts, and invoices are already strong enough to improve next
 
 Includes:
-- fuller estimate editor/workspace
-- fuller invoice editor/workspace
+- fuller Estimate Editoror/workspace
+- fuller Invoice Editoror/workspace
 - contract generation and contract downstream behavior completion
 - save-as-template/default and document layout behavior
 

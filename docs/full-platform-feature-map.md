@@ -85,7 +85,7 @@ Supporting systems must attach to that chain instead of creating parallel record
   - appointments
 - Shared contractor global search across canonical tenant records.
 - Shared contractor notifications backed by stored notification records.
-- Universal create launcher that routes into canonical quick-create flows.
+- Universal create launcher that routes into canonical Quick-Create flows.
 - Contractor settings for organization, templates, catalogs, financial defaults, workflow defaults, automation visibility, admin, and module controls.
 
 ### Partially Implemented

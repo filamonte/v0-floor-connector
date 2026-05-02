@@ -1,4 +1,4 @@
-# Estimate Editor Group-First Refactor Plan
+# Estimate Editoror Group-First Refactor Plan
 
 Status:
 - long-term design and implementation plan
@@ -16,7 +16,7 @@ Related docs:
 
 ## Purpose
 
-The current estimate editor works, but the Items workspace is too long and still feels like a collection of estimating tools above a line-item table. The long-term direction should make estimate groups the primary authoring surface:
+The current Estimate Editoror works, but the Items workspace is too long and still feels like a collection of estimating tools above a line-item table. The long-term direction should make estimate groups the primary authoring surface:
 
 ```text
 create/select group -> choose item source -> review/add item -> edit line snapshot in group
@@ -39,7 +39,7 @@ Mandatory docs inspected:
 - `docs/estimate-catalog-selection-phase-2b-plan.md`
 - `docs/qa-estimate-catalog-item-insertion.md`
 
-Estimate editor and estimate data files inspected:
+Estimate Editoror and estimate data files inspected:
 - `apps/web/components/estimate-form.tsx`
 - `apps/web/components/estimates/items-section.tsx`
 - `apps/web/components/estimates/estimate-import-chooser.tsx`
@@ -74,7 +74,7 @@ The editor also already has multiple item sources:
 - archived catalog items are visible in the Catalog Items panel but blocked from insertion.
 - system catalog items use `insertSystemToEstimateAction`, preview measurements, then expand grouped component lines.
 - line items can be imported from another same-organization estimate into draft estimates.
-- the current "Add manual item" path quick-creates a catalog item, then inserts it into the estimate.
+- the current "Add manual item" path Quick-Creates a catalog item, then inserts it into the estimate.
 
 Important limitation:
 - current catalog insertion does not accept a target group.
@@ -142,7 +142,7 @@ Recommended role for the current Catalog Items panel:
 - convert it into the Cost Database tab inside the group-scoped Add Item drawer.
 - optionally keep a temporary global "Add item" entry during transition, but route the user to select or create a target group before insertion.
 
-This avoids making the estimate editor feel like the place to manage the Cost Items Database. Catalog maintenance should remain in `/cost-items-database` and `/settings/catalogs`; the estimate editor should use catalog items as insertion sources.
+This avoids making the Estimate Editoror feel like the place to manage the Cost Items Database. Catalog maintenance should remain in `/cost-items-database` and `/settings/catalogs`; the Estimate Editoror should use catalog items as insertion sources.
 
 ## Snapshot Editing Direction
 
@@ -294,7 +294,7 @@ Validation:
 ### Phase E: Larger Design / v0 Pass
 
 Goal:
-- turn the estimate editor into a cleaner production estimate workspace after the behavior is stable.
+- turn the Estimate Editoror into a cleaner production estimate workspace after the behavior is stable.
 
 Recommended scope:
 - group-first visual redesign using the shared contractor workspace language.
@@ -314,7 +314,7 @@ Recommendation:
 
 Rationale:
 - catalog items should be maintained in the Cost Items Database.
-- the estimate editor should consume reusable cost items as insertion sources.
+- the Estimate Editoror should consume reusable cost items as insertion sources.
 - permanent catalog browsing makes the editor long and competes with the actual estimate groups.
 - group-level actions match contractor workflow better: choose section, then add item.
 
@@ -344,7 +344,7 @@ Do not touch:
 - tax calculation behavior
 - database schema or migrations
 - durable group table design
-- catalog item management workflows inside the estimate editor
+- catalog item management workflows inside the Estimate Editoror
 - direct takeoff/AI-generated estimate lines
 - customer-facing output beyond preserving existing grouped display
 - mock data, local-only persistence, or placeholder estimating flows
@@ -354,7 +354,7 @@ Do not touch:
 Before implementation, decide:
 - whether Phase B may use a two-step client assignment/autosave or should extend the server action with optional `groupName`.
 - whether system insertion from a group should always use the selected group or offer "new system group" as a separate action.
-- whether "custom one-off item" should remain catalog-quick-create-first or whether a true one-off `manual` source path should be designed separately.
+- whether "custom one-off item" should remain catalog-Quick-Create-first or whether a true one-off `manual` source path should be designed separately.
 - whether previous-estimate import should support selected rows before destination-group targeting.
 
 ## Suggested Validation Commands

@@ -33,7 +33,7 @@ type EstimateWorkspaceShellProps = {
   children: ReactNode;
   statusStrip: ReactNode;
   headerActions?: ReactNode;
-  saveStateLabel?: string;
+  saveAction?: ReactNode;
   titleEditing?: boolean;
   onTitleEditToggle?: () => void;
   onTitleChange?: (value: string) => void;
@@ -70,7 +70,7 @@ export function EstimateWorkspaceShell({
   children,
   statusStrip,
   headerActions,
-  saveStateLabel,
+  saveAction,
   titleEditing,
   onTitleEditToggle,
   onTitleChange,
@@ -158,16 +158,15 @@ export function EstimateWorkspaceShell({
         <main className="flex-1 bg-white">{children}</main>
 
         <footer className="border-t border-[#e8ded5] bg-white px-4 py-2.5">
-          <div className="flex items-center justify-between gap-4">
-            <p className="text-[12px] font-medium text-[#6f6256]">
-              {saveStateLabel ?? "All changes saved."}
-            </p>
-            <button
-              type="submit"
-              className="inline-flex h-8 min-w-[120px] items-center justify-center border border-[#d8731f] bg-[#d8731f] px-3 text-sm font-semibold text-white transition hover:bg-[#bf6519]"
-            >
-              Save now
-            </button>
+          <div className="flex items-center justify-end">
+            {saveAction ?? (
+              <button
+                type="submit"
+                className="inline-flex h-9 min-w-[124px] items-center justify-center border border-[#d8731f] bg-[#d8731f] px-3 text-sm font-semibold text-white transition hover:bg-[#bf6519]"
+              >
+                Save now
+              </button>
+            )}
           </div>
         </footer>
       </div>

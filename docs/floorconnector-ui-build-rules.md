@@ -10,8 +10,8 @@ These rules are the default for all future FloorConnector UI changes unless a ta
 - Do not invent new page structures.
 - Do not create one-off card patterns.
 - Do not create new interaction styles unless explicitly approved.
-- Reuse the existing manager-page pattern for list and queue pages.
-- Reuse the existing record-workspace pattern for detail pages.
+- Reuse the existing Manager Page pattern for list and queue pages.
+- Reuse the existing Record Workspace pattern for detail pages.
 - Reuse shared context-card patterns such as the existing production-schedule or schedule-handoff cards and `RelatedConversationsCard`.
 - Use Contractor Foreman as the primary UX interaction reference for:
   - flow order

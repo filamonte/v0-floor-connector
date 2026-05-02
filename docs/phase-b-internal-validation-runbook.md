@@ -113,7 +113,7 @@ Run these passes in order. Later passes rely on records created in earlier passe
 ### Pass 1: Core Lead To Payment Workflow
 
 Steps:
-1. Create a new opportunity from `/leads` with a unique validation name.
+1. Create a new opportunity from Leads Manager Page (`/leads`) with a unique validation name.
 2. Start an estimate from the opportunity path.
 3. Create or link one canonical customer and one canonical project.
 4. Add estimate line items from catalog-backed or supported manual item flows.
@@ -174,10 +174,10 @@ Failure notes to record:
 Steps:
 1. Open `/reports`.
 2. Set a date range that includes the validation records.
-3. Compare lead pipeline counts against `/leads`.
-4. Compare estimate status counts against `/estimates`.
-5. Compare invoice summary and aging against `/invoices` and `/financials`.
-6. Compare recent payment activity against `/payments`.
+3. Compare lead pipeline counts against Leads Manager Page (`/leads`).
+4. Compare estimate status counts against Estimates Manager Page (`/estimates`).
+5. Compare invoice summary and aging against Invoices Manager Page (`/invoices`) and Financials Home (`/financials`).
+6. Compare recent payment activity against Payments Manager Page (`/payments`).
 7. Compare project readiness blockers against project detail.
 8. Click drilldown rows and confirm they link to canonical record pages.
 
@@ -290,14 +290,14 @@ Steps:
 1. Use a fresh or near-empty contractor organization where practical.
 2. Open `/dashboard`.
 3. Review the `Start here` guidance.
-4. Open `/leads`, `/customers`, `/projects`, and `/estimates` before records exist.
-5. Use direct quick-create actions from empty states.
-6. Confirm each quick-create creates a canonical record and hands off to the full workspace.
+4. Open Leads Manager Page (`/leads`), Customers Manager Page (`/customers`), Projects Manager Page (`/projects`), and Estimates Manager Page (`/estimates`) before records exist.
+5. Use direct Quick-Create actions from empty states.
+6. Confirm each Quick-Create creates a canonical record and hands off to the full workspace.
 7. Confirm settings links guide the user toward organization, financial, tax, workflow, template, and catalog setup where applicable.
 
 Expected result:
 - Empty states are production-safe and do not depend on seeded demo records.
-- Quick-create remains canonical-record-first.
+- Quick-Create remains canonical-record-first.
 - The user can understand where to start.
 - No fake local persistence, sample business flows, or placeholder records appear in protected routes.
 
@@ -305,7 +305,7 @@ Failure notes to record:
 - route
 - confusing empty-state copy
 - missing create action
-- quick-create failure
+- Quick-Create failure
 - any seeded/demo assumption
 - any action that creates a duplicate model or dead-end record
 

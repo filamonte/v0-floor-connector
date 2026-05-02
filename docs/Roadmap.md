@@ -11,7 +11,7 @@ It tracks delivery sequence and major platform milestones. It should be read alo
 - [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
 - [docs/estimate-builder-build-plan.md](C:/FloorConnector/docs/estimate-builder-build-plan.md): long-term Estimate Builder blueprint
 - [docs/estimate-builder-v1-scope.md](C:/FloorConnector/docs/estimate-builder-v1-scope.md): constrained Estimate Builder V1 scope
-- [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): UI, directory/contact, tax, estimate editor, workflow-guidance, project-address, and configurable-view alignment backlog
+- [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): UI, directory/contact, tax, Estimate Editoror, workflow-guidance, project-address, and configurable-view alignment backlog
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
 
 This document is sequencing guidance, not a claim that a later phase is already implemented. If status and plan conflict, trust [docs/current-state.md](C:/FloorConnector/docs/current-state.md) for current reality.
@@ -68,7 +68,7 @@ Planned focus:
 - deepen module controls and entitlement behavior beyond the current configuration foundation
 - keep contractor admin and super-admin responsibilities clearly separated as more modules plug into settings
 - reduce route and UI inconsistencies before expanding new domains
-- address demo-polish alignment items from [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md), especially estimate editor navigation/review actions, project service-address visibility, line taxable-toggle planning, and UI consistency audit work
+- address demo-polish alignment items from [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md), especially Estimate Editoror navigation/review actions, project service-address visibility, line taxable-toggle planning, and UI consistency audit work
 
 ## Phase 3
 

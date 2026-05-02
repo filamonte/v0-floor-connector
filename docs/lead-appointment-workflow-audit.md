@@ -11,9 +11,9 @@ Status: implementation note for the lead -> appointment / site visit workflow.
 
 ## Fix Direction
 
-- Lead quick-create should capture structured address fields instead of a single combined address.
+- Lead Quick-Create should capture structured address fields instead of a single combined address.
 - Creating an appointment from a lead should preserve `opportunity_id` and should not require the lead to be converted into a customer first.
-- Site visit quick-create from a lead should use a sensible default title: `Site Visit / Inspection - {customer name or company name}`.
+- Site visit Quick-Create from a lead should use a sensible default title: `Site Visit / Inspection - {customer name or company name}`.
 - When a lead-linked site visit is scheduled, the linked opportunity should move into the site-assessment scheduled state so the lead workspace guidance stays aligned with real appointment activity.
 
 ## Future TODOs
