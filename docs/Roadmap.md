@@ -56,19 +56,45 @@ Included in Phase 1:
 
 ## Phase 2
 
-**Current phase: operational depth, scheduling, and communication UI**
+**Current phase: Phase B validation and foundation hardening**
+
+Current reality:
+- first-pass operational depth, schedule, communications, reporting, Sales Tax Summary, manual notification-only automation, onboarding readiness, and contractor UI normalization foundations are implemented on the current branch
+- `/schedule` has first-pass planner/board and crew-assignment continuity on canonical jobs and `job_assignments`
+- `/communications` has a first contractor-side review surface, URL-driven filtering, safe replies on existing canonical threads, and notification triage without provider sends or automation execution
+- `/reports` has narrow read-only internal-beta summaries over canonical records, including Sales Tax Summary
+
+Current focus:
+- run and record seed-free Phase B validation before contractor beta
+- verify reporting and Sales Tax Summary accuracy against canonical invoices, payments, opportunities, estimates, projects, and tax snapshots
+- validate the manual automation runner's duplicate guard and recipient behavior
+- complete internal beta support/release checklist, onboarding runbook, beta candidate criteria, and bug triage process
+- fix validation-blocking defects without expanding into unrelated feature breadth
+- keep contractor admin and super-admin responsibilities clearly separated as more modules plug into settings
+
+## Phase C: Operational Depth Systems
 
 Planned focus:
-- align docs, navigation, route protection, and workflow messaging with the already-built system
-- tighten project-centered workflow guidance across leads, projects, estimates, contracts, jobs, and invoices
-- improve dashboard and queue truthfulness
-- deepen the new scheduling foundation without creating a disconnected dispatch subsystem
-- build user-facing communication UI on top of the already-implemented notification and communication foundations
-- harden the new modular settings and super-admin architecture with clearer enforcement, permissions, and rollout rules
-- deepen module controls and entitlement behavior beyond the current configuration foundation
-- keep contractor admin and super-admin responsibilities clearly separated as more modules plug into settings
-- reduce route and UI inconsistencies before expanding new domains
-- address demo-polish alignment items from [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md), especially Estimate Editoror navigation/review actions, project service-address visibility, line taxable-toggle planning, and UI consistency audit work
+
+- HR + OSHA / Safety System: Introduce incident entity, extend people, compliance_records, time tracking, projects/jobs for HR and safety management.
+
+- Unified Task System: Define Task as canonical entity attaching to any record for assignable, lifecycle-tracked tasks.
+
+- Progress Billing / AIA System: Extend ScheduleOfValues, invoices for % complete, G702/G703, retainage.
+
+- Website + Lead Ingestion + Marketing Layer: Add public ingestion layer for leads into opportunities.
+
+- Purchasing + Inventory System: Extend catalog_items, inventory_items for purchase orders, stock tracking.
+
+- Subcontractor System: Extend vendors, people, compliance_records for onboarding and compliance.
+
+- PTO / Workforce Management: Add PTO accrual, requests, approval on people, time tracking.
+
+- Service Layer: Define AI, call intelligence, takeoffs, marketplace, marketing automation, forecasting as read-only enrichments.
+
+- Mobile-First Field Workflows: Ensure all field workflows support mobile for time tracking, incident capture, photos, tasks, daily logs, safety checklists.
+
+- Canonical Entity Cleanup: Clarify entities, remove Deal, ensure EmployeeProfile extends people.
 
 ## Phase 3
 
@@ -85,12 +111,12 @@ Planned focus:
 
 ## Phase 4
 
-**Next: scheduling**
+**Next: deeper scheduling and dispatch**
 
 Planned focus:
-- scheduling and schedule-readiness workflows
-- crew assignment
-- calendar and board views
+- dispatch-grade scheduling and schedule-readiness workflows beyond the current first-pass planner/board foundation
+- deeper crew coordination and assignment automation beyond current canonical `job_assignments` review/assignment
+- richer calendar, dispatch board, rescheduling, and operational planning controls
 - deeper execution planning and operational scheduling on top of the already-implemented time and daily-log foundations
 
 ## Phase 5
@@ -128,7 +154,7 @@ Document-template work in this phase should preserve the existing copied-templat
 
 Planned focus:
 - e-sign integration on top of canonical contracts
-- external payment gateway support on top of canonical payments
+- deeper payment-provider support, reconciliation, retry, and provider lifecycle tooling on top of canonical payments
 - PDF generation and document delivery
 - external tax provider integration
 - accounting and adjacent third-party integrations behind shared adapters
@@ -139,7 +165,7 @@ Planned focus:
 
 Planned focus:
 - broader customer portal workflows beyond the current access, review, and contract-signature foundation
-- customer-facing online payment UI and richer post-review customer actions
+- richer customer-facing payment self-service and post-review actions beyond the current portal invoice/payment handoff
 - record-based communication tied to projects, jobs, change orders, invoices, daily logs, field notes, and other canonical workflow records
 - scoped subcontractor/vendor/project partner collaboration where invited external participants can access only explicitly shared project or job workrooms
 - project/job workrooms for limited status updates, photo uploads, field notes, files, and record-tied communication

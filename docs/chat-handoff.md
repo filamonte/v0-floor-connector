@@ -75,6 +75,38 @@ Current stage:
 - Phase B progress checkpoint now lives at [docs/phase-b-progress-checkpoint.md](C:/FloorConnector/docs/phase-b-progress-checkpoint.md), and recommends internal validation before more feature breadth
 - Phase B internal validation runbook now lives at [docs/phase-b-internal-validation-runbook.md](C:/FloorConnector/docs/phase-b-internal-validation-runbook.md), with ordered passes for core workflow, portal permissions, reports, Sales Tax Summary, automation runner, communications, and onboarding/empty states
 
+## New Systems Summary
+
+Added systems:
+
+- Incident + OSHA System
+
+- HR System
+
+- Task System
+
+- Progress Billing
+
+- Marketing + Lead Ingestion
+
+- Purchasing + Inventory
+
+- Subcontractor System
+
+- PTO / Workforce Management
+
+- Service Layer
+
+- Mobile-First Requirements
+
+## Architectural Risks
+
+- Duplicate models: Ensure no separate employee or subcontractor entities.
+
+- Silo systems: All extend canonical entities.
+
+- Data ownership: Service layer read-only.
+
 ## Built Now
 
 Implemented on the current branch:
@@ -326,6 +358,20 @@ Dependency repair / validation status:
 - Validation now passes: `pnpm typecheck`, `pnpm lint`, and `git diff --check` all complete successfully. `git diff --check` reports line-ending warnings only.
 - Playwright spec discovery works with the web server disabled: `PLAYWRIGHT_SKIP_WEB_SERVER=1 pnpm exec playwright test --list` lists the two focused estimate group-catalog tests.
 - Authenticated e2e execution still requires local-only setup: saved auth state or `FLOORCONNECTOR_E2E_EMAIL` / `FLOORCONNECTOR_E2E_PASSWORD`, plus `FLOORCONNECTOR_E2E_DRAFT_ESTIMATE_ID` or path and active non-system catalog item names.
+
+## Final Documentation Review
+
+Final pre-next-phase documentation consistency review completed. Reviewed, in order: `docs/chat-handoff.md`, `docs/developer-source-of-truth.md`, `docs/current-state.md`, `docs/workflows.md`, `docs/Roadmap.md`, `docs/system-overview.md`, `docs/sales-to-production.md`, `docs/target-ia.md`, `docs/vision.md`, and `README.md`, with `docs/documentation-governance.md` checked for archival rules.
+
+Corrections made were documentation-only:
+- `docs/reporting-basics-plan.md` now clearly says the first `/reports` basics surface is implemented and that the plan is retained as guardrail/context, not an unstarted build plan.
+- `docs/Roadmap.md` now identifies the current Phase B focus as validation and foundation hardening instead of implying first-pass scheduling, communications, reporting, and automation UI are still future work.
+- `docs/system-overview.md` now distinguishes implemented first-pass `/communications`, `/schedule`, `/reports`, and Sales Tax Summary foundations from deeper target-only communication, dispatch, and analytics work.
+
+Known remaining doc risks:
+- several detailed implementation plans remain active because they still provide useful guardrails; they should be archived only after the next validation pass confirms they no longer prevent drift.
+- no broad link rewrite was done; active source-of-truth docs still use absolute `C:/FloorConnector/...` links by convention.
+- the next build phase should remain validation-first: run and record seed-free Phase B validation before adding feature breadth.
 
 ## System Rules
 

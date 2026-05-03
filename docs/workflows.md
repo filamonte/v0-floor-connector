@@ -55,6 +55,8 @@ Canonical system records:
 - job
 - invoice
 - payment
+- task
+- incident
 
 Supporting workflow stages:
 - contact and qualification work
@@ -467,6 +469,46 @@ How this should be interpreted today:
 - some of these steps already map cleanly to canonical records in the app
 - some are operational stages that still need stronger UX guidance or status handling around the implemented readiness gate
 - the system should preserve one continuous path rather than forcing users to decide between disconnected modules
+
+### Employee Lifecycle Workflow
+
+- Onboarding: Create person, assign role, certifications, PTO setup.
+
+- Management: Update profiles, track PTO, certifications.
+
+- Safety: Incident reporting, compliance.
+
+### Subcontractor Onboarding Workflow
+
+- Invite: Create vendor/person, send invite.
+
+- Document upload: Insurance, compliance.
+
+- Validation: Compliance checks.
+
+### Incident Workflow
+
+- Capture: Required from time clock punch-out (entry point), project page, mobile workflows, daily logs. System supports tracking of all incidents, not just OSHA-recordable ones.
+
+- Record: Attach to company/location/project/job/person for multi-establishment and jobsite reporting. Include classification fields: recordable vs non-recordable, days away from work, restricted duty, medical treatment beyond first aid, loss of consciousness, near miss (no injury, potential hazard). Internal severity levels (low, medium, high, critical) are separate from OSHA recordability and used for prioritization and risk tracking. Support OSHA recordkeeping timing: recordable injury/illness within 7 calendar days, fatality flag within 8 hours, hospitalization/amputation/eye loss flag within 24 hours.
+
+- Reporting: Generate OSHA 301 (incident detail), 300 (log), 300A (annual summary) from incident data. OSHA 300/300A include ONLY recordable incidents; non-recordable incidents and near misses are stored but excluded from OSHA logs. /reports is the home for OSHA 300/300A/301 exports.
+
+### Task Lifecycle Workflow
+
+- Create: Attach to any record, assign, due date.
+
+- Track: Status, audit.
+
+- Complete: Close.
+
+### Progress Billing Workflow
+
+- Setup: SOV with % complete.
+
+- Update: Mark complete, billed.
+
+- Generate: G702/G703.
 
 ## Intended Workflow Direction
 

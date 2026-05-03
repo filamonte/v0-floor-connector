@@ -249,6 +249,8 @@ That includes:
 - time records
 - daily logs
 - field notes
+- incidents
+- tasks
 
 This is the product's central rule. If the same customer, project, contract, invoice, or payment starts appearing in multiple module-specific forms, the system is drifting in the wrong direction.
 
@@ -302,14 +304,15 @@ The right way to describe the current product is not "unfinished in general." Th
 These are still later layers:
 
 #### Communications
-- internal messaging
-- contractor-to-customer messaging
-- broader notification and conversation workflows
+- broader send/reply workflows beyond the current safe contractor reply composer
+- provider-backed customer messaging and delivery
+- job, daily-log, field-note, and broader source coverage beyond the currently supported canonical thread filters
+- richer notification and conversation workflows
 
 #### Scheduling And Dispatch
-- full scheduling calendar workflows
-- crew assignment
-- dispatch boards
+- full dispatch-grade scheduling workflows beyond the current first-pass `/schedule` planner and board
+- drag-and-drop rescheduling, route optimization, and deeper crew-calendar coordination
+- broader crew assignment automation beyond the current canonical `job_assignments` review/assignment foundation
 - deeper operational scheduling controls
 
 #### Deeper Payment Features
@@ -326,7 +329,7 @@ These are still later layers:
 - deeper provider-driven signature workflows on top of the current canonical contract flow
 
 #### Advanced Reporting And Analytics
-- broader reporting
+- broader reporting beyond the current read-only `/reports` basics and Sales Tax Summary
 - cross-module analytics
 - management dashboards
 - higher-level business intelligence views
@@ -344,10 +347,10 @@ The next layers should follow the current roadmap direction in a disciplined ord
 - tighten readiness, blockers, and next-best-action guidance
 - keep reducing page-to-page friction
 
-2. Scheduling and dispatch foundations
-- scheduling workflows
-- crew assignment
-- calendar and board views
+2. Scheduling and dispatch depth
+- dispatch-grade scheduling workflows beyond the current planner/board foundation
+- deeper crew coordination on canonical jobs and `job_assignments`
+- route optimization, drag-and-drop rescheduling, and operational automation
 
 3. Materials, reusable catalogs, and richer shared document tooling
 - deepen reusable operational content on the same canonical system
@@ -422,3 +425,47 @@ Future features should extend the canonical record chain rather than introduce p
 - no disconnected field-execution silo
 
 That discipline is what keeps FloorConnector credible both as a product and as an implementation strategy.
+
+## Section 8 -- HR System
+
+The HR system extends the canonical people records with:
+
+- Employee profiles: employment type, role/trade, pay type, certifications via compliance_records, PTO/sick tracking, onboarding status.
+
+- OSHA / Safety: Introduces incident entity attached to project/job/person, representing OSHA Form 301-level detail. Not all incidents are OSHA-recordable; system supports internal tracking of all incidents. Incidents include classification fields to determine recordability: recordable vs non-recordable, days away from work, restricted duty, medical treatment beyond first aid, loss of consciousness, near miss (no injury, potential hazard). Internal severity levels (low, medium, high, critical) are separate from OSHA recordability and used for prioritization and risk tracking. Incidents support OSHA recordkeeping timing: recordable injury/illness entered within 7 calendar days, fatality reporting flag within 8 hours, hospitalization, amputation, or eye loss reporting flag within 24 hours. Incident creation from time clock punch-out (required entry point), project pages, mobile workflows, daily logs. Incident records support company/location/project/job/person context for multi-establishment and jobsite reporting needs. OSHA reports (301 incident detail, 300 log, 300A annual summary) are generated from incident data, not stored as separate canonical forms; reports include ONLY recordable incidents, while non-recordable incidents and near misses are stored but excluded from OSHA logs. /reports is the reporting home for OSHA 300/300A/301 exports.
+
+- Safety Dashboard: Visualization and work queue only, not a data owner. Visualizes incidents (including near misses), severity (low, medium, high, critical), trends, compliance gaps from incidents, compliance_records, projects, people.
+
+## Section 9 -- Service Layer
+
+The service layer provides read-only enrichment over canonical data:
+
+- AI: Estimates, forecasting, takeoffs.
+
+- Call Intelligence: Conversations to opportunities.
+
+- Takeoffs: Measurement to estimate input.
+
+- Marketplace: Supplier/distributor integration.
+
+- Marketing Automation.
+
+- Benchmarking / Forecasting.
+
+These systems read from canonical data without owning or duplicating records.
+
+## Section 10 -- Mobile-First Field Workflows
+
+All field workflows support mobile-first UX:
+
+- Time tracking
+
+- Incident capture
+
+- Photos / attachments
+
+- Tasks
+
+- Daily logs
+
+- Safety checklists

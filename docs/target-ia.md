@@ -362,6 +362,36 @@ Module toggles should affect:
 
 They should **not** create duplicate models or parallel architecture.
 
+## HR / Workforce
+
+- Employee management extending people.
+
+- PTO tracking.
+
+- Certifications.
+
+## Safety Dashboard
+
+- Visualization and work queue only, not a data owner.
+
+- Incident visualization.
+
+- Compliance gaps.
+
+- Trends.
+
+## Tasks System
+
+- Task list, assignment, lifecycle.
+
+## Reports Alignment
+
+- OSHA reports.
+
+- HR reports.
+
+- Task reports.
+
 ## Current Implementation Note
 
 Today the contractor app still includes parallel top-level routes such as:

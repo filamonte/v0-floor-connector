@@ -1,8 +1,13 @@
 # Reporting Basics Plan
 
-Status: Phase B planning document for the smallest useful internal-beta reporting layer.
+Status: Phase B planning document for the smallest useful internal-beta reporting layer. The first read-only `/reports` implementation is now complete and documented in [docs/current-state.md](C:/FloorConnector/docs/current-state.md).
 
-This plan does not authorize app code, schema changes, reporting tables, workflow mutation, or broad analytics work by itself. It defines the first reporting pass that should help internal beta users understand current work without creating a disconnected analytics system.
+This plan is retained as implementation context and guardrail history. It does not override [docs/current-state.md](C:/FloorConnector/docs/current-state.md), does not authorize additional app code, schema changes, reporting tables, workflow mutation, or broad analytics work by itself, and should not be read as a claim that `/reports` is still unbuilt.
+
+Implemented first pass:
+- `/reports` exists as a read-only internal-beta Reports Home.
+- It covers lead pipeline, estimate status, invoice summary/aging, recent payment activity, project readiness blockers, and Sales Tax Summary.
+- It reads tenant-scoped canonical records only and does not create reporting tables, exports, filing workflows, or a separate analytics model.
 
 Primary references:
 - [docs/phase-a-completion-and-phase-b-readiness.md](C:/FloorConnector/docs/phase-a-completion-and-phase-b-readiness.md)
@@ -60,10 +65,9 @@ Implemented or partially available today:
 - Tax foundation:
   - invoice calculations and tax snapshots are present, but tax reporting is not yet a complete reporting workflow
 
-Not complete today:
+Still not complete today:
 
-- no full reports module
-- no consolidated reporting home
+- no broad reports module beyond the first narrow `/reports` basics surface
 - no durable report definitions
 - no CSV/export reporting flow
 - no advanced filterable analytics catalog
@@ -72,7 +76,7 @@ Not complete today:
 
 ## 2. First Internal-Beta Reports
 
-The first reports should be narrow, read-only, and useful for a contractor or internal tester running the core workflow.
+The first reports described below have been implemented as the narrow, read-only `/reports` basics surface. Treat the sections below as guardrail context for validating and extending that implementation, not as an unstarted build plan.
 
 ### Lead Pipeline Summary
 
@@ -421,6 +425,6 @@ Resolve during implementation without changing the canonical model:
 
 ## Phase B Recommendation
 
-The first reporting pass should be a small read-only reports home over canonical records, with five internal-beta summaries and drill-down links back into existing workspaces.
+The first reporting pass is now implemented as a small read-only reports home over canonical records, with internal-beta summaries and drill-down links back into existing workspaces.
 
-Build the reports only after the seed-free QA path and onboarding readiness have proven that a normal contractor tenant can operate without seed data. Reporting should help internal beta testers see what happened in the canonical lifecycle; it should not become a new workflow, ledger, CRM, or analytics warehouse.
+Next reporting work should be validation-first: verify the reports with seed-free Phase B workflow data before adding exports, durable report definitions, analytics breadth, or any reporting-specific persistence. Reporting should help internal beta testers see what happened in the canonical lifecycle; it should not become a new workflow, ledger, CRM, or analytics warehouse.
