@@ -1,4 +1,8 @@
 import { DetailPanel } from "@/components/detail-panel";
+import {
+  SaveStateForm,
+  SaveStateSubmitButton
+} from "@/components/save-feedback/save-state-form";
 import { SettingsFeedback } from "@/components/settings-feedback";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { requireOrganizationAdminScope } from "@/lib/organizations/admin";
@@ -36,7 +40,11 @@ export default async function SettingsWorkflowsPage({ searchParams }: PageProps)
         title="Workflow Defaults"
         description="Set organization-owned contract workflow defaults, estimate starting defaults, and the next human-facing estimate, invoice, change order, and contract numbers without breaking the canonical commercial chain."
       >
-        <form action={updateOrganizationWorkflowSettingsAction} className="space-y-5">
+        <SaveStateForm
+          action={updateOrganizationWorkflowSettingsAction}
+          pendingLabel="Saving..."
+          className="space-y-5"
+        >
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-800">
               Approved-estimate contract template
@@ -271,13 +279,11 @@ export default async function SettingsWorkflowsPage({ searchParams }: PageProps)
             Contracts still generate from approved estimates using canonical project, customer, estimate, and opportunity continuity. Draft contracts can be customized before signature activity locks the record, while numbering, deposit, financing, and signature expectations remain organization-scoped workflow inputs.
           </div>
 
-          <button
-            type="submit"
-            className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-          >
-            Save workflow defaults
-          </button>
-        </form>
+          <SaveStateSubmitButton
+            submitLabel="Save workflow defaults"
+            pendingLabel="Saving..."
+          />
+        </SaveStateForm>
       </DetailPanel>
     </div>
   );

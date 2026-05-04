@@ -128,7 +128,7 @@ The platform should eventually support the customer-facing parts of the same wor
 - customer-facing status and communication surfaces
 - notifications, tasks, and workflow prompts that help office, ops, and finance teams act on the next step
 
-The purpose is not to create a separate system. It is to project the same canonical records outward in a controlled way.
+The purpose is not to create a separate system. Customer interaction can happen through the portal or through contractor-assisted onsite workflows, while still acting on the same canonical records in a controlled way.
 
 ### 5. Connected Platform Layer
 

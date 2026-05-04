@@ -10,6 +10,7 @@ coverage
 playwright/.auth/
 playwright-report/
 test-results/
+.playwright-tmp/
 
 # env
 .env

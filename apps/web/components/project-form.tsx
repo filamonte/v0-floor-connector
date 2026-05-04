@@ -5,9 +5,12 @@ import type {
 } from "@floorconnector/types";
 
 import { AuthField } from "@/components/auth-field";
-import { AuthSubmitButton } from "@/components/auth-submit-button";
 import { CountryComboboxField } from "@/components/country-combobox-field";
 import { CustomerPickerField } from "@/components/customer-picker-field";
+import {
+  SaveStateForm,
+  SaveStateSubmitButton
+} from "@/components/save-feedback/save-state-form";
 import { projectStatusesList } from "@/lib/projects/schemas";
 
 type ProjectFormProps = {
@@ -44,7 +47,12 @@ export function ProjectForm({
   );
 
   return (
-    <form action={action} className="space-y-5">
+    <SaveStateForm
+      action={action}
+      enabled={Boolean(project)}
+      pendingLabel={pendingLabel}
+      className="space-y-5"
+    >
       {project ? <input type="hidden" name="projectId" value={project.id} /> : null}
       <input
         type="hidden"
@@ -143,13 +151,15 @@ export function ProjectForm({
       </label>
 
       <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-        <AuthSubmitButton pendingLabel={pendingLabel} className="sm:min-w-[200px]">
-          <span>{submitLabel}</span>
-        </AuthSubmitButton>
+        <SaveStateSubmitButton
+          submitLabel={submitLabel}
+          pendingLabel={pendingLabel}
+          className="sm:min-w-[200px]"
+        />
         <p className="text-sm leading-6 text-slate-500">
           Project records stay scoped to the active organization automatically.
         </p>
       </div>
-    </form>
+    </SaveStateForm>
   );
 }

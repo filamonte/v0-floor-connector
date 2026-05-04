@@ -15,6 +15,7 @@ import {
   countersignContract,
   createContractFromEstimate,
   getContractSignatureActionOptions,
+  recordOnsiteContractSignature,
   recordCustomerDeclinedContract,
   recordCustomerSignedContract,
   sendContractForSignature,
@@ -24,11 +25,13 @@ import {
 } from "./data";
 import {
   contractCountersignInputSchema,
+  contractOnsiteSignatureActionInputSchema,
   contractPortalSignatureActionInputSchema,
   contractSendSignatureActionInputSchema,
   createContractFromEstimateInputSchema,
   updateContractDraftInputSchema
 } from "./schemas";
+import { recordWorkflowErrorForCurrentUser } from "@/lib/workflow-errors/data";
 
 function getFieldValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -74,6 +77,41 @@ function getInternalApprovalActionLabel(status: ContractInternalApprovalStatus) 
   }
 }
 
+function getContractGenerationErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : "Unable to generate contract.";
+
+  if (message === "Approved estimate snapshot is missing. Re-approve the estimate before generating a contract.") {
+    return "This estimate was approved, but its approved snapshot is missing. Rebuild the approval snapshot from the estimate, then generate the contract again.";
+  }
+
+  return message;
+}
+
+function toUuidOrNull(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+    ? value
+    : null;
+}
+
+async function logContractGenerationFailure(input: {
+  estimateId: string;
+  templateId?: string;
+  message: string;
+  source: "contract_create" | "contract_quick_create";
+}) {
+  await recordWorkflowErrorForCurrentUser({
+    action: "contract.generate_from_estimate",
+    subjectType: "estimate",
+    subjectId: toUuidOrNull(input.estimateId),
+    message: input.message,
+    metadata: {
+      source: input.source,
+      estimateId: input.estimateId || null,
+      hasTemplateId: Boolean(input.templateId)
+    }
+  });
+}
+
 function revalidateContractPaths(contract: {
   id: string;
   estimateId: string | null;
@@ -100,10 +138,17 @@ export async function createContractFromEstimateAction(formData: FormData) {
   });
 
   if (!result.success) {
+    const message = result.error.issues[0]?.message ?? "Unable to generate contract.";
+    await logContractGenerationFailure({
+      estimateId,
+      templateId,
+      message,
+      source: "contract_create"
+    });
     redirect(
       buildRedirect("/contracts", {
         estimateId,
-        error: result.error.issues[0]?.message ?? "Unable to generate contract."
+        error: message
       })
     );
   }
@@ -113,11 +158,17 @@ export async function createContractFromEstimateAction(formData: FormData) {
   try {
     contract = await createContractFromEstimate(result.data);
   } catch (error) {
+    const message = getContractGenerationErrorMessage(error);
+    await logContractGenerationFailure({
+      estimateId,
+      templateId,
+      message,
+      source: "contract_create"
+    });
     redirect(
       buildRedirect("/contracts", {
         estimateId,
-        error:
-          error instanceof Error ? error.message : "Unable to generate contract."
+        error: message
       })
     );
   }
@@ -140,11 +191,18 @@ export async function quickCreateContractFromEstimateAction(formData: FormData) 
   });
 
   if (!result.success) {
+    const message = result.error.issues[0]?.message ?? "Unable to generate contract.";
+    await logContractGenerationFailure({
+      estimateId,
+      templateId,
+      message,
+      source: "contract_quick_create"
+    });
     redirect(
       buildRedirect("/contracts", {
         compose: "1",
         estimateId,
-        error: result.error.issues[0]?.message ?? "Unable to generate contract."
+        error: message
       })
     );
   }
@@ -154,12 +212,18 @@ export async function quickCreateContractFromEstimateAction(formData: FormData) 
   try {
     contract = await createContractFromEstimate(result.data);
   } catch (error) {
+    const message = getContractGenerationErrorMessage(error);
+    await logContractGenerationFailure({
+      estimateId,
+      templateId,
+      message,
+      source: "contract_quick_create"
+    });
     redirect(
       buildRedirect("/contracts", {
         compose: "1",
         estimateId,
-        error:
-          error instanceof Error ? error.message : "Unable to generate contract."
+        error: message
       })
     );
   }
@@ -600,4 +664,37 @@ export async function customerDeclineContractAction(formData: FormData) {
       message: `${contract.title} was declined.`
     })
   );
+}
+
+export async function recordOnsiteContractSignatureAction(input: {
+  contractId: string;
+  signerId: string;
+  signatureImage: string;
+}) {
+  const result = contractOnsiteSignatureActionInputSchema.safeParse(input);
+
+  if (!result.success) {
+    return {
+      ok: false as const,
+      error:
+        result.error.issues[0]?.message ?? "Unable to complete onsite signature."
+    };
+  }
+
+  try {
+    const contract = await recordOnsiteContractSignature(result.data);
+    revalidateContractPaths(contract);
+
+    return {
+      ok: true as const,
+      contractId: contract.id,
+      title: contract.title
+    };
+  } catch (error) {
+    return {
+      ok: false as const,
+      error:
+        error instanceof Error ? error.message : "Unable to complete onsite signature."
+    };
+  }
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { QuickCreateFormShell } from "@/components/quick-create-form-shell";
 import { AuthSubmitButton } from "@/components/auth-submit-button";
 
@@ -13,6 +15,8 @@ type ContractQuickCreateFormProps = {
   action: (formData: FormData) => void | Promise<void>;
   approvedEstimates: ApprovedEstimateOption[];
   initialEstimateId?: string | null;
+  errorMessage?: string | null;
+  estimateHref?: string | null;
   preferredTemplateId?: string | null;
   requireInternalApproval?: boolean;
 };
@@ -21,6 +25,8 @@ export function ContractQuickCreateForm({
   action,
   approvedEstimates,
   initialEstimateId,
+  errorMessage,
+  estimateHref,
   preferredTemplateId,
   requireInternalApproval = false
 }: ContractQuickCreateFormProps) {
@@ -40,6 +46,21 @@ export function ContractQuickCreateForm({
             : "This creates a real contract record and takes you straight into the full contract workspace."
         }
       >
+        {errorMessage ? (
+          <div className="mb-5 rounded-[4px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-900">
+            <p className="font-semibold">Contract generation is blocked</p>
+            <p className="mt-1">{errorMessage}</p>
+            {estimateHref ? (
+              <Link
+                href={estimateHref}
+                className="mt-3 inline-flex items-center rounded-[4px] border border-rose-300 bg-white px-3 py-2 text-sm font-medium text-rose-900 transition hover:bg-rose-100"
+              >
+                Open estimate to rebuild snapshot
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
+
         <label className="block">
           <span className="mb-2 block text-sm font-medium text-slate-800">
             Approved estimate

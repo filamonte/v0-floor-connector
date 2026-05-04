@@ -164,7 +164,7 @@ export function EstimateWorkspaceShell({
                 type="submit"
                 className="inline-flex h-9 min-w-[124px] items-center justify-center border border-[#d8731f] bg-[#d8731f] px-3 text-sm font-semibold text-white transition hover:bg-[#bf6519]"
               >
-                Save now
+                Save
               </button>
             )}
           </div>

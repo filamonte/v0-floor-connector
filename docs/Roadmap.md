@@ -41,7 +41,7 @@ Included in Phase 1:
 - shared templates
 - change orders and approved change-order snapshots
 - contracts
-- contract signature foundation and customer-facing signature workflow on canonical contracts
+- contract signature foundation, customer-facing portal signing, and contractor-side onsite signing on canonical contracts
 - jobs
 - invoices and invoice line items
 - snapshot-based invoice lineage and schedule-of-values lineage
@@ -155,7 +155,7 @@ Document-template work in this phase should preserve the existing copied-templat
 Planned focus:
 - e-sign integration on top of canonical contracts
 - deeper payment-provider support, reconciliation, retry, and provider lifecycle tooling on top of canonical payments
-- PDF generation and document delivery
+- deeper PDF generation, document delivery, and provider lifecycle tooling beyond the current canonical contract PDF snapshot foundation
 - external tax provider integration
 - accounting and adjacent third-party integrations behind shared adapters
 

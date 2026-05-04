@@ -1,6 +1,9 @@
 import type { FieldNote } from "@floorconnector/types";
 
-import { AuthSubmitButton } from "@/components/auth-submit-button";
+import {
+  SaveStateForm,
+  SaveStateSubmitButton
+} from "@/components/save-feedback/save-state-form";
 
 type JobOption = {
   id: string;
@@ -50,7 +53,12 @@ export function FieldNoteForm({
   defaultJobId
 }: FieldNoteFormProps) {
   return (
-    <form action={action} className="space-y-4">
+    <SaveStateForm
+      action={action}
+      enabled={Boolean(fieldNote)}
+      pendingLabel={pendingLabel}
+      className="space-y-4"
+    >
       <input type="hidden" name="dailyLogId" value={dailyLogId} />
       <input type="hidden" name="projectId" value={projectId} />
       <input type="hidden" name="visibility" value="internal" />
@@ -174,17 +182,16 @@ export function FieldNoteForm({
       </label>
 
       <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
-        <AuthSubmitButton
+        <SaveStateSubmitButton
+          submitLabel={submitLabel}
           pendingLabel={pendingLabel}
           variant={fieldNote ? "secondary" : "primary"}
           className="sm:min-w-[180px]"
-        >
-          <span>{submitLabel}</span>
-        </AuthSubmitButton>
+        />
         <p className="text-sm leading-6 text-slate-500">
           Notes stay inside the daily-log workflow and use shared `note_type` and `status` instead of separate execution subsystems.
         </p>
       </div>
-    </form>
+    </SaveStateForm>
   );
 }

@@ -1,5 +1,4 @@
 const { defineConfig, devices } = require("@playwright/test");
-const fs = require("node:fs");
 const path = require("node:path");
 
 const authStatePath = path.resolve(
@@ -19,13 +18,26 @@ module.exports = defineConfig({
     baseURL,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
-    video: "retain-on-failure",
-    storageState: fs.existsSync(authStatePath) ? authStatePath : undefined
+    video: "retain-on-failure"
   },
   projects: [
     {
-      name: "chromium",
+      name: "setup",
+      testMatch: /auth\.setup\.js/
+    },
+    {
+      name: "chromium-public",
+      testIgnore: [/auth\.setup\.js/, /estimate-.*\.spec\.js/],
       use: { ...devices["Desktop Chrome"] }
+    },
+    {
+      name: "chromium-protected",
+      dependencies: ["setup"],
+      testMatch: /estimate-.*\.spec\.js/,
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: authStatePath
+      }
     }
   ],
   webServer: process.env.PLAYWRIGHT_SKIP_WEB_SERVER

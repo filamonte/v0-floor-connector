@@ -6,6 +6,7 @@ import {
   requireOrganizationAdminScope
 } from "@/lib/organizations/admin";
 import { updateOrganizationMembershipRoleAction } from "@/lib/settings/actions";
+import { listRecentWorkflowErrorEventsForAdmin } from "@/lib/workflow-errors/data";
 
 type PageProps = {
   searchParams?: Promise<{
@@ -17,9 +18,10 @@ type PageProps = {
 export default async function SettingsAdminPage({ searchParams }: PageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const scope = await requireOrganizationAdminScope("/settings/admin");
-  const [members, roles] = await Promise.all([
+  const [members, roles, workflowErrors] = await Promise.all([
     listOrganizationMembers(scope.organizationId),
-    listOrganizationRoles(scope.organizationId)
+    listOrganizationRoles(scope.organizationId),
+    listRecentWorkflowErrorEventsForAdmin()
   ]);
 
   return (
@@ -90,6 +92,37 @@ export default async function SettingsAdminPage({ searchParams }: PageProps) {
             </form>
           ))}
         </div>
+      </DetailPanel>
+
+      <DetailPanel
+        title="Workflow Error Events"
+        description="Recent tenant-scoped workflow failures recorded for owner/admin review. Contract generation failures are the first logged workflow."
+      >
+        {workflowErrors.length > 0 ? (
+          <div className="divide-y divide-slate-200 rounded-[1.5rem] border border-slate-200 bg-white">
+            {workflowErrors.map((event) => (
+              <div key={event.id} className="px-5 py-4">
+                <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-950">{event.action}</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">{event.message}</p>
+                    <p className="mt-2 text-xs uppercase tracking-[0.14em] text-slate-500">
+                      {event.subjectType}
+                      {event.subjectId ? ` ${event.subjectId.slice(0, 8)}` : ""}
+                    </p>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    {new Date(event.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">
+            No workflow errors have been recorded for this organization yet.
+          </div>
+        )}
       </DetailPanel>
     </div>
   );

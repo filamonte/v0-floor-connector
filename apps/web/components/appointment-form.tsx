@@ -3,7 +3,10 @@
 import { useMemo, useState } from "react";
 
 import { AuthField } from "@/components/auth-field";
-import { AuthSubmitButton } from "@/components/auth-submit-button";
+import {
+  SaveStateForm,
+  SaveStateSubmitButton
+} from "@/components/save-feedback/save-state-form";
 
 type OpportunityOption = {
   id: string;
@@ -111,7 +114,7 @@ export function AppointmentForm({
   );
 
   return (
-    <form action={action} className="space-y-5">
+    <SaveStateForm action={action} pendingLabel="Saving..." className="space-y-5">
       <input type="hidden" name="appointmentId" value={appointment.id} />
       {redirectTo ? <input type="hidden" name="redirectTo" value={redirectTo} /> : null}
 
@@ -265,10 +268,8 @@ export function AppointmentForm({
       </label>
 
       <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center">
-        <AuthSubmitButton pendingLabel="Saving appointment...">
-          <span>Save appointment</span>
-        </AuthSubmitButton>
+        <SaveStateSubmitButton submitLabel="Save appointment" pendingLabel="Saving..." />
       </div>
-    </form>
+    </SaveStateForm>
   );
 }

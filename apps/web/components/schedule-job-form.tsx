@@ -1,7 +1,10 @@
 "use client";
 
-import { AuthSubmitButton } from "@/components/auth-submit-button";
 import { QuickCreateFormShell } from "@/components/quick-create-form-shell";
+import {
+  SaveStateForm,
+  SaveStateSubmitButton
+} from "@/components/save-feedback/save-state-form";
 
 type ScheduleJobFormProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -28,7 +31,7 @@ export function ScheduleJobForm({
 
   return (
     <div className="space-y-4">
-      <form action={action} className="space-y-5">
+      <SaveStateForm action={action} pendingLabel="Saving..." className="space-y-5">
         <input type="hidden" name="jobId" value={job.id} />
         {redirectTo ? <input type="hidden" name="redirectTo" value={redirectTo} /> : null}
 
@@ -93,10 +96,12 @@ export function ScheduleJobForm({
           </div>
         </QuickCreateFormShell>
 
-        <AuthSubmitButton pendingLabel="Saving schedule..." className="w-full">
-          <span>Save schedule</span>
-        </AuthSubmitButton>
-      </form>
+        <SaveStateSubmitButton
+          submitLabel="Save schedule"
+          pendingLabel="Saving..."
+          className="w-full"
+        />
+      </SaveStateForm>
 
       {canUnschedule ? (
         <form action={unscheduleAction}>

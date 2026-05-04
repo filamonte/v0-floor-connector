@@ -2277,19 +2277,37 @@ export async function updateEstimateStatus(
     );
   }
 
-  if (nextStatus === "approved" || nextStatus === "rejected") {
-    throw new Error(
-      "Customer approval and rejection now flow through the authenticated portal only."
-    );
-  }
+  const nowIso = new Date().toISOString();
+  const updatePayload =
+    nextStatus === "approved"
+      ? {
+          status: nextStatus,
+          customer_viewed_at: currentEstimate.customer_viewed_at ?? nowIso,
+          approved_at: nowIso,
+          approved_by_portal_user_id: null,
+          rejected_at: null,
+          rejected_by_portal_user_id: null,
+          updated_by: scope.userId
+        }
+      : nextStatus === "rejected"
+        ? {
+            status: nextStatus,
+            customer_viewed_at: currentEstimate.customer_viewed_at ?? nowIso,
+            approved_at: null,
+            approved_by_portal_user_id: null,
+            rejected_at: nowIso,
+            rejected_by_portal_user_id: null,
+            updated_by: scope.userId
+          }
+        : {
+            status: nextStatus,
+            updated_by: scope.userId
+          };
 
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("estimates")
-    .update({
-      status: nextStatus,
-      updated_by: scope.userId
-    })
+    .update(updatePayload)
     .eq("company_id", scope.organizationId)
     .eq("id", estimateId)
     .select("id")
@@ -2318,9 +2336,302 @@ export async function updateEstimateStatus(
     throw new EstimateVersionConflictError();
   }
 
+  if (
+    (nextStatus === "approved" || nextStatus === "rejected") &&
+    !currentEstimate.customer_viewed_at
+  ) {
+    await insertEstimateCustomerEvent({
+      organizationId: updatedEstimate.company_id,
+      estimateId: updatedEstimate.id,
+      customerId: updatedEstimate.customer_id,
+      projectId: updatedEstimate.project_id,
+      eventType: "viewed",
+      actorType: "organization_user",
+      organizationUserId: scope.userId,
+      occurredAt: nowIso
+    });
+    await recordEstimateNotificationEvent({
+      organizationId: updatedEstimate.company_id,
+      estimateId: updatedEstimate.id,
+      customerId: updatedEstimate.customer_id,
+      projectId: updatedEstimate.project_id,
+      estimateReferenceNumber: updatedEstimate.reference_number,
+      customerName: updatedEstimate.customers?.name ?? null,
+      eventType: "viewed",
+      actorType: "organization_user",
+      actorUserId: scope.userId,
+      occurredAt: nowIso
+    });
+  }
+
+  if (nextStatus === "approved" || nextStatus === "rejected") {
+    await insertEstimateCustomerEvent({
+      organizationId: updatedEstimate.company_id,
+      estimateId: updatedEstimate.id,
+      customerId: updatedEstimate.customer_id,
+      projectId: updatedEstimate.project_id,
+      eventType: nextStatus,
+      actorType: "organization_user",
+      organizationUserId: scope.userId,
+      occurredAt: nowIso
+    });
+    await recordEstimateNotificationEvent({
+      organizationId: updatedEstimate.company_id,
+      estimateId: updatedEstimate.id,
+      customerId: updatedEstimate.customer_id,
+      projectId: updatedEstimate.project_id,
+      estimateReferenceNumber: updatedEstimate.reference_number,
+      customerName: updatedEstimate.customers?.name ?? null,
+      eventType: nextStatus,
+      actorType: "organization_user",
+      actorUserId: scope.userId,
+      occurredAt: nowIso
+    });
+  }
+
   await syncEstimateProjectReadiness(scope.organizationId, [currentEstimate.project_id]);
 
   return mapEstimate(updatedEstimate);
+}
+
+async function loadLatestEstimateCommercialSnapshotSummary(
+  organizationId: string,
+  estimateId: string
+): Promise<{ id: string; snapshot_version: number; created_at: string } | null> {
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("estimate_commercial_snapshots")
+    .select("id, snapshot_version, created_at")
+    .eq("company_id", organizationId)
+    .eq("estimate_id", estimateId)
+    .order("snapshot_version", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (response.error) {
+    throw new Error(`Unable to load approved estimate snapshot state: ${response.error.message}`);
+  }
+
+  const data: unknown = response.data;
+
+  if (
+    data &&
+    typeof data === "object" &&
+    "id" in data &&
+    "snapshot_version" in data &&
+    "created_at" in data &&
+    typeof data.id === "string" &&
+    typeof data.snapshot_version === "number" &&
+    typeof data.created_at === "string"
+  ) {
+    return data as { id: string; snapshot_version: number; created_at: string };
+  }
+
+  return null;
+}
+
+async function verifyApprovedEstimateSnapshotForContractGeneration(
+  organizationId: string,
+  estimateId: string
+): Promise<{ id: string; snapshot_version: number; created_at: string; itemCount: number } | null> {
+  const supabase = await getSupabaseServerClient();
+  const snapshotResponse = await supabase
+    .from("estimate_commercial_snapshots")
+    .select(
+      `
+        id,
+        company_id,
+        estimate_id,
+        customer_id,
+        project_id,
+        snapshot_version,
+        estimate_reference_number,
+        subtotal_amount,
+        taxable_sales_amount,
+        exempt_sales_amount,
+        tax_amount,
+        discount_amount,
+        total_amount,
+        scope_summary_html,
+        inclusions_html,
+        exclusions_html,
+        terms_html,
+        content_snapshot,
+        customer_name_snapshot,
+        customer_company_name_snapshot,
+        customer_email_snapshot,
+        customer_phone_snapshot,
+        customer_address_line_1_snapshot,
+        customer_address_line_2_snapshot,
+        customer_city_snapshot,
+        customer_state_region_snapshot,
+        customer_postal_code_snapshot,
+        customer_country_code_snapshot,
+        service_address_line_1_snapshot,
+        service_address_line_2_snapshot,
+        service_city_snapshot,
+        service_state_region_snapshot,
+        service_postal_code_snapshot,
+        service_country_code_snapshot,
+        project_name_snapshot,
+        created_at
+      `
+    )
+    .eq("company_id", organizationId)
+    .eq("estimate_id", estimateId)
+    .order("snapshot_version", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (snapshotResponse.error) {
+    throw new Error(
+      `Unable to verify approved estimate snapshot for contract generation: ${snapshotResponse.error.message}`
+    );
+  }
+
+  const snapshotData = snapshotResponse.data as
+    | {
+        id?: unknown;
+        company_id?: unknown;
+        estimate_id?: unknown;
+        customer_id?: unknown;
+        project_id?: unknown;
+        snapshot_version?: unknown;
+        estimate_reference_number?: unknown;
+        customer_name_snapshot?: unknown;
+        project_name_snapshot?: unknown;
+        created_at?: unknown;
+      }
+    | null;
+
+  if (!snapshotData) {
+    return null;
+  }
+
+  if (
+    typeof snapshotData.id !== "string" ||
+    typeof snapshotData.company_id !== "string" ||
+    typeof snapshotData.estimate_id !== "string" ||
+    typeof snapshotData.customer_id !== "string" ||
+    typeof snapshotData.project_id !== "string" ||
+    typeof snapshotData.snapshot_version !== "number" ||
+    typeof snapshotData.estimate_reference_number !== "string" ||
+    typeof snapshotData.customer_name_snapshot !== "string" ||
+    typeof snapshotData.project_name_snapshot !== "string" ||
+    typeof snapshotData.created_at !== "string"
+  ) {
+    throw new Error(
+      "Approved estimate snapshot exists but is not readable for contract generation."
+    );
+  }
+
+  const snapshotItemsResponse = await supabase
+    .from("estimate_commercial_snapshot_items")
+    .select(
+      `
+        id,
+        company_id,
+        estimate_commercial_snapshot_id,
+        name,
+        description,
+        quantity,
+        unit,
+        line_total,
+        sort_order,
+        created_at
+      `
+    )
+    .eq("company_id", organizationId)
+    .eq("estimate_commercial_snapshot_id", snapshotData.id)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (snapshotItemsResponse.error) {
+    throw new Error(
+      `Unable to verify approved estimate snapshot items for contract generation: ${snapshotItemsResponse.error.message}`
+    );
+  }
+
+  if (!Array.isArray(snapshotItemsResponse.data)) {
+    throw new Error(
+      "Approved estimate snapshot items exist in an unreadable shape for contract generation."
+    );
+  }
+
+  return {
+    id: snapshotData.id,
+    snapshot_version: snapshotData.snapshot_version,
+    created_at: snapshotData.created_at,
+    itemCount: snapshotItemsResponse.data.length
+  };
+}
+
+export async function rebuildApprovedEstimateCommercialSnapshot(estimateId: string) {
+  const scope = await requireEstimateScope(`/estimates/${estimateId}`);
+  const currentEstimate = await getEstimateRecordById(scope.organizationId, estimateId);
+
+  if (!currentEstimate) {
+    throw new Error("Estimate not found for this organization.");
+  }
+
+  if (currentEstimate.status !== "approved") {
+    throw new Error("Only approved estimates can rebuild approval snapshots.");
+  }
+
+  const existingSnapshot = await loadLatestEstimateCommercialSnapshotSummary(
+    scope.organizationId,
+    estimateId
+  );
+
+  if (existingSnapshot) {
+    const verifiedSnapshot = await verifyApprovedEstimateSnapshotForContractGeneration(
+      scope.organizationId,
+      estimateId
+    );
+
+    if (!verifiedSnapshot) {
+      throw new Error(
+        "Snapshot rebuild completed but no approved snapshot was found. Contact support."
+      );
+    }
+
+    return {
+      estimate: mapEstimate(currentEstimate),
+      snapshotId: verifiedSnapshot.id,
+      snapshotVersion: verifiedSnapshot.snapshot_version,
+      created: false
+    };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase.rpc("create_estimate_commercial_snapshot", {
+    target_estimate_id: estimateId,
+    acting_user_id: scope.userId
+  });
+
+  if (response.error) {
+    throw new Error(`Unable to rebuild the approved estimate snapshot: ${response.error.message}`);
+  }
+
+  const rebuiltSnapshot = await verifyApprovedEstimateSnapshotForContractGeneration(
+    scope.organizationId,
+    estimateId
+  );
+
+  if (!rebuiltSnapshot) {
+    throw new Error(
+      "Snapshot rebuild completed but no approved snapshot was found. Contact support."
+    );
+  }
+
+  return {
+    estimate: mapEstimate(currentEstimate),
+    snapshotId: rebuiltSnapshot.id,
+    snapshotVersion: rebuiltSnapshot.snapshot_version,
+    created: true
+  };
 }
 
 export async function sendEstimateToCustomer(
@@ -3088,6 +3399,137 @@ export async function insertCatalogItemToEstimate(input: {
 
   if (!updatedEstimate) {
     throw new Error("Estimate not found after inserting the catalog item.");
+  }
+
+  return updatedEstimate;
+}
+
+export async function updateCatalogItemFromEstimateLine(input: {
+  estimateId: string;
+  estimateLineItemId: string;
+  catalogItemId: string;
+  name: string;
+  description: string | null;
+  unit: string;
+  defaultUnitPrice: string;
+  taxable: boolean;
+}) {
+  const scope = await requireEstimateScope(`/estimates/${input.estimateId}/edit`);
+  const estimate = await getEstimateRecordById(scope.organizationId, input.estimateId);
+
+  if (!estimate) {
+    throw new Error("Estimate not found for this organization.");
+  }
+
+  if (estimate.status === "approved") {
+    throw new Error("Approved estimates cannot edit catalog item snapshots.");
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const lineItemResponse = await supabase
+    .from("estimate_line_items")
+    .select("*")
+    .eq("company_id", scope.organizationId)
+    .eq("estimate_id", input.estimateId)
+    .eq("id", input.estimateLineItemId)
+    .eq("catalog_item_id", input.catalogItemId)
+    .maybeSingle();
+
+  if (lineItemResponse.error) {
+    throw new Error(`Unable to load estimate line item: ${lineItemResponse.error.message}`);
+  }
+
+  if (!lineItemResponse.data) {
+    throw new Error("Estimate line item not found for this estimate.");
+  }
+
+  const catalogUpdateResponse = await supabase
+    .from("catalog_items")
+    .update({
+      name: input.name,
+      description: input.description,
+      unit: input.unit,
+      default_unit_price: input.defaultUnitPrice,
+      taxable: input.taxable,
+      updated_by: scope.userId
+    })
+    .eq("company_id", scope.organizationId)
+    .eq("id", input.catalogItemId)
+    .select("*")
+    .single();
+
+  if (catalogUpdateResponse.error) {
+    throw new Error(`Unable to update catalog item: ${catalogUpdateResponse.error.message}`);
+  }
+
+  const catalogItemsById = await loadCatalogItemsForEstimateSources(scope.organizationId, [
+    input.catalogItemId
+  ]);
+  const catalogItem = catalogItemsById.get(input.catalogItemId);
+
+  if (!catalogItem) {
+    throw new Error("Updated catalog item could not be loaded for estimate snapshot.");
+  }
+
+  const currentLineItem = lineItemResponse.data as EstimateLineItemRow;
+  const snapshot = buildCatalogItemPricingSnapshot({
+    catalogItem,
+    quantity: currentLineItem.quantity,
+    sourceType:
+      currentLineItem.source_type === "system_component"
+        ? "system_component"
+        : "catalog_item",
+    sourceSystemId: currentLineItem.source_system_id,
+    sourceComponentId: currentLineItem.source_component_id,
+    groupName: currentLineItem.group_name,
+    assignedTo: currentLineItem.assigned_to
+  });
+  const [snapshotRow] = await buildEstimateLineInsertRows({
+    organizationId: scope.organizationId,
+    userId: scope.userId,
+    estimateId: input.estimateId,
+    lineItems: [snapshot],
+    sortOrderStart: currentLineItem.sort_order
+  });
+
+  if (!snapshotRow) {
+    throw new Error("Unable to rebuild estimate snapshot from catalog item.");
+  }
+
+  const lineItemUpdatePayload: Partial<typeof snapshotRow> = { ...snapshotRow };
+  delete lineItemUpdatePayload.company_id;
+  delete lineItemUpdatePayload.estimate_id;
+  delete lineItemUpdatePayload.created_by;
+  const lineItemUpdateResponse = await supabase
+    .from("estimate_line_items")
+    .update(lineItemUpdatePayload)
+    .eq("company_id", scope.organizationId)
+    .eq("estimate_id", input.estimateId)
+    .eq("id", input.estimateLineItemId);
+
+  if (lineItemUpdateResponse.error) {
+    throw new Error(
+      `Unable to update estimate line item snapshot: ${lineItemUpdateResponse.error.message}`
+    );
+  }
+
+  const estimateUpdateResponse = await supabase
+    .from("estimates")
+    .update({ updated_by: scope.userId })
+    .eq("company_id", scope.organizationId)
+    .eq("id", input.estimateId);
+
+  if (estimateUpdateResponse.error) {
+    throw new Error(`Unable to refresh estimate totals: ${estimateUpdateResponse.error.message}`);
+  }
+
+  const updatedEstimate = await getEstimateById(
+    input.estimateId,
+    `/estimates/${input.estimateId}/edit`
+  );
+
+  if (!updatedEstimate) {
+    throw new Error("Estimate not found after updating the catalog item.");
   }
 
   return updatedEstimate;

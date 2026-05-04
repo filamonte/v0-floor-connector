@@ -37,6 +37,21 @@ FloorConnector is a production-first specialty-contractor operating system built
 
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
+## Latest Contract Generation Fix
+
+- `/contracts?compose=1` now opens the contract Quick-Create composer consistently, preserves `estimateId` selection context, and displays decoded `error` query blockers inside the composer.
+- The missing approved-snapshot blocker now points users back to the estimate recovery path: rebuild the approval snapshot from the approved estimate, then generate the contract again.
+- Contract-generation guardrails were not weakened: generation still reads only approved estimate snapshots and still refuses approved estimates with missing snapshot lineage.
+- Approval normally creates the required immutable snapshot through the database trigger `snapshot_estimate_on_approval`, which calls `create_estimate_commercial_snapshot` when an estimate status becomes `approved`.
+- If an already-approved estimate is missing its approved snapshot, treat it as old/bad data or an environment that missed the snapshot migration. The Estimate Workspace and Estimate Editor now show a warning and expose `Rebuild Approval Snapshot`, which calls the canonical `create_estimate_commercial_snapshot` path only for an approved estimate with no existing snapshot.
+- Data-repair note: old approved estimates may need this rebuild action before contract generation. Do not patch a fake snapshot, do not toggle status manually, and do not generate contracts from mutable/current estimate data.
+- Backend mismatch fixed after QA: the affected estimate `d5f508a6-61f6-459c-8982-88ef45714472` did have `estimate_commercial_snapshots` row `714f5d9c-407d-45ed-adfc-62e9e4553138` with two `estimate_commercial_snapshot_items`; contract generation was misclassifying it as missing because Supabase returned numeric snapshot fields as JavaScript numbers while the contract snapshot guards only accepted strings.
+- Contract generation now accepts string or number numeric values from `estimate_commercial_snapshots` and `estimate_commercial_snapshot_items`, then normalizes them to strings for contract rendering. The rebuild action also verifies the same contract-generation snapshot header and item query before reporting success.
+- Follow-up response-shape mismatch fixed after the snapshot guard passed: contract creation inserts and requests `{ id }`, then reloads the full contract record before redirecting. The reload query omitted top-level `contracts.reference_number` even though `isContractRow` requires it, so the helper returned `null` and surfaced `Unexpected contract response after generation`. Contract reloads now use the canonical `contractSelect`, including `reference_number`.
+- `workflow_error_events` is now the lightweight tenant-scoped workflow failure log. Contract generation failures are recorded with action `contract.generate_from_estimate`, subject `estimate`, safe metadata, and user context when available. Organization owners/admins can review recent events from `/settings/admin`.
+- Approved snapshot rebuild failures are recorded as `estimate.rebuild_approval_snapshot` with safe estimate context only when the recovery action fails.
+- Validation run for this fix: `pnpm typecheck` and `pnpm lint` passed. Playwright spec discovery passed with `PLAYWRIGHT_SKIP_WEB_SERVER=1`; a headless `/contracts?compose=1&estimateId=<id>&error=<encoded message>` check reached the local app but redirected to `/login` because no saved contractor auth state or E2E credentials were available in this session.
+
 Current stage:
 - Phase B first-pass foundations are now implemented for onboarding readiness polish, reporting basics, Sales Tax Summary, and manual notification-only automation
 - Inventory / Cost Item Database Phase 1 audit is recorded in [docs/inventory-cost-item-database-plan.md](C:/FloorConnector/docs/inventory-cost-item-database-plan.md). The safe implementation decision is to keep `catalog_items` as the canonical reusable cost item database, with optional stock tracking through linked `inventory_items` and audited `inventory_transactions`; no new `contractor_cost_items` table was added.
@@ -62,6 +77,9 @@ Current stage:
 - customer detail now clearly labels customer-level versus linked-contact portal grants and guides admins to attach legacy customer-level grants to existing related contacts when they are ready
 - linked-contact grants now enforce stored permissions for portal estimate approve/reject, change-order approve/reject, and contract sign/decline actions
 - contractor-side customer signer options now filter out linked-contact portal users when `canSignContracts` is off
+- contractor-side onsite contract signing is implemented and verified on the same canonical contract/signature system as portal signing; QA passed contractor UI send, signer routing, onsite canvas signature, canonical `signer_signed` event, signed contract status, and project readiness sync
+- verified onsite signing QA record: contract `c6e12b54-985d-4d2c-9618-5e54657e06f9`, estimate `f11c2eae-338d-4b08-8781-fcdb81b918be`, customer signer `7e3cf4ef-cf79-4801-b775-6eaa1b588abe`, project `cbb32597-59c6-424b-9c3c-77f2b40ba0d0`, organization `29230b6a-a870-4b85-8b7d-4bfed4c8dfad`; validation passed with `pnpm typecheck`, `pnpm lint`, and `git diff --check` reporting CRLF warnings only
+- deposit follow-through after signature is conditional on organization workflow settings: required deposits use the existing canonical deposit invoice/payment chain, and no deposit invoice is created when deposit readiness is not required
 - null-contact customer-level grants still keep legacy behavior, and contract view/countersign, invoice/payment, estimate send, and broader portal view behavior are unchanged
 - seed-free internal QA workflow checklist now lives at [docs/internal-qa-workflow-checklist.md](C:/FloorConnector/docs/internal-qa-workflow-checklist.md) for repeatable Phase A manual testing
 - local browser QA auth/session setup now lives at [docs/local-qa-auth-session-note.md](C:/FloorConnector/docs/local-qa-auth-session-note.md); use it when protected routes redirect to `/login` from an expired local Supabase session
@@ -117,7 +135,7 @@ Implemented on the current branch:
 - customer detail now surfaces canonical related customer contacts beneath the customer account, with contractor-admin add/edit/main-contact management on top of `contacts` and `customer_contacts`
 - customer estimate send, portal review, approval, rejection, and estimate email tracking
 - approved estimate commercial snapshots as the downstream commercial baseline
-- canonical contracts with signer routing and portal signature actions
+- canonical contracts with signer routing, portal signature actions, and contractor-side onsite signature capture
 - canonical change orders with contractor + portal workflow, immutable approved snapshots, and SOV or invoice integration
 - server-side Project Readiness Gate is implemented
 - jobs, scheduling, and execution workflows are blocked until readiness conditions are met
@@ -152,6 +170,7 @@ Implemented on the current branch:
 - contract detail now also includes a compact schedule-handoff card derived only from canonical contract `projectId` plus canonical jobs and job_assignments, surfacing project-level production counts, next scheduled continuity, and crew-state visibility without introducing a contract/schedule bridge model
 - invoice detail now also includes a compact linked-schedule handoff card derived only from canonical invoice `projectId` / optional `jobId` links plus canonical jobs and job assignments, so billed work can be read against current production state without introducing a billing-schedule bridge model
 - phase-one lead-to-invoice CTA normalization is now live on dashboard, leads, estimate detail, and project detail; prefer the canonical labels `Start estimate`, `Send estimate`, `Approve estimate`, `Generate contract`, `Open progress billing`, and `Create invoice` in follow-up passes
+- contractor-side Estimate Review now intentionally supports manual/offline customer decisions from draft or sent estimates through the shared estimate status-transition action: `Record customer approval` and `Record rejection` are for paper signature, verbal approval, fake email during testing, non-portal customers, and workflow testing before send-mail and portal delivery are complete; this is not a duplicate approval model
 - phase-two estimate-builder UI polish is now live on Estimate Editoror: the existing item-entry area is grouped into one clearer estimating-tools cluster, catalog insertion is more visible, manual item wording now clearly means catalog-backed estimate items, and import-from-another-estimate now supports real line-item import for same-organization source estimates into draft destination estimates only
 - reusable estimate-content UI polish is now live across Estimate Editoror/detail and the existing defaults/block surfaces: scope / SOW, project details, terms, inclusions, and exclusions now read more clearly as reusable estimating content, defaults are framed as empty-state starting content only, and project-detail/content import is still called out honestly as later work
 - reusable-content insertion is now unified inside Estimate Editoror with one shared inserter for Scope / SOW, Terms, Inclusion, and Exclusion blocks; it still uses the current content-block system, still appends into the active estimate, and still does not implement estimate-import or project-details import
@@ -346,8 +365,9 @@ Post-audit documentation corrections are complete. [docs/current-state.md](C:/Fl
 Focused Playwright browser QA infrastructure was added for protected contractor flows, starting with Phase B estimate-editor group-targeted catalog insertion. This is test infrastructure only: no app behavior, schema, auth/RLS, workflow, estimate calculation, invoice behavior, or catalog insertion logic changed.
 
 - Playwright config now lives at [playwright.config.js](C:/FloorConnector/playwright.config.js).
-- Auth setup lives at [e2e/auth.setup.js](C:/FloorConnector/e2e/auth.setup.js) and uses a real local contractor account through the normal `/login` flow when `FLOORCONNECTOR_E2E_EMAIL` and `FLOORCONNECTOR_E2E_PASSWORD` are provided. Credentials are not hardcoded.
+- Auth setup lives at [e2e/auth.setup.js](C:/FloorConnector/e2e/auth.setup.js) and uses a real local contractor account through the normal `/login` flow. The setup project requires `FLOORCONNECTOR_E2E_EMAIL` and `FLOORCONNECTOR_E2E_PASSWORD`, saves `playwright/.auth/local-user.json`, and the protected Playwright project reuses that storage state for contractor app specs.
 - The focused estimate spec lives at [e2e/estimate-group-catalog-insertion.spec.js](C:/FloorConnector/e2e/estimate-group-catalog-insertion.spec.js). It requires a safe draft estimate id/path and active non-system catalog item names supplied via environment variables.
+- The manual estimate approval spec lives at [e2e/estimate-manual-approval-action.spec.js](C:/FloorConnector/e2e/estimate-manual-approval-action.spec.js). It uses the protected project and shared authenticated storage state, then records a real manual approval through the canonical estimate status-transition path.
 - Minimal non-user-facing test ids were added to the Estimate Editoror group, group add-item, catalog search/select/add, catalog preview, and line-item row surfaces so browser QA can use DOM selectors instead of fragile coordinate clicks.
 - Running instructions live at [docs/e2e-browser-qa.md](C:/FloorConnector/docs/e2e-browser-qa.md).
 
@@ -356,8 +376,8 @@ Dependency repair / validation status:
 - The local dependency tree was repaired by stopping only those FloorConnector dev-server process trees, removing workspace `node_modules` artifacts, and rerunning `pnpm install --config.offline=false --reporter=append-only`.
 - Playwright is installed (`pnpm exec playwright --version` reports 1.59.1), and Chromium was installed with `pnpm exec playwright install chromium`.
 - Validation now passes: `pnpm typecheck`, `pnpm lint`, and `git diff --check` all complete successfully. `git diff --check` reports line-ending warnings only.
-- Playwright spec discovery works with the web server disabled: `PLAYWRIGHT_SKIP_WEB_SERVER=1 pnpm exec playwright test --list` lists the two focused estimate group-catalog tests.
-- Authenticated e2e execution still requires local-only setup: saved auth state or `FLOORCONNECTOR_E2E_EMAIL` / `FLOORCONNECTOR_E2E_PASSWORD`, plus `FLOORCONNECTOR_E2E_DRAFT_ESTIMATE_ID` or path and active non-system catalog item names.
+- Playwright spec discovery works with the web server disabled: `PLAYWRIGHT_SKIP_WEB_SERVER=1 pnpm exec playwright test --list` lists the setup project, unauthenticated fixture tests, and protected estimate specs.
+- Authenticated e2e execution still requires local-only setup: `FLOORCONNECTOR_E2E_EMAIL` / `FLOORCONNECTOR_E2E_PASSWORD`, plus spec-specific data such as `FLOORCONNECTOR_E2E_DRAFT_ESTIMATE_ID` or path, active non-system catalog item names, or `FLOORCONNECTOR_E2E_MANUAL_APPROVAL_ESTIMATE_PATH`.
 
 ## Final Documentation Review
 

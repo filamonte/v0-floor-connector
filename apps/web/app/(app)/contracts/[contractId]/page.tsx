@@ -7,6 +7,7 @@ import {
 import { sanitizeHtml } from "@/lib/html/sanitize";
 
 import { ContractStatusActions } from "@/components/contract-status-actions";
+import { OnsiteSignatureModal } from "@/components/contracts/onsite-signature-modal";
 import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
@@ -374,6 +375,19 @@ export default async function ContractDetailPage({
 
     return left.createdAt.localeCompare(right.createdAt);
   });
+  const onsiteCustomerSigner =
+    contract.status === "sent" || contract.status === "viewed"
+      ? sortedSigners.find(
+          (signer) =>
+            signer.signerRole === "customer" &&
+            signer.signedAt === null &&
+            (signer.signerStatus === "pending" || signer.signerStatus === "viewed")
+        )
+      : null;
+  const depositHref =
+    readinessSnapshot?.depositRequired && !readinessSnapshot.depositSatisfied
+      ? `/invoices?projectId=${contract.projectId}&estimateId=${contract.estimateId ?? ""}&workflowRole=deposit`
+      : null;
   const recentSignatureEvents = [...contract.signatureEvents]
     .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt))
     .slice(0, 6);
@@ -418,14 +432,10 @@ export default async function ContractDetailPage({
               </Link>
               {contract.status === "signed" ? (
                 <Link
-                  href={
-                    readinessSnapshot?.depositRequired && !readinessSnapshot.depositSatisfied
-                      ? `/invoices?projectId=${contract.projectId}&estimateId=${contract.estimateId ?? ""}&workflowRole=deposit`
-                      : `/projects/${contract.projectId}`
-                  }
+                  href={depositHref ?? `/projects/${contract.projectId}`}
                   className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
                 >
-                  {readinessSnapshot?.depositRequired && !readinessSnapshot.depositSatisfied
+                  {depositHref
                     ? "Create deposit invoice"
                     : "Open project readiness hub"}
                 </Link>
@@ -678,6 +688,29 @@ export default async function ContractDetailPage({
                   canCountersign={canCountersign}
                   countersignMessage={countersignMessage}
                 />
+                {onsiteCustomerSigner && signatureSummary.canCustomerAct ? (
+                  <div className="rounded-[1.5rem] border border-brand-200 bg-brand-50 px-4 py-4">
+                    <div className="space-y-2 text-sm leading-6 text-[#5f4f43]">
+                      <p className="font-medium text-[#17120f]">
+                        Onsite customer signature
+                      </p>
+                      <p>
+                        Hand this device to {onsiteCustomerSigner.displayName} to
+                        capture the next customer signature on the canonical contract.
+                      </p>
+                    </div>
+                    <div className="mt-4">
+                      <OnsiteSignatureModal
+                        contractId={contract.id}
+                        signerId={onsiteCustomerSigner.id}
+                        contractTitle={contract.title}
+                        contractReference={contract.referenceNumber}
+                        customerName={onsiteCustomerSigner.displayName}
+                        depositHref={depositHref}
+                      />
+                    </div>
+                  </div>
+                ) : null}
                 {contract.sentPdfDownloadUrl ? (
                   <Link
                     href={contract.sentPdfDownloadUrl}

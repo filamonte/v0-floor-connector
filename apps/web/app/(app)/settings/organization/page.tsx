@@ -1,4 +1,8 @@
 import { DetailPanel } from "@/components/detail-panel";
+import {
+  SaveStateForm,
+  SaveStateSubmitButton
+} from "@/components/save-feedback/save-state-form";
 import { SettingsFeedback } from "@/components/settings-feedback";
 import { updateOrganizationProfileAction } from "@/lib/settings/actions";
 import { requireOrganizationAdminScope } from "@/lib/organizations/admin";
@@ -25,7 +29,11 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
         title="Organization Profile"
         description="This tenant-scoped profile controls how the contractor organization appears throughout the app and across canonical project, document, and billing records."
       >
-        <form action={updateOrganizationProfileAction} className="space-y-5">
+        <SaveStateForm
+          action={updateOrganizationProfileAction}
+          pendingLabel="Saving..."
+          className="space-y-5"
+        >
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-800">
@@ -81,13 +89,11 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
             Platform status is still controlled by super admin. Contractor admins manage only the organization-owned profile layer here.
           </div>
 
-          <button
-            type="submit"
-            className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-          >
-            Save organization profile
-          </button>
-        </form>
+          <SaveStateSubmitButton
+            submitLabel="Save organization profile"
+            pendingLabel="Saving..."
+          />
+        </SaveStateForm>
       </DetailPanel>
     </div>
   );

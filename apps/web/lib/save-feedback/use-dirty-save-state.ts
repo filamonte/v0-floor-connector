@@ -27,6 +27,12 @@ export function useDirtySaveState({
     setMessage("Unsaved changes");
   }, []);
 
+  const markClean = useCallback(() => {
+    setIsDirty(false);
+    setStatus((currentStatus) => (currentStatus === "saving" ? currentStatus : "idle"));
+    setMessage(initialMessage);
+  }, [initialMessage]);
+
   const beginSave = useCallback(() => {
     const saveVersion = dirtyVersionRef.current;
     setStatus("saving");
@@ -92,6 +98,7 @@ export function useDirtySaveState({
     message,
     isDirty,
     markDirty,
+    markClean,
     beginSave,
     markSaved,
     markSaveFailed

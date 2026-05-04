@@ -1,0 +1,10 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Generate Implementation Plan for Catalog-Backed Estimate Line Items",
+			"type": "shell",
+			"command": "echo 'Creating implementation plan directory' && mkdir -p C:\\FloorConnector\\plan"
+		}
+	]
+}

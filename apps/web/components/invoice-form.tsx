@@ -14,7 +14,10 @@ import type {
 } from "@floorconnector/types";
 
 import { AuthField } from "@/components/auth-field";
-import { AuthSubmitButton } from "@/components/auth-submit-button";
+import {
+  SaveStateForm,
+  SaveStateSubmitButton
+} from "@/components/save-feedback/save-state-form";
 import {
   invoiceBaseSourceTypesList,
   editableInvoiceStatusesList,
@@ -738,7 +741,12 @@ export function InvoiceForm({
   }
 
   return (
-    <form action={action} className="space-y-0">
+    <SaveStateForm
+      action={action}
+      enabled={Boolean(invoice)}
+      pendingLabel={pendingLabel}
+      className="space-y-0"
+    >
       {invoice ? <input type="hidden" name="invoiceId" value={invoice.id} /> : null}
       <input type="hidden" name="sourceConfiguration" value={sourceConfiguration} />
 
@@ -1477,14 +1485,16 @@ export function InvoiceForm({
         description="Save the invoice build first, then continue into review, customer send, and collection status handling."
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <AuthSubmitButton pendingLabel={pendingLabel} className="sm:min-w-[140px]">
-            <span>{submitLabel}</span>
-          </AuthSubmitButton>
+          <SaveStateSubmitButton
+            submitLabel={submitLabel}
+            pendingLabel={pendingLabel}
+            className="sm:min-w-[140px]"
+          />
           <p className="max-w-2xl text-sm leading-5 text-slate-500">
             Saving here updates the primary invoice workspace. Customer send, open balance, overdue, and payment collection remain visible in the invoice manager and detail flow.
           </p>
         </div>
       </WorkspaceSection>
-    </form>
+    </SaveStateForm>
   );
 }

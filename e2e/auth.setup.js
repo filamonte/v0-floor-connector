@@ -1,4 +1,5 @@
 const { test, expect } = require("@playwright/test");
+const fs = require("node:fs/promises");
 const path = require("node:path");
 
 const authStatePath = path.resolve(
@@ -9,10 +10,11 @@ test("save local authenticated contractor state", async ({ page }) => {
   const email = process.env.FLOORCONNECTOR_E2E_EMAIL;
   const password = process.env.FLOORCONNECTOR_E2E_PASSWORD;
 
-  test.skip(
-    !email || !password,
-    "Set FLOORCONNECTOR_E2E_EMAIL and FLOORCONNECTOR_E2E_PASSWORD to create saved auth state."
-  );
+  if (!email || !password) {
+    throw new Error(
+      "Playwright auth setup requires FLOORCONNECTOR_E2E_EMAIL and FLOORCONNECTOR_E2E_PASSWORD for a real local contractor account."
+    );
+  }
 
   await page.goto("/login");
 
@@ -24,7 +26,8 @@ test("save local authenticated contractor state", async ({ page }) => {
   await passwordInput.fill(password);
   await page.locator('button[type="submit"]').first().click();
 
-  await page.waitForURL((url) => !url.pathname.startsWith("/login"), { timeout: 30_000 });
+  await page.waitForURL((url) => url.pathname === "/dashboard", { timeout: 30_000 });
   await expect(page.locator("body")).toContainText(/Dashboard|FloorConnector/i);
+  await fs.mkdir(path.dirname(authStatePath), { recursive: true });
   await page.context().storageState({ path: authStatePath });
 });

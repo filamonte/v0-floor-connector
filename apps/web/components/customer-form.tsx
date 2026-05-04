@@ -1,8 +1,11 @@
 import type { Customer } from "@floorconnector/types";
 
 import { AuthField } from "@/components/auth-field";
-import { AuthSubmitButton } from "@/components/auth-submit-button";
 import { CountryComboboxField } from "@/components/country-combobox-field";
+import {
+  SaveStateForm,
+  SaveStateSubmitButton
+} from "@/components/save-feedback/save-state-form";
 
 type CustomerFormProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -24,7 +27,12 @@ export function CustomerForm({
   defaultRetainagePercentage
 }: CustomerFormProps) {
   return (
-    <form action={action} className="space-y-5">
+    <SaveStateForm
+      action={action}
+      enabled={Boolean(customer)}
+      pendingLabel={pendingLabel}
+      className="space-y-5"
+    >
       {customer ? <input type="hidden" name="customerId" value={customer.id} /> : null}
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -171,13 +179,15 @@ export function CustomerForm({
       </label>
 
       <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-        <AuthSubmitButton pendingLabel={pendingLabel} className="sm:min-w-[200px]">
-          <span>{submitLabel}</span>
-        </AuthSubmitButton>
+        <SaveStateSubmitButton
+          submitLabel={submitLabel}
+          pendingLabel={pendingLabel}
+          className="sm:min-w-[200px]"
+        />
         <p className="text-sm leading-6 text-slate-500">
           Customer records are scoped to the active organization automatically and stay separate from workforce People records.
         </p>
       </div>
-    </form>
+    </SaveStateForm>
   );
 }

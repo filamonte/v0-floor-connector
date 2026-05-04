@@ -14,6 +14,7 @@ type EstimateApprovalNextStepsPanelProps = {
   orchestration: EstimateApprovalOrchestrationState;
   contractAction: (formData: FormData) => void | Promise<void>;
   scheduleOfValuesAction: (formData: FormData) => void | Promise<void>;
+  rebuildSnapshotAction?: (formData: FormData) => void | Promise<void>;
   initialOpen?: boolean;
 };
 
@@ -40,6 +41,7 @@ export function EstimateApprovalNextStepsPanel({
   orchestration,
   contractAction,
   scheduleOfValuesAction,
+  rebuildSnapshotAction,
   initialOpen = false
 }: EstimateApprovalNextStepsPanelProps) {
   const [isOpen, setIsOpen] = useState(initialOpen);
@@ -212,8 +214,20 @@ export function EstimateApprovalNextStepsPanel({
             </div>
             {orchestration.contract.snapshotMissing ? (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-                Approved estimate snapshot data is missing. Re-approve the estimate before trying
-                to generate the contract.
+                <p className="font-semibold">
+                  This approved estimate is missing its approval snapshot.
+                </p>
+                <p className="mt-1">
+                  Rebuild the approval snapshot before generating a contract.
+                </p>
+                {rebuildSnapshotAction ? (
+                  <form action={rebuildSnapshotAction} className="mt-3">
+                    <input type="hidden" name="estimateId" value={orchestration.estimateId} />
+                    <AuthSubmitButton pendingLabel="Rebuilding snapshot...">
+                      <span>Rebuild Approval Snapshot</span>
+                    </AuthSubmitButton>
+                  </form>
+                ) : null}
               </div>
             ) : null}
             <ul className="grid gap-3 lg:grid-cols-2">

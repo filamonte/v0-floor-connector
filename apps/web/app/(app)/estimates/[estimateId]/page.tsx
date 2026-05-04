@@ -23,6 +23,7 @@ import { quickCreateContractFromEstimateAction } from "@/lib/contracts/actions";
 import { listContracts } from "@/lib/contracts/data";
 import {
   openOrCreateScheduleOfValuesAction,
+  rebuildApprovedEstimateSnapshotAction,
   sendEstimateToCustomerAction
 } from "@/lib/estimates/actions";
 import { resolveEstimateApprovalOrchestration } from "@/lib/estimates/approval-orchestration";
@@ -105,12 +106,20 @@ function getEstimateNextAction(input: {
   depositInvoiceId: string | null;
 }) {
   if (input.estimateStatus !== "approved") {
+    const canRecordManualDecision =
+      input.estimateStatus === "draft" || input.estimateStatus === "sent";
+
     return {
-      title: "Approve estimate",
+      title: canRecordManualDecision ? "Record customer approval" : "Send estimate",
       description:
-        "Approval is still the active commercial gate before contract and readiness work should continue, and the approval handoff completes through the customer portal.",
-      href: `/estimates/${input.estimateId}`,
-      label: "Approve estimate"
+        canRecordManualDecision
+          ? "Use the manual decision actions when the customer approved outside the portal, such as paper signature, verbal approval, fake email during testing, or a non-portal customer."
+          : "Approval is still the active commercial gate before contract and readiness work should continue. Send the estimate before recording a customer decision.",
+      href:
+        canRecordManualDecision
+          ? `/estimates/${input.estimateId}#estimate-decision-actions`
+          : `/estimates/${input.estimateId}`,
+      label: canRecordManualDecision ? "Review manual approval" : "Review send actions"
     };
   }
 
@@ -472,7 +481,11 @@ export default async function EstimateDetailPage({
               orchestration={approvalOrchestration}
               contractAction={quickCreateContractFromEstimateAction}
               scheduleOfValuesAction={openOrCreateScheduleOfValuesAction}
-              initialOpen={resolvedSearchParams.showNextSteps === "1"}
+              rebuildSnapshotAction={rebuildApprovedEstimateSnapshotAction}
+              initialOpen={
+                resolvedSearchParams.showNextSteps === "1" ||
+                approvalOrchestration.contract.snapshotMissing
+              }
             />
           </div>
         ) : null}

@@ -193,8 +193,12 @@ Contracts should be:
 This stage may include:
 - internal approval requirements
 - send readiness
-- customer signature
+- customer signature through portal signing or contractor-assisted onsite signing
 - contractor countersign later where needed
+
+Current implementation note:
+- contractor-side onsite signing supports in-person close workflows and acts on the same canonical contract, signer, and signature-event records as portal signing
+- onsite signing can satisfy signature readiness only when all required signers are complete; financial readiness after signature remains conditional on organization deposit or financing settings
 
 ### 8. Financial Readiness
 
@@ -204,6 +208,8 @@ After contract completion, the work may require:
 - internal green-light checks
 
 This is the stage that determines whether work is actually ready for production scheduling.
+
+If deposit readiness is required, deposit invoicing and payment collection should use the existing canonical invoice/payment chain with the `deposit` workflow role. If deposits are not required, signature completion can allow the project to proceed toward scheduling readiness.
 
 ### 9. Scheduling And Production Readiness
 

@@ -11,9 +11,11 @@ import {
   GripVertical,
   Lock,
   Package,
+  Pencil,
   Plus,
   Search,
   Trash2,
+  X,
   UserRound
 } from "lucide-react";
 import type {
@@ -31,6 +33,7 @@ import { FinancialSummaryBar } from "@/components/estimates/financial-summary-ba
 import type { ExpandedSystemPreview } from "@/lib/catalogs/system-expansion";
 
 export type EstimateItemsDraft = {
+  id: string | null;
   rowKey: string;
   catalogItemId: string | null;
   sourceType: "catalog_item" | "system_component";
@@ -76,7 +79,6 @@ type ItemsSectionProps = {
   showOnlyZeroItems: boolean;
   visibleCatalogItems: CatalogItem[];
   catalogItemsForReview: CatalogItem[];
-  selectedCatalogItemId: string;
   selectedSystemId: string;
   systemInputMode: "dimensions" | "direct";
   systemLength: string;
@@ -87,10 +89,8 @@ type ItemsSectionProps = {
   systemPreview: ExpandedSystemPreview | null;
   systemPreviewMessage?: string | null;
   isPreviewPending?: boolean;
-  onSelectedCatalogItemIdChange: (value: string) => void;
   onSelectedSystemIdChange: (value: string) => void;
   onSystemMeasurementChange: (field: string, value: string) => void;
-  onAddCatalogItem: (targetGroupId?: string | null) => void;
   onQuickAddCatalogItem: (catalogItemId: string, targetGroupId?: string | null) => void;
   onAddPreviewCatalogItem: (catalogItemId: string, targetGroupId?: string | null) => void;
   onImportLineItemsFromEstimate: (
@@ -116,11 +116,19 @@ type ItemsSectionProps = {
   onRemoveLineItem: (rowKey: string) => void;
   onQuickCreateCatalogItem: (input: {
     name: string;
-    itemType: CatalogItem["itemType"];
+    description: string | null;
     unit: string;
-    category: string | null;
-    defaultUnitCost: string;
-    defaultUnitPrice: string | null;
+    defaultUnitPrice: string;
+    taxable: boolean;
+  }) => Promise<boolean>;
+  onEditCatalogItemFromEstimate: (input: {
+    estimateLineItemId: string;
+    catalogItemId: string;
+    name: string;
+    description: string | null;
+    unit: string;
+    defaultUnitPrice: string;
+    taxable: boolean;
   }) => Promise<boolean>;
   inventoryCreateError?: string | null;
   catalogPreviewAddMessage?: string | null;
@@ -199,16 +207,6 @@ function isUnitPriceOverridden(lineItem: EstimateItemsDraft) {
   const catalogPrice = getCatalogPriceBasis(lineItem);
 
   return Math.abs(currentUnitPrice - catalogPrice) >= 0.01;
-}
-
-function isAddOnOptionCategory(category: string | null | undefined) {
-  return (category ?? "").trim().toLowerCase() === "add-ons / options";
-}
-
-function getCatalogItemOptionLabel(item: CatalogItem) {
-  const suffix = isAddOnOptionCategory(item.category) ? " - Add-on / Option" : "";
-
-  return `${item.name} (${item.itemType}${item.category ? ` / ${item.category}` : ""})${suffix}`;
 }
 
 function formatCatalogCurrency(value: string | null) {
@@ -308,7 +306,6 @@ export function ItemsSection({
   showOnlyZeroItems,
   visibleCatalogItems,
   catalogItemsForReview,
-  selectedCatalogItemId,
   selectedSystemId,
   systemInputMode,
   systemLength,
@@ -319,10 +316,8 @@ export function ItemsSection({
   systemPreview,
   systemPreviewMessage,
   isPreviewPending = false,
-  onSelectedCatalogItemIdChange,
   onSelectedSystemIdChange,
   onSystemMeasurementChange,
-  onAddCatalogItem,
   onQuickAddCatalogItem,
   onAddPreviewCatalogItem,
   onImportLineItemsFromEstimate,
@@ -338,6 +333,7 @@ export function ItemsSection({
   onMoveLineItem,
   onRemoveLineItem,
   onQuickCreateCatalogItem,
+  onEditCatalogItemFromEstimate,
   inventoryCreateError,
   catalogPreviewAddMessage,
   isCatalogPreviewAddPending = false
@@ -349,19 +345,26 @@ export function ItemsSection({
   const [showCreateItemForm, setShowCreateItemForm] = useState(false);
   const [showImportTools, setShowImportTools] = useState(false);
   const [quickItemName, setQuickItemName] = useState("");
-  const [quickItemType, setQuickItemType] = useState<CatalogItemType>("material");
+  const [quickItemDescription, setQuickItemDescription] = useState("");
   const [quickItemUnit, setQuickItemUnit] = useState("each");
-  const [quickItemCategory, setQuickItemCategory] = useState("");
-  const [quickItemCost, setQuickItemCost] = useState("");
   const [quickItemPrice, setQuickItemPrice] = useState("");
+  const [quickItemTaxable, setQuickItemTaxable] = useState(true);
+  const [editingLineItem, setEditingLineItem] = useState<EstimateItemsDraft | null>(null);
+  const [editItemName, setEditItemName] = useState("");
+  const [editItemDescription, setEditItemDescription] = useState("");
+  const [editItemUnit, setEditItemUnit] = useState("each");
+  const [editItemPrice, setEditItemPrice] = useState("");
+  const [editItemTaxable, setEditItemTaxable] = useState(true);
   const [catalogPreviewSearch, setCatalogPreviewSearch] = useState("");
   const [catalogPreviewType, setCatalogPreviewType] = useState("all");
   const [catalogPreviewCategory, setCatalogPreviewCategory] = useState("all");
   const [selectedCatalogPreviewId, setSelectedCatalogPreviewId] = useState("");
   const visibleGroups = getVisibleRowGroups(lineItems, itemGroups, showOnlyZeroItems);
   const visibleItemCount = visibleGroups.reduce((sum, group) => sum + group.rows.length, 0);
+  const normalizedItemSearch = itemSearch.trim().toLowerCase();
+  const hasItemSearch = normalizedItemSearch.length > 0;
   const filteredPickerItems = visibleCatalogItems.filter((item) =>
-    item.name.toLowerCase().includes(itemSearch.trim().toLowerCase())
+    item.name.toLowerCase().includes(normalizedItemSearch)
   );
   const directCatalogItems = filteredPickerItems.filter((item) => item.itemType !== "system");
   const systemCatalogItems = filteredPickerItems.filter((item) => item.itemType === "system");
@@ -435,7 +438,27 @@ export function ItemsSection({
   const canSubmitQuickCreate =
     quickItemName.trim().length > 0 &&
     quickItemUnit.trim().length > 0 &&
-    quickItemCost.trim().length > 0;
+    quickItemPrice.trim().length > 0;
+  const normalizedQuickItemName = quickItemName.trim().toLowerCase();
+  const quickCreateDuplicateItem = normalizedQuickItemName.length > 0
+    ? catalogItemsForReview.find(
+        (item) => item.name.trim().toLowerCase() === normalizedQuickItemName
+      ) ?? null
+    : null;
+  const canSubmitCatalogEdit =
+    Boolean(editingLineItem?.id && editingLineItem.catalogItemId) &&
+    editItemName.trim().length > 0 &&
+    editItemUnit.trim().length > 0 &&
+    editItemPrice.trim().length > 0 &&
+    estimateStatus !== "approved";
+  const normalizedEditItemName = editItemName.trim().toLowerCase();
+  const editDuplicateItem = normalizedEditItemName.length > 0
+    ? catalogItemsForReview.find(
+        (item) =>
+          item.id !== editingLineItem?.catalogItemId &&
+          item.name.trim().toLowerCase() === normalizedEditItemName
+      ) ?? null
+    : null;
   const selectedAddItemGroup =
     selectedAddItemGroupId == null
       ? null
@@ -473,7 +496,7 @@ export function ItemsSection({
             <span className="hidden text-[12px] font-medium text-[#666666] sm:inline">
               {selectedAddItemGroup
                 ? `Adding catalog items into ${selectedAddItemGroup.label}`
-                : "Catalog, manual catalog-backed item, system expansion, or previous estimate import"}
+                : "Catalog item, system expansion, or previous estimate import"}
             </span>
           </span>
           <span className="rounded-full border border-[#d6d6d6] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#666666]">
@@ -756,7 +779,7 @@ export function ItemsSection({
               className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d6d6d6] bg-white px-4 text-[14px] font-medium text-[#5f5f5f]"
             >
               <Plus className="h-4 w-4" />
-              <span>Add manual item</span>
+              <span>Create new item</span>
             </button>
             <button
               type="button"
@@ -827,38 +850,10 @@ export function ItemsSection({
               Press Enter to add <span className="font-medium text-[#2a2a2a]">{firstQuickAddItem.name}</span> as an estimate item.
             </div>
           ) : null}
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="min-w-[260px] flex-1 text-[12px] font-medium text-[#5d6f8a]">
-              Catalog / cost database item
-              <select
-                value={selectedCatalogItemId}
-                onChange={(event) => onSelectedCatalogItemIdChange(event.target.value)}
-                className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
-                data-testid="estimate-catalog-item-select"
-              >
-                <option value="">Select catalog item</option>
-                {directCatalogItems.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {getCatalogItemOptionLabel(item)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              type="button"
-              onClick={() => onAddCatalogItem(selectedAddItemGroupId)}
-              disabled={!selectedCatalogItemId}
-              className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-[#ef7d32] px-4 text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:bg-[#9fb7ea]"
-              data-testid="estimate-catalog-add-selected"
-            >
-              <Package className="h-4 w-4" />
-              <span>Add from catalog</span>
-            </button>
-          </div>
           {quickAddItems.length > 0 ? (
             <div className="mt-3">
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#666666]">
-                Catalog quick matches
+                {hasItemSearch ? "Catalog quick matches" : "Suggested catalog items"}
               </div>
               <div className="flex flex-wrap gap-2">
                 {quickAddItems.map((item) => (
@@ -876,14 +871,35 @@ export function ItemsSection({
                 ))}
               </div>
             </div>
-          ) : null}
+          ) : (
+            <div className="mt-3 rounded-[8px] border border-dashed border-[#d6d6d6] bg-[#f8f8f8] px-3 py-3 text-[13px] leading-5 text-[#666666]">
+              {hasItemSearch
+                ? "No active direct catalog items match this search. Try a different item name or create a new catalog item."
+                : "Start typing to search catalog items. Suggested active items will appear here from the current catalog order."}
+            </div>
+          )}
           {showCreateItemForm ? (
-            <div className="mt-3 rounded-[10px] border border-[#d6d6d6] bg-white p-3">
-              <div className="mb-2 text-[12px] leading-5 text-[#6b7c96]">
-                Add a manual one-off estimate item by creating the reusable catalog item first, then
-                adding it to this estimate immediately.
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4 py-6">
+              <div className="w-full max-w-xl rounded-[10px] border border-[#d6d6d6] bg-white shadow-[0_24px_80px_-38px_rgba(15,23,42,0.65)]">
+              <div className="flex items-start justify-between gap-4 border-b border-[#e6e9ef] px-5 py-4">
+                <div>
+                  <h2 className="text-[18px] font-semibold text-[#171717]">
+                    Create Catalog Item
+                  </h2>
+                  <p className="mt-1 text-[13px] leading-5 text-[#6b7c96]">
+                    Create the reusable catalog item first, then add it to this estimate immediately.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateItemForm(false)}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] border border-[#d6d6d6] text-[#5d6f8a]"
+                  title="Close"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="grid gap-3 px-5 py-4 md:grid-cols-2">
                 <label className="text-[12px] font-medium text-[#5d6f8a]">
                   Name
                   <input
@@ -891,21 +907,6 @@ export function ItemsSection({
                     onChange={(event) => setQuickItemName(event.target.value)}
                     className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
                   />
-                </label>
-                <label className="text-[12px] font-medium text-[#5d6f8a]">
-                  Type
-                  <select
-                    value={quickItemType}
-                    onChange={(event) => setQuickItemType(event.target.value as CatalogItemType)}
-                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
-                  >
-                    <option value="material">Material</option>
-                    <option value="labor">Labor</option>
-                    <option value="service">Service</option>
-                    <option value="equipment">Equipment</option>
-                    <option value="subcontractor">Subcontractor</option>
-                    <option value="other">Other</option>
-                  </select>
                 </label>
                 <label className="text-[12px] font-medium text-[#5d6f8a]">
                   Unit
@@ -916,37 +917,41 @@ export function ItemsSection({
                   />
                 </label>
                 <label className="text-[12px] font-medium text-[#5d6f8a]">
-                  Classification
-                  <select
-                    value={quickItemCategory}
-                    onChange={(event) => setQuickItemCategory(event.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
-                  >
-                    <option value="">Catalog Item</option>
-                    <option value="Add-ons / Options">Add-ons / Options</option>
-                  </select>
-                </label>
-                <label className="text-[12px] font-medium text-[#5d6f8a]">
-                  Cost
-                  <input
-                    value={quickItemCost}
-                    onChange={(event) => setQuickItemCost(event.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
-                  />
-                </label>
-                <label className="text-[12px] font-medium text-[#5d6f8a]">
-                  Price (optional)
+                  Price
                   <input
                     value={quickItemPrice}
                     onChange={(event) => setQuickItemPrice(event.target.value)}
                     className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
                   />
                 </label>
+                <label className="md:col-span-2 text-[12px] font-medium text-[#5d6f8a]">
+                  Description
+                  <textarea
+                    value={quickItemDescription}
+                    onChange={(event) => setQuickItemDescription(event.target.value)}
+                    className="mt-1.5 min-h-20 w-full rounded-[8px] border border-[#d6d6d6] px-3 py-2 text-[14px] text-[#2a2a2a] outline-none"
+                  />
+                </label>
+                <label className="inline-flex items-center gap-2 text-[13px] font-medium text-[#2a2a2a]">
+                  <input
+                    type="checkbox"
+                    checked={quickItemTaxable}
+                    onChange={(event) => setQuickItemTaxable(event.target.checked)}
+                    className="h-4 w-4 rounded border-[#cbd4e1] text-[#d8731f] focus:ring-[#d8731f]"
+                  />
+                  Taxable
+                </label>
               </div>
-              {inventoryCreateError ? (
-                <p className="mt-3 text-[13px] text-rose-700">{inventoryCreateError}</p>
+              {quickCreateDuplicateItem ? (
+                <p className="mt-3 text-[13px] text-amber-800">
+                  A catalog item named "{quickCreateDuplicateItem.name}" already exists. You can
+                  still save with a different name or add the existing item from catalog.
+                </p>
               ) : null}
-              <div className="mt-4 flex justify-end gap-2">
+              {inventoryCreateError ? (
+                <p className="px-5 text-[13px] text-rose-700">{inventoryCreateError}</p>
+              ) : null}
+              <div className="flex justify-end gap-2 border-t border-[#e6e9ef] px-5 py-4">
                 <button
                   type="button"
                   onClick={() => setShowCreateItemForm(false)}
@@ -960,18 +965,20 @@ export function ItemsSection({
                     void (async () => {
                       const didCreate = await onQuickCreateCatalogItem({
                         name: quickItemName,
-                        itemType: quickItemType,
+                        description:
+                          quickItemDescription.trim().length > 0
+                            ? quickItemDescription
+                            : null,
                         unit: quickItemUnit,
-                        category: quickItemCategory.trim().length > 0 ? quickItemCategory : null,
-                        defaultUnitCost: quickItemCost,
-                        defaultUnitPrice: quickItemPrice.trim().length > 0 ? quickItemPrice : null
+                        defaultUnitPrice: quickItemPrice,
+                        taxable: quickItemTaxable
                       });
                       if (didCreate) {
                         setQuickItemName("");
+                        setQuickItemDescription("");
                         setQuickItemUnit("each");
-                        setQuickItemCategory("");
-                        setQuickItemCost("");
                         setQuickItemPrice("");
+                        setQuickItemTaxable(true);
                         setShowCreateItemForm(false);
                       }
                     })();
@@ -981,6 +988,7 @@ export function ItemsSection({
                 >
                   Create item and add to estimate
                 </button>
+              </div>
               </div>
             </div>
           ) : null}
@@ -1410,9 +1418,33 @@ export function ItemsSection({
                         </td>
                         <td className="px-2 py-2">
                           <div className="flex flex-col gap-1">
-                            <div className="min-h-7 px-0 text-[14px] font-medium text-[#2a2a2a]">
-                              {lineItem.name}
-                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!lineItem.id || !lineItem.catalogItemId) {
+                                  return;
+                                }
+
+                                setEditingLineItem(lineItem);
+                                setEditItemName(lineItem.name);
+                                setEditItemDescription(lineItem.description);
+                                setEditItemUnit(lineItem.unit);
+                                setEditItemPrice(lineItem.unitPrice);
+                                setEditItemTaxable(lineItem.taxCode === "taxable");
+                              }}
+                              disabled={!lineItem.id || !lineItem.catalogItemId}
+                              className="inline-flex min-h-7 w-fit max-w-full items-center gap-1 px-0 text-left text-[14px] font-medium text-[#2a2a2a] underline-offset-4 enabled:hover:underline disabled:cursor-default"
+                              title={
+                                lineItem.id && lineItem.catalogItemId
+                                  ? "Edit catalog item and this estimate snapshot"
+                                  : "Catalog-backed estimate item required"
+                              }
+                            >
+                              <span className="truncate">{lineItem.name}</span>
+                              {lineItem.id && lineItem.catalogItemId ? (
+                                <Pencil className="h-3.5 w-3.5 text-[#8a98ad]" />
+                              ) : null}
+                            </button>
                             <div className="min-h-7 px-0 text-[12px] text-[#8694ab]">
                               {lineItem.description || "Estimate item snapshot from catalog"}
                             </div>
@@ -1549,7 +1581,7 @@ export function ItemsSection({
                           className="px-4 py-7 text-center text-[14px] text-[#777777]"
                         >
                           This estimate section is ready. Use Add Item to open the existing catalog,
-                          manual item, system, or import tools.
+                          catalog item, system, or import tools.
                         </td>
                       </tr>
                     ) : null}
@@ -1560,6 +1592,120 @@ export function ItemsSection({
           ))}
         </div>
       </div>
+      {editingLineItem ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4 py-6">
+          <div className="w-full max-w-xl rounded-[10px] border border-[#d6d6d6] bg-white shadow-[0_24px_80px_-38px_rgba(15,23,42,0.65)]">
+            <div className="flex items-start justify-between gap-4 border-b border-[#e6e9ef] px-5 py-4">
+              <div>
+                <h2 className="text-[18px] font-semibold text-[#171717]">Edit Catalog Item</h2>
+                <p className="mt-1 text-[13px] leading-5 text-[#6b7c96]">
+                  Updates the reusable catalog item and this estimate line snapshot only.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingLineItem(null)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] border border-[#d6d6d6] text-[#5d6f8a]"
+                title="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="grid gap-3 px-5 py-4 md:grid-cols-2">
+              <label className="text-[12px] font-medium text-[#5d6f8a]">
+                Name
+                <input
+                  value={editItemName}
+                  onChange={(event) => setEditItemName(event.target.value)}
+                  className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
+                />
+              </label>
+              <label className="text-[12px] font-medium text-[#5d6f8a]">
+                Unit
+                <input
+                  value={editItemUnit}
+                  onChange={(event) => setEditItemUnit(event.target.value)}
+                  className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
+                />
+              </label>
+              <label className="text-[12px] font-medium text-[#5d6f8a]">
+                Price
+                <input
+                  value={editItemPrice}
+                  onChange={(event) => setEditItemPrice(event.target.value)}
+                  className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
+                />
+              </label>
+              <label className="mt-7 inline-flex items-center gap-2 text-[13px] font-medium text-[#2a2a2a]">
+                <input
+                  type="checkbox"
+                  checked={editItemTaxable}
+                  onChange={(event) => setEditItemTaxable(event.target.checked)}
+                  className="h-4 w-4 rounded border-[#cbd4e1] text-[#d8731f] focus:ring-[#d8731f]"
+                />
+                Taxable
+              </label>
+              <label className="md:col-span-2 text-[12px] font-medium text-[#5d6f8a]">
+                Description
+                <textarea
+                  value={editItemDescription}
+                  onChange={(event) => setEditItemDescription(event.target.value)}
+                  className="mt-1.5 min-h-24 w-full rounded-[8px] border border-[#d6d6d6] px-3 py-2 text-[14px] text-[#2a2a2a] outline-none"
+                />
+              </label>
+              {editDuplicateItem ? (
+                <p className="md:col-span-2 text-[13px] text-amber-800">
+                  A catalog item named "{editDuplicateItem.name}" already exists. Rename this item
+                  before saving to avoid duplicate catalog names.
+                </p>
+              ) : null}
+              {estimateStatus === "approved" ? (
+                <p className="md:col-span-2 text-[13px] text-rose-700">
+                  Approved estimates cannot edit catalog snapshots.
+                </p>
+              ) : null}
+            </div>
+            <div className="flex justify-end gap-2 border-t border-[#e6e9ef] px-5 py-4">
+              <button
+                type="button"
+                onClick={() => setEditingLineItem(null)}
+                className="rounded-[8px] border border-[#d6d6d6] px-4 py-2 text-[14px] font-medium text-[#2a2a2a]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!canSubmitCatalogEdit}
+                onClick={() => {
+                  void (async () => {
+                    if (!editingLineItem.id || !editingLineItem.catalogItemId) {
+                      return;
+                    }
+
+                    const didEdit = await onEditCatalogItemFromEstimate({
+                      estimateLineItemId: editingLineItem.id,
+                      catalogItemId: editingLineItem.catalogItemId,
+                      name: editItemName,
+                      description:
+                        editItemDescription.trim().length > 0 ? editItemDescription : null,
+                      unit: editItemUnit,
+                      defaultUnitPrice: editItemPrice,
+                      taxable: editItemTaxable
+                    });
+
+                    if (didEdit) {
+                      setEditingLineItem(null);
+                    }
+                  })();
+                }}
+                className="rounded-[8px] bg-[#ef7d32] px-4 py-2 text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:bg-[#9fb7ea]"
+              >
+                Save catalog item
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

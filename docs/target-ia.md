@@ -334,7 +334,7 @@ Target contractor record pages should converge on the same structural pattern:
 
 Page-role guidance inside that shared pattern:
 - project detail is the authoritative workflow and readiness hub
-- estimate and contract detail support document review and workflow progression, then point back to the project hub for broader handoff state
+- estimate and contract detail support document review and workflow progression, including onsite signature action when an eligible sent contract has an unsigned customer signer, then point back to the project hub for broader handoff state
 - invoice detail should be structured as review-first billing workspace, not primarily as a top-heavy edit form
 - job detail should use the same shared page language rather than a separate ad hoc detail pattern
 

@@ -498,7 +498,7 @@ export const estimateStatusTransitions: Record<
   EstimateStatus,
   readonly EstimateStatus[]
 > = {
-  draft: ["sent"],
+  draft: ["sent", "approved", "rejected"],
   sent: ["approved", "rejected"],
   approved: [],
   rejected: []

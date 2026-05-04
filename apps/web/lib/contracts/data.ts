@@ -29,6 +29,7 @@ import type {
 
 import type {
   ContractPortalSignatureActionInput,
+  ContractOnsiteSignatureActionInput,
   ContractSignerInput,
   CreateContractFromEstimateInput,
   SendContractForSignatureInput,
@@ -187,6 +188,11 @@ type ContractPortalSignerGrantRow = {
         id: string;
         email: string;
         full_name: string | null;
+      }
+    | {
+        id: string;
+        email: string;
+        full_name: string | null;
       }[]
     | null;
 };
@@ -218,6 +224,8 @@ type ContractScope = {
   organizationId: string;
 };
 
+type SnapshotNumericValue = string | number;
+
 type EstimateCommercialSnapshotRow = {
   id: string;
   company_id: string;
@@ -226,12 +234,12 @@ type EstimateCommercialSnapshotRow = {
   project_id: string;
   snapshot_version: number;
   estimate_reference_number: string;
-  subtotal_amount: string;
-  taxable_sales_amount: string;
-  exempt_sales_amount: string;
-  tax_amount: string;
-  discount_amount: string;
-  total_amount: string;
+  subtotal_amount: SnapshotNumericValue;
+  taxable_sales_amount: SnapshotNumericValue;
+  exempt_sales_amount: SnapshotNumericValue;
+  tax_amount: SnapshotNumericValue;
+  discount_amount: SnapshotNumericValue;
+  total_amount: SnapshotNumericValue;
   scope_summary_html: string | null;
   inclusions_html: string | null;
   exclusions_html: string | null;
@@ -263,9 +271,9 @@ type EstimateCommercialSnapshotItemRow = {
   estimate_commercial_snapshot_id: string;
   name: string;
   description: string | null;
-  quantity: string;
+  quantity: SnapshotNumericValue;
   unit: string;
-  line_total: string;
+  line_total: SnapshotNumericValue;
   sort_order: number;
   created_at: string;
 };
@@ -339,6 +347,7 @@ const contractSelect = `
   project_id,
   estimate_id,
   template_id,
+  reference_number,
   status,
   title,
   rendered_subject,
@@ -553,6 +562,14 @@ function isContractPortalSignerGrantRowArray(
   return Array.isArray(value) && value.every((row) => isContractPortalSignerGrantRow(row));
 }
 
+function getPortalUserFromGrant(grant: ContractPortalSignerGrantRow) {
+  if (Array.isArray(grant.portal_user)) {
+    return grant.portal_user[0] ?? null;
+  }
+
+  return grant.portal_user;
+}
+
 function isContractPortalProjectAccessRow(
   value: unknown
 ): value is ContractPortalProjectAccessRow {
@@ -575,6 +592,14 @@ function isContractPortalProjectAccessRowArray(
   return Array.isArray(value) && value.every((row) => isContractPortalProjectAccessRow(row));
 }
 
+function isSnapshotNumericValue(value: unknown): value is SnapshotNumericValue {
+  return typeof value === "string" || typeof value === "number";
+}
+
+function snapshotNumericToString(value: SnapshotNumericValue) {
+  return typeof value === "number" ? value.toFixed(2) : value;
+}
+
 function isEstimateCommercialSnapshotRow(
   value: unknown
 ): value is EstimateCommercialSnapshotRow {
@@ -592,12 +617,12 @@ function isEstimateCommercialSnapshotRow(
     typeof row.project_id === "string" &&
     typeof row.snapshot_version === "number" &&
     typeof row.estimate_reference_number === "string" &&
-    typeof row.subtotal_amount === "string" &&
-    typeof row.taxable_sales_amount === "string" &&
-    typeof row.exempt_sales_amount === "string" &&
-    typeof row.tax_amount === "string" &&
-    typeof row.discount_amount === "string" &&
-    typeof row.total_amount === "string" &&
+    isSnapshotNumericValue(row.subtotal_amount) &&
+    isSnapshotNumericValue(row.taxable_sales_amount) &&
+    isSnapshotNumericValue(row.exempt_sales_amount) &&
+    isSnapshotNumericValue(row.tax_amount) &&
+    isSnapshotNumericValue(row.discount_amount) &&
+    isSnapshotNumericValue(row.total_amount) &&
     (row.scope_summary_html === null || typeof row.scope_summary_html === "string") &&
     (row.inclusions_html === null || typeof row.inclusions_html === "string") &&
     (row.exclusions_html === null || typeof row.exclusions_html === "string") &&
@@ -654,9 +679,9 @@ function isEstimateCommercialSnapshotItemRow(
     typeof row.estimate_commercial_snapshot_id === "string" &&
     typeof row.name === "string" &&
     (row.description === null || typeof row.description === "string") &&
-    typeof row.quantity === "string" &&
+    isSnapshotNumericValue(row.quantity) &&
     typeof row.unit === "string" &&
-    typeof row.line_total === "string" &&
+    isSnapshotNumericValue(row.line_total) &&
     typeof row.sort_order === "number" &&
     typeof row.created_at === "string"
   );
@@ -731,7 +756,7 @@ async function getLatestApprovedEstimateCommercialSnapshotForContract(
 
   if (!isEstimateCommercialSnapshotRow(snapshotData)) {
     throw new Error(
-      "Approved estimate snapshot is missing. Re-approve the estimate before generating a contract."
+      "This estimate was approved, but its approved snapshot is missing. Rebuild the approval snapshot from the estimate, then generate the contract again."
     );
   }
 
@@ -765,7 +790,7 @@ async function getLatestApprovedEstimateCommercialSnapshotForContract(
 
   if (!isEstimateCommercialSnapshotItemRowArray(snapshotItemsData)) {
     throw new Error(
-      "Approved estimate snapshot items are missing. Re-approve the estimate before generating a contract."
+      "Approved estimate snapshot items are missing. Rebuild the approval snapshot from the estimate before generating a contract."
     );
   }
 
@@ -791,12 +816,12 @@ async function getLatestApprovedEstimateCommercialSnapshotForContract(
       serviceStateRegionSnapshot: snapshotData.service_state_region_snapshot,
       servicePostalCodeSnapshot: snapshotData.service_postal_code_snapshot,
       serviceCountryCodeSnapshot: snapshotData.service_country_code_snapshot,
-      subtotalAmount: snapshotData.subtotal_amount,
-      taxableSalesAmount: snapshotData.taxable_sales_amount,
-      exemptSalesAmount: snapshotData.exempt_sales_amount,
-      taxAmount: snapshotData.tax_amount,
-      discountAmount: snapshotData.discount_amount,
-      totalAmount: snapshotData.total_amount,
+      subtotalAmount: snapshotNumericToString(snapshotData.subtotal_amount),
+      taxableSalesAmount: snapshotNumericToString(snapshotData.taxable_sales_amount),
+      exemptSalesAmount: snapshotNumericToString(snapshotData.exempt_sales_amount),
+      taxAmount: snapshotNumericToString(snapshotData.tax_amount),
+      discountAmount: snapshotNumericToString(snapshotData.discount_amount),
+      totalAmount: snapshotNumericToString(snapshotData.total_amount),
       scopeSummaryHtml: snapshotData.scope_summary_html,
       inclusionsHtml: snapshotData.inclusions_html,
       exclusionsHtml: snapshotData.exclusions_html,
@@ -806,9 +831,9 @@ async function getLatestApprovedEstimateCommercialSnapshotForContract(
     snapshotItems: snapshotItemsData.map((item) => ({
       name: item.name,
       description: item.description,
-      quantity: item.quantity,
+      quantity: snapshotNumericToString(item.quantity),
       unit: item.unit,
-      lineTotal: item.line_total,
+      lineTotal: snapshotNumericToString(item.line_total),
       sortOrder: item.sort_order
     }))
   };
@@ -1027,39 +1052,7 @@ async function getContractRecordByIdInCurrentScope(contractId: string): Promise<
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("contracts")
-    .select(
-      `
-        id,
-        company_id,
-        customer_id,
-        project_id,
-        estimate_id,
-        template_id,
-        status,
-        title,
-        rendered_subject,
-        rendered_content,
-        generated_from_estimate_reference,
-        signature_provider,
-        signature_provider_reference,
-        signature_started_at,
-        customer_viewed_at,
-        customer_signed_at,
-        contractor_countersigned_at,
-        signature_declined_at,
-        signature_voided_at,
-        internal_approval_status,
-        internal_approved_at,
-        signature_readiness_status,
-        locked_at,
-        edit_lock_reason,
-        sent_at,
-        viewed_at,
-        signed_at,
-        created_at,
-        updated_at
-      `
-    )
+    .select(contractSelect)
     .eq("id", contractId)
     .maybeSingle();
   const data: unknown = response.data;
@@ -1768,9 +1761,7 @@ export async function getContractSignatureActionOptions(
       portalGrantData
         .filter((grant) => activeProjectGrantIds.has(grant.id))
         .map(async (grant) => {
-          const portalUser = Array.isArray(grant.portal_user)
-            ? (grant.portal_user[0] ?? null)
-            : null;
+          const portalUser = getPortalUserFromGrant(grant);
 
           if (!portalUser?.id || !portalUser.email) {
             return null;
@@ -2380,6 +2371,173 @@ export async function recordCustomerSignedContract(
 
   await syncProjectCommercialReadiness({
     organizationId: updated.company_id,
+    projectId: updated.project_id
+  });
+
+  return mapContract(updated);
+}
+
+export async function recordOnsiteContractSignature(
+  input: ContractOnsiteSignatureActionInput
+) {
+  const scope = await requireContractScope(`/contracts/${input.contractId}`);
+  const contract = await getContractRecordById(scope.organizationId, input.contractId);
+
+  if (!contract) {
+    throw new Error("Contract not found for this organization.");
+  }
+
+  if (contract.status !== "sent" && contract.status !== "viewed") {
+    throw new Error("Only sent or viewed contracts can be signed onsite.");
+  }
+
+  const signers = await listContractSignerRowsAdmin(
+    scope.organizationId,
+    input.contractId
+  );
+  const signer = signers.find((candidate) => candidate.id === input.signerId);
+
+  if (!signer || signer.contract_id !== contract.id) {
+    throw new Error("Selected signer does not belong to this contract.");
+  }
+
+  if (signer.signer_role !== "customer") {
+    throw new Error("Onsite customer signature cannot complete a contractor countersign slot.");
+  }
+
+  if (signer.signed_at !== null || signer.signer_status === "signed") {
+    throw new Error("This customer signer has already signed the contract.");
+  }
+
+  if (signer.signer_status !== "pending" && signer.signer_status !== "viewed") {
+    throw new Error("This customer signer is not currently available for signature.");
+  }
+
+  const firstUnsignedCustomerSigner = signers.find(
+    (candidate) =>
+      candidate.signer_role === "customer" &&
+      candidate.signed_at === null &&
+      (candidate.signer_status === "pending" || candidate.signer_status === "viewed")
+  );
+
+  if (!firstUnsignedCustomerSigner || firstUnsignedCustomerSigner.id !== signer.id) {
+    throw new Error("Complete the first unsigned customer signer before later signers.");
+  }
+
+  const summary = buildContractSignatureSummary(contract, signers);
+
+  if (!summary.canCustomerAct) {
+    throw new Error("This contract is not currently available for customer signature.");
+  }
+
+  const nowIso = new Date().toISOString();
+  const admin = getSupabaseAdminClient();
+  const signerUpdateResponse = await admin
+    .from("contract_signers")
+    .update({
+      signer_status: "signed",
+      viewed_at: signer.viewed_at ?? nowIso,
+      signed_at: nowIso,
+      declined_at: null,
+      decline_reason: null
+    })
+    .eq("company_id", scope.organizationId)
+    .eq("contract_id", contract.id)
+    .eq("id", signer.id);
+
+  if (signerUpdateResponse.error) {
+    throw new Error(
+      `Unable to record the onsite customer signature: ${signerUpdateResponse.error.message}`
+    );
+  }
+
+  const refreshedSigners = await listContractSignerRowsAdmin(
+    scope.organizationId,
+    contract.id
+  );
+  const refreshedSummary = buildContractSignatureSummary(contract, refreshedSigners);
+
+  await insertContractSignatureEvents(scope.organizationId, contract.id, [
+    {
+      contractSignerId: signer.id,
+      eventType: "signer_signed" as const,
+      actorType: "organization_user" as const,
+      actorUserId: scope.userId,
+      payload: {
+        source: "onsite",
+        capturedVia: "contractor_app",
+        captureMethod: "canvas",
+        signatureImage: input.signatureImage,
+        version: 1,
+        signerRole: signer.signer_role,
+        signerOrder: signer.signer_order
+      },
+      occurredAt: nowIso
+    },
+    ...(refreshedSummary.allRequiredSignersSigned
+      ? [
+          {
+            contractSignerId: null,
+            eventType: "signature_completed" as const,
+            actorType: "system" as const,
+            payload: {
+              completionMode: refreshedSummary.requiresCountersign
+                ? "customer_and_contractor"
+                : "customer_only",
+              source: "onsite",
+              version: 1
+            },
+            occurredAt: nowIso
+          }
+        ]
+      : [])
+  ]);
+
+  if (refreshedSummary.allRequiredSignersSigned) {
+    await recordContractNotificationEvent({
+      organizationId: scope.organizationId,
+      contractId: contract.id,
+      customerId: contract.customer_id,
+      projectId: contract.project_id,
+      contractTitle: contract.title,
+      eventType: "signed",
+      actorType: "system",
+      occurredAt: nowIso,
+      payload: {
+        completionMode: refreshedSummary.requiresCountersign
+          ? "customer_and_contractor"
+          : "customer_only",
+        source: "onsite"
+      }
+    });
+  }
+
+  const contractState = buildContractStateFromSigners({
+    contract,
+    signers: refreshedSigners,
+    nowIso,
+    actorUserId: scope.userId
+  });
+  const contractUpdateResponse = await admin
+    .from("contracts")
+    .update(contractState)
+    .eq("company_id", scope.organizationId)
+    .eq("id", contract.id);
+
+  if (contractUpdateResponse.error) {
+    throw new Error(
+      `Unable to update the canonical contract signature state: ${contractUpdateResponse.error.message}`
+    );
+  }
+
+  const updated = await getContractRecordById(scope.organizationId, input.contractId);
+
+  if (!updated) {
+    throw new Error("Contract not found for this organization.");
+  }
+
+  await syncProjectCommercialReadiness({
+    organizationId: scope.organizationId,
     projectId: updated.project_id
   });
 

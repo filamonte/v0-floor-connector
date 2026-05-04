@@ -119,6 +119,16 @@ type EstimateFormProps = {
     | { ok: true; item: CatalogItem }
     | { ok: false; message: string }
   >;
+  updateCatalogItemFromEstimateAction: (input: {
+    estimateId: string;
+    estimateLineItemId: string;
+    catalogItemId: string;
+    name: string;
+    description: string | null;
+    unit: string;
+    defaultUnitPrice: string;
+    taxable: boolean;
+  }) => Promise<EstimateInsertResult>;
   importSourceEstimates?: Array<{
     id: string;
     referenceNumber: string;
@@ -135,6 +145,7 @@ type EstimateFormProps = {
   approvalOrchestration?: EstimateApprovalOrchestrationState | null;
   contractAction: (formData: FormData) => void | Promise<void>;
   scheduleOfValuesAction: (formData: FormData) => void | Promise<void>;
+  rebuildSnapshotAction?: (formData: FormData) => void | Promise<void>;
 };
 
 type PendingAttachment = {
@@ -301,6 +312,7 @@ function buildLineItemDrafts(
         : legacyRow?.groupId ?? null;
 
       return applyDraftPricing({
+        id: lineItem.id,
         rowKey: legacyRow?.rowKey ?? createRowKey("row", index + 1),
         catalogItemId: lineItem.catalogItemId,
         sourceType:
@@ -671,10 +683,12 @@ export function EstimateForm({
   importLineItemsFromEstimateAction,
   importReusableContentFromEstimateAction,
   quickCreateCatalogItemAction,
+  updateCatalogItemFromEstimateAction,
   importSourceEstimates = [],
   approvalOrchestration = null,
   contractAction,
-  scheduleOfValuesAction
+  scheduleOfValuesAction,
+  rebuildSnapshotAction
 }: EstimateFormProps) {
   const initialItemGroups = buildItemGroups(estimate);
   const [activeSection, setActiveSection] =
@@ -722,7 +736,6 @@ export function EstimateForm({
     estimate?.attachments?.map((attachment) => attachment.id) ?? []
   );
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
-  const [selectedCatalogItemId, setSelectedCatalogItemId] = useState("");
   const [selectedSystemId, setSelectedSystemId] = useState("");
   const [systemInputMode, setSystemInputMode] = useState<"dimensions" | "direct">("dimensions");
   const [systemLength, setSystemLength] = useState("");
@@ -739,6 +752,7 @@ export function EstimateForm({
     message: saveFeedbackMessage,
     isDirty,
     markDirty,
+    markClean,
     beginSave,
     markSaved,
     markSaveFailed
@@ -751,7 +765,9 @@ export function EstimateForm({
   const [inventoryCreateError, setInventoryCreateError] = useState<string | null>(null);
   const [catalogPreviewAddMessage, setCatalogPreviewAddMessage] = useState<string | null>(null);
   const [catalogInventoryItems, setCatalogInventoryItems] = useState<CatalogItem[]>(catalogItems);
-  const [approvalPanelInitialOpen, setApprovalPanelInitialOpen] = useState(false);
+  const [approvalPanelInitialOpen, setApprovalPanelInitialOpen] = useState(
+    Boolean(approvalOrchestration?.contract.snapshotMissing)
+  );
   const [approvalState, setApprovalState] = useState<EstimateApprovalOrchestrationState | null>(
     approvalOrchestration
   );
@@ -976,19 +992,6 @@ export function EstimateForm({
     return true;
   }
 
-  function handleAddCatalogItem(targetGroupId?: string | null) {
-    const catalogItem = filteredCatalogItems.find((item) => item.id === selectedCatalogItemId);
-
-    if (!catalogItem) {
-      return;
-    }
-
-    startSaveTransition(async () => {
-      await insertCatalogItem(catalogItem, targetGroupId);
-      setSelectedCatalogItemId("");
-    });
-  }
-
   function handleQuickAddCatalogItem(catalogItemId: string, targetGroupId?: string | null) {
     const catalogItem = filteredCatalogItems.find((item) => item.id === catalogItemId);
 
@@ -998,7 +1001,6 @@ export function EstimateForm({
 
     startSaveTransition(async () => {
       await insertCatalogItem(catalogItem, targetGroupId);
-      setSelectedCatalogItemId("");
     });
   }
 
@@ -1027,30 +1029,28 @@ export function EstimateForm({
           ? `${catalogItem.name} was added${targetGroupName ? ` to ${targetGroupName}` : ""} as a locked estimate snapshot.`
           : "Catalog item could not be added. Review the save message above and try again."
       );
-      setSelectedCatalogItemId("");
     });
   }
 
   async function handleQuickCreateCatalogItem(input: {
     name: string;
-    itemType: CatalogItem["itemType"];
+    description: string | null;
     unit: string;
-    category: string | null;
-    defaultUnitCost: string;
-    defaultUnitPrice: string | null;
+    defaultUnitPrice: string;
+    taxable: boolean;
   }) {
     const formData = new FormData();
     formData.set("name", input.name);
-    formData.set("itemType", input.itemType);
+    formData.set("itemType", "service");
     formData.set("unit", input.unit);
-    if (input.category) {
-      formData.set("category", input.category);
+    if (input.description) {
+      formData.set("description", input.description);
     }
-    formData.set("defaultUnitCost", input.defaultUnitCost);
-    if (input.defaultUnitPrice) {
-      formData.set("defaultUnitPrice", input.defaultUnitPrice);
+    formData.set("defaultUnitCost", "0.00");
+    formData.set("defaultUnitPrice", input.defaultUnitPrice);
+    if (input.taxable) {
+      formData.set("taxable", "on");
     }
-    formData.set("taxable", "on");
 
     const result = await quickCreateCatalogItemAction(formData);
 
@@ -1061,10 +1061,65 @@ export function EstimateForm({
 
     setInventoryCreateError(null);
     setCatalogInventoryItems((currentItems) => [result.item, ...currentItems]);
-    setSelectedCatalogItemId(result.item.id);
     startSaveTransition(async () => {
       await insertCatalogItem(result.item);
     });
+    return true;
+  }
+
+  async function handleEditCatalogItemFromEstimate(input: {
+    estimateLineItemId: string;
+    catalogItemId: string;
+    name: string;
+    description: string | null;
+    unit: string;
+    defaultUnitPrice: string;
+    taxable: boolean;
+  }) {
+    if (!estimate?.id) {
+      setInventoryCreateError("Save this estimate before editing catalog items.");
+      return false;
+    }
+
+    const saveResult = isDirty ? await persistEstimate() : null;
+
+    if (saveResult && !saveResult.ok) {
+      return false;
+    }
+
+    const result = await updateCatalogItemFromEstimateAction({
+      estimateId: estimate.id,
+      estimateLineItemId: input.estimateLineItemId,
+      catalogItemId: input.catalogItemId,
+      name: input.name,
+      description: input.description,
+      unit: input.unit,
+      defaultUnitPrice: input.defaultUnitPrice,
+      taxable: input.taxable
+    });
+
+    if (!result.ok) {
+      setInventoryCreateError(result.message);
+      markSaveFailed(result.message);
+      return false;
+    }
+
+    setInventoryCreateError(null);
+    syncServerInsertedLineItems(result.lineItems, result.updatedAt);
+    setCatalogInventoryItems((currentItems) =>
+      currentItems.map((item) =>
+        item.id === input.catalogItemId
+          ? {
+              ...item,
+              name: input.name.trim(),
+              description: input.description,
+              unit: input.unit.trim(),
+              defaultUnitPrice: Number(input.defaultUnitPrice.replace(/[$,\s]/g, "")).toFixed(2),
+              taxable: input.taxable
+            }
+          : item
+      )
+    );
     return true;
   }
 
@@ -1466,8 +1521,11 @@ export function EstimateForm({
 
     if (currentSnapshot !== lastSavedSnapshotRef.current) {
       markDirty();
+      return;
     }
-  }, [currentSnapshot, markDirty]);
+
+    markClean();
+  }, [currentSnapshot, markClean, markDirty]);
 
   const statusStrip = (
     <div className="flex items-start gap-4">
@@ -1614,6 +1672,7 @@ export function EstimateForm({
           orchestration={approvalState}
           contractAction={contractAction}
           scheduleOfValuesAction={scheduleOfValuesAction}
+          rebuildSnapshotAction={rebuildSnapshotAction}
           initialOpen={approvalPanelInitialOpen}
         />
       ) : null}
@@ -1757,7 +1816,6 @@ export function EstimateForm({
             catalogItemsForReview={catalogInventoryItems}
             estimateStatus={status}
             importSourceEstimates={importSourceEstimates}
-            selectedCatalogItemId={selectedCatalogItemId}
             selectedSystemId={selectedSystemId}
             systemInputMode={systemInputMode}
             systemLength={systemLength}
@@ -1768,10 +1826,8 @@ export function EstimateForm({
             systemPreview={selectedSystemPreview}
             systemPreviewMessage={systemPreviewMessage}
             isPreviewPending={isPreviewPending}
-            onSelectedCatalogItemIdChange={setSelectedCatalogItemId}
             onSelectedSystemIdChange={handleSelectedSystemIdChange}
             onSystemMeasurementChange={handleSystemMeasurementChange}
-            onAddCatalogItem={handleAddCatalogItem}
             onQuickAddCatalogItem={handleQuickAddCatalogItem}
             onAddPreviewCatalogItem={handleAddPreviewCatalogItem}
             onImportLineItemsFromEstimate={handleImportLineItemsFromEstimate}
@@ -1787,6 +1843,7 @@ export function EstimateForm({
             onMoveLineItem={handleMoveLineItem}
             onRemoveLineItem={handleRemoveLineItem}
             onQuickCreateCatalogItem={handleQuickCreateCatalogItem}
+            onEditCatalogItemFromEstimate={handleEditCatalogItemFromEstimate}
             inventoryCreateError={inventoryCreateError}
             catalogPreviewAddMessage={catalogPreviewAddMessage}
             isCatalogPreviewAddPending={isPending}

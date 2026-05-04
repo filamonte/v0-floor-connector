@@ -4,7 +4,10 @@ import { useMemo, useState } from "react";
 import type { DailyLog } from "@floorconnector/types";
 
 import { AuthField } from "@/components/auth-field";
-import { AuthSubmitButton } from "@/components/auth-submit-button";
+import {
+  SaveStateForm,
+  SaveStateSubmitButton
+} from "@/components/save-feedback/save-state-form";
 
 type ProjectOption = {
   id: string;
@@ -57,7 +60,12 @@ export function DailyLogForm({
   );
 
   return (
-    <form action={action} className="space-y-5">
+    <SaveStateForm
+      action={action}
+      enabled={Boolean(dailyLog)}
+      pendingLabel={pendingLabel}
+      className="space-y-5"
+    >
       {dailyLog ? <input type="hidden" name="dailyLogId" value={dailyLog.id} /> : null}
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -238,13 +246,15 @@ export function DailyLogForm({
       </section>
 
       <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-        <AuthSubmitButton pendingLabel={pendingLabel} className="sm:min-w-[220px]">
-          <span>{submitLabel}</span>
-        </AuthSubmitButton>
+        <SaveStateSubmitButton
+          submitLabel={submitLabel}
+          pendingLabel={pendingLabel}
+          className="sm:min-w-[220px]"
+        />
         <p className="text-sm leading-6 text-slate-500">
           Daily logs stay project-centered, with optional dominant-job context when one job defines the day.
         </p>
       </div>
-    </form>
+    </SaveStateForm>
   );
 }

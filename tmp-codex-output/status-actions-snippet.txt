@@ -1,0 +1,237 @@
+
+  apps\web\components\contract-status-actions.tsx:1:import type {
+> apps\web\components\contract-status-actions.tsx:2:  ContractContractorSignerOption,
+> apps\web\components\contract-status-actions.tsx:3:  ContractSignatureParticipantOption
+> apps\web\components\contract-status-actions.tsx:4:} from "@/lib/contracts/data";
+  apps\web\components\contract-status-actions.tsx:5:import {
+> apps\web\components\contract-status-actions.tsx:6:  ContractInternalApprovalStatus,
+> apps\web\components\contract-status-actions.tsx:7:  ContractStatus
+  apps\web\components\contract-status-actions.tsx:8:} from "@floorconnector/types";
+  apps\web\components\contract-status-actions.tsx:9:
+  apps\web\components\contract-status-actions.tsx:10:import {
+> apps\web\components\contract-status-actions.tsx:11:  countersignContractAction,
+> apps\web\components\contract-status-actions.tsx:12:  sendContractForSignatureAction,
+> apps\web\components\contract-status-actions.tsx:13:  updateContractInternalApprovalStatusAction,
+> apps\web\components\contract-status-actions.tsx:14:  updateContractStatusAction
+> apps\web\components\contract-status-actions.tsx:15:} from "@/lib/contracts/actions";
+  apps\web\components\contract-status-actions.tsx:16:
+> apps\web\components\contract-status-actions.tsx:17:type ContractStatusActionsProps = {
+> apps\web\components\contract-status-actions.tsx:18:  contractId: string;
+> apps\web\components\contract-status-actions.tsx:19:  currentStatus: ContractStatus;
+> apps\web\components\contract-status-actions.tsx:20:  currentInternalApprovalStatus: ContractInternalApprovalStatus;
+> apps\web\components\contract-status-actions.tsx:21:  requireContractInternalApproval: boolean;
+> apps\web\components\contract-status-actions.tsx:22:  canSend: boolean;
+> apps\web\components\contract-status-actions.tsx:23:  sendReadinessMessage: string;
+  apps\web\components\contract-status-actions.tsx:24:  isLocked: boolean;
+> apps\web\components\contract-status-actions.tsx:25:  customerPortalSignerOptions: ContractSignatureParticipantOption[];
+> apps\web\components\contract-status-actions.tsx:26:  contractorSignerOptions: ContractContractorSignerOption[];
+  apps\web\components\contract-status-actions.tsx:27:  canCountersign: boolean;
+  apps\web\components\contract-status-actions.tsx:28:  countersignMessage: string;
+  apps\web\components\contract-status-actions.tsx:29:};
+  apps\web\components\contract-status-actions.tsx:30:
+> apps\web\components\contract-status-actions.tsx:31:function formatStatusLabel(status: string) {
+> apps\web\components\contract-status-actions.tsx:32:  return status.replaceAll("_", " ");
+  apps\web\components\contract-status-actions.tsx:33:}
+  apps\web\components\contract-status-actions.tsx:34:
+> apps\web\components\contract-status-actions.tsx:35:function getStatusButtonStyles(status: ContractStatus) {
+> apps\web\components\contract-status-actions.tsx:36:  switch (status) {
+  apps\web\components\contract-status-actions.tsx:37:    case "sent":
+  apps\web\components\contract-status-actions.tsx:38:      return "border-amber-300 bg-amber-50 text-amber-900 hover:border-amber-400 hover:bg-amber-100";
+  apps\web\components\contract-status-actions.tsx:48:}
+  apps\web\components\contract-status-actions.tsx:49:
+> apps\web\components\contract-status-actions.tsx:50:export function ContractStatusActions({
+> apps\web\components\contract-status-actions.tsx:51:  contractId,
+> apps\web\components\contract-status-actions.tsx:52:  currentStatus,
+> apps\web\components\contract-status-actions.tsx:53:  currentInternalApprovalStatus,
+> apps\web\components\contract-status-actions.tsx:54:  requireContractInternalApproval,
+> apps\web\components\contract-status-actions.tsx:55:  canSend,
+> apps\web\components\contract-status-actions.tsx:56:  sendReadinessMessage,
+  apps\web\components\contract-status-actions.tsx:57:  isLocked,
+> apps\web\components\contract-status-actions.tsx:58:  customerPortalSignerOptions,
+> apps\web\components\contract-status-actions.tsx:59:  contractorSignerOptions,
+  apps\web\components\contract-status-actions.tsx:60:  canCountersign,
+  apps\web\components\contract-status-actions.tsx:61:  countersignMessage
+> apps\web\components\contract-status-actions.tsx:62:}: ContractStatusActionsProps) {
+> apps\web\components\contract-status-actions.tsx:63:  const nextStatuses: ContractStatus[] =
+> apps\web\components\contract-status-actions.tsx:64:    currentStatus === "draft"
+  apps\web\components\contract-status-actions.tsx:65:      ? ["void"]
+> apps\web\components\contract-status-actions.tsx:66:      : currentStatus === "sent" || currentStatus === "viewed"
+  apps\web\components\contract-status-actions.tsx:67:        ? ["void"]
+  apps\web\components\contract-status-actions.tsx:68:        : [];
+  apps\web\components\contract-status-actions.tsx:69:
+  apps\web\components\contract-status-actions.tsx:70:  if (
+> apps\web\components\contract-status-actions.tsx:71:    nextStatuses.length === 0 &&
+> apps\web\components\contract-status-actions.tsx:72:    (!requireContractInternalApproval || currentStatus !== "draft" || isLocked) &&
+  apps\web\components\contract-status-actions.tsx:73:    !canCountersign
+  apps\web\components\contract-status-actions.tsx:74:  ) {
+  apps\web\components\contract-status-actions.tsx:75:    return (
+  apps\web\components\contract-status-actions.tsx:76:      <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+> apps\web\components\contract-status-actions.tsx:77:        This contract is in a final state. No further status changes are available from here.
+  apps\web\components\contract-status-actions.tsx:78:      </div>
+  apps\web\components\contract-status-actions.tsx:79:    );
+  apps\web\components\contract-status-actions.tsx:82:  return (
+  apps\web\components\contract-status-actions.tsx:83:    <div className="space-y-4">
+> apps\web\components\contract-status-actions.tsx:84:      {requireContractInternalApproval && currentStatus === "draft" && !isLocked ? (
+  apps\web\components\contract-status-actions.tsx:85:        <div className="space-y-3 rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4">
+  apps\web\components\contract-status-actions.tsx:86:          <div className="text-sm leading-6 text-slate-600">
+  apps\web\components\contract-status-actions.tsx:87:            <p className="font-medium text-slate-950">Internal approval</p>
+  apps\web\components\contract-status-actions.tsx:88:            <p className="mt-1 capitalize">
+> apps\web\components\contract-status-actions.tsx:89:              Current state: {formatStatusLabel(currentInternalApprovalStatus)}
+  apps\web\components\contract-status-actions.tsx:90:            </p>
+  apps\web\components\contract-status-actions.tsx:91:          </div>
+  apps\web\components\contract-status-actions.tsx:92:          <div className="flex flex-wrap gap-3">
+> apps\web\components\contract-status-actions.tsx:93:            {currentInternalApprovalStatus !== "approved" ? (
+> apps\web\components\contract-status-actions.tsx:94:              <form action={updateContractInternalApprovalStatusAction}>
+> apps\web\components\contract-status-actions.tsx:95:                <input type="hidden" name="contractId" value={contractId} />
+  apps\web\components\contract-status-actions.tsx:96:                <input
+  apps\web\components\contract-status-actions.tsx:97:                  type="hidden"
+> apps\web\components\contract-status-actions.tsx:98:                  name="currentInternalApprovalStatus"
+> apps\web\components\contract-status-actions.tsx:99:                  value={currentInternalApprovalStatus}
+  apps\web\components\contract-status-actions.tsx:100:                />
+  apps\web\components\contract-status-actions.tsx:101:                <input
+  apps\web\components\contract-status-actions.tsx:102:                  type="hidden"
+> apps\web\components\contract-status-actions.tsx:103:                  name="nextInternalApprovalStatus"
+  apps\web\components\contract-status-actions.tsx:104:                  value="approved"
+  apps\web\components\contract-status-actions.tsx:105:                />
+  apps\web\components\contract-status-actions.tsx:108:                  className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-900 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-100"
+  apps\web\components\contract-status-actions.tsx:109:                >
+> apps\web\components\contract-status-actions.tsx:110:                  Approve for send
+  apps\web\components\contract-status-actions.tsx:111:                </button>
+> apps\web\components\contract-status-actions.tsx:112:              </form>
+  apps\web\components\contract-status-actions.tsx:113:            ) : null}
+> apps\web\components\contract-status-actions.tsx:114:            {currentInternalApprovalStatus !== "rejected" ? (
+> apps\web\components\contract-status-actions.tsx:115:              <form action={updateContractInternalApprovalStatusAction}>
+> apps\web\components\contract-status-actions.tsx:116:                <input type="hidden" name="contractId" value={contractId} />
+  apps\web\components\contract-status-actions.tsx:117:                <input
+  apps\web\components\contract-status-actions.tsx:118:                  type="hidden"
+> apps\web\components\contract-status-actions.tsx:119:                  name="currentInternalApprovalStatus"
+> apps\web\components\contract-status-actions.tsx:120:                  value={currentInternalApprovalStatus}
+  apps\web\components\contract-status-actions.tsx:121:                />
+  apps\web\components\contract-status-actions.tsx:122:                <input
+  apps\web\components\contract-status-actions.tsx:123:                  type="hidden"
+> apps\web\components\contract-status-actions.tsx:124:                  name="nextInternalApprovalStatus"
+  apps\web\components\contract-status-actions.tsx:125:                  value="rejected"
+  apps\web\components\contract-status-actions.tsx:126:                />
+  apps\web\components\contract-status-actions.tsx:131:                  Mark needs revision
+  apps\web\components\contract-status-actions.tsx:132:                </button>
+> apps\web\components\contract-status-actions.tsx:133:              </form>
+  apps\web\components\contract-status-actions.tsx:134:            ) : null}
+> apps\web\components\contract-status-actions.tsx:135:            {currentInternalApprovalStatus !== "pending" ? (
+> apps\web\components\contract-status-actions.tsx:136:              <form action={updateContractInternalApprovalStatusAction}>
+> apps\web\components\contract-status-actions.tsx:137:                <input type="hidden" name="contractId" value={contractId} />
+  apps\web\components\contract-status-actions.tsx:138:                <input
+  apps\web\components\contract-status-actions.tsx:139:                  type="hidden"
+> apps\web\components\contract-status-actions.tsx:140:                  name="currentInternalApprovalStatus"
+> apps\web\components\contract-status-actions.tsx:141:                  value={currentInternalApprovalStatus}
+  apps\web\components\contract-status-actions.tsx:142:                />
+  apps\web\components\contract-status-actions.tsx:143:                <input
+  apps\web\components\contract-status-actions.tsx:144:                  type="hidden"
+> apps\web\components\contract-status-actions.tsx:145:                  name="nextInternalApprovalStatus"
+  apps\web\components\contract-status-actions.tsx:146:                  value="pending"
+  apps\web\components\contract-status-actions.tsx:147:                />
+  apps\web\components\contract-status-actions.tsx:152:                  Reset to pending
+  apps\web\components\contract-status-actions.tsx:153:                </button>
+> apps\web\components\contract-status-actions.tsx:154:              </form>
+  apps\web\components\contract-status-actions.tsx:155:            ) : null}
+  apps\web\components\contract-status-actions.tsx:156:          </div>
+  apps\web\components\contract-status-actions.tsx:158:      ) : null}
+  apps\web\components\contract-status-actions.tsx:159:
+> apps\web\components\contract-status-actions.tsx:160:      {!canSend && currentStatus === "draft" ? (
+  apps\web\components\contract-status-actions.tsx:161:        <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-900">
+> apps\web\components\contract-status-actions.tsx:162:          {sendReadinessMessage}
+  apps\web\components\contract-status-actions.tsx:163:        </div>
+  apps\web\components\contract-status-actions.tsx:164:      ) : null}
+  apps\web\components\contract-status-actions.tsx:165:
+> apps\web\components\contract-status-actions.tsx:166:      {currentStatus === "draft" ? (
+  apps\web\components\contract-status-actions.tsx:167:        <div className="space-y-3 rounded-[1.5rem] border border-slate-200 bg-white px-4 py-4">
+  apps\web\components\contract-status-actions.tsx:168:          <div className="space-y-1 text-sm leading-6 text-slate-600">
+> apps\web\components\contract-status-actions.tsx:169:            <p className="font-medium text-slate-950">Send for customer signature</p>
+  apps\web\components\contract-status-actions.tsx:170:            <p>
+> apps\web\components\contract-status-actions.tsx:171:              Choose the active customer portal signer for this project, then optionally add the
+> apps\web\components\contract-status-actions.tsx:172:              contractor countersigner who should complete the final signature if required.
+  apps\web\components\contract-status-actions.tsx:173:            </p>
+  apps\web\components\contract-status-actions.tsx:174:          </div>
+  apps\web\components\contract-status-actions.tsx:175:
+> apps\web\components\contract-status-actions.tsx:176:          {customerPortalSignerOptions.length === 0 ? (
+  apps\web\components\contract-status-actions.tsx:177:            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+> apps\web\components\contract-status-actions.tsx:178:              No eligible customer signer is available for this project. Grant portal access and,
+> apps\web\components\contract-status-actions.tsx:179:              for linked customer contacts, confirm contract-signing permission before sending.
+  apps\web\components\contract-status-actions.tsx:180:            </div>
+  apps\web\components\contract-status-actions.tsx:181:          ) : (
+> apps\web\components\contract-status-actions.tsx:182:            <form action={sendContractForSignatureAction} className="space-y-4">
+> apps\web\components\contract-status-actions.tsx:183:              <input type="hidden" name="contractId" value={contractId} />
+  apps\web\components\contract-status-actions.tsx:184:
+  apps\web\components\contract-status-actions.tsx:185:              <label className="block space-y-2 text-sm leading-6 text-slate-600">
+> apps\web\components\contract-status-actions.tsx:186:                <span className="font-medium text-slate-950">Customer portal signer</span>
+  apps\web\components\contract-status-actions.tsx:187:                <select
+> apps\web\components\contract-status-actions.tsx:188:                  name="customerPortalUserId"
+  apps\web\components\contract-status-actions.tsx:189:                  required
+  apps\web\components\contract-status-actions.tsx:190:                  defaultValue={
+> apps\web\components\contract-status-actions.tsx:191:                    customerPortalSignerOptions.length === 1
+> apps\web\components\contract-status-actions.tsx:192:                      ? customerPortalSignerOptions[0]?.userId
+  apps\web\components\contract-status-actions.tsx:193:                      : ""
+  apps\web\components\contract-status-actions.tsx:194:                  }
+  apps\web\components\contract-status-actions.tsx:195:                  className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
+  apps\web\components\contract-status-actions.tsx:196:                >
+> apps\web\components\contract-status-actions.tsx:197:                  <option value="">Select a portal user</option>
+> apps\web\components\contract-status-actions.tsx:198:                  {customerPortalSignerOptions.map((option) => (
+  apps\web\components\contract-status-actions.tsx:199:                    <option key={option.userId} value={option.userId}>
+  apps\web\components\contract-status-actions.tsx:200:                      {option.displayName} ({option.email})
+  apps\web\components\contract-status-actions.tsx:206:              <label className="block space-y-2 text-sm leading-6 text-slate-600">
+  apps\web\components\contract-status-actions.tsx:207:                <span className="font-medium text-slate-950">
+> apps\web\components\contract-status-actions.tsx:208:                  Contractor countersigner
+  apps\web\components\contract-status-actions.tsx:209:                </span>
+  apps\web\components\contract-status-actions.tsx:210:                <select
+> apps\web\components\contract-status-actions.tsx:211:                  name="contractorSignerUserId"
+  apps\web\components\contract-status-actions.tsx:212:                  defaultValue=""
+  apps\web\components\contract-status-actions.tsx:213:                  className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
+  apps\web\components\contract-status-actions.tsx:214:                >
+> apps\web\components\contract-status-actions.tsx:215:                  <option value="">No contractor countersign required</option>
+> apps\web\components\contract-status-actions.tsx:216:                  {contractorSignerOptions.map((option) => (
+  apps\web\components\contract-status-actions.tsx:217:                    <option key={option.userId} value={option.userId}>
+  apps\web\components\contract-status-actions.tsx:218:                      {option.displayName} ({option.membershipRole})
+  apps\web\components\contract-status-actions.tsx:224:              <button
+  apps\web\components\contract-status-actions.tsx:225:                type="submit"
+> apps\web\components\contract-status-actions.tsx:226:                disabled={!canSend || customerPortalSignerOptions.length === 0}
+  apps\web\components\contract-status-actions.tsx:227:                className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-900 shadow-sm transition hover:border-amber-400 hover:bg-amber-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+  apps\web\components\contract-status-actions.tsx:228:              >
+> apps\web\components\contract-status-actions.tsx:229:                Send for signature
+  apps\web\components\contract-status-actions.tsx:230:              </button>
+> apps\web\components\contract-status-actions.tsx:231:            </form>
+  apps\web\components\contract-status-actions.tsx:232:          )}
+  apps\web\components\contract-status-actions.tsx:233:        </div>
+  apps\web\components\contract-status-actions.tsx:237:        <div className="space-y-3 rounded-[1.5rem] border border-emerald-200 bg-emerald-50 px-4 py-4">
+  apps\web\components\contract-status-actions.tsx:238:          <div className="text-sm leading-6 text-emerald-900">
+> apps\web\components\contract-status-actions.tsx:239:            <p className="font-medium text-emerald-950">Contractor countersign</p>
+  apps\web\components\contract-status-actions.tsx:240:            <p className="mt-1">{countersignMessage}</p>
+  apps\web\components\contract-status-actions.tsx:241:          </div>
+> apps\web\components\contract-status-actions.tsx:242:          <form action={countersignContractAction}>
+> apps\web\components\contract-status-actions.tsx:243:            <input type="hidden" name="contractId" value={contractId} />
+  apps\web\components\contract-status-actions.tsx:244:            <button
+  apps\web\components\contract-status-actions.tsx:245:              type="submit"
+  apps\web\components\contract-status-actions.tsx:246:              className="inline-flex items-center rounded-full border border-emerald-300 bg-white px-4 py-2 text-sm font-medium text-emerald-900 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-100"
+  apps\web\components\contract-status-actions.tsx:247:            >
+> apps\web\components\contract-status-actions.tsx:248:              Complete contractor countersign
+  apps\web\components\contract-status-actions.tsx:249:            </button>
+> apps\web\components\contract-status-actions.tsx:250:          </form>
+  apps\web\components\contract-status-actions.tsx:251:        </div>
+> apps\web\components\contract-status-actions.tsx:252:      ) : currentStatus !== "draft" && countersignMessage ? (
+  apps\web\components\contract-status-actions.tsx:253:        <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+  apps\web\components\contract-status-actions.tsx:254:          {countersignMessage}
+  apps\web\components\contract-status-actions.tsx:257:
+  apps\web\components\contract-status-actions.tsx:258:      <div className="flex flex-wrap gap-3">
+> apps\web\components\contract-status-actions.tsx:259:        {nextStatuses.map((nextStatus) => (
+> apps\web\components\contract-status-actions.tsx:260:          <form key={nextStatus} action={updateContractStatusAction}>
+> apps\web\components\contract-status-actions.tsx:261:            <input type="hidden" name="contractId" value={contractId} />
+> apps\web\components\contract-status-actions.tsx:262:            <input type="hidden" name="currentStatus" value={currentStatus} />
+> apps\web\components\contract-status-actions.tsx:263:            <input type="hidden" name="nextStatus" value={nextStatus} />
+  apps\web\components\contract-status-actions.tsx:264:            <button
+  apps\web\components\contract-status-actions.tsx:265:              type="submit"
+> apps\web\components\contract-status-actions.tsx:266:              className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition ${getStatusButtonStyles(nextStatus)}`}
+  apps\web\components\contract-status-actions.tsx:267:            >
+> apps\web\components\contract-status-actions.tsx:268:              {`Mark as ${formatStatusLabel(nextStatus)}`}
+  apps\web\components\contract-status-actions.tsx:269:            </button>
+> apps\web\components\contract-status-actions.tsx:270:          </form>
+  apps\web\components\contract-status-actions.tsx:271:        ))}
+  apps\web\components\contract-status-actions.tsx:272:      </div>
+

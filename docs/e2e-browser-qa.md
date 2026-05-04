@@ -37,13 +37,22 @@ PLAYWRIGHT_STORAGE_STATE=playwright/.auth/local-user.json
 
 ## Auth Strategy
 
+Protected contractor specs use the shared `chromium-protected` Playwright project. That project depends on the `setup` project, which logs in through the real local `/login` route and saves storage state before protected tests run.
+
 Preferred local path:
 
-1. Create a saved Playwright auth state from a real local contractor test account.
+1. Provide a real local contractor test account.
 2. Do not hardcode credentials in the repo.
 3. Do not bypass Supabase Auth, RLS, middleware, or organization membership checks.
 
-To create the saved auth state:
+Required local environment variables:
+
+```text
+FLOORCONNECTOR_E2E_EMAIL
+FLOORCONNECTOR_E2E_PASSWORD
+```
+
+To create or refresh the saved auth state directly:
 
 ```bash
 $env:FLOORCONNECTOR_E2E_EMAIL="contractor-test@example.com"
@@ -58,6 +67,8 @@ playwright/.auth/local-user.json
 ```
 
 That file is local-only and should not be committed.
+
+Running protected specs through `pnpm e2e` also runs the setup project first. If either credential variable is missing, auth setup fails with a clear environment-variable error instead of letting protected tests drift into `/login`.
 
 If you already have a saved storage-state file, point Playwright to it:
 
@@ -123,4 +134,14 @@ If the test should use an already running dev server and never start one:
 ```bash
 $env:PLAYWRIGHT_SKIP_WEB_SERVER="1"
 pnpm e2e -- e2e/estimate-group-catalog-insertion.spec.js
+```
+
+## Manual Estimate Approval QA
+
+The manual approval spec uses the same protected project and shared authenticated storage state. It is a real action against a real draft or sent estimate and will mark that estimate approved through the canonical status-transition path.
+
+```bash
+$env:FLOORCONNECTOR_E2E_MANUAL_APPROVAL_ESTIMATE_PATH="/estimates/estimate-uuid"
+$env:PLAYWRIGHT_SKIP_WEB_SERVER="1"
+pnpm exec playwright test e2e/estimate-manual-approval-action.spec.js
 ```

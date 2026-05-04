@@ -92,6 +92,7 @@ Current shared canonical model includes:
 - notification deliveries
 - communication threads
 - communication messages
+- workflow error events
 - payments
 
 ## Authentication
@@ -208,6 +209,7 @@ Implemented contractor UI direction now includes:
 
 Current contractor UI design notes:
 - the dashboard is now the visual reference point for the contractor app shell and Manager Page surface language
+- existing canonical-record edit forms now use a shared save-state pattern: unchanged records show `Saved`, edits switch the control to `Save`, saving shows `Saving...`, and successful saves reset the dirty baseline to the persisted values
 - the dashboard now reads more like a contractor home base than a light summary page:
   - compact priority metrics
   - modular commercial, operations, and finance queues
@@ -797,6 +799,7 @@ Implemented:
 - contractor-side customer send flow for estimates
 - customer-facing portal estimate review and approval or rejection
 - immutable approved estimate commercial snapshot creation on approval
+- approved estimates that are missing their approval snapshot now show a recovery warning on estimate detail/edit and can rebuild the canonical approved commercial snapshot before contract generation
 - canonical `estimate_customer_events` audit trail for send, view, comment, approval, and rejection activity
 - estimate email tracking for sent, opened, clicked, and viewed states tied to portal review links
 
@@ -809,12 +812,18 @@ Estimate statuses currently implemented:
 #### Estimate System (Current Behavior)
 
 Quick reference:
-- inventory-first only; new user-facing manual estimate rows are intentionally disabled
+- catalog-first only; new user-facing manual estimate rows are intentionally disabled
 - `catalog_items` is the canonical reusable cost item database and the source for reusable estimate items
 - `catalog_system_components` drives reusable systems on top of `catalog_items`
 - `estimate_line_items` is the only authoritative pricing truth; `estimates.content.itemRows` is legacy-only
 - approved estimates create immutable commercial snapshots for downstream contract, SOV, and invoice lineage
+- already-approved estimates with missing snapshot lineage can rebuild the canonical approval snapshot through the estimate recovery action; contract generation still refuses to read mutable/current estimate data
 - customer approval is canonical portal behavior, not a contractor-side override path
+- Estimate Editoror users can create a new catalog/cost item inline and add it through the same catalog-to-estimate insertion flow
+- Estimate Editoror users can add existing active non-system catalog items as current-estimate snapshots
+- catalog-backed estimate item names are clickable for editing the reusable catalog item from the estimate
+- editing from the Estimate Editoror updates the reusable `catalog_items` row and only the current estimate line-item snapshot; other estimates do not silently update
+- approved estimate snapshot editing is blocked
 - systems expand by sqft using shared logic before becoming canonical estimate line items
 - defaults apply only on initial load when estimate content is effectively empty
 - autosave validates before persisting and includes conflict protection against stale overwrites
@@ -832,7 +841,9 @@ Planned but not implemented in the current estimate system:
 Implemented:
 - estimate line item schema
 - line-item-based Estimate Editoror
-- add/edit/remove line items
+- catalog-first add/edit/remove behavior for draft estimate line items
+- inline catalog/cost item creation from the Estimate Editoror, followed by server-owned estimate line-item snapshot insertion
+- click-to-edit for catalog-backed estimate item names; edits update the reusable catalog item and the current estimate snapshot only
 - database-calculated subtotal and total logic
 - tax and discount support
 - approved-estimate-triggered commercial snapshot and schedule-of-values seeding foundation
@@ -1090,6 +1101,7 @@ Current design notes:
   - stored estimate and invoice line items act as immutable commercial snapshots
   - browser-sent pricing, hidden markup, taxability, and cost code inputs are rejected on save
 - approved estimate snapshots are now the canonical downstream financial source for contracts, SOV, and direct estimate-based invoicing
+- the approved-snapshot recovery path only repairs missing snapshot lineage for already-approved estimates and does not change contract or invoice source rules
 - schedule-of-values records stay linked to approved estimate or approved change-order snapshot items instead of creating disconnected AIA-only source data
 - progress billing now uses the existing SOV layer as the contractor-side billing workspace instead of a disconnected pay-app model
 - canonical invoices remain the financial source of truth; progress billing prepares or updates those invoices rather than replacing them
@@ -1162,6 +1174,10 @@ Implemented:
 - linked inventory tracking now exposes quantity on hand, reorder point, default location, manual adjustments, and recent transaction history from the same cost item workflow
 - canonical `catalog_system_components` foundation for system / assembly rows attached to `catalog_items`
 - estimate line item authoring can add active non-system `catalog_items` from the Estimate Editoror Catalog Items panel, with server-owned snapshot creation
+- estimate users can create new catalog/cost items inline from the Estimate Editoror, with the saved catalog item inserted into the current estimate through the same server-owned snapshot path
+- catalog-backed estimate item names can be clicked from the Estimate Editoror to edit the reusable catalog item and refresh only the current estimate line snapshot
+- catalog edits made from one estimate do not mutate other estimates that already snapshotted the same catalog item
+- approved estimates block catalog-backed estimate snapshot editing
 - archived catalog items remain visible for review in the Estimate Editoror panel but are blocked from insertion and rejected server-side
 - system catalog items continue to use the existing system expansion flow instead of direct single-line catalog insertion
 - sqft-expanded systems continue to generate normal canonical estimate line item snapshots through the existing system flow
@@ -1180,6 +1196,7 @@ Current design notes:
 - estimate item sourcing snapshots from `catalog_items` for active non-system catalog items through the Estimate Editoror panel; general-purpose invoice catalog insertion and materials execution workflows remain future work
 - limited invoice-only manual catalog-backed rows may use `catalog_items` as a starting snapshot for explicit invoice-only adjustments, but they do not create approved-scope invoice billing from live catalog rows
 - invoice pricing remains snapshot-based through approved estimate, SOV, change-order, or invoice-only lineage; inventory quantity is operational context only and does not drive pricing
+- catalog-first estimate authoring does not change schema, downstream invoice behavior, contract behavior, SOV behavior, payment behavior, or approved-snapshot billing lineage
 - `system` remains the canonical reusable assembly concept, with component rows designed to scale immediately by sqft in estimates
 - current systems are reusable catalog assemblies; they are not yet the planned System Templates with required inputs, formulas beyond current sqft expansion, grouping rules, Quick Build, Detailed Build, or share-back review
 - current catalog management is still foundation-first; future work should deepen reuse across estimating, invoicing, and execution without replacing the shared catalog and line-item chain
@@ -1193,6 +1210,7 @@ Current design notes:
 Implemented:
 - organization-scoped contract schema
 - contract generation from approved estimate and project context
+- contract Quick-Create opens from `/contracts?compose=1`, preserves `estimateId` selection context, and shows returned generation blockers inside the composer
 - organization-scoped approved-estimate contract template assignment in contractor settings
 - protected contracts list page
 - contractor-side contract detail/review page
@@ -1206,6 +1224,7 @@ Implemented:
 - supporting `contract_signers` workflow foundation for signer-role modeling
 - supporting immutable `contract_signature_events` audit foundation for signature lifecycle history
 - tenant-safe server-side signature workflow helpers for send, customer-viewed, customer-signed, customer-declined, optional contractor countersign, and signature void/completion state updates on the same canonical contract
+- contractor-side onsite customer signature capture for sent/viewed contracts, using a canvas signature pad and the same canonical signer/event workflow
 
 Contract statuses currently implemented:
 - `draft`
@@ -1236,6 +1255,7 @@ Current contract design notes:
 - send-for-signature now creates signer routing and immutable signature-request events instead of relying only on manual status changes
 - customer view, sign, decline, and optional contractor countersign now progress through signer-state validation and immutable signature events before the canonical contract reaches final `signed` state
 - contractor-side contract detail now includes explicit send-for-signature controls with customer portal signer selection and optional contractor countersigner assignment
+- contractor-side contract detail can capture the next unsigned customer signer onsite without creating a separate signed-document model; onsite capture records a `signer_signed` event with structured canvas-capture metadata on `contract_signature_events`
 - contractor-side contract detail now surfaces canonical signature-state timestamps, signer routing/status visibility, and recent immutable signature events inside the existing Contract Workspace
 - contractor-side countersign now has a dedicated workspace action when the signed customer contract is waiting on the assigned organization signer
 - portal contract review now supports customer-facing signature-state visibility, signer visibility, and customer sign/decline actions on the same canonical contract record through tenant-safe portal scope
@@ -1273,6 +1293,10 @@ The current implemented workflow foundation supports:
 - Estimate Workspace item sourcing is now catalog/cost-item-first, using active catalog items and sqft-scaled system expansion into canonical estimate line items
 - Estimate Builder V1 quick system generation is now implemented inside the existing Estimate Editoror:
   - contractors can add active non-system catalog items from the Estimate Editoror Catalog Items panel; insertion uses the existing server action path to create immutable estimate line-item snapshots for name, description, unit, pricing, taxability, source metadata, and supported cost fields
+  - contractors can create a new catalog/cost item inline from the Estimate Editoror; saving first creates the organization-scoped `catalog_items` record, then inserts the current estimate line through the same catalog insertion flow
+  - catalog-backed estimate item names are clickable in the Estimate Editoror; saving an edit updates the reusable `catalog_items` row and the current estimate line-item snapshot only
+  - other estimates that previously snapshotted the same catalog item do not silently update when the catalog item is edited from the current estimate
+  - approved estimates block catalog-backed snapshot editing from the Estimate Editoror
   - archived catalog items are visible in the Catalog Items panel for review but cannot be inserted, and server-side insertion rejects archived/inactive catalog items
   - system catalog items remain routed through the system expansion flow instead of direct single-line catalog insertion
   - contractors can select an existing catalog system, enter length x width or direct area plus linear footage, preview area/perimeter-derived quantities, and append grouped canonical estimate line items
@@ -1282,7 +1306,7 @@ The current implemented workflow foundation supports:
   - generated lines remain normal editable estimate line items with catalog pricing snapshotted at insertion
   - one-off estimate-line unit price overrides are supported in the existing item table and persist on the estimate line without mutating catalog defaults
   - customer-facing portal estimate review groups line items by the existing generated group snapshot and continues to hide internal cost, markup, hidden markup, and labor/cost internals
-- Estimate Editoror now groups item insertion into one clearer estimating-tools cluster: `Add manual item`, `Add from catalog`, and `Import from another estimate`, while keeping manual entry catalog-backed and non-billing-authoritative
+- Estimate Editoror now groups item insertion into one clearer estimating-tools cluster: `Create new item`, `Add from catalog`, system generation, and `Import from another estimate`; new estimate items are catalog-first rather than manual freeform rows
 - estimate line-item import from another estimate is now live for same-organization source estimates into draft destination estimates only; imported rows are reseeded as new destination `estimate_line_items` and do not create invoice rows, SOV rows, contracts, or payments
 - Estimate Editoror and detail now use clearer reusable-content language for scope / SOW, project details, terms, inclusions, and exclusions, and they distinguish insertable content blocks from defaults that only prefill empty estimates
 - Estimate Editoror now also uses one shared reusable-content insertion area for scope / SOW, terms, inclusions, and exclusions, reusing the existing content-block system while preserving append behavior into the live estimate
@@ -1291,13 +1315,17 @@ The current implemented workflow foundation supports:
 - Estimate Workspace edits now use autosave with validation, dirty/error state handling, and stale-write conflict protection
 - estimate defaults now hydrate only when the estimate content is initially empty, using platform defaults first and organization overrides second
 - contractor workflow settings now explain estimate defaults more explicitly: Scope / SOW, Terms, Inclusions, and Exclusions are organization-owned starting defaults for empty estimates only, while reusable blocks append on demand and estimate import copies from a selected prior estimate
-- estimate customer send, email tracking, portal review, and status progression
-- estimate detail, customer portal-access setup, portal project visibility, portal estimate approval, and contract Quick-Create now include compact prerequisite guidance for the current send -> approval -> approved-snapshot -> contract generation path without weakening canonical guards
+- estimate customer send, email tracking, portal review, contractor-side supported manual/offline decision actions, and status progression
+- estimate detail, customer portal-access setup, portal project visibility, portal estimate approval, contractor-side supported manual/offline estimate decision actions, and contract Quick-Create now include compact prerequisite guidance for the current send -> approval -> approved-snapshot -> contract generation path without weakening canonical guards
+- contractor-side manual estimate approval can be recorded from draft or sent estimates and is intended for paper signature, verbal customer approval, fake email during testing, non-portal customers, and workflow testing before send-mail and portal delivery are complete; it uses the shared canonical estimate status-transition path rather than a duplicate approval model
 - estimate create, update, and status transitions now refresh the linked project's stored commercial-readiness fields, including project reassignment during estimate updates
 - approved estimate commercial snapshot creation on approval for downstream lineage
 - approved-estimate-to-contract generation and pre-sign contract editing
 - required internal contract approval and send-readiness gating on draft contracts
 - server-side canonical contract signature workflow progression with signer/event updates on the shared contract model
+- contractor-side contract send creates canonical `contract_signers` and `contract_signature_events`, and sent/viewed contracts can capture an eligible unsigned customer signer onsite from the contractor app
+- contractor-side onsite signing uses the shared canonical `contracts`, `contract_signers`, and `contract_signature_events` records; canvas signatures are stored as base64 PNG metadata on the canonical signature event payload rather than a separate signed-document model
+- contract status reaches `signed` only when all required signers are complete; if contractor countersign is required, onsite customer signing does not complete the contract early
 - canonical change-order authoring, send-for-review, and customer portal approval or rejection on the shared project and contract chain
 - approved change-order commercial snapshot creation on approval, with append-only downstream SOV and invoice integration
 - project-detail readiness hub for the upstream commercial chain with blockers, next action, and ready-to-schedule handoff visibility
@@ -1320,10 +1348,12 @@ The current implemented workflow foundation supports:
 - shared template selection and merge-data preparation for estimate, invoice, and contract document workflows
 - canonical rendered contract records with revision snapshots and signature-lock scaffolding
 - canonical contract signature-state, signer, and immutable signature-event foundation on the shared contract model
-- canonical contract signature workflow helpers that keep send, customer signature progression, optional countersign, and readiness sync on the same contract record
+- canonical contract signature workflow helpers that keep send, portal or contractor-side onsite customer signature progression, optional countersign, and readiness sync on the same contract record
 - stored notification events, per-user notifications, delivery tracking, and canonical communication thread/message foundations
+- tenant-scoped `workflow_error_events` foundation for owner/admin review of failed workflow actions, starting with contract-generation failures
 - shared commercial-readiness foundation fields across opportunities, projects, contracts, invoices, and organization workflow settings
 - project commercial-readiness sync from signed-contract, deposit-readiness, financing-status, and recorded-payment state
+- project commercial-readiness sync reacts to contractor-side onsite signing the same way it reacts to portal signing; deposit follow-through remains conditional on organization workflow settings and uses the existing canonical deposit invoice/payment chain when required
 - shared plain-numeric customer-facing numbering across estimates, invoices, change orders, and contracts using the existing organization and platform workflow settings tables
 
 ## What Exists But Is Still Minimal
@@ -1373,6 +1403,11 @@ Implemented:
   - eligibility preview/debug, static template preview, and compact build-plan summaries remain visible for supported categories
   - saved preference fields are limited to category, manual-enable intent, and intended contractor-role recipients
   - no automation path sends email/SMS, creates queues or cron jobs, posts customer messages, or mutates workflow records
+- first lightweight workflow error logging foundation:
+  - `workflow_error_events` stores tenant-scoped failed workflow actions with action, subject, safe metadata, user context when available, and timestamp
+  - contract generation from approved estimates records failures such as missing approved snapshots without weakening the approved-snapshot guard
+  - approved estimate snapshot rebuild attempts log to `workflow_error_events` only when the recovery action fails
+  - `/settings/admin` shows recent workflow error events to organization owners/admins
 
 Current design notes:
 - this is a contractor organization settings surface, separate from platform super-admin controls
@@ -1432,8 +1467,8 @@ Not implemented yet:
 - contractor network collaboration, contractor-to-contractor chat, marketplace behavior, and subcontractor/vendor portal collaboration
 - scoped external project/job workrooms for subcontractors, vendors, or partner contractors
 - broad module-dashboard coverage across the contractor app
-- PDF generation
 - external e-sign provider integration
+- deeper PDF/email delivery and external e-sign provider lifecycle integration
 - deeper gateway-backed reconciliation, retry, and provider-sync workflows
 - billing/subscriptions
 - deeper gateway-backed customer-facing payment completion and reconciliation workflows
@@ -1441,7 +1476,7 @@ Not implemented yet:
 - deeper AIA/pay-application UX, export/reporting forms, and richer SOV draw management
 - external tax provider integration
 - rich template editing UI
-- e-sign integration workflows on top of the canonical contract record
+- external e-sign integration workflows on top of the canonical contract record
 - broader alignment from [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md), including stronger module-page UI consistency, directory/contact unification, Estimate Editoror navigation/review improvements, line taxable-toggle planning, structured project/service address display, configurable tax-rate direction, and fuller workflow-guidance states
 
 Future-looking note:

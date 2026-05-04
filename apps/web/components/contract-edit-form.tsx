@@ -3,7 +3,10 @@
 import type { Contract } from "@floorconnector/types";
 
 import { AuthField } from "@/components/auth-field";
-import { AuthSubmitButton } from "@/components/auth-submit-button";
+import {
+  SaveStateForm,
+  SaveStateSubmitButton
+} from "@/components/save-feedback/save-state-form";
 
 type ContractEditFormProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -15,7 +18,7 @@ type ContractEditFormProps = {
 
 export function ContractEditForm({ action, contract }: ContractEditFormProps) {
   return (
-    <form action={action} className="space-y-5">
+    <SaveStateForm action={action} pendingLabel="Saving..." className="space-y-5">
       <input type="hidden" name="contractId" value={contract.id} />
 
       <section
@@ -105,14 +108,16 @@ export function ContractEditForm({ action, contract }: ContractEditFormProps) {
         className="rounded-[24px] border border-[#d6d6d6] bg-white px-5 py-5 shadow-[0_18px_50px_-45px_rgba(15,23,42,0.35)]"
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <AuthSubmitButton pendingLabel="Saving contract..." className="sm:min-w-[220px]">
-            <span>Save contract</span>
-          </AuthSubmitButton>
+          <SaveStateSubmitButton
+            submitLabel="Save contract"
+            pendingLabel="Saving..."
+            className="sm:min-w-[220px]"
+          />
           <p className="text-sm leading-6 text-slate-500">
             Draft edits remain available only until signature activity begins.
           </p>
         </div>
       </section>
-    </form>
+    </SaveStateForm>
   );
 }

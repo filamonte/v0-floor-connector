@@ -75,7 +75,7 @@ Contract generation requires:
 - approved estimate commercial snapshot
 - approved estimate snapshot items
 
-If an approved estimate returns `Approved estimate snapshot is missing`, do not patch a snapshot. Re-approve a sent estimate through the supported portal approval flow and retry contract generation from that freshly approved estimate.
+If an approved estimate returns `Approved estimate snapshot is missing`, do not patch a snapshot or generate from current estimate data. Open the approved estimate, use `Rebuild Approval Snapshot`, and retry contract generation after the canonical snapshot exists.
 
 Expected:
 - One canonical contract is created.

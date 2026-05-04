@@ -8,9 +8,12 @@ import type {
 } from "@floorconnector/types";
 
 import { AuthField } from "@/components/auth-field";
-import { AuthSubmitButton } from "@/components/auth-submit-button";
 import { CountryComboboxField } from "@/components/country-combobox-field";
 import { OpportunityStructuredIntakeFields } from "@/components/opportunity-structured-intake-fields";
+import {
+  SaveStateForm,
+  SaveStateSubmitButton
+} from "@/components/save-feedback/save-state-form";
 import { opportunityStatusesList } from "@/lib/opportunities/schemas";
 
 type OpportunityFormOpportunity = Opportunity & {
@@ -84,7 +87,12 @@ export function OpportunityForm({
   const attachmentRows = buildAttachmentRows(opportunity?.attachments);
 
   return (
-    <form action={action} className="space-y-8">
+    <SaveStateForm
+      action={action}
+      enabled={Boolean(opportunity)}
+      pendingLabel={pendingLabel}
+      className="space-y-8"
+    >
       {opportunity ? (
         <input type="hidden" name="opportunityId" value={opportunity.id} />
       ) : null}
@@ -359,13 +367,15 @@ export function OpportunityForm({
       </div>
 
       <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-        <AuthSubmitButton pendingLabel={pendingLabel} className="sm:min-w-[200px]">
-          <span>{submitLabel}</span>
-        </AuthSubmitButton>
+        <SaveStateSubmitButton
+          submitLabel={submitLabel}
+          pendingLabel={pendingLabel}
+          className="sm:min-w-[200px]"
+        />
         <p className="text-sm leading-6 text-slate-500">
           Leads stay scoped to the active organization automatically.
         </p>
       </div>
-    </form>
+    </SaveStateForm>
   );
 }

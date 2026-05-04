@@ -10,7 +10,7 @@
     "dev": "turbo run dev --filter=@floorconnector/web",
     "build": "turbo run build",
     "e2e": "playwright test",
-    "e2e:auth": "playwright test e2e/auth.setup.js",
+    "e2e:auth": "playwright test --project=setup",
     "e2e:headed": "playwright test --headed",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",

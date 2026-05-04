@@ -1,3 +1,4 @@
+import { updateEstimateStatusAction } from "@/lib/estimates/actions";
 import type { EstimateStatus } from "@floorconnector/types";
 
 type EstimateStatusActionsProps = {
@@ -6,20 +7,58 @@ type EstimateStatusActionsProps = {
 };
 
 export function EstimateStatusActions({
-  estimateId: _estimateId,
+  estimateId,
   currentStatus
 }: EstimateStatusActionsProps) {
-  void _estimateId;
+  if (currentStatus === "draft" || currentStatus === "sent") {
+    return (
+      <div
+        id="estimate-decision-actions"
+        className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600"
+      >
+        <p className="font-medium text-slate-950">Manual customer decision</p>
+        <p className="mt-2">
+          Use these actions when the customer approved or rejected outside the portal, such
+          as a paper signature, verbal approval, fake email during testing, or a non-portal
+          customer. This records the customer decision on the canonical estimate so
+          downstream contract, job, and invoice workflows can continue without waiting for
+          send-mail or portal delivery.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <form action={updateEstimateStatusAction}>
+            <input type="hidden" name="estimateId" value={estimateId} />
+            <input type="hidden" name="currentStatus" value={currentStatus} />
+            <input type="hidden" name="nextStatus" value="approved" />
+            <button
+              type="submit"
+              className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+            >
+              Record customer approval
+            </button>
+          </form>
+          <form action={updateEstimateStatusAction}>
+            <input type="hidden" name="estimateId" value={estimateId} />
+            <input type="hidden" name="currentStatus" value={currentStatus} />
+            <input type="hidden" name="nextStatus" value="rejected" />
+            <button
+              type="submit"
+              className="inline-flex items-center rounded-full border border-rose-300 bg-white px-4 py-2 text-sm font-medium text-rose-900 transition hover:border-rose-400 hover:bg-rose-50"
+            >
+              Record rejection
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
-      {currentStatus === "sent"
-        ? "This estimate is out for customer portal review. Approve estimate happens through the portal handoff, not through contractor-side status buttons."
-        : currentStatus === "approved"
+      {currentStatus === "approved"
           ? "This estimate is approved and is ready for the downstream contract and billing handoff."
           : currentStatus === "rejected"
-            ? "This estimate needs revision before you send estimate again."
-            : "Contractor-side status buttons are disabled for estimates. Use Send estimate, then let customer portal approval drive the next step."}
+            ? "This estimate is marked rejected and needs revision before you send estimate again."
+            : "Use Send estimate before recording a manual customer approval decision."}
     </div>
   );
 }

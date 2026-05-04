@@ -63,6 +63,18 @@ function buildContractsHref(input: {
   return query.length > 0 ? `/contracts?${query}` : "/contracts";
 }
 
+function decodeQueryMessage(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    return decodeURIComponent(value.replaceAll("+", " "));
+  } catch {
+    return value.replaceAll("+", " ");
+  }
+}
+
 export default async function ContractsPage({ searchParams }: ContractsPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const user = await requireAuthenticatedUser("/contracts");
@@ -87,9 +99,11 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
   const query = resolvedSearchParams.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
   const statusFilter = resolvedSearchParams.status ?? "all";
+  const composerError = decodeQueryMessage(resolvedSearchParams.error);
+  const pageMessage = decodeQueryMessage(resolvedSearchParams.message);
   const showComposer =
     resolvedSearchParams.compose === "1" ||
-    Boolean(resolvedSearchParams.error) ||
+    Boolean(composerError) ||
     Boolean(resolvedSearchParams.estimateId);
 
   const filteredContracts = contracts.filter((contract) => {
@@ -257,23 +271,24 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
       }}
     >
       <div className="space-y-6">
-        {resolvedSearchParams.error ? (
+        {composerError ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
-            <p>{resolvedSearchParams.error}</p>
-            {resolvedSearchParams.error.includes("Approved estimate snapshot is missing") ? (
+            <p>{composerError}</p>
+            {composerError.includes("approved snapshot is missing") ||
+            composerError.includes("Approved estimate snapshot is missing") ? (
               <div className="mt-3 rounded-2xl border border-rose-200 bg-white/70 px-4 py-3 text-rose-900">
                 <p className="font-medium">Contract generation needs approved snapshot lineage.</p>
                 <p className="mt-1">
-                  Re-send and approve the estimate through the supported portal approval path,
-                  then return here. Existing approved sample records may be too old to include
-                  the current snapshot bundle.
+                  Open the approved estimate and use Rebuild Approval Snapshot, then return here
+                  and generate the contract again. Existing approved sample records may be too old
+                  to include the current snapshot bundle.
                 </p>
                 {resolvedSearchParams.estimateId ? (
                   <Link
                     href={`/estimates/${resolvedSearchParams.estimateId}`}
                     className="mt-3 inline-flex items-center rounded-full border border-rose-300 bg-white px-4 py-2 text-sm font-medium text-rose-900 transition hover:bg-rose-50"
                   >
-                    Open estimate
+                    Open estimate to rebuild snapshot
                   </Link>
                 ) : null}
               </div>
@@ -281,9 +296,9 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
           </div>
         ) : null}
 
-        {resolvedSearchParams.message ? (
+        {pageMessage ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
-            {resolvedSearchParams.message}
+            {pageMessage}
           </div>
         ) : null}
 
@@ -455,23 +470,46 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
         closeHref={buildContractsHref({ q: query, status: statusFilter })}
         openLabel="Open contract quick create"
       >
-        {approvedEstimates.length > 0 ? (
-          <ContractQuickCreateForm
-            action={quickCreateContractFromEstimateAction}
-            approvedEstimates={approvedEstimates.map((estimate) => ({
-              id: estimate.id,
-              referenceNumber: estimate.referenceNumber,
-              projectName: estimate.project?.name ?? null
-            }))}
-            initialEstimateId={resolvedSearchParams.estimateId}
-            preferredTemplateId={preferredTemplateId}
-            requireInternalApproval={workflowSettings.requireContractInternalApproval}
-          />
-        ) : (
-          <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-            Approve an estimate before generating a contract.
-          </div>
-        )}
+        <div className="space-y-5">
+          {composerError && approvedEstimates.length === 0 ? (
+            <div className="rounded-[4px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-900">
+              <p className="font-semibold">Contract generation is blocked</p>
+              <p className="mt-1">{composerError}</p>
+              {resolvedSearchParams.estimateId ? (
+                <Link
+                  href={`/estimates/${resolvedSearchParams.estimateId}`}
+                  className="mt-3 inline-flex items-center rounded-[4px] border border-rose-300 bg-white px-3 py-2 text-sm font-medium text-rose-900 transition hover:bg-rose-100"
+                >
+                  Open estimate to rebuild snapshot
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
+
+          {approvedEstimates.length > 0 ? (
+            <ContractQuickCreateForm
+              action={quickCreateContractFromEstimateAction}
+              approvedEstimates={approvedEstimates.map((estimate) => ({
+                id: estimate.id,
+                referenceNumber: estimate.referenceNumber,
+                projectName: estimate.project?.name ?? null
+              }))}
+              initialEstimateId={resolvedSearchParams.estimateId}
+              errorMessage={composerError}
+              estimateHref={
+                resolvedSearchParams.estimateId
+                  ? `/estimates/${resolvedSearchParams.estimateId}`
+                  : null
+              }
+              preferredTemplateId={preferredTemplateId}
+              requireInternalApproval={workflowSettings.requireContractInternalApproval}
+            />
+          ) : (
+            <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+              Approve an estimate before generating a contract.
+            </div>
+          )}
+        </div>
       </WorkspaceComposerSheet>
     </ContractorWorkspacePage>
   );

@@ -12,6 +12,8 @@ import {
   insertSystemToEstimateAction,
   previewExpandedSystemAction,
   quickCreateEstimateCatalogItemAction,
+  rebuildApprovedEstimateSnapshotAction,
+  updateCatalogItemFromEstimateAction,
   updateEstimateStatusSaveAction
 } from "@/lib/estimates/actions";
 import { resolveEstimateApprovalOrchestration } from "@/lib/estimates/approval-orchestration";
@@ -115,10 +117,12 @@ export default async function EstimateEditPage({
         importLineItemsFromEstimateAction={importEstimateLineItemsAction}
         importReusableContentFromEstimateAction={importEstimateReusableContentAction}
         quickCreateCatalogItemAction={quickCreateEstimateCatalogItemAction}
+        updateCatalogItemFromEstimateAction={updateCatalogItemFromEstimateAction}
         importSourceEstimates={importSourceEstimates}
         approvalOrchestration={approvalOrchestration}
         contractAction={quickCreateContractFromEstimateAction}
         scheduleOfValuesAction={openOrCreateScheduleOfValuesAction}
+        rebuildSnapshotAction={rebuildApprovedEstimateSnapshotAction}
       />
     </div>
   );

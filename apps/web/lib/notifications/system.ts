@@ -621,17 +621,26 @@ export async function recordEstimateNotificationEvent(input: EstimateNotificatio
     viewed: {
       severity: "warning" as const,
       title: `${titlePrefix} viewed`,
-      message: `${titlePrefix} was viewed in the portal${customerName}.`
+      message:
+        input.actorType === "organization_user"
+          ? `${titlePrefix} was marked viewed by your team${customerName}.`
+          : `${titlePrefix} was viewed in the portal${customerName}.`
     },
     approved: {
       severity: "neutral" as const,
       title: `${titlePrefix} approved`,
-      message: `${titlePrefix} was approved in the portal${customerName}.`
+      message:
+        input.actorType === "organization_user"
+          ? `${titlePrefix} was approved by your team${customerName}.`
+          : `${titlePrefix} was approved in the portal${customerName}.`
     },
     rejected: {
       severity: "warning" as const,
       title: `${titlePrefix} rejected`,
-      message: `${titlePrefix} was rejected in the portal${customerName}.`
+      message:
+        input.actorType === "organization_user"
+          ? `${titlePrefix} was rejected by your team${customerName}.`
+          : `${titlePrefix} was rejected in the portal${customerName}.`
     },
     comment_added: {
       severity: "warning" as const,

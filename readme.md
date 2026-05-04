@@ -4,7 +4,7 @@ FloorConnector is a production-first, multi-tenant vertical SaaS platform for ep
 
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
-Current branch highlights include the normalized contractor shell, shared quick-create to full-workspace flow, inventory-first estimating on canonical records, contractor and portal continuity on canonical records, first real contractor-side module dashboards for payments and schedule, and a broader shared contractor theme direction across the shell, manager pages, and quick-create surfaces.
+Current branch highlights include the normalized contractor shell, shared quick-create to full-workspace flow, inventory-first estimating on canonical records, portal and contractor-side onsite contract signing on canonical records, first real contractor-side module dashboards for payments and schedule, and a broader shared contractor theme direction across the shell, manager pages, and quick-create surfaces.
 
 ## Repository Shape
 

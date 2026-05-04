@@ -23,8 +23,10 @@ import {
   insertSystemToEstimate,
   quickCreateEstimateFromContext,
   rejectEstimateFromPortal,
+  rebuildApprovedEstimateCommercialSnapshot,
   sendEstimateToCustomer,
   syncEstimateAttachments,
+  updateCatalogItemFromEstimateLine,
   updateEstimate,
   updateEstimateStatus,
   uploadEstimateAttachmentFiles
@@ -44,6 +46,7 @@ import {
 } from "./schemas";
 import { createCustomer } from "@/lib/customers/data";
 import { customerInputSchema } from "@/lib/customers/schemas";
+import { recordWorkflowErrorForCurrentUser } from "@/lib/workflow-errors/data";
 
 function getFieldValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -94,6 +97,12 @@ function buildRedirect(
   const query = search.toString();
 
   return query ? `${pathname}?${query}` : pathname;
+}
+
+function toUuidOrNull(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+    ? value
+    : null;
 }
 
 function parseEstimateInput(formData: FormData) {
@@ -296,6 +305,11 @@ export async function createEstimateAction(formData: FormData) {
 
 const quickEstimateCatalogItemInputSchema = z.object({
   name: z.string().trim().min(1, "Item name is required.").max(120),
+  description: z
+    .string()
+    .trim()
+    .max(2000, "Description must be 2000 characters or fewer.")
+    .transform((value) => (value.length > 0 ? value : null)),
   itemType: z.enum(
     ["material", "labor", "service", "equipment", "subcontractor", "other"] as const
   ),
@@ -322,6 +336,33 @@ const quickEstimateCatalogItemInputSchema = z.object({
       message: "Price must be zero or greater."
     })
     .transform((value) => (value == null ? null : Number(value).toFixed(2))),
+  taxable: z.boolean()
+});
+
+const estimateCatalogItemEditInputSchema = z.object({
+  estimateId: z.string().uuid("Estimate id is required."),
+  estimateLineItemId: z.string().uuid("Estimate line item id is required."),
+  catalogItemId: z.string().uuid("Catalog item id is required."),
+  name: z.string().trim().min(1, "Item name is required.").max(120),
+  description: z
+    .string()
+    .trim()
+    .max(2000, "Description must be 2000 characters or fewer.")
+    .nullable()
+    .transform((value) => {
+      const normalized = value?.trim() ?? "";
+      return normalized.length > 0 ? normalized : null;
+    }),
+  unit: z.string().trim().min(1, "Unit is required.").max(40),
+  defaultUnitPrice: z
+    .string()
+    .trim()
+    .min(1, "Price is required.")
+    .transform((value) => value.replace(/[$,\s]/g, ""))
+    .refine((value) => !Number.isNaN(Number(value)) && Number(value) >= 0, {
+      message: "Price must be zero or greater."
+    })
+    .transform((value) => Number(value).toFixed(2)),
   taxable: z.boolean()
 });
 
@@ -518,17 +559,6 @@ export async function updateEstimateStatusSaveAction(formData: FormData) {
     } as const;
   }
 
-  if (nextStatus !== currentStatus) {
-    return {
-      ok: false,
-      type: "error",
-      message:
-        nextStatus === "sent"
-          ? "Use Send to customer so FloorConnector can record the portal delivery event and email tracking."
-          : "Customer approval decisions now flow through the authenticated portal only."
-    } as const;
-  }
-
   try {
     const estimate = await updateEstimateStatus(estimateId, nextStatus as EstimateStatus, {
       expectedUpdatedAt: expectedUpdatedAt || null
@@ -587,6 +617,7 @@ export async function quickCreateEstimateCatalogItemAction(
 > {
   const result = quickEstimateCatalogItemInputSchema.safeParse({
     name: getFieldValue(formData, "name"),
+    description: getFieldValue(formData, "description"),
     itemType: getFieldValue(formData, "itemType"),
     unit: getFieldValue(formData, "unit"),
     category: getFieldValue(formData, "category"),
@@ -608,7 +639,7 @@ export async function quickCreateEstimateCatalogItemAction(
       inventoryItemId: null,
       itemType: result.data.itemType,
       name: result.data.name,
-      description: null,
+      description: result.data.description,
       internalNotes: null,
       unit: result.data.unit,
       defaultUnitCost: result.data.defaultUnitCost,
@@ -642,6 +673,40 @@ export async function quickCreateEstimateCatalogItemAction(
     return {
       ok: false,
       message: error instanceof Error ? error.message : "Unable to create inventory item."
+    };
+  }
+}
+
+export async function updateCatalogItemFromEstimateAction(
+  input: unknown
+): Promise<EstimateInsertResult> {
+  const result = estimateCatalogItemEditInputSchema.safeParse(input);
+
+  if (!result.success) {
+    return {
+      ok: false,
+      message: result.error.issues[0]?.message ?? "Unable to update catalog item."
+    };
+  }
+
+  try {
+    const estimate = await updateCatalogItemFromEstimateLine(result.data);
+    revalidateEstimatePaths(estimate);
+    revalidatePath("/settings/catalogs");
+    revalidatePath("/cost-items-database");
+    revalidatePath("/cost-items-database/items");
+    revalidatePath("/materials");
+
+    return {
+      ok: true,
+      estimateId: estimate.id,
+      updatedAt: estimate.updatedAt,
+      lineItems: estimate.lineItems
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Unable to update catalog item."
     };
   }
 }
@@ -1116,17 +1181,6 @@ export async function updateEstimateStatusAction(formData: FormData) {
     );
   }
 
-  if (nextStatus !== currentStatus) {
-    redirect(
-      buildRedirect(`/estimates/${estimateId}`, {
-        error:
-          nextStatus === "sent"
-            ? "Use Send to customer so FloorConnector can record the portal delivery event and email tracking."
-            : "Customer approval decisions now flow through the authenticated portal only."
-      })
-    );
-  }
-
   let estimate;
 
   try {
@@ -1150,6 +1204,58 @@ export async function updateEstimateStatusAction(formData: FormData) {
       message: `${estimate.referenceNumber} was ${getStatusActionLabel(
         estimate.status
       )}.`
+    })
+  );
+}
+
+export async function rebuildApprovedEstimateSnapshotAction(formData: FormData) {
+  const estimateId = getFieldValue(formData, "estimateId");
+
+  if (!estimateId) {
+    redirect(
+      buildRedirect("/estimates", {
+        error: "Estimate id is required to rebuild the approval snapshot."
+      })
+    );
+  }
+
+  let result;
+
+  try {
+    result = await rebuildApprovedEstimateCommercialSnapshot(estimateId);
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Unable to rebuild the approved estimate snapshot.";
+
+    await recordWorkflowErrorForCurrentUser({
+      action: "estimate.rebuild_approval_snapshot",
+      subjectType: "estimate",
+      subjectId: toUuidOrNull(estimateId),
+      message,
+      metadata: {
+        source: "estimate_detail",
+        estimateId
+      }
+    });
+
+    redirect(
+      buildRedirect(`/estimates/${estimateId}`, {
+        error: message
+      })
+    );
+  }
+
+  revalidateEstimatePaths(result.estimate);
+  revalidatePath("/contracts");
+
+  redirect(
+    buildRedirect(`/estimates/${result.estimate.id}`, {
+      showNextSteps: "1",
+      message: result.created
+        ? `Approval snapshot v${result.snapshotVersion} was rebuilt. You can generate the contract again.`
+        : `Approval snapshot v${result.snapshotVersion} already exists. You can generate the contract again.`
     })
   );
 }

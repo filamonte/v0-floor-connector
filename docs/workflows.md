@@ -246,11 +246,17 @@ Current customer-account interpretation:
 Implemented flow:
 - estimates are created from project context
 - estimate authoring is cost-item-first:
+  - new estimate line items are catalog-first; user-facing manual freeform estimate row creation is disabled
+  - `Create new item` saves an organization-scoped `catalog_items` record inline from the Estimate Editoror and then inserts it into the current estimate through the existing catalog insertion flow
   - active non-system `catalog_items` can be added from the Estimate Editoror Catalog Items panel
   - inserted catalog items become editable commercial `estimate_line_items` snapshots rather than live-bound catalog rows
+  - catalog-backed estimate item names are clickable for editing from the Estimate Editoror
+  - editing from the estimate updates the reusable `catalog_items` row and refreshes only the current estimate line snapshot
+  - other estimates that already snapshotted the same catalog item do not silently update
+  - approved estimate snapshot editing is blocked
   - archived catalog items remain visible for review where surfaced but are blocked from insertion
   - reusable systems expand through shared system logic from length x width or direct area plus linear footage
-  - Quick-Create from the Estimate Workspace saves a minimal new `catalog_items` record first, then adds it to the estimate
+- system-generated estimate items still use catalog/system component sources and become canonical estimate line-item snapshots
 - `catalog_items` are the canonical reusable sellable cost item database; physical stock now belongs in `inventory_items`
 - inventory remains optional per organization and never blocks cost item selection in estimates
 - item-level tax stays simple:
@@ -262,6 +268,7 @@ Implemented flow:
 - Estimate Editoror edits autosave with validation and stale-write conflict protection
 - estimate defaults apply only when the estimate content is initially empty, resolving platform defaults first and contractor overrides second
 - estimates move through status progression such as `draft`, `sent`, `approved`, and `rejected`
+- this catalog-first estimate authoring behavior does not change schema, downstream invoice behavior, contract behavior, SOV behavior, payment behavior, or approved commercial snapshot lineage
 
 Current canonical records involved:
 - project
@@ -298,6 +305,7 @@ Customer-account guardrail for downstream commercial flows:
 
 Implemented approval rules:
 - customer-facing estimate approval happens through the portal on the same canonical estimate record
+- contractor-side Estimate Review can also record a supported manual/offline approval or rejection decision from draft or sent estimates through the shared estimate status-transition action for cases such as paper signature, verbal customer approval, fake email during testing, non-portal customers, or workflow testing before send-mail and portal delivery are complete
 - approval does not execute downstream financial actions automatically
 - approval creates an immutable commercial snapshot used for downstream contract, SOV, and invoice lineage
 
@@ -309,11 +317,16 @@ Supporting audit and delivery records involved:
 Implemented flow:
 - approved estimates can generate canonical contracts
 - contract generation reads from approved estimate snapshot data only
+- contract Quick-Create opens from `/contracts?compose=1`; if contract generation redirects back with an `error` query value, that blocker is displayed inside the composer near the approved estimate selection
 - contracts use the shared template foundation
 - draft contracts may be lightly edited
 - unrestricted editing locks once signature activity begins
 - contractor-side send-for-signature and optional countersign workflow now run on the same canonical contract record
 - portal customers can now review, sign, and decline the same canonical contract through tenant-safe portal access
+- contractor-side onsite signing is implemented for in-person close workflows: when a sent or viewed contract has an eligible unsigned customer signer, the contractor can capture the customer signature on the contractor device
+- portal signing and contractor-side onsite signing both update the same canonical `contracts`, `contract_signers`, and `contract_signature_events` records
+- onsite signature capture stores canvas/base64 PNG metadata in the canonical signature event payload, marks the customer signer signed, and only completes the contract when all required signers, including any contractor countersigner, are complete
+- after signature completion, project commercial-readiness sync runs; deposit invoice/payment follow-through is required only when organization workflow settings require deposit readiness, and it stays on the canonical invoice/payment chain
 
 Current canonical records involved:
 - estimate
@@ -557,7 +570,10 @@ Today, the app should be understood this way:
 - customer estimate approval is portal-based and writes to the same canonical estimate record
 - estimate approval creates an immutable commercial snapshot and does not auto-run contract, SOV, invoice, or payment actions
 - Cost Items Database is the reusable item master module backed by canonical `catalog_items`; it is the Phase 1 foundation for estimate authoring, systems, optional inventory, future invoice reuse, and materials planning
-- active non-system catalog items can now be inserted into estimates from the Estimate Editoror Catalog Items panel as editable commercial snapshots; archived items are blocked from insertion, and systems continue through the existing system expansion flow
+- estimate authoring is catalog-first: users either create a new catalog/cost item inline or add an existing active non-system catalog item, and both paths insert a current-estimate `estimate_line_items` snapshot through the catalog insertion flow
+- catalog-backed estimate item names are clickable for editing; edits update the reusable catalog item and the current estimate line snapshot only, while other estimates that already snapshotted that item do not silently update
+- approved estimate snapshot editing is blocked from the Estimate Editoror
+- archived items are blocked from insertion, and systems continue through the existing system expansion flow using catalog/system component sources
 - future catalog/cost item design should treat default cost, markup, labor, production, price, and tax behavior as internal cost behavior that can be overridden intentionally on an estimate and kept out of customer-facing output
 - customer-facing estimates should show only customer-facing descriptions, quantities, unit prices, and totals; markup and internal cost should not appear on customer-facing estimate output
 - one-off estimate-line price overrides should affect that estimate line, while catalog/cost item updates should affect future estimates only
@@ -568,9 +584,11 @@ Today, the app should be understood this way:
   - generated lines remain editable canonical estimate line items
 - imported estimate lines should preserve their snapshot price, markup, and override behavior; new lines added from catalog should use current item defaults
 - past estimates should not mutate when catalog defaults change
+- the catalog-first estimate flow does not change schema, downstream invoice behavior, contract behavior, SOV behavior, payment behavior, or approved commercial snapshot lineage
 - approved estimate snapshots feed downstream contract generation, SOV provisioning, and direct estimate-based invoice lineage
 - change orders append approved scope changes through immutable change-order snapshots rather than mutating prior approved scope
-- contracts now carry the live customer-facing signature workflow on the same canonical contract record across contractor and portal surfaces
+- contracts now carry the live signature workflow on the same canonical contract record across portal and contractor app surfaces; contractor-side onsite capture supports in-person customer signing on the next eligible unsigned customer signer
+- after contract signature, deposit follow-through is conditional on organization workflow settings: required deposits use the existing canonical `deposit` invoice/payment chain, while projects with no deposit requirement can proceed toward scheduling readiness after signature and readiness sync
 - jobs represent execution
 - workforce time and field execution now support the same project-centered operating chain through shared people, vendor, time-card, and daily-log records
 - invoices and payments complete the financial path, with invoice rows sourced from approved estimate snapshot items, SOV items, approved change-order snapshot items, or invoice-only adjustments

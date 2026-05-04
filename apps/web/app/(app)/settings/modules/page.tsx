@@ -1,4 +1,8 @@
 import { FeaturePolicyCard } from "@/components/feature-policy-card";
+import {
+  SaveStateForm,
+  SaveStateSubmitButton
+} from "@/components/save-feedback/save-state-form";
 import { SettingsFeedback } from "@/components/settings-feedback";
 import { SettingsSectionCard } from "@/components/settings-section-card";
 import { listOrganizationFeatureOverrides } from "@/lib/organizations/module-settings";
@@ -61,7 +65,11 @@ export default async function SettingsModulesPage({ searchParams }: PageProps) {
                   </>
                 }
                 form={
-                  <form action={updateOrganizationFeatureOverrideAction} className="space-y-4">
+                  <SaveStateForm
+                    action={updateOrganizationFeatureOverrideAction}
+                    pendingLabel="Saving..."
+                    className="space-y-4"
+                  >
                     <input type="hidden" name="key" value={policy.key} />
                     <input type="hidden" name="name" value={policy.name} />
                     <input
@@ -83,13 +91,13 @@ export default async function SettingsModulesPage({ searchParams }: PageProps) {
                         Store an organization-scoped enabled/disabled override for this feature family.
                       </span>
                     </label>
-                    <button
-                      type="submit"
-                      className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
-                    >
-                      Save organization override
-                    </button>
-                  </form>
+                    <SaveStateSubmitButton
+                      submitLabel="Save organization override"
+                      pendingLabel="Saving..."
+                      className="rounded-full"
+                      variant="secondary"
+                    />
+                  </SaveStateForm>
                 }
               />
             );

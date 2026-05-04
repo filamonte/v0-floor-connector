@@ -47,10 +47,11 @@ What users can do now:
 - require internal approval before send when configured
 - send contracts through the canonical signature workflow
 - let customers review, sign, or decline from the portal
+- capture onsite customer signatures from the contractor app on eligible sent contracts
 - support optional contractor countersign
 - review signer routing and immutable signature history on the same contract chain
 
-The important point is that signature workflow extends the canonical contract. FloorConnector does not create a separate signed-contract system.
+The important point is that portal signing and contractor-side onsite signing are two interaction surfaces on the same canonical signature system. FloorConnector does not create a separate signed-contract system.
 
 ### Invoice And Payment Workflow
 
@@ -175,6 +176,7 @@ The customer is not acting on a second portal-specific version of the contract o
 After the customer acts, the system updates the canonical workflow state:
 - contract signature status changes
 - signer routing advances
+- onsite signature events can mark the customer signer signed and complete the contract when all required signers are complete
 - payment events are written
 - payments finalize
 - invoice balance and paid state recalculate
@@ -189,6 +191,7 @@ The contractor then continues operating from the updated state:
 - sees the invoice is now paid or partially paid
 - sees payment failures or voids if they occur
 - sees readiness and next-step guidance change
+- proceeds toward scheduling readiness after signature according to organization workflow settings, including any configured deposit requirement
 - continues into execution and downstream work using the same project chain
 
 That is the practical value of the system:
@@ -283,7 +286,7 @@ Signature workflow extends the contract through:
 - supporting contract signer records
 - immutable contract signature events
 
-There is no separate signed-contract system.
+Portal signing and contractor-side onsite signing both act on those same records. Onsite canvas signatures are stored as signature-event payload metadata, not as a separate signed-document model.
 
 ### Payments Extend Canonical Invoices And Payments
 
@@ -358,7 +361,7 @@ The next layers should follow the current roadmap direction in a disciplined ord
 4. External integrations
 - deeper e-sign provider integration
 - deeper payment-provider and reconciliation tooling
-- PDF and document delivery
+- deeper PDF and document delivery beyond the current contract PDF snapshot foundation
 - tax and accounting adapters
 
 5. Broader portal and communication expansion

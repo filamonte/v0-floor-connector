@@ -7,6 +7,10 @@ import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NextActionCard } from "@/components/next-action-card";
+import {
+  SaveStateForm,
+  SaveStateSubmitButton
+} from "@/components/save-feedback/save-state-form";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { listDailyLogsByProject } from "@/lib/daily-logs/data";
 import { getEstimateById } from "@/lib/estimates/data";
@@ -520,7 +524,11 @@ export default async function JobDetailPage({
 
               <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5">
                 <p className="text-sm font-medium text-slate-950">Update schedule</p>
-                <form action={scheduleJobAction} className="mt-4 space-y-4">
+                <SaveStateForm
+                  action={scheduleJobAction}
+                  pendingLabel="Saving..."
+                  className="mt-4 space-y-4"
+                >
                   <input type="hidden" name="jobId" value={job.id} />
                   <div className="grid gap-4 md:grid-cols-2">
                     <label className="block">
@@ -574,14 +582,13 @@ export default async function JobDetailPage({
                   </label>
 
                   <div className="flex flex-wrap gap-3">
-                    <button
-                      type="submit"
-                      className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                    >
-                      Save schedule
-                    </button>
+                    <SaveStateSubmitButton
+                      submitLabel="Save schedule"
+                      pendingLabel="Saving..."
+                      className="rounded-full"
+                    />
                   </div>
-                </form>
+                </SaveStateForm>
 
                 <form action={unscheduleJobAction} className="mt-3">
                   <input type="hidden" name="jobId" value={job.id} />

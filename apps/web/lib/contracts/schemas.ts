@@ -135,6 +135,19 @@ export const contractPortalSignatureActionInputSchema = z.object({
   declineReason: optionalTrimmedString(500)
 });
 
+export const contractOnsiteSignatureActionInputSchema = z.object({
+  contractId: z.string().uuid("Contract id is required."),
+  signerId: z.string().uuid("Signer id is required."),
+  signatureImage: z
+    .string()
+    .trim()
+    .min(1, "Signature image is required.")
+    .max(2_000_000, "Signature image is too large.")
+    .refine((value) => value.startsWith("data:image/png;base64,"), {
+      message: "Signature image must be a base64 PNG."
+    })
+});
+
 export const contractCountersignInputSchema = z.object({
   contractId: z.string().uuid("Contract id is required.")
 });
@@ -156,6 +169,9 @@ export type ContractSendSignatureActionInput = z.infer<
 >;
 export type ContractPortalSignatureActionInput = z.infer<
   typeof contractPortalSignatureActionInputSchema
+>;
+export type ContractOnsiteSignatureActionInput = z.infer<
+  typeof contractOnsiteSignatureActionInputSchema
 >;
 export type ContractCountersignInput = z.infer<typeof contractCountersignInputSchema>;
 export type VoidContractSignatureInput = z.infer<

@@ -1,7 +1,10 @@
 import type { Job, Project } from "@floorconnector/types";
 
 import { AuthField } from "@/components/auth-field";
-import { AuthSubmitButton } from "@/components/auth-submit-button";
+import {
+  SaveStateForm,
+  SaveStateSubmitButton
+} from "@/components/save-feedback/save-state-form";
 import { jobStatusesList } from "@/lib/jobs/schemas";
 
 type JobProjectOption = Pick<Project, "id" | "name" | "customerId"> & {
@@ -47,7 +50,12 @@ export function JobForm({
   const selectedProjectId = job?.projectId ?? initialProjectId ?? "";
 
   return (
-    <form action={action} className="space-y-5">
+    <SaveStateForm
+      action={action}
+      enabled={Boolean(job)}
+      pendingLabel={pendingLabel}
+      className="space-y-5"
+    >
       {job ? <input type="hidden" name="jobId" value={job.id} /> : null}
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -168,13 +176,15 @@ export function JobForm({
       </label>
 
       <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-        <AuthSubmitButton pendingLabel={pendingLabel} className="sm:min-w-[200px]">
-          <span>{submitLabel}</span>
-        </AuthSubmitButton>
+        <SaveStateSubmitButton
+          submitLabel={submitLabel}
+          pendingLabel={pendingLabel}
+          className="sm:min-w-[200px]"
+        />
         <p className="text-sm leading-6 text-slate-500">
           Crew assignment and calendar views can layer on top of this job foundation later.
         </p>
       </div>
-    </form>
+    </SaveStateForm>
   );
 }

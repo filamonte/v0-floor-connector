@@ -143,7 +143,7 @@ The current branch already includes a real multi-tenant contractor app with:
 - approved estimate snapshot and customer approval flow
 - change orders
 - contracts
-- contract-signature foundation and customer-facing contract signing on the canonical contract record
+- contract-signature foundation, customer-facing portal signing, and contractor-side onsite signing on the canonical contract record
 - jobs
 - appointments linked to the same lead/customer/project chain
 - invoices and payments
@@ -208,8 +208,10 @@ Important workflow rules:
 - do not use live `estimate_line_items` as a billing source
 - change orders must extend the same shared project, contract, and invoice chain rather than introducing a separate scope-change model
 - change orders are append-only commercial scope changes; they do not mutate prior approved snapshot lineage
-- customer estimate approval is canonical portal behavior, not a contractor-side override shortcut
-- customer-facing signature actions now attach to the same canonical contract record used in the contractor app
+- customer estimate approval is canonical portal behavior; the contractor Estimate Review page may also record an explicit manual/offline estimate decision from draft or sent estimates through the shared status-transition action when scoped by the existing tenant and workflow guards, for cases such as paper signature, verbal approval, fake email during testing, non-portal customers, or workflow testing before send-mail and portal delivery are complete
+- customer-facing portal signature actions and contractor-side onsite signature actions now attach to the same canonical contract record used in the contractor app
+- onsite contract signing is a contractor-app interaction surface on the canonical contract signature system, not a separate workflow or model; it must reuse `contracts`, `contract_signers`, and `contract_signature_events`
+- do not introduce alternate onsite contract records, signed-document records, deposit records, payment records, or portal-only signature copies for onsite signing
 - customer-facing payment workflow foundations now attach to the same canonical invoice/payment chain used in the contractor app
 - templates are shared infrastructure across estimates, contracts, and invoices
 - future Templates & Systems administration should centralize document templates, System Templates, add-ons/options, and sharing/review settings instead of scattering those controls across estimate, invoice, contract, and catalog surfaces

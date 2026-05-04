@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "lucide-react";
 import type { ButtonHTMLAttributes } from "react";
 
 import { cn } from "@/lib/utils";
@@ -12,10 +13,10 @@ type SaveStatusButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const buttonLabels: Record<SaveFeedbackState, string> = {
-  idle: "Save now",
+  idle: "Save",
   saving: "Saving...",
   success: "Saved",
-  error: "Save failed"
+  error: "Save"
 };
 
 export function SaveStatusButton({
@@ -26,25 +27,31 @@ export function SaveStatusButton({
   disabled,
   ...props
 }: SaveStatusButtonProps) {
-  const label = buttonLabels[status];
+  const isSaved = !isDirty && status !== "saving";
+  const label = isSaved ? "Saved" : buttonLabels[status];
   const liveMessage =
-    status === "idle" && isDirty ? "Unsaved changes" : statusMessage ?? label;
+    status === "idle" && isDirty
+      ? "Unsaved changes"
+      : status === "error"
+        ? statusMessage ?? "Save failed"
+        : statusMessage ?? label;
 
   return (
     <div className="flex flex-col items-end gap-1">
       <button
         {...props}
-        disabled={disabled || status === "saving"}
+        disabled={disabled || status === "saving" || isSaved}
         className={cn(
-          "inline-flex h-9 min-w-[124px] items-center justify-center border px-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-70",
-          status === "success"
-            ? "border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800"
+          "inline-flex h-9 min-w-[124px] items-center justify-center gap-2 border px-3 text-sm font-semibold transition disabled:cursor-not-allowed",
+          isSaved
+            ? "border-emerald-700 bg-emerald-700 text-white"
             : status === "error"
-              ? "border-rose-700 bg-rose-700 text-white hover:bg-rose-800"
+              ? "border-[#d8731f] bg-[#d8731f] text-white hover:bg-[#bf6519]"
               : "border-[#d8731f] bg-[#d8731f] text-white hover:bg-[#bf6519]",
           className
         )}
       >
+        {isSaved ? <Check className="h-4 w-4" aria-hidden="true" /> : null}
         {label}
       </button>
       <span className="sr-only" role="status" aria-live="polite">

@@ -7,7 +7,8 @@
     "NEXT_PUBLIC_SUPABASE_ANON_KEY",
     "SUPABASE_SERVICE_ROLE_KEY",
     "GOOGLE_CLIENT_ID",
-    "GOOGLE_CLIENT_SECRET"
+    "GOOGLE_CLIENT_SECRET",
+    "PDF_BROWSER_EXECUTABLE_PATH"
   ],
   "tasks": {
     "build": {
@@ -20,7 +21,8 @@
         "NEXT_PUBLIC_SUPABASE_ANON_KEY",
         "SUPABASE_SERVICE_ROLE_KEY",
         "GOOGLE_CLIENT_ID",
-        "GOOGLE_CLIENT_SECRET"
+        "GOOGLE_CLIENT_SECRET",
+        "PDF_BROWSER_EXECUTABLE_PATH"
       ]
     },
     "dev": {
@@ -33,7 +35,8 @@
         "NEXT_PUBLIC_SUPABASE_ANON_KEY",
         "SUPABASE_SERVICE_ROLE_KEY",
         "GOOGLE_CLIENT_ID",
-        "GOOGLE_CLIENT_SECRET"
+        "GOOGLE_CLIENT_SECRET",
+        "PDF_BROWSER_EXECUTABLE_PATH"
       ]
     },
     "lint": {

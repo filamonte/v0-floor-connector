@@ -1,4 +1,8 @@
 import { DetailPanel } from "@/components/detail-panel";
+import {
+  SaveStateForm,
+  SaveStateSubmitButton
+} from "@/components/save-feedback/save-state-form";
 import { SettingsFeedback } from "@/components/settings-feedback";
 import { SettingsSectionCard } from "@/components/settings-section-card";
 import { listTaxCodes } from "@/lib/catalogs/data";
@@ -39,7 +43,11 @@ export default async function SettingsFinancialPage({ searchParams }: PageProps)
         title="Financial Defaults"
         description="These organization-scoped defaults feed live invoice behavior, own organization tax behavior, and seed the retainage value used when new customers are created or leads are converted into canonical customer records."
       >
-        <form action={updateOrganizationFinancialSettingsAction} className="space-y-5">
+        <SaveStateForm
+          action={updateOrganizationFinancialSettingsAction}
+          pendingLabel="Saving..."
+          className="space-y-5"
+        >
           <input type="hidden" name="returnTo" value="/settings/financial" />
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
@@ -92,13 +100,11 @@ export default async function SettingsFinancialPage({ searchParams }: PageProps)
             </p>
           </label>
 
-          <button
-            type="submit"
-            className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-          >
-            Save financial defaults
-          </button>
-        </form>
+          <SaveStateSubmitButton
+            submitLabel="Save financial defaults"
+            pendingLabel="Saving..."
+          />
+        </SaveStateForm>
       </DetailPanel>
 
       <DetailPanel
@@ -169,8 +175,9 @@ export default async function SettingsFinancialPage({ searchParams }: PageProps)
                         <summary className="cursor-pointer rounded-[4px] border border-[#d6d6d6] px-3 py-1.5 text-sm text-[#3f3f3f]">
                           Edit
                         </summary>
-                        <form
+                        <SaveStateForm
                           action={updateTaxCodeAction}
+                          pendingLabel="Saving..."
                           className="mt-2 grid min-w-[320px] gap-2 border border-[#d8dfe9] bg-white p-3 shadow-lg"
                         >
                           <input type="hidden" name="returnTo" value="/settings/financial" />
@@ -203,13 +210,12 @@ export default async function SettingsFinancialPage({ searchParams }: PageProps)
                             />
                             Active
                           </label>
-                          <button
-                            type="submit"
-                            className="rounded-[4px] bg-[#171717] px-3 py-2 text-sm font-medium text-white"
-                          >
-                            Save
-                          </button>
-                        </form>
+                          <SaveStateSubmitButton
+                            submitLabel="Save"
+                            pendingLabel="Saving..."
+                            className="rounded-[4px]"
+                          />
+                        </SaveStateForm>
                       </details>
                     </td>
                   </tr>
