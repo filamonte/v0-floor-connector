@@ -27,13 +27,13 @@ module.exports = defineConfig({
     },
     {
       name: "chromium-public",
-      testIgnore: [/auth\.setup\.js/, /estimate-.*\.spec\.js/],
+      testMatch: /(?:save-state-form|ui-primitives)\.spec\.js/,
       use: { ...devices["Desktop Chrome"] }
     },
     {
       name: "chromium-protected",
       dependencies: ["setup"],
-      testMatch: /estimate-.*\.spec\.js/,
+      testMatch: /(?:estimate-.*|project-detail-ui|dashboard-ui|detail-workspace-ui)\.spec\.js/,
       use: {
         ...devices["Desktop Chrome"],
         storageState: authStatePath

@@ -5,6 +5,11 @@ import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { NextActionCard } from "@/components/next-action-card";
+import {
+  PortalStatusBadge,
+  portalActionBoxClassName,
+  portalHeroPanelClassName
+} from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import {
   customerAddEstimateCommentAction,
@@ -184,7 +189,7 @@ export default async function PortalEstimateReviewPage({
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
       <section className="space-y-8">
-        <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+        <div className={portalHeroPanelClassName}>
           <DetailPageHeader
             eyebrow="Estimate Review"
             title={estimate.title ?? estimate.referenceNumber}
@@ -192,9 +197,9 @@ export default async function PortalEstimateReviewPage({
             backHref={`/portal/projects/${estimate.projectId}`}
             backLabel="Back to project workspace"
             actions={
-              <span className="inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium capitalize text-slate-700">
+              <PortalStatusBadge status={estimate.status} className="px-4 py-2 text-sm">
                 {formatStatusLabel(estimate.status)}
-              </span>
+              </PortalStatusBadge>
             }
           />
 
@@ -459,7 +464,7 @@ export default async function PortalEstimateReviewPage({
         >
           <div className="space-y-4 text-sm leading-6 text-slate-600">
             {estimate.status === "sent" ? (
-              <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
+              <div className={portalActionBoxClassName}>
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
                   Approval creates the approved commercial snapshot used later for contract,
                   SOV, and invoice lineage. Do not approve here unless this shared estimate is

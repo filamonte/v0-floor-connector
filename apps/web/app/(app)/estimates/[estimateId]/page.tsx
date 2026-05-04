@@ -8,7 +8,6 @@ import { EstimateStatusActions } from "@/components/estimate-status-actions";
 import { EstimateApprovalNextStepsPanel } from "@/components/estimates/approval-next-steps-panel";
 import { EstimateCustomerTimeline } from "@/components/estimates/estimate-customer-timeline";
 import { LinkedRecordCard } from "@/components/linked-record-card";
-import { NextActionCard } from "@/components/next-action-card";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
 import {
   ScheduleContextActions,
@@ -16,7 +15,6 @@ import {
   ScheduleContextMetrics,
   ScheduleContextNotice
 } from "@/components/schedule-context-card";
-import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
 import { quickCreateContractFromEstimateAction } from "@/lib/contracts/actions";
@@ -39,6 +37,13 @@ import {
   getScheduleSummarySortValue
 } from "@/lib/schedule/summary";
 import { getIncludedEstimateScopeItems } from "@/lib/estimates/workspace";
+import {
+  ActionBar,
+  ProjectStateSummary,
+  WorkflowBar,
+  getStatusBadgeClassName
+} from "@floorconnector/ui";
+import type { ProjectStateSummaryProps, WorkflowStep } from "@floorconnector/ui";
 
 function formatStatusLabel(status: string) {
   return status.replaceAll("_", " ");
@@ -76,19 +81,6 @@ function formatUnitLabel(unit: string) {
   return normalized || "ea";
 }
 
-function getStatusBadgeClassName(status: string) {
-  switch (status) {
-    case "sent":
-      return "border-amber-200 bg-amber-50 text-amber-900";
-    case "approved":
-      return "border-emerald-200 bg-emerald-50 text-emerald-900";
-    case "rejected":
-      return "border-rose-200 bg-rose-50 text-rose-900";
-    default:
-      return "border-slate-200 bg-slate-50 text-slate-700";
-  }
-}
-
 function formatReadinessLabel(status: string | null) {
   if (!status) {
     return "not started";
@@ -105,21 +97,30 @@ function getEstimateNextAction(input: {
   readinessStatus: string | null;
   depositInvoiceId: string | null;
 }) {
-  if (input.estimateStatus !== "approved") {
-    const canRecordManualDecision =
-      input.estimateStatus === "draft" || input.estimateStatus === "sent";
-
+  if (input.estimateStatus === "draft") {
     return {
-      title: canRecordManualDecision ? "Record customer approval" : "Send estimate",
-      description:
-        canRecordManualDecision
-          ? "Use the manual decision actions when the customer approved outside the portal, such as paper signature, verbal approval, fake email during testing, or a non-portal customer."
-          : "Approval is still the active commercial gate before contract and readiness work should continue. Send the estimate before recording a customer decision.",
-      href:
-        canRecordManualDecision
-          ? `/estimates/${input.estimateId}#estimate-decision-actions`
-          : `/estimates/${input.estimateId}`,
-      label: canRecordManualDecision ? "Review manual approval" : "Review send actions"
+      title: "Review and send estimate",
+      description: "Finish the proposal review, then use the existing send or manual decision actions when the customer is ready to respond.",
+      href: `/estimates/${input.estimateId}/edit`,
+      label: "Back to edit"
+    };
+  }
+
+  if (input.estimateStatus === "sent") {
+    return {
+      title: "Record customer decision",
+      description: "Use the manual decision actions only when the customer approved or rejected outside the portal, such as paper signature, verbal approval, fake email during testing, or a non-portal customer.",
+      href: `/estimates/${input.estimateId}#estimate-decision-actions`,
+      label: "Review decision actions"
+    };
+  }
+
+  if (input.estimateStatus === "rejected") {
+    return {
+      title: "Revise or resend estimate",
+      description: "Review the rejected proposal, update the scope or pricing if needed, then resend through the existing estimate workflow.",
+      href: `/estimates/${input.estimateId}/edit`,
+      label: "Revise estimate"
     };
   }
 
@@ -339,46 +340,128 @@ export default async function EstimateDetailPage({
       ? readinessSnapshot.blockers.map((blocker) => blocker.replaceAll("_", " ")).join(", ")
       : "No active project-level commercial blockers recorded.";
   const estimateMeaning = getEstimateMeaning(estimate.status);
+  const lineItemCount = estimate.lineItems.length;
+  const primaryContract = estimateContracts[0] ?? null;
+  const primaryInvoice = estimateInvoices[0] ?? null;
+  const hasSignedContract = primaryContract?.status === "signed";
+  const completedEstimateJobs = estimateJobs.filter((job) => job.dispatchStatus === "completed");
+  const actionBarStatusTone =
+    estimate.status === "approved"
+      ? "success"
+      : estimate.status === "rejected"
+        ? "danger"
+        : estimate.status === "sent"
+          ? "warning"
+          : "neutral";
+  const contractStepState =
+    primaryContract
+      ? hasSignedContract
+        ? "complete"
+        : "current"
+      : estimate.status === "approved"
+        ? "current"
+        : "upcoming";
+  const jobStepState =
+    estimateJobs.length > 0
+      ? completedEstimateJobs.length > 0
+        ? "complete"
+        : "current"
+      : hasSignedContract
+        ? "current"
+        : "upcoming";
+  const invoiceStepState =
+    estimateInvoices.length > 0
+      ? estimateInvoices.every((invoice) => invoice.status === "paid")
+        ? "complete"
+        : "current"
+      : completedEstimateJobs.length > 0
+        ? "current"
+        : "upcoming";
+  const workflowSteps: WorkflowStep[] = [
+    {
+      id: "estimate",
+      label: "Estimate",
+      state:
+        estimate.status === "approved"
+          ? "complete"
+          : estimate.status === "rejected"
+            ? "blocked"
+            : "current",
+      description: formatStatusLabel(estimate.status)
+    },
+    {
+      id: "contract",
+      label: "Contract",
+      state: contractStepState,
+      description: primaryContract ? formatStatusLabel(primaryContract.status) : "After approval"
+    },
+    {
+      id: "job",
+      label: "Job",
+      state: jobStepState,
+      description:
+        estimateJobs.length > 0
+          ? `${estimateJobs.length} linked job${estimateJobs.length === 1 ? "" : "s"}`
+          : hasSignedContract
+            ? "Ready for project scheduling checks"
+            : "After signed contract/readiness"
+    },
+    {
+      id: "invoice",
+      label: "Invoice",
+      state: invoiceStepState,
+      description: primaryInvoice
+        ? `${estimateInvoices.length} linked invoice${estimateInvoices.length === 1 ? "" : "s"}`
+        : completedEstimateJobs.length > 0
+          ? "Completed work is ready to review"
+          : "After production or billing trigger"
+    }
+  ];
+  const estimateStateItems: ProjectStateSummaryProps["items"] = [
+    {
+      id: "total",
+      label: "Total",
+      value: formatMoney(estimate.totalAmount),
+      tone: estimate.status === "approved" ? "complete" : "pending",
+      detail: `${formatMoney(estimate.subtotalAmount)} subtotal`
+    },
+    {
+      id: "tax-discount",
+      label: "Tax / Discount",
+      value: `${formatMoney(estimate.taxAmount)} tax`,
+      tone: "pending",
+      detail: `${formatMoney(estimate.discountAmount)} discount`
+    },
+    {
+      id: "line-items",
+      label: "Line Items",
+      value: `${lineItemCount} item${lineItemCount === 1 ? "" : "s"}`,
+      tone: lineItemCount > 0 ? "active" : "needsAction",
+      detail: lineItemCount > 0 ? "Readonly proposal review below" : "Add items from the editor"
+    },
+    {
+      id: "readiness",
+      label: "Project Readiness",
+      value: <span className="capitalize">{readinessStatusLabel}</span>,
+      tone:
+        readinessSnapshot && readinessSnapshot.blockers.length > 0
+          ? "needsAction"
+          : readinessSnapshot
+            ? "complete"
+            : "pending",
+      detail: readinessBlockersLabel
+    }
+  ];
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 print:max-w-none">
-      <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10 print:hidden">
+      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6 print:hidden">
         <DetailPageHeader
           eyebrow="Estimate Review"
           title={estimate.title ?? estimate.referenceNumber}
           description={estimateMeaning}
           backHref="/estimates"
           backLabel="Back to estimates"
-          actions={
-            <>
-              {estimate.status === "approved" ? (
-                <>
-                  <Link
-                    href={`/contracts?estimateId=${estimate.id}`}
-                    className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                  >
-                    Generate contract
-                  </Link>
-                  <Link
-                    href={`/projects/${estimate.projectId}`}
-                    className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-                  >
-                    Open project workspace
-                  </Link>
-                </>
-              ) : null}
-              <Link
-                href={`/estimates/${estimate.id}/edit`}
-                className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-medium transition ${
-                  estimate.status === "approved"
-                    ? "border border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-white"
-                    : "bg-brand-700 text-white hover:bg-brand-900"
-                  }`}
-              >
-                Back to edit
-              </Link>
-            </>
-          }
         />
 
         {resolvedSearchParams.error ? (
@@ -393,86 +476,47 @@ export default async function EstimateDetailPage({
           </div>
         ) : null}
 
-        <div className="mt-8 print:hidden">
-          <WorkspaceSummaryBand
-            className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.95fr)_minmax(0,1fr)]"
-            items={[
-              {
-                key: "review-purpose",
-                label: "Review purpose",
-                content: (
-                  <div className="space-y-2 text-sm leading-6 text-slate-600">
-                    <p className="text-base font-semibold text-slate-950 capitalize">
-                      {formatStatusLabel(estimate.status)} estimate
-                    </p>
-                    <p>{estimateMeaning}</p>
-                  </div>
-                )
-              },
-              {
-                key: "next-action",
-                label: "Preferred next action",
-                content: (
-                  <NextActionCard
-                    eyebrow="Workflow guidance"
-                    title={nextAction.title}
-                    description={nextAction.description}
-                    primaryAction={
-                      <Link
-                        href={nextAction.href}
-                        className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                      >
-                        {nextAction.label}
-                      </Link>
-                    }
-                  />
-                )
-              },
-              {
-                key: "project-readiness",
-                label: "Project readiness context",
-                content: (
-                  <ContextFactsList
-                    items={[
-                      {
-                        label: "Current readiness",
-                        value: <span className="capitalize">{readinessStatusLabel}</span>
-                      },
-                      {
-                        label: "Active blockers",
-                        value: readinessBlockersLabel
-                      },
-                      {
-                        label: "Authoritative workspace",
-                        value: (
-                          <Link
-                            href={`/projects/${estimate.projectId}`}
-                            className="font-medium text-brand-700 transition hover:text-brand-900"
-                          >
-                            Open the project readiness hub
-                          </Link>
-                        )
-                      }
-                    ]}
-                  />
-                )
-              },
-              {
-                key: "continuity",
-                label: "Connected workflow",
-                content: (
-                  <>
-                    <p className="text-sm font-semibold text-slate-950">
-                      Proposal continuity stays on the shared project chain
-                    </p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      Use this page to review scope and pricing, send estimate, and hand approved work off to the project and contract workspaces instead of recreating downstream records.
-                    </p>
-                  </>
-                )
-              }
-            ]}
+        <div className="mt-6 space-y-3 print:hidden">
+          <ActionBar
+            title={nextAction.title}
+            description={nextAction.description}
+            statusLabel={`${formatStatusLabel(estimate.status)} estimate`}
+            statusTone={actionBarStatusTone}
+            nextActionLabel="Preferred next action"
+            primaryAction={
+              <Link
+                href={nextAction.href}
+                className="inline-flex items-center rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+              >
+                {nextAction.label}
+              </Link>
+            }
+            secondaryActions={
+              <>
+                <Link
+                  href={`/estimates/${estimate.id}/edit`}
+                  className="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                >
+                  Back to edit
+                </Link>
+                <Link
+                  href={`/projects/${estimate.projectId}`}
+                  className="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                >
+                  Open project workspace
+                </Link>
+              </>
+            }
+            meta={
+              <span>
+                Estimate #{estimate.referenceNumber} | {estimate.customer?.name ?? "Unknown customer"}
+              </span>
+            }
           />
+
+          <WorkflowBar title="Estimate workflow" steps={workflowSteps} />
+
+          <ProjectStateSummary title="Estimate state summary" items={estimateStateItems} />
         </div>
 
         {estimate.status === "approved" && approvalOrchestration ? (
@@ -514,13 +558,74 @@ export default async function EstimateDetailPage({
               {estimate.title ?? estimate.referenceNumber}
             </p>
             <p className="mt-2 text-sm text-slate-500">Estimate #{estimate.referenceNumber}</p>
-            <div
-              className={`mt-3 inline-flex rounded-full border px-3 py-1 text-sm font-medium capitalize ${getStatusBadgeClassName(
-                estimate.status
-              )}`}
-            >
-              {formatStatusLabel(estimate.status)}
-            </div>
+            <p className="mt-3 text-lg font-semibold text-slate-950">
+              {formatMoney(estimate.totalAmount)}
+            </p>
+          </div>
+        </div>
+
+        <div className="border-b border-slate-200 py-8">
+          <div className="mb-6 print:hidden">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Line items
+            </p>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+              Review the proposal pricing, grouped scope, quantities, and totals here first. Workflow
+              guidance stays above while lower sections carry customer, project, notes, and activity context.
+            </p>
+          </div>
+          <div className="space-y-6">
+            {buildGroupedLineItems(estimate).map((group) => (
+              <div key={group.id ?? "ungrouped"} className="rounded-3xl border border-slate-200 bg-slate-50/40 p-4">
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">
+                    {group.label}
+                  </p>
+                  <p className="text-sm font-medium text-slate-700">
+                    {group.items.length} item{group.items.length === 1 ? "" : "s"}
+                  </p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full border-separate border-spacing-y-3">
+                    <thead>
+                      <tr className="text-left text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                        <th className="pb-2 pr-4">Description</th>
+                        <th className="pb-2 pr-4">Qty</th>
+                        <th className="pb-2 pr-4">Unit</th>
+                        <th className="pb-2 pr-4 text-right">Unit Price</th>
+                        <th className="pb-2 text-right">Line Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.items.map((lineItem) => (
+                        <tr key={lineItem.id} className="align-top text-sm leading-6 text-slate-700">
+                          <td className="rounded-l-2xl border-y border-l border-slate-200 bg-white px-4 py-4">
+                            <p className="font-medium text-slate-950">{lineItem.name}</p>
+                            {lineItem.description ? (
+                              <p className="mt-1 text-sm leading-6 text-slate-500">
+                                {lineItem.description}
+                              </p>
+                            ) : null}
+                          </td>
+                          <td className="border-y border-slate-200 bg-white px-4 py-4">
+                            {lineItem.quantity}
+                          </td>
+                          <td className="border-y border-slate-200 bg-white px-4 py-4">
+                            {formatUnitLabel(lineItem.unit)}
+                          </td>
+                          <td className="border-y border-slate-200 bg-white px-4 py-4 text-right">
+                            {formatMoney(lineItem.unitPrice)}
+                          </td>
+                          <td className="rounded-r-2xl border-y border-r border-slate-200 bg-white px-4 py-4 text-right font-medium text-slate-950">
+                            {formatMoney(lineItem.lineTotal)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -598,71 +703,6 @@ export default async function EstimateDetailPage({
               </div>
             </div>
           </section>
-        </div>
-
-        <div className="border-b border-slate-200 py-8">
-          <div className="mb-6 print:hidden">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-              Estimate scope
-            </p>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-              Review the proposal body, scope, pricing, and terms here. Workflow guidance stays
-              above and to the side so this estimate remains the main review surface.
-            </p>
-          </div>
-          <div className="space-y-6">
-            {buildGroupedLineItems(estimate).map((group) => (
-              <div key={group.id ?? "ungrouped"} className="rounded-3xl border border-slate-200 bg-slate-50/40 p-4">
-                <div className="mb-4 flex items-center justify-between gap-4">
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">
-                    {group.label}
-                  </p>
-                  <p className="text-sm font-medium text-slate-700">
-                    {group.items.length} item{group.items.length === 1 ? "" : "s"}
-                  </p>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full border-separate border-spacing-y-3">
-                    <thead>
-                      <tr className="text-left text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                        <th className="pb-2 pr-4">Description</th>
-                        <th className="pb-2 pr-4">Qty</th>
-                        <th className="pb-2 pr-4">Unit</th>
-                        <th className="pb-2 pr-4 text-right">Unit Price</th>
-                        <th className="pb-2 text-right">Line Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {group.items.map((lineItem) => (
-                        <tr key={lineItem.id} className="align-top text-sm leading-6 text-slate-700">
-                          <td className="rounded-l-2xl border-y border-l border-slate-200 bg-white px-4 py-4">
-                            <p className="font-medium text-slate-950">{lineItem.name}</p>
-                            {lineItem.description ? (
-                              <p className="mt-1 text-sm leading-6 text-slate-500">
-                                {lineItem.description}
-                              </p>
-                            ) : null}
-                          </td>
-                          <td className="border-y border-slate-200 bg-white px-4 py-4">
-                            {lineItem.quantity}
-                          </td>
-                          <td className="border-y border-slate-200 bg-white px-4 py-4">
-                            {formatUnitLabel(lineItem.unit)}
-                          </td>
-                          <td className="border-y border-slate-200 bg-white px-4 py-4 text-right">
-                            {formatMoney(lineItem.unitPrice)}
-                          </td>
-                          <td className="rounded-r-2xl border-y border-r border-slate-200 bg-white px-4 py-4 text-right font-medium text-slate-950">
-                            {formatMoney(lineItem.lineTotal)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
 
         <div className="grid gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -870,7 +910,11 @@ export default async function EstimateDetailPage({
                     subtitle="Project"
                     meta={estimate.customer?.name ?? "Unknown customer"}
                     badge={
-                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                      <span
+                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusBadgeClassName(
+                          estimate.project.status
+                        )}`}
+                      >
                         {formatStatusLabel(estimate.project.status)}
                       </span>
                     }
@@ -888,7 +932,11 @@ export default async function EstimateDetailPage({
                         : "Return to the project hub for readiness"
                     }
                     badge={
-                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                      <span
+                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusBadgeClassName(
+                          contract.status
+                        )}`}
+                      >
                         {formatStatusLabel(contract.status)}
                       </span>
                     }
@@ -902,7 +950,11 @@ export default async function EstimateDetailPage({
                     subtitle="Job"
                     meta={job.scheduledDate ? `Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}` : "Unscheduled"}
                     badge={
-                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                      <span
+                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusBadgeClassName(
+                          job.dispatchStatus
+                        )}`}
+                      >
                         {formatStatusLabel(job.dispatchStatus)}
                       </span>
                     }
@@ -916,7 +968,11 @@ export default async function EstimateDetailPage({
                     subtitle="Invoice"
                     meta={`Balance due ${formatMoney(invoice.balanceDueAmount)} | project hub governs handoff`}
                     badge={
-                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                      <span
+                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusBadgeClassName(
+                          invoice.status
+                        )}`}
+                      >
                         {formatStatusLabel(invoice.status)}
                       </span>
                     }
@@ -1064,30 +1120,6 @@ export default async function EstimateDetailPage({
                   </ScheduleContextNotice>
                 )}
               </div>
-            </DetailPanel>
-
-            <DetailPanel
-              title="Pricing Snapshot"
-              description="Keep the commercial total easy to scan while the proposal body above remains the primary review surface."
-            >
-              <dl className="space-y-3 text-sm leading-6 text-slate-600">
-                <div className="flex items-center justify-between gap-4">
-                  <dt>Subtotal</dt>
-                  <dd>{formatMoney(estimate.subtotalAmount)}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <dt>Discount</dt>
-                  <dd>-{formatMoney(estimate.discountAmount)}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <dt>Tax</dt>
-                  <dd>{formatMoney(estimate.taxAmount)}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-4 border-t border-slate-200 pt-3 text-base font-semibold text-slate-950">
-                  <dt>Total</dt>
-                  <dd>{formatMoney(estimate.totalAmount)}</dd>
-                </div>
-              </dl>
             </DetailPanel>
 
             <RelatedConversationsCard

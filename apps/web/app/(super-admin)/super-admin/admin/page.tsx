@@ -38,6 +38,7 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
       <DetailPanel
         title="Platform Admin Access"
         description="Super-admin access is managed separately from tenant membership so global controls remain explicit and auditable."
+        tone="neutral"
       >
         <form
           action={assignPlatformAdminAction}
@@ -83,6 +84,7 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
       <DetailPanel
         title="Tenant Oversight"
         description="Manage global tenant lifecycle state without bypassing tenant-owned business records."
+        tone="neutral"
       >
         <div className="space-y-4">
           {tenants.map((tenant) => (
@@ -240,6 +242,7 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
       <DetailPanel
         title="Platform Roles And Permissions"
         description="The platform role layer stays separate from tenant memberships so super-admin behavior can evolve without fragmenting contractor auth."
+        tone="neutral"
       >
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">

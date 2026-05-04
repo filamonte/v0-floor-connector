@@ -26,6 +26,7 @@ export default async function PlatformModulesPage({ searchParams }: PageProps) {
         eyebrow="Module Controls"
         title="Manage shared platform feature policy"
         description="Platform feature policy is the source of truth for module availability and capability family defaults across the whole system."
+        tone="neutral"
       >
         <div className="space-y-4">
           {policies.map((policy) => (

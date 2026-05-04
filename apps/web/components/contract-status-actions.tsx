@@ -105,7 +105,7 @@ export function ContractStatusActions({
                 />
                 <button
                   type="submit"
-                  className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-900 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-100"
+                  className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
                 >
                   Approve for send
                 </button>
@@ -234,16 +234,16 @@ export function ContractStatusActions({
       ) : null}
 
       {canCountersign ? (
-        <div className="space-y-3 rounded-[1.5rem] border border-emerald-200 bg-emerald-50 px-4 py-4">
-          <div className="text-sm leading-6 text-emerald-900">
-            <p className="font-medium text-emerald-950">Contractor countersign</p>
+        <div className="space-y-3 rounded-[1.5rem] border border-amber-200 bg-amber-50 px-4 py-4">
+          <div className="text-sm leading-6 text-amber-900">
+            <p className="font-medium text-amber-950">Contractor countersign</p>
             <p className="mt-1">{countersignMessage}</p>
           </div>
           <form action={countersignContractAction}>
             <input type="hidden" name="contractId" value={contractId} />
             <button
               type="submit"
-              className="inline-flex items-center rounded-full border border-emerald-300 bg-white px-4 py-2 text-sm font-medium text-emerald-900 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-100"
+              className="inline-flex items-center rounded-full border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-900 shadow-sm transition hover:border-amber-400 hover:bg-amber-100"
             >
               Complete contractor countersign
             </button>

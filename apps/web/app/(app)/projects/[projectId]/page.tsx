@@ -1,14 +1,24 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  ActionBar,
+  ProjectStateSummary,
+  WorkflowBar,
+  getStatusBadgeClassName,
+  type ProjectStateItem,
+  type WorkflowStep
+} from "@floorconnector/ui";
 
 import { AppEmptyState } from "@/components/app-empty-state";
 import { listAppointmentsByProject } from "@/lib/appointments/data";
 import { listProjectChangeOrders } from "@/lib/change-orders/data";
+import { CoreWorkflowSection } from "@/components/layout/core-workflow-section";
+import { ExecutionSection } from "@/components/layout/execution-section";
+import { SupportSection } from "@/components/layout/support-section";
 import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
-import { NextActionCard } from "@/components/next-action-card";
 import { ProjectForm } from "@/components/project-form";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
 import {
@@ -89,6 +99,36 @@ type SectionOverviewProps = {
   stat: string;
 };
 
+function mapReadinessStageToWorkflowState(
+  state: ReadinessStageView["state"]
+): WorkflowStep["state"] {
+  switch (state) {
+    case "complete":
+      return "complete";
+    case "current":
+      return "current";
+    case "blocked":
+      return "blocked";
+    case "upcoming":
+      return "upcoming";
+  }
+}
+
+function mapWorkspaceToneToProjectStateTone(
+  tone: WorkspaceStateTone
+): ProjectStateItem["tone"] {
+  switch (tone) {
+    case "positive":
+      return "complete";
+    case "warning":
+      return "needsAction";
+    case "critical":
+      return "blocked";
+    case "neutral":
+      return "pending";
+  }
+}
+
 function formatStatusLabel(status: string) {
   return status.replaceAll("_", " ");
 }
@@ -108,28 +148,27 @@ function formatLocation(parts: Array<string | null | undefined>) {
   return parts.filter(Boolean).join(", ") || "Not provided";
 }
 
-function getReadinessBadgeClassName(isReadyToSchedule: boolean) {
-  return isReadyToSchedule
-    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-    : "border-amber-200 bg-amber-50 text-amber-900";
-}
-
 function getStageCardClassName(state: ReadinessStageView["state"]) {
   switch (state) {
     case "complete":
-      return "border-emerald-200 bg-emerald-50/80";
+      return getStatusBadgeClassName("complete");
     case "current":
-      return "border-brand-200 bg-brand-50/70";
+      return getStatusBadgeClassName("current");
     case "blocked":
-      return "border-rose-200 bg-rose-50/80";
+      return getStatusBadgeClassName("blocked");
     default:
-      return "border-slate-200 bg-slate-50/80";
+      return getStatusBadgeClassName("not_started");
   }
 }
 
 function renderStatusBadge(label: string) {
   return (
-    <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+    <span
+      className={[
+        "inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]",
+        getStatusBadgeClassName(label)
+      ].join(" ")}
+    >
       {label}
     </span>
   );
@@ -160,19 +199,6 @@ function formatBlockerLabel(
   }
 }
 
-function getWorkspaceStateCardClassName(tone: WorkspaceStateTone) {
-  switch (tone) {
-    case "positive":
-      return "border-emerald-200 bg-emerald-50/85";
-    case "warning":
-      return "border-amber-200 bg-amber-50/90";
-    case "critical":
-      return "border-rose-200 bg-rose-50/90";
-    default:
-      return "border-slate-200 bg-slate-50/85";
-  }
-}
-
 function getWorkspaceActionLinkClassName(
   tone: NonNullable<WorkspaceActionItem["tone"]> = "secondary"
 ) {
@@ -180,7 +206,7 @@ function getWorkspaceActionLinkClassName(
     case "primary":
       return "inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900";
     case "warning":
-      return "inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-900 transition hover:border-amber-300 hover:bg-amber-100";
+      return "inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700";
     default:
       return "inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700";
   }
@@ -197,7 +223,7 @@ function SectionOverview({
   return (
     <div className="flex flex-col gap-3 border-b border-[#eadfce] pb-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#a4581a]">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#665446]">
           {eyebrow}
         </p>
         <h3 className="mt-2 text-lg font-semibold tracking-tight text-[#2b2118]">
@@ -1116,13 +1142,6 @@ export default async function ProjectDetailPage({
     depositLatestPaymentEventType:
       paymentFocusInvoice?.id === depositInvoice?.id ? paymentFocusLatestEventType : null
   });
-  const commercialHandoff = readinessSnapshot?.isReadyToSchedule
-    ? "Sales-side assessment, contract, and financial readiness are complete. This project is now cleared for downstream operational scheduling when that slice is ready."
-    : "This view is the authoritative pre-scheduling handoff. Clear the current commercial blockers here before operations takes over.";
-  const salesVsOperationsNote =
-    projectOpportunity?.siteAssessmentStatus === "scheduled"
-      ? "The scheduled site assessment is sales scheduling activity. It documents upstream commercial work, not downstream crew scheduling."
-      : "Ready to schedule is an operational handoff state, not a calendar slot. Actual scheduling remains intentionally out of scope in this slice.";
   const activeBlockers = readinessSnapshot?.blockers ?? [];
   const unresolvedPunchlistItems = projectPunchlistItems.filter(
     (item) => item.status !== "closed"
@@ -1288,6 +1307,49 @@ export default async function ProjectDetailPage({
     isReadyToSchedule: Boolean(readinessSnapshot?.isReadyToSchedule),
     hasProgressBillingInvoiceGap
   });
+  const workflowSteps: WorkflowStep[] = readinessStages.map((stage) => ({
+    id: stage.title.toLowerCase().replaceAll(" ", "-"),
+    label: stage.title,
+    description: stage.detail,
+    state: mapReadinessStageToWorkflowState(stage.state)
+  }));
+  const projectStateItems: ProjectStateItem[] = [
+    {
+      id: "project-status",
+      label: "Project",
+      value: formatStatusLabel(project.status),
+      detail:
+        project.description?.trim() ||
+        "Project remains the operational root for connected work.",
+      tone: "pending"
+    },
+    {
+      id: "readiness-state",
+      label: "Readiness",
+      value: readinessSnapshot?.isReadyToSchedule
+        ? "Ready to schedule"
+        : formatStatusLabel(readinessStatus),
+      detail:
+        readinessSnapshot?.isReadyToSchedule
+          ? "Commercial handoff is complete."
+          : "Clear the current gate before operations moves forward.",
+      tone: readinessSnapshot?.isReadyToSchedule ? "complete" : "needsAction"
+    },
+    {
+      id: "financial-state",
+      label: "Financial",
+      value: financialState.value,
+      detail: financialState.detail,
+      tone: mapWorkspaceToneToProjectStateTone(financialState.tone)
+    },
+    {
+      id: "scheduling-state",
+      label: "Schedule",
+      value: schedulingState.value,
+      detail: schedulingState.detail,
+      tone: mapWorkspaceToneToProjectStateTone(schedulingState.tone)
+    }
+  ];
 
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.12fr)_320px]">
@@ -1308,7 +1370,7 @@ export default async function ProjectDetailPage({
                       project.customerId,
                       projectOpportunity?.id
                     )}
-                    className="inline-flex items-center rounded-full bg-[#ef7d32] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_14px_30px_-18px_rgba(239,125,50,0.9)] transition hover:bg-[#d96d27]"
+                    className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
                   >
                     Create Estimate
                   </Link>
@@ -1339,22 +1401,10 @@ export default async function ProjectDetailPage({
                       href={`/invoices?projectId=${project.id}&jobId=${completedJobId}`}
                       className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
                     >
-                      Create invoice
-                    </Link>
-                  ) : null}
-                </div>
-                <div className="flex flex-wrap gap-2.5">
-                  <span
-                    className={`inline-flex items-center rounded-full border px-3.5 py-2 text-sm font-medium ${getReadinessBadgeClassName(
-                      Boolean(readinessSnapshot?.isReadyToSchedule)
-                    )}`}
-                  >
-                    {readinessSnapshot?.isReadyToSchedule
-                      ? "Ready to schedule"
-                      : formatStatusLabel(readinessStatus)}
-                  </span>
-                  {renderStatusBadge(formatStatusLabel(project.status))}
-                </div>
+                    Create invoice
+                  </Link>
+                ) : null}
+              </div>
               </>
             }
           />
@@ -1371,240 +1421,255 @@ export default async function ProjectDetailPage({
             </div>
           ) : null}
 
-          <section className="mt-8 rounded-[1.4rem] border border-[#e7d7c5] bg-[#fffaf4] px-5 py-5">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  {renderStatusBadge(formatStatusLabel(project.status))}
-                  <span
-                    className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getReadinessBadgeClassName(
-                      Boolean(readinessSnapshot?.isReadyToSchedule)
-                    )}`}
-                  >
-                    {readinessSnapshot?.isReadyToSchedule
-                      ? "Ready to schedule"
-                      : formatStatusLabel(readinessStatus)}
-                  </span>
+          <div className="mt-6 space-y-4">
+            <ActionBar
+              title={nextAction.title}
+              description={
+                <div className="space-y-2">
+                  <p>{nextAction.description}</p>
+                  {nextAction.blockerCopy ? (
+                    <p className="font-medium text-amber-900">{nextAction.blockerCopy}</p>
+                  ) : null}
                 </div>
-                <h2 className="mt-3 text-xl font-semibold tracking-tight text-[#221a14]">
-                  {project.name}
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-[#665446]">
-                  {project.customer?.name ?? "Unknown customer"} /{" "}
-                  {formatLocation([
-                    project.addressLine1,
-                    project.city,
-                    project.stateRegion,
-                    project.postalCode
-                  ])}
+              }
+              statusLabel={
+                readinessSnapshot?.isReadyToSchedule
+                  ? "Ready to schedule"
+                  : formatStatusLabel(readinessStatus)
+              }
+              statusTone={
+                readinessSnapshot?.isReadyToSchedule
+                  ? "success"
+                  : workspaceBlockers.length > 0
+                    ? "warning"
+                    : "neutral"
+              }
+              nextActionLabel={nextAction.primaryLabel ?? "Create estimate"}
+              primaryAction={
+                nextAction.primaryLabel && nextAction.primaryHref ? (
+                  <Link
+                    href={nextAction.primaryHref}
+                    className={getWorkspaceActionLinkClassName("primary")}
+                  >
+                    {nextAction.primaryLabel}
+                  </Link>
+                ) : undefined
+              }
+              secondaryActions={
+                nextAction.secondaryLabel && nextAction.secondaryHref ? (
+                  <Link
+                    href={nextAction.secondaryHref}
+                    className={getWorkspaceActionLinkClassName("secondary")}
+                  >
+                    {nextAction.secondaryLabel}
+                  </Link>
+                ) : nextAction.secondaryLabel ? (
+                  <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600">
+                    {nextAction.secondaryLabel}
+                  </span>
+                ) : undefined
+              }
+              meta={`${project.customer?.name ?? "Unknown customer"} / ${formatLocation([
+                project.addressLine1,
+                project.city,
+                project.stateRegion,
+                project.postalCode
+              ])}`}
+            />
+
+            <WorkflowBar title="Project readiness workflow" steps={workflowSteps} />
+
+            <ProjectStateSummary title="Project state summary" items={projectStateItems} />
+
+            <section className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                    Key blockers
+                  </p>
+                  <p className="mt-1 text-base font-semibold text-slate-950">
+                    {workspaceBlockers.length > 0
+                      ? `${workspaceBlockers.length} items need attention`
+                      : "No active blockers"}
+                  </p>
+                </div>
+                <p className="text-sm text-slate-500">
+                  Ready to schedule: {formatDateTime(readyToScheduleAt)}
                 </p>
               </div>
-              <Link
-                href={nextAction.primaryHref ?? buildProjectEstimateCreateHref(
-                  project.id,
-                  project.customerId,
-                  projectOpportunity?.id
-                )}
-                className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#ef7d32] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_14px_30px_-18px_rgba(239,125,50,0.9)] transition hover:bg-[#d96d27]"
-              >
-                {nextAction.primaryLabel ?? "Create estimate"}
-              </Link>
-            </div>
-          </section>
-
-          <div className="mt-6 space-y-5">
-            <section className="rounded-[1.9rem] border border-[#e3d6c7] bg-[linear-gradient(180deg,#fdf7ef,#ffffff)] px-6 py-6 shadow-[0_24px_70px_-46px_rgba(57,43,30,0.28)]">
-              <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-                <div className="space-y-5">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span
-                      className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium ${getReadinessBadgeClassName(
-                        Boolean(readinessSnapshot?.isReadyToSchedule)
-                      )}`}
+              {workspaceBlockers.length > 0 ? (
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {workspaceBlockers.slice(0, 4).map((blocker) => (
+                    <div
+                      key={blocker}
+                      className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-900"
                     >
-                      {readinessSnapshot?.isReadyToSchedule
-                        ? "Ready to schedule"
-                        : formatStatusLabel(readinessStatus)}
-                    </span>
-                    {renderStatusBadge(formatStatusLabel(project.status))}
-                  </div>
-                  <div className="space-y-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[#a4581a]">
-                      Operational overview
-                    </p>
-                    <p className="text-xl font-semibold tracking-tight text-[#2b2118] sm:text-[1.55rem]">
-                      {commercialHandoff}
-                    </p>
-                    <p className="max-w-[70ch] text-sm leading-6 text-[#665446]">
-                      {salesVsOperationsNote}
-                    </p>
-                  </div>
-                  <div className="rounded-[1.6rem] border border-slate-200 bg-white/88 px-5 py-5">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                          Key blockers
-                        </p>
-                        <p className="mt-2 text-lg font-semibold text-slate-950">
-                          {workspaceBlockers.length > 0
-                            ? `${workspaceBlockers.length} items need attention`
-                            : "No active blockers"}
-                        </p>
-                      </div>
-                      <p className="text-sm text-slate-500">
-                        Ready to schedule: {formatDateTime(readyToScheduleAt)}
-                      </p>
+                      {blocker}
                     </div>
-                    {workspaceBlockers.length > 0 ? (
-                      <div className="mt-4 grid gap-3 md:grid-cols-2">
-                        {workspaceBlockers.slice(0, 4).map((blocker) => (
-                          <div
-                            key={blocker}
-                            className="rounded-2xl border border-rose-200 bg-rose-50/85 px-4 py-3 text-sm leading-6 text-rose-900"
-                          >
-                            {blocker}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/90 px-4 py-4 text-sm leading-6 text-emerald-900">
-                        Commercial, scheduling, and closeout blockers are currently clear on this project.
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {[
-                    {
-                      key: "project-status",
-                      label: "Project status",
-                      value: formatStatusLabel(project.status),
-                      detail:
-                        project.description?.trim() ||
-                        "Project remains the operational root for all connected work.",
-                      tone: "neutral" as WorkspaceStateTone
-                    },
-                    {
-                      key: "readiness-state",
-                      label: "Readiness state",
-                      value: readinessSnapshot?.isReadyToSchedule
-                        ? "Ready to schedule"
-                        : formatStatusLabel(readinessStatus),
-                      detail:
-                        readinessSnapshot?.isReadyToSchedule
-                          ? "Commercial handoff is complete."
-                          : "Use the next action below to clear the current gate and keep the workflow moving.",
-                      tone: readinessSnapshot?.isReadyToSchedule
-                        ? ("positive" as WorkspaceStateTone)
-                        : ("warning" as WorkspaceStateTone)
-                    },
-                    {
-                      key: "financial-state",
-                      label: "Financial state",
-                      value: financialState.value,
-                      detail: financialState.detail,
-                      tone: financialState.tone
-                    },
-                    {
-                      key: "scheduling-state",
-                      label: "Scheduling state",
-                      value: schedulingState.value,
-                      detail: schedulingState.detail,
-                      tone: schedulingState.tone
-                    },
-                    {
-                      key: "coordination-state",
-                      label: "Appointments",
-                      value:
-                        scheduledAppointments.length > 0
-                          ? `${scheduledAppointments.length} upcoming`
-                          : "No upcoming appointments",
-                      detail:
-                        scheduledAppointments[0]
-                          ? `${scheduledAppointments[0].appointmentType.replaceAll("_", " ")} on ${new Date(
-                              scheduledAppointments[0].startsAt
-                            ).toLocaleString()}`
-                          : "Customer meetings, site visits, and follow-ups should stay visible here.",
-                      tone:
-                        scheduledAppointments.length > 0
-                          ? ("positive" as WorkspaceStateTone)
-                          : ("neutral" as WorkspaceStateTone)
-                    },
-                    {
-                      key: "connected-counts",
-                      label: "Connected workflow",
-                      value: `${projectEstimates.length} estimates / ${projectContracts.length} contracts / ${projectInvoices.length} invoices`,
-                      detail: `${projectJobs.length} jobs / ${projectPunchlistItems.length} punchlists / ${projectProgressBilling.length} SOV workspaces`,
-                      tone: "neutral" as WorkspaceStateTone
-                    }
-                  ].map((card) => (
-                    <section
-                      key={card.key}
-                      className={`rounded-[1.45rem] border px-4 py-4 ${getWorkspaceStateCardClassName(card.tone)}`}
-                    >
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                        {card.label}
-                      </p>
-                      <p className="mt-3 text-base font-semibold text-slate-950">
-                        {card.value}
-                      </p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">{card.detail}</p>
-                    </section>
                   ))}
                 </div>
-              </div>
+              ) : (
+                <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
+                  Commercial, scheduling, and closeout blockers are currently clear on this project.
+                </div>
+              )}
             </section>
           </div>
         </div>
 
-        <DetailPanel
-          title="Next Actions"
-          description="Simple heuristics from the current project state keep the team focused on what should happen next."
+        <CoreWorkflowSection
+          title="Core Workflow"
+          description="Estimate, contract, job, and invoice are the primary project handoff path. Each card links back to the canonical workspace that owns the real action."
         >
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)]">
-            <section className="rounded-[1.85rem] border border-[#d8be9f] bg-[linear-gradient(180deg,#fff8ef,#ffffff)] px-6 py-6 shadow-[0_24px_70px_-46px_rgba(57,43,30,0.28)]">
-              <NextActionCard
-                eyebrow="Primary next action"
-                title={nextAction.title}
-                description={nextAction.description}
-                primaryAction={
-                  nextAction.primaryLabel && nextAction.primaryHref ? (
-                    <Link
-                      href={nextAction.primaryHref}
-                      className={getWorkspaceActionLinkClassName("primary")}
-                    >
-                      {nextAction.primaryLabel}
-                    </Link>
-                  ) : undefined
-                }
-                secondaryAction={
-                  nextAction.secondaryLabel && nextAction.secondaryHref ? (
-                    <Link
-                      href={nextAction.secondaryHref}
-                      className={getWorkspaceActionLinkClassName("secondary")}
-                    >
-                      {nextAction.secondaryLabel}
-                    </Link>
-                  ) : nextAction.secondaryLabel ? (
-                    <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600">
-                      {nextAction.secondaryLabel}
-                    </span>
-                  ) : undefined
-                }
-              />
-              {nextAction.blockerCopy ? (
-                <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm leading-6 text-amber-950">
-                  {nextAction.blockerCopy}
-                </div>
-              ) : null}
-            </section>
-
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-medium text-slate-950">Estimate</p>
+              <span className="text-xs font-semibold text-slate-500">
+                {projectEstimates.length}
+              </span>
+            </div>
             <div className="grid gap-3">
+              {projectEstimates.length > 0 ? (
+                projectEstimates.slice(0, 2).map((estimate) => (
+                  <LinkedRecordCard
+                    key={estimate.id}
+                    href={`/estimates/${estimate.id}`}
+                    title={estimate.referenceNumber}
+                    subtitle={estimate.customer?.name ?? project.customer?.name ?? "Unknown customer"}
+                    meta={`Total ${formatMoney(estimate.totalAmount)}`}
+                    badge={renderStatusBadge(formatStatusLabel(estimate.status))}
+                  />
+                ))
+              ) : (
+                <AppEmptyState
+                  eyebrow="No estimates"
+                  title="Start the commercial flow"
+                  description="Create an estimate from this project so scope, pricing, and downstream workflow records stay connected."
+                  actionHref={buildProjectEstimateCreateHref(
+                    project.id,
+                    project.customerId,
+                    projectOpportunity?.id
+                  )}
+                  actionLabel="Create estimate"
+                />
+              )}
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-medium text-slate-950">Contract</p>
+              <span className="text-xs font-semibold text-slate-500">
+                {projectContracts.length}
+              </span>
+            </div>
+            <div className="grid gap-3">
+              {projectContracts.length > 0 ? (
+                projectContracts.slice(0, 2).map((contract) => (
+                  <LinkedRecordCard
+                    key={contract.id}
+                    href={`/contracts/${contract.id}`}
+                    title={contract.title}
+                    subtitle={contract.customer?.name ?? project.customer?.name ?? "Unknown customer"}
+                    meta={getProjectContractSummary({ contract, readinessSnapshot })}
+                    badge={renderStatusBadge(formatStatusLabel(contract.status))}
+                  />
+                ))
+              ) : (
+                <AppEmptyState
+                  eyebrow="No contracts"
+                  title="Generate contract after approval"
+                  description="Once an estimate is approved, generate the contract from the same project chain."
+                  actionHref={approvedEstimateId ? `/contracts?estimateId=${approvedEstimateId}` : undefined}
+                  actionLabel={approvedEstimateId ? "Generate contract" : undefined}
+                />
+              )}
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-medium text-slate-950">Job</p>
+              <span className="text-xs font-semibold text-slate-500">{projectJobs.length}</span>
+            </div>
+            <div className="grid gap-3">
+              {projectJobs.length > 0 ? (
+                projectJobs.slice(0, 2).map((job) => (
+                  <LinkedRecordCard
+                    key={job.id}
+                    href={`/jobs/${job.id}`}
+                    title={job.project?.name ?? project.name}
+                    subtitle={job.customer?.name ?? project.customer?.name ?? "Unknown customer"}
+                    meta={
+                      job.scheduledDate
+                        ? `${job.crewVendor?.name ?? "Crew not assigned"} / Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}`
+                        : `${job.crewVendor?.name ?? "Crew not assigned"} / Unscheduled`
+                    }
+                    badge={renderStatusBadge(formatStatusLabel(job.dispatchStatus))}
+                  />
+                ))
+              ) : (
+                <AppEmptyState
+                  eyebrow="No jobs"
+                  title="Create job after readiness clears"
+                  description="Jobs should stay downstream of the commercial readiness chain."
+                  actionHref={
+                    readinessSnapshot?.isReadyToSchedule
+                      ? `/jobs?projectId=${project.id}`
+                      : undefined
+                  }
+                  actionLabel={readinessSnapshot?.isReadyToSchedule ? "Create job" : undefined}
+                />
+              )}
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-medium text-slate-950">Invoice</p>
+              <span className="text-xs font-semibold text-slate-500">
+                {projectInvoices.length}
+              </span>
+            </div>
+            <div className="grid gap-3">
+              {projectInvoices.length > 0 ? (
+                projectInvoices.slice(0, 2).map((invoice) => (
+                  <LinkedRecordCard
+                    key={invoice.id}
+                    href={`/invoices/${invoice.id}`}
+                    title={invoice.referenceNumber}
+                    subtitle={invoice.customer?.name ?? project.customer?.name ?? "Unknown customer"}
+                    meta={getProjectInvoiceSummary(invoice)}
+                    badge={renderStatusBadge(formatStatusLabel(invoice.status))}
+                  />
+                ))
+              ) : (
+                <AppEmptyState
+                  eyebrow="No invoices"
+                  title="Create invoice from connected work"
+                  description="Billing should continue from the same project and downstream work context."
+                  actionHref={
+                    canCreateInvoice && completedJobId
+                      ? `/invoices?projectId=${project.id}&jobId=${completedJobId}`
+                      : undefined
+                  }
+                  actionLabel={canCreateInvoice && completedJobId ? "Create invoice" : undefined}
+                />
+              )}
+            </div>
+          </section>
+        </CoreWorkflowSection>
+
+        {nextActionQueue.length > 1 ? (
+          <DetailPanel
+            title="Follow-Up Actions"
+            description="Secondary project actions stay available after the primary next step, without competing with the core workflow above."
+          >
+            <div className="grid gap-3 md:grid-cols-2">
               {nextActionQueue.slice(1).map((action) => (
                 <section
                   key={`${action.title}-${action.href ?? "no-link"}`}
-                  className="rounded-[1.5rem] border border-slate-200 bg-white px-5 py-4"
+                  className="rounded-lg border border-slate-200 bg-white px-5 py-4"
                 >
                   <p className="text-base font-semibold text-slate-950">{action.title}</p>
                   <p className="mt-2 text-sm leading-6 text-slate-600">{action.description}</p>
@@ -1621,8 +1686,8 @@ export default async function ProjectDetailPage({
                 </section>
               ))}
             </div>
-          </div>
-        </DetailPanel>
+          </DetailPanel>
+        ) : null}
 
         <DetailPanel
           title="Upstream Readiness Chain"
@@ -1647,71 +1712,19 @@ export default async function ProjectDetailPage({
         </DetailPanel>
 
         <DetailPanel
-          title="Connected Workflow"
-          description="Upstream commercial and customer-facing records stay visible here so the project hub shows continuity without duplicating those workflows."
+          title="Coordination"
+          description="Customer-facing appointments stay visible below the core estimate, contract, job, and invoice path."
         >
           <div className="space-y-6">
             <SectionOverview
-              eyebrow="Estimates / Contracts / Appointments"
-              title="Commercial records stay connected to the project"
-              description="Project should make upstream status easy to scan, then hand off into the real estimate, contract, and appointment workspaces for deeper work."
-              href={projectContracts.length > 0 ? "/contracts" : "/estimates"}
-              linkLabel={projectContracts.length > 0 ? "Open contracts" : "Open estimates"}
-              stat={`${projectEstimates.length} estimates / ${projectContracts.length} contracts / ${projectAppointments.length} appointments`}
+              eyebrow="Appointments"
+              title="Customer coordination stays connected to the project"
+              description="Use appointments for customer meetings, site visits, and follow-up blocks while keeping execution scheduling on canonical jobs."
+              href={`/appointments?projectId=${project.id}`}
+              linkLabel="Open appointments"
+              stat={`${projectAppointments.length} appointments`}
             />
-            <div className="grid gap-8 xl:grid-cols-3">
-            <section className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-slate-950">Estimates</p>
-              </div>
-              <div className="grid gap-4">
-                {projectEstimates.length > 0 ? (
-                  projectEstimates.slice(0, 2).map((estimate) => (
-                    <LinkedRecordCard
-                      key={estimate.id}
-                      href={`/estimates/${estimate.id}`}
-                      title={estimate.referenceNumber}
-                      subtitle={estimate.customer?.name ?? project.customer?.name ?? "Unknown customer"}
-                      meta={`Total ${formatMoney(estimate.totalAmount)}`}
-                      badge={renderStatusBadge(formatStatusLabel(estimate.status))}
-                    />
-                  ))
-                ) : (
-                  <AppEmptyState
-                    eyebrow="No estimates"
-                    title="Start the commercial flow"
-                    description="Create an estimate from this project so scope, pricing, and downstream workflow records stay connected."
-                  />
-                )}
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-slate-950">Contracts</p>
-              </div>
-              <div className="grid gap-4">
-                {projectContracts.length > 0 ? (
-                  projectContracts.slice(0, 2).map((contract) => (
-                    <LinkedRecordCard
-                      key={contract.id}
-                      href={`/contracts/${contract.id}`}
-                      title={contract.title}
-                      subtitle={contract.customer?.name ?? project.customer?.name ?? "Unknown customer"}
-                      meta={getProjectContractSummary({ contract, readinessSnapshot })}
-                      badge={renderStatusBadge(formatStatusLabel(contract.status))}
-                    />
-                  ))
-                ) : (
-                  <AppEmptyState
-                    eyebrow="No contracts"
-                    title="Generate contract after approval"
-                    description="Once the estimate is approved, generate contract from the same project chain so the signed record stays connected."
-                  />
-                )}
-              </div>
-            </section>
-
+            <div className="grid gap-8">
             <section className="space-y-4">
               <div>
                 <p className="text-sm font-medium text-slate-950">Appointments</p>
@@ -1747,7 +1760,7 @@ export default async function ProjectDetailPage({
           </div>
         </DetailPanel>
 
-        <DetailPanel
+        <SupportSection
           title="Documents"
           description="Estimate attachments and sent contract PDFs stay linked to the same project chain here without duplicating file records."
         >
@@ -1808,9 +1821,9 @@ export default async function ProjectDetailPage({
               </div>
             </section>
           </div>
-        </DetailPanel>
+        </SupportSection>
 
-        <DetailPanel
+        <ExecutionSection
           title="Operations Hub"
           description="Project stays the operating summary for jobs, scheduling pressure, and closeout work while real execution still happens on canonical job and punchlist records."
         >
@@ -1924,7 +1937,7 @@ export default async function ProjectDetailPage({
             </section>
           </div>
           </div>
-        </DetailPanel>
+        </ExecutionSection>
 
         <DetailPanel
           title="Financial Hub"

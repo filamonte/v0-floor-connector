@@ -5,6 +5,14 @@ import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { NextActionCard } from "@/components/next-action-card";
+import {
+  PortalSecondaryLink,
+  PortalStatusBadge,
+  portalActionBoxClassName,
+  portalHeroPanelClassName,
+  portalInsetPanelClassName,
+  portalStatePanelClassName
+} from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { requestPortalInvoicePaymentAction } from "@/lib/invoices/actions";
 import { getPortalInvoiceReviewData } from "@/lib/portal/data";
@@ -274,7 +282,7 @@ export default async function PortalInvoiceReviewPage({
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
       <section className="space-y-10">
-        <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+        <div className={portalHeroPanelClassName}>
           <DetailPageHeader
             eyebrow="Invoice Review"
             title={invoice.referenceNumber}
@@ -282,9 +290,9 @@ export default async function PortalInvoiceReviewPage({
             backHref={`/portal/projects/${invoice.projectId}`}
             backLabel="Back to project workspace"
             actions={
-              <span className="inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium capitalize text-slate-700">
+              <PortalStatusBadge status={invoice.status} className="px-4 py-2 text-sm">
                 {formatStatusLabel(invoice.status)}
-              </span>
+              </PortalStatusBadge>
             }
           />
 
@@ -302,15 +310,15 @@ export default async function PortalInvoiceReviewPage({
 
           <div className="mt-10 space-y-5">
             <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
-              <section className="rounded-[1.85rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,1))] px-6 py-6">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-brand-700">
+              <section className={portalStatePanelClassName}>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
                   Payment state
                 </p>
                 <div className="mt-4 space-y-3">
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="inline-flex rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium capitalize text-slate-700">
+                    <PortalStatusBadge status={invoice.status} className="px-3.5 py-1.5 text-sm">
                       {formatStatusLabel(invoice.status)}
-                    </span>
+                    </PortalStatusBadge>
                     <span className="inline-flex rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-600">
                       {invoice.workflowRole === "deposit" ? "Deposit request" : "Standard invoice"}
                     </span>
@@ -321,7 +329,7 @@ export default async function PortalInvoiceReviewPage({
                   <p className="text-sm leading-6 text-slate-600">
                     {formatMoney(invoice.paidAmount)} paid of {formatMoney(invoice.totalAmount)} total
                   </p>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/85 px-4 py-4">
+                  <div className={portalInsetPanelClassName}>
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                       Current progress
                     </p>
@@ -357,12 +365,9 @@ export default async function PortalInvoiceReviewPage({
                         title={nextAction.title}
                         description={nextAction.description}
                         primaryAction={
-                          <Link
-                            href={nextAction.href}
-                            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
-                          >
+                          <PortalSecondaryLink href={nextAction.href}>
                             {nextAction.label}
-                          </Link>
+                          </PortalSecondaryLink>
                         }
                       />
                     )
@@ -574,7 +579,7 @@ export default async function PortalInvoiceReviewPage({
             })}</p>
 
             {invoice.paymentWorkflow.canRequestPayment ? (
-              <form action={requestPortalInvoicePaymentAction} className="space-y-3 rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
+              <form action={requestPortalInvoicePaymentAction} className={portalActionBoxClassName}>
                 <input type="hidden" name="invoiceId" value={invoice.id} />
                 <input type="hidden" name="amount" value={invoice.balanceDueAmount} />
                 <label className="block space-y-2">

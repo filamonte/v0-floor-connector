@@ -22,14 +22,14 @@ export function DetailPageHeader({
     <div className="space-y-5">
       <div className="flex flex-col gap-7 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 max-w-3xl space-y-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#a4581a]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6b7280]">
             {eyebrow}
           </p>
           <div className="space-y-3">
-            <h2 className="text-3xl font-semibold tracking-tight text-[#2b2118] sm:text-[2.4rem]">
+            <h2 className="text-3xl font-semibold tracking-tight text-[#171717] sm:text-[2.4rem]">
               {title}
             </h2>
-            <p className="max-w-[65ch] text-sm leading-6 text-[#665446] sm:text-[0.95rem]">
+            <p className="max-w-[65ch] text-sm leading-6 text-[#4b5563] sm:text-[0.95rem]">
               {description}
             </p>
           </div>
@@ -38,7 +38,7 @@ export function DetailPageHeader({
         <div className="flex flex-col items-start gap-3 lg:max-w-[26rem] lg:items-end">
           <Link
             href={backHref}
-            className="inline-flex items-center rounded-full border border-[#e2d4c5] bg-[#fbf5ee] px-3.5 py-2 text-sm font-medium text-[#5f4d40] transition hover:border-[#caac88] hover:bg-white hover:text-[#2b2118]"
+            className="inline-flex items-center rounded-md border border-[#d1d5db] bg-white px-3.5 py-2 text-sm font-medium text-[#4b5563] transition hover:border-[#9ca3af] hover:bg-[#f8fafc] hover:text-[#171717]"
           >
             {backLabel}
           </Link>

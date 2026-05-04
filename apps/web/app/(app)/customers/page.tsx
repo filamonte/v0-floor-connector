@@ -11,6 +11,7 @@ import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 import { listProjects } from "@/lib/projects/data";
+import { getStatusBadgeClassName } from "@floorconnector/ui";
 
 type CustomersPageProps = {
   searchParams?: Promise<{
@@ -41,6 +42,30 @@ function buildCustomersHref(input: {
 
 function formatDateLabel(value: string) {
   return new Date(value).toLocaleDateString();
+}
+
+function formatProjectCount(count: number) {
+  return `${count} project${count === 1 ? "" : "s"}`;
+}
+
+function getCustomerContinuityCue(input: {
+  hasDirectContact: boolean;
+  hasSavedAddress: boolean;
+  linkedProjectCount: number;
+}) {
+  if (!input.hasDirectContact) {
+    return "Next: add direct contact";
+  }
+
+  if (!input.hasSavedAddress) {
+    return "Next: add address";
+  }
+
+  if (input.linkedProjectCount > 0) {
+    return `Linked to ${formatProjectCount(input.linkedProjectCount)}`;
+  }
+
+  return "Ready for first project";
 }
 
 export default async function CustomersPage({
@@ -106,6 +131,15 @@ export default async function CustomersPage({
   const customersWithProjects = customers.filter((customer) =>
     projects.some((project) => project.customerId === customer.id)
   );
+  const linkedProjectCountByCustomerId = new Map<string, number>();
+
+  for (const project of projects) {
+    linkedProjectCountByCustomerId.set(
+      project.customerId,
+      (linkedProjectCountByCustomerId.get(project.customerId) ?? 0) + 1
+    );
+  }
+
   const recentCustomers = [...filteredCustomers]
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
     .slice(0, 20);
@@ -117,13 +151,13 @@ export default async function CustomersPage({
       description="Customers anchor the shared external relationship, project continuity, billing defaults, and estimate-recipient contact details across the contractor operating system."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Total</p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {customers.length}
             </p>
           </div>
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Tax exempt
             </p>
@@ -131,7 +165,7 @@ export default async function CustomersPage({
               {taxExemptCustomers.length}
             </p>
           </div>
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Direct contact saved
             </p>
@@ -139,7 +173,7 @@ export default async function CustomersPage({
               {customersWithDirectContact.length}
             </p>
           </div>
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Saved address
             </p>
@@ -218,6 +252,7 @@ export default async function CustomersPage({
               meta: customer.taxExemptionReference
                 ? `Reference: ${customer.taxExemptionReference}`
                 : customer.taxExemptionReason,
+              badge: "neutral",
               trailing: `${customer.retainagePercentageDefault}%`
             }))}
             emptyTitle="No tax-exempt customers"
@@ -236,6 +271,7 @@ export default async function CustomersPage({
               meta: customer.city || customer.stateRegion
                 ? [customer.city, customer.stateRegion].filter(Boolean).join(", ")
                 : null,
+              badge: "needs_action",
               trailing: "No contact"
             }))}
             emptyTitle="Direct contact is filled"
@@ -252,6 +288,7 @@ export default async function CustomersPage({
               title: customer.name,
               subtitle: customer.companyName ?? "Individual customer",
               meta: customer.email ?? customer.phone ?? null,
+              badge: "needs_action",
               trailing: "Address needed"
             }))}
             emptyTitle="Address coverage looks good"
@@ -273,7 +310,8 @@ export default async function CustomersPage({
                 title: customer.name,
                 subtitle: customer.companyName ?? "Individual customer",
                 meta: customer.email ?? customer.phone ?? null,
-                trailing: `${linkedProjectCount} project${linkedProjectCount === 1 ? "" : "s"}`
+                badge: "ready",
+                trailing: formatProjectCount(linkedProjectCount)
               };
             })}
             emptyTitle="No customer-project links yet"
@@ -306,47 +344,79 @@ export default async function CustomersPage({
                   <tr>
                     <th className="px-5 py-3 sm:px-6">Customer</th>
                     <th className="px-5 py-3 sm:px-6">Company / location</th>
+                    <th className="px-5 py-3 sm:px-6">Continuity</th>
                     <th className="px-5 py-3 sm:px-6">Financial defaults</th>
                     <th className="px-5 py-3 text-right sm:px-6">Updated</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
-                  {recentCustomers.map((customer) => (
-                    <tr key={customer.id} className="hover:bg-slate-50/70">
-                      <td className="px-5 py-4 sm:px-6">
-                        <Link
-                          href={`/customers/${customer.id}`}
-                          className="font-semibold text-slate-950 transition hover:text-brand-700"
-                        >
-                          {customer.name}
-                        </Link>
-                        <p className="mt-1 text-sm leading-6 text-slate-500">
-                          {customer.email ?? customer.phone ?? "No direct contact saved"}
-                        </p>
-                      </td>
-                      <td className="px-5 py-4 sm:px-6">
-                        <p className="font-medium text-slate-700">
-                          {customer.companyName ?? "Individual customer"}
-                        </p>
-                        <p className="mt-1 text-sm leading-6 text-slate-500">
-                          {[customer.city, customer.stateRegion, customer.postalCode]
-                            .filter(Boolean)
-                            .join(", ") || "No location saved"}
-                        </p>
-                      </td>
-                      <td className="px-5 py-4 sm:px-6">
-                        <span className="inline-flex rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
-                          {customer.isTaxExempt ? "Tax exempt" : "Taxable"}
-                        </span>
-                        <p className="mt-2 text-sm leading-6 text-slate-500">
-                          Retainage {customer.retainagePercentageDefault}%
-                        </p>
-                      </td>
-                      <td className="px-5 py-4 text-right text-slate-500 sm:px-6">
-                        {formatDateLabel(customer.updatedAt)}
-                      </td>
-                    </tr>
-                  ))}
+                  {recentCustomers.map((customer) => {
+                    const linkedProjectCount =
+                      linkedProjectCountByCustomerId.get(customer.id) ?? 0;
+                    const hasDirectContact = Boolean(customer.email || customer.phone);
+                    const hasSavedAddress = Boolean(
+                      customer.addressLine1 ||
+                        customer.city ||
+                        customer.stateRegion ||
+                        customer.postalCode
+                    );
+
+                    return (
+                      <tr key={customer.id} className="hover:bg-slate-50/70">
+                        <td className="px-5 py-4 sm:px-6">
+                          <Link
+                            href={`/customers/${customer.id}`}
+                            className="font-semibold text-slate-950 transition hover:text-brand-700"
+                          >
+                            {customer.name}
+                          </Link>
+                          <p className="mt-1 text-sm leading-6 text-slate-500">
+                            {customer.email ?? customer.phone ?? "No direct contact saved"}
+                          </p>
+                        </td>
+                        <td className="px-5 py-4 sm:px-6">
+                          <p className="font-medium text-slate-700">
+                            {customer.companyName ?? "Individual customer"}
+                          </p>
+                          <p className="mt-1 text-sm leading-6 text-slate-500">
+                            {[customer.city, customer.stateRegion, customer.postalCode]
+                              .filter(Boolean)
+                              .join(", ") || "No location saved"}
+                          </p>
+                        </td>
+                        <td className="px-5 py-4 sm:px-6">
+                          <p className="text-sm font-medium text-slate-700">
+                            {getCustomerContinuityCue({
+                              hasDirectContact,
+                              hasSavedAddress,
+                              linkedProjectCount
+                            })}
+                          </p>
+                          <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-400">
+                            {formatProjectCount(linkedProjectCount)}
+                          </p>
+                        </td>
+                        <td className="px-5 py-4 sm:px-6">
+                          <span
+                            className={[
+                              "inline-flex rounded-md border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]",
+                              getStatusBadgeClassName(
+                                customer.isTaxExempt ? "neutral" : "active"
+                              )
+                            ].join(" ")}
+                          >
+                            {customer.isTaxExempt ? "Tax exempt" : "Taxable"}
+                          </span>
+                          <p className="mt-2 text-sm leading-6 text-slate-500">
+                            Retainage {customer.retainagePercentageDefault}%
+                          </p>
+                        </td>
+                        <td className="px-5 py-4 text-right text-slate-500 sm:px-6">
+                          {formatDateLabel(customer.updatedAt)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

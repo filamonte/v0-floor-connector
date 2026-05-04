@@ -19,18 +19,18 @@ export function LinkedRecordCard({
   return (
     <Link
       href={href}
-      className="block rounded-[1.5rem] border border-[#e3d6c7] bg-[linear-gradient(180deg,#fcf7f0,#ffffff)] px-5 py-4 transition hover:border-[#d8b28a] hover:bg-white"
+      className="block rounded-lg border border-[#e2e5e9] bg-white px-5 py-4 transition hover:border-[#cbd5e1] hover:bg-[#f8fafc]"
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h3 className="truncate text-base font-medium text-[#2b2118]">{title}</h3>
+          <h3 className="truncate text-base font-medium text-[#171717]">{title}</h3>
           {subtitle ? (
-            <p className="mt-1 text-sm leading-6 text-[#665446]">{subtitle}</p>
+            <p className="mt-1 text-sm leading-6 text-[#4b5563]">{subtitle}</p>
           ) : null}
         </div>
         {badge ? <div className="sm:text-right">{badge}</div> : null}
       </div>
-      {meta ? <p className="mt-3 text-sm leading-6 text-[#7a6656]">{meta}</p> : null}
+      {meta ? <p className="mt-3 text-sm leading-6 text-[#6b7280]">{meta}</p> : null}
     </Link>
   );
 }

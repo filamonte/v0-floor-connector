@@ -9,7 +9,6 @@ import { DetailPanel } from "@/components/detail-panel";
 import { InvoiceForm } from "@/components/invoice-form";
 import { InvoicePaymentForm } from "@/components/invoice-payment-form";
 import { LinkedRecordCard } from "@/components/linked-record-card";
-import { NextActionCard } from "@/components/next-action-card";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
 import {
   ScheduleContextActions,
@@ -17,7 +16,6 @@ import {
   ScheduleContextMetrics,
   ScheduleContextNotice
 } from "@/components/schedule-context-card";
-import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { listCatalogItems } from "@/lib/catalogs/data";
 import { listInvoiceChangeOrders } from "@/lib/change-orders/data";
 import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
@@ -38,6 +36,12 @@ import {
   getScheduleAssignmentSummary,
   getScheduleSummarySortValue
 } from "@/lib/schedule/summary";
+import {
+  ActionBar,
+  ProjectStateSummary,
+  WorkflowBar
+} from "@floorconnector/ui";
+import type { ProjectStateSummaryProps, WorkflowStep } from "@floorconnector/ui";
 
 type InvoiceDetailPageProps = {
   params: Promise<{
@@ -143,53 +147,6 @@ function getOnlinePaymentReadinessSummary(input: {
   return "This invoice is ready for customer-facing secure checkout on the same canonical invoice and payment chain.";
 }
 
-function getCustomerPaymentProgressSummary(input: {
-  workflowRole: string;
-  invoiceStatus: string;
-  balanceDueAmount: string;
-  latestPaymentEventType: PaymentEvent["eventType"] | null;
-}) {
-  if (input.latestPaymentEventType === "payment_failed") {
-    return "A recent customer payment attempt failed, so collections follow-through is still needed before this invoice can be treated as clear.";
-  }
-
-  if (input.latestPaymentEventType === "checkout_started") {
-    return "Customer checkout is in motion, but the invoice remains open until a canonical payment succeeds.";
-  }
-
-  if (input.latestPaymentEventType === "payment_succeeded") {
-    return input.invoiceStatus === "paid" || Number(input.balanceDueAmount) <= 0
-      ? "A provider-backed payment completed and this invoice is now financially settled."
-      : input.workflowRole === "deposit"
-        ? `A provider-backed deposit payment completed, but ${formatMoney(input.balanceDueAmount)} still remains before readiness is fully clear.`
-        : `A provider-backed payment completed, but ${formatMoney(input.balanceDueAmount)} still remains due.`;
-  }
-
-  if (input.latestPaymentEventType === "payment_requested") {
-    return "Customer payment has been requested on this invoice and is waiting for the next payment step.";
-  }
-
-  if (input.latestPaymentEventType === "payment_voided") {
-    return "The most recent provider-backed payment was voided, so the invoice has returned to an open collection state.";
-  }
-
-  if (input.invoiceStatus === "paid" || Number(input.balanceDueAmount) <= 0) {
-    return input.workflowRole === "deposit"
-      ? "Deposit readiness is satisfied from this canonical invoice."
-      : "The invoice is financially settled.";
-  }
-
-  if (input.invoiceStatus === "partially_paid") {
-    return input.workflowRole === "deposit"
-      ? `A deposit payment is already recorded, but ${formatMoney(input.balanceDueAmount)} still remains.`
-      : `A payment is already recorded, but ${formatMoney(input.balanceDueAmount)} still remains due.`;
-  }
-
-  return input.workflowRole === "deposit"
-    ? `Deposit collection is still open for ${formatMoney(input.balanceDueAmount)}.`
-    : `The invoice still carries ${formatMoney(input.balanceDueAmount)} due.`;
-}
-
 function getRecentPaymentSignal(input: {
   latestPayment: Payment | null;
   latestEvent: PaymentEvent | null;
@@ -219,14 +176,6 @@ function getRecentPaymentSignal(input: {
   }
 
   return "No customer-facing or contractor-recorded payment activity has been captured yet.";
-}
-
-function renderStatusBadge(label: string) {
-  return (
-    <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
-      {label}
-    </span>
-  );
 }
 
 function getInvoiceTypeLabel(input: { billingModel: string; workflowRole: string }) {
@@ -277,6 +226,22 @@ function getInvoiceContinuityTitle(input: { billingModel: string; workflowRole: 
 
 function buildProjectScheduleHref(projectId: string) {
   return buildScheduleHref({ projectId });
+}
+
+function getInvoiceActionBarStatusTone(status: string) {
+  if (status === "paid") {
+    return "success" as const;
+  }
+
+  if (status === "void") {
+    return "neutral" as const;
+  }
+
+  if (status === "partially_paid" || status === "sent") {
+    return "warning" as const;
+  }
+
+  return "neutral" as const;
 }
 
 export default async function InvoiceDetailPage({
@@ -335,6 +300,14 @@ export default async function InvoiceDetailPage({
           description:
             "This invoice is void, so the page stays focused on historical review instead of payment collection or editing changes."
         }
+      : invoice.status === "draft"
+        ? {
+            title: "Review and send invoice",
+            description:
+              "Finish billing details, lineage, tax, retainage, and status in the existing invoice editor before customer-facing collection begins.",
+            primaryLabel: "Review invoice build",
+            primaryHref: "#invoice-editing"
+          }
       : Number(invoice.balanceDueAmount) > 0
         ? {
             title:
@@ -504,49 +477,126 @@ export default async function InvoiceDetailPage({
           : 0
         : scheduleAssignmentsByJobId.get(job.id)?.length ?? 0) === 0)
   );
+  const invoiceBalanceDue = Number(invoice.balanceDueAmount);
+  const invoiceRetainageHeld = Number(invoice.retainageHeldAmount);
+  const invoiceIsSettled = invoice.status === "paid" || invoiceBalanceDue <= 0;
+  const invoiceWorkflowSteps: WorkflowStep[] = [
+    {
+      id: "estimate",
+      label: "Estimate",
+      state: invoice.estimate
+        ? invoice.estimate.status === "approved"
+          ? "complete"
+          : "current"
+        : "upcoming",
+      description: invoice.estimate
+        ? `${invoice.estimate.referenceNumber} | ${formatStatusLabel(invoice.estimate.status)}`
+        : "No estimate source"
+    },
+    {
+      id: "contract",
+      label: "Contract",
+      state: readinessSnapshot?.contractStatus
+        ? readinessSnapshot.contractStatus === "signed"
+          ? "complete"
+          : "current"
+        : "upcoming",
+      description: readinessSnapshot?.contractStatus
+        ? formatStatusLabel(readinessSnapshot.contractStatus)
+        : "Project readiness source"
+    },
+    {
+      id: "job",
+      label: "Job",
+      state: linkedJob
+        ? linkedJob.dispatchStatus === "completed"
+          ? "complete"
+          : "current"
+        : projectJobs.some((job) => job.dispatchStatus === "completed")
+          ? "complete"
+          : projectJobs.length > 0
+            ? "current"
+            : "upcoming",
+      description: linkedJob
+        ? formatStatusLabel(linkedJob.dispatchStatus)
+        : projectJobs.length > 0
+          ? `${projectJobs.length} project job${projectJobs.length === 1 ? "" : "s"}`
+          : "After billable work"
+    },
+    {
+      id: "invoice",
+      label: "Invoice",
+      state: invoice.status === "void" ? "blocked" : invoice.status === "paid" ? "complete" : "current",
+      description: `${formatStatusLabel(invoice.status)} | ${formatMoney(invoice.balanceDueAmount)} due`
+    },
+    {
+      id: "payment",
+      label: "Payment",
+      state:
+        invoice.status === "paid"
+          ? "complete"
+          : invoice.status === "void"
+            ? "blocked"
+            : "current",
+      description:
+        activePayments.length > 0
+          ? `${activePayments.length} recorded payment${activePayments.length === 1 ? "" : "s"}`
+          : "No payment recorded"
+    }
+  ];
+  const invoiceStateItems: ProjectStateSummaryProps["items"] = [
+    {
+      id: "total",
+      label: "Total",
+      value: formatMoney(invoice.totalAmount),
+      tone: "pending",
+      detail: `${formatMoney(invoice.subtotalAmount)} subtotal`
+    },
+    {
+      id: "paid",
+      label: "Paid",
+      value: formatMoney(invoice.paidAmount),
+      tone: activePayments.length > 0 ? "complete" : "pending",
+      detail: `${activePayments.length} payment${activePayments.length === 1 ? "" : "s"} recorded`
+    },
+    {
+      id: "balance",
+      label: "Balance Due",
+      value: formatMoney(invoice.balanceDueAmount),
+      tone:
+        invoice.status === "void"
+          ? "blocked"
+          : invoiceBalanceDue > 0
+            ? "needsAction"
+            : "complete",
+      detail:
+        invoiceBalanceDue > 0
+          ? `Due ${formatDate(invoice.dueDate)}`
+          : "No remaining balance"
+    },
+    ...(invoiceRetainageHeld > 0
+      ? [
+          {
+            id: "retainage",
+            label: "Retainage Held",
+            value: formatMoney(invoice.retainageHeldAmount),
+            tone: "active" as const,
+            detail: `${Number(invoice.retainagePercentage).toFixed(2)}% retainage`
+          }
+        ]
+      : [])
+  ];
 
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
       <section className="space-y-10">
-        <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <DetailPageHeader
             eyebrow="Invoice Review"
             title={invoice.referenceNumber}
             description={invoiceTypeMeaning}
             backHref="/invoices"
             backLabel="Back to invoices"
-            actions={
-              <>
-                <div className="flex flex-wrap gap-2.5">
-                  {invoice.status !== "void" ? (
-                    <a
-                      href="#payment-recording"
-                      className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                    >
-                      Record payment
-                    </a>
-                  ) : null}
-                  {invoice.billingModel === "aia_progress" && progressBillingWorkspace ? (
-                    <Link
-                      href={`/progress-billing/${progressBillingWorkspace.id}`}
-                      className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
-                    >
-                      Open progress billing workspace
-                    </Link>
-                  ) : null}
-                  <Link
-                    href={`/projects/${invoice.projectId}`}
-                    className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
-                  >
-                    Open project readiness hub
-                  </Link>
-                </div>
-                <div className="flex flex-wrap gap-2.5">
-                  {renderStatusBadge(formatStatusLabel(invoice.status))}
-                  {renderStatusBadge(invoiceTypeLabel)}
-                </div>
-              </>
-            }
           />
 
           {resolvedSearchParams.error ? (
@@ -561,169 +611,61 @@ export default async function InvoiceDetailPage({
             </div>
           ) : null}
 
-          <div className="mt-10 space-y-5">
-            <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-              <section className="rounded-[1.85rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,1))] px-6 py-6">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-brand-700">
-                  Invoice identity
-                </p>
-                <div className="mt-4 space-y-3">
-                  <div className="flex flex-wrap items-center gap-3">
-                    {renderStatusBadge(formatStatusLabel(invoice.status))}
-                    {renderStatusBadge(invoiceTypeLabel)}
-                  </div>
-                  <div>
-                    <p className="text-[1.85rem] font-semibold tracking-tight text-slate-950">
-                      {invoiceTypeLabel}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{invoiceTypeMeaning}</p>
-                  </div>
-                  <p className="text-[2rem] font-semibold tracking-tight text-slate-950">
-                    {formatMoney(invoice.balanceDueAmount)}
-                  </p>
-                  <p className="text-sm leading-6 text-slate-600">
-                    {formatMoney(invoice.paidAmount)} paid of {formatMoney(invoice.totalAmount)} total
-                    {" "}with due date {formatDate(invoice.dueDate)}
-                  </p>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/85 px-4 py-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                      Current billing state
-                    </p>
-                    <p className="mt-2 text-sm font-semibold capitalize text-slate-950">
-                      {formatStatusLabel(invoice.status)}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                      {getCustomerPaymentProgressSummary({
-                        workflowRole: invoice.workflowRole,
-                        invoiceStatus: invoice.status,
-                        balanceDueAmount: invoice.balanceDueAmount,
-                        latestPaymentEventType: latestPaymentEvent?.eventType ?? null
-                      })}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                      {activePayments.length} payment
-                      {activePayments.length === 1 ? "" : "s"} recorded
-                    </p>
-                  </div>
-                </div>
-              </section>
+          <div className="mt-6 space-y-3">
+            <ActionBar
+              title={nextAction.title}
+              description={nextAction.description}
+              statusLabel={`${formatStatusLabel(invoice.status)} invoice`}
+              statusTone={getInvoiceActionBarStatusTone(invoice.status)}
+              nextActionLabel="Preferred next action"
+              primaryAction={
+                nextAction.primaryLabel && nextAction.primaryHref ? (
+                  nextAction.primaryHref.startsWith("#") ? (
+                    <a
+                      href={nextAction.primaryHref}
+                      className="inline-flex items-center rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                    >
+                      {nextAction.primaryLabel}
+                    </a>
+                  ) : (
+                    <Link
+                      href={nextAction.primaryHref}
+                      className="inline-flex items-center rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                    >
+                      {nextAction.primaryLabel}
+                    </Link>
+                  )
+                ) : null
+              }
+              secondaryActions={
+                <>
+                  {invoice.billingModel === "aia_progress" && progressBillingWorkspace ? (
+                    <Link
+                      href={`/progress-billing/${progressBillingWorkspace.id}`}
+                      className="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                    >
+                      Open progress billing workspace
+                    </Link>
+                  ) : null}
+                  <Link
+                    href={`/projects/${invoice.projectId}`}
+                    className="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                  >
+                    Open project readiness hub
+                  </Link>
+                </>
+              }
+              meta={
+                <span>
+                  {invoiceTypeLabel} | {formatMoney(invoice.paidAmount)} paid of{" "}
+                  {formatMoney(invoice.totalAmount)} total
+                </span>
+              }
+            />
 
-              <WorkspaceSummaryBand
-                className="grid gap-3 sm:grid-cols-2"
-                itemClassName="rounded-2xl border border-slate-200/80 bg-slate-50/65 px-4 py-4"
-                labelClassName="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"
-                items={[
-                  {
-                    key: "next-action",
-                    label: "Next best action",
-                    content: (
-                      <NextActionCard
-                        eyebrow="Billing guidance"
-                        title={nextAction.title}
-                        description={nextAction.description}
-                        primaryAction={
-                          nextAction.primaryLabel && nextAction.primaryHref
-                            ? nextAction.primaryHref.startsWith("#")
-                              ? (
-                                <a
-                                  href={nextAction.primaryHref}
-                                  className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                                >
-                                  {nextAction.primaryLabel}
-                                </a>
-                              )
-                              : (
-                                <Link
-                                  href={nextAction.primaryHref}
-                                  className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                                >
-                                  {nextAction.primaryLabel}
-                                </Link>
-                              )
-                            : undefined
-                        }
-                      />
-                    )
-                  },
-                  {
-                    key: "continuity",
-                    label: invoiceContinuityTitle,
-                    content: (
-                      <>
-                        <p className="text-sm font-semibold text-slate-950">
-                          {invoice.billingModel === "aia_progress"
-                            ? progressBillingWorkspace
-                              ? "Linked back to the canonical SOV workspace"
-                              : "Progress invoice is missing its SOV workspace link"
-                            : invoice.workflowRole === "deposit"
-                              ? "Deposit billing stays tied to project readiness"
-                              : "Standard invoice stays on the shared project billing chain"}
-                        </p>
-                        <p className="mt-1 text-sm text-slate-600">
-                          {invoice.billingModel === "aia_progress"
-                            ? progressBillingWorkspace
-                              ? `This invoice was built from ${linkedProgressItems.length || invoice.lineItems.length} linked scope item${linkedProgressItems.length === 1 || (linkedProgressItems.length === 0 && invoice.lineItems.length === 1) ? "" : "s"}. Structural billing updates belong in progress billing, not here.`
-                              : "This invoice is marked as progress-billed, but the linked schedule-of-values workspace could not be loaded from the current estimate chain."
-                            : invoice.workflowRole === "deposit"
-                              ? "Use this invoice to track deposit collection while keeping the broader contract and readiness handoff in the project workspace."
-                              : "Use this invoice as the billing review surface while the project hub keeps the broader contract, schedule, and execution context."}
-                        </p>
-                        <div className="mt-3">
-                          <Link
-                            href={continuityHref}
-                            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
-                          >
-                            {continuityLabel}
-                          </Link>
-                        </div>
-                      </>
-                    )
-                  },
-                  {
-                    key: "collections",
-                    label: "Payment and collections",
-                    content: (
-                      <>
-                        <p className="text-sm font-semibold text-slate-950">
-                          {onlinePaymentGate.canStartCheckout
-                            ? "Ready for online payment"
-                            : Number(invoice.balanceDueAmount) > 0
-                              ? "Collections follow-through still needed"
-                              : "Billing settled"}
-                        </p>
-                        <p className="mt-1 text-sm text-slate-600">
-                          {getOnlinePaymentReadinessSummary({
-                            canStartCheckout: onlinePaymentGate.canStartCheckout,
-                            invoiceStatus: invoice.status,
-                            balanceDueAmount: invoice.balanceDueAmount
-                          })}
-                        </p>
-                      </>
-                    )
-                  },
-                  {
-                    key: "recent-signal",
-                    label: "Recent shared billing signal",
-                    content: (
-                      <>
-                        <p className="text-sm font-semibold text-slate-950">
-                          {latestPaymentEvent
-                            ? getPaymentEventLabel(latestPaymentEvent.eventType)
-                            : "No recent customer-facing signal"}
-                        </p>
-                        <p className="mt-1 text-sm text-slate-600">
-                          {getRecentPaymentSignal({
-                            latestPayment,
-                            latestEvent: latestPaymentEvent
-                          })}
-                        </p>
-                      </>
-                    )
-                  }
-                ]}
-              />
-            </div>
+            <WorkflowBar title="Billing workflow" steps={invoiceWorkflowSteps} />
 
+            <ProjectStateSummary title="Invoice state summary" items={invoiceStateItems} />
           </div>
         </div>
 
@@ -739,96 +681,6 @@ export default async function InvoiceDetailPage({
         >
           <div className="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
             <div className="space-y-6">
-              <section className="space-y-3">
-                <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5">
-                  <p className="text-sm font-medium text-slate-950">{invoiceContinuityTitle}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {invoice.billingModel === "aia_progress"
-                      ? "This invoice is a read-only billing snapshot of current SOV state. Keep structural percent-complete, retainage, and scope billing changes in the progress billing workspace."
-                      : invoice.workflowRole === "deposit"
-                        ? "This invoice carries deposit collection on the same canonical project and payment chain. Keep contract, readiness, and downstream execution review in the project workspace."
-                        : "This invoice remains part of the shared estimate, project, and payment chain. Use it for billing review without replacing the project workspace as the operational root."}
-                  </p>
-                  <div className="mt-4 flex flex-wrap gap-2.5">
-                    <Link
-                      href={continuityHref}
-                      className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                    >
-                      {continuityLabel}
-                    </Link>
-                    {invoice.project ? (
-                      <Link
-                        href={`/projects/${invoice.project.id}`}
-                        className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
-                      >
-                        Open project workspace
-                      </Link>
-                    ) : null}
-                  </div>
-                </div>
-
-                {invoice.billingModel === "aia_progress" ? (
-                  progressBillingWorkspace ? (
-                    <div className="rounded-2xl border border-[#eadfce] bg-[#fbf5ee] px-5 py-5">
-                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium text-[#473729]">
-                            Linked progress billing snapshot
-                          </p>
-                          <p className="text-sm leading-6 text-[#665446]">
-                            This page summarizes the invoice outcome. The canonical SOV workspace remains the place to adjust billed percent, retainage, and scope-item billing.
-                          </p>
-                        </div>
-                        <span className="inline-flex rounded-full border border-[#d9c7b1] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#665446]">
-                          {linkedProgressItems.length || invoice.lineItems.length} linked item
-                          {linkedProgressItems.length === 1 || (linkedProgressItems.length === 0 && invoice.lineItems.length === 1)
-                            ? ""
-                            : "s"}
-                        </span>
-                      </div>
-                      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                        <div className="rounded-2xl border border-[#d9c7b1] bg-white/80 px-4 py-4">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8b735f]">
-                            Previously billed
-                          </p>
-                          <p className="mt-2 text-sm font-semibold text-[#473729]">
-                            {formatMoney(linkedProgressSummary.previousBilled)}
-                          </p>
-                        </div>
-                        <div className="rounded-2xl border border-[#d9c7b1] bg-white/80 px-4 py-4">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8b735f]">
-                            Current billed
-                          </p>
-                          <p className="mt-2 text-sm font-semibold text-[#473729]">
-                            {formatMoney(linkedProgressSummary.currentBilling)}
-                          </p>
-                        </div>
-                        <div className="rounded-2xl border border-[#d9c7b1] bg-white/80 px-4 py-4">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8b735f]">
-                            Retainage held
-                          </p>
-                          <p className="mt-2 text-sm font-semibold text-[#473729]">
-                            {formatMoney(linkedProgressSummary.retainageHeld)}
-                          </p>
-                        </div>
-                        <div className="rounded-2xl border border-[#d9c7b1] bg-white/80 px-4 py-4">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8b735f]">
-                            Balance to finish
-                          </p>
-                          <p className="mt-2 text-sm font-semibold text-[#473729]">
-                            {formatMoney(linkedProgressSummary.balanceToFinish)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
-                      This invoice is marked as progress-billed, but the linked progress billing workspace could not be resolved from the current estimate chain.
-                    </div>
-                  )
-                ) : null}
-              </section>
-
               <section className="space-y-4">
                 <div>
                   <p className="text-sm font-medium text-slate-950">Line items</p>
@@ -860,7 +712,7 @@ export default async function InvoiceDetailPage({
                               {Number(lineItem.quantity).toLocaleString("en-US")} {lineItem.unit} at{" "}
                               {formatMoney(lineItem.unitPrice)}
                             </p>
-                            <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand-700">
+                            <p className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">
                               {getInvoiceLineageBadge({
                                 lineageType: lineItem.lineageType,
                                 invoiceOnlyAdjustmentKind: lineItem.invoiceOnlyAdjustmentKind
@@ -879,6 +731,96 @@ export default async function InvoiceDetailPage({
                     No line items are currently attached to this invoice.
                   </div>
                 )}
+              </section>
+
+              <section className="space-y-3">
+                <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5">
+                  <p className="text-sm font-medium text-slate-950">{invoiceContinuityTitle}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {invoice.billingModel === "aia_progress"
+                      ? "This invoice is a read-only billing snapshot of current SOV state. Keep structural percent-complete, retainage, and scope billing changes in the progress billing workspace."
+                      : invoice.workflowRole === "deposit"
+                        ? "This invoice carries deposit collection on the same canonical project and payment chain. Keep contract, readiness, and downstream execution review in the project workspace."
+                        : "This invoice remains part of the shared estimate, project, and payment chain. Use it for billing review without replacing the project workspace as the operational root."}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2.5">
+                    <Link
+                      href={continuityHref}
+                      className="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                    >
+                      {continuityLabel}
+                    </Link>
+                    {invoice.project ? (
+                      <Link
+                        href={`/projects/${invoice.project.id}`}
+                        className="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                      >
+                        Open project workspace
+                      </Link>
+                    ) : null}
+                  </div>
+                </div>
+
+                {invoice.billingModel === "aia_progress" ? (
+                  progressBillingWorkspace ? (
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-slate-950">
+                            Linked progress billing snapshot
+                          </p>
+                          <p className="text-sm leading-6 text-slate-600">
+                            This page summarizes the invoice outcome. The canonical SOV workspace remains the place to adjust billed percent, retainage, and scope-item billing.
+                          </p>
+                        </div>
+                        <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                          {linkedProgressItems.length || invoice.lineItems.length} linked item
+                          {linkedProgressItems.length === 1 || (linkedProgressItems.length === 0 && invoice.lineItems.length === 1)
+                            ? ""
+                            : "s"}
+                        </span>
+                      </div>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                            Previously billed
+                          </p>
+                          <p className="mt-2 text-sm font-semibold text-slate-950">
+                            {formatMoney(linkedProgressSummary.previousBilled)}
+                          </p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                            Current billed
+                          </p>
+                          <p className="mt-2 text-sm font-semibold text-slate-950">
+                            {formatMoney(linkedProgressSummary.currentBilling)}
+                          </p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                            Retainage held
+                          </p>
+                          <p className="mt-2 text-sm font-semibold text-slate-950">
+                            {formatMoney(linkedProgressSummary.retainageHeld)}
+                          </p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                            Balance to finish
+                          </p>
+                          <p className="mt-2 text-sm font-semibold text-slate-950">
+                            {formatMoney(linkedProgressSummary.balanceToFinish)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
+                      This invoice is marked as progress-billed, but the linked progress billing workspace could not be resolved from the current estimate chain.
+                    </div>
+                  )
+                ) : null}
               </section>
 
               <section className="grid gap-6 lg:grid-cols-2">
@@ -928,8 +870,8 @@ export default async function InvoiceDetailPage({
               <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
                 <p className="text-sm font-medium text-slate-950">
                   {invoice.billingModel === "aia_progress"
-                    ? "Billing totals and retainage snapshot"
-                    : "Totals and billing math"}
+                    ? "Detailed SOV billing math"
+                    : "Detailed billing math"}
                 </p>
                 <dl className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
                   <div className="flex items-center justify-between gap-4">
@@ -1049,8 +991,12 @@ export default async function InvoiceDetailPage({
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <DetailPanel
-            title="Payment Recording"
-            description="Record canonical payments here while keeping customer-facing checkout signals in view."
+            title={invoiceIsSettled ? "Payment Activity" : "Payment Recording"}
+            description={
+              invoiceIsSettled
+                ? "Review canonical payment activity and settled balance without prompting another collection step."
+                : "Record canonical payments here while keeping customer-facing checkout signals in view."
+            }
           >
             <div id="payment-recording" className="space-y-4">
               <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5">
@@ -1063,7 +1009,11 @@ export default async function InvoiceDetailPage({
                       Readiness
                     </p>
                     <p className="mt-2 font-semibold text-slate-950">
-                      {onlinePaymentGate.canStartCheckout ? "Ready for online payment" : "Not ready"}
+                      {invoiceIsSettled
+                        ? "Payment settled"
+                        : onlinePaymentGate.canStartCheckout
+                          ? "Ready for online payment"
+                          : "Not ready"}
                     </p>
                     <p className="mt-2">
                       {getOnlinePaymentReadinessSummary({
@@ -1128,6 +1078,10 @@ export default async function InvoiceDetailPage({
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
                   Void invoices do not accept recorded payments.
                 </div>
+              ) : invoiceIsSettled ? (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-900">
+                  This invoice is fully paid. No additional payment recording is needed while the balance remains settled.
+                </div>
               ) : (
                 <InvoicePaymentForm
                   invoiceId={invoice.id}
@@ -1164,61 +1118,63 @@ export default async function InvoiceDetailPage({
             </div>
           </DetailPanel>
 
-          <DetailPanel
-            title={
-              invoice.billingModel === "aia_progress"
-                ? "Progress Billing Source"
-                : "Edit Invoice"
-            }
-            description={
-              invoice.billingModel === "aia_progress"
-                ? "This invoice was built from the canonical schedule-of-values workspace, so scope-line billing should be managed there instead of through ad hoc invoice editing."
-                : "Editing stays available from the same record, but it is intentionally secondary to billing review."
-            }
-          >
-            {invoice.billingModel === "aia_progress" ? (
-              <div className="space-y-4">
-                <div className="rounded-2xl border border-[#eadfce] bg-[#fbf5ee] px-5 py-4 text-sm leading-6 text-[#665446]">
-                  Progress-billed invoice lines stay tied to approved scope through the
-                  shared schedule-of-values record. Update percent complete and rebuild the
-                  draft invoice from the progress billing workspace instead of editing those
-                  lines here.
+          <div id="invoice-editing">
+            <DetailPanel
+              title={
+                invoice.billingModel === "aia_progress"
+                  ? "Progress Billing Source"
+                  : "Edit Invoice"
+              }
+              description={
+                invoice.billingModel === "aia_progress"
+                  ? "This invoice was built from the canonical schedule-of-values workspace, so scope-line billing should be managed there instead of through ad hoc invoice editing."
+                  : "Editing stays available from the same record, but it is intentionally secondary to billing review."
+              }
+            >
+              {invoice.billingModel === "aia_progress" ? (
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">
+                    Progress-billed invoice lines stay tied to approved scope through the
+                    shared schedule-of-values record. Update percent complete and rebuild the
+                    draft invoice from the progress billing workspace instead of editing those
+                    lines here.
+                  </div>
+                  {progressBillingWorkspace ? (
+                    <Link
+                      href={`/progress-billing/${progressBillingWorkspace.id}`}
+                      className="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                    >
+                      Open progress billing workspace
+                    </Link>
+                  ) : null}
                 </div>
-                {progressBillingWorkspace ? (
-                  <Link
-                    href={`/progress-billing/${progressBillingWorkspace.id}`}
-                    className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                  >
-                    Open progress billing workspace
-                  </Link>
-                ) : null}
-              </div>
-            ) : (
-              <InvoiceForm
-                action={updateInvoiceAction}
-                submitLabel="Save invoice"
-                pendingLabel="Saving invoice..."
-                projects={projectOptions}
-                estimates={approvedEstimateOptions}
-                jobs={jobOptions}
-                organizationFinancialSettings={financialSettings}
-                invoice={{
-                  ...invoice,
-                  lineItems: invoice.lineItems,
-                  paidAmount: invoice.paidAmount
-                }}
-                paidAmount={invoice.paidAmount}
-                sourceOptions={sourceOptions}
-                catalogItems={catalogItems.map((item) => ({
-                  id: item.id,
-                  name: item.name,
-                  unit: item.unit,
-                  defaultUnitPrice: item.defaultUnitPrice,
-                  status: item.status
-                }))}
-              />
-            )}
-          </DetailPanel>
+              ) : (
+                <InvoiceForm
+                  action={updateInvoiceAction}
+                  submitLabel="Save invoice"
+                  pendingLabel="Saving invoice..."
+                  projects={projectOptions}
+                  estimates={approvedEstimateOptions}
+                  jobs={jobOptions}
+                  organizationFinancialSettings={financialSettings}
+                  invoice={{
+                    ...invoice,
+                    lineItems: invoice.lineItems,
+                    paidAmount: invoice.paidAmount
+                  }}
+                  paidAmount={invoice.paidAmount}
+                  sourceOptions={sourceOptions}
+                  catalogItems={catalogItems.map((item) => ({
+                    id: item.id,
+                    name: item.name,
+                    unit: item.unit,
+                    defaultUnitPrice: item.defaultUnitPrice,
+                    status: item.status
+                  }))}
+                />
+              )}
+            </DetailPanel>
+          </div>
         </div>
       </section>
 

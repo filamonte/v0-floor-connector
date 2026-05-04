@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AppEmptyState } from "@/components/app-empty-state";
@@ -6,6 +5,14 @@ import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { NextActionCard } from "@/components/next-action-card";
+import {
+  PortalSecondaryLink,
+  PortalStatusBadge,
+  portalHeroPanelClassName,
+  portalInsetPanelClassName,
+  portalReviewCardClassName,
+  portalStatePanelClassName
+} from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import {
   getPortalProjectDetailSummary,
@@ -270,7 +277,7 @@ function RecordSummaryCard({
   href?: string;
 }) {
   return (
-    <div className="rounded-[1.5rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.94),rgba(255,255,255,0.98))] px-5 py-4">
+    <div className={portalReviewCardClassName}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -279,19 +286,16 @@ function RecordSummaryCard({
           <h3 className="mt-2 text-base font-semibold text-slate-950">{title}</h3>
           <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
         </div>
-        <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+        <PortalStatusBadge status={badge}>
           {badge}
-        </span>
+        </PortalStatusBadge>
       </div>
       <p className="mt-3 text-sm leading-6 text-slate-500">{meta}</p>
       {href ? (
         <div className="mt-4">
-          <Link
-            href={href}
-            className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-          >
+          <PortalSecondaryLink href={href}>
             Review record
-          </Link>
+          </PortalSecondaryLink>
         </div>
       ) : null}
     </div>
@@ -331,7 +335,7 @@ export default async function PortalProjectDetailPage({
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
       <section className="space-y-10">
-        <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+        <div className={portalHeroPanelClassName}>
           <DetailPageHeader
             eyebrow="Shared Project Workspace"
             title={project.name}
@@ -339,34 +343,34 @@ export default async function PortalProjectDetailPage({
             backHref="/portal"
             backLabel="Back to portal home"
             actions={
-              <span className="inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium capitalize text-slate-700">
+              <PortalStatusBadge status={project.status ?? "neutral"} className="px-4 py-2 text-sm">
                 {formatStatusLabel(project.status)}
-              </span>
+              </PortalStatusBadge>
             }
           />
 
           <div className="mt-10 space-y-5">
             <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
-              <section className="rounded-[1.85rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,1))] px-6 py-6">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-brand-700">
+              <section className={portalStatePanelClassName}>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
                   Current project state
                 </p>
                 <div className="mt-4 space-y-3">
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="inline-flex rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium capitalize text-slate-700">
+                    <PortalStatusBadge status={project.status ?? "neutral"} className="px-3.5 py-1.5 text-sm">
                       {formatStatusLabel(project.status)}
-                    </span>
+                    </PortalStatusBadge>
                     {project.latestInvoiceStatus ? (
-                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-600">
+                      <PortalStatusBadge status={project.latestInvoiceStatus} className="px-3.5 py-1.5 text-sm">
                         {formatStatusLabel(project.latestInvoiceStatus)}
-                      </span>
+                      </PortalStatusBadge>
                     ) : null}
                   </div>
                   <p className="text-lg font-semibold tracking-tight text-slate-950">
                     {nextAction.title}
                   </p>
                   <p className="text-sm leading-6 text-slate-600">{nextAction.description}</p>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/85 px-4 py-4">
+                  <div className={portalInsetPanelClassName}>
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                       Shared workflow
                     </p>
@@ -615,12 +619,9 @@ export default async function PortalProjectDetailPage({
             <p>
               Contract signing and invoice payment progress feed back into this project workspace, so the next shared step changes here as the workflow moves.
             </p>
-            <Link
-              href="/portal"
-              className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-            >
+            <PortalSecondaryLink href="/portal">
               Return to portal home
-            </Link>
+            </PortalSecondaryLink>
           </div>
         </DetailPanel>
       </aside>

@@ -5,6 +5,14 @@ import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { NextActionCard } from "@/components/next-action-card";
+import {
+  PortalSecondaryLink,
+  PortalStatusBadge,
+  portalActionBoxClassName,
+  portalDocumentPanelClassName,
+  portalHeroPanelClassName,
+  portalStatePanelClassName
+} from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import {
   customerApproveChangeOrderAction,
@@ -112,7 +120,7 @@ export default async function PortalChangeOrderReviewPage({
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
       <section className="space-y-10">
-        <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+        <div className={portalHeroPanelClassName}>
           <DetailPageHeader
             eyebrow="Change Order Review"
             title={changeOrder.title}
@@ -120,9 +128,9 @@ export default async function PortalChangeOrderReviewPage({
             backHref={`/portal/projects/${changeOrder.projectId}`}
             backLabel="Back to project workspace"
             actions={
-              <span className="inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium capitalize text-slate-700">
+              <PortalStatusBadge status={changeOrder.status} className="px-4 py-2 text-sm">
                 {formatStatusLabel(changeOrder.status)}
-              </span>
+              </PortalStatusBadge>
             }
           />
 
@@ -140,8 +148,8 @@ export default async function PortalChangeOrderReviewPage({
 
           <div className="mt-10 space-y-5">
             <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
-              <section className="rounded-[1.85rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,1))] px-6 py-6">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-brand-700">
+              <section className={portalStatePanelClassName}>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
                   Scope change
                 </p>
                 <div className="mt-4 space-y-3">
@@ -149,9 +157,9 @@ export default async function PortalChangeOrderReviewPage({
                     <span className="inline-flex rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-700">
                       {formatMoney(changeOrder.priceAdjustment)}
                     </span>
-                    <span className="inline-flex rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium capitalize text-slate-700">
+                    <PortalStatusBadge status={changeOrder.status} className="px-3.5 py-1.5 text-sm">
                       {formatStatusLabel(changeOrder.status)}
-                    </span>
+                    </PortalStatusBadge>
                   </div>
                   <p className="text-lg font-semibold tracking-tight text-slate-950">
                     {changeOrder.scopeChangeNotes?.trim() ||
@@ -180,12 +188,9 @@ export default async function PortalChangeOrderReviewPage({
                         title={nextAction.title}
                         description={nextAction.description}
                         primaryAction={
-                          <Link
-                            href={nextAction.href}
-                            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
-                          >
+                          <PortalSecondaryLink href={nextAction.href}>
                             {nextAction.label}
-                          </Link>
+                          </PortalSecondaryLink>
                         }
                       />
                     )
@@ -220,7 +225,7 @@ export default async function PortalChangeOrderReviewPage({
               </div>
             ) : null}
 
-            <article className="rounded-3xl border border-slate-200 bg-slate-50/50 px-6 py-6 whitespace-pre-wrap text-sm leading-7 text-slate-700">
+            <article className={`${portalDocumentPanelClassName} whitespace-pre-wrap text-sm leading-7 text-slate-700`}>
               {changeOrder.scopeChangeNotes?.trim() ||
                 "No additional scope notes were captured on this change order."}
             </article>
@@ -235,7 +240,7 @@ export default async function PortalChangeOrderReviewPage({
         >
           <div className="space-y-4 text-sm leading-6 text-slate-600">
             {changeOrder.status === "sent" ? (
-              <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
+              <div className={portalActionBoxClassName}>
                 <form action={customerApproveChangeOrderAction} className="space-y-3">
                   <input type="hidden" name="changeOrderId" value={changeOrder.id} />
                   <label className="block space-y-2">

@@ -18,6 +18,7 @@ Use these docs together:
 - [docs/estimate-builder-v1-scope.md](C:/FloorConnector/docs/estimate-builder-v1-scope.md): constrained Estimate Builder V1 scope
 - [docs/estimate-builder-system-generation-spec.md](C:/FloorConnector/docs/estimate-builder-system-generation-spec.md): future system-generation planning detail
 - [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): future/planned UI, directory/contact, tax, Estimate Editoror, project-address, and workflow-guidance alignment backlog
+- [docs/ui-patterns.md](C:/FloorConnector/docs/ui-patterns.md): implemented decision-first UI patterns for contractor workspaces, Manager Pages, status color semantics, and portal/super-admin differences
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
 - [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md): mandatory UI and module implementation rules
 
@@ -175,7 +176,11 @@ Current shell behavior:
   - routes into real downstream workspaces instead of introducing duplicate business records
 - shared detail-page/workspace pattern is now implemented across the main contractor record pages:
   - project detail is the reference workflow and readiness hub
+  - project, estimate, contract, invoice, and job detail use the decision-first top stack: a truthful `ActionBar`, a conservative `WorkflowBar` where applicable, and a compact state summary before lower-priority detail panels
   - estimate, contract, invoice, and job detail now broadly follow the same shared page language and point back to the project hub when broader handoff state matters
+  - contract detail distinguishes draft, sent/awaiting, partially signed, signed/completed, declined, and void states without showing green completion before the contract is fully signed
+  - invoice detail treats billing review, balance due, and payment recording as the primary story while keeping line items and payment activity visible
+  - job detail treats schedule, crew, status, and project execution state as the primary story while keeping daily logs, time, field, invoice, and support links visible but secondary
   - remaining UI issues are now iterative polish items rather than structural layout breaks
 - first-login onboarding readiness has been polished without adding schema or new workflow logic:
   - dashboard now shows a lightweight `Start here` setup guide until settings, the first customer, the first project, and the first estimate are present
@@ -191,11 +196,13 @@ Implemented contractor UI direction now includes:
 - thinner command/search strips beneath page identity on Manager Page surfaces
 - dashboard as a denser and more curated operational command-center surface with modular queue widgets, stronger Quick-Create entry, and continuity back into shared records instead of a loose summary page
 - dashboard validation polish now promotes canonical attention items, open estimates, unpaid invoices, upcoming appointments, leads, active projects, and today/live jobs near the top of the home board without introducing fake dashboard data
+- dashboard now has smoke-tested PriorityStrip coverage for the decision-first attention area
 - early module-dashboard direction on top of the same shared Manager Page system, with estimates and invoices now reading more like operational entry surfaces than plain lists
 - Manager Pages built around:
   - page identity
   - command bar
   - overview/list workspace
+- Projects, Estimates, Invoices, Jobs, Contracts, and Customers Manager Pages now use more uniform list/card hierarchy, semantic status badges, clearer primary create actions, and light next-action or continuity cues derived only from existing loaded data
 - shared composer-sheet pattern for create flows on the main contractor Manager Pages instead of permanently open create forms
 - Quick-Create overlays are now the default contractor manager create behavior where appropriate:
   - collect minimum required fields only
@@ -222,9 +229,14 @@ Current contractor UI design notes:
   - shared overview/detail typography and surface treatment
 - the active contractor-app theme direction is now:
   - black or near-black framing where framing helps
-  - orange for actions, emphasis, and UI identity
+  - orange reserved for primary CTAs and intentional action emphasis, not passive status or decorative card chrome
+  - semantic status colors through shared helpers: gray for neutral/draft/not-started, blue for active/current/in-progress, amber/yellow for waiting or needs-action states, red for blocked/error/failed, and green only for complete/approved/paid/signed states
   - white or light-neutral surfaces for primary reading and work areas
   - tighter, more practical spacing and typography across manager screens
+- customer portal and super-admin surfaces received only safe visual consistency cleanup after the contractor system stabilized:
+  - portal keeps customer-review simplicity and does not copy contractor ActionBar/WorkflowBar patterns wholesale
+  - super-admin keeps slate/black administrative CTA hierarchy rather than contractor orange primary actions
+  - both surfaces use calmer card/border/status treatment where safe without changing auth, access, permissions, loaders, routes, schema, backend, RLS, or workflow logic
 - the contractor header is now also the shared home for global record search, so search should be treated as shell-level continuity into canonical records rather than as a dashboard-only or module-local widget
 - overview pages should read as operational manager screens rather than dense admin tables or stacked forms
 - deeper record pages may still use contextual side navigation where it helps, but overview navigation should remain top-nav-first
@@ -1486,31 +1498,27 @@ Future-looking note:
 - no manual measurement-driven estimate generation, full System Template estimate generation, System Template sharing, dedicated Templates & Systems admin module, add-on/option management workflow, on-screen takeoff, AI Capture, AI takeoff, plan measurement, takeoff-to-cost-item mapping, source traceability, out-of-sync review state, or automated estimate generation exists today.
 - future takeoff must stay separate from implemented truth: Measurements are manual quantity inputs; Takeoff means plan/PDF/drawing-based measurement; AI Capture is a future photo/app/AI-derived input method. Takeoff and measurements would produce quantities, catalog/cost items would define reusable cost, pricing, production, markup, and tax behavior, System Templates would map quantities to grouped estimate content, and estimates would define customer-facing pricing and commercial scope.
 
-## UI DIRECTION UPDATE (LATEST)
+## UI Direction Update (Latest)
 
-The system is functionally correct but has UI clarity gaps.
+The decision-first contractor UI refactor is implemented across the main contractor dashboard, Manager Pages, and core Record Workspaces.
 
-### Identified Issues:
-- Header navigation overcrowding
-- Project detail lacks strong contextual navigation
-- Estimate creation context is now implemented: project-launched estimates pre-populate and lock the project and derived customer, global estimate creation requires customer plus existing-or-new project selection, and validation redirects preserve entered values
-- Financial readiness not clearly surfaced
+Implemented UI behavior now:
+- Project remains the primary workflow and readiness hub.
+- Dashboard emphasizes high-signal priorities before passive metrics.
+- Project, Estimate, Contract, Invoice, and Job Workspaces lead with next-action and workflow-state context before supporting panels.
+- Projects, Estimates, Invoices, Jobs, Contracts, and Customers Manager Pages use the shared Manager Page rhythm with clearer status scanning, primary create actions, and compact continuity cues.
+- Portal and super-admin received only safe consistency cleanup; they do not copy contractor operational patterns wholesale.
 
-### Direction:
-- Project becomes primary working surface
-- Navigation becomes clearer and contextual
-- Creation flows respect origin context
-- Financial and readiness states are grouped logically
-
-### Context-aware creation:
+Context-aware creation remains unchanged:
 - Project context: downstream records are auto-linked to the project and derived customer.
 - Customer context: the customer is prefilled, and a project must be selected or created.
 - Global context: both customer and project must be selected explicitly.
 - Applies to estimates, jobs, contracts, and invoices.
 
-### Constraints:
-- No changes to data model
-- No workflow changes
-- No calculation changes
+Constraints preserved:
+- No changes to data model.
+- No workflow changes.
+- No calculation changes.
+- No auth, RLS, route, server-action, or backend behavior changes.
 
-This is a UI/UX clarity evolution only
+For implementation guidance on the current UI baseline, use [docs/ui-patterns.md](C:/FloorConnector/docs/ui-patterns.md).

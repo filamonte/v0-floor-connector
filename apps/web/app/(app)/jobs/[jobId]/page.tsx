@@ -6,12 +6,10 @@ import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
-import { NextActionCard } from "@/components/next-action-card";
 import {
   SaveStateForm,
   SaveStateSubmitButton
 } from "@/components/save-feedback/save-state-form";
-import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { listDailyLogsByProject } from "@/lib/daily-logs/data";
 import { getEstimateById } from "@/lib/estimates/data";
 import { listInvoices } from "@/lib/invoices/data";
@@ -27,6 +25,13 @@ import { listPeople } from "@/lib/people/data";
 import { listPunchlistItemsByJob } from "@/lib/punchlists/data";
 import { listOpenTimeCardStates, listTimeCardsByJob } from "@/lib/time/data";
 import { listVendors } from "@/lib/vendors/data";
+import {
+  ActionBar,
+  PrimarySection,
+  ProjectStateSummary,
+  WorkflowBar
+} from "@floorconnector/ui";
+import type { ProjectStateSummaryProps, WorkflowStep } from "@floorconnector/ui";
 
 type JobDetailPageProps = {
   params: Promise<{
@@ -72,19 +77,67 @@ function formatDuration(minutes: number) {
   return `${hours}h ${remainingMinutes}m`;
 }
 
-function getStatusClasses(status: string) {
+function getActionBarStatusTone(status: string): "neutral" | "warning" | "success" {
   switch (status) {
-    case "scheduled":
-      return "border-[#d6d6d6] bg-[#f8f8f8] text-[#2a2a2a]";
-    case "in_progress":
-      return "border-[#ef7d32] bg-[#fff4ec] text-[#8b4a18]";
     case "completed":
-      return "border-emerald-200 bg-emerald-50 text-emerald-900";
+      return "success";
+    case "in_progress":
+      return "neutral";
     case "unscheduled":
-      return "border-amber-200 bg-amber-50 text-amber-900";
+      return "warning";
     default:
-      return "border-slate-200 bg-slate-50 text-slate-700";
+      return "neutral";
   }
+}
+
+function getExecutionWorkflowSteps(
+  job: {
+    dispatchStatus: string;
+    scheduledDate: string | null;
+    project: { name: string } | null;
+  },
+  assignmentCount: number
+): WorkflowStep[] {
+  const isScheduled = job.dispatchStatus !== "unscheduled";
+  const hasCrew = assignmentCount > 0;
+  const isStarted =
+    job.dispatchStatus === "in_progress" || job.dispatchStatus === "completed";
+  const isCompleted = job.dispatchStatus === "completed";
+
+  return [
+    {
+      id: "project",
+      label: "Project",
+      state: "complete",
+      description: job.project?.name ?? "Project link is present"
+    },
+    {
+      id: "schedule",
+      label: "Schedule",
+      state: isScheduled ? "complete" : "current",
+      description: isScheduled
+        ? formatScheduledDate(job.scheduledDate)
+        : "Commit a work date or timing"
+    },
+    {
+      id: "crew",
+      label: "Crew",
+      state: hasCrew ? "complete" : isScheduled ? "current" : "upcoming",
+      description: hasCrew
+        ? `${assignmentCount} assignment${assignmentCount === 1 ? "" : "s"}`
+        : "Assign people or labor provider"
+    },
+    {
+      id: "execution",
+      label: "Execution",
+      state: isCompleted ? "complete" : isStarted ? "current" : "upcoming",
+      description: isCompleted
+        ? "Field work complete"
+        : isStarted
+          ? "Work is in progress"
+          : "Start work when ready"
+    }
+  ];
 }
 
 function renderStatusBadge(label: string) {
@@ -242,6 +295,7 @@ export default async function JobDetailPage({
   const jobDailyLogs = projectDailyLogs.filter((dailyLog) => dailyLog.jobId === job.id);
   const assignablePeople = people.filter((person) => person.isActive && person.isAssignable);
   const laborVendors = vendors.filter((vendor) => vendor.isActive && vendor.isLaborProvider);
+  const hasAssignableCrewOptions = assignablePeople.length > 0 || laborVendors.length > 0;
   const operationalBlockers = [
     job.dispatchStatus === "unscheduled" ? "schedule commitment still missing" : null,
     jobAssignments.length === 0 ? "crew assignments still missing" : null,
@@ -259,6 +313,55 @@ export default async function JobDetailPage({
   const nextActionDescription =
     primaryAction?.summary ??
     "This job already reflects its current operational handoff. Use the linked project, estimate, and invoice records for broader workflow context.";
+  const workflowSteps = getExecutionWorkflowSteps(job, jobAssignments.length);
+  const jobStateItems: ProjectStateSummaryProps["items"] = [
+    {
+      id: "schedule",
+      label: "Schedule",
+      value: formatScheduledDate(job.scheduledDate),
+      tone: job.dispatchStatus === "unscheduled" ? "needsAction" : "complete",
+      detail: job.scheduledStartAt
+        ? `${formatScheduleDateTime(job.scheduledStartAt)}${job.scheduledEndAt ? ` to ${formatScheduleDateTime(job.scheduledEndAt)}` : ""}`
+        : "No start or end time captured"
+    },
+    {
+      id: "crew",
+      label: "Crew",
+      value: `${jobAssignments.length} assignment${jobAssignments.length === 1 ? "" : "s"}`,
+      tone: jobAssignments.length > 0 ? "complete" : "needsAction",
+      detail: job.crewVendor?.name ?? "No crew vendor assigned"
+    },
+    {
+      id: "status",
+      label: "Status",
+      value: <span className="capitalize">{formatStatusLabel(job.dispatchStatus)}</span>,
+      tone:
+        job.dispatchStatus === "completed"
+          ? "complete"
+          : job.dispatchStatus === "unscheduled"
+            ? "needsAction"
+            : "active",
+      detail:
+        job.dispatchStatus === "in_progress"
+          ? "Field work is active"
+          : job.dispatchStatus === "completed"
+            ? "Ready for billing follow-through"
+            : "Execution state on the job"
+    },
+    {
+      id: "project",
+      label: "Project",
+      value: job.project ? (
+        <Link href={`/projects/${job.project.id}`}>{job.project.name}</Link>
+      ) : (
+        "Unknown project"
+      ),
+      tone: "pending",
+      detail: job.customer?.name ?? "Unknown customer"
+    }
+  ];
+  const canUpdateSchedule = job.dispatchStatus !== "completed";
+  const canUnschedule = job.dispatchStatus === "scheduled";
 
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
@@ -271,31 +374,12 @@ export default async function JobDetailPage({
             backHref="/jobs"
             backLabel="Back to jobs"
             actions={
-              <>
-                <div className="flex flex-wrap gap-3">
-                  <Link
-                    href={`/projects/${job.projectId}`}
-                    className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-                  >
-                    Open project hub
-                  </Link>
-                  {renderPrimaryAction(
-                    primaryAction,
-                    job,
-                    "inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <span
-                    className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusClasses(
-                      job.dispatchStatus
-                    )}`}
-                  >
-                    {formatStatusLabel(job.dispatchStatus)}
-                  </span>
-                  {renderStatusBadge(linkedInvoice ? "Billing linked" : "No invoice yet")}
-                </div>
-              </>
+              <Link
+                href={`/projects/${job.projectId}`}
+                className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+              >
+                Open project hub
+              </Link>
             }
           />
 
@@ -311,191 +395,68 @@ export default async function JobDetailPage({
             </div>
           ) : null}
 
-          <div className="mt-8">
-            <WorkspaceSummaryBand
-              items={[
-                {
-                  key: "review-purpose",
-                  label: "Workspace role",
-                  content: (
-                    <p>
-                      Jobs are the operational execution workspace. Keep schedule, crew, labor support, and billing handoff clear here, then return to the project hub when broader readiness context matters.
-                    </p>
-                  )
-                },
-                {
-                  key: "current-state",
-                  label: "Dispatch state",
-                  content: (
-                    <>
-                      <p className="text-sm font-semibold capitalize text-slate-950">
-                        {formatStatusLabel(job.dispatchStatus)}
-                      </p>
-                      <p className="mt-2 text-sm text-slate-600">
-                        {job.dispatchStatus === "unscheduled"
-                          ? "Operational work is ready but not yet committed to the schedule."
-                          : job.dispatchStatus === "scheduled"
-                            ? `Scheduled for ${formatScheduledDate(job.scheduledDate)}.`
-                            : job.dispatchStatus === "in_progress"
-                              ? "Field execution is actively underway."
-                              : "Field execution is complete and ready for billing follow-through."}
-                      </p>
-                    </>
-                  )
-                },
-                {
-                  key: "schedule",
-                  label: "Schedule",
-                  content: (
-                    <>
-                      <p className="text-sm font-semibold text-slate-950">
-                        {formatScheduledDate(job.scheduledDate)}
-                      </p>
-                      <p className="mt-2 text-sm text-slate-600">
-                        {job.scheduledStartAt
-                          ? `${formatScheduleDateTime(job.scheduledStartAt)}${job.scheduledEndAt ? ` to ${formatScheduleDateTime(job.scheduledEndAt)}` : ""}`
-                          : "No start or end time has been captured yet."}
-                      </p>
-                    </>
-                  )
-                },
-                {
-                  key: "blockers",
-                  label: "Operational blockers",
-                  content: (
-                    <>
-                      <p className="text-sm font-semibold text-slate-950">
-                        {operationalBlockers.length > 0 ? "Needs follow-through" : "No active blockers"}
-                      </p>
-                      <p className="mt-2 text-sm text-slate-600">
-                        {operationalBlockers.length > 0
-                          ? operationalBlockers.join(" | ")
-                          : "Schedule, crew, and downstream billing handoff are aligned with the current dispatch state."}
-                      </p>
-                    </>
-                  )
-                },
-                {
-                  key: "next-action",
-                  label: "Next best action",
-                  content: (
-                    <NextActionCard
-                      title={nextActionTitle}
-                      description={nextActionDescription}
-                      className="space-y-3 text-sm leading-6 text-slate-600"
-                    />
-                  )
-                }
-              ]}
+          <div className="mt-8 space-y-4">
+            <ActionBar
+              title={nextActionTitle}
+              description={nextActionDescription}
+              statusLabel={formatStatusLabel(job.dispatchStatus)}
+              statusTone={getActionBarStatusTone(job.dispatchStatus)}
+              nextActionLabel={
+                operationalBlockers.length > 0
+                  ? `${operationalBlockers.length} operational follow-up${operationalBlockers.length === 1 ? "" : "s"}`
+                  : "Operational record current"
+              }
+              primaryAction={
+                primaryAction
+                  ? renderPrimaryAction(
+                      primaryAction,
+                      job,
+                      "inline-flex items-center rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                    )
+                  : null
+              }
+              secondaryActions={
+                <a
+                  href="#schedule-and-crew"
+                  className="inline-flex items-center rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                >
+                  Schedule and crew
+                </a>
+              }
+              meta={
+                <>
+                  {job.customer?.name ?? "Unknown customer"} ·{" "}
+                  {job.project?.name ?? "Unknown project"}
+                </>
+              }
             />
+
+            <WorkflowBar title="Job execution workflow" steps={workflowSteps} />
+
+            <ProjectStateSummary title="Job execution state" items={jobStateItems} />
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-          <DetailPanel
-            title="Operational State"
-            description="This is the main workspace for the job itself: dispatch state, customer context, and the connected field notes that travel with the job."
-          >
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="space-y-4">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
-                  <p className="text-sm font-medium text-slate-950">Dispatch summary</p>
-                  <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
-                    <p>
-                      <span className="font-medium text-slate-950">Dispatch status:</span>{" "}
-                      <span className="capitalize">{formatStatusLabel(job.dispatchStatus)}</span>
-                    </p>
-                    <p>
-                      <span className="font-medium text-slate-950">Scheduled date:</span>{" "}
-                      {formatScheduledDate(job.scheduledDate)}
-                    </p>
-                    <p>
-                      <span className="font-medium text-slate-950">Created:</span>{" "}
-                      {new Date(job.createdAt).toLocaleString()}
-                    </p>
-                    <p>
-                      <span className="font-medium text-slate-950">Updated:</span>{" "}
-                      {new Date(job.updatedAt).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5">
-                  <p className="text-sm font-medium text-slate-950">Customer and project</p>
-                  <dl className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
-                    <div>
-                      <dt className="font-medium text-slate-950">Customer</dt>
-                      <dd>
-                        {job.customer ? (
-                          <Link
-                            href={`/customers/${job.customer.id}`}
-                            className="font-medium text-brand-700"
-                          >
-                            {job.customer.name}
-                          </Link>
-                        ) : (
-                          "Unknown customer"
-                        )}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="font-medium text-slate-950">Project</dt>
-                      <dd>
-                        {job.project ? (
-                          <Link
-                            href={`/projects/${job.project.id}`}
-                            className="font-medium text-brand-700"
-                          >
-                            {job.project.name}
-                          </Link>
-                        ) : (
-                          "Unknown project"
-                        )}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="font-medium text-slate-950">Customer company</dt>
-                      <dd>{job.customer?.companyName ?? "Not provided"}</dd>
-                    </div>
-                  </dl>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5">
-                  <p className="text-sm font-medium text-slate-950">Job notes</p>
-                  <p className="mt-4 text-sm leading-7 text-slate-600">
-                    {job.notes ?? "No job notes have been added yet."}
-                  </p>
-                </div>
-
-                {primaryAction ? (
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
-                    <p className="text-sm font-medium text-slate-950">Action guidance</p>
-                    <p className="mt-4 text-sm font-semibold text-slate-950">
-                      {primaryAction.label}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                      {primaryAction.helper}
-                    </p>
-                    <div className="mt-4">
-                      {renderPrimaryAction(
-                        primaryAction,
-                        job,
-                        "inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-                      )}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </DetailPanel>
-
-          <DetailPanel
-            title="Scheduling and Crew"
-            description="This first pass keeps scheduling and crew assignment directly on the canonical job record and its assignment rows."
-          >
+        <PrimarySection
+          title="Schedule and crew"
+          description="Set the work timing, keep the dispatch state current, and attach the people or labor-provider vendors who will execute the job."
+          className="scroll-mt-24"
+        >
+          <div id="schedule-and-crew" className="space-y-6">
             <div className="space-y-6">
+              {operationalBlockers.length > 0 ? (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
+                  <p className="text-sm font-semibold text-amber-900">
+                    Operational follow-through needed
+                  </p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-amber-900">
+                    {operationalBlockers.map((blocker) => (
+                      <li key={blocker}>{blocker}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
               <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
                 <p className="text-sm font-medium text-slate-950">Current schedule</p>
                 <dl className="mt-4 grid gap-3 sm:grid-cols-2 text-sm leading-6 text-slate-600">
@@ -522,173 +483,187 @@ export default async function JobDetailPage({
                 </dl>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5">
-                <p className="text-sm font-medium text-slate-950">Update schedule</p>
-                <SaveStateForm
-                  action={scheduleJobAction}
-                  pendingLabel="Saving..."
-                  className="mt-4 space-y-4"
-                >
-                  <input type="hidden" name="jobId" value={job.id} />
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <label className="block">
-                      <span className="mb-2 block text-sm font-medium text-slate-800">
-                        Scheduled date
-                      </span>
-                      <input
-                        type="date"
-                        name="scheduledDate"
-                        defaultValue={job.scheduledDate ?? ""}
-                        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
-                      />
-                    </label>
-
-                    <label className="block">
-                      <span className="mb-2 block text-sm font-medium text-slate-800">
-                        Scheduled start
-                      </span>
-                      <input
-                        type="datetime-local"
-                        name="scheduledStartAt"
-                        defaultValue={job.scheduledStartAt ? job.scheduledStartAt.slice(0, 16) : ""}
-                        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
-                      />
-                    </label>
-
-                    <label className="block md:col-span-2">
-                      <span className="mb-2 block text-sm font-medium text-slate-800">
-                        Scheduled end
-                      </span>
-                      <input
-                        type="datetime-local"
-                        name="scheduledEndAt"
-                        defaultValue={job.scheduledEndAt ? job.scheduledEndAt.slice(0, 16) : ""}
-                        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
-                      />
-                    </label>
-                  </div>
-
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-medium text-slate-800">
-                      Schedule notes
-                    </span>
-                    <textarea
-                      name="scheduleNotes"
-                      defaultValue={job.scheduleNotes ?? ""}
-                      rows={4}
-                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
-                      placeholder="Access notes, sequencing reminders, or day-of-job details"
-                    />
-                  </label>
-
-                  <div className="flex flex-wrap gap-3">
-                    <SaveStateSubmitButton
-                      submitLabel="Save schedule"
-                      pendingLabel="Saving..."
-                      className="rounded-full"
-                    />
-                  </div>
-                </SaveStateForm>
-
-                <form action={unscheduleJobAction} className="mt-3">
-                  <input type="hidden" name="jobId" value={job.id} />
-                  <button
-                    type="submit"
-                    className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+              {canUpdateSchedule ? (
+                <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5">
+                  <p className="text-sm font-medium text-slate-950">
+                    {job.dispatchStatus === "unscheduled" ? "Set schedule" : "Update schedule"}
+                  </p>
+                  <SaveStateForm
+                    action={scheduleJobAction}
+                    enabled={job.dispatchStatus !== "unscheduled"}
+                    pendingLabel="Saving..."
+                    className="mt-4 space-y-4"
                   >
-                    Unschedule job
-                  </button>
-                </form>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5">
-                <p className="text-sm font-medium text-slate-950">Assign crew</p>
-                <form action={assignCrewAction} className="mt-4 space-y-4">
-                  <input type="hidden" name="jobId" value={job.id} />
-                  <input type="hidden" name="projectId" value={job.projectId} />
-                  <input type="hidden" name="estimateId" value={job.estimateId ?? ""} />
-
-                  <div className="grid gap-4">
-                    <label className="block">
-                      <span className="mb-2 block text-sm font-medium text-slate-800">
-                        Crew member
-                      </span>
-                      <select
-                        name="personId"
-                        defaultValue=""
-                        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
-                      >
-                        <option value="">No person selected</option>
-                        {assignablePeople.map((person) => (
-                          <option key={person.id} value={person.id}>
-                            {person.displayName}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <label className="block">
-                      <span className="mb-2 block text-sm font-medium text-slate-800">
-                        Subcontractor vendor
-                      </span>
-                      <select
-                        name="vendorId"
-                        defaultValue=""
-                        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
-                      >
-                        <option value="">No vendor selected</option>
-                        {laborVendors.map((vendor) => (
-                          <option key={vendor.id} value={vendor.id}>
-                            {vendor.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <label className="block">
-                      <span className="mb-2 block text-sm font-medium text-slate-800">Role</span>
-                      <select
-                        name="role"
-                        defaultValue="crew"
-                        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
-                      >
-                        <option value="lead">Lead</option>
-                        <option value="crew">Crew</option>
-                        <option value="subcontractor">Subcontractor</option>
-                      </select>
-                    </label>
-
+                    <input type="hidden" name="jobId" value={job.id} />
                     <div className="grid gap-4 md:grid-cols-2">
                       <label className="block">
                         <span className="mb-2 block text-sm font-medium text-slate-800">
-                          Assigned start
+                          Scheduled date
                         </span>
                         <input
-                          type="datetime-local"
-                          name="assignedStartAt"
+                          type="date"
+                          name="scheduledDate"
+                          defaultValue={job.scheduledDate ?? ""}
                           className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
                         />
                       </label>
+
                       <label className="block">
                         <span className="mb-2 block text-sm font-medium text-slate-800">
-                          Assigned end
+                          Scheduled start
                         </span>
                         <input
                           type="datetime-local"
-                          name="assignedEndAt"
+                          name="scheduledStartAt"
+                          defaultValue={job.scheduledStartAt ? job.scheduledStartAt.slice(0, 16) : ""}
+                          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                        />
+                      </label>
+
+                      <label className="block md:col-span-2">
+                        <span className="mb-2 block text-sm font-medium text-slate-800">
+                          Scheduled end
+                        </span>
+                        <input
+                          type="datetime-local"
+                          name="scheduledEndAt"
+                          defaultValue={job.scheduledEndAt ? job.scheduledEndAt.slice(0, 16) : ""}
                           className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
                         />
                       </label>
                     </div>
-                  </div>
 
-                  <button
-                    type="submit"
-                    className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                  >
-                    Add assignment
-                  </button>
-                </form>
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-medium text-slate-800">
+                        Schedule notes
+                      </span>
+                      <textarea
+                        name="scheduleNotes"
+                        defaultValue={job.scheduleNotes ?? ""}
+                        rows={4}
+                        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                        placeholder="Access notes, sequencing reminders, or day-of-job details"
+                      />
+                    </label>
+
+                    <div className="flex flex-wrap gap-3">
+                      <SaveStateSubmitButton
+                        submitLabel="Save schedule"
+                        pendingLabel="Saving..."
+                        className="rounded-full"
+                      />
+                    </div>
+                  </SaveStateForm>
+
+                  {canUnschedule ? (
+                    <form action={unscheduleJobAction} className="mt-3">
+                      <input type="hidden" name="jobId" value={job.id} />
+                      <button
+                        type="submit"
+                        className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                      >
+                        Unschedule job
+                      </button>
+                    </form>
+                  ) : null}
+                </div>
+              ) : null}
+
+              <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5">
+                <p className="text-sm font-medium text-slate-950">Assign crew</p>
+                {hasAssignableCrewOptions ? (
+                  <form action={assignCrewAction} className="mt-4 space-y-4">
+                    <input type="hidden" name="jobId" value={job.id} />
+                    <input type="hidden" name="projectId" value={job.projectId} />
+                    <input type="hidden" name="estimateId" value={job.estimateId ?? ""} />
+
+                    <div className="grid gap-4">
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-medium text-slate-800">
+                          Crew member
+                        </span>
+                        <select
+                          name="personId"
+                          defaultValue=""
+                          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                        >
+                          <option value="">No person selected</option>
+                          {assignablePeople.map((person) => (
+                            <option key={person.id} value={person.id}>
+                              {person.displayName}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-medium text-slate-800">
+                          Subcontractor vendor
+                        </span>
+                        <select
+                          name="vendorId"
+                          defaultValue=""
+                          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                        >
+                          <option value="">No vendor selected</option>
+                          {laborVendors.map((vendor) => (
+                            <option key={vendor.id} value={vendor.id}>
+                              {vendor.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-medium text-slate-800">Role</span>
+                        <select
+                          name="role"
+                          defaultValue="crew"
+                          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                        >
+                          <option value="lead">Lead</option>
+                          <option value="crew">Crew</option>
+                          <option value="subcontractor">Subcontractor</option>
+                        </select>
+                      </label>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <label className="block">
+                          <span className="mb-2 block text-sm font-medium text-slate-800">
+                            Assigned start
+                          </span>
+                          <input
+                            type="datetime-local"
+                            name="assignedStartAt"
+                            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="mb-2 block text-sm font-medium text-slate-800">
+                            Assigned end
+                          </span>
+                          <input
+                            type="datetime-local"
+                            name="assignedEndAt"
+                            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                    >
+                      Add assignment
+                    </button>
+                  </form>
+                ) : (
+                  <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
+                    No assignable crew members or labor-provider vendors are available yet. Add
+                    workforce or labor-provider records before assigning this job.
+                  </div>
+                )}
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
@@ -740,13 +715,13 @@ export default async function JobDetailPage({
                 </div>
               </div>
             </div>
-          </DetailPanel>
-        </div>
+          </div>
+        </PrimarySection>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
           <DetailPanel
-            title="Linked Workflow Context"
-            description="Jobs remain downstream operational records, but they should still point back to the same connected project, estimate, and invoice chain."
+            title="Connected Records"
+            description="Project, customer, estimate, and invoice context stays available without competing with schedule and crew execution."
           >
             <div className="grid gap-4">
               {job.project ? (
@@ -763,7 +738,7 @@ export default async function JobDetailPage({
                   href={`/estimates/${linkedEstimate.id}`}
                   title={linkedEstimate.referenceNumber}
                   subtitle="Estimate"
-                  meta={`Total ${formatCurrency(linkedEstimate.totalAmount)}`}
+                  meta={`Status ${formatStatusLabel(linkedEstimate.status)}`}
                   badge={renderStatusBadge(formatStatusLabel(linkedEstimate.status))}
                 />
               ) : (
@@ -909,35 +884,11 @@ export default async function JobDetailPage({
 
       <aside className="space-y-6">
         <DetailPanel
-          title="Job Context"
-          description="Compact context stays in the rail so the main column can stay focused on dispatch, schedule, and workflow continuity."
+          title="Record Links"
+          description="Compact linked-record context stays in the rail so the main column can stay focused on dispatch, schedule, and crew."
         >
           <ContextFactsList
             items={[
-              {
-                label: "Dispatch status",
-                value: <span className="capitalize">{formatStatusLabel(job.dispatchStatus)}</span>
-              },
-              {
-                label: "Scheduled date",
-                value: formatScheduledDate(job.scheduledDate)
-              },
-              {
-                label: "Scheduled start",
-                value: formatScheduleDateTime(job.scheduledStartAt)
-              },
-              {
-                label: "Scheduled end",
-                value: formatScheduleDateTime(job.scheduledEndAt)
-              },
-              {
-                label: "Crew vendor",
-                value: job.crewVendor?.name ?? "No vendor assigned"
-              },
-              {
-                label: "Crew assignments",
-                value: `${jobAssignments.length} assignment${jobAssignments.length === 1 ? "" : "s"}`
-              },
               {
                 label: "Customer",
                 value: job.customer ? (
@@ -968,6 +919,15 @@ export default async function JobDetailPage({
               }
             ]}
           />
+        </DetailPanel>
+
+        <DetailPanel
+          title="Job Notes"
+          description="Operational notes stay visible, but schedule and crew remain the primary working surface."
+        >
+          <p className="text-sm leading-7 text-slate-600">
+            {job.notes ?? "No job notes have been added yet."}
+          </p>
         </DetailPanel>
 
         <DetailPanel

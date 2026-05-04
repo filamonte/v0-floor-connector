@@ -25,6 +25,7 @@ export default async function PlatformCatalogsPage({ searchParams }: PageProps) 
         eyebrow="Starter Catalog Items"
         title="Manage platform Catalog Item and System seeds"
         description="Platform starter seeds define reusable Catalog Items, Systems, Add-ons / Options, and default categories tenants can adopt into organization-owned catalog records."
+        tone="neutral"
       >
         <div className="space-y-4">
           {seeds.map((seed) => (

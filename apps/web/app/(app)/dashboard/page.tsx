@@ -266,6 +266,12 @@ export default async function DashboardPage() {
             "As real contractor workflow pressure builds, it will surface here and in the shared header attention center.",
           items: []
         };
+  const primaryAttentionItem = notifications.visibleItems[0] ?? null;
+  const firstOverdueInvoice = overdueInvoices[0] ?? null;
+  const firstOpenInvoice = openInvoices[0] ?? null;
+  const firstEstimateAwaitingAction = estimatesAwaitingAction[0] ?? null;
+  const firstJobNeedingScheduling = jobsNeedingScheduling[0] ?? null;
+  const firstJobTodayOrInProgress = jobsTodayOrInProgress[0] ?? null;
 
   return (
     <ContractorDashboardSurface
@@ -277,6 +283,117 @@ export default async function DashboardPage() {
         activeProjectCount: activeProjects.length,
         openReceivablesLabel: formatCurrency(openReceivables)
       }}
+      priorityItems={[
+        primaryAttentionItem
+          ? {
+              key: "attention",
+              label: "Attention",
+              title: primaryAttentionItem.title,
+              detail: primaryAttentionItem.description,
+              href: primaryAttentionItem.href,
+              actionLabel: "Open first attention item",
+              countLabel: String(notifications.visibleItems.length),
+              status: "needs_action"
+            }
+          : {
+              key: "attention",
+              label: "Attention",
+              title: "No high-signal attention items",
+              detail: "The shared attention feed is clear right now.",
+              href: "/dashboard",
+              actionLabel: "Stay on dashboard",
+              countLabel: "0",
+              status: "complete"
+            },
+        firstOverdueInvoice
+          ? {
+              key: "collections",
+              label: "Collections",
+              title: `${overdueInvoices.length} overdue invoice${overdueInvoices.length === 1 ? "" : "s"}`,
+              detail: `${firstOverdueInvoice.referenceNumber} is overdue and still has ${formatCurrency(firstOverdueInvoice.balanceDueAmount)} due.`,
+              href: `/invoices/${firstOverdueInvoice.id}`,
+              actionLabel: "Open overdue invoice",
+              countLabel: String(overdueInvoices.length),
+              status: "overdue"
+            }
+          : firstOpenInvoice
+            ? {
+                key: "collections",
+                label: "Collections",
+                title: `${openInvoices.length} open invoice${openInvoices.length === 1 ? "" : "s"}`,
+                detail: `${firstOpenInvoice.referenceNumber} has ${formatCurrency(firstOpenInvoice.balanceDueAmount)} remaining.`,
+                href: `/invoices/${firstOpenInvoice.id}`,
+                actionLabel: "Open invoice",
+                countLabel: String(openInvoices.length),
+                status: "open"
+              }
+            : {
+                key: "collections",
+                label: "Collections",
+                title: "No open receivables",
+                detail: "Paid and void invoices are clear from the dashboard collection queue.",
+                href: "/payments",
+                actionLabel: "Open payments",
+                countLabel: "$0",
+                status: "paid"
+              },
+        firstEstimateAwaitingAction
+          ? {
+              key: "estimates",
+              label: "Commercial",
+              title: `${estimatesAwaitingAction.length} estimate${estimatesAwaitingAction.length === 1 ? "" : "s"} awaiting action`,
+              detail: `${firstEstimateAwaitingAction.referenceNumber} is ${labelize(firstEstimateAwaitingAction.status)} for ${firstEstimateAwaitingAction.project?.name ?? "an active project"}.`,
+              href: `/estimates/${firstEstimateAwaitingAction.id}`,
+              actionLabel: "Open estimate",
+              countLabel: String(estimatesAwaitingAction.length),
+              status: firstEstimateAwaitingAction.status
+            }
+          : {
+              key: "estimates",
+              label: "Commercial",
+              title: "No estimates need action",
+              detail: "Draft, sent, and rejected estimate queues are clear right now.",
+              href: "/estimates",
+              actionLabel: "Open estimates",
+              countLabel: "0",
+              status: "complete"
+            },
+        firstJobNeedingScheduling
+          ? {
+              key: "execution",
+              label: "Execution",
+              title: `${jobsNeedingScheduling.length} job${jobsNeedingScheduling.length === 1 ? "" : "s"} need scheduling`,
+              detail: `${firstJobNeedingScheduling.project?.name ?? "A job"} is ready for date and crew follow-through.`,
+              href: `/jobs/${firstJobNeedingScheduling.id}`,
+              actionLabel: "Open unscheduled job",
+              countLabel: String(jobsNeedingScheduling.length),
+              status: "needs_action"
+            }
+          : firstJobTodayOrInProgress
+            ? {
+                key: "execution",
+                label: "Execution",
+                title: `${jobsTodayOrInProgress.length} job${jobsTodayOrInProgress.length === 1 ? "" : "s"} today or live`,
+                detail: `${firstJobTodayOrInProgress.project?.name ?? "A job"} is ${firstJobTodayOrInProgress.dispatchStatus === "in_progress" ? "in progress" : "scheduled today"}.`,
+                href: `/jobs/${firstJobTodayOrInProgress.id}`,
+                actionLabel: "Open job",
+                countLabel: String(jobsTodayOrInProgress.length),
+                status:
+                  firstJobTodayOrInProgress.dispatchStatus === "in_progress"
+                    ? "in_progress"
+                    : "scheduled"
+              }
+            : {
+                key: "execution",
+                label: "Execution",
+                title: "No urgent execution queue",
+                detail: "Unscheduled and live job queues are clear from the dashboard.",
+                href: "/schedule",
+                actionLabel: "Open schedule",
+                countLabel: "0",
+                status: "complete"
+              }
+      ]}
       metrics={[
         {
           key: "leads-follow-up",

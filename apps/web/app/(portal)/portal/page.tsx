@@ -4,6 +4,14 @@ import { AppEmptyState } from "@/components/app-empty-state";
 import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPanel } from "@/components/detail-panel";
 import { NextActionCard } from "@/components/next-action-card";
+import {
+  PortalSecondaryLink,
+  PortalStatusBadge,
+  portalHeroPanelClassName,
+  portalInsetPanelClassName,
+  portalReviewCardClassName,
+  portalStatePanelClassName
+} from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { listPortalAccessibleProjects } from "@/lib/portal/data";
 
@@ -201,8 +209,8 @@ export default async function PortalHomePage() {
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
       <section className="space-y-10">
-        <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-700">
+        <div className={portalHeroPanelClassName}>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500">
             Customer Workspace
           </p>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
@@ -214,8 +222,8 @@ export default async function PortalHomePage() {
 
           <div className="mt-10 space-y-5">
             <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
-              <section className="rounded-[1.85rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,1))] px-6 py-6">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-brand-700">
+              <section className={portalStatePanelClassName}>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
                   Where you are
                 </p>
                 <div className="mt-4 space-y-3">
@@ -226,7 +234,7 @@ export default async function PortalHomePage() {
                     Each project holds the customer-facing estimate, contract, and invoice records your contractor has shared with you.
                   </p>
                   {primaryProject ? (
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50/85 px-4 py-4">
+                    <div className={portalInsetPanelClassName}>
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                         Project needing attention
                       </p>
@@ -259,12 +267,9 @@ export default async function PortalHomePage() {
                         title={nextAction.title}
                         description={nextAction.description}
                         primaryAction={
-                          <Link
-                            href={nextAction.href}
-                            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
-                          >
+                          <PortalSecondaryLink href={nextAction.href}>
                             {nextAction.label}
-                          </Link>
+                          </PortalSecondaryLink>
                         }
                       />
                     ) : (
@@ -303,7 +308,7 @@ export default async function PortalHomePage() {
                 <Link
                   key={project.id}
                   href={`/portal/projects/${project.id}`}
-                  className="block rounded-[1.75rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.94),rgba(255,255,255,0.98))] px-6 py-5 transition hover:border-brand-200 hover:bg-white"
+                  className={`block ${portalReviewCardClassName}`}
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
@@ -321,9 +326,9 @@ export default async function PortalHomePage() {
                         {project.locationSummary ? `| ${project.locationSummary}` : ""}
                       </p>
                     </div>
-                    <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                    <PortalStatusBadge status={project.status ?? "neutral"}>
                       {formatStatusLabel(project.status)}
-                    </span>
+                    </PortalStatusBadge>
                   </div>
 
                   <div className="mt-5 grid gap-3 md:grid-cols-3">

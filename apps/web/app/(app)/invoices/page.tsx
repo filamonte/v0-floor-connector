@@ -34,10 +34,6 @@ type InvoicesPageProps = {
 
 const INVOICES_ROWS_PER_VIEW_STORAGE_KEY = "fc.grid.rows.invoices";
 
-function formatStatusLabel(status: string) {
-  return status.replaceAll("_", " ");
-}
-
 function formatMoney(amount: string) {
   return Number(amount).toLocaleString("en-US", {
     style: "currency",
@@ -54,6 +50,31 @@ function formatDate(value: string) {
     month: "short",
     day: "numeric"
   }).format(new Date(value));
+}
+
+function getInvoiceQueueCue(invoice: {
+  status: string;
+  dueDate: string | null;
+  balanceDueAmount: string;
+}) {
+  if (invoice.status === "draft") {
+    return "Next: finish billing detail";
+  }
+
+  if (invoice.status === "sent" || invoice.status === "partially_paid") {
+    const dueLabel = invoice.dueDate ? `due ${formatDate(invoice.dueDate)}` : "due date TBD";
+    return `Collect ${formatMoney(invoice.balanceDueAmount)} - ${dueLabel}`;
+  }
+
+  if (invoice.status === "paid") {
+    return "Settled";
+  }
+
+  if (invoice.status === "void") {
+    return "Voided";
+  }
+
+  return "Review invoice";
 }
 
 function buildInvoicesHref(input: {
@@ -320,22 +341,22 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       title={`Invoice manager for ${organizationContext.organization.displayName}`}
       description="Create the invoice, finish billing details, review it, send it, and then manage collections. This manager keeps the billing workflow clearer instead of jumping straight into payment detail."
       summary={
-        <div className="grid gap-px border border-[#d9cdc2] bg-[#d9cdc2] sm:grid-cols-2 xl:grid-cols-4">
-          <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">Draft</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#221a14]">{draftCount}</p>
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Draft</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">{draftCount}</p>
           </div>
-          <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">Sent</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#221a14]">{sentCount}</p>
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Sent</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">{sentCount}</p>
           </div>
-          <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">Overdue</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#221a14]">{overdueCount}</p>
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Overdue</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">{overdueCount}</p>
           </div>
-          <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">Open balance</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#221a14]">{openCount}</p>
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Open balance</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">{openCount}</p>
           </div>
         </div>
       }
@@ -359,11 +380,11 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               name="q"
               defaultValue={query}
               placeholder="Search invoice, project, customer, or role"
-              className="min-w-0 flex-1 rounded-[4px] border border-[#d9cdc2] bg-white px-4 py-2.5 text-sm text-[#221a14] outline-none transition placeholder:text-[#9a8b80] focus:border-[#c59a6b]"
+              className="min-w-0 flex-1 rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9cdc2] bg-white px-4 py-2.5 text-sm font-medium text-[#594839] transition hover:border-[#ef7d32] hover:bg-[#fbf7f2]"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               Search
             </button>
@@ -397,14 +418,14 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
                   ? "bg-[#171717] text-white"
-                  : "border border-[#d9cdc2] bg-white text-[#594839] hover:bg-[#fbf7f2]"
+                  : "border border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"
               ].join(" ")}
             >
               <span>{view.label}</span>
               <span
                 className={[
                   "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-[#f2e7dc] text-[#8f5b32]"
+                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
                 ].join(" ")}
               >
                 {view.count}
@@ -466,8 +487,8 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               href: `/invoices/${invoice.id}/edit`,
               title: invoice.referenceNumber,
               subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "Unknown project"}`,
-              meta: `${formatStatusLabel(invoice.status)} - due ${invoice.dueDate ? formatDate(invoice.dueDate) : "TBD"}`,
-              badge: invoice.workflowRole === "deposit" ? "Deposit" : "Standard",
+              meta: getInvoiceQueueCue(invoice),
+              badge: invoice.status,
               trailing: formatMoney(invoice.balanceDueAmount)
             }))}
             emptyTitle="No invoices are waiting on payment right now."
@@ -494,7 +515,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               title: invoice.referenceNumber,
               subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "Unknown project"}`,
               meta: `Due ${invoice.dueDate ? formatDate(invoice.dueDate) : "TBD"}`,
-              badge: "Overdue",
+              badge: "overdue",
               trailing: formatMoney(invoice.balanceDueAmount)
             }))}
             emptyTitle="No overdue invoices need attention."
@@ -520,20 +541,20 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               href: `/invoices/${invoice.id}/edit`,
               title: invoice.referenceNumber,
               subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "Unknown project"}`,
-              meta: `Workflow role ${invoice.workflowRole.replaceAll("_", " ")} - updated ${formatDate(invoice.updatedAt)}`,
-              badge: "Draft",
+              meta: getInvoiceQueueCue(invoice),
+              badge: invoice.status,
               trailing: formatMoney(invoice.totalAmount)
             }))}
             emptyTitle="No draft invoices need review."
             emptyDescription="Draft invoices waiting to be finished or sent will appear here."
           />
 
-          <section className="flex h-full flex-col border border-[#d9cdc2] bg-white">
-            <div className="border-b border-[#e8ded5] px-4 py-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+          <section className="flex h-full flex-col border border-[#e2e5e9] bg-white">
+            <div className="border-b border-[#e2e5e9] bg-[#f8fafc] px-4 py-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Billing context
               </p>
-              <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#221a14]">
+              <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-slate-950">
                 Billing posture
               </h3>
               <p className="mt-1 text-xs leading-5 text-slate-500">
@@ -543,20 +564,20 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
 
             <div className="flex flex-1 flex-col space-y-3 px-4 py-3">
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="border border-[#e8ded5] bg-[#fbf7f2] px-3 py-2.5">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">Tax default</p>
+                <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Tax default</p>
                   <p className="mt-1 text-sm font-medium text-slate-800">
                     {financialSettings.defaultTaxBehavior.replaceAll("_", " ")}
                   </p>
                 </div>
-                <div className="border border-[#e8ded5] bg-[#fbf7f2] px-3 py-2.5">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">Tax rate</p>
+                <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Tax rate</p>
                   <p className="mt-1 text-sm font-medium text-slate-800">
                     {formatRate(financialSettings.defaultTaxRate)}
                   </p>
                 </div>
-                <div className="border border-[#e8ded5] bg-[#fbf7f2] px-3 py-2.5">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">Partially paid</p>
+                <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Partially paid</p>
                   <p className="mt-1 text-sm font-medium text-slate-800">{partialCount} invoices</p>
                 </div>
               </div>
@@ -575,28 +596,28 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                       changeOrderId: changeOrderFilterId || undefined,
                       workflowRole: workflowRoleFilter
                     })}
-                    className="inline-flex items-center rounded-[3px] border border-[#d9cdc2] bg-[#fbf7f2] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#594839] transition hover:border-[#ef7d32] hover:bg-white"
+                    className="inline-flex items-center rounded-[3px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
                   >
                     View paid
                   </Link>
                 </div>
 
-                <div className="divide-y divide-[#eee4dc] border border-[#e8ded5] bg-white">
+                <div className="divide-y divide-[#e5e7eb] border border-[#e2e5e9] bg-white">
                   {recentlyPaidQueue.length > 0 ? (
                     recentlyPaidQueue.map((invoice) => (
                       <Link
                         key={invoice.id}
                         href={`/invoices/${invoice.id}/edit`}
-                        className="group flex items-start justify-between gap-4 px-4 py-3 transition hover:bg-[#fbf7f2]"
+                        className="group flex items-start justify-between gap-4 px-4 py-3 transition hover:bg-[#f8fafc]"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-[#221a14] transition group-hover:text-[#a4581a]">
+                          <p className="truncate text-sm font-semibold text-slate-950 transition group-hover:text-brand-700">
                             {invoice.referenceNumber}
                           </p>
                           <p className="mt-1 text-sm leading-6 text-slate-600">
                             {invoice.customer?.name ?? "Unknown customer"} - {invoice.project?.name ?? "Unknown project"}
                           </p>
-                          <p className="mt-1 text-xs font-medium uppercase tracking-[0.16em] text-[#8f7f72]">
+                          <p className="mt-1 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
                             Paid - updated {formatDate(invoice.updatedAt)}
                           </p>
                         </div>
@@ -632,7 +653,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         ) : null}
 
         {projectFilterId || estimateFilterId || jobFilterId || changeOrderFilterId || workflowRoleFilter ? (
-          <div className="order-2 flex flex-col gap-3 border border-[#d9cdc2] bg-white px-4 py-3 text-sm leading-6 text-[#6f6256] sm:flex-row sm:items-center sm:justify-between">
+          <div className="order-2 flex flex-col gap-3 border border-[#e2e5e9] bg-white px-4 py-3 text-sm leading-6 text-slate-600 sm:flex-row sm:items-center sm:justify-between">
             <p>
               Billing context is scoped to{" "}
               <span className="font-semibold text-slate-900">
@@ -643,7 +664,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             </p>
             <Link
               href="/invoices"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9cdc2] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#594839] transition hover:border-[#ef7d32] hover:bg-[#fbf7f2] hover:text-[#221a14]"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
             >
               Clear context
             </Link>

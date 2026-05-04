@@ -18,6 +18,7 @@ import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { listOpportunities } from "@/lib/opportunities/data";
 import { listProjects } from "@/lib/projects/data";
+import { getStatusBadgeClassName } from "@floorconnector/ui";
 
 type EstimatesPageProps = {
   searchParams?: Promise<{
@@ -224,22 +225,22 @@ export default async function EstimatesPage({
       title={`Estimates for ${organizationContext.organization.displayName}`}
       description="A dense estimating module for draft build work, sent follow-up, customer responses, and approved handoff. New estimates start from customer and project context, then open the full estimate workspace."
       summary={
-        <div className="grid gap-px border border-[#d9cdc2] bg-[#d9cdc2] sm:grid-cols-2 xl:grid-cols-4">
-          <div className="bg-white px-3 py-2.5">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Build</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#221a14]">{draftCount}</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">{draftCount}</p>
           </div>
-          <div className="bg-white px-3 py-2.5">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Sent</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#221a14]">{sentCount}</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">{sentCount}</p>
           </div>
-          <div className="bg-white px-3 py-2.5">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Approved</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#221a14]">{approvedCount}</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">{approvedCount}</p>
           </div>
-          <div className="bg-white px-3 py-2.5">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Pipeline value</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#221a14]">
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
               {formatMoney(totalPipelineValue)}
             </p>
           </div>
@@ -408,19 +409,19 @@ export default async function EstimatesPage({
               emptyDescription="Sent estimates will appear here when customer follow-up is needed."
             />
 
-            <section className="border border-[#d9cdc2] bg-white">
-              <div className="border-b border-[#e8ded5] bg-[#fbf7f2] px-4 py-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+            <section className="border border-[#e2e5e9] bg-white">
+              <div className="border-b border-[#e2e5e9] bg-[#f8fafc] px-4 py-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                   Status
                 </p>
-                <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#221a14]">
+                <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-slate-950">
                   Estimates by status
                 </h3>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
                   Current-state status mix from canonical estimate records.
                 </p>
               </div>
-              <div className="divide-y divide-[#eee4dc]">
+              <div className="divide-y divide-[#e5e7eb]">
                 {statusBreakdown.map((status) => (
                   <Link
                     key={status.key}
@@ -432,12 +433,17 @@ export default async function EstimatesPage({
                       customerId: resolvedSearchParams.customerId,
                       projectId: resolvedSearchParams.projectId
                     })}
-                    className="grid grid-cols-[minmax(0,1fr)_120px_48px] items-center gap-3 px-4 py-3 text-sm transition hover:bg-[#fbf7f2]"
+                    className="grid grid-cols-[minmax(0,1fr)_120px_48px] items-center gap-3 px-4 py-3 text-sm transition hover:bg-[#f8fafc]"
                   >
-                    <span className="font-semibold text-[#221a14]">
+                    <span
+                      className={[
+                        "inline-flex w-fit rounded-md border px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em]",
+                        getStatusBadgeClassName(status.key)
+                      ].join(" ")}
+                    >
                       {status.label} ({status.count})
                     </span>
-                    <span className="h-2 overflow-hidden rounded-full bg-[#eee4dc]">
+                    <span className="h-2 overflow-hidden rounded-full bg-slate-100">
                       <span
                         className="block h-full rounded-full bg-[#171717]"
                         style={{ width: `${status.percent}%` }}

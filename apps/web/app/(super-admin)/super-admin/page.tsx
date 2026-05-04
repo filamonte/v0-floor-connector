@@ -29,6 +29,7 @@ export default async function SuperAdminHomePage() {
         description="Global financial and workflow baselines used when new organizations have not set their own overrides yet."
         href="/super-admin/platform"
         ctaLabel="Manage platform defaults"
+        tone="neutral"
       >
         <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
           <p>
@@ -44,6 +45,7 @@ export default async function SuperAdminHomePage() {
         description="Platform-owned document seeds that organizations can copy into editable tenant-owned records."
         href="/super-admin/templates"
         ctaLabel="Manage starter templates"
+        tone="neutral"
       >
         <div className="grid gap-3 sm:grid-cols-3">
           {(["estimate", "invoice", "contract"] as const).map((templateType) => {
@@ -69,6 +71,7 @@ export default async function SuperAdminHomePage() {
         description="Reusable starter cost items, systems, and package defaults available for tenant adoption."
         href="/super-admin/catalogs"
         ctaLabel="Manage starter cost items"
+        tone="neutral"
       >
         <div className="grid gap-3 sm:grid-cols-3">
           {(["material", "labor", "service", "equipment", "system"] as const).map((itemType) => {
@@ -92,6 +95,7 @@ export default async function SuperAdminHomePage() {
         description="Shared platform feature policies that shape which capability families are available to contractors."
         href="/super-admin/modules"
         ctaLabel="Manage module controls"
+        tone="neutral"
       >
         <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
           <p className="font-medium text-slate-950">{featurePolicies.length} platform feature policies</p>

@@ -8,6 +8,7 @@ import {
   formatRowsPerViewVisibleCount,
   useRowsPerViewPreference
 } from "@/components/rows-per-view-control";
+import { getStatusBadgeClassName } from "@floorconnector/ui";
 
 type InvoiceRecord = {
   id: string;
@@ -16,6 +17,7 @@ type InvoiceRecord = {
   workflowRole: string;
   balanceDueAmount: string;
   taxCollectedAmount: string;
+  dueDate?: string | null;
   customer?: {
     name?: string | null;
   } | null;
@@ -41,6 +43,33 @@ function formatMoney(amount: string) {
   });
 }
 
+function formatShortDate(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric"
+  }).format(new Date(value));
+}
+
+function getInvoiceContinuityCue(invoice: InvoiceRecord) {
+  if (invoice.status === "draft") {
+    return "Next: finish billing detail";
+  }
+
+  if (invoice.status === "sent" || invoice.status === "partially_paid") {
+    return invoice.dueDate ? `Next: collect by ${formatShortDate(invoice.dueDate)}` : "Next: collect payment";
+  }
+
+  if (invoice.status === "paid") {
+    return "Settled";
+  }
+
+  if (invoice.status === "void") {
+    return "Voided";
+  }
+
+  return "Next: review invoice";
+}
+
 export function InvoiceRecordsPanel({
   invoices,
   totalInvoiceCount,
@@ -50,15 +79,15 @@ export function InvoiceRecordsPanel({
   const visibleInvoices = applyRowsPerView(invoices, rowsPerView);
 
   return (
-    <section className="border border-[#d9cdc2] bg-white">
-      <div className="border-b border-[#e8ded5] bg-[#fbf7f2] px-4 py-2.5">
+    <section className="border border-[#e2e5e9] bg-white">
+      <div className="border-b border-[#e2e5e9] bg-[#f8fafc] px-4 py-2.5">
         <div className="flex items-end justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
               Invoice records
             </p>
           </div>
-          <div className="hidden grid-cols-[minmax(0,1.35fr)_1fr_160px_140px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8f7f72] md:grid md:flex-1">
+          <div className="hidden grid-cols-[minmax(0,1.35fr)_1fr_160px_140px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
             <span>Invoice</span>
             <span>Project</span>
             <span>Status</span>
@@ -79,13 +108,13 @@ export function InvoiceRecordsPanel({
         </div>
       </div>
 
-      <div className="divide-y divide-[#eee4dc]">
+      <div className="divide-y divide-[#e5e7eb]">
         {invoices.length > 0 ? (
           visibleInvoices.map((invoice) => (
             <Link
               key={invoice.id}
               href={`/invoices/${invoice.id}/edit`}
-              className="group block px-4 py-2.5 transition hover:bg-[#fbf7f2]"
+              className="group block px-4 py-2.5 transition hover:bg-[#f8fafc]"
             >
               <div className="grid gap-3 md:grid-cols-[minmax(0,1.35fr)_1fr_160px_140px] md:items-center">
                 <div className="min-w-0">
@@ -94,6 +123,9 @@ export function InvoiceRecordsPanel({
                   </h3>
                   <p className="mt-0.5 text-sm leading-5 text-slate-500">
                     {invoice.customer?.name ?? "Unknown customer"}
+                  </p>
+                  <p className="mt-0.5 text-xs uppercase tracking-[0.16em] text-slate-400">
+                    {getInvoiceContinuityCue(invoice)}
                   </p>
                 </div>
                 <div>
@@ -113,7 +145,12 @@ export function InvoiceRecordsPanel({
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
                     Status
                   </p>
-                  <span className="inline-flex rounded-[3px] border border-[#d9cdc2] bg-[#fbf7f2] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#594839]">
+                  <span
+                    className={[
+                      "inline-flex rounded-md border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]",
+                      getStatusBadgeClassName(invoice.status)
+                    ].join(" ")}
+                  >
                     {formatStatusLabel(invoice.status)}
                   </span>
                 </div>

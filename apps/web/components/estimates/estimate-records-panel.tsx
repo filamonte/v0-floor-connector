@@ -8,6 +8,7 @@ import {
   formatRowsPerViewVisibleCount,
   useRowsPerViewPreference
 } from "@/components/rows-per-view-control";
+import { getStatusBadgeClassName } from "@floorconnector/ui";
 
 type EstimateRecord = {
   id: string;
@@ -17,6 +18,7 @@ type EstimateRecord = {
   status: string;
   estimateDate?: string | null;
   updatedAt?: string | null;
+  customerViewedAt?: string | null;
   customer?: {
     name?: string | null;
   } | null;
@@ -58,6 +60,21 @@ function formatShortDate(value: string | null | undefined) {
   }).format(new Date(`${value.slice(0, 10)}T00:00:00`));
 }
 
+function getEstimateContinuityCue(estimate: EstimateRecord) {
+  switch (estimate.status) {
+    case "draft":
+      return "Next: finish build";
+    case "sent":
+      return estimate.customerViewedAt ? "Next: follow up after view" : "Next: await customer";
+    case "approved":
+      return "Next: contract handoff";
+    case "rejected":
+      return "Next: revise scope";
+    default:
+      return "Next: review estimate";
+  }
+}
+
 export function EstimateRecordsPanel({
   estimates,
   totalEstimateCount,
@@ -68,15 +85,15 @@ export function EstimateRecordsPanel({
   const visibleEstimates = applyRowsPerView(estimates, rowsPerView);
 
   return (
-    <section className="border border-[#d9cdc2] bg-white">
-      <div className="border-b border-[#e8ded5] bg-[#fbf7f2] px-4 py-2.5">
+    <section className="border border-[#e2e5e9] bg-white">
+      <div className="border-b border-[#e2e5e9] bg-[#f8fafc] px-4 py-2.5">
         <div className="flex items-end justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
               Estimate records
             </p>
           </div>
-          <div className="hidden grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8f7f72] md:grid md:flex-1">
+          <div className="hidden grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
             <span>EST. #</span>
             <span>Title / customer</span>
             <span>Project</span>
@@ -99,13 +116,13 @@ export function EstimateRecordsPanel({
         </div>
       </div>
 
-      <div className="divide-y divide-[#eee4dc]">
+      <div className="divide-y divide-[#e5e7eb]">
         {estimates.length > 0 ? (
           visibleEstimates.map((estimate) => (
             <Link
               key={estimate.id}
               href={`/estimates/${estimate.id}`}
-              className="group block px-4 py-2.5 transition hover:bg-[#fbf7f2]"
+              className="group block px-4 py-2.5 transition hover:bg-[#f8fafc]"
             >
               <div className="grid gap-3 md:grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px] md:items-center">
                 <div className="min-w-0">
@@ -124,8 +141,13 @@ export function EstimateRecordsPanel({
                     {estimate.customer?.name ?? "Unknown customer"}
                   </p>
                   <p className="mt-0.5 text-xs uppercase tracking-[0.16em] text-slate-400">
-                    {estimate.opportunity?.title ?? "Opportunity linked"}
+                    {getEstimateContinuityCue(estimate)}
                   </p>
+                  {estimate.opportunity?.title ? (
+                    <p className="mt-0.5 truncate text-xs text-slate-400">
+                      {estimate.opportunity.title}
+                    </p>
+                  ) : null}
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
@@ -147,7 +169,12 @@ export function EstimateRecordsPanel({
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
                     Status
                   </p>
-                  <span className="inline-flex rounded-[3px] border border-[#d9cdc2] bg-[#fbf7f2] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#594839]">
+                  <span
+                    className={[
+                      "inline-flex rounded-md border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]",
+                      getStatusBadgeClassName(estimate.status)
+                    ].join(" ")}
+                  >
                     {formatStatusLabel(estimate.status)}
                   </span>
                 </div>

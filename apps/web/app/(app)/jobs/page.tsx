@@ -6,8 +6,10 @@ import { JobQuickCreateForm } from "@/components/job-quick-create-form";
 import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { quickCreateJobAction } from "@/lib/jobs/actions";
+import type { JobListItem } from "@/lib/jobs/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { listProjects } from "@/lib/projects/data";
+import { getStatusBadgeClassName } from "@floorconnector/ui";
 
 type JobView = "all" | "unscheduled" | "scheduled" | "in_progress" | "completed";
 
@@ -32,6 +34,34 @@ function formatDate(value: string | null) {
 
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString();
+}
+
+function getJobContinuityCue(job: JobListItem, assignmentCount: number) {
+  if (job.dispatchStatus === "unscheduled") {
+    return "Next: schedule job";
+  }
+
+  if (job.dispatchStatus === "scheduled" && job.crewVendorId === null) {
+    return "Next: assign crew vendor";
+  }
+
+  if (job.dispatchStatus === "scheduled" && assignmentCount === 0) {
+    return "Next: add crew assignments";
+  }
+
+  if (job.dispatchStatus === "scheduled") {
+    return `Ready: ${formatDate(job.scheduledDate)}`;
+  }
+
+  if (job.dispatchStatus === "in_progress") {
+    return "Field work active";
+  }
+
+  if (job.dispatchStatus === "completed") {
+    return "Ready for closeout";
+  }
+
+  return "Review job workspace";
 }
 
 function buildJobsHref(input: {
@@ -137,7 +167,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
       description="Use jobs as the operational link between project readiness, crew scheduling, time, daily logs, and invoice-ready completion."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Unscheduled
             </p>
@@ -145,7 +175,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               {unscheduledJobs.length}
             </p>
           </div>
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Scheduled
             </p>
@@ -153,7 +183,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               {scheduledJobs.length}
             </p>
           </div>
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               In progress
             </p>
@@ -161,7 +191,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               {inProgressJobs.length}
             </p>
           </div>
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Completed
             </p>
@@ -306,6 +336,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               meta: job.estimate?.referenceNumber
                 ? `Estimate ${job.estimate.referenceNumber}`
                 : "Project-created job",
+              badge: job.dispatchStatus,
               trailing: formatDateTime(job.updatedAt)
             }))}
             emptyTitle="No unscheduled jobs"
@@ -326,6 +357,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               title: job.project?.name ?? "Untitled job",
               subtitle: job.customer?.name ?? "Unknown customer",
               meta: `Scheduled ${formatDate(job.scheduledDate)}`,
+              badge: job.dispatchStatus,
               trailing: "Crew vendor missing"
             }))}
             emptyTitle="All scheduled jobs have a crew vendor"
@@ -346,6 +378,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               title: job.project?.name ?? "Untitled job",
               subtitle: job.customer?.name ?? "Unknown customer",
               meta: `Scheduled ${formatDate(job.scheduledDate)}`,
+              badge: job.dispatchStatus,
               trailing: "No assignments"
             }))}
             emptyTitle="All scheduled jobs have assignments"
@@ -366,6 +399,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               title: job.project?.name ?? "Untitled job",
               subtitle: job.customer?.name ?? "Unknown customer",
               meta: job.crewVendor?.name ?? "No crew vendor",
+              badge: job.dispatchStatus,
               trailing: formatDate(job.scheduledDate)
             }))}
             emptyTitle="No jobs are currently in progress"
@@ -394,7 +428,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                     <th className="px-5 py-3 sm:px-6">Job</th>
                     <th className="px-5 py-3 sm:px-6">Customer</th>
                     <th className="px-5 py-3 sm:px-6">Status</th>
-                    <th className="px-5 py-3 sm:px-6">Scheduled</th>
+                    <th className="px-5 py-3 sm:px-6">Schedule / crew</th>
                     <th className="px-5 py-3 text-right sm:px-6">Updated</th>
                   </tr>
                 </thead>
@@ -423,12 +457,22 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                         </p>
                       </td>
                       <td className="px-5 py-4 sm:px-6">
-                        <span className="inline-flex rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                        <span
+                          className={[
+                            "inline-flex rounded-md border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]",
+                            getStatusBadgeClassName(job.dispatchStatus)
+                          ].join(" ")}
+                        >
                           {formatStatusLabel(job.dispatchStatus)}
                         </span>
                       </td>
-                      <td className="px-5 py-4 text-slate-500 sm:px-6">
-                        {formatDate(job.scheduledDate)}
+                      <td className="px-5 py-4 sm:px-6">
+                        <p className="text-sm font-medium text-slate-700">
+                          {getJobContinuityCue(job, (assignmentsByJobId.get(job.id) ?? []).length)}
+                        </p>
+                        <p className="mt-0.5 text-xs uppercase tracking-[0.14em] text-slate-400">
+                          {job.crewVendor?.name ?? "No crew vendor"}
+                        </p>
                       </td>
                       <td className="px-5 py-4 text-right text-slate-500 sm:px-6">
                         {formatDateTime(job.updatedAt)}

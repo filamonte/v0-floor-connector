@@ -16,14 +16,14 @@ export function AppEmptyState({
   actionLabel
 }: AppEmptyStateProps) {
   return (
-    <div className="rounded-[8px] border border-dashed border-[#d9cdc2] bg-[#fbf7f2] px-6 py-8 text-sm leading-6 text-[#6f6256]">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#a4581a]">
+    <div className="rounded-lg border border-dashed border-[#d1d5db] bg-[#f8fafc] px-6 py-8 text-sm leading-6 text-[#4b5563]">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6b7280]">
         {eyebrow}
       </p>
-      <h3 className="mt-4 text-xl font-semibold tracking-tight text-[#221a14] sm:text-2xl">
+      <h3 className="mt-4 text-xl font-semibold tracking-tight text-[#171717] sm:text-2xl">
         {title}
       </h3>
-      <p className="mt-3 max-w-2xl text-[#6f6256]">{description}</p>
+      <p className="mt-3 max-w-2xl text-[#4b5563]">{description}</p>
       {actionHref && actionLabel ? (
         <Link
           href={actionHref}

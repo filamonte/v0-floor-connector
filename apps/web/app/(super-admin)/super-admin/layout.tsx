@@ -32,6 +32,7 @@ export default async function SuperAdminLayout({
             title="Platform configuration"
             description="Manage the global layer that seeds contractor organizations, defines modular platform behavior, and governs cross-tenant defaults without collapsing tenant ownership."
             navItems={platformAdminNavItems}
+            tone="neutral"
             meta={
               <div className="rounded-[1.75rem] border border-slate-200 bg-slate-50/90 px-5 py-5 text-sm text-slate-600">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">

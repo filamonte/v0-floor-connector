@@ -39,6 +39,7 @@ export default async function PlatformDefaultsPage({ searchParams }: PageProps) 
         <DetailPanel
           title="Platform Financial Defaults"
           description="These global defaults seed organizations before they create tenant-owned financial settings of their own."
+          tone="neutral"
         >
           <form action={updatePlatformFinancialDefaultsAction} className="space-y-5">
             <div className="grid gap-4 md:grid-cols-2">
@@ -102,6 +103,7 @@ export default async function PlatformDefaultsPage({ searchParams }: PageProps) 
           eyebrow="Platform Inheritance"
           title="What tenants receive before overrides"
           description="Organizations start from these global defaults, then own their copies or organization-scoped settings after adoption."
+          tone="neutral"
         >
           <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
             <p>Tax behavior: {financialDefaults.defaultTaxBehavior}</p>
@@ -115,6 +117,7 @@ export default async function PlatformDefaultsPage({ searchParams }: PageProps) 
       <DetailPanel
         title="Platform Workflow Defaults"
         description="Define the shared contract-generation baseline, starter estimate defaults, and financial-readiness defaults that seed organizations before they adopt tenant-owned workflow settings."
+        tone="neutral"
       >
         <form action={updatePlatformWorkflowDefaultsAction} className="space-y-5">
           <label className="block">

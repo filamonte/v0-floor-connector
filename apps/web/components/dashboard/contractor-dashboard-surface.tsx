@@ -4,7 +4,10 @@ import type { ReactNode } from "react";
 import { startTransition, useDeferredValue, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Customer, MembershipRole } from "@floorconnector/types";
+import { getStatusBadgeClassName } from "@floorconnector/ui";
 
+import type { DashboardPriorityItem } from "@/components/dashboard/priority-strip";
+import { PriorityStrip } from "@/components/dashboard/priority-strip";
 import { UniversalCreateMenu } from "@/components/universal-create-menu";
 
 type QuickCreateAction = (formData: FormData) => void | Promise<void>;
@@ -113,6 +116,7 @@ export type ContractorDashboardSurfaceProps = {
     activeProjectCount: number;
     openReceivablesLabel: string;
   };
+  priorityItems: DashboardPriorityItem[];
   metrics: DashboardMetric[];
   attentionWidget?: DashboardWidget | null;
   commercialWidgets: DashboardWidget[];
@@ -191,7 +195,7 @@ function TopLink({
   return (
     <Link
       href={href}
-      className="inline-flex h-8 items-center gap-2 border border-[#d6d6d6] bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f] transition hover:bg-[#f8f8f8]"
+      className="inline-flex h-8 items-center gap-2 rounded-md border border-[#d6d6d6] bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f] transition hover:bg-[#f8f8f8]"
     >
       <span>{label}</span>
       {metric ? <span className="text-[#666666]">{metric}</span> : null}
@@ -213,7 +217,7 @@ function BoardPanel({
   children: ReactNode;
 }) {
   return (
-    <section className="border border-[#d6d6d6] bg-white">
+    <section className="rounded-lg border border-[#d6d6d6] bg-white">
       <div className="flex items-start justify-between gap-3 border-b border-[#d6d6d6] px-4 py-3">
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
@@ -235,7 +239,23 @@ function BoardPanel({
 
 function PriorityGrid({ metrics }: { metrics: DashboardMetric[] }) {
   return (
-    <section className="border border-[#d6d6d6] bg-white">
+    <section
+      aria-labelledby="dashboard-key-metrics-title"
+      className="rounded-lg border border-[#d6d6d6] bg-white"
+    >
+      <div className="flex items-center justify-between gap-3 border-b border-[#d6d6d6] px-4 py-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+            Key metrics
+          </p>
+          <h2
+            id="dashboard-key-metrics-title"
+            className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]"
+          >
+            Pipeline and execution snapshot
+          </h2>
+        </div>
+      </div>
       <div className="grid gap-px bg-[#d6d6d6] md:grid-cols-5">
         {metrics.map((metric) => (
           <Link
@@ -294,7 +314,12 @@ function QueueRows({
                       {item.title}
                     </Link>
                     {item.badge ? (
-                      <span className="border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                      <span
+                        className={[
+                          "rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                          getStatusBadgeClassName(item.badge)
+                        ].join(" ")}
+                      >
                         {item.badge}
                       </span>
                     ) : null}
@@ -332,16 +357,16 @@ function OnboardingGuide({ steps }: { steps: DashboardOnboardingStep[] }) {
   }
 
   return (
-    <section className="border border-[#d7c7b4] bg-white">
-      <div className="flex flex-col gap-4 border-b border-[#eadfd4] bg-[#fff8f1] px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
+    <section className="rounded-lg border border-[#d6d6d6] bg-white">
+      <div className="flex flex-col gap-4 border-b border-[#d6d6d6] bg-[#f8fafc] px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6b7280]">
             Start here
           </p>
-          <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#2b2118]">
+          <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]">
             Finish the first setup path
           </h3>
-          <p className="mt-1 max-w-3xl text-sm leading-6 text-[#665446]">
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-[#4b5563]">
             Create the first customer, project, and estimate from the existing quick-create paths.
             Those records become the canonical chain for contracts, jobs, invoices, and payments.
           </p>
@@ -353,21 +378,19 @@ function OnboardingGuide({ steps }: { steps: DashboardOnboardingStep[] }) {
           {nextStep.actionLabel}
         </Link>
       </div>
-      <div className="grid gap-px bg-[#eadfd4] md:grid-cols-4">
+      <div className="grid gap-px bg-[#e2e5e9] md:grid-cols-4">
         {steps.map((step) => (
           <Link
             key={step.key}
             href={step.href}
-            className="bg-white px-4 py-3 transition hover:bg-[#fffaf5]"
+            className="bg-white px-4 py-3 transition hover:bg-[#f8fafc]"
           >
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-semibold text-[#171717]">{step.label}</p>
               <span
                 className={[
                   "shrink-0 border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
-                  step.complete
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                    : "border-amber-200 bg-amber-50 text-amber-900"
+                  getStatusBadgeClassName(step.complete ? "complete" : "needs_action")
                 ].join(" ")}
               >
                 {step.complete ? "Done" : "Next step"}
@@ -450,6 +473,7 @@ function FinanceTable({
 
 export function ContractorDashboardSurface({
   header,
+  priorityItems,
   metrics,
   attentionWidget,
   commercialWidgets,
@@ -496,19 +520,19 @@ export function ContractorDashboardSurface({
   ].filter(Boolean) as DashboardShortcut[];
 
   return (
-    <div className="-mx-5 bg-[#f3eee8] sm:-mx-8">
-      <section className="border-b border-[#d7c7b4] bg-[#fbf7f1] px-4 py-3 sm:px-6">
+    <div className="-mx-5 bg-[#f4f5f7] sm:-mx-8">
+      <section className="border-b border-[#d6d6d6] bg-white px-4 py-3 sm:px-6">
         <div className="space-y-3">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6b7280]">
                 Contractor dashboard
               </p>
-              <h2 className="mt-1 text-[22px] font-semibold tracking-tight text-[#2b2118]">
+              <h1 className="mt-1 text-[22px] font-semibold tracking-tight text-[#171717]">
                 {header.organizationName}
-              </h2>
-              <p className="mt-1 text-[13px] leading-5 text-[#665446]">
-                Operational queues and recent records in one working surface.
+              </h1>
+              <p className="mt-1 text-[13px] leading-5 text-[#4b5563]">
+                Priority decisions, core metrics, and work queues in one contractor surface.
               </p>
             </div>
 
@@ -579,12 +603,27 @@ export function ContractorDashboardSurface({
         </div>
       </section>
 
-      <div className="space-y-3 px-4 py-3 sm:px-6">
+      <div className="space-y-4 px-4 py-4 sm:px-6">
+        <PriorityStrip items={priorityItems} />
+
         <PriorityGrid metrics={metrics} />
 
         {onboardingSteps && onboardingSteps.some((step) => !step.complete) ? (
           <OnboardingGuide steps={onboardingSteps} />
         ) : null}
+
+        <section aria-labelledby="dashboard-work-queues-title" className="space-y-3">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6b7280]">
+              Work queues
+            </p>
+            <h2
+              id="dashboard-work-queues-title"
+              className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]"
+            >
+              Follow up by workflow area
+            </h2>
+          </div>
 
         <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,0.95fr)]">
           {attentionWidget ? (
@@ -659,6 +698,7 @@ export function ContractorDashboardSurface({
             />
           ) : null}
         </div>
+        </section>
       </div>
     </div>
   );

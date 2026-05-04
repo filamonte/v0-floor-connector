@@ -5,6 +5,15 @@ import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { NextActionCard } from "@/components/next-action-card";
+import {
+  PortalSecondaryLink,
+  PortalStatusBadge,
+  portalActionBoxClassName,
+  portalDocumentPanelClassName,
+  portalHeroPanelClassName,
+  portalInsetPanelClassName,
+  portalStatePanelClassName
+} from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import {
   customerDeclineContractAction,
@@ -149,7 +158,7 @@ export default async function PortalContractReviewPage({
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
       <section className="space-y-10">
-        <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+        <div className={portalHeroPanelClassName}>
           <DetailPageHeader
             eyebrow="Contract Review"
             title={contract.title}
@@ -157,9 +166,9 @@ export default async function PortalContractReviewPage({
             backHref={`/portal/projects/${contract.projectId}`}
             backLabel="Back to project workspace"
             actions={
-              <span className="inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium capitalize text-slate-700">
+              <PortalStatusBadge status={contract.status} className="px-4 py-2 text-sm">
                 {formatStatusLabel(contract.status)}
-              </span>
+              </PortalStatusBadge>
             }
           />
 
@@ -177,15 +186,15 @@ export default async function PortalContractReviewPage({
 
           <div className="mt-10 space-y-5">
             <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
-              <section className="rounded-[1.85rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,1))] px-6 py-6">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-brand-700">
+              <section className={portalStatePanelClassName}>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
                   Signature state
                 </p>
                 <div className="mt-4 space-y-3">
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="inline-flex rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium capitalize text-slate-700">
+                    <PortalStatusBadge status={contract.status} className="px-3.5 py-1.5 text-sm">
                       {formatStatusLabel(contract.status)}
-                    </span>
+                    </PortalStatusBadge>
                     <span className="inline-flex rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-600">
                       {contract.project?.name ?? "Shared project"}
                     </span>
@@ -204,7 +213,7 @@ export default async function PortalContractReviewPage({
                         : "still required"
                       : "not required"}
                   </p>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/85 px-4 py-4 text-sm leading-6 text-slate-600">
+                  <div className={`${portalInsetPanelClassName} text-sm leading-6 text-slate-600`}>
                     This contract stays attached to the same shared project and signature workflow your contractor sees.
                   </div>
                 </div>
@@ -228,12 +237,9 @@ export default async function PortalContractReviewPage({
                             : nextAction.description
                         }
                         primaryAction={
-                          <Link
-                            href={nextAction.href}
-                            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
-                          >
+                          <PortalSecondaryLink href={nextAction.href}>
                             {nextAction.label}
-                          </Link>
+                          </PortalSecondaryLink>
                         }
                       />
                     )
@@ -269,7 +275,7 @@ export default async function PortalContractReviewPage({
             ) : null}
 
             <article
-              className="rounded-3xl border border-slate-200 bg-slate-50/50 px-6 py-6 text-sm leading-7 text-slate-700 [&_a]:text-brand-700 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-slate-200 [&_blockquote]:pl-4 [&_h1]:text-2xl [&_h1]:font-semibold [&_h2]:mt-6 [&_h2]:text-xl [&_h2]:font-semibold [&_h3]:mt-5 [&_h3]:text-lg [&_h3]:font-semibold [&_li]:ml-5 [&_ol]:list-decimal [&_p]:my-3 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-200 [&_td]:px-3 [&_td]:py-2 [&_th]:border [&_th]:border-slate-200 [&_th]:bg-slate-100 [&_th]:px-3 [&_th]:py-2 [&_ul]:list-disc"
+              className={`${portalDocumentPanelClassName} text-sm leading-7 text-slate-700 [&_a]:text-brand-700 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-slate-200 [&_blockquote]:pl-4 [&_h1]:text-2xl [&_h1]:font-semibold [&_h2]:mt-6 [&_h2]:text-xl [&_h2]:font-semibold [&_h3]:mt-5 [&_h3]:text-lg [&_h3]:font-semibold [&_li]:ml-5 [&_ol]:list-decimal [&_p]:my-3 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-200 [&_td]:px-3 [&_td]:py-2 [&_th]:border [&_th]:border-slate-200 [&_th]:bg-slate-100 [&_th]:px-3 [&_th]:py-2 [&_ul]:list-disc`}
               dangerouslySetInnerHTML={{ __html: sanitizeHtml(contract.renderedContent) }}
             />
           </div>
@@ -285,7 +291,7 @@ export default async function PortalContractReviewPage({
             <p className="max-w-[34ch]">{signatureGuidance}</p>
 
             {contract.currentUserCanSign ? (
-              <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
+              <div className={portalActionBoxClassName}>
                 <form action={customerSignContractAction} className="space-y-3">
                   <input type="hidden" name="contractId" value={contract.id} />
                   <button

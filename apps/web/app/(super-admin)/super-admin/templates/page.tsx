@@ -25,6 +25,7 @@ export default async function PlatformTemplatesPage({ searchParams }: PageProps)
         eyebrow="Starter Templates"
         title="Manage platform-owned document seeds"
         description="Platform starter templates are not shared mutable records inside tenant workflows. Organizations adopt editable copies, but the starter definitions here remain the source of truth for future adoptions."
+        tone="neutral"
       >
         <div className="space-y-6">
           <PlatformTemplateSeedCard

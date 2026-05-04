@@ -13,6 +13,7 @@ import {
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
+import { getStatusBadgeClassName } from "@floorconnector/ui";
 
 type ContractView = "all" | "draft" | "sent" | "viewed" | "signed";
 
@@ -33,6 +34,36 @@ function formatStatusLabel(status: string) {
 
 function formatDateTime(value: string | null) {
   return value ? new Date(value).toLocaleString() : "Not recorded";
+}
+
+function getContractSignatureCue(contract: {
+  status: string;
+  signatureReadinessStatus: string;
+  customerSignedAt: string | null;
+  contractorCountersignedAt: string | null;
+  signedAt: string | null;
+}) {
+  if (contract.status === "signed" || contract.signedAt) {
+    return "Signature complete";
+  }
+
+  if (contract.status === "void") {
+    return "Signature voided";
+  }
+
+  if (contract.customerSignedAt && !contract.contractorCountersignedAt) {
+    return "Customer signed; countersign if required";
+  }
+
+  if (contract.status === "sent" || contract.status === "viewed") {
+    return contract.status === "viewed" ? "Viewed; awaiting signature" : "Awaiting customer";
+  }
+
+  if (contract.signatureReadinessStatus === "ready_to_send") {
+    return "Ready to send";
+  }
+
+  return formatStatusLabel(contract.signatureReadinessStatus);
 }
 
 function buildContractsHref(input: {
@@ -158,13 +189,13 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
       description="Contracts stay attached to the same project, estimate, and customer chain instead of drifting into a separate signature subsystem."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Draft</p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {draftContracts.length}
             </p>
           </div>
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Pending approval
             </p>
@@ -172,7 +203,7 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
               {pendingApprovalContracts.length}
             </p>
           </div>
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Ready to send
             </p>
@@ -180,7 +211,7 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
               {readyToSendContracts.length}
             </p>
           </div>
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Signed</p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {signedContracts.length}
@@ -316,6 +347,7 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
               meta: contract.estimate?.referenceNumber
                 ? `Estimate ${contract.estimate.referenceNumber}`
                 : null,
+              badge: contract.internalApprovalStatus,
               trailing: formatDateTime(contract.updatedAt)
             }))}
             emptyTitle="No contracts are waiting on approval"
@@ -331,7 +363,8 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
               href: `/contracts/${contract.id}`,
               title: contract.title,
               subtitle: contract.customer?.name ?? "Unknown customer",
-              meta: contract.project?.name ?? null,
+              meta: getContractSignatureCue(contract),
+              badge: contract.signatureReadinessStatus,
               trailing: formatDateTime(contract.updatedAt)
             }))}
             emptyTitle="No contracts are ready to send"
@@ -347,7 +380,8 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
               href: `/contracts/${contract.id}`,
               title: contract.title,
               subtitle: contract.customer?.name ?? "Unknown customer",
-              meta: contract.project?.name ?? null,
+              meta: getContractSignatureCue(contract),
+              badge: contract.status,
               trailing: formatDateTime(contract.sentAt ?? contract.updatedAt)
             }))}
             emptyTitle="Nothing is currently out for signature"
@@ -363,7 +397,8 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
               href: `/contracts/${contract.id}`,
               title: contract.title,
               subtitle: contract.customer?.name ?? "Unknown customer",
-              meta: contract.project?.name ?? null,
+              meta: getContractSignatureCue(contract),
+              badge: contract.status,
               trailing: formatDateTime(contract.customerViewedAt ?? contract.viewedAt)
             }))}
             emptyTitle="No viewed contracts are waiting"
@@ -421,12 +456,22 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
                         </p>
                       </td>
                       <td className="px-5 py-4 sm:px-6">
-                        <span className="inline-flex rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                        <span
+                          className={[
+                            "inline-flex rounded-md border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]",
+                            getStatusBadgeClassName(contract.status)
+                          ].join(" ")}
+                        >
                           {formatStatusLabel(contract.status)}
                         </span>
                       </td>
-                      <td className="px-5 py-4 capitalize text-slate-500 sm:px-6">
-                        {formatStatusLabel(contract.signatureReadinessStatus)}
+                      <td className="px-5 py-4 sm:px-6">
+                        <p className="text-sm font-medium text-slate-700">
+                          {getContractSignatureCue(contract)}
+                        </p>
+                        <p className="mt-0.5 text-xs uppercase tracking-[0.14em] text-slate-400">
+                          {formatStatusLabel(contract.signatureReadinessStatus)}
+                        </p>
                       </td>
                       <td className="px-5 py-4 text-right text-slate-500 sm:px-6">
                         {formatDateTime(contract.updatedAt)}

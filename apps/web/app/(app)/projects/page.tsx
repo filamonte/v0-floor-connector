@@ -9,7 +9,9 @@ import { listCustomers } from "@/lib/customers/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { quickCreateProjectAction } from "@/lib/projects/actions";
+import type { ProjectListItem } from "@/lib/projects/data";
 import { listProjects } from "@/lib/projects/data";
+import { getStatusBadgeClassName } from "@floorconnector/ui";
 
 type ProjectView =
   | "all"
@@ -67,6 +69,33 @@ function buildProjectsHref(input: {
   const query = searchParams.toString();
 
   return query.length > 0 ? `/projects?${query}` : "/projects";
+}
+
+function getProjectContinuityCue(project: ProjectListItem) {
+  if (project.readyToScheduleAt) {
+    return "Ready to schedule";
+  }
+
+  if (project.commercialReadinessStatus !== "not_ready") {
+    return formatStatusLabel(project.commercialReadinessStatus);
+  }
+
+  switch (project.status) {
+    case "lead":
+      return "Start estimate path";
+    case "estimating":
+      return "Finish estimate";
+    case "approved":
+      return "Review contract handoff";
+    case "scheduled":
+      return "Track scheduled work";
+    case "in_progress":
+      return "Monitor execution";
+    case "completed":
+      return "Closeout review";
+    default:
+      return "Open project workspace";
+  }
 }
 
 export default async function ProjectsPage({
@@ -155,13 +184,13 @@ export default async function ProjectsPage({
       description="Projects are the operational root connecting customer context to estimating, contracts, execution, billing, and closeout."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Lead</p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {leadProjects.length}
             </p>
           </div>
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Estimating
             </p>
@@ -169,7 +198,7 @@ export default async function ProjectsPage({
               {estimatingProjects.length}
             </p>
           </div>
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               Scheduled
             </p>
@@ -177,7 +206,7 @@ export default async function ProjectsPage({
               {scheduledProjects.length}
             </p>
           </div>
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
               In progress
             </p>
@@ -304,7 +333,8 @@ export default async function ProjectsPage({
               href: `/projects/${project.id}`,
               title: project.name,
               subtitle: project.customer?.name ?? "Unlinked customer",
-              meta: project.commercialReadinessStatus.replaceAll("_", " "),
+              meta: getProjectContinuityCue(project),
+              badge: project.status,
               trailing: formatDateLabel(project.updatedAt)
             }))}
             emptyTitle="No lead-stage projects"
@@ -320,7 +350,8 @@ export default async function ProjectsPage({
               href: `/projects/${project.id}`,
               title: project.name,
               subtitle: project.customer?.name ?? "Unlinked customer",
-              meta: project.commercialReadinessStatus.replaceAll("_", " "),
+              meta: getProjectContinuityCue(project),
+              badge: project.status,
               trailing: formatDateLabel(project.updatedAt)
             }))}
             emptyTitle="No estimating projects"
@@ -336,7 +367,8 @@ export default async function ProjectsPage({
               href: `/projects/${project.id}`,
               title: project.name,
               subtitle: project.customer?.name ?? "Unlinked customer",
-              meta: project.financingStatus.replaceAll("_", " "),
+              meta: getProjectContinuityCue(project),
+              badge: project.financingStatus,
               trailing: formatDateLabel(project.updatedAt)
             }))}
             emptyTitle="No approved projects"
@@ -353,6 +385,7 @@ export default async function ProjectsPage({
               title: project.name,
               subtitle: project.customer?.name ?? "Unlinked customer",
               meta: `Ready: ${formatDateLabel(project.readyToScheduleAt ?? project.updatedAt)}`,
+              badge: "ready",
               trailing: formatStatusLabel(project.status)
             }))}
             emptyTitle="Nothing ready to schedule"
@@ -383,7 +416,7 @@ export default async function ProjectsPage({
                     <th className="px-4 py-2.5">Project</th>
                     <th className="px-4 py-2.5">Customer</th>
                     <th className="px-4 py-2.5">Status</th>
-                    <th className="px-4 py-2.5">Commercial state</th>
+                    <th className="px-4 py-2.5">Continuity</th>
                     <th className="px-4 py-2.5 text-right">Updated</th>
                   </tr>
                 </thead>
@@ -412,12 +445,22 @@ export default async function ProjectsPage({
                         </p>
                       </td>
                       <td className="px-4 py-2.5">
-                        <span className="inline-flex rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                        <span
+                          className={[
+                            "inline-flex rounded-md border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]",
+                            getStatusBadgeClassName(project.status)
+                          ].join(" ")}
+                        >
                           {formatStatusLabel(project.status)}
                         </span>
                       </td>
-                      <td className="px-4 py-2.5 text-slate-500">
-                        {project.commercialReadinessStatus.replaceAll("_", " ")}
+                      <td className="px-4 py-2.5">
+                        <p className="text-sm font-medium text-slate-700">
+                          {getProjectContinuityCue(project)}
+                        </p>
+                        <p className="mt-0.5 text-xs uppercase tracking-[0.14em] text-slate-400">
+                          {formatStatusLabel(project.commercialReadinessStatus)}
+                        </p>
                       </td>
                       <td className="px-4 py-2.5 text-right text-slate-500">
                         {formatDateLabel(project.updatedAt)}
