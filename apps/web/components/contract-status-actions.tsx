@@ -13,6 +13,7 @@ import {
   updateContractInternalApprovalStatusAction,
   updateContractStatusAction
 } from "@/lib/contracts/actions";
+import { SendToContactSelect } from "@/components/send-to-contact-select";
 
 type ContractStatusActionsProps = {
   contractId: string;
@@ -166,42 +167,38 @@ export function ContractStatusActions({
       {currentStatus === "draft" ? (
         <div className="space-y-3 rounded-[1.5rem] border border-slate-200 bg-white px-4 py-4">
           <div className="space-y-1 text-sm leading-6 text-slate-600">
-            <p className="font-medium text-slate-950">Send for customer signature</p>
+            <p className="font-medium text-slate-950">Send to contact for signature</p>
             <p>
-              Choose the active customer portal signer for this project, then optionally add the
+              Choose the portal-ready customer contact for this project, then optionally add the
               contractor countersigner who should complete the final signature if required.
             </p>
           </div>
 
           {customerPortalSignerOptions.length === 0 ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-              No eligible customer signer is available for this project. Grant portal access and,
-              for linked customer contacts, confirm contract-signing permission before sending.
+              No eligible customer signer is available for this project. Manage the contact,
+              portal access, and contract-signing permission from People before sending.
             </div>
           ) : (
             <form action={sendContractForSignatureAction} className="space-y-4">
               <input type="hidden" name="contractId" value={contractId} />
 
-              <label className="block space-y-2 text-sm leading-6 text-slate-600">
-                <span className="font-medium text-slate-950">Customer portal signer</span>
-                <select
-                  name="customerPortalUserId"
-                  required
-                  defaultValue={
-                    customerPortalSignerOptions.length === 1
-                      ? customerPortalSignerOptions[0]?.userId
-                      : ""
-                  }
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
-                >
-                  <option value="">Select a portal user</option>
-                  {customerPortalSignerOptions.map((option) => (
-                    <option key={option.userId} value={option.userId}>
-                      {option.displayName} ({option.email})
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <SendToContactSelect
+                name="customerPortalUserId"
+                fallbackLabel="Select a contact"
+                required
+                defaultValue={
+                  customerPortalSignerOptions.length === 1
+                    ? customerPortalSignerOptions[0]?.userId
+                    : undefined
+                }
+                options={customerPortalSignerOptions.map((option) => ({
+                  value: option.userId,
+                  label: option.contactDisplayName ?? option.displayName,
+                  email: option.contactEmail ?? option.email,
+                  isPrimary: option.isPrimaryContact
+                }))}
+              />
 
               <label className="block space-y-2 text-sm leading-6 text-slate-600">
                 <span className="font-medium text-slate-950">

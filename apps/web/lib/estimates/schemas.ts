@@ -28,6 +28,19 @@ function optionalUuidishString(maxLength: number) {
     .transform((value) => value ?? null);
 }
 
+function optionalUuidField(message: string) {
+  return z
+    .string()
+    .trim()
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .optional()
+    .refine((value) => value == null || z.string().uuid().safeParse(value).success, {
+      message
+    })
+    .transform((value) => value ?? null);
+}
+
 function currencyAmountField(label: string) {
   return z
     .string()
@@ -316,7 +329,8 @@ export const estimateReusableContentImportInputSchema = z.object({
 });
 
 export const estimateSendToCustomerInputSchema = z.object({
-  estimateId: z.string().uuid("Estimate id is required.")
+  estimateId: z.string().uuid("Estimate id is required."),
+  portalUserId: optionalUuidField("Select a valid contact recipient.")
 });
 
 export const estimatePortalDecisionInputSchema = z.object({

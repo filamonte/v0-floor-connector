@@ -2,6 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ContextFactsList } from "@/components/context-facts-list";
+import {
+  ActionOverflowMenu,
+  overflowActionClassName,
+  primaryActionClassName,
+  secondaryActionClassName
+} from "@/components/action-hierarchy";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { EstimateStatusActions } from "@/components/estimate-status-actions";
@@ -15,6 +21,7 @@ import {
   ScheduleContextMetrics,
   ScheduleContextNotice
 } from "@/components/schedule-context-card";
+import { SendToContactSelect } from "@/components/send-to-contact-select";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
 import { quickCreateContractFromEstimateAction } from "@/lib/contracts/actions";
@@ -25,7 +32,11 @@ import {
   sendEstimateToCustomerAction
 } from "@/lib/estimates/actions";
 import { resolveEstimateApprovalOrchestration } from "@/lib/estimates/approval-orchestration";
-import { getEstimateById, listEstimateCustomerEvents } from "@/lib/estimates/data";
+import {
+  getEstimateById,
+  listEstimateCustomerEvents,
+  listEstimatePortalRecipients
+} from "@/lib/estimates/data";
 import { listInvoices } from "@/lib/invoices/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
@@ -259,6 +270,14 @@ export default async function EstimateDetailPage({
     notFound();
   }
 
+  const sendContactOptions =
+    estimate.status === "draft" || estimate.status === "rejected"
+      ? await listEstimatePortalRecipients({
+          organizationId: estimate.organizationId,
+          customerId: estimate.customerId,
+          projectId: estimate.projectId
+        })
+      : [];
   const estimateContracts = contracts.filter((contract) => contract.estimateId === estimate.id);
   const estimateJobs = jobs.filter((job) => job.estimateId === estimate.id);
   const estimateInvoices = invoices.filter((invoice) => invoice.estimateId === estimate.id);
@@ -343,6 +362,18 @@ export default async function EstimateDetailPage({
   const lineItemCount = estimate.lineItems.length;
   const primaryContract = estimateContracts[0] ?? null;
   const primaryInvoice = estimateInvoices[0] ?? null;
+  const estimatePrimaryAction =
+    estimate.status === "approved" && !primaryContract
+      ? {
+          label: "Create Contract",
+          href: `/contracts?estimateId=${estimate.id}`
+        }
+      : estimate.status === "draft" || estimate.status === "rejected"
+        ? {
+            label: "Send Estimate",
+            href: "#estimate-workflow-actions"
+          }
+        : null;
   const hasSignedContract = primaryContract?.status === "signed";
   const completedEstimateJobs = estimateJobs.filter((job) => job.dispatchStatus === "completed");
   const actionBarStatusTone =
@@ -484,27 +515,36 @@ export default async function EstimateDetailPage({
             statusTone={actionBarStatusTone}
             nextActionLabel="Preferred next action"
             primaryAction={
-              <Link
-                href={nextAction.href}
-                className="inline-flex items-center rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-              >
-                {nextAction.label}
-              </Link>
+              estimatePrimaryAction ? (
+                estimatePrimaryAction.href.startsWith("#") ? (
+                  <a href={estimatePrimaryAction.href} className={primaryActionClassName}>
+                    {estimatePrimaryAction.label}
+                  </a>
+                ) : (
+                  <Link href={estimatePrimaryAction.href} className={primaryActionClassName}>
+                    {estimatePrimaryAction.label}
+                  </Link>
+                )
+              ) : null
             }
             secondaryActions={
               <>
                 <Link
                   href={`/estimates/${estimate.id}/edit`}
-                  className="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                  className={secondaryActionClassName}
                 >
-                  Back to edit
+                  Edit
                 </Link>
-                <Link
-                  href={`/projects/${estimate.projectId}`}
-                  className="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
-                >
-                  Open project workspace
-                </Link>
+                <ActionOverflowMenu>
+                  <Link href={`/projects/${estimate.projectId}`} className={overflowActionClassName}>
+                    View Project
+                  </Link>
+                  {estimate.customer ? (
+                    <Link href={`/customers/${estimate.customer.id}`} className={overflowActionClassName}>
+                      View Customer
+                    </Link>
+                  ) : null}
+                </ActionOverflowMenu>
               </>
             }
             meta={
@@ -810,25 +850,53 @@ export default async function EstimateDetailPage({
                           Send prerequisites
                         </p>
                         <p className="mt-2">
-                          This estimate can be sent only after the customer has an
-                          authenticated portal user with active access to this project.
-                          Manage the portal grant and project visibility on the customer
-                          workspace before sending.
+                          This estimate can be sent only after the customer email/contact has
+                          authenticated portal access with active visibility to this project.
+                          Manage contact identity, invite state, and project visibility from
+                          People; this estimate action only triggers the send.
                         </p>
                         {estimate.customer ? (
                           <Link
-                            href={`/customers/${estimate.customer.id}`}
+                            href="/people#customer-access"
                             className="mt-3 inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                           >
-                            Manage customer portal access
+                            Manage access in People
                           </Link>
                         ) : null}
                       </div>
-                      <form action={sendEstimateToCustomerAction} className="space-y-4">
+                      <form
+                        id="estimate-workflow-actions"
+                        action={sendEstimateToCustomerAction}
+                        className="space-y-4"
+                      >
                         <input type="hidden" name="estimateId" value={estimate.id} />
+                        {sendContactOptions.length > 0 ? (
+                          <SendToContactSelect
+                            name="portalUserId"
+                            defaultValue={
+                              sendContactOptions.length === 1
+                                ? sendContactOptions[0]?.portalUserId
+                                : sendContactOptions.find((option) => option.isPrimaryContact)
+                                    ?.portalUserId
+                            }
+                            options={sendContactOptions.map((option) => ({
+                              value: option.portalUserId,
+                              label: option.contactDisplayName ?? option.fullName ?? option.email,
+                              email: option.contactEmail ?? option.email,
+                              isPrimary: option.isPrimaryContact
+                            }))}
+                            hint="People owns contact identity and portal access. Leaving this blank uses the primary customer contact when available, then the existing customer email fallback."
+                          />
+                        ) : (
+                          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                            No portal-ready contact is available for this project. Manage the
+                            contact and project access from People before sending.
+                          </div>
+                        )}
                         <button
                           type="submit"
-                          className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                          disabled={sendContactOptions.length === 0}
+                          className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
                         >
                           Send estimate
                         </button>
@@ -840,9 +908,9 @@ export default async function EstimateDetailPage({
                         Customer email is missing on the canonical customer record.
                       </p>
                       <p className="mt-2">
-                        Estimate send uses <span className="font-semibold">customer.email</span> on
-                        the shared estimate -&gt; customer chain. The People directory is workforce-only
-                        and is not used for estimate recipients.
+                        Estimate send uses the shared estimate -&gt; customer chain and an active
+                        portal contact. People is the management surface for contact identity,
+                        portal invite state, and project visibility.
                       </p>
                       <p className="mt-2">
                         Add the direct email on the customer first, or review the linked lead if

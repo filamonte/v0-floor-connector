@@ -1263,7 +1263,8 @@ export async function rebuildApprovedEstimateSnapshotAction(formData: FormData) 
 export async function sendEstimateToCustomerAction(formData: FormData) {
   const estimateId = getFieldValue(formData, "estimateId");
   const result = estimateSendToCustomerInputSchema.safeParse({
-    estimateId
+    estimateId,
+    portalUserId: getFieldValue(formData, "portalUserId")
   });
 
   if (!result.success) {

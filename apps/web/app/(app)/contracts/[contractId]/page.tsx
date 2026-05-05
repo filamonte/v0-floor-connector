@@ -7,12 +7,19 @@ import {
 import { sanitizeHtml } from "@/lib/html/sanitize";
 
 import { ContractStatusActions } from "@/components/contract-status-actions";
+import {
+  ActionOverflowMenu,
+  overflowActionClassName,
+  primaryActionClassName,
+  secondaryActionClassName
+} from "@/components/action-hierarchy";
 import { OnsiteSignatureModal } from "@/components/contracts/onsite-signature-modal";
 import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
+import { ReadyToScheduleActionPanel } from "@/components/ready-to-schedule-action-panel";
 import {
   ScheduleContextActions,
   ScheduleContextFocusCard,
@@ -553,6 +560,10 @@ export default async function ContractDetailPage({
     readinessSnapshot?.depositRequired && !readinessSnapshot.depositSatisfied
       ? `/invoices?projectId=${contract.projectId}&estimateId=${contract.estimateId ?? ""}&workflowRole=deposit`
       : null;
+  const showReadyToSchedulePanel =
+    contract.status === "signed" &&
+    signatureSummary.isCompleted &&
+    Boolean(readinessSnapshot?.isReadyToSchedule);
   const contractAction = getContractAction({
     contractId: contract.id,
     projectId: contract.projectId,
@@ -566,6 +577,10 @@ export default async function ContractDetailPage({
     depositRequired: readinessSnapshot?.depositRequired ?? false,
     depositSatisfied: readinessSnapshot?.depositSatisfied ?? false
   });
+  const contractPrimaryAction =
+    contractAction.label === "Send for signature" || contractAction.label === "Countersign"
+      ? contractAction
+      : null;
   const contractDisplayState = getContractDisplayState({
     status: contract.status,
     signatureSummary
@@ -714,29 +729,40 @@ export default async function ContractDetailPage({
                     : "Signature workflow"
             }
             primaryAction={
-              <Link
-                href={contractAction.href}
-                className="inline-flex items-center rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-              >
-                {contractAction.label}
-              </Link>
+              contractPrimaryAction ? (
+                <a href={contractPrimaryAction.href} className={primaryActionClassName}>
+                  {contractPrimaryAction.label}
+                </a>
+              ) : null
             }
             secondaryActions={
               <>
                 {contract.isEditable ? (
                   <Link
                     href={`/contracts/${contract.id}/edit`}
-                    className="inline-flex items-center rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                    className={secondaryActionClassName}
                   >
-                    Edit draft
+                    Edit
                   </Link>
                 ) : null}
-                <a
-                  href="#signer-routing"
-                  className="inline-flex items-center rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-                >
-                  Signers
-                </a>
+                <Link href={`/projects/${contract.projectId}`} className={secondaryActionClassName}>
+                  View Project
+                </Link>
+                <ActionOverflowMenu>
+                  {contract.status === "draft" || contract.status === "sent" || contract.status === "viewed" ? (
+                    <a href="#contract-workflow-actions" className={overflowActionClassName}>
+                      Void
+                    </a>
+                  ) : null}
+                  {contract.estimateId ? (
+                    <Link href={`/estimates/${contract.estimateId}`} className={overflowActionClassName}>
+                      View Estimate
+                    </Link>
+                  ) : null}
+                  <a href="#signer-routing" className={overflowActionClassName}>
+                    Signer Routing
+                  </a>
+                </ActionOverflowMenu>
               </>
             }
             meta={
@@ -751,6 +777,22 @@ export default async function ContractDetailPage({
           <WorkflowBar title="Contract workflow" steps={contractWorkflowSteps} />
 
           <ProjectStateSummary title="Signature state" items={contractStateItems} />
+
+          {showReadyToSchedulePanel ? (
+            <ReadyToScheduleActionPanel
+              projectId={contract.projectId}
+              projectName={contract.project?.name ?? "Linked project"}
+              estimateId={contract.estimate?.status === "approved" ? contract.estimateId : null}
+              contractId={contract.id}
+              readyToScheduleAt={readinessSnapshot?.contractSignedAt}
+              jobCount={relatedJobs.length}
+              unscheduledJobCount={unscheduledJobs.length}
+              unscheduledJobId={
+                unscheduledJobs.length === 1 ? unscheduledJobs[0].id : null
+              }
+              source="contract"
+            />
+          ) : null}
         </div>
       </div>
 
@@ -841,7 +883,7 @@ export default async function ContractDetailPage({
               title="Workflow Actions"
               description="Move the contract through approval, send, and countersign from this review surface."
             >
-              <div className="space-y-4">
+              <div id="contract-workflow-actions" className="space-y-4">
                 <ContractStatusActions
                   contractId={contract.id}
                   currentStatus={contract.status}

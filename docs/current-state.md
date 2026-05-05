@@ -272,9 +272,9 @@ Current protected routes include:
 - Settings (`/settings`)
 
 Current route-language note:
-- `/people` is still the implemented workforce-oriented route today
-- the future contractor-facing direction is a broader `Directory` workspace that can unify customer accounts, related contacts, workforce records, vendors, and other contact-like entries at the view layer
-- that future Directory direction does not change the current canonical model in this pass
+- `/people` is now the intended contractor-side management home for people identity across workforce records, related customer contacts, portal invite state, contact-permission readiness, and project visibility administration
+- `/directory` remains the read-only unified contractor-facing scan-and-jump view over canonical customers, related customer contacts, people, vendors, and opportunities, while editable ownership stays on canonical workspaces
+- this People management direction does not introduce a duplicate portal user, contact, customer, or permissions model
 - `/directory` now exists as a read-only unified contractor-facing view over canonical customers, related customer contacts, people, vendors, and opportunities, while each row still routes into its existing canonical workspace
 - the customer, person, vendor, and lead detail pages now include compact Directory-context handoff cards so users can jump back to the read-only index without weakening those canonical detail workspaces as the editing and workflow homes
 - Directory customer-contact rows now describe linked portal grants and contact-level permissions as managed on the parent customer detail page instead of presenting portal linkage as future-only
@@ -360,23 +360,23 @@ Implemented:
 - protected customers list page
 - customer detail page
 - customer detail now includes a compact `Contacts` management section over canonical `contacts` and `customer_contacts`
-- contractor admins can now add related customer contacts, edit their basic contact details, and designate one main contact from customer detail
+- contractor admins can now add related customer contacts, edit their basic contact details, and designate one main contact through the shared customer-contact actions; People is the intended management home for this relationship/portal access work, while customer detail keeps contextual visibility
 - `/directory` now also surfaces those related customer contacts as read-only `Customer Contact` entries that route back to the parent customer detail page
 - customer detail and Directory now also show portal-readiness and permission context for related customer contacts:
   - whether the contact has an email
   - whether the contact is the main contact
   - whether a linked-contact portal grant has stored permission flags available for enforced actions
-- customer detail portal access now also shows whether an existing grant is still customer-level or linked to one canonical related customer contact
-- linked-contact portal grants now also store customer-contact portal permissions and allow contractor-admin editing from customer detail
+- People portal access management now shows whether an existing grant is still customer-level or linked to one canonical related customer contact
+- linked-contact portal grants now also store customer-contact portal permissions and allow contractor-admin editing from the People customer-access section using the same canonical actions
 - linked-contact portal grants now also enforce stored permissions for portal estimate approve/reject, change-order approve/reject, and contract sign/decline actions
 - null-contact customer-level grants still continue to use legacy portal behavior during this first enforcement rollout
 
 Current customer-account guardrails:
 - `customers` remain the canonical customer/account records for commercial and financial workflows
 - customer entries that later appear inside a unified contractor `Directory` should still be those full canonical customer/account records, not lightweight contact cards
-- estimate send, invoice recipient, contract customer context, payment/billing context, and project ownership should continue to read canonical customer/account fields by default
+- estimate send, invoice recipient, contract customer context, payment/billing context, and project ownership should continue to use canonical customer/account context, with portal-ready related contacts selected where existing access data supports it
 - additional customer contacts are related contacts beneath the canonical customer/account and do not replace it
-- `customers.email` still remains the account-level estimate, contract, and invoice recipient source of truth in this phase
+- `customers.email` remains the account-level fallback for estimate, contract, and invoice recipient continuity when a more specific portal-ready related contact is not selected
 
 Starter fields include:
 - name
@@ -402,6 +402,7 @@ Implemented:
 - project commercial-readiness sync foundation derived from contract, invoice, payment, financing, and workflow-setting state
 - stored project readiness fields now refresh from upstream opportunity and estimate mutations instead of waiting for later downstream changes to resync them
 - project detail now acts as the upstream sales-to-production readiness hub with blocker visibility, next-best-action guidance, and a derived ready-to-schedule handoff state
+- project and signed contract detail now surface a ready-to-schedule action panel only when the existing project readiness snapshot is clear, guiding users from signed contract into canonical job Quick-Create and the shared project-filtered schedule surface; where an approved estimate is available, the handoff preserves that estimate context so the created job stays linked to the upstream commercial lineage, and when exactly one unscheduled job exists the schedule handoff opens the focused scheduling action for that canonical job
 - project readiness is now enforced server-side through a centralized readiness gate before job creation, scheduling, and execution workflows can proceed
 - project detail next-action guidance now distinguishes draft/sent/rejected/approved estimate states, contract draft/signature states, deposit readiness, pending change orders, job scheduling, completed-work invoicing, and open invoice/payment follow-up using existing canonical records only
 - project detail completed-job invoice actions now preserve the canonical `jobId` when handing off to invoice Quick-Create, and active job follow-up routes through `/jobs?projectId=...` so the project context is not lost
@@ -438,7 +439,7 @@ Implemented:
 - authenticated-user portal access lookup foundation for customer-facing record loaders
 - tenant-safe portal record loaders for canonical project, estimate, contract, and invoice review data
 - lightweight `portal_record_views` audit foundation for customer-facing record visibility events
-- contractor-side portal access management on customer detail for granting, linking, reviewing, revoking, and project-scoping customer portal access
+- contractor-side portal access management is intended to live in People for granting, linking, reviewing, revoking, and project-scoping customer portal access, while customer detail keeps a contextual access snapshot and handoff
 - contractor-side portal invite creation from customer detail now supports pending project-scoped invites for customer/contact emails that do not yet belong to an authenticated FloorConnector user
 - `/portal/invite?token=...` validates a hashed invite token, shows customer-safe customer/project context, sends users through the existing login/signup flow, and activates the canonical portal grant only when the authenticated email matches the invite
 - customer detail now also shows stored linked-contact permission readiness, including the supported customer-facing permission set
@@ -460,15 +461,15 @@ Current portal access design notes:
 - normal contractor workflow now starts customer portal access from a contractor-created customer/project invite, not from customer self-registration before anything is shared
 - null `customer_contact_id` still represents the existing customer-level portal grant behavior
 - existing customer-level grants are not migrated, revoked, or altered automatically; they continue to work as legacy account-level portal access
-- contractor admins can attach an existing customer-level grant to an existing related customer contact from the customer detail Portal Access area when they are ready to use contact-level permissions
+- contractor admins can attach an existing customer-level grant to an existing related customer contact from People when they are ready to use contact-level permissions
 - linked-contact grants now identify which canonical related customer contact a login represents without changing project visibility behavior
-- linked-contact grants now also show stored permission readiness on customer detail
+- linked-contact grants now also show stored permission readiness in People and contextual customer surfaces
 - linked-contact grants now also persist stored permission flags for estimate visibility/approval, contract signing, change-order approval, invoice view/pay, and quote-request readiness
 - project visibility is explicitly granted beneath that customer access instead of exposing all tenant projects automatically
 - portal read access now flows through the same canonical project, estimate, contract, and invoice records instead of portal-specific copies
-- contractor admins now manage portal access from the canonical customer surface rather than a disconnected portal-contact subsystem
+- contractor admins now manage portal access from People on top of canonical customer, customer-contact, portal-grant, and project-access records rather than a disconnected portal-contact subsystem
 - contact-specific permission gating is now active for linked-contact estimate approval/rejection, change-order approval/rejection, and contract sign/decline actions only
-- estimate send lookup, contract viewing, contractor countersign, invoice/payment behavior, and null-contact customer-level grants remain unchanged in this rollout
+- estimate send lookup can now select an existing portal-ready related contact when project access already exists; contract send labels the signer selection as contact selection; contract viewing, contractor countersign, invoice/payment behavior, and null-contact customer-level grants remain unchanged
 - a future Directory customer-account workspace may expose dedicated tabs such as `Overview`, `Contacts`, `Projects`, `Portal Access`, and optional `Billing` / `Financial`, but that is a wording and UX direction rather than a current route or schema change
 - the customer-facing portal now has a real protected shell, portal home workspace, and project-detail workspace built on that same scoped read layer
 - customer-facing estimate, contract, and invoice review pages now exist inside the portal on top of the same tenant-safe canonical record loaders
@@ -809,6 +810,7 @@ Implemented:
 - status transition actions
 - estimate detail now surfaces project-level readiness context and a clearer preferred next action instead of implying older parallel downstream shortcuts
 - contractor-side customer send flow for estimates
+- contractor-side estimate send can target an existing portal-ready customer contact when project-scoped portal access already exists, otherwise it clearly points recipient/access management back to People instead of owning that setup on the estimate page
 - customer-facing portal estimate review and approval or rejection
 - immutable approved estimate commercial snapshot creation on approval
 - approved estimates that are missing their approval snapshot now show a recovery warning on estimate detail/edit and can rebuild the canonical approved commercial snapshot before contract generation
@@ -962,6 +964,7 @@ Current invoice design notes:
   - review-first summary of unscheduled, today, in-progress, and upcoming work
   - explicit schedule-view and crew-filter state normalization on the same `/schedule` surface
   - optional `projectId` URL filtering for project-scoped schedule handoff, applied directly against canonical `jobs.project_id` while still allowing `q` text search to narrow the same result set
+  - optional `jobId` plus `action=schedule|assign` URL context for opening the existing schedule action panel on a canonical job, with project-scoped single-job inference for older ready-to-schedule handoffs that arrive without `jobId`
   - optional `projectId` URL filtering on `/jobs`, applied directly against canonical `jobs.project_id` while preserving view, search, and Quick-Create handoff state
   - compact active-filter banner on `/schedule` for project, search, crew, and selected job/action handoff state, with per-filter clear links that preserve the remaining query context
   - next-actions guidance for jobs that need scheduling, crew assignment, or immediate attention
@@ -1341,6 +1344,7 @@ The current implemented workflow foundation supports:
 - canonical change-order authoring, send-for-review, and customer portal approval or rejection on the shared project and contract chain
 - approved change-order commercial snapshot creation on approval, with append-only downstream SOV and invoice integration
 - project-detail readiness hub for the upstream commercial chain with blockers, next action, and ready-to-schedule handoff visibility
+- signed contract and project detail now share a post-sign ready-to-schedule action panel that points to existing job Quick-Create and `/schedule` project handoff routes without adding a contract-specific scheduling model; the job Quick-Create handoff preserves approved estimate context when available, and a single unscheduled project job opens directly in the existing `/schedule` scheduling action panel
 - downstream job creation now respects the canonical ready-to-schedule gate instead of relying only on estimate approval
 - downstream job reassignment now respects the same canonical ready-to-schedule gate instead of allowing a later project move to bypass the handoff rule
 - centralized server-side project readiness enforcement now blocks job creation, scheduling, scheduled/execution job transitions, daily logs, field notes, execution attachments, punchlist items, and project-attributed time punches until readiness conditions pass

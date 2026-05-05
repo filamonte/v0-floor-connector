@@ -1482,7 +1482,7 @@ export function InvoiceForm({
       <WorkspaceSection
         id="review-send"
         title="Review / Send"
-        description="Save the invoice build first, then continue into review, customer send, and collection status handling."
+        description="Save the invoice build first, then continue into review, customer send, and collection status handling. Invoice send currently uses the canonical customer/account context as its fallback; manage customer contacts and portal access from People."
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <SaveStateSubmitButton

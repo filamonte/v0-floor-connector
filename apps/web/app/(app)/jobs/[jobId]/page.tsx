@@ -2,6 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AppEmptyState } from "@/components/app-empty-state";
+import {
+  ActionOverflowMenu,
+  overflowActionClassName,
+  primaryActionClassName,
+  secondaryActionClassName
+} from "@/components/action-hierarchy";
 import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
@@ -152,21 +158,21 @@ function getPrimaryProgressionAction(status: string) {
   switch (status) {
     case "unscheduled":
       return {
-        label: "Mark scheduled",
+        label: "Set Schedule",
         nextStatus: "scheduled",
         helper: "Move this job into the scheduled state once timing is committed.",
         summary: "This job is commercially ready and waiting on the first real schedule commitment."
       };
     case "scheduled":
       return {
-        label: "Start work",
+        label: "Start Work",
         nextStatus: "in_progress",
         helper: "Move the job into active execution when the crew begins field work.",
         summary: "Scheduling is in place. The next real step is starting field execution."
       };
     case "in_progress":
       return {
-        label: "Mark complete",
+        label: "Mark Complete",
         nextStatus: "completed",
         helper: "Close the job when field work is finished and billing follow-through can start.",
         summary: "Execution is underway. Close the job once field work is truly complete."
@@ -183,6 +189,16 @@ function getHeaderPrimaryAction(
   hasLinkedInvoice: boolean
 ) {
   const progressionAction = getPrimaryProgressionAction(status);
+
+  if (status === "unscheduled" && progressionAction) {
+    return {
+      type: "link" as const,
+      label: progressionAction.label,
+      helper: progressionAction.helper,
+      summary: progressionAction.summary,
+      href: "#schedule-and-crew"
+    };
+  }
 
   if (progressionAction) {
     return {
@@ -411,17 +427,39 @@ export default async function JobDetailPage({
                   ? renderPrimaryAction(
                       primaryAction,
                       job,
-                      "inline-flex items-center rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                      primaryActionClassName
                     )
                   : null
               }
               secondaryActions={
-                <a
-                  href="#schedule-and-crew"
-                  className="inline-flex items-center rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-                >
-                  Schedule and crew
-                </a>
+                <>
+                  <a href="#schedule-and-crew" className={secondaryActionClassName}>
+                    Update Schedule
+                  </a>
+                  <Link href={`/projects/${job.projectId}`} className={secondaryActionClassName}>
+                    View Project
+                  </Link>
+                  <ActionOverflowMenu>
+                    <a href="#schedule-and-crew" className={overflowActionClassName}>
+                      Assign Crew
+                    </a>
+                    {canUnschedule ? (
+                      <a href="#schedule-and-crew" className={overflowActionClassName}>
+                        Unschedule
+                      </a>
+                    ) : null}
+                    {job.estimateId ? (
+                      <Link href={`/estimates/${job.estimateId}`} className={overflowActionClassName}>
+                        View Estimate
+                      </Link>
+                    ) : null}
+                    {linkedInvoice ? (
+                      <Link href={`/invoices/${linkedInvoice.id}`} className={overflowActionClassName}>
+                        View Invoice
+                      </Link>
+                    ) : null}
+                  </ActionOverflowMenu>
+                </>
               }
               meta={
                 <>

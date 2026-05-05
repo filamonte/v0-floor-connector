@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { AuthSubmitButton } from "@/components/auth-submit-button";
 import { QuickCreateFormShell } from "@/components/quick-create-form-shell";
 
@@ -13,15 +15,26 @@ type JobQuickCreateFormProps = {
   action: (formData: FormData) => void | Promise<void>;
   projects: JobQuickCreateProjectOption[];
   initialProjectId?: string | null;
+  initialEstimateId?: string | null;
+  initialContractId?: string | null;
 };
 
 export function JobQuickCreateForm({
   action,
   projects,
-  initialProjectId
+  initialProjectId,
+  initialEstimateId,
+  initialContractId
 }: JobQuickCreateFormProps) {
+  const [selectedProjectId, setSelectedProjectId] = useState(initialProjectId ?? "");
+  const shouldPreserveEstimate = Boolean(
+    initialEstimateId && initialProjectId && selectedProjectId === initialProjectId
+  );
+
   return (
     <form action={action} className="space-y-5">
+      <input type="hidden" name="estimateId" value={shouldPreserveEstimate ? initialEstimateId ?? "" : ""} />
+      <input type="hidden" name="contractId" value={shouldPreserveEstimate ? initialContractId ?? "" : ""} />
       <QuickCreateFormShell
         eyebrow="Quick create"
         title="Create job"
@@ -33,6 +46,7 @@ export function JobQuickCreateForm({
           <select
             name="projectId"
             defaultValue={initialProjectId ?? ""}
+            onChange={(event) => setSelectedProjectId(event.target.value)}
             className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
             required
           >
@@ -47,6 +61,11 @@ export function JobQuickCreateForm({
             ))}
           </select>
         </label>
+        {shouldPreserveEstimate ? (
+          <p className="rounded-[4px] border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs leading-5 text-emerald-900">
+            This job will preserve the approved estimate context from the signed project handoff.
+          </p>
+        ) : null}
       </QuickCreateFormShell>
 
       <div className="flex flex-col gap-3 pt-1">

@@ -2,6 +2,12 @@
 
 import Link from "next/link";
 
+import {
+  ActionOverflowMenu,
+  overflowActionClassName,
+  primaryActionClassName,
+  secondaryActionClassName
+} from "@/components/action-hierarchy";
 import { AppEmptyState } from "@/components/app-empty-state";
 import {
   applyRowsPerView,
@@ -22,7 +28,14 @@ type InvoiceRecord = {
     name?: string | null;
   } | null;
   project?: {
+    id?: string | null;
     name?: string | null;
+  } | null;
+  estimate?: {
+    id?: string | null;
+  } | null;
+  job?: {
+    id?: string | null;
   } | null;
 };
 
@@ -70,6 +83,24 @@ function getInvoiceContinuityCue(invoice: InvoiceRecord) {
   return "Next: review invoice";
 }
 
+function getInvoicePrimaryAction(invoice: InvoiceRecord) {
+  if (invoice.status === "draft") {
+    return {
+      label: "Send Invoice",
+      href: `/invoices/${invoice.id}#invoice-editing`
+    };
+  }
+
+  if (invoice.status !== "paid" && invoice.status !== "void" && Number(invoice.balanceDueAmount) > 0) {
+    return {
+      label: "Record Payment",
+      href: `/invoices/${invoice.id}#payment-recording`
+    };
+  }
+
+  return null;
+}
+
 export function InvoiceRecordsPanel({
   invoices,
   totalInvoiceCount,
@@ -87,11 +118,12 @@ export function InvoiceRecordsPanel({
               Invoice records
             </p>
           </div>
-          <div className="hidden grid-cols-[minmax(0,1.35fr)_1fr_160px_140px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
+          <div className="hidden grid-cols-[minmax(0,1.35fr)_1fr_160px_140px_180px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
             <span>Invoice</span>
             <span>Project</span>
             <span>Status</span>
             <span className="text-right">Balance due</span>
+            <span className="text-right">Actions</span>
           </div>
           <div className="md:hidden">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
@@ -110,16 +142,18 @@ export function InvoiceRecordsPanel({
 
       <div className="divide-y divide-[#e5e7eb]">
         {invoices.length > 0 ? (
-          visibleInvoices.map((invoice) => (
-            <Link
+          visibleInvoices.map((invoice) => {
+            const primaryAction = getInvoicePrimaryAction(invoice);
+
+            return (
+            <div
               key={invoice.id}
-              href={`/invoices/${invoice.id}/edit`}
               className="group block px-4 py-2.5 transition hover:bg-[#f8fafc]"
             >
-              <div className="grid gap-3 md:grid-cols-[minmax(0,1.35fr)_1fr_160px_140px] md:items-center">
+              <div className="grid gap-3 md:grid-cols-[minmax(0,1.35fr)_1fr_160px_140px_180px] md:items-center">
                 <div className="min-w-0">
                   <h3 className="text-sm font-semibold text-slate-950 transition group-hover:text-brand-700">
-                    {invoice.referenceNumber}
+                    <Link href={`/invoices/${invoice.id}`}>{invoice.referenceNumber}</Link>
                   </h3>
                   <p className="mt-0.5 text-sm leading-5 text-slate-500">
                     {invoice.customer?.name ?? "Unknown customer"}
@@ -162,9 +196,37 @@ export function InvoiceRecordsPanel({
                     {formatMoney(invoice.balanceDueAmount)}
                   </p>
                 </div>
+                <div className="flex flex-wrap justify-start gap-2 md:justify-end">
+                  {primaryAction ? (
+                    <Link href={primaryAction.href} className={primaryActionClassName}>
+                      {primaryAction.label}
+                    </Link>
+                  ) : null}
+                  <Link href={`/invoices/${invoice.id}#invoice-editing`} className={secondaryActionClassName}>
+                    Edit
+                  </Link>
+                  <ActionOverflowMenu>
+                    {invoice.project?.id ? (
+                      <Link href={`/projects/${invoice.project.id}`} className={overflowActionClassName}>
+                        View Project
+                      </Link>
+                    ) : null}
+                    {invoice.estimate?.id ? (
+                      <Link href={`/estimates/${invoice.estimate.id}`} className={overflowActionClassName}>
+                        View Estimate
+                      </Link>
+                    ) : null}
+                    {invoice.job?.id ? (
+                      <Link href={`/jobs/${invoice.job.id}`} className={overflowActionClassName}>
+                        View Job
+                      </Link>
+                    ) : null}
+                  </ActionOverflowMenu>
+                </div>
               </div>
-            </Link>
-          ))
+            </div>
+            );
+          })
         ) : (
           <div className="px-6 py-8 sm:px-8">
             <AppEmptyState

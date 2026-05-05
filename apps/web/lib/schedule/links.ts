@@ -1,4 +1,10 @@
-export type ScheduleViewKey = "all" | "unscheduled" | "today" | "upcoming" | "in_progress";
+export type ScheduleViewKey =
+  | "all"
+  | "unscheduled"
+  | "scheduled"
+  | "today"
+  | "upcoming"
+  | "in_progress";
 export type CrewViewKey = "all" | "assigned" | "unassigned";
 export type ScheduleLayoutKey = "week" | "day" | "board";
 export type ScheduleActionKey = "schedule" | "assign";

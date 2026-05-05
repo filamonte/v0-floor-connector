@@ -75,7 +75,8 @@ function parseJobInput(formData: FormData) {
 
 function parseJobQuickCreateInput(formData: FormData) {
   return jobQuickCreateInputSchema.safeParse({
-    projectId: getFieldValue(formData, "projectId")
+    projectId: getFieldValue(formData, "projectId"),
+    estimateId: getFieldValue(formData, "estimateId")
   });
 }
 
@@ -138,11 +139,14 @@ export async function createJobAction(formData: FormData) {
 
 export async function quickCreateJobAction(formData: FormData) {
   const projectId = getFieldValue(formData, "projectId");
+  const estimateId = getFieldValue(formData, "estimateId");
   const result = parseJobQuickCreateInput(formData);
 
   if (!result.success) {
     redirect(
       buildRedirect("/dashboard", {
+        projectId,
+        estimateId,
         error: result.error.issues[0]?.message ?? "Unable to create job."
       })
     );
@@ -153,7 +157,7 @@ export async function quickCreateJobAction(formData: FormData) {
   try {
     job = await createJob({
       projectId: result.data.projectId,
-      estimateId: null,
+      estimateId: result.data.estimateId,
       dispatchStatus: "unscheduled",
       crewVendorId: null,
       scheduledDate: null,
@@ -166,7 +170,8 @@ export async function quickCreateJobAction(formData: FormData) {
     redirect(
       buildRedirect("/dashboard", {
         error: error instanceof Error ? error.message : "Unable to create job.",
-        projectId
+        projectId,
+        estimateId
       })
     );
   }

@@ -2,6 +2,12 @@
 
 import Link from "next/link";
 
+import {
+  ActionOverflowMenu,
+  overflowActionClassName,
+  primaryActionClassName,
+  secondaryActionClassName
+} from "@/components/action-hierarchy";
 import { AppEmptyState } from "@/components/app-empty-state";
 import {
   applyRowsPerView,
@@ -20,9 +26,11 @@ type EstimateRecord = {
   updatedAt?: string | null;
   customerViewedAt?: string | null;
   customer?: {
+    id?: string | null;
     name?: string | null;
   } | null;
   project?: {
+    id?: string | null;
     name?: string | null;
   } | null;
   opportunity?: {
@@ -75,6 +83,24 @@ function getEstimateContinuityCue(estimate: EstimateRecord) {
   }
 }
 
+function getEstimatePrimaryAction(estimate: EstimateRecord) {
+  if (estimate.status === "approved") {
+    return {
+      label: "Create Contract",
+      href: `/contracts?estimateId=${estimate.id}`
+    };
+  }
+
+  if (estimate.status === "draft" || estimate.status === "rejected") {
+    return {
+      label: "Send Estimate",
+      href: `/estimates/${estimate.id}#estimate-workflow-actions`
+    };
+  }
+
+  return null;
+}
+
 export function EstimateRecordsPanel({
   estimates,
   totalEstimateCount,
@@ -93,13 +119,14 @@ export function EstimateRecordsPanel({
               Estimate records
             </p>
           </div>
-          <div className="hidden grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
+          <div className="hidden grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px_170px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
             <span>EST. #</span>
             <span>Title / customer</span>
             <span>Project</span>
             <span>Date</span>
             <span>Status</span>
             <span className="text-right">Total</span>
+            <span className="text-right">Actions</span>
           </div>
           <div className="md:hidden">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
@@ -118,19 +145,21 @@ export function EstimateRecordsPanel({
 
       <div className="divide-y divide-[#e5e7eb]">
         {estimates.length > 0 ? (
-          visibleEstimates.map((estimate) => (
-            <Link
+          visibleEstimates.map((estimate) => {
+            const primaryAction = getEstimatePrimaryAction(estimate);
+
+            return (
+            <div
               key={estimate.id}
-              href={`/estimates/${estimate.id}`}
               className="group block px-4 py-2.5 transition hover:bg-[#f8fafc]"
             >
-              <div className="grid gap-3 md:grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px] md:items-center">
+              <div className="grid gap-3 md:grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px_170px] md:items-center">
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
                     EST. #
                   </p>
                   <h3 className="text-sm font-semibold text-slate-950 transition group-hover:text-brand-700">
-                    {estimate.referenceNumber}
+                    <Link href={`/estimates/${estimate.id}`}>{estimate.referenceNumber}</Link>
                   </h3>
                 </div>
                 <div className="min-w-0">
@@ -186,9 +215,32 @@ export function EstimateRecordsPanel({
                     {formatMoney(estimate.totalAmount)}
                   </p>
                 </div>
+                <div className="flex flex-wrap justify-start gap-2 md:justify-end">
+                  {primaryAction ? (
+                    <Link href={primaryAction.href} className={primaryActionClassName}>
+                      {primaryAction.label}
+                    </Link>
+                  ) : null}
+                  <Link href={`/estimates/${estimate.id}/edit`} className={secondaryActionClassName}>
+                    Edit
+                  </Link>
+                  <ActionOverflowMenu>
+                    {estimate.project?.id ? (
+                      <Link href={`/projects/${estimate.project.id}`} className={overflowActionClassName}>
+                        View Project
+                      </Link>
+                    ) : null}
+                    {estimate.customer?.id ? (
+                      <Link href={`/customers/${estimate.customer.id}`} className={overflowActionClassName}>
+                        View Customer
+                      </Link>
+                    ) : null}
+                  </ActionOverflowMenu>
+                </div>
               </div>
-            </Link>
-          ))
+            </div>
+            );
+          })
         ) : (
           <div className="px-6 py-8 sm:px-8">
             <AppEmptyState

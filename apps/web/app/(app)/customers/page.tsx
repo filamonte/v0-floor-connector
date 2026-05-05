@@ -329,7 +329,8 @@ export default async function CustomersPage({
                 Latest customer updates
               </h3>
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Customer email and phone live here as the canonical recipient contact details for estimates, projects, invoices, and portal access.
+                Customer billing context stays here, while People owns contact identity,
+                portal invite status, permissions, and project visibility.
               </p>
             </div>
             <p className="text-sm leading-6 text-slate-500">

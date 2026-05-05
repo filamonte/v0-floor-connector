@@ -600,9 +600,23 @@ export default async function CustomerDetailPage({
 
         <DetailPanel
           title="Portal Access"
-          description="Grant and constrain customer-facing portal visibility here so access stays anchored to the canonical customer record, explicitly scoped projects, and optional linked customer contacts."
+          description="Customer detail keeps access context visible, while People is the management home for contact identity, invite state, stored permissions, and project visibility."
         >
           <div className="space-y-8">
+            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+              <p className="font-medium text-slate-950">Manage portal access from People</p>
+              <p className="mt-1">
+                Estimate, contract, and invoice workflows can trigger or verify access, but
+                portal identity and permissions are administered from the People customer-access
+                section.
+              </p>
+              <Link
+                href="/people#customer-access"
+                className="mt-3 inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                Open People access management
+              </Link>
+            </div>
             <section className="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
               <div className="flex flex-col gap-2">
                 <p className="text-base font-semibold text-slate-950">Invite customer to portal</p>
@@ -1161,7 +1175,7 @@ export default async function CustomerDetailPage({
         <DirectoryContextCard
           href={`/directory?view=customers&q=${encodeURIComponent(customer.name)}`}
           recordLabel="Customer account"
-          description="Directory is the contractor-side scan-and-jump index. This customer page remains the canonical home for billing details, portal access, projects, and downstream workflow actions."
+          description="Directory is the contractor-side scan-and-jump index. This customer page remains the canonical home for billing details, projects, and downstream workflow context; People owns contact identity and portal access administration."
         />
 
         <DetailPanel title="Customer Summary">

@@ -455,7 +455,7 @@ export async function sendContractForSignatureAction(formData: FormData) {
     redirect(
       buildRedirect(`/contracts/${result.data.contractId}`, {
         error:
-          "Select an active portal user who has access to this customer project before sending."
+          "Select an active contact who has project portal access before sending. Manage contact access from People."
       })
     );
   }

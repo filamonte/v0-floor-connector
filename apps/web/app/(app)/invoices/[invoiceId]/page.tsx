@@ -4,6 +4,12 @@ import { computeInvoicePaymentWorkflowGate } from "@floorconnector/domain";
 import type { Payment, PaymentEvent } from "@floorconnector/types";
 
 import { ContextFactsList } from "@/components/context-facts-list";
+import {
+  ActionOverflowMenu,
+  overflowActionClassName,
+  primaryActionClassName,
+  secondaryActionClassName
+} from "@/components/action-hierarchy";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { InvoiceForm } from "@/components/invoice-form";
@@ -300,12 +306,18 @@ export default async function InvoiceDetailPage({
           description:
             "This invoice is void, so the page stays focused on historical review instead of payment collection or editing changes."
         }
+      : invoice.status === "paid"
+        ? {
+            title: "Billing review is current",
+            description:
+              "This invoice is fully paid. Use the secondary or overflow links for broader project, estimate, or job context."
+          }
       : invoice.status === "draft"
         ? {
             title: "Review and send invoice",
             description:
-              "Finish billing details, lineage, tax, retainage, and status in the existing invoice editor before customer-facing collection begins.",
-            primaryLabel: "Review invoice build",
+              "Finish billing details, lineage, tax, retainage, and status in the existing invoice editor before customer-facing collection begins. Customer contact and portal access management stays in People.",
+            primaryLabel: "Send Invoice",
             primaryHref: "#invoice-editing"
           }
       : Number(invoice.balanceDueAmount) > 0
@@ -354,9 +366,7 @@ export default async function InvoiceDetailPage({
         : {
             title: "Billing review is current",
             description:
-              "This invoice is fully paid. Use the project hub if you need the broader contract, readiness, or downstream workflow context.",
-            primaryLabel: "Open project readiness hub",
-            primaryHref: `/projects/${invoice.projectId}`
+              "This invoice is fully paid. Use the secondary or overflow links for broader project, estimate, or job context."
           };
   const activePayments = invoice.payments.filter((payment) => payment.status !== "void");
   const latestPayment = activePayments[0] ?? invoice.payments[0] ?? null;
@@ -621,17 +631,11 @@ export default async function InvoiceDetailPage({
               primaryAction={
                 nextAction.primaryLabel && nextAction.primaryHref ? (
                   nextAction.primaryHref.startsWith("#") ? (
-                    <a
-                      href={nextAction.primaryHref}
-                      className="inline-flex items-center rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                    >
+                    <a href={nextAction.primaryHref} className={primaryActionClassName}>
                       {nextAction.primaryLabel}
                     </a>
                   ) : (
-                    <Link
-                      href={nextAction.primaryHref}
-                      className="inline-flex items-center rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                    >
+                    <Link href={nextAction.primaryHref} className={primaryActionClassName}>
                       {nextAction.primaryLabel}
                     </Link>
                   )
@@ -639,20 +643,32 @@ export default async function InvoiceDetailPage({
               }
               secondaryActions={
                 <>
-                  {invoice.billingModel === "aia_progress" && progressBillingWorkspace ? (
-                    <Link
-                      href={`/progress-billing/${progressBillingWorkspace.id}`}
-                      className="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
-                    >
-                      Open progress billing workspace
-                    </Link>
-                  ) : null}
+                  <a href="#invoice-editing" className={secondaryActionClassName}>
+                    Edit
+                  </a>
                   <Link
                     href={`/projects/${invoice.projectId}`}
-                    className="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                    className={secondaryActionClassName}
                   >
-                    Open project readiness hub
+                    View Project
                   </Link>
+                  <ActionOverflowMenu>
+                    {invoice.estimateId ? (
+                      <Link href={`/estimates/${invoice.estimateId}`} className={overflowActionClassName}>
+                        View Estimate
+                      </Link>
+                    ) : null}
+                    {invoice.jobId ? (
+                      <Link href={`/jobs/${invoice.jobId}`} className={overflowActionClassName}>
+                        View Job
+                      </Link>
+                    ) : null}
+                    {invoice.billingModel === "aia_progress" && progressBillingWorkspace ? (
+                      <Link href={`/progress-billing/${progressBillingWorkspace.id}`} className={overflowActionClassName}>
+                        Progress Billing
+                      </Link>
+                    ) : null}
+                  </ActionOverflowMenu>
                 </>
               }
               meta={

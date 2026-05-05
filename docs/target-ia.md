@@ -135,6 +135,8 @@ People should be the cross-organization workforce and relationship management ar
 
 This area should include:
 - employees
+- customer contacts and linked customer relationships
+- portal invite/access administration on canonical access records
 - subcontractors/vendors
 - roles and assignments later
 - certifications and compliance later

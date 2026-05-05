@@ -43,6 +43,16 @@ function getCustomerPath(customerId: string) {
   return `/customers/${customerId}`;
 }
 
+function getManagementPath(formData: FormData, customerId: string) {
+  const returnTo = getFieldValue(formData, "returnTo");
+
+  if (returnTo.startsWith("/people") || returnTo === getCustomerPath(customerId)) {
+    return returnTo;
+  }
+
+  return getCustomerPath(customerId);
+}
+
 function getPortalGrantStatus(formData: FormData) {
   const status = getFieldValue(formData, "status");
 
@@ -70,6 +80,7 @@ export async function createPortalAccessGrantAction(formData: FormData) {
   const customerContactId = getOptionalCustomerContactId(formData);
   const portalUserEmail = getFieldValue(formData, "portalUserEmail").trim().toLowerCase();
   const projectId = getFieldValue(formData, "projectId");
+  const managementPath = customerId ? getManagementPath(formData, customerId) : "/customers";
 
   if (!customerId) {
     redirect(
@@ -116,6 +127,8 @@ export async function createPortalAccessGrantAction(formData: FormData) {
 
   revalidatePath("/customers");
   revalidatePath(getCustomerPath(customerId));
+  revalidatePath(managementPath);
+  revalidatePath("/people");
   revalidatePath("/portal");
 
   const requestHeaders = await headers();
@@ -125,14 +138,14 @@ export async function createPortalAccessGrantAction(formData: FormData) {
     : undefined;
 
   redirect(
-    buildRedirect(getCustomerPath(customerId), {
+    buildRedirect(managementPath, {
       message: inviteResult.reusedExistingGrant
         ? inviteResult.activatedImmediately
-          ? `Existing portal access for ${portalUserEmail} was scoped to the selected project.`
+          ? `Sent to ${portalUserEmail}. Portal access already active and scoped to the selected project.`
           : `A pending portal invite already exists for ${portalUserEmail}. Revoke it and create a fresh invite if the original link is no longer available.`
         : inviteResult.activatedImmediately
-          ? `Portal access for ${portalUserEmail} was activated and scoped to the selected project.`
-          : `Portal invite for ${portalUserEmail} was created. Copy the invite link from this page.`,
+          ? `Sent to ${portalUserEmail}. Portal access granted for the selected project.`
+          : `Sent to ${portalUserEmail}. Portal invite was created; copy the invite link from this page.`,
       inviteUrl,
       inviteEmail: inviteResult.invitedEmail
     })
@@ -146,6 +159,7 @@ export async function updatePortalAccessGrantStatusAction(formData: FormData) {
   const userId = getFieldValue(formData, "userId");
   const invitedEmail = getFieldValue(formData, "invitedEmail").trim().toLowerCase();
   const status = getPortalGrantStatus(formData);
+  const managementPath = customerId ? getManagementPath(formData, customerId) : "/customers";
 
   if (!portalAccessGrantId || !customerId) {
     redirect(
@@ -184,10 +198,12 @@ export async function updatePortalAccessGrantStatusAction(formData: FormData) {
 
   revalidatePath("/customers");
   revalidatePath(getCustomerPath(customerId));
+  revalidatePath(managementPath);
+  revalidatePath("/people");
   revalidatePath("/portal");
 
   redirect(
-    buildRedirect(getCustomerPath(customerId), {
+    buildRedirect(managementPath, {
       message:
         status === "revoked"
           ? "Portal access was revoked."
@@ -203,6 +219,7 @@ export async function updatePortalAccessGrantLinkAction(formData: FormData) {
   const userId = getFieldValue(formData, "userId");
   const invitedEmail = getFieldValue(formData, "invitedEmail").trim().toLowerCase();
   const status = getPortalGrantStatus(formData);
+  const managementPath = customerId ? getManagementPath(formData, customerId) : "/customers";
 
   if (!portalAccessGrantId || !customerId || !userId) {
     redirect(
@@ -233,11 +250,13 @@ export async function updatePortalAccessGrantLinkAction(formData: FormData) {
 
   revalidatePath("/customers");
   revalidatePath(getCustomerPath(customerId));
+  revalidatePath(managementPath);
+  revalidatePath("/people");
   revalidatePath("/directory");
   revalidatePath("/portal");
 
   redirect(
-    buildRedirect(getCustomerPath(customerId), {
+    buildRedirect(managementPath, {
       message: customerContactId
         ? "Portal access was linked to the selected customer contact."
         : "Portal access now remains a customer-level grant."
@@ -249,6 +268,7 @@ export async function createPortalProjectAccessAction(formData: FormData) {
   const customerId = getFieldValue(formData, "customerId");
   const portalAccessGrantId = getFieldValue(formData, "portalAccessGrantId");
   const projectId = getFieldValue(formData, "projectId");
+  const managementPath = customerId ? getManagementPath(formData, customerId) : "/customers";
 
   if (!customerId || !portalAccessGrantId || !projectId) {
     redirect(
@@ -277,10 +297,12 @@ export async function createPortalProjectAccessAction(formData: FormData) {
 
   revalidatePath("/customers");
   revalidatePath(getCustomerPath(customerId));
+  revalidatePath(managementPath);
+  revalidatePath("/people");
   revalidatePath("/portal");
 
   redirect(
-    buildRedirect(getCustomerPath(customerId), {
+    buildRedirect(managementPath, {
       message: "Project portal visibility was added."
     })
   );
@@ -292,6 +314,7 @@ export async function updatePortalProjectAccessStatusAction(formData: FormData) 
   const portalAccessGrantId = getFieldValue(formData, "portalAccessGrantId");
   const projectId = getFieldValue(formData, "projectId");
   const status = getPortalProjectStatus(formData);
+  const managementPath = customerId ? getManagementPath(formData, customerId) : "/customers";
 
   if (!portalProjectAccessId || !customerId || !portalAccessGrantId || !projectId) {
     redirect(
@@ -320,10 +343,12 @@ export async function updatePortalProjectAccessStatusAction(formData: FormData) 
 
   revalidatePath("/customers");
   revalidatePath(getCustomerPath(customerId));
+  revalidatePath(managementPath);
+  revalidatePath("/people");
   revalidatePath("/portal");
 
   redirect(
-    buildRedirect(getCustomerPath(customerId), {
+    buildRedirect(managementPath, {
       message:
         status === "revoked"
           ? "Project portal visibility was revoked."
@@ -336,6 +361,7 @@ export async function updateCustomerContactPortalPermissionAction(formData: Form
   const portalAccessGrantId = getFieldValue(formData, "portalAccessGrantId");
   const customerId = getFieldValue(formData, "customerId");
   const customerContactId = getFieldValue(formData, "customerContactId");
+  const managementPath = customerId ? getManagementPath(formData, customerId) : "/customers";
 
   const result = customerContactPortalPermissionInputSchema.safeParse({
     portalAccessGrantId,
@@ -373,11 +399,13 @@ export async function updateCustomerContactPortalPermissionAction(formData: Form
 
   revalidatePath("/customers");
   revalidatePath(getCustomerPath(customerId));
+  revalidatePath(managementPath);
+  revalidatePath("/people");
   revalidatePath("/directory");
   revalidatePath("/portal");
 
   redirect(
-    buildRedirect(getCustomerPath(customerId), {
+    buildRedirect(managementPath, {
       message: "Stored portal permissions were updated."
     })
   );

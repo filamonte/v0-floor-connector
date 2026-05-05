@@ -7,6 +7,7 @@ type CustomerContactFormProps = {
   action: (formData: FormData) => void | Promise<void>;
   customerId: string;
   customerContact?: CustomerContactListItem;
+  returnTo?: string;
 };
 
 function getValue(value: string | null | undefined) {
@@ -16,7 +17,8 @@ function getValue(value: string | null | undefined) {
 export function CustomerContactForm({
   action,
   customerId,
-  customerContact
+  customerContact,
+  returnTo
 }: CustomerContactFormProps) {
   const contact = customerContact?.contact;
   const isEditing = Boolean(customerContact);
@@ -24,6 +26,7 @@ export function CustomerContactForm({
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="customerId" value={customerId} />
+      {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
       {customerContact ? (
         <input type="hidden" name="customerContactId" value={customerContact.id} />
       ) : null}

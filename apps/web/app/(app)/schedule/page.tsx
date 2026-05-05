@@ -29,6 +29,7 @@ import { listVendors } from "@/lib/vendors/data";
 const SCHEDULE_VIEW_OPTIONS = [
   { value: "all", label: "All scheduled work" },
   { value: "unscheduled", label: "Unscheduled" },
+  { value: "scheduled", label: "Scheduled" },
   { value: "today", label: "Today" },
   { value: "upcoming", label: "Upcoming" },
   { value: "in_progress", label: "In progress" }
@@ -180,6 +181,7 @@ function normalizeOptionalSearchParam(value?: string | string[]) {
 function normalizeScheduleView(value?: string | string[]): ScheduleViewKey {
   switch (normalizeOptionalSearchParam(value)) {
     case "unscheduled":
+    case "scheduled":
     case "today":
     case "upcoming":
     case "in_progress":
@@ -314,6 +316,15 @@ function getScheduleListEmptyState(input: {
       title: "Nothing is scheduled for today",
       description:
         "Once jobs carry a real date commitment for today, they will appear here as the immediate operating queue."
+    };
+  }
+
+  if (input.view === "scheduled") {
+    return {
+      eyebrow: "No scheduled work",
+      title: "No jobs have a schedule commitment yet",
+      description:
+        "Jobs will appear here once their canonical schedule fields carry a real date commitment."
     };
   }
 
@@ -898,30 +909,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
   const view = resolvedSearchParams.view;
   const crewFilter = resolvedSearchParams.crew;
   const selectedAction = resolvedSearchParams.action;
-  const selectedJobId = resolvedSearchParams.jobId;
-  const selectedJob = selectedJobId
-    ? jobs.find((job) => job.id === selectedJobId) ?? null
-    : null;
-  const selectedJobAssignments = selectedJob
-    ? assignmentsByJobId.get(selectedJob.id) ?? []
-    : [];
-  const showComposer =
-    Boolean(selectedAction && selectedJob) || Boolean(resolvedSearchParams.error);
-  const selectedJobCrewState = selectedJob
-    ? getCrewState({
-        dispatchStatus: selectedJob.dispatchStatus,
-        assignmentCount: selectedJobAssignments.length,
-        crewSummary: selectedJobAssignments
-          .slice(0, 2)
-          .map(
-            (assignment) =>
-              assignment.person?.displayName ?? assignment.vendor?.name ?? "Crew assignment"
-          ),
-        crewVendor: selectedJob.crewVendor
-      })
-    : null;
-  const selectedJobNeedsScheduleBeforeCrew =
-    selectedAction === "assign" && selectedJob?.dispatchStatus === "unscheduled";
+  const explicitSelectedJobId = resolvedSearchParams.jobId;
 
   const jobsWithAssignments = jobs.map((job) => {
     const assignments = assignmentsByJobId.get(job.id) ?? [];
@@ -982,6 +970,48 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
     .sort((left, right) => getScheduledSortTime(right) - getScheduledSortTime(left))
     .slice(0, 3);
 
+  const inferredSelectedJobs =
+    selectedAction && !explicitSelectedJobId && projectFilterId
+      ? jobsWithAssignments.filter((job) => {
+          if (job.projectId !== projectFilterId) {
+            return false;
+          }
+
+          if (selectedAction === "schedule") {
+            return job.dispatchStatus === "unscheduled";
+          }
+
+          return job.dispatchStatus !== "unscheduled" && job.assignmentCount === 0;
+        })
+      : [];
+  const selectedJob =
+    explicitSelectedJobId
+      ? jobsWithAssignments.find((job) => job.id === explicitSelectedJobId) ?? null
+      : inferredSelectedJobs.length === 1
+        ? inferredSelectedJobs[0]
+        : null;
+  const selectedJobId = selectedJob?.id ?? explicitSelectedJobId;
+  const selectedJobAssignments = selectedJob
+    ? assignmentsByJobId.get(selectedJob.id) ?? []
+    : [];
+  const showComposer =
+    Boolean(selectedAction && selectedJob) || Boolean(resolvedSearchParams.error);
+  const selectedJobCrewState = selectedJob
+    ? getCrewState({
+        dispatchStatus: selectedJob.dispatchStatus,
+        assignmentCount: selectedJobAssignments.length,
+        crewSummary: selectedJobAssignments
+          .slice(0, 2)
+          .map(
+            (assignment) =>
+              assignment.person?.displayName ?? assignment.vendor?.name ?? "Crew assignment"
+          ),
+        crewVendor: selectedJob.crewVendor
+      })
+    : null;
+  const selectedJobNeedsScheduleBeforeCrew =
+    selectedAction === "assign" && selectedJob?.dispatchStatus === "unscheduled";
+
   const visibleJobs = jobsWithAssignments.filter((job) => {
     const matchesProject = projectFilterId ? job.projectId === projectFilterId : true;
     const matchesView =
@@ -989,11 +1019,13 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
         ? true
         : view === "unscheduled"
           ? job.dispatchStatus === "unscheduled"
-          : view === "today"
-            ? job.isToday
-            : view === "upcoming"
-              ? job.isUpcoming
-              : job.dispatchStatus === "in_progress";
+          : view === "scheduled"
+            ? job.scheduledDate !== null
+            : view === "today"
+              ? job.isToday
+              : view === "upcoming"
+                ? job.isUpcoming
+                : job.dispatchStatus === "in_progress";
 
     const matchesCrew =
       crewFilter === "all"
@@ -1246,11 +1278,13 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
         ? jobsWithAssignments.length
         : option.value === "unscheduled"
           ? unscheduledJobs.length
-          : option.value === "today"
-            ? scheduledTodayJobs.length
-            : option.value === "upcoming"
-              ? upcomingJobs.length
-              : inProgressJobs.length
+          : option.value === "scheduled"
+            ? scheduledJobs.length
+            : option.value === "today"
+              ? scheduledTodayJobs.length
+              : option.value === "upcoming"
+                ? upcomingJobs.length
+                : inProgressJobs.length
   }));
   const crewViews = CREW_VIEW_OPTIONS;
   const listEmptyState = getScheduleListEmptyState({

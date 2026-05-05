@@ -1,6 +1,12 @@
 import Link from "next/link";
 
 import { AppEmptyState } from "@/components/app-empty-state";
+import {
+  ActionOverflowMenu,
+  overflowActionClassName,
+  primaryActionClassName,
+  secondaryActionClassName
+} from "@/components/action-hierarchy";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
 import { JobQuickCreateForm } from "@/components/job-quick-create-form";
 import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
@@ -19,6 +25,8 @@ type JobsPageProps = {
     view?: JobView;
     compose?: string;
     projectId?: string;
+    estimateId?: string;
+    contractId?: string;
     error?: string;
     message?: string;
   }>;
@@ -64,11 +72,22 @@ function getJobContinuityCue(job: JobListItem, assignmentCount: number) {
   return "Review job workspace";
 }
 
+function getJobPrimaryAction(job: JobListItem) {
+  switch (job.dispatchStatus) {
+    case "unscheduled":
+      return { label: "Set Schedule", href: `/jobs/${job.id}#schedule-and-crew` };
+    default:
+      return null;
+  }
+}
+
 function buildJobsHref(input: {
   q?: string;
   view?: JobView;
   compose?: string;
   projectId?: string;
+  estimateId?: string;
+  contractId?: string;
 }) {
   const searchParams = new URLSearchParams();
 
@@ -88,6 +107,14 @@ function buildJobsHref(input: {
     searchParams.set("projectId", input.projectId);
   }
 
+  if (input.estimateId) {
+    searchParams.set("estimateId", input.estimateId);
+  }
+
+  if (input.contractId) {
+    searchParams.set("contractId", input.contractId);
+  }
+
   const query = searchParams.toString();
   return query.length > 0 ? `/jobs?${query}` : "/jobs";
 }
@@ -99,6 +126,8 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   const normalizedQuery = query.toLowerCase();
   const view = resolvedSearchParams.view ?? "all";
   const projectFilterId = resolvedSearchParams.projectId?.trim() ?? "";
+  const estimateContextId = resolvedSearchParams.estimateId?.trim() ?? "";
+  const contractContextId = resolvedSearchParams.contractId?.trim() ?? "";
   const projectFilter = projectFilterId
     ? projects.find((project) => project.id === projectFilterId) ?? null
     : null;
@@ -214,6 +243,8 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             {view !== "all" ? <input type="hidden" name="view" value={view} /> : null}
             {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
             {projectFilterId ? <input type="hidden" name="projectId" value={projectFilterId} /> : null}
+            {estimateContextId ? <input type="hidden" name="estimateId" value={estimateContextId} /> : null}
+            {contractContextId ? <input type="hidden" name="contractId" value={contractContextId} /> : null}
             <input
               type="search"
               name="q"
@@ -247,7 +278,9 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                 q: query,
                 view: jobView.key,
                 compose: showComposer ? "1" : undefined,
-                projectId: projectFilterId || undefined
+                projectId: projectFilterId || undefined,
+                estimateId: showComposer ? estimateContextId || undefined : undefined,
+                contractId: showComposer ? contractContextId || undefined : undefined
               })}
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
@@ -274,7 +307,9 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               q: query,
               view,
               compose: "1",
-              projectId: projectFilterId || undefined
+              projectId: projectFilterId || undefined,
+              estimateId: estimateContextId || undefined,
+              contractId: contractContextId || undefined
             })}
             className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
           >
@@ -309,7 +344,9 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               href={buildJobsHref({
                 q: query,
                 view,
-                compose: showComposer ? "1" : undefined
+                compose: showComposer ? "1" : undefined,
+                estimateId: showComposer ? estimateContextId || undefined : undefined,
+                contractId: showComposer ? contractContextId || undefined : undefined
               })}
               className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
             >
@@ -430,10 +467,14 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                     <th className="px-5 py-3 sm:px-6">Status</th>
                     <th className="px-5 py-3 sm:px-6">Schedule / crew</th>
                     <th className="px-5 py-3 text-right sm:px-6">Updated</th>
+                    <th className="px-5 py-3 text-right sm:px-6">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
-                  {recentJobs.map((job) => (
+                  {recentJobs.map((job) => {
+                    const primaryAction = getJobPrimaryAction(job);
+
+                    return (
                     <tr key={job.id} className="hover:bg-slate-50/70">
                       <td className="px-5 py-4 sm:px-6">
                         <Link
@@ -477,8 +518,41 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                       <td className="px-5 py-4 text-right text-slate-500 sm:px-6">
                         {formatDateTime(job.updatedAt)}
                       </td>
+                      <td className="px-5 py-4 sm:px-6">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {primaryAction ? (
+                            <Link href={primaryAction.href} className={primaryActionClassName}>
+                              {primaryAction.label}
+                            </Link>
+                          ) : null}
+                          <Link href={`/jobs/${job.id}#schedule-and-crew`} className={secondaryActionClassName}>
+                            Update Schedule
+                          </Link>
+                          <ActionOverflowMenu>
+                            {job.project?.id ? (
+                              <Link href={`/projects/${job.project.id}`} className={overflowActionClassName}>
+                                View Project
+                              </Link>
+                            ) : null}
+                            <Link href={`/jobs/${job.id}#schedule-and-crew`} className={overflowActionClassName}>
+                              Assign Crew
+                            </Link>
+                            {job.dispatchStatus === "scheduled" ? (
+                              <Link href={`/jobs/${job.id}#schedule-and-crew`} className={overflowActionClassName}>
+                                Unschedule
+                              </Link>
+                            ) : null}
+                            {job.estimate?.id ? (
+                              <Link href={`/estimates/${job.estimate.id}`} className={overflowActionClassName}>
+                                View Estimate
+                              </Link>
+                            ) : null}
+                          </ActionOverflowMenu>
+                        </div>
+                      </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -511,12 +585,16 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           q: query,
           view,
           compose: "1",
-          projectId: projectFilterId || undefined
+          projectId: projectFilterId || undefined,
+          estimateId: estimateContextId || undefined,
+          contractId: contractContextId || undefined
         })}
         closeHref={buildJobsHref({
           q: query,
           view,
-          projectId: projectFilterId || undefined
+          projectId: projectFilterId || undefined,
+          estimateId: estimateContextId || undefined,
+          contractId: contractContextId || undefined
         })}
         openLabel="Open job quick create"
       >
@@ -525,6 +603,8 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             action={quickCreateJobAction}
             projects={readyProjectOptions}
             initialProjectId={projectFilterId || null}
+            initialEstimateId={estimateContextId || null}
+            initialContractId={contractContextId || null}
           />
         ) : (
           <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">

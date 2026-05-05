@@ -12,6 +12,7 @@ type PortalAccessGrantFormProps = {
     status: string;
   }>;
   defaultCustomerContactId?: string | null;
+  returnTo?: string;
 };
 
 export function PortalAccessGrantForm({
@@ -20,13 +21,15 @@ export function PortalAccessGrantForm({
   defaultEmail,
   customerContacts = [],
   projects = [],
-  defaultCustomerContactId
+  defaultCustomerContactId,
+  returnTo
 }: PortalAccessGrantFormProps) {
   const defaultProjectId = projects.length === 1 ? projects[0]?.id : "";
 
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="customerId" value={customerId} />
+      {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
 
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="block">
@@ -34,7 +37,7 @@ export function PortalAccessGrantForm({
             htmlFor="portal-invite-email"
             className="mb-2 block text-sm font-medium text-slate-800"
           >
-            Customer email to invite
+            Send to contact
           </label>
           <input
             id="portal-invite-email"
@@ -76,7 +79,7 @@ export function PortalAccessGrantForm({
           htmlFor="portal-invite-contact"
           className="mb-2 block text-sm font-medium text-slate-800"
         >
-          Related customer contact
+            Canonical contact relationship
         </label>
         <select
           id="portal-invite-contact"
@@ -98,12 +101,11 @@ export function PortalAccessGrantForm({
           type="submit"
           className="inline-flex h-9 w-full items-center justify-center gap-2 border border-[#d8731f] bg-[#d8731f] px-3 text-sm font-medium text-white transition hover:bg-[#bf6519] sm:w-auto sm:min-w-[220px]"
         >
-          Invite customer to portal
+          Ensure portal access to this project
         </button>
         <p className="text-sm leading-6 text-slate-500">
-          This creates project-scoped portal access from the contractor side. If the
-          email already has a FloorConnector login, access activates now; otherwise
-          copy the generated invite link for the customer to sign up or log in.
+          People remains the management home. This action only ensures the selected
+          contact can reach the selected project when a workflow needs portal access.
         </p>
       </div>
     </form>

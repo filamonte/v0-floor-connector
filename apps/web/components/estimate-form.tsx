@@ -2049,7 +2049,7 @@ export function EstimateForm({
                       ? "Generate contract or continue project readiness"
                       : status === "sent"
                         ? "Wait for portal approval or customer feedback"
-                        : "Review the estimate, then send when portal access is ready"}
+                        : "Review the estimate, then send to a portal-ready contact"}
                   </p>
                 </div>
               </div>

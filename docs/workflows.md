@@ -192,6 +192,12 @@ Project readiness is required before:
 
 All enforcement happens at the server boundary through the centralized project readiness gate. Module-specific flows must not bypass or reinterpret readiness independently.
 
+When the existing readiness snapshot is clear after contract signature, contractor-facing detail pages may guide the user into the next operational steps:
+- create the canonical project job
+- schedule that job through the shared schedule surface
+
+This is a Sign -> Schedule -> Execute UI handoff only. It must continue to use the centralized readiness gate and canonical `jobs` scheduling fields rather than introducing a contract-specific scheduling model. When the handoff starts from signed contract or project readiness context and an approved estimate is available, job Quick-Create should preserve that estimate lineage on the canonical job. When exactly one unscheduled canonical job already exists for the project, the `/schedule` handoff may carry `jobId` and `action=schedule` so the existing schedule action panel opens in that job context.
+
 ## Current Implemented Workflows
 
 The current app already supports the following live workflows:
@@ -227,7 +233,8 @@ Implemented flow:
 - customer records are managed in the protected app
 - projects are created under canonical customers
 - project detail acts as the current bridge into estimating and downstream work
-- contractor admins can invite a customer/contact email to project-scoped portal access from the canonical customer record after a customer and project exist
+- contractor admins manage customer contact identity, portal invite state, and project-scoped portal visibility from People after a customer and project exist
+- estimate, contract, and invoice workflows may trigger or verify portal access contextually, but they do not own portal identity or permissions management
 - invited customers use `/portal/invite?token=...` to sign up or log in, and the invite activates only when the authenticated email matches the contractor-created invite
 
 Current canonical records involved:
@@ -235,10 +242,11 @@ Current canonical records involved:
 - project
 - portal access grant
 - portal project access
+- optional related customer contact
 
 Current customer-account interpretation:
 - the customer is the full canonical customer/account record, not a lightweight contact card
-- additional customer contacts may later appear beneath that account in a unified Directory workspace, but the account remains the commercial and financial source of truth
+- additional customer contacts sit beneath that account and are managed from People for identity, relationship, and portal access administration, but the account remains the commercial and financial source of truth
 - normal portal onboarding is contractor-initiated from the shared customer/project workflow; customers do not self-register first unless a later customer-led quote/intake surface explicitly supports that path
 
 ### Project To Estimate
@@ -300,8 +308,8 @@ Future workflow guidance:
 - takeoff quantities may eventually inform material requirements, labor estimation, production readiness, and job planning, but there should be no direct takeoff-to-invoice flow
 
 Customer-account guardrail for downstream commercial flows:
-- estimate send recipient continuity remains on canonical customer/account fields by default
-- the same rule should continue for invoice recipient, contract customer context, payment/billing context, and project ownership unless a later approved customer-contact permission model explicitly changes a specific flow
+- estimate send recipient continuity remains on canonical customer/account context with an explicit portal-ready contact selection when existing project access data supports it
+- invoice recipient, contract customer context, payment/billing context, and project ownership should continue to use canonical customer/account context, with People remaining the management home for contact identity and access
 
 Implemented approval rules:
 - customer-facing estimate approval happens through the portal on the same canonical estimate record
@@ -356,7 +364,9 @@ Implemented flow:
 - approved estimates can create jobs
 - jobs track operational execution states such as `unscheduled`, `scheduled`, `in_progress`, and `completed`
 - job detail provides progression-oriented actions
+- signed-contract and project-readiness handoffs preserve approved estimate context when creating the canonical job where that lineage is available
 - job creation, scheduling, and job updates into scheduled or execution states are blocked unless the project passes the centralized server-side readiness gate
+- once contract signature and readiness blockers clear, project detail and signed contract detail can show the direct handoff into job creation and project-filtered scheduling on the existing job chain, including a focused scheduling action panel when a single unscheduled job can be resolved
 
 Current canonical records involved:
 - project

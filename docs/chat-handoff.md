@@ -31,6 +31,88 @@ For stronger implementation control on new tasks, also use:
 - [docs/local-qa-auth-session-note.md](C:/FloorConnector/docs/local-qa-auth-session-note.md)
 - [docs/qa-estimate-send-approval-contract-prerequisites.md](C:/FloorConnector/docs/qa-estimate-send-approval-contract-prerequisites.md)
 
+## Post-Sign Ready-To-Schedule Handoff
+
+Implemented a UI/workflow handoff from signed contract readiness into existing job and schedule foundations. No schema, RLS, auth, route architecture, or duplicate scheduling model was added.
+
+Files changed:
+- `apps/web/components/ready-to-schedule-action-panel.tsx`
+- `apps/web/app/(app)/contracts/[contractId]/page.tsx`
+- `apps/web/app/(app)/projects/[projectId]/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Behavior changed:
+- Contract detail now shows a ready-to-schedule action panel only when the contract is fully signed and the existing project readiness snapshot is ready to schedule.
+- Project detail now shows the same panel whenever the existing project readiness snapshot is ready to schedule.
+- The panel routes to existing canonical job Quick-Create with project context, preserves approved estimate context where available, and links to the existing project-filtered `/schedule` surface.
+- When exactly one unscheduled canonical job exists for the project, the ready-to-schedule panel now includes `jobId` with `action=schedule`, and `/schedule` can also infer that single project job from older `projectId + action=schedule` links so the existing schedule action panel opens immediately.
+- Job Quick-Create now accepts the URL `estimateId` context from readiness handoffs and passes it into the existing canonical job create action; server-side job creation still validates the approved estimate/project relationship and the centralized readiness gate.
+- Scheduling remains on canonical `jobs` and the centralized project readiness gate remains the enforcement point.
+
+## People-Centered Portal Access Refactor
+
+Focused refactor completed to make People the intended management home for customer-contact identity and portal access administration. No schema, RLS, auth, backend route, data-model, financial calculation, signature state-machine, payment-logic, or workflow-table changes were made.
+
+Follow-up workflow recipient cleanup:
+- Estimate send now exposes a shared `Send to contact` selector when active project-scoped portal access already provides eligible customer/contact recipients, preferring the main related contact or the only available recipient.
+- Estimate send no longer presents recipient/access setup as estimate-owned management; if no eligible contact exists, the estimate page points users back to People.
+- Contract send now uses the same `Send to contact` selector copy for eligible portal signers while preserving the existing signer routing and permission guards.
+- Invoice send/status workflow remains on the existing canonical invoice status transition, with copy and server comments clarifying that recipient identity and portal access are managed from People rather than the invoice page.
+- The stale manual-estimate Playwright resolver was updated to locate a real estimate detail page that actually exposes the current manual decision UI before running the mutation test.
+
+Files changed:
+- `apps/web/app/(app)/people/page.tsx`
+- `apps/web/components/people-portal-access-panel.tsx`
+- `apps/web/components/customer-contact-form.tsx`
+- `apps/web/components/portal-access-grant-form.tsx`
+- `apps/web/components/portal-project-access-form.tsx`
+- `apps/web/lib/contacts/actions.ts`
+- `apps/web/lib/portal-access/actions.ts`
+- `apps/web/app/(app)/customers/[customerId]/page.tsx`
+- `apps/web/app/(app)/customers/page.tsx`
+- `apps/web/app/(app)/estimates/[estimateId]/page.tsx`
+- `apps/web/components/estimate-form.tsx`
+- `apps/web/components/send-to-contact-select.tsx`
+- `apps/web/components/contract-status-actions.tsx`
+- `apps/web/app/(app)/invoices/[invoiceId]/page.tsx`
+- `apps/web/components/invoice-form.tsx`
+- `apps/web/lib/estimates/actions.ts`
+- `apps/web/lib/estimates/data.ts`
+- `apps/web/lib/estimates/schemas.ts`
+- `apps/web/lib/contracts/actions.ts`
+- `apps/web/lib/contracts/data.ts`
+- `apps/web/lib/invoices/actions.ts`
+- `e2e/estimate-manual-approval-action.spec.js`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/developer-source-of-truth.md`
+- `docs/target-ia.md`
+- `docs/chat-handoff.md`
+
+Behavior changed:
+- `/people` now loads related customer contacts, portal grants, stored contact-permission readiness, and project visibility using existing canonical loaders.
+- Added a People customer-access panel for contact edit/create, main-contact selection, portal invite/access ensure, grant contact-linking, stored permission editing, revoke/reactivate, and project visibility using existing actions and existing canonical tables.
+- Existing contact and portal-access server actions now accept an optional safe `returnTo` path for `/people` so the same actions can be hosted from People without duplicating action logic.
+- Estimate and contract send surfaces now frame portal access as contact/access readiness, use contact-selection copy where eligible existing access data supports it, and point management back to People instead of making estimate/contract pages feel like access ownership surfaces.
+- Customer surfaces now describe People as the portal access administration home while retaining contextual access visibility.
+
+Existing risky access paths found:
+- Customer detail was still the full portal access management surface: invite creation, grant linking, stored permission editing, revoke/reactivate, and project visibility were all presented there.
+- `/people` copy and implementation were workforce-only and explicitly excluded customer recipient contacts, which conflicted with the new product direction.
+- Invoice send is still an invoice status transition rather than a full contact-recipient picker; copy and server comments now make the customer/account fallback explicit.
+
+Validation so far:
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+- Previous Playwright attempt: `pnpm exec playwright test e2e/estimate-manual-approval-action.spec.js --project=chromium-protected` ran auth setup successfully but failed because the stale resolver selected an estimate detail page without the current manual decision UI. The resolver has since been updated to search candidate details for the active decision UI before running the mutation.
+
+Deferred items:
+- A deeper removal of duplicate customer-detail portal management controls can be done in a follow-up if the team wants Customer Detail to become read-only/context-only for access.
+- A fuller invoice recipient picker is deferred until invoice sending grows a dedicated recipient-selection action; People remains the management home in the meantime.
+
 ## Decision-First UI Refactor Final Documentation Phase 14
 
 Phase 14 completed as documentation and safe cleanup for the implemented decision-first UI refactor. No UI redesign, backend, schema, auth, RLS, server-action, data-model, route, or workflow changes were made.

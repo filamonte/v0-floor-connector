@@ -21,6 +21,7 @@ import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { ProjectForm } from "@/components/project-form";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
+import { ReadyToScheduleActionPanel } from "@/components/ready-to-schedule-action-panel";
 import {
   ScheduleContextActions,
   ScheduleContextFocusCard,
@@ -1480,6 +1481,21 @@ export default async function ProjectDetailPage({
             <WorkflowBar title="Project readiness workflow" steps={workflowSteps} />
 
             <ProjectStateSummary title="Project state summary" items={projectStateItems} />
+
+            {readinessSnapshot?.isReadyToSchedule ? (
+              <ReadyToScheduleActionPanel
+                projectId={project.id}
+                projectName={project.name}
+                estimateId={approvedEstimateId}
+                readyToScheduleAt={readyToScheduleAt}
+                jobCount={projectJobs.length}
+                unscheduledJobCount={unscheduledJobs.length}
+                unscheduledJobId={
+                  unscheduledJobs.length === 1 ? unscheduledJobs[0].id : null
+                }
+                source="project"
+              />
+            ) : null}
 
             <section className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5">
               <div className="flex flex-wrap items-center justify-between gap-3">

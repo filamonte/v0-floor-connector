@@ -1,6 +1,12 @@
 import Link from "next/link";
 
 import { AppEmptyState } from "@/components/app-empty-state";
+import {
+  ActionOverflowMenu,
+  overflowActionClassName,
+  primaryActionClassName,
+  secondaryActionClassName
+} from "@/components/action-hierarchy";
 import { ContractQuickCreateForm } from "@/components/contract-quick-create-form";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
 import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
@@ -64,6 +70,23 @@ function getContractSignatureCue(contract: {
   }
 
   return formatStatusLabel(contract.signatureReadinessStatus);
+}
+
+function getContractPrimaryAction(contract: {
+  id: string;
+  status: string;
+  signatureReadinessStatus: string;
+  customerSignedAt: string | null;
+  contractorCountersignedAt: string | null;
+}) {
+  if (contract.status === "draft" && contract.signatureReadinessStatus === "ready_to_send") {
+    return {
+      label: "Send for Signature",
+      href: `/contracts/${contract.id}#contract-workflow-actions`
+    };
+  }
+
+  return null;
 }
 
 function buildContractsHref(input: {
@@ -431,10 +454,14 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
                     <th className="px-5 py-3 sm:px-6">Status</th>
                     <th className="px-5 py-3 sm:px-6">Signature readiness</th>
                     <th className="px-5 py-3 text-right sm:px-6">Updated</th>
+                    <th className="px-5 py-3 text-right sm:px-6">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
-                  {recentContracts.map((contract) => (
+                  {recentContracts.map((contract) => {
+                    const primaryAction = getContractPrimaryAction(contract);
+
+                    return (
                     <tr key={contract.id} className="hover:bg-slate-50/70">
                       <td className="px-5 py-4 sm:px-6">
                         <Link
@@ -476,8 +503,40 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
                       <td className="px-5 py-4 text-right text-slate-500 sm:px-6">
                         {formatDateTime(contract.updatedAt)}
                       </td>
+                      <td className="px-5 py-4 sm:px-6">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {primaryAction ? (
+                            <Link href={primaryAction.href} className={primaryActionClassName}>
+                              {primaryAction.label}
+                            </Link>
+                          ) : null}
+                          {contract.status === "draft" ? (
+                            <Link href={`/contracts/${contract.id}/edit`} className={secondaryActionClassName}>
+                              Edit
+                            </Link>
+                          ) : null}
+                          <ActionOverflowMenu>
+                            {contract.project?.id ? (
+                              <Link href={`/projects/${contract.project.id}`} className={overflowActionClassName}>
+                                View Project
+                              </Link>
+                            ) : null}
+                            {contract.status === "draft" || contract.status === "sent" || contract.status === "viewed" ? (
+                              <Link href={`/contracts/${contract.id}#contract-workflow-actions`} className={overflowActionClassName}>
+                                Void
+                              </Link>
+                            ) : null}
+                            {contract.estimate?.id ? (
+                              <Link href={`/estimates/${contract.estimate.id}`} className={overflowActionClassName}>
+                                View Estimate
+                              </Link>
+                            ) : null}
+                          </ActionOverflowMenu>
+                        </div>
+                      </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

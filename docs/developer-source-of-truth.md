@@ -203,6 +203,9 @@ Important workflow rules:
 - contracts, invoices, and estimates must stay connected through the shared canonical model
 - canonical `customers` remain the commercial and financial customer/account record even if a broader contractor `Directory` view is introduced later
 - estimate send, invoice recipient, contract customer context, payment customer context, and project ownership must continue to read from canonical customer/account fields unless a later approved customer-contact permission model explicitly changes a specific flow
+- People is the contractor-side management home for identity/contact/workforce/relationship administration, including related customer contacts, portal invite status, contact-permission readiness, and project visibility
+- estimate, contract, and invoice workflows may trigger or verify portal access when sending, signing, reviewing, or paying, but they must not become separate portal identity or permissions management surfaces
+- portal access remains canonical through `portal_access_grants` and `portal_project_access`; do not introduce portal-only contacts, duplicate customer models, or module-specific invite/access tables
 - additional customer contacts remain related contacts beneath a canonical customer account; they do not replace the account record
 - all downstream financial systems must use immutable approved snapshots as their billing source of truth
 - do not use live `estimate_line_items` as a billing source

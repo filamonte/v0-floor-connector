@@ -42,8 +42,19 @@ function getCustomerPath(customerId: string) {
   return `/customers/${customerId}`;
 }
 
+function getManagementPath(formData: FormData, customerId: string) {
+  const returnTo = getFieldValue(formData, "returnTo");
+
+  if (returnTo.startsWith("/people") || returnTo === getCustomerPath(customerId)) {
+    return returnTo;
+  }
+
+  return getCustomerPath(customerId);
+}
+
 export async function createCustomerContactAction(formData: FormData) {
   const customerId = getFieldValue(formData, "customerId");
+  const managementPath = customerId ? getManagementPath(formData, customerId) : "/customers";
   const result = customerContactInputSchema.safeParse({
     customerId,
     displayName: getFieldValue(formData, "displayName"),
@@ -91,10 +102,12 @@ export async function createCustomerContactAction(formData: FormData) {
 
   revalidatePath("/customers");
   revalidatePath(getCustomerPath(result.data.customerId));
+  revalidatePath(managementPath);
+  revalidatePath("/people");
   revalidatePath("/directory");
 
   redirect(
-    buildRedirect(getCustomerPath(result.data.customerId), {
+    buildRedirect(managementPath, {
       message: "Customer contact added successfully."
     })
   );
@@ -102,6 +115,7 @@ export async function createCustomerContactAction(formData: FormData) {
 
 export async function updateCustomerContactAction(formData: FormData) {
   const customerId = getFieldValue(formData, "customerId");
+  const managementPath = customerId ? getManagementPath(formData, customerId) : "/customers";
   const result = updateCustomerContactInputSchema.safeParse({
     customerId,
     customerContactId: getFieldValue(formData, "customerContactId"),
@@ -150,10 +164,12 @@ export async function updateCustomerContactAction(formData: FormData) {
 
   revalidatePath("/customers");
   revalidatePath(getCustomerPath(result.data.customerId));
+  revalidatePath(managementPath);
+  revalidatePath("/people");
   revalidatePath("/directory");
 
   redirect(
-    buildRedirect(getCustomerPath(result.data.customerId), {
+    buildRedirect(managementPath, {
       message: "Customer contact updated successfully."
     })
   );
@@ -161,6 +177,7 @@ export async function updateCustomerContactAction(formData: FormData) {
 
 export async function makeCustomerContactPrimaryAction(formData: FormData) {
   const customerId = getFieldValue(formData, "customerId");
+  const managementPath = customerId ? getManagementPath(formData, customerId) : "/customers";
   const result = makePrimaryCustomerContactInputSchema.safeParse({
     customerId,
     customerContactId: getFieldValue(formData, "customerContactId")
@@ -191,10 +208,12 @@ export async function makeCustomerContactPrimaryAction(formData: FormData) {
 
   revalidatePath("/customers");
   revalidatePath(getCustomerPath(result.data.customerId));
+  revalidatePath(managementPath);
+  revalidatePath("/people");
   revalidatePath("/directory");
 
   redirect(
-    buildRedirect(getCustomerPath(result.data.customerId), {
+    buildRedirect(managementPath, {
       message: "Main customer contact updated."
     })
   );

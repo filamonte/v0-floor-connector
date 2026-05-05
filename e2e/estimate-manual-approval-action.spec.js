@@ -22,11 +22,21 @@ async function resolveManualApprovalEstimatePath(page) {
     await expectAuthenticatedApp(page);
     const estimateLinks = page.locator('a[href^="/estimates/"]:not([href$="/edit"])');
     const estimateCount = await estimateLinks.count();
+    const estimatePaths = [];
 
-    if (estimateCount > 0) {
-      const href = await estimateLinks.first().getAttribute("href");
+    for (let index = 0; index < estimateCount; index += 1) {
+      const href = await estimateLinks.nth(index).getAttribute("href");
 
       if (href) {
+        estimatePaths.push(href);
+      }
+    }
+
+    for (const href of estimatePaths) {
+      await page.goto(href);
+      await expectAuthenticatedApp(page);
+
+      if (await page.locator("#estimate-decision-actions").isVisible()) {
         return href;
       }
     }

@@ -195,6 +195,36 @@ type ContractPortalSignerGrantRow = {
         full_name: string | null;
       }[]
     | null;
+  customer_contact?:
+    | {
+        id: string;
+        is_primary: boolean;
+        contacts:
+          | {
+              display_name: string | null;
+              email: string | null;
+            }
+          | {
+              display_name: string | null;
+              email: string | null;
+            }[]
+          | null;
+      }
+    | {
+        id: string;
+        is_primary: boolean;
+        contacts:
+          | {
+              display_name: string | null;
+              email: string | null;
+            }
+          | {
+              display_name: string | null;
+              email: string | null;
+            }[]
+          | null;
+      }[]
+    | null;
 };
 
 type ContractPortalProjectAccessRow = {
@@ -327,6 +357,9 @@ export type ContractSignatureParticipantOption = {
   userId: string;
   displayName: string;
   email: string;
+  contactDisplayName?: string | null;
+  contactEmail?: string | null;
+  isPrimaryContact?: boolean;
 };
 
 export type ContractContractorSignerOption = ContractSignatureParticipantOption & {
@@ -568,6 +601,24 @@ function getPortalUserFromGrant(grant: ContractPortalSignerGrantRow) {
   }
 
   return grant.portal_user;
+}
+
+function getCustomerContactFromGrant(grant: ContractPortalSignerGrantRow) {
+  if (Array.isArray(grant.customer_contact)) {
+    return grant.customer_contact[0] ?? null;
+  }
+
+  return grant.customer_contact ?? null;
+}
+
+function getContactFromCustomerContact(
+  customerContact: NonNullable<ReturnType<typeof getCustomerContactFromGrant>>
+) {
+  if (Array.isArray(customerContact.contacts)) {
+    return customerContact.contacts[0] ?? null;
+  }
+
+  return customerContact.contacts ?? null;
 }
 
 function isContractPortalProjectAccessRow(
@@ -1696,6 +1747,14 @@ export async function getContractSignatureActionOptions(
             id,
             email,
             full_name
+          ),
+          customer_contact:customer_contacts!portal_access_grants_company_customer_contact_fkey (
+            id,
+            is_primary,
+            contacts:contacts!customer_contacts_contact_company_fkey (
+              display_name,
+              email
+            )
           )
         `
       )
@@ -1762,6 +1821,8 @@ export async function getContractSignatureActionOptions(
         .filter((grant) => activeProjectGrantIds.has(grant.id))
         .map(async (grant) => {
           const portalUser = getPortalUserFromGrant(grant);
+          const customerContact = getCustomerContactFromGrant(grant);
+          const contact = customerContact ? getContactFromCustomerContact(customerContact) : null;
 
           if (!portalUser?.id || !portalUser.email) {
             return null;
@@ -1783,14 +1844,19 @@ export async function getContractSignatureActionOptions(
           return {
             userId: portalUser.id,
             displayName: getParticipantDisplayName({
-              fullName: portalUser.full_name,
+              fullName: contact?.display_name ?? portalUser.full_name,
               email: portalUser.email
             }),
-            email: portalUser.email
+            email: portalUser.email,
+            contactDisplayName: contact?.display_name ?? null,
+            contactEmail: contact?.email ?? null,
+            isPrimaryContact: customerContact?.is_primary === true
           } satisfies ContractSignatureParticipantOption;
         })
     )
-  ).filter((option): option is ContractSignatureParticipantOption => option !== null);
+  ).filter(
+    (option): option is Exclude<typeof option, null> => option !== null
+  );
 
   return {
     contractId: contract.id,

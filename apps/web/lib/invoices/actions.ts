@@ -306,6 +306,8 @@ export async function updateInvoiceAction(formData: FormData) {
   let invoice;
 
   try {
+    // Invoice "send" is currently the canonical invoice status transition. Recipient
+    // identity stays in People/portal access; this action must not manage portal access.
     invoice = await updateInvoice(invoiceId, result.data);
   } catch (error) {
     redirect(

@@ -133,7 +133,8 @@ export const jobInputSchema = z.object({
 });
 
 export const jobQuickCreateInputSchema = z.object({
-  projectId: z.string().uuid("Select a valid project.")
+  projectId: z.string().uuid("Select a valid project."),
+  estimateId: optionalUuidField("Select a valid estimate.")
 });
 
 export const jobAssignmentInputSchema = z

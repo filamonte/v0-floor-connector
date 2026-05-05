@@ -2,14 +2,22 @@ import Link from "next/link";
 
 import { AppEmptyState } from "@/components/app-empty-state";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
+import { PeoplePortalAccessPanel } from "@/components/people-portal-access-panel";
 import { PersonForm } from "@/components/person-form";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
+import { listCustomerContactsForDirectory } from "@/lib/contacts/data";
 import { createPersonAction } from "@/lib/people/actions";
 import { listPeople } from "@/lib/people/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { listComplianceRecords } from "@/lib/compliance/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { listOrganizationMembers } from "@/lib/organizations/admin";
+import {
+  listCustomerContactPortalPermissionsByCustomer,
+  listPortalAccessGrants,
+  listPortalProjectAccessByGrantId
+} from "@/lib/portal-access/data";
+import { listProjects } from "@/lib/projects/data";
 import { listVendors } from "@/lib/vendors/data";
 
 type PeoplePageProps = {
@@ -63,11 +71,14 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
     );
   }
 
-  const [people, vendors, complianceRecords, members] = await Promise.all([
+  const [people, vendors, complianceRecords, members, customerContacts, portalAccessGrants, projects] = await Promise.all([
     listPeople(),
     listVendors(),
     listComplianceRecords(),
-    listOrganizationMembers(organizationContext.organization.id)
+    listOrganizationMembers(organizationContext.organization.id),
+    listCustomerContactsForDirectory("/people"),
+    listPortalAccessGrants(),
+    listProjects()
   ]);
 
   const query = resolvedSearchParams.q?.trim() ?? "";
@@ -78,7 +89,36 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
   const employeeCount = people.filter((person) => person.personType === "employee").length;
   const subcontractorCount = people.length - employeeCount;
   const activeCount = people.filter((person) => person.isActive).length;
+  const canManageCustomerContacts =
+    organizationContext.membership.role === "owner" ||
+    organizationContext.membership.role === "admin";
   const complianceCountByPersonId = new Map<string, number>();
+  const customerIds = [...new Set(customerContacts.map((contact) => contact.customerId))];
+  const portalPermissionEntries = await Promise.all(
+    customerIds.map(async (customerId) => [
+      customerId,
+      await listCustomerContactPortalPermissionsByCustomer(customerId, "/people")
+    ] as const)
+  );
+  const portalProjectAccessEntries = await Promise.all(
+    portalAccessGrants.map(async (grant) => [
+      grant.id,
+      await listPortalProjectAccessByGrantId(grant.id, "/people")
+    ] as const)
+  );
+  const portalPermissionsByCustomerContactId = new Map(
+    portalPermissionEntries
+      .flatMap(([, permissions]) => permissions)
+      .map((permission) => [permission.customerContactId, permission])
+  );
+  const portalProjectAccessByGrantId = new Map(portalProjectAccessEntries);
+  const projectsByCustomerId = new Map<string, typeof projects>();
+
+  for (const project of projects) {
+    const existing = projectsByCustomerId.get(project.customerId) ?? [];
+    existing.push(project);
+    projectsByCustomerId.set(project.customerId, existing);
+  }
 
   for (const record of complianceRecords) {
     if (record.subjectType !== "person") {
@@ -140,8 +180,8 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
   return (
     <ContractorWorkspacePage
       eyebrow="People"
-      title={`Labor participants for ${organizationContext.organization.displayName}`}
-      description="Manage the shared workforce directory for employees and vendor-linked subcontractor workers before time, compliance, and assignment workflows deepen. Customer recipient contacts stay on customer records, not here."
+      title={`People for ${organizationContext.organization.displayName}`}
+      description="Manage canonical people identity across workforce participants, customer contacts, login linkage, and portal access administration. Workflow pages can trigger access, but People is the management home."
       summary={
         <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-3">
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
@@ -161,7 +201,7 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
       commandBar={{
         supportSlot: (
           <p>
-            Search the workforce roster, switch between employee and subcontractor views, and open the people composer only when you need a new internal or subcontractor workforce record.
+            Search the workforce roster, switch between employee and subcontractor views, and use the customer-access section for portal invite status, linked contacts, and project visibility.
           </p>
         ),
         searchSlot: (
@@ -314,19 +354,29 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
                     description={
                       people.length > 0
                         ? "Try a broader search or switch views to find the workforce record you need."
-                        : "People become the shared labor identity foundation for workforce compliance, time tracking, and assignment work. Customer contacts stay on customer records."
+                        : "People become the shared identity foundation for workforce records, customer contacts, portal access, and relationship continuity."
                     }
                   />
                 </div>
               )}
             </div>
           </section>
+
+          <PeoplePortalAccessPanel
+            customerContacts={customerContacts}
+            portalAccessGrants={portalAccessGrants}
+            portalProjectAccessByGrantId={portalProjectAccessByGrantId}
+            portalPermissionsByCustomerContactId={portalPermissionsByCustomerContactId}
+            projectsByCustomerId={projectsByCustomerId}
+            canManageCustomerContacts={canManageCustomerContacts}
+            returnTo="/people#customer-access"
+          />
         </section>
 
         <WorkspaceComposerSheet
           id="person-create"
           title="Create workforce person"
-          description="Add an employee or subcontractor worker using the same canonical people model. This directory is not for customer recipients."
+          description="Add an employee or subcontractor worker using the canonical workforce people model. Customer contacts and portal access are managed in the customer-access section above."
           open={showComposer}
           openHref={buildPeopleHref({ q: query, view, compose: "1" }) + "#person-create"}
           closeHref={buildPeopleHref({ q: query, view })}

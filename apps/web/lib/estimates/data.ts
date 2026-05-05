@@ -214,10 +214,15 @@ type EstimatePortalScope = {
   estimate: EstimateRow;
 };
 
-type EstimatePortalRecipient = {
+export type EstimatePortalRecipient = {
+  portalAccessGrantId: string;
   portalUserId: string;
   email: string;
   fullName: string | null;
+  customerContactId: string | null;
+  contactDisplayName: string | null;
+  contactEmail: string | null;
+  isPrimaryContact: boolean;
 };
 
 type EstimateAttachmentRow = {
@@ -826,7 +831,7 @@ export async function requireEstimateScope(next = "/estimates") {
   return scope;
 }
 
-async function listEstimatePortalRecipients(input: {
+export async function listEstimatePortalRecipients(input: {
   organizationId: string;
   customerId: string;
   projectId: string;
@@ -837,11 +842,20 @@ async function listEstimatePortalRecipients(input: {
     .select(
       `
         id,
+        customer_contact_id,
         user_id,
         portal_user:users!portal_access_grants_user_id_fkey (
           id,
           email,
           full_name
+        ),
+        customer_contact:customer_contacts!portal_access_grants_company_customer_contact_fkey (
+          id,
+          is_primary,
+          contacts:contacts!customer_contacts_contact_company_fkey (
+            display_name,
+            email
+          )
         )
       `
     )
@@ -853,6 +867,7 @@ async function listEstimatePortalRecipients(input: {
       | Array<{
           id?: string;
           user_id?: string | null;
+          customer_contact_id?: string | null;
           portal_user?:
             | {
                 id?: string;
@@ -863,6 +878,36 @@ async function listEstimatePortalRecipients(input: {
                 id?: string;
                 email?: string | null;
                 full_name?: string | null;
+              }>
+            | null;
+          customer_contact?:
+            | {
+                id?: string;
+                is_primary?: boolean;
+                contacts?:
+                  | {
+                      display_name?: string | null;
+                      email?: string | null;
+                    }
+                  | Array<{
+                      display_name?: string | null;
+                      email?: string | null;
+                    }>
+                  | null;
+              }
+            | Array<{
+                id?: string;
+                is_primary?: boolean;
+                contacts?:
+                  | {
+                      display_name?: string | null;
+                      email?: string | null;
+                    }
+                  | Array<{
+                      display_name?: string | null;
+                      email?: string | null;
+                    }>
+                  | null;
               }>
             | null;
         }>
@@ -912,18 +957,30 @@ async function listEstimatePortalRecipients(input: {
   return grantRows
     .filter((row) => typeof row.id === "string" && activeGrantIds.has(row.id))
     .map((row) => {
+      const portalAccessGrantId = row.id;
       const portalUser = Array.isArray(row.portal_user)
         ? (row.portal_user[0] ?? null)
         : row.portal_user ?? null;
+      const customerContact = Array.isArray(row.customer_contact)
+        ? (row.customer_contact[0] ?? null)
+        : row.customer_contact ?? null;
+      const contact = Array.isArray(customerContact?.contacts)
+        ? (customerContact?.contacts[0] ?? null)
+        : customerContact?.contacts ?? null;
 
-      if (!portalUser?.id || !portalUser.email) {
+      if (!portalAccessGrantId || !portalUser?.id || !portalUser.email) {
         return null;
       }
 
       return {
+        portalAccessGrantId,
         portalUserId: portalUser.id,
         email: portalUser.email,
-        fullName: portalUser.full_name ?? null
+        fullName: portalUser.full_name ?? null,
+        customerContactId: row.customer_contact_id ?? null,
+        contactDisplayName: contact?.display_name ?? null,
+        contactEmail: contact?.email ?? null,
+        isPrimaryContact: customerContact?.is_primary === true
       } satisfies EstimatePortalRecipient;
     })
     .filter((value): value is EstimatePortalRecipient => value !== null);
@@ -932,8 +989,31 @@ async function listEstimatePortalRecipients(input: {
 function resolveEstimatePortalRecipient(input: {
   customerEmail: string;
   customerName: string | null;
+  selectedPortalUserId?: string | null;
   portalRecipients: EstimatePortalRecipient[];
 }) {
+  if (input.selectedPortalUserId) {
+    const selectedRecipient =
+      input.portalRecipients.find(
+        (recipient) => recipient.portalUserId === input.selectedPortalUserId
+      ) ?? null;
+
+    if (!selectedRecipient) {
+      throw new Error(
+        "Select an active contact with project portal access before sending this estimate."
+      );
+    }
+
+    return selectedRecipient;
+  }
+
+  const primaryContactRecipient =
+    input.portalRecipients.find((recipient) => recipient.isPrimaryContact) ?? null;
+
+  if (primaryContactRecipient) {
+    return primaryContactRecipient;
+  }
+
   const normalizedCustomerEmail = input.customerEmail.trim().toLowerCase();
   const exactMatch =
     input.portalRecipients.find(
@@ -949,7 +1029,7 @@ function resolveEstimatePortalRecipient(input: {
   }
 
   throw new Error(
-    "Customer portal access is required before sending this estimate. Add one active portal user for this project, or make sure canonical customer.email matches an active portal recipient."
+    "Customer portal access is required before sending this estimate. Select one active contact for this project, or manage the customer's primary contact and project access from People."
   );
 }
 
@@ -2674,6 +2754,7 @@ export async function sendEstimateToCustomer(
   const portalRecipient = resolveEstimatePortalRecipient({
     customerEmail: estimate.customers.email,
     customerName: estimate.customers.name,
+    selectedPortalUserId: input.portalUserId,
     portalRecipients
   });
   const nowIso = new Date().toISOString();
@@ -2730,6 +2811,8 @@ export async function sendEstimateToCustomer(
       payload: {
         portalPath: `/portal/estimates/${estimate.id}`,
         portalUserId: portalRecipient.portalUserId,
+        portalAccessGrantId: portalRecipient.portalAccessGrantId,
+        customerContactId: portalRecipient.customerContactId,
         estimateReferenceNumber: estimate.reference_number,
         customerName: estimate.customers.name
       },
@@ -2753,7 +2836,9 @@ export async function sendEstimateToCustomer(
       groupKey: `estimate:${estimate.id}`,
       payload: {
         portalPath: `/portal/estimates/${estimate.id}`,
-        portalUserId: portalRecipient.portalUserId
+        portalUserId: portalRecipient.portalUserId,
+        portalAccessGrantId: portalRecipient.portalAccessGrantId,
+        customerContactId: portalRecipient.customerContactId
       },
       occurredAt: nowIso
     });

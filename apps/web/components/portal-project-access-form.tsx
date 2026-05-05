@@ -11,18 +11,21 @@ type PortalProjectAccessFormProps = {
   customerId: string;
   portalAccessGrantId: string;
   projects: ProjectOption[];
+  returnTo?: string;
 };
 
 export function PortalProjectAccessForm({
   action,
   customerId,
   portalAccessGrantId,
-  projects
+  projects,
+  returnTo
 }: PortalProjectAccessFormProps) {
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="customerId" value={customerId} />
       <input type="hidden" name="portalAccessGrantId" value={portalAccessGrantId} />
+      {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
 
       <label className="block">
         <span className="mb-2 block text-sm font-medium text-slate-800">
