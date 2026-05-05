@@ -36,6 +36,12 @@ export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
     adminOnly: true
   },
   {
+    href: "/settings/system-layers",
+    label: "System Layers",
+    description: "Finish products and floor system template administration.",
+    adminOnly: true
+  },
+  {
     href: "/settings/financial",
     label: "Financial",
     description: "Tax, retainage, billing defaults, and tax-code settings.",

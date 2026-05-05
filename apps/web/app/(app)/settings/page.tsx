@@ -7,6 +7,7 @@ import { requireOrganizationAdminScope, listOrganizationMembers } from "@/lib/or
 import { listOrganizationFeatureOverrides } from "@/lib/organizations/module-settings";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { listCatalogItems } from "@/lib/catalogs/data";
+import { getSystemLayersAdminData } from "@/lib/system-layers/data";
 import { listDocumentTemplates } from "@/lib/templates/data";
 
 type SettingsPageProps = {
@@ -30,14 +31,16 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
     financialSettings,
     workflowSettings,
     members,
-    featureOverrides
+    featureOverrides,
+    systemLayersData
   ] = await Promise.all([
     listDocumentTemplates(),
     listCatalogItems(),
     getOrganizationFinancialSettings(scope.organizationId),
     getOrganizationWorkflowSettings(scope.organizationId),
     listOrganizationMembers(scope.organizationId),
-    listOrganizationFeatureOverrides(scope.organizationId)
+    listOrganizationFeatureOverrides(scope.organizationId),
+    getSystemLayersAdminData("/settings")
   ]);
   const systemCount = catalogItems.filter((item) => item.itemType === "system").length;
   const addOnOptionCount = catalogItems.filter(
@@ -140,9 +143,9 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
         <SettingsOverviewCard
           title="Templates & Systems"
-          description="Current V1 reusable setup lives across Document Templates plus Cost Items Database Systems. A dedicated Templates & Systems module is still future work."
-          href="/settings/templates"
-          ctaLabel="Review document templates"
+          description="Current reusable setup lives across Document Templates, Cost Items Database Systems, and the first System Layers admin surface."
+          href="/settings/system-layers"
+          ctaLabel="Manage system layers"
         >
           <div className="space-y-3 border border-[#d9cdc2] bg-[#fbf7f2] px-4 py-4 text-sm leading-6 text-[#6f6256]">
             <p>
@@ -155,9 +158,26 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               Add-ons / Options are managed as Catalog Items today.
             </p>
             <p>
-              System add-on toggles, sharing, and template promotion remain deferred.
+              <span className="font-medium text-[#221a14]">
+                {systemLayersData.finishProducts.length}
+              </span>{" "}
+              Finish Products and{" "}
+              <span className="font-medium text-[#221a14]">
+                {systemLayersData.templates.length}
+              </span>{" "}
+              Floor System Templates are available for admin maintenance.
+            </p>
+            <p>
+              Estimate generation, sharing, promotion, selected systems, snapshots, and
+              downstream workflow hooks remain deferred.
             </p>
             <div className="flex flex-wrap gap-2 pt-1">
+              <Link
+                href="/settings/system-layers"
+                className="inline-flex border border-[#d9cdc2] bg-white px-3 py-1.5 text-xs font-medium text-[#594839] transition hover:border-[#ef7d32]"
+              >
+                System layers
+              </Link>
               <Link
                 href="/settings/catalogs"
                 className="inline-flex border border-[#d9cdc2] bg-white px-3 py-1.5 text-xs font-medium text-[#594839] transition hover:border-[#ef7d32]"

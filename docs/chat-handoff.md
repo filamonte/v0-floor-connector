@@ -66,6 +66,42 @@ Validation:
 - `pnpm lint` passed
 - `supabase db lint` was attempted, but the local Supabase Postgres service was not running on `127.0.0.1:54322`
 
+## System Layers Admin/Data Access Layer
+
+Implemented the first admin/data access layer for the already-created first-slice system tables. This is an admin foundation only and does not add downstream workflow behavior.
+
+Files changed:
+- `apps/web/lib/system-layers/constants.ts`
+- `apps/web/lib/system-layers/schemas.ts`
+- `apps/web/lib/system-layers/data.ts`
+- `apps/web/lib/system-layers/actions.ts`
+- `apps/web/app/(app)/settings/system-layers/page.tsx`
+- `apps/web/app/(app)/settings/page.tsx`
+- `apps/web/lib/settings/navigation.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Behavior changed:
+- `/settings/system-layers` now lists, creates, edits, and archives tenant-owned `finish_products`.
+- `/settings/system-layers` now lists, creates, edits, and archives tenant-owned `floor_system_templates`.
+- Template components can be added, removed, reordered, and edited from the same settings surface.
+- Server actions validate required fields, allowed status progression, service/finish family values, component quantity basis, JSON formula metadata, and tenant-owned linked records.
+- Component writes require a same-company `catalog_items` row and optionally validate a same-company `finish_products` row.
+- Component save normalizes `sort_order` to contiguous ordering and increments the parent template version on structural component changes.
+- Template service/finish family structural changes increment `template_version`.
+
+Still not added:
+- no `selected_floor_systems`
+- no `visualizer_sessions`
+- no estimate integration
+- no contract integration
+- no snapshots
+- no files or file links
+- no message delivery attempts/events
+- no activity events
+- no downstream workflow logic
+
 ## Post-Sign Ready-To-Schedule Handoff
 
 Implemented a UI/workflow handoff from signed contract readiness into existing job and schedule foundations. No schema, RLS, auth, route architecture, or duplicate scheduling model was added.

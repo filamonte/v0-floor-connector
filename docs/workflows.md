@@ -305,7 +305,8 @@ Implemented flow:
   - archived catalog items remain visible for review where surfaced but are blocked from insertion
   - reusable systems expand through shared system logic from length x width or direct area plus linear footage
 - system-generated estimate items still use catalog/system component sources and become canonical estimate line-item snapshots
-- the new `finish_products`, `floor_system_templates`, and `floor_system_template_components` tables are foundation-only in this slice; they do not yet change active estimate authoring, estimate generation, contract generation, invoice behavior, or approved snapshot lineage
+- `finish_products`, `floor_system_templates`, and `floor_system_template_components` now have a first contractor-side admin/data access layer in `/settings/system-layers`
+- System Layers admin is foundation-only for workflow purposes: it does not yet change active estimate authoring, estimate generation, contract generation, invoice behavior, selected systems, files, activity, or approved snapshot lineage
 - `catalog_items` are the canonical reusable sellable cost item database; physical stock now belongs in `inventory_items`
 - inventory remains optional per organization and never blocks cost item selection in estimates
 - item-level tax stays simple:

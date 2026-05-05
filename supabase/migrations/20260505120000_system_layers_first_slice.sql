@@ -95,7 +95,6 @@ drop trigger if exists set_finish_products_updated_at on public.finish_products;
 create trigger set_finish_products_updated_at
 before update on public.finish_products
 for each row
-when (old is distinct from new)
 execute function public.set_updated_at();
 
 alter table public.finish_products enable row level security;
@@ -199,7 +198,6 @@ drop trigger if exists set_floor_system_templates_updated_at on public.floor_sys
 create trigger set_floor_system_templates_updated_at
 before update on public.floor_system_templates
 for each row
-when (old is distinct from new)
 execute function public.set_updated_at();
 
 alter table public.floor_system_templates enable row level security;
@@ -324,7 +322,6 @@ drop trigger if exists set_floor_system_template_components_updated_at on public
 create trigger set_floor_system_template_components_updated_at
 before update on public.floor_system_template_components
 for each row
-when (old is distinct from new)
 execute function public.set_updated_at();
 
 alter table public.floor_system_template_components enable row level security;

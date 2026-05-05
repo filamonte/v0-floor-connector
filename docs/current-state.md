@@ -1192,6 +1192,7 @@ Implemented:
 - canonical `catalog_system_components` foundation for system / assembly rows attached to `catalog_items`
 - tenant-owned `finish_products` foundation for manufacturer/product/spec proof metadata
 - tenant-owned `floor_system_templates` and `floor_system_template_components` foundation for future floor system templates backed by `catalog_items`
+- contractor-side System Layers settings at `/settings/system-layers` for admin-only list, create, edit, status progression, archive, and component maintenance over `finish_products`, `floor_system_templates`, and `floor_system_template_components`
 - estimate line item authoring can add active non-system `catalog_items` from the Estimate Editoror Catalog Items panel, with server-owned snapshot creation
 - estimate users can create new catalog/cost items inline from the Estimate Editoror, with the saved catalog item inserted into the current estimate through the same server-owned snapshot path
 - catalog-backed estimate item names can be clicked from the Estimate Editoror to edit the reusable catalog item and refresh only the current estimate line snapshot
@@ -1209,6 +1210,7 @@ Current design notes:
 - catalog items are the current Phase 1 foundation for reusable item pricing, cost fields, taxable behavior, optional inventory links, and future production/markup behavior
 - `finish_products` are metadata/proof records only; they do not own cost, pricing, quantity basis, estimate expansion, invoice behavior, or reusable item behavior
 - `floor_system_template_components` require `catalog_items` for cost/pricing/quantity/estimate expansion and may optionally reference `finish_products` only for product/spec proof
+- `/settings/system-layers` maintains first-slice records only; it does not select systems for projects, generate estimates, create snapshots, attach files, or alter contract/invoice workflows
 - estimate workflows now reuse and snapshot active non-system catalog item data through canonical `estimate_line_items`; future invoice and materials workflows should extend the same shared model instead of creating module-specific item silos
 - inventory is now an optional operational extension of the same catalog item instead of a separate primary inventory workflow
 - inventory availability is now controlled through the shared platform / organization feature policy key `inventory_enabled`
@@ -1400,6 +1402,7 @@ Implemented:
   - organization profile/settings
   - document templates
   - catalogs/master data
+  - system layers
   - financial defaults
   - workflow defaults
   - automation visibility
@@ -1411,7 +1414,8 @@ Implemented:
 - stored contractor preferences for internal contract approval, signed-contract readiness, deposit-before-scheduling readiness, and financing-approval readiness
 - organization-scoped reusable catalog item management
 - `/settings/catalogs` now renders the same contractor cost item settings component used by `/cost-items-database/settings`
-- `/settings` now includes a lightweight Templates & Systems planning note linking the existing Document Templates, Catalog Items, Systems, and Add-ons / Options surfaces without adding a dedicated future module
+- `/settings/system-layers` now provides the first admin/data access layer for finish products, floor system templates, and catalog-backed template components
+- `/settings` now links the existing Document Templates, Catalog Items, Systems, Add-ons / Options, and System Layers surfaces while leaving deeper Templates & Systems workflows deferred
 - organization member role management
 - organization-level feature override storage within the shared platform feature policy model
 - first contractor-side automation visibility/settings surface at `/settings/automation`
@@ -1472,7 +1476,7 @@ Not implemented yet:
 - full scheduling/dispatch system
 - drag-and-drop rescheduling, dispatch optimization, and deeper crew-calendar coordination
 - automated dispatching and external notifications
-- a dedicated Templates & Systems settings/admin area that unifies document templates, System Templates, add-ons/options, and sharing/review settings
+- a full dedicated Templates & Systems settings/admin area that unifies document templates, System Templates, add-ons/options, sharing/review settings, platform promotion, and downstream generation workflows
 - full document-template coverage for proposal/SOW and future work order templates
 - full per-record display-template switching across estimates, invoices, contracts, SOW output, and custom document layouts beyond the currently implemented shared template references
 - contractor shareable template/system/add-on opt-in settings, super-admin review/import/promotion, anonymization review, or promoted platform defaults for other contractors to adopt

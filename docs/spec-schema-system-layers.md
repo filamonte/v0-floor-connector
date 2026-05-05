@@ -1009,7 +1009,7 @@ Final first-slice choices:
 - `created_by` and `updated_by` reference `public.users(id)` to match current DB conventions
 - generated lookup fields are `finish_products.normalized_product_name` and `floor_system_templates.normalized_name`
 - `floor_system_template_components.finish_product_id` is optional and uses column-scoped `on delete set null (finish_product_id)`
-- update triggers use `when (old is distinct from new)` with `public.set_updated_at()`
+- update triggers call `public.set_updated_at()` without a `WHEN` clause because first-slice tables include generated lookup columns, and PostgreSQL does not allow whole-row `OLD`/`NEW` trigger `WHEN` comparisons on tables with generated columns
 
 ### Second Migration Slice
 
