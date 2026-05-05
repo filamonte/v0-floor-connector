@@ -1194,6 +1194,7 @@ Implemented:
 - tenant-owned `floor_system_templates` and `floor_system_template_components` foundation for future floor system templates backed by `catalog_items`
 - tenant-owned `selected_floor_systems` foundation for chosen or proposed finish/service systems linked to real tenant workflow records
 - contractor-side System Layers settings at `/settings/system-layers` for admin-only list, create, edit, status progression, archive, and component maintenance over `finish_products`, `floor_system_templates`, and `floor_system_template_components`
+- contractor-side Selected Systems settings at `/settings/selected-systems` for admin-only list, create, edit, status changes, retraction/voiding, and project-primary validation over tenant-owned `selected_floor_systems`
 - estimate line item authoring can add active non-system `catalog_items` from the Estimate Editoror Catalog Items panel, with server-owned snapshot creation
 - estimate users can create new catalog/cost items inline from the Estimate Editoror, with the saved catalog item inserted into the current estimate through the same server-owned snapshot path
 - catalog-backed estimate item names can be clicked from the Estimate Editoror to edit the reusable catalog item and refresh only the current estimate line snapshot
@@ -1212,7 +1213,8 @@ Current design notes:
 - `finish_products` are metadata/proof records only; they do not own cost, pricing, quantity basis, estimate expansion, invoice behavior, or reusable item behavior
 - `floor_system_template_components` require `catalog_items` for cost/pricing/quantity/estimate expansion and may optionally reference `finish_products` only for product/spec proof
 - `selected_floor_systems` rows are tenant-owned through required `company_id`; they are not public/pre-auth visualizer rows and they require at least one canonical workflow anchor such as opportunity, customer, project, estimate, contract, or job
-- `/settings/system-layers` maintains product/template/component records only; no UI, server actions, estimate generation, contract generation, snapshotting, files, delivery proof, activity timeline, or downstream selected-system workflow is implemented yet
+- `/settings/selected-systems` maintains selected-system records only; it validates same-company template, finish product, and workflow anchors, and automatically unsets other project-primary rows when a selected system is marked primary
+- `/settings/system-layers` and `/settings/selected-systems` are admin/data-access surfaces only; no estimate generation, contract generation, job integration, snapshotting, files, delivery proof, activity timeline, visualizer, or downstream selected-system workflow is implemented yet
 - estimate workflows now reuse and snapshot active non-system catalog item data through canonical `estimate_line_items`; future invoice and materials workflows should extend the same shared model instead of creating module-specific item silos
 - inventory is now an optional operational extension of the same catalog item instead of a separate primary inventory workflow
 - inventory availability is now controlled through the shared platform / organization feature policy key `inventory_enabled`
@@ -1417,7 +1419,7 @@ Implemented:
 - organization-scoped reusable catalog item management
 - `/settings/catalogs` now renders the same contractor cost item settings component used by `/cost-items-database/settings`
 - `/settings/system-layers` now provides the first admin/data access layer for finish products, floor system templates, and catalog-backed template components
-- `/settings` now links the existing Document Templates, Catalog Items, Systems, Add-ons / Options, and System Layers surfaces while leaving deeper Templates & Systems workflows deferred
+- `/settings` now links the existing Document Templates, Catalog Items, Systems, Add-ons / Options, System Layers, and Selected Systems surfaces while leaving deeper Templates & Systems workflows deferred
 - organization member role management
 - organization-level feature override storage within the shared platform feature policy model
 - first contractor-side automation visibility/settings surface at `/settings/automation`
@@ -1484,7 +1486,7 @@ Not implemented yet:
 - contractor shareable template/system/add-on opt-in settings, super-admin review/import/promotion, anonymization review, or promoted platform defaults for other contractors to adopt
 - Takeoff & Scope Intelligence
 - pre-lead visual/product/finish selection or room visualizer handoff
-- active selected-system/spec workflow for sold and installed finish systems beyond the tenant-owned `selected_floor_systems` schema foundation
+- active selected-system/spec workflow for sold and installed finish systems beyond the tenant-owned `selected_floor_systems` admin/data-access foundation
 - product images, spec sheets, visualizer renders, and downstream customer proof beyond the `finish_products` metadata and `selected_floor_systems` foundations
 - shared file/evidence layer with multi-record links across projects, opportunities, estimates, contracts, jobs, invoices, payments, change orders, daily logs, field notes, selected systems/specs, and finish products
 - canonical delivery attempts/events for estimate, contract, invoice, change-order, portal-invite, or payment-request sends beyond the currently implemented notification delivery foundation
@@ -1518,7 +1520,7 @@ Future-looking note:
 - the current vendors, people, compliance, jobs, daily logs, time, communication, notification, and portal access foundations could support future scoped collaboration, but no contractor network, marketplace, open contractor chat, or external subcontractor/vendor collaboration surface is implemented today.
 - the current projects, estimates, estimate line items, reusable catalog item foundations, platform starter catalog foundations, organization-owned catalog items, document-template/settings foundations, selected-system schema foundation, files/attachments foundations, site-assessment fields, communication/notification foundations, and customer/project workflow could support future visual/product/finish selection, selected-system/spec workflows, shared file/evidence linking, delivery proof, activity timelines, measurement-driven estimating, System Template generation, add-ons/options, Templates & Systems administration, Takeoff & Scope Intelligence, and AI Capture.
 - the current lead Scope Intake fields can support future reviewed estimate planning, but they do not currently generate estimate lines, SOW, labor plans, material plans, takeoff records, AI suggestions, invoices, or customer-facing commercial scope automatically.
-- no `visualizer_sessions` table, pre-lead visualizer handoff, selected-system UI/server-action workflow, estimate/contract selected-system integration, selected-system snapshots, shared multi-record file/evidence layer, delivery-proof lifecycle for commercial sends, company-brain timeline, manual measurement-driven estimate generation, full System Template estimate generation, System Template sharing, dedicated Templates & Systems admin module, add-on/option management workflow, on-screen takeoff, AI Capture, AI takeoff, plan measurement, takeoff-to-cost-item mapping, source traceability, out-of-sync review state, or automated estimate generation exists today.
+- no `visualizer_sessions` table, pre-lead visualizer handoff, estimate/contract selected-system integration, selected-system snapshots, shared multi-record file/evidence layer, delivery-proof lifecycle for commercial sends, company-brain timeline, manual measurement-driven estimate generation, full System Template estimate generation, System Template sharing, dedicated Templates & Systems admin module, add-on/option management workflow, on-screen takeoff, AI Capture, AI takeoff, plan measurement, takeoff-to-cost-item mapping, source traceability, out-of-sync review state, or automated estimate generation exists today.
 - future takeoff must stay separate from implemented truth: Measurements are manual quantity inputs; Takeoff means plan/PDF/drawing-based measurement; AI Capture is a future photo/app/AI-derived input method. Takeoff and measurements would produce quantities, catalog/cost items would define reusable cost, pricing, production, markup, and tax behavior, System Templates would map quantities to grouped estimate content, and estimates would define customer-facing pricing and commercial scope.
 
 ## UI Direction Update (Latest)

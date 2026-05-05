@@ -122,7 +122,6 @@ Behavior changed:
 - Template service/finish family structural changes increment `template_version`.
 
 Still not added:
-- no selected-system UI or server actions
 - no `visualizer_sessions`
 - no estimate integration
 - no contract integration
@@ -131,6 +130,44 @@ Still not added:
 - no message delivery attempts/events
 - no activity events
 - no downstream workflow logic
+
+## Selected Systems Admin/Data Access Layer
+
+Implemented the first admin/data access layer for the already-created `selected_floor_systems` table. This is validation of the selected-system foundation only and does not add downstream workflow behavior.
+
+Files changed:
+- `apps/web/lib/selected-systems/constants.ts`
+- `apps/web/lib/selected-systems/schemas.ts`
+- `apps/web/lib/selected-systems/data.ts`
+- `apps/web/lib/selected-systems/actions.ts`
+- `apps/web/app/(app)/settings/selected-systems/page.tsx`
+- `apps/web/app/(app)/settings/page.tsx`
+- `apps/web/lib/settings/navigation.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Behavior changed:
+- `/settings/selected-systems` now lists tenant-owned selected floor systems.
+- Admin users can create and edit selected systems against existing same-company floor system templates, finish products, and real workflow anchors.
+- Server actions validate selected-system check values for status, source, area type, and spec-completeness status.
+- Server actions validate nonnegative estimated area and linear-foot quantities.
+- Same-company validation is enforced for linked opportunity, customer, project, estimate, contract, job, floor system template, and finish product records.
+- Selected systems require at least one real workflow anchor; the create form requires a project by default for the validation slice.
+- Project-primary validation is enforced in the data layer: when a selected system is saved as primary for a project, other primary rows for that company/project are unset first.
+- Admin users can change status, retract, void, and toggle project-primary state without touching downstream records.
+
+Still not added:
+- no estimate integration
+- no contract integration
+- no job integration
+- no snapshots
+- no `visualizer_sessions`
+- no files or file links
+- no message delivery attempts/events
+- no activity events
+- no customer-facing UI
+- no changes to current Estimate Editoror or estimate builder behavior
 
 ## Post-Sign Ready-To-Schedule Handoff
 

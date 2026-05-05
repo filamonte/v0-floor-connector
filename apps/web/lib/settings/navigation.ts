@@ -42,6 +42,12 @@ export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
     adminOnly: true
   },
   {
+    href: "/settings/selected-systems",
+    label: "Selected Systems",
+    description: "Admin validation for selected floor systems on real workflow records.",
+    adminOnly: true
+  },
+  {
     href: "/settings/financial",
     label: "Financial",
     description: "Tax, retainage, billing defaults, and tax-code settings.",

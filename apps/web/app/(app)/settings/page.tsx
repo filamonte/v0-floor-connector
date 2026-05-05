@@ -7,6 +7,7 @@ import { requireOrganizationAdminScope, listOrganizationMembers } from "@/lib/or
 import { listOrganizationFeatureOverrides } from "@/lib/organizations/module-settings";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { listCatalogItems } from "@/lib/catalogs/data";
+import { getSelectedSystemsAdminData } from "@/lib/selected-systems/data";
 import { getSystemLayersAdminData } from "@/lib/system-layers/data";
 import { listDocumentTemplates } from "@/lib/templates/data";
 
@@ -32,7 +33,8 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
     workflowSettings,
     members,
     featureOverrides,
-    systemLayersData
+    systemLayersData,
+    selectedSystemsData
   ] = await Promise.all([
     listDocumentTemplates(),
     listCatalogItems(),
@@ -40,7 +42,8 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
     getOrganizationWorkflowSettings(scope.organizationId),
     listOrganizationMembers(scope.organizationId),
     listOrganizationFeatureOverrides(scope.organizationId),
-    getSystemLayersAdminData("/settings")
+    getSystemLayersAdminData("/settings"),
+    getSelectedSystemsAdminData("/settings")
   ]);
   const systemCount = catalogItems.filter((item) => item.itemType === "system").length;
   const addOnOptionCount = catalogItems.filter(
@@ -179,6 +182,12 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                 System layers
               </Link>
               <Link
+                href="/settings/selected-systems"
+                className="inline-flex border border-[#d9cdc2] bg-white px-3 py-1.5 text-xs font-medium text-[#594839] transition hover:border-[#ef7d32]"
+              >
+                Selected systems
+              </Link>
+              <Link
                 href="/settings/catalogs"
                 className="inline-flex border border-[#d9cdc2] bg-white px-3 py-1.5 text-xs font-medium text-[#594839] transition hover:border-[#ef7d32]"
               >
@@ -191,6 +200,28 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                 Systems workspace
               </Link>
             </div>
+          </div>
+        </SettingsOverviewCard>
+
+        <SettingsOverviewCard
+          title="Selected Systems"
+          description="Validate selected floor system records against tenant-owned templates, finish products, and real workflow anchors without activating downstream integrations."
+          href="/settings/selected-systems"
+          ctaLabel="Manage selected systems"
+        >
+          <div className="space-y-3 border border-[#d9cdc2] bg-[#fbf7f2] px-4 py-4 text-sm leading-6 text-[#6f6256]">
+            <p>
+              <span className="font-medium text-[#221a14]">
+                {selectedSystemsData.selectedSystems.length}
+              </span>{" "}
+              selected system
+              {selectedSystemsData.selectedSystems.length === 1 ? "" : "s"} are stored
+              on tenant-owned `selected_floor_systems` rows.
+            </p>
+            <p>
+              This admin route verifies CRUD, status changes, project primary selection,
+              and same-company link validation only.
+            </p>
           </div>
         </SettingsOverviewCard>
 
