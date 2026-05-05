@@ -31,6 +31,41 @@ For stronger implementation control on new tasks, also use:
 - [docs/local-qa-auth-session-note.md](C:/FloorConnector/docs/local-qa-auth-session-note.md)
 - [docs/qa-estimate-send-approval-contract-prerequisites.md](C:/FloorConnector/docs/qa-estimate-send-approval-contract-prerequisites.md)
 
+## System Layers First Migration Slice
+
+Schema-only first slice implemented for future product/spec and floor system template foundations.
+
+Migration:
+- `supabase/migrations/20260505120000_system_layers_first_slice.sql`
+
+Tables added:
+- `finish_products`
+- `floor_system_templates`
+- `floor_system_template_components`
+
+What changed:
+- Added tenant-owned product/spec metadata foundation with `company_id`, `created_by`, `updated_by`, generated normalized lookup fields, CHECK constraints, useful indexes, update triggers, RLS enable/force RLS, and membership-based RLS policies.
+- Added tenant-owned floor system template and component foundation.
+- `floor_system_template_components.catalog_item_id` is required and same-company enforced through composite FK to `catalog_items(company_id, id)`.
+- `floor_system_template_components.finish_product_id` is optional product/spec proof metadata and uses column-scoped `on delete set null (finish_product_id)`.
+
+Deferred:
+- no selected systems
+- no visualizer sessions
+- no estimate or contract snapshots
+- no shared files/file links
+- no communication delivery proof
+- no activity timeline
+- no seed/demo data
+- no app UI, routes, APIs, server actions, tests, or product behavior
+
+Validation:
+- targeted migration grep checks passed for forbidden later-slice tables and `organization_id`
+- `git diff --check` passed for the migration and touched docs
+- `pnpm typecheck` passed
+- `pnpm lint` passed
+- `supabase db lint` was attempted, but the local Supabase Postgres service was not running on `127.0.0.1:54322`
+
 ## Post-Sign Ready-To-Schedule Handoff
 
 Implemented a UI/workflow handoff from signed contract readiness into existing job and schedule foundations. No schema, RLS, auth, route architecture, or duplicate scheduling model was added.

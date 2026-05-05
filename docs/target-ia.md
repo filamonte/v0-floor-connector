@@ -114,6 +114,8 @@ Projects should answer:
 - what work is being delivered
 - what stage it is in
 - what execution records and financial records are attached to it
+- what finish/system/spec was selected, sold, installed, changed, and closed out
+- which files, evidence, delivery events, and activity timeline entries explain the operational history
 
 ## Financials
 
@@ -126,6 +128,7 @@ This area should include:
 - retainage and AIA billing later
 - change-order financial effects later
 - reporting and collections views later
+- payment-request delivery history later
 
 Financials is where users work across many projects at once, especially for accounting, approvals, and collections.
 
@@ -170,11 +173,22 @@ This area should include:
 - project files
 - estimate and invoice attachments
 - photos
+- product images
+- visualizer renders
+- spec sheets
+- signed documents
+- field photos
+- markups and closeout evidence
 - forms/checklists later
 - document output and attachments
 - shared company documents later
 
 Documents should support both project-level and organization-level retrieval.
+
+Target boundary:
+- Documents should become a shared file/evidence layer, not a module-specific attachment silo.
+- Files should be linkable to multiple canonical records such as project, opportunity, estimate, contract, job, invoice, payment, change order, daily log, field note, selected system/spec, and finish product.
+- Existing execution attachments are the current implementation baseline; the shared file/evidence layer is future direction.
 
 ## Communications
 
@@ -185,10 +199,18 @@ This area should eventually include:
 - customer communication tied to canonical records
 - subcontractor, vendor, and project partner communication tied to canonical records later
 - estimate/invoice delivery history
+- contract, change-order, portal-invite, and payment-request delivery history
 - portal communications later
 - activity notifications later
+- email, SMS, portal, app, and manual-log communication views later
 
 Communications should group conversation flows rather than scattering them across modules. Future communication should be record-based over free-floating chat, with threads attached to projects, jobs, change orders, invoices, daily logs, field notes, or other canonical records.
+
+Target delivery-proof behavior:
+- sending estimates, invoices, contracts, change orders, portal invites, and payment requests should create canonical communication/delivery records
+- delivery events should include queued, sent, delivered, opened, clicked, deferred, bounced, blocked, dropped, and failed when provider data supports those states
+- provider data is delivery telemetry, not the business source of truth
+- open and click tracking should be treated as useful signal, not perfect legal certainty
 
 ## Settings
 
@@ -227,6 +249,7 @@ In UX terms, a project should become the primary record that organizes delivery 
 Target project workspace sections:
 - Overview
 - Takeoff & Scope later
+- Finish / System Spec later
 - Estimate
 - Scope
 - Jobs / Work Orders
@@ -255,6 +278,16 @@ This workspace should keep the boundary clear: Measurements are manual inputs su
 
 Quick Build should support selecting a System Template, entering minimal measurements, and generating grouped estimate lines for review. Detailed Build should support multiple rooms/zones, options, conditions, waste factors, optional components, overrides, and review before generation. AI-assisted suggestions and generated line items should remain reviewable and explicitly approved before they are exposed to the customer.
 
+### Finish / System Spec
+
+Future project workspace section for the selected finish/system/spec that represents what is sold and installed.
+
+This section should support visual/product/finish selection context that may have started before lead intake, then became canonical once accepted into the contractor workflow. Supported future finish families include decorative flake, metallic epoxy, decorative quartz, solid color, and future surface systems.
+
+Manufacturer/product metadata should support Torginol-style vendor, product line, product code, product images, spec sheets, and technical notes without committing the architecture to a single vendor. Selected systems/specs should flow into estimate, contract, job, portal, closeout, and warranty context.
+
+Once approved or once contract/signature activity begins, selected systems should be snapshotted or locked like financial/document truth. Later changes should be handled through revision or change-order style workflows rather than silent edits.
+
 ### Estimate
 
 Estimate proposal, line items, approval state, and estimate-to-job conversion path.
@@ -281,7 +314,9 @@ Project-linked financial billing records and collections status.
 
 ### Files
 
-Project-specific documents, photos, and supporting records.
+Project-specific view of shared files, product images, room photos, visualizer renders, spec sheets, signed documents, field photos, markups, and closeout evidence.
+
+Files should be shared/linkable across canonical records, not trapped inside project-only, estimate-only, contract-only, invoice-only, or field-only attachment silos.
 
 ### Notes
 
@@ -289,7 +324,9 @@ Persistent project notes that do not fit better in financial or execution record
 
 ### Activity
 
-Audit-style timeline of important system and workflow events.
+Readable activity timeline of important system and workflow events.
+
+The activity timeline is the project/company-brain memory layer over canonical records, not a replacement source of truth. It should summarize events such as finish selected, estimate sent/viewed/approved, contract sent/signed, invoice sent/paid, payment completed, file uploaded, message received, job scheduled, daily log finalized, and closeout evidence captured.
 
 ## Standalone Global Routes That Should Still Exist
 

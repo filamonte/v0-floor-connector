@@ -71,6 +71,9 @@ Current focus:
 - complete internal beta support/release checklist, onboarding runbook, beta candidate criteria, and bug triage process
 - fix validation-blocking defects without expanding into unrelated feature breadth
 - keep contractor admin and super-admin responsibilities clearly separated as more modules plug into settings
+- document the future company-brain architecture without treating it as implemented behavior
+- preserve the current canonical model while designing product/spec, shared file/evidence, and communication-delivery foundations
+- tighten the project hub and readiness story around existing canonical records before adding broader new workflow depth
 
 ## Phase C: Operational Depth Systems
 
@@ -96,6 +99,25 @@ Planned focus:
 
 - Canonical Entity Cleanup: Clarify entities, remove Deal, ensure EmployeeProfile extends people.
 
+## Company Brain Foundation Sequence
+
+This sequence is future roadmap guidance. It does not mean the product/finish/spec, shared file-link, delivery-event, or activity-timeline layers are implemented today.
+
+Recommended sequence:
+- Phase 2 / near term: document target architecture, preserve current canonical records, tighten project hub/readiness, and design the product/spec/file/delivery foundations without creating duplicate records.
+- Next foundation slice: product/finish/spec model planning, manufacturer/product metadata planning, and shared file-link model planning. Manufacturer/product metadata should support Torginol-style vendor, product line, product code, product images, spec sheets, and technical notes without hardcoding a vendor commitment.
+- Next workflow slice: selected system/spec integration into estimate and contract review, including snapshot/lock behavior once approval or contract/signature activity begins.
+- Next communication slice: communication threads/messages plus delivery attempts/events for estimates, contracts, invoices, change orders, payment requests, and portal invites.
+- Next memory slice: activity timeline over the project/customer/record chain, rendered as readable memory over canonical records rather than a replacement source of truth.
+- Later: visualizer handoff, mobile/offline capture, AI auto-linking/classification, smart change-order detection, and deeper field/material/job-costing workflows.
+
+Guardrails:
+- visual/product/finish selection may begin before lead intake, but operational use must eventually attach to canonical records instead of session-only or module-local data
+- selected finish/spec data should flow through `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment` without replacing that lifecycle
+- finish systems represent what is sold and installed; they should not degrade into loose estimate descriptions
+- shared files/evidence should be linkable across projects, opportunities, estimates, contracts, jobs, invoices, payments, change orders, daily logs, field notes, selected systems/specs, and finish products
+- delivery telemetry from providers should be stored as immutable delivery events tied to canonical records, while open/click signals remain useful but imperfect evidence
+
 ## Phase 3
 
 **Next: project workspace**
@@ -103,6 +125,7 @@ Planned focus:
 Planned focus:
 - make project the primary operational workspace
 - connect estimates, contracts, jobs, invoices, files, and activity more clearly inside the project context
+- make project the future operational memory hub for selected finish/spec context, delivery proof, files/evidence, communication history, and activity timeline views
 - align project/service address display with the planned structured address direction while keeping it distinct from customer billing/contact address
 - strengthen project-scoped site info, plan/photo/file inputs, and scope summary foundations that can later support Takeoff & Scope Intelligence
 - strengthen readiness, blockers, and next-action guidance
@@ -141,10 +164,15 @@ Current reality and planned focus:
 - planned add-on/option foundations for catalog-backed optional scope modifiers such as integrated cove base, vinyl cove base, control joints, crack repair, coating removal, moisture mitigation, extra topcoat, mobilization/setup, and future labor adjustments
 - planned template sharing loop where contractor-created templates/systems/add-ons can be marked shareable, reviewed by super admin, stripped or anonymized for private cost/markup/margin/internal notes, and promoted as platform defaults without silently updating contractor local copies
 - planned on-screen Takeoff & Scope Intelligence foundations where project-scoped plan/PDF/drawing measurement can produce quantities, map through System Templates and reusable catalog/cost items, and generate reviewed estimate line items
+- planned visual/product/finish selection foundations where pre-lead finish choices can later become canonical selected-system/spec records, with finish families such as decorative flake, metallic epoxy, decorative quartz, solid color, and future surface systems
+- planned manufacturer/product metadata foundations for vendor, product line, product code, images, spec sheets, and technical notes, using examples such as Torginol-style product metadata without committing to one vendor
+- planned selected-system/spec snapshot behavior so approved or signature-active work does not silently change after estimate or contract truth is established
 - richer shared template and document editing capability
 - broader document workflow refinement
 
 Takeoff work in this phase would be planned direction only. Manual measurements are not takeoff; they are contractor-entered quantities or dimensions. Takeoff means plan, PDF, or drawing-based measurement. Both input paths should support the canonical estimate workflow and the existing `catalog_items` cost item database instead of becoming separate estimating apps. Takeoff and measurement quantities may eventually inform material requirements, labor estimation, production readiness, and job planning, but they should flow through reviewed estimates before contracts, jobs, invoices, or payments.
+
+Visualizer and selected-finish work in this phase would also be planned direction only. A future room visualizer may start before lead intake, but selected finish/spec data should become canonical selected-system/spec context only when accepted into the shared workflow. It should not become a parallel lead, project, estimate, or product model.
 
 Document-template work in this phase should preserve the existing copied-template model: platform defaults seed contractor-owned templates, contractors can edit local copies and switch templates per estimate, invoice, or contract where supported, and future proposal/SOW or work order templates should extend the same shared template foundation instead of creating module-specific template silos.
 
@@ -156,8 +184,11 @@ Planned focus:
 - e-sign integration on top of canonical contracts
 - deeper payment-provider support, reconciliation, retry, and provider lifecycle tooling on top of canonical payments
 - deeper PDF generation, document delivery, and provider lifecycle tooling beyond the current canonical contract PDF snapshot foundation
+- delivery attempts/events for estimates, contracts, invoices, change orders, portal invites, and payment requests, including queued, sent, delivered, opened, clicked, deferred, bounced, blocked, dropped, and failed where providers support those states
 - external tax provider integration
 - accounting and adjacent third-party integrations behind shared adapters
+
+Provider event data should remain delivery telemetry. FloorConnector's canonical records and immutable delivery events remain the business source of truth, and open/click tracking should not be treated as perfect legal certainty.
 
 ## Phase 7
 
@@ -167,8 +198,10 @@ Planned focus:
 - broader customer portal workflows beyond the current access, review, and contract-signature foundation
 - richer customer-facing payment self-service and post-review actions beyond the current portal invoice/payment handoff
 - record-based communication tied to projects, jobs, change orders, invoices, daily logs, field notes, and other canonical workflow records
+- canonical communication/delivery records for estimate sends, contract sends/signature requests, invoice sends, change-order sends, payment requests, portal invites, app messages, SMS, email, and manual logs
 - scoped subcontractor/vendor/project partner collaboration where invited external participants can access only explicitly shared project or job workrooms
 - project/job workrooms for limited status updates, photo uploads, field notes, files, and record-tied communication
+- shared activity timelines for project, customer, and record workspaces that summarize canonical events without becoming a separate source of truth
 
 This is planned direction only. It does not mean contractor network collaboration, subcontractor portal access, or contractor-to-contractor messaging is currently implemented.
 

@@ -33,6 +33,9 @@ Financial readiness, scheduling readiness, production readiness, and similar che
 That flow may tighten over time into a more project-centered UX, but the key rule is unchanged:
 - no duplicate re-entry of core business data at later stages
 - no disconnected contract, billing, or production records
+- no visualizer-only, file-only, communication-only, or module-local records presented as business truth when the same context belongs on the shared chain
+
+Future pre-lead visual/product/finish selection may happen before a formal opportunity exists. That should extend the lifecycle concept, not replace it: selected finish/spec context can begin early, then attach to `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment` when the contractor accepts it into the operational workflow.
 
 ### 2. Project As Operational Root
 
@@ -41,10 +44,14 @@ Once work becomes real enough to deliver, the project should become the operatio
 - execution readiness
 - job planning
 - downstream billing context
+- selected finish/spec context
+- shared files, evidence, communication history, delivery proof, and activity timeline views
 
 ### 3. Workflow Over Modules
 
 FloorConnector should behave like one connected contractor workflow, not a stack of disconnected modules.
+
+That includes files, product selections, spec sheets, visualizer renders, delivery events, and communication history. These should be linkable across canonical records instead of trapped in module-specific silos.
 
 ### 4. Financing And Financial Readiness Are Workflow Stages
 
@@ -66,6 +73,7 @@ Possible sources:
 - inspection request
 - manual sales entry
 - future estimator or scheduler entry points
+- future room visualizer or product/finish selection entry points
 
 Core intake data:
 - name
@@ -74,6 +82,13 @@ Core intake data:
 - service type
 - notes
 - source
+- selected finish/system/spec context when a future pre-lead visual or product selection exists
+
+Future visual/product/finish selection:
+- a customer can choose a finish/system visually before becoming a full lead or customer
+- supported future finish families include decorative flake, metallic epoxy, decorative quartz, solid color, and future surface systems
+- manufacturer/product metadata should support Torginol-style vendor, product line, product code, product image, spec sheet, and technical note fields without hardcoding a vendor dependency
+- visual selections should later become canonical selected-system/spec records when they are used operationally, not disposable session-only data
 
 ### 2. Qualification And Customer Creation
 
@@ -92,6 +107,7 @@ May include:
 - Measurements such as length x width, direct square footage, direct linear footage, and counts
 - photos
 - uploaded plans or drawings later
+- visualizer renders, product images, finish samples, spec sheets, and product technical notes later
 - substrate condition
 - prep requirements
 - recommended system
@@ -103,6 +119,7 @@ Input sources may be:
 - customer-provided plans and photos later
 - contractor-uploaded plans, photos, and site information later
 - future instant-estimate tooling
+- future pre-lead visualizer/product selection handoff
 
 Future Takeoff & Scope Intelligence:
 - site assessment may feed project-scoped takeoff work before estimate creation
@@ -187,6 +204,14 @@ Contracts should be:
 - merged with project and customer context
 - editable while still in draft
 - locked after signature activity begins
+- informed by the selected finish/system/spec context that represents what is being sold and installed
+
+Future selected-system/spec behavior:
+- finish systems are not loose estimate line-item descriptions
+- selected systems/specs represent the actual sold and installed surface system
+- selected system/spec context should flow into estimate, contract, job, portal review, closeout, and warranty context
+- once approved or once contract/signature activity begins, selected systems should be snapshotted or locked like financial/document truth
+- later changes should move through revision or change-order style workflows instead of silent edits
 
 ### 7. Contract Approval And Signature Readiness
 
@@ -238,6 +263,29 @@ This stage should support:
 - payment recording
 - balance tracking
 - retainage-aware and future progress-billing-aware financial behavior
+- closeout evidence, selected finish/spec references, warranty context, and payment-request delivery proof tied back to canonical records
+
+## Shared Files, Delivery Proof, And Activity Memory
+
+This is target architecture only.
+
+Future shared file/evidence behavior should support:
+- product images
+- room photos
+- visualizer renders
+- spec sheets
+- signed documents
+- field photos
+- markups
+- closeout evidence
+
+Files should be linkable to multiple canonical records, including project, opportunity, estimate, contract, job, invoice, payment, change order, daily log, field note, selected system/spec, and finish product. Existing execution attachments remain the current implementation; the long-term direction is a shared file/evidence layer rather than module-specific attachment silos.
+
+Future communication and delivery proof behavior should support customer and contractor communications across email, SMS, portal, app, and manual logs. Sending estimates, invoices, contracts, change orders, portal invites, and payment requests should create canonical communication/delivery records.
+
+Delivery events should include queued, sent, delivered, opened, clicked, deferred, bounced, blocked, dropped, and failed when provider data supports those states. Provider data is delivery telemetry, not the business source of truth. FloorConnector should store immutable delivery events tied back to canonical records. Open and click tracking are useful signals, not perfect legal certainty.
+
+Future activity timelines should summarize important lifecycle events such as finish selected, estimate sent/viewed/approved, contract sent/signed, invoice sent/paid, payment completed, file uploaded, message received, job scheduled, daily log finalized, and closeout evidence captured. The activity timeline is a readable company-brain layer over canonical records, not a replacement source of truth.
 
 ## Configuration Requirements
 
@@ -285,8 +333,12 @@ FloorConnector should avoid:
 - duplicate data between modules
 - disconnected contract and invoice systems
 - module-specific template silos
+- module-specific file, attachment, product-selection, delivery-proof, or communication silos
 - manual re-entry of estimate or contract data downstream
 - contractors depending directly on one mutable global starter record
+- visualizer selections that never become canonical selected-system/spec context once used operationally
+- treating finish systems as loose text descriptions once they represent sold and installed scope
+- silent edits to selected systems after approval or signature activity begins
 - a separate takeoff or estimating silo disconnected from project, catalog, and estimate records
 - direct takeoff-to-invoice behavior that bypasses reviewed estimate line items and approved commercial scope
 - pricing directly inside raw takeoff measurements
@@ -296,17 +348,22 @@ FloorConnector should avoid:
 - generated estimate content with no source traceability back to System Template, measurement/takeoff input, and source file or photo where applicable
 - silent reuse of generated estimate content after source inputs change without an out-of-sync or needs-review signal
 - free-floating contractor chat that is not tied back to canonical project, job, financial, or field records
+- provider telemetry treated as the legal/business source of truth instead of immutable FloorConnector delivery events
 - external partner access that exposes customer contact data, pricing, files, pipeline, or project history without explicit permissions
 
 ## Future Extensions
 
 Future workflow expansion may include:
 - richer estimator tooling
+- pre-lead visualizer handoff into canonical opportunity/customer/project workflows
+- product/finish/spec management for decorative flake, metallic epoxy, decorative quartz, solid color, and future surface systems
+- shared file/evidence layer with multi-record links
 - Takeoff & Scope Intelligence for manual/on-screen takeoff, AI-assisted suggestions, cost item mapping, and estimate generation
 - online scheduling
 - customer portal flows
 - full AIA/progress billing workflows
-- communications and notifications
+- communications, notifications, delivery attempts, and immutable delivery events
+- activity timelines over the project/customer/record chain
 - CRM and sales pipeline depth
 - deeper production and field execution tooling
 - subcontractor handoff from financially ready project/job records

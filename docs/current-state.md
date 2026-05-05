@@ -76,6 +76,8 @@ Current shared canonical model includes:
 - platform catalog item seeds
 - document templates
 - catalog items / reusable cost items
+- finish products / manufacturer-product-spec metadata foundation
+- floor system templates and template components
 - customers
 - projects
 - estimates
@@ -1188,6 +1190,8 @@ Implemented:
 - optional linked inventory tracking on catalog items through `inventory_items`
 - linked inventory tracking now exposes quantity on hand, reorder point, default location, manual adjustments, and recent transaction history from the same cost item workflow
 - canonical `catalog_system_components` foundation for system / assembly rows attached to `catalog_items`
+- tenant-owned `finish_products` foundation for manufacturer/product/spec proof metadata
+- tenant-owned `floor_system_templates` and `floor_system_template_components` foundation for future floor system templates backed by `catalog_items`
 - estimate line item authoring can add active non-system `catalog_items` from the Estimate Editoror Catalog Items panel, with server-owned snapshot creation
 - estimate users can create new catalog/cost items inline from the Estimate Editoror, with the saved catalog item inserted into the current estimate through the same server-owned snapshot path
 - catalog-backed estimate item names can be clicked from the Estimate Editoror to edit the reusable catalog item and refresh only the current estimate line snapshot
@@ -1203,6 +1207,8 @@ Current design notes:
 - reusable items stay on the same canonical foundation instead of spawning module-specific catalog silos
 - `catalog_items` is the shared commercial item master and the only canonical cost item model; there is no second cost item table
 - catalog items are the current Phase 1 foundation for reusable item pricing, cost fields, taxable behavior, optional inventory links, and future production/markup behavior
+- `finish_products` are metadata/proof records only; they do not own cost, pricing, quantity basis, estimate expansion, invoice behavior, or reusable item behavior
+- `floor_system_template_components` require `catalog_items` for cost/pricing/quantity/estimate expansion and may optionally reference `finish_products` only for product/spec proof
 - estimate workflows now reuse and snapshot active non-system catalog item data through canonical `estimate_line_items`; future invoice and materials workflows should extend the same shared model instead of creating module-specific item silos
 - inventory is now an optional operational extension of the same catalog item instead of a separate primary inventory workflow
 - inventory availability is now controlled through the shared platform / organization feature policy key `inventory_enabled`
@@ -1213,7 +1219,7 @@ Current design notes:
 - invoice pricing remains snapshot-based through approved estimate, SOV, change-order, or invoice-only lineage; inventory quantity is operational context only and does not drive pricing
 - catalog-first estimate authoring does not change schema, downstream invoice behavior, contract behavior, SOV behavior, payment behavior, or approved-snapshot billing lineage
 - `system` remains the canonical reusable assembly concept, with component rows designed to scale immediately by sqft in estimates
-- current systems are reusable catalog assemblies; they are not yet the planned System Templates with required inputs, formulas beyond current sqft expansion, grouping rules, Quick Build, Detailed Build, or share-back review
+- current systems are reusable catalog assemblies, and the new floor system template tables are schema foundation only; they are not yet active estimate/contract behavior, required-input workflows, formulas beyond current sqft expansion, grouping rules, Quick Build, Detailed Build, or share-back review
 - current catalog management is still foundation-first; future work should deepen reuse across estimating, invoicing, and execution without replacing the shared catalog and line-item chain
 - planned add-ons/options should be catalog-backed optional scope modifiers, not a second pricing model; examples include cove base, control joints, crack repair, coating removal, moisture mitigation, extra topcoat, prevailing wage labor adjustment, and mobilization/setup
 - cove base is currently best treated as a catalog item and optional system/add-on component; it is not a full floor system by itself
@@ -1471,10 +1477,17 @@ Not implemented yet:
 - full per-record display-template switching across estimates, invoices, contracts, SOW output, and custom document layouts beyond the currently implemented shared template references
 - contractor shareable template/system/add-on opt-in settings, super-admin review/import/promotion, anonymization review, or promoted platform defaults for other contractors to adopt
 - Takeoff & Scope Intelligence
+- pre-lead visual/product/finish selection or room visualizer handoff
+- canonical selected-system/spec records for sold and installed finish systems
+- active product/spec workflow for selected finish systems, product images, spec sheets, visualizer renders, and downstream customer proof beyond the `finish_products` metadata foundation
+- shared file/evidence layer with multi-record links across projects, opportunities, estimates, contracts, jobs, invoices, payments, change orders, daily logs, field notes, selected systems/specs, and finish products
+- canonical delivery attempts/events for estimate, contract, invoice, change-order, portal-invite, or payment-request sends beyond the currently implemented notification delivery foundation
+- provider-backed delivery telemetry lifecycle for queued, sent, delivered, opened, clicked, deferred, bounced, blocked, dropped, or failed delivery states across customer-facing commercial sends
+- company-brain activity timelines over project/customer/record chains
 - automated Scope Intake to Estimate Plan or estimate-line generation
 - detailed measurement-driven estimate generation with multiple rooms/zones, irregular geometry, optional components, or advanced quantity review
-- full System Template estimate generation beyond V1 Quick Build, including Detailed Build, advanced formula-driven required inputs, optional components, defaults, and template share-back/review workflows
-- System Template adoption/promotion/versioning workflows beyond the current catalog system and document-template foundations
+- full System Template estimate generation beyond the schema foundation, including active estimate/contract integration, Detailed Build, advanced formula-driven required inputs, optional components, defaults, and template share-back/review workflows
+- System Template adoption/promotion/versioning workflows beyond the current catalog system, document-template foundations, and first floor-system-template tables
 - dedicated add-ons/options management for sqft, lf, each/count, project/flat-price, or future labor/multiplier based modifiers
 - full internal labor modeling as catalog/cost item components with crew size, production rate, minimum site time, markup, and condition/access multipliers
 - AI Capture, AI-assisted takeoff, AI-suggested measurements, AI-suggested system/cost-item mapping, and AI-generated estimate drafts
@@ -1497,9 +1510,9 @@ Not implemented yet:
 
 Future-looking note:
 - the current vendors, people, compliance, jobs, daily logs, time, communication, notification, and portal access foundations could support future scoped collaboration, but no contractor network, marketplace, open contractor chat, or external subcontractor/vendor collaboration surface is implemented today.
-- the current projects, estimates, estimate line items, reusable catalog item foundations, platform starter catalog foundations, organization-owned catalog items, document-template/settings foundations, files/attachments foundations, site-assessment fields, and customer/project workflow could support future measurement-driven estimating, System Template generation, add-ons/options, Templates & Systems administration, Takeoff & Scope Intelligence, and AI Capture.
+- the current projects, estimates, estimate line items, reusable catalog item foundations, platform starter catalog foundations, organization-owned catalog items, document-template/settings foundations, files/attachments foundations, site-assessment fields, communication/notification foundations, and customer/project workflow could support future visual/product/finish selection, selected-system/spec records, shared file/evidence linking, delivery proof, activity timelines, measurement-driven estimating, System Template generation, add-ons/options, Templates & Systems administration, Takeoff & Scope Intelligence, and AI Capture.
 - the current lead Scope Intake fields can support future reviewed estimate planning, but they do not currently generate estimate lines, SOW, labor plans, material plans, takeoff records, AI suggestions, invoices, or customer-facing commercial scope automatically.
-- no manual measurement-driven estimate generation, full System Template estimate generation, System Template sharing, dedicated Templates & Systems admin module, add-on/option management workflow, on-screen takeoff, AI Capture, AI takeoff, plan measurement, takeoff-to-cost-item mapping, source traceability, out-of-sync review state, or automated estimate generation exists today.
+- no pre-lead visualizer handoff, canonical selected-system/spec workflow, shared multi-record file/evidence layer, delivery-proof lifecycle for commercial sends, company-brain timeline, manual measurement-driven estimate generation, full System Template estimate generation, System Template sharing, dedicated Templates & Systems admin module, add-on/option management workflow, on-screen takeoff, AI Capture, AI takeoff, plan measurement, takeoff-to-cost-item mapping, source traceability, out-of-sync review state, or automated estimate generation exists today.
 - future takeoff must stay separate from implemented truth: Measurements are manual quantity inputs; Takeoff means plan/PDF/drawing-based measurement; AI Capture is a future photo/app/AI-derived input method. Takeoff and measurements would produce quantities, catalog/cost items would define reusable cost, pricing, production, markup, and tax behavior, System Templates would map quantities to grouped estimate content, and estimates would define customer-facing pricing and commercial scope.
 
 ## UI Direction Update (Latest)

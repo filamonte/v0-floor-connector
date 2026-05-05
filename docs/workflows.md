@@ -22,6 +22,7 @@ This workflow document assumes the supporting configuration model now has two la
 - project-centered operational continuity
 - records flow forward rather than being recreated
 - status progression should guide next actions
+- shared files, selected finishes/specs, communication history, and delivery proof should attach to canonical records instead of creating module silos
 
 In practical terms:
 - a lead should not become a second disconnected customer-like record later
@@ -29,6 +30,7 @@ In practical terms:
 - downstream financial records should always inherit from immutable approved snapshots rather than live Estimate Editoror rows
 - canonical records should stay linked so teams can follow the same job from intake through payment
 - the app should guide users toward the next best action instead of presenting every downstream action as equally primary
+- future visualizer/product/finish selections may start before lead intake, but once used operationally they should become canonical selected-system/spec context instead of disposable session-only data
 - a future contractor-facing `Directory` may unify how contact-like records are browsed and managed, but it must remain a view over canonical records rather than a replacement business model
 
 ## Canonical Workflow Chain
@@ -40,6 +42,8 @@ The current canonical business lifecycle is:
 Authentication, organization bootstrap, dashboard entry, site assessment, Scope Intake, financial readiness, and scheduling readiness are supporting access or workflow stages around that lifecycle. They should guide the same records forward rather than creating duplicate records or module-specific silos.
 
 This chain is already real in the current system, even though the user experience is still distributed across multiple module pages instead of being fully project-centered.
+
+Future pre-lead visual/product/finish selection can extend the front of this lifecycle, but it does not replace the canonical implemented chain. The intended future path is visual/product/finish selection context -> opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment, with the selected finish/spec context flowing forward once it becomes operational truth.
 
 ## Canonical Records Vs Supporting Workflow Stages
 
@@ -60,10 +64,15 @@ Canonical system records:
 
 Supporting workflow stages:
 - contact and qualification work
+- future pre-lead visual/product/finish selection
 - site assessment or inspection
 - Scope Intake for structured measurements, observations, requested finish, current conditions, files, logistics, and notes
 - customer-provided measurements, photos, and requirements
 - future project-scoped takeoff and scope intelligence
+- future selected system/spec review
+- future shared file/evidence linking
+- future delivery proof and communication tracking
+- future activity timeline review
 - estimate review and approval
 - contract send / signature readiness
 - deposit or financial readiness checks
@@ -79,10 +88,10 @@ Estimating terminology:
 - Takeoff means plan, PDF, or drawing-based measurement.
 - AI Capture is a future photo, app, or AI-derived measurement input method.
 - Catalog items are the implemented reusable cost item database on `catalog_items`; they define reusable pricing, cost, production, markup, and tax behavior as the foundation evolves.
-- System Templates are reusable estimating systems made from catalog/cost items, formulas, grouping rules, optional components, and required inputs.
+- Floor system template tables now provide a schema foundation for future reusable estimating systems made from catalog/cost items, formulas, grouping rules, optional components, and required inputs.
 - Estimates are customer-facing commercial scope and price.
 
-Boundary rule: Takeoff and measurements produce quantities. Catalog items / cost items define reusable cost, pricing, production, markup, and tax behavior. System Templates map quantities to grouped estimate content. Estimates define customer-facing pricing and commercial scope.
+Boundary rule: Takeoff and measurements produce quantities. Catalog items / cost items define reusable cost, pricing, production, markup, and tax behavior. Future System Template workflows should map quantities to grouped estimate content. Estimates define customer-facing pricing and commercial scope.
 
 Future Templates & Systems administration:
 - document templates, System Templates, add-ons/options, and sharing/review settings should eventually live in a dedicated contractor settings/admin area rather than being scattered across estimates, invoices, contracts, and other modules
@@ -95,6 +104,37 @@ Future Templates & Systems administration:
 - cove base is a hybrid: not a full floor system by itself, but a catalog item plus optional System Template/add-on component that can be generated from perimeter or entered directly
 - customer-facing estimate, invoice, and contract display should default to a clean grouped view while allowing detailed line-item and SOW-plus-price views; custom display templates are a later direction
 - internal cost, markup, margin, private notes, and production math should stay internal unless intentionally configured as customer-facing language
+
+Future Visual/Product/Finish Selection:
+- a room visualizer or finish selector may start before lead intake
+- supported future finish families include decorative flake, metallic epoxy, decorative quartz, solid color, and future surface systems
+- manufacturer/product metadata should support Torginol-style vendor, product line, product code, product images, spec sheets, and technical notes without creating a vendor-specific commitment
+- selected finish/spec context should become canonical selected-system/spec records later, not fake session-only business truth
+
+Future System Specification / Finish System:
+- finish systems are not loose estimate line-item descriptions
+- they represent what is actually sold and installed
+- selected system/spec context should flow into estimate, contract, job, portal, closeout, and warranty context
+- once approved or once contract/signature activity begins, selected systems/specs should be snapshotted or locked like financial/document truth
+- later changes should move through revision or change-order style workflows rather than silent edits
+
+Future Shared Files / Evidence:
+- product images, room photos, visualizer renders, spec sheets, signed documents, field photos, markups, and closeout evidence should live in a shared file/evidence layer
+- files should be linkable to multiple canonical records such as project, opportunity, estimate, contract, job, invoice, payment, change order, daily log, field note, selected system/spec, and finish product
+- existing execution attachments remain the current implementation, but the future direction is a shared file/evidence layer rather than module-specific attachment silos
+
+Future Communication / Delivery Proof:
+- communication history should cover email, SMS, portal, app, and manual logs where supported
+- sending estimates, invoices, contracts, change orders, portal invites, and payment requests should create canonical communication/delivery records
+- delivery events should include queued, sent, delivered, opened, clicked, deferred, bounced, blocked, dropped, and failed when provider data supports those states
+- provider data is delivery telemetry, not the business source of truth
+- FloorConnector should store immutable delivery events tied back to canonical records
+- open and click tracking are useful signals, not perfect legal certainty
+
+Future Activity Timeline:
+- project, customer, and record timelines should summarize important canonical events across the lifecycle
+- timeline entries should be readable memory over canonical records, not replacement source-of-truth rows
+- examples include finish selected, estimate sent/viewed/approved, contract sent/signed, invoice sent/paid, payment completed, file uploaded, message received, job scheduled, daily log finalized, and closeout evidence captured
 
 ## Financial Workflow Rules
 
@@ -265,6 +305,7 @@ Implemented flow:
   - archived catalog items remain visible for review where surfaced but are blocked from insertion
   - reusable systems expand through shared system logic from length x width or direct area plus linear footage
 - system-generated estimate items still use catalog/system component sources and become canonical estimate line-item snapshots
+- the new `finish_products`, `floor_system_templates`, and `floor_system_template_components` tables are foundation-only in this slice; they do not yet change active estimate authoring, estimate generation, contract generation, invoice behavior, or approved snapshot lineage
 - `catalog_items` are the canonical reusable sellable cost item database; physical stock now belongs in `inventory_items`
 - inventory remains optional per organization and never blocks cost item selection in estimates
 - item-level tax stays simple:
@@ -288,6 +329,7 @@ Current canonical records involved:
 
 Future workflow guidance:
 - the intended pre-estimate lead path is `Lead -> Site Visit Appointment -> Scope Intake -> Estimate Plan -> Estimate`
+- a future pre-lead visual/product/finish path may precede opportunity creation, but operational use should attach selected finish/spec context to the canonical chain rather than creating a separate visualizer workflow
 - Scope Intake should remain a reviewed pre-estimate support stage, not a direct intake-to-invoice or intake-to-customer-price workflow
 - Takeoff & Scope Intelligence may become a supporting pre-estimate workflow stage between opportunity/site assessment and estimate authoring
 - future inputs may include Measurements, Takeoff, AI Capture, customer-provided plans/photos, contractor site data, requirements, and uploaded plan or image files
@@ -295,7 +337,7 @@ Future workflow guidance:
 - example measurement formulas include L x W for floor square footage and `(L x 2) + (W x 2)` for perimeter linear footage
 - integrated cove base and vinyl cove base are measured in linear feet and may be generated from perimeter or entered directly
 - takeoff should stay project-scoped and feed estimate creation through reviewed quantities mapped to System Templates and reusable catalog/cost items
-- Takeoff and measurements produce quantities. Catalog/cost items define reusable cost, pricing, production, markup, and tax behavior. System Templates map quantities to grouped estimate content. Estimates define customer-facing pricing and commercial scope.
+- Takeoff and measurements produce quantities. Catalog/cost items define reusable cost, pricing, production, markup, and tax behavior. Future System Template workflows should map quantities to grouped estimate content. Estimates define customer-facing pricing and commercial scope.
 - takeoff is not a replacement for estimates; the canonical estimate remains the commercial scope record and the customer-facing pricing proposal
 - the intended future estimate-input flow still feeds the canonical lifecycle: `Opportunity -> Customer -> Project -> Site Info / Measurements / Plans / Photos -> Measurement, Takeoff, or AI Capture -> System Template -> Catalog/Cost Item Mapping -> Grouped Estimate Line Items -> Estimate -> Contract -> Change Order -> Job -> Invoice -> Payment`
 - conceptual future objects may include `takeoffs`, `takeoff_documents`, `takeoff_measurements`, `takeoff_scope_items`, and `takeoff_estimate_links`, but these are not existing tables and should not be treated as implemented schema
@@ -306,6 +348,7 @@ Future workflow guidance:
 - Detailed Build should support multiple rooms/zones, options, conditions, waste factors, optional components, overrides, and review before generation
 - AI-assisted measurements, area suggestions, system suggestions, scope suggestions, estimate drafts, and cost-item mapping suggestions must remain reviewable and explicitly contractor-approved before they become customer-facing estimate content
 - takeoff quantities may eventually inform material requirements, labor estimation, production readiness, and job planning, but there should be no direct takeoff-to-invoice flow
+- selected system/spec context should flow into the estimate as reviewed sold-scope context, then into contract, job, portal, closeout, and warranty context without becoming a loose line-item description
 
 Customer-account guardrail for downstream commercial flows:
 - estimate send recipient continuity remains on canonical customer/account context with an explicit portal-ready contact selection when existing project access data supports it
@@ -319,6 +362,10 @@ Implemented approval rules:
 
 Supporting audit and delivery records involved:
 - estimate customer events
+
+Future delivery proof:
+- estimate sends should eventually create canonical communication/delivery records with immutable delivery events where provider data supports them
+- opened and clicked events should support follow-up decisions, not serve as perfect legal certainty
 
 ### Approved Estimate To Contract
 
@@ -343,6 +390,11 @@ Current canonical records involved:
 - contract signature events
 - shared template reference
 - project and customer context carried forward
+
+Future selected-system/spec context:
+- contract review should inherit selected finish/system/spec context from approved estimate truth
+- once contract/signature activity begins, selected systems/specs should be locked or snapshotted
+- changes after that point should be handled through revision or change-order style workflows
 
 ### Estimate To Change Order
 
@@ -414,6 +466,10 @@ Current canonical records involved:
 - payment
 - payment events
 
+Future payment-request delivery proof:
+- payment requests should create canonical communication/delivery records with immutable events when sent through provider-backed or manual channels
+- provider statuses such as queued, sent, delivered, opened, clicked, bounced, blocked, dropped, and failed should remain telemetry tied back to the canonical invoice/payment chain
+
 ### Notifications And Communications
 
 Implemented flow:
@@ -428,6 +484,11 @@ Current canonical records involved:
 - notification deliveries
 - communication threads
 - communication messages
+
+Future communication direction:
+- communication and delivery proof should extend across estimates, contracts, invoices, change orders, payment requests, portal invites, customer/contractor messages, app interactions, SMS, email, and manual logs
+- delivery attempts/events should be immutable and tied back to canonical records
+- provider delivery data enriches FloorConnector records but should not become the business source of truth
 
 ### Financials Module Home
 
@@ -474,24 +535,26 @@ Directory direction note:
 
 The best current product direction for the contractor revenue workflow is:
 
-1. Lead / Opportunity
-2. Contact / customer qualification
-3. Site assessment / inspection or customer-provided measurements and requirements
-4. Customer
-5. Project
-6. Future takeoff / scope intelligence where plans, photos, and site data become reviewed quantities
-7. Estimate
-8. Portal estimate approval and approved snapshot creation
-9. Contract
-10. Change order when scope changes
-11. Job execution / scheduling
-12. Invoice
-13. Payment and closeout
+1. Future pre-lead visual/product/finish selection where applicable
+2. Lead / Opportunity
+3. Contact / customer qualification
+4. Site assessment / inspection or customer-provided measurements and requirements
+5. Customer
+6. Project
+7. Future takeoff / scope intelligence where plans, photos, and site data become reviewed quantities
+8. Estimate
+9. Portal estimate approval and approved snapshot creation
+10. Contract
+11. Change order when scope changes
+12. Job execution / scheduling
+13. Invoice
+14. Payment and closeout
 
 How this should be interpreted today:
 - some of these steps already map cleanly to canonical records in the app
 - some are operational stages that still need stronger UX guidance or status handling around the implemented readiness gate
 - the system should preserve one continuous path rather than forcing users to decide between disconnected modules
+- pre-lead visual/product/finish selection is future direction only and does not change the implemented canonical chain
 
 ### Employee Lifecycle Workflow
 
@@ -544,11 +607,14 @@ The preferred contractor journey is:
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
 With supporting readiness stages between those records:
+- future pre-lead visual/product/finish selection
 - qualification
 - site assessment or requirements gathering
 - future takeoff and cost item mapping before estimate authoring
+- selected system/spec review and snapshot readiness
 - approval
 - signature readiness
+- future delivery proof and communication tracking
 - deposit or billing readiness
 - scheduling readiness
 - closeout
@@ -559,7 +625,7 @@ In data-model terms, FloorConnector already uses shared canonical records across
 
 In UX terms, the near-term direction is:
 - `Project` should become the operational hub
-- estimates, contracts, jobs, invoices, files, and activity should feel like connected parts of one project
+- estimates, contracts, jobs, invoices, files, selected systems/specs, delivery proof, communication history, and activity should feel like connected parts of one project
 - standalone module routes should continue to exist as global queues and work surfaces, not as separate mental models
 
 ### Workflow Tightening Still Needed
