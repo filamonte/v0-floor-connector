@@ -11,7 +11,7 @@ tags: [schema, planning, products, systems, files, communication, delivery-proof
 
 Status: partially implemented schema specification.
 
-This document converts the approved system-layers implementation plan into a PostgreSQL schema specification. The first migration slice is implemented in `supabase/migrations/20260505120000_system_layers_first_slice.sql`. Later slices remain planning only.
+This document converts the approved system-layers implementation plan into a PostgreSQL schema specification. The first migration slice is implemented in `supabase/migrations/20260505120000_system_layers_first_slice.sql`. The selected-system-only second slice is implemented in `supabase/migrations/20260505140921_selected_floor_systems_foundation.sql`. Later slices remain planning only.
 
 For implemented status, trust [docs/current-state.md](C:/FloorConnector/docs/current-state.md). This schema spec is future direction until an approved migration task implements it.
 
@@ -356,7 +356,7 @@ Purpose: planning-only pre-auth handoff table for future public room visualizer 
 - Primary key: `id`.
 - FK: `claimed_company_id -> public.companies(id)`.
 - FK: `claimed_selected_floor_system_id -> selected_floor_systems(id)` once the second slice creates both tables.
-- Circular-link note: because `selected_floor_systems.visualizer_session_id` also points back to this table, the second-slice migration should either add one FK after both tables exist or make `claimed_selected_floor_system_id` server-validated instead of a hard FK in the first selected-system migration.
+- Handoff-link note: the implemented selected-system slice does not add `selected_floor_systems.visualizer_session_id`; when `visualizer_sessions` is implemented later, the claim link should either remain one-way through `claimed_selected_floor_system_id` or be added through a separately approved migration.
 - Check: `claim_status in ('unclaimed','claimed','expired','void')`.
 - Check: `service_family is null or service_family in (...)`.
 - Check: `finish_family is null or finish_family in (...)`.
@@ -385,7 +385,7 @@ Purpose: planning-only pre-auth handoff table for future public room visualizer 
 
 ## Table: `selected_floor_systems`
 
-Purpose: tenant-owned selected finish/system/spec context after a public visualizer selection, lead intake, customer/project workflow, or contractor selection has been accepted into the canonical chain. This table does not require `project_id`, but it always requires `company_id`.
+Purpose: tenant-owned selected finish/system/spec context after lead intake, customer/project workflow, or contractor selection has been accepted into the canonical chain. This table does not require `project_id`, but it always requires `company_id` and at least one real workflow anchor. Public/pre-auth visualizer state is not stored here.
 
 ### Columns
 
@@ -393,18 +393,17 @@ Purpose: tenant-owned selected finish/system/spec context after a public visuali
 | --- | --- | --- | --- | --- |
 | `id` | `uuid` | yes | `gen_random_uuid()` | Primary key. |
 | `company_id` | `uuid` | yes | none | FK to `public.companies(id)`. Required tenant owner. |
-| `visualizer_session_id` | `uuid` | no | none | Optional FK to `visualizer_sessions(id)` after server-only claim. |
+| `floor_system_template_id` | `uuid` | no | none | Optional same-company FK to `floor_system_templates(id)`. |
+| `finish_product_id` | `uuid` | no | none | Optional same-company FK to `finish_products(id)`. |
 | `opportunity_id` | `uuid` | no | none | FK to `opportunities(id)`. |
 | `customer_id` | `uuid` | no | none | FK to `customers(id)`. |
 | `project_id` | `uuid` | no | none | FK to `projects(id)`. |
 | `estimate_id` | `uuid` | no | none | FK to `estimates(id)`. |
 | `contract_id` | `uuid` | no | none | FK to `contracts(id)`. |
 | `job_id` | `uuid` | no | none | FK to `jobs(id)`. |
-| `floor_system_template_id` | `uuid` | no | none | FK to `floor_system_templates(id)`. |
-| `primary_finish_product_id` | `uuid` | no | none | FK to `finish_products(id)`. |
-| `system_name` | `text` | yes | none | Working selected system name. |
-| `service_family` | `text` | yes | none | Check against shared values. |
-| `finish_family` | `text` | no | none | Nullable for concrete polishing/process systems. |
+| `source` | `text` | yes | `'manual'` | `manual`, `lead_intake`, `site_assessment`, `estimate_builder`, `visualizer_handoff`, `other`. |
+| `status` | `text` | yes | `'draft'` | `draft`, `proposed`, `selected`, `locked`, `superseded`, `amended`, `void`, `retracted`, `rejected`. |
+| `is_primary` | `boolean` | yes | `false` | Primary system for the project. Scope is per project only. |
 | `area_label` | `text` | no | none | Room/area label such as Garage, Kitchen, Phase 1. |
 | `area_type` | `text` | yes | `'whole_project'` | Check against shared `area_type` values. |
 | `phase_label` | `text` | no | none | Optional phase support. |
@@ -414,17 +413,11 @@ Purpose: tenant-owned selected finish/system/spec context after a public visuali
 | `estimated_linear_ft` | `numeric(12,2)` | no | none | Planning quantity, not billing truth. |
 | `quantity_notes` | `text` | no | none | Area/room measurement notes. |
 | `customer_facing_description` | `text` | no | none | Required before proposal-facing use. |
-| `technical_notes` | `text` | no | none | Product/process/install notes. |
-| `spec_completeness_status` | `text` | yes | `'incomplete'` | `incomplete`, `ready_for_proposal`, `complete`, `needs_review`. |
-| `spec_completeness_checks` | `jsonb` | yes | `'{}'::jsonb` | Validation details for later draft -> proposed gate. |
-| `spec_completed_at` | `timestamptz` | no | none | Set when proposed/complete requirements are satisfied. |
-| `lifecycle_state` | `text` | yes | `'draft'` | `draft`, `proposed`, `selected`, `locked`, `superseded`, `amended`, `void`, `retracted`, `rejected`. |
-| `is_primary` | `boolean` | yes | `false` | Primary system for the project. Scope is per project only. |
-| `selected_at` | `timestamptz` | no | none | When contractor/customer selection becomes operationally selected. |
-| `locked_at` | `timestamptz` | no | none | Set when estimate/contract boundary locks the selected system. |
-| `claimed_at` | `timestamptz` | no | none | Set when converted from `visualizer_sessions`. |
-| `claimed_by_user_id` | `uuid` | no | none | FK to `public.users(id)`. |
-| `source_metadata` | `jsonb` | yes | `'{}'::jsonb` | Visualizer/import context; no provider secrets. |
+| `internal_notes` | `text` | no | none | Internal product/process/install notes. |
+| `spec_completeness_status` | `text` | yes | `'incomplete'` | `incomplete`, `ready_for_proposal`, `customer_facing`, `locked`. |
+| `metadata` | `jsonb` | yes | `'{}'::jsonb` | Extensible metadata object; not snapshot truth or file/proof storage. |
+| `created_by` | `uuid` | no | none | FK to `public.users(id)`. |
+| `updated_by` | `uuid` | no | none | FK to `public.users(id)`. |
 | `created_at` | `timestamptz` | yes | `now()` | Creation timestamp. |
 | `updated_at` | `timestamptz` | yes | `now()` | Updated by trigger in implementation. |
 
@@ -432,46 +425,48 @@ Purpose: tenant-owned selected finish/system/spec context after a public visuali
 
 - Primary key: `id`.
 - FK: `company_id -> public.companies(id)`.
-- FK: `visualizer_session_id -> visualizer_sessions(id)`.
-- FKs to `opportunities`, `customers`, `projects`, `estimates`, `contracts`, and `jobs` as listed above.
-- FK: `floor_system_template_id -> floor_system_templates(id)`.
-- FK: `primary_finish_product_id -> finish_products(id)`.
-- FK: `claimed_by_user_id -> public.users(id)`.
-- Check: `lifecycle_state in ('draft','proposed','selected','locked','superseded','amended','void','retracted','rejected')`.
-- Check: `spec_completeness_status in ('incomplete','ready_for_proposal','complete','needs_review')`.
-- Check: `service_family in (...)`.
-- Check: `finish_family is null or finish_family in (...)`.
+- Same-company FK: `floor_system_template_id -> floor_system_templates(company_id, id)` with column-scoped `on delete set null`.
+- Same-company FK: `finish_product_id -> finish_products(company_id, id)` with column-scoped `on delete set null`.
+- Same-company FKs to `opportunities`, `customers`, `projects`, `estimates`, `contracts`, and `jobs` as listed above, each with column-scoped `on delete set null`.
+- FK: `created_by -> public.users(id)`.
+- FK: `updated_by -> public.users(id)`.
+- Check: `source in ('manual','lead_intake','site_assessment','estimate_builder','visualizer_handoff','other')`.
+- Check: `status in ('draft','proposed','selected','locked','superseded','amended','void','retracted','rejected')`.
+- Check: `spec_completeness_status in ('incomplete','ready_for_proposal','customer_facing','locked')`.
 - Check: `area_type in (...)`.
 - Check: `sort_order >= 0`.
 - Check: `estimated_area_sqft is null or estimated_area_sqft >= 0`.
 - Check: `estimated_linear_ft is null or estimated_linear_ft >= 0`.
-- Planning check for future proposal validation: if `lifecycle_state in ('proposed','selected','locked')`, then `spec_completeness_status in ('ready_for_proposal','complete')`, `customer_facing_description is not null`, and `spec_completed_at is not null`.
-- Same-company alignment: opportunity, customer, project, estimate, contract, job, template, and finish product links must all resolve to the same `company_id`.
+- Check: `jsonb_typeof(metadata) = 'object'`.
+- Check: optional labels and notes are either null or non-blank.
+- Check: at least one workflow anchor is present: `opportunity_id`, `customer_id`, `project_id`, `estimate_id`, `contract_id`, or `job_id`.
+- Unique: partial unique index on `(company_id, project_id) where is_primary = true and project_id is not null`.
 
 ### Recommended Indexes
 
-- `(company_id, project_id, lifecycle_state) where project_id is not null`.
+- `(company_id, project_id, status) where project_id is not null`.
 - `(company_id, opportunity_id) where opportunity_id is not null`.
 - `(company_id, customer_id) where customer_id is not null`.
 - `(company_id, estimate_id) where estimate_id is not null`.
 - `(company_id, contract_id) where contract_id is not null`.
 - `(company_id, job_id) where job_id is not null`.
 - `(company_id, floor_system_template_id) where floor_system_template_id is not null`.
-- `(company_id, primary_finish_product_id) where primary_finish_product_id is not null`.
+- `(company_id, finish_product_id) where finish_product_id is not null`.
+- `(company_id, source, status)`.
 - Partial unique primary project index: `(company_id, project_id) where is_primary = true and project_id is not null`.
 
 ### RLS Expectations
 
 - Enable RLS.
 - Tenant-owned rows require active company membership through existing company/member RLS helpers.
-- No public/pre-auth rows are allowed in this table. Visualizer handoff must claim into this table through a server-only flow.
-- Portal visibility should come from selected/snapshot/file visibility through scoped loaders, not direct table browsing.
+- No public/pre-auth rows are allowed in this table. The implemented second slice does not add `visualizer_sessions`; future visualizer handoff must claim into this table through a server-only flow after that table and claim path are approved.
+- No portal policies are added in this slice. Future portal visibility should come from selected/snapshot/file visibility through scoped loaders, not direct table browsing.
 
 ### Immutable Fields
 
 - `id`, `created_at`.
 - `company_id` is immutable.
-- `lifecycle_state = locked` means selected system/spec fields should not be edited in place; later changes use amendment/revision/change-order style workflow.
+- `status = locked` means selected system/spec fields should not be edited in place; later changes use amendment/revision/change-order style workflow.
 
 ## Table: `estimate_system_snapshots`
 
@@ -1013,15 +1008,27 @@ Final first-slice choices:
 
 ### Second Migration Slice
 
-Build only after the first slice is applied and claim/attach server paths are ready:
-1. `visualizer_sessions`
-2. `selected_floor_systems`
+Implemented by `supabase/migrations/20260505140921_selected_floor_systems_foundation.sql`:
+1. `selected_floor_systems`
 
-Rules for this slice:
-- `visualizer_sessions` handles pre-auth/public handoff
-- `selected_floor_systems.company_id` is required
-- no fake opportunity/customer/project rows are created just to preserve selection context
+Final second-slice choices:
+- `selected_floor_systems.company_id` is required and never nullable
+- no public/pre-auth rows are stored in `selected_floor_systems`
+- no `visualizer_sessions` table or FK is created in this slice
+- rows require at least one real canonical workflow anchor instead of fake opportunity/customer/project records
+- same-company composite FKs are enforced for workflow links, `floor_system_templates`, and `finish_products`
 - only one selected floor system per project can be primary
+- RLS is enabled and forced with active company membership policies
+- update trigger calls `public.set_updated_at()` without a `WHEN` clause
+
+Deferred from this slice:
+- public/pre-auth visualizer handoff and `visualizer_sessions`
+- selected-system server actions and UI
+- estimate/contract integration
+- estimate and contract system snapshots
+- shared files/file links
+- message delivery proof
+- activity timeline
 
 ### Later Migration Slices
 

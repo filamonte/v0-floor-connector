@@ -306,7 +306,9 @@ Implemented flow:
   - reusable systems expand through shared system logic from length x width or direct area plus linear footage
 - system-generated estimate items still use catalog/system component sources and become canonical estimate line-item snapshots
 - `finish_products`, `floor_system_templates`, and `floor_system_template_components` now have a first contractor-side admin/data access layer in `/settings/system-layers`
-- System Layers admin is foundation-only for workflow purposes: it does not yet change active estimate authoring, estimate generation, contract generation, invoice behavior, selected systems, files, activity, or approved snapshot lineage
+- `selected_floor_systems` now exists as a tenant-owned schema foundation for chosen or proposed finish/service systems linked to real workflow records
+- System Layers remains foundation-only for workflow purposes: it does not yet change active estimate authoring, estimate generation, contract generation, invoice behavior, selected-system server actions/UI, files, activity, or approved snapshot lineage
+- selected systems are not public/pre-auth records; no `visualizer_sessions` table or public visualizer handoff exists yet
 - `catalog_items` are the canonical reusable sellable cost item database; physical stock now belongs in `inventory_items`
 - inventory remains optional per organization and never blocks cost item selection in estimates
 - item-level tax stays simple:

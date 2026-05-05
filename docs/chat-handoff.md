@@ -66,6 +66,36 @@ Validation:
 - `pnpm lint` passed
 - `supabase db lint` was attempted, but the local Supabase Postgres service was not running on `127.0.0.1:54322`
 
+## System Layers Second Migration Slice
+
+Schema-only second slice implemented for selected system/spec workflow foundations.
+
+Migration:
+- `supabase/migrations/20260505140921_selected_floor_systems_foundation.sql`
+
+Table added:
+- `selected_floor_systems`
+
+What changed:
+- Added tenant-owned selected floor system/spec foundation with required `company_id`.
+- Rows require at least one real canonical workflow anchor: opportunity, customer, project, estimate, contract, or job.
+- Same-company composite FKs are enforced for existing canonical workflow links plus `floor_system_templates` and `finish_products`.
+- Supports multiple systems per project, area/room/phase/option labels, alternates/options, quantity notes, customer-facing/internal notes, source/status/spec-completeness checks, metadata, and created/updated user tracking.
+- Only one row per `company_id + project_id` can have `is_primary = true`.
+- RLS is enabled and forced with active company membership policies through `public.is_active_company_member(company_id)`.
+- Update trigger calls `public.set_updated_at()` without a `WHEN` clause.
+
+Deferred:
+- no UI
+- no selected-system server actions
+- no estimate or contract integration
+- no `visualizer_sessions` or public/pre-auth visualizer handoff
+- no estimate or contract system snapshots
+- no shared files or `file_links`
+- no message delivery proof
+- no activity timeline
+- no changes to current Estimate Editoror or estimate builder behavior
+
 ## System Layers Admin/Data Access Layer
 
 Implemented the first admin/data access layer for the already-created first-slice system tables. This is an admin foundation only and does not add downstream workflow behavior.
@@ -92,7 +122,7 @@ Behavior changed:
 - Template service/finish family structural changes increment `template_version`.
 
 Still not added:
-- no `selected_floor_systems`
+- no selected-system UI or server actions
 - no `visualizer_sessions`
 - no estimate integration
 - no contract integration
