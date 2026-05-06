@@ -4,6 +4,10 @@ const path = require("node:path");
 const authStatePath = path.resolve(
   process.env.PLAYWRIGHT_STORAGE_STATE ?? "playwright/.auth/local-user.json"
 );
+const platformAdminAuthStatePath = path.resolve(
+  process.env.PLAYWRIGHT_PLATFORM_ADMIN_STORAGE_STATE ??
+    "playwright/.auth/platform-admin.json"
+);
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3001";
 
 module.exports = defineConfig({
@@ -23,7 +27,11 @@ module.exports = defineConfig({
   projects: [
     {
       name: "setup",
-      testMatch: /auth\.setup\.js/
+      testMatch: /(^|[\\/])auth\.setup\.js$/
+    },
+    {
+      name: "setup-platform-admin",
+      testMatch: /(^|[\\/])platform-admin-auth\.setup\.js$/
     },
     {
       name: "chromium-public",
@@ -37,6 +45,16 @@ module.exports = defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         storageState: authStatePath
+      }
+    },
+    {
+      name: "chromium-super-admin-access",
+      dependencies: ["setup", "setup-platform-admin"],
+      testMatch: /super-admin-access\.spec\.js/,
+      use: {
+        ...devices["Desktop Chrome"],
+        contractorStorageState: authStatePath,
+        platformAdminStorageState: platformAdminAuthStatePath
       }
     }
   ],

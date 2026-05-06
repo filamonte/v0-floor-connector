@@ -20,6 +20,7 @@ Today the web app already includes:
 - Supabase SSR client wrappers for browser, server, middleware, route-handler, and admin usage
 - public auth routes for sign-in, sign-up, password reset, and callback handling
 - middleware and server checks protecting `/app`, `/portal`, and `/super-admin`
+- `/super-admin` authorization through the separate `platform_user_roles` layer, not contractor organization membership roles
 - health endpoints that report required callback and redirect configuration
 
 This foundation is real, but the shared auth/account model and long-term package ownership are still being documented and hardened.
@@ -37,9 +38,39 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<supabase-anon-key>
 SUPABASE_SERVICE_ROLE_KEY=<supabase-service-role-key>
+PLATFORM_SUPER_ADMIN_EMAIL=platform@floorconnector.com
 ```
 
 If your local app runs on another port, update `NEXT_PUBLIC_APP_URL` to match.
+
+`PLATFORM_SUPER_ADMIN_EMAIL` is optional and used by the local operator helper only. It does not grant access by itself. To grant the first platform admin explicitly, sign in once with the target account and run:
+
+```bash
+pnpm platform-admin grant platform@floorconnector.com
+pnpm platform-admin status platform@floorconnector.com
+```
+
+To keep `jfilamonte@gmail.com` as a contractor owner/test account without platform authority, ensure it has no platform role:
+
+```bash
+pnpm platform-admin revoke jfilamonte@gmail.com
+pnpm platform-admin status jfilamonte@gmail.com
+```
+
+For focused browser regression coverage, provide real local credentials for both the contractor-only account and the platform account:
+
+```text
+FLOORCONNECTOR_E2E_EMAIL
+FLOORCONNECTOR_E2E_PASSWORD
+FLOORCONNECTOR_PLATFORM_E2E_EMAIL=platform@floorconnector.com
+FLOORCONNECTOR_PLATFORM_E2E_PASSWORD
+```
+
+Then run:
+
+```bash
+pnpm e2e:super-admin
+```
 
 ## Supabase Provider Setup Notes
 Configure these settings in the Supabase dashboard for each environment:

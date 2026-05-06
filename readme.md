@@ -37,9 +37,30 @@ pnpm lint
 pnpm typecheck
 pnpm build
 supabase db push
+pnpm platform-admin grant platform@floorconnector.com
 ```
 
 The local environment source of truth is `C:\FloorConnector\.env.local`.
+
+## Platform Super Admin Bootstrap
+
+Super-admin access is assigned only through `platform_user_roles`; contractor organization `owner`, `admin`, `manager`, or `member` roles do not grant `/super-admin` access.
+
+Use the explicit helper after the target user has signed in once so their canonical `public.users` profile exists:
+
+```bash
+pnpm platform-admin grant platform@floorconnector.com
+pnpm platform-admin revoke jfilamonte@gmail.com
+pnpm platform-admin status jfilamonte@gmail.com
+```
+
+You may also set `PLATFORM_SUPER_ADMIN_EMAIL` in `C:\FloorConnector\.env.local` and run `pnpm platform-admin grant` without an email argument. The helper requires `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` and does not create contractor organizations.
+
+For focused browser regression coverage, set real local credentials for the contractor-only account and the platform account, then run:
+
+```bash
+pnpm e2e:super-admin
+```
 
 ## Production Environment Notes
 

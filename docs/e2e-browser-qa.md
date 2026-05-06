@@ -76,6 +76,57 @@ If you already have a saved storage-state file, point Playwright to it:
 $env:PLAYWRIGHT_STORAGE_STATE="C:\path\to\local-user.json"
 ```
 
+## Super Admin Access Regression QA
+
+The super-admin access spec uses two real authenticated states:
+- contractor-only owner state from `FLOORCONNECTOR_E2E_EMAIL` / `FLOORCONNECTOR_E2E_PASSWORD`
+- platform-admin state from `FLOORCONNECTOR_PLATFORM_E2E_EMAIL` / `FLOORCONNECTOR_PLATFORM_E2E_PASSWORD`
+
+The intended local platform operator is:
+
+```text
+platform@floorconnector.com
+```
+
+That account must be created through the normal Supabase Auth signup/login flow first so `public.users` exists. Then grant platform access explicitly:
+
+```bash
+pnpm platform-admin grant platform@floorconnector.com
+pnpm platform-admin status platform@floorconnector.com
+pnpm platform-admin status jfilamonte@gmail.com
+```
+
+The existing first-entry auth bootstrap can create a normal contractor owner membership for the platform account after login. That bootstrap membership is not required for `/super-admin`; the access check must still come from `platform_user_roles`.
+
+Required local environment variables:
+
+```text
+FLOORCONNECTOR_E2E_EMAIL
+FLOORCONNECTOR_E2E_PASSWORD
+FLOORCONNECTOR_PLATFORM_E2E_EMAIL
+FLOORCONNECTOR_PLATFORM_E2E_PASSWORD
+```
+
+To run only the focused access regression:
+
+```bash
+pnpm e2e:super-admin
+```
+
+The generated local-only storage files are:
+
+```text
+playwright/.auth/local-user.json
+playwright/.auth/platform-admin.json
+```
+
+The spec verifies:
+- platform-admin user can load `/super-admin`
+- contractor-only owner is redirected from `/super-admin` to `/dashboard?error=Platform+admin+access+is+required.`
+- contractor-only owner can still load `/dashboard`, `/projects`, and `/settings`
+
+Contractor route-continuity checks assume the contractor E2E account has completed the real `/setup/company` gate. If the account redirects to `/setup/company`, complete that form through the app UI and rerun `pnpm e2e:super-admin`; do not patch storage state manually.
+
 ## Estimate Group Catalog Insertion QA
 
 Required test data:

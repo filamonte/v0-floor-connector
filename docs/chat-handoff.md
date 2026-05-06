@@ -31,6 +31,32 @@ For stronger implementation control on new tasks, also use:
 - [docs/local-qa-auth-session-note.md](C:/FloorConnector/docs/local-qa-auth-session-note.md)
 - [docs/qa-estimate-send-approval-contract-prerequisites.md](C:/FloorConnector/docs/qa-estimate-send-approval-contract-prerequisites.md)
 
+## Platform Super Admin Access Cleanup
+
+Super-admin authorization now stays strictly on the platform role assignment layer:
+- `/super-admin` and nested routes require a `platform_user_roles` assignment to the existing platform `platform_admin` role.
+- Contractor organization roles (`owner`, `admin`, `manager`, `member`) do not imply super-admin access.
+- The old first-visitor bootstrap behavior in the super-admin access helper was removed; visiting `/super-admin` no longer grants platform access when no assignments exist.
+- First platform admin setup is explicit through `pnpm platform-admin grant <email>` or `PLATFORM_SUPER_ADMIN_EMAIL` plus `pnpm platform-admin grant`.
+- `jfilamonte@gmail.com` is intended to remain a normal contractor owner/test account, not a platform operator. Use `pnpm platform-admin revoke jfilamonte@gmail.com` and `pnpm platform-admin status jfilamonte@gmail.com` to verify it has no platform role while retaining contractor membership.
+- The helper requires `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; it does not create contractor organizations or memberships.
+- `platform@floorconnector.com` is the intended local platform operator account, but it must sign up or log in through the normal Supabase Auth flow once before the grant script can find it in `public.users`.
+- Focused Playwright coverage now lives in `e2e/super-admin-access.spec.js` with the `chromium-super-admin-access` project and `pnpm e2e:super-admin`. It uses contractor auth from `FLOORCONNECTOR_E2E_EMAIL` / `FLOORCONNECTOR_E2E_PASSWORD` and platform auth from `FLOORCONNECTOR_PLATFORM_E2E_EMAIL` / `FLOORCONNECTOR_PLATFORM_E2E_PASSWORD`.
+
+Manual QA checklist:
+- Sign in as the configured platform admin and open `/super-admin`; confirm the platform admin surface loads.
+- Sign in as `jfilamonte@gmail.com` or another contractor-only owner and open `/super-admin`; confirm it redirects to `/dashboard?error=Platform+admin+access+is+required.`.
+- As the contractor-only account, open normal contractor routes such as `/dashboard`, `/projects`, and `/settings`; confirm contractor access still works.
+- Run `pnpm platform-admin status jfilamonte@gmail.com` and confirm `Platform roles: none`.
+
+Latest verification note:
+- `platform@floorconnector.com` now exists as a real auth/canonical user and `pnpm platform-admin status platform@floorconnector.com` confirms `Platform roles: platform_admin`.
+- After real login, the existing auth bootstrap may also create a normal contractor owner membership for the platform account; that membership is not required for `/super-admin` and does not grant platform access.
+- `pnpm platform-admin status jfilamonte@gmail.com` confirms `Platform roles: none` and contractor membership `jfilamonte: owner (active)`.
+- `.env.local` includes the local-only dual-account Playwright variables for `FLOORCONNECTOR_E2E_EMAIL` / `FLOORCONNECTOR_E2E_PASSWORD` and `FLOORCONNECTOR_PLATFORM_E2E_EMAIL` / `FLOORCONNECTOR_PLATFORM_E2E_PASSWORD`.
+- `jfilamonte@gmail.com` completed the real `/setup/company` flow through the app UI during verification so contractor route-continuity checks can reach `/dashboard`, `/projects`, and `/settings`.
+- `pnpm e2e:super-admin` passes and generates both local auth storage states through the real login flow.
+
 ## Early Access Build Complete
 
 Final early-access onboarding/demo status is documented here for the next session. This is the current operational summary; defer to [docs/current-state.md](C:/FloorConnector/docs/current-state.md) for full implemented truth and [docs/workflows.md](C:/FloorConnector/docs/workflows.md) for canonical workflow rules.

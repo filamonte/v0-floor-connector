@@ -11,8 +11,10 @@
     "build": "turbo run build",
     "e2e": "playwright test",
     "e2e:auth": "playwright test --project=setup",
+    "e2e:super-admin": "playwright test --project=chromium-super-admin-access",
     "e2e:headed": "playwright test --headed",
     "lint": "turbo run lint",
+    "platform-admin": "node scripts/platform-admin.mjs",
     "typecheck": "turbo run typecheck",
     "format": "prettier --check .",
     "format:write": "prettier --write ."

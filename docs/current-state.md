@@ -1503,7 +1503,10 @@ Implemented:
 - platform-owned starter catalog seed management
 - platform-level feature policy management
 - platform module controls now include the inventory default policy used by the Cost Items Database module
-- platform admin assignment foundation
+- platform admin assignment foundation backed by `platform_user_roles`
+- `/super-admin` and nested super-admin routes require an explicit platform role assignment; contractor organization owner/admin/manager/member roles do not grant super-admin access
+- first-platform-admin setup is explicit through the local/operator helper (`pnpm platform-admin grant <email>` or `PLATFORM_SUPER_ADMIN_EMAIL`), not automatic on first visit
+- focused Playwright regression coverage exists for platform-admin access, contractor-only denial, and contractor route continuity when real platform and contractor test credentials are configured
 - tenant lifecycle/status administration foundation
 - `/super-admin/early-access` provides a minimal onboarding visibility view over existing `companies` and canonical workflow records:
   - company name, created date, tenant status, lifecycle state, and saved-payment-method presence derived from `companies.stripe_payment_method_id`
@@ -1523,6 +1526,7 @@ Current design notes:
 - super admin is the source of truth for platform-wide defaults and system controls
 - contractor organizations remain isolated and own their copies after adoption
 - platform admin uses a separate platform-role assignment layer instead of piggybacking on tenant membership roles
+- `jfilamonte@gmail.com` is intended to remain a normal contractor owner/test account and is not granted platform admin by default
 - tenant activation continues to use the existing tenant lifecycle/status administration foundation on `companies.tenant_status` and `companies.lifecycle_state`; no separate activation/account-status model has been added
 - platform workflow defaults now include signature-readiness and financing-readiness baselines that tenant workflow settings can inherit
 - the super-admin surface is now implemented as a real configuration foundation, but deeper enforcement, entitlements, and broader platform governance workflows are still future work

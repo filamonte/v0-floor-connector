@@ -258,6 +258,7 @@ Implemented flow:
 - pending/trial organizations may create and review real internal canonical records, but the shared activation guard blocks irreversible external production actions until the organization is activated
 - non-production QA can use `/dashboard?fresh=true` to force the existing Start Here onboarding prompts visible without creating fake records or changing tenant data
 - non-production platform admins can reset a selected early-access tenant from `/super-admin/early-access`; this is a development-only utility over existing company and workflow records, not a sandbox/demo mode
+- `/super-admin` access is not inherited from contractor organization ownership or administration. It requires an explicit platform role assignment in `platform_user_roles`; contractor owner/admin/member test accounts remain contractor-scoped unless separately granted a platform role.
 
 Current canonical records involved:
 - profile
