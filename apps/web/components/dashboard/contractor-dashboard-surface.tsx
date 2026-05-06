@@ -8,6 +8,7 @@ import { getStatusBadgeClassName } from "@floorconnector/ui";
 
 import type { DashboardPriorityItem } from "@/components/dashboard/priority-strip";
 import { PriorityStrip } from "@/components/dashboard/priority-strip";
+import { StartHereCard } from "@/components/onboarding/start-here-card";
 import { UniversalCreateMenu } from "@/components/universal-create-menu";
 
 type QuickCreateAction = (formData: FormData) => void | Promise<void>;
@@ -116,6 +117,15 @@ export type ContractorDashboardSurfaceProps = {
     activeProjectCount: number;
     openReceivablesLabel: string;
   };
+  earlyAccess?: {
+    isLocked: boolean;
+    statusLabel: string;
+    href: string;
+    setupHref?: string;
+    setupMessage?: string;
+    setupCtaLabel?: string;
+    billingStatusLabel?: string;
+  };
   priorityItems: DashboardPriorityItem[];
   metrics: DashboardMetric[];
   attentionWidget?: DashboardWidget | null;
@@ -123,6 +133,7 @@ export type ContractorDashboardSurfaceProps = {
   operationsWidgets: DashboardWidget[];
   financeWidgets: DashboardWidget[];
   onboardingSteps?: DashboardOnboardingStep[];
+  startHereForceVisible?: boolean;
   shortcuts: DashboardShortcut[];
   placeholders: DashboardPlaceholder[];
   quickCreate: {
@@ -348,62 +359,6 @@ function QueueRows({
   );
 }
 
-function OnboardingGuide({ steps }: { steps: DashboardOnboardingStep[] }) {
-  const incompleteSteps = steps.filter((step) => !step.complete);
-  const nextStep = incompleteSteps[0] ?? null;
-
-  if (!nextStep) {
-    return null;
-  }
-
-  return (
-    <section className="rounded-lg border border-[#d6d6d6] bg-white">
-      <div className="flex flex-col gap-4 border-b border-[#d6d6d6] bg-[#f8fafc] px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6b7280]">
-            Start here
-          </p>
-          <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]">
-            Finish the first setup path
-          </h3>
-          <p className="mt-1 max-w-3xl text-sm leading-6 text-[#4b5563]">
-            Create the first customer, project, and estimate from the existing quick-create paths.
-            Those records become the canonical chain for contracts, jobs, invoices, and payments.
-          </p>
-        </div>
-        <Link
-          href={nextStep.href}
-          className="inline-flex items-center justify-center border border-[#d8731f] bg-[#d8731f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#bf6519]"
-        >
-          {nextStep.actionLabel}
-        </Link>
-      </div>
-      <div className="grid gap-px bg-[#e2e5e9] md:grid-cols-4">
-        {steps.map((step) => (
-          <Link
-            key={step.key}
-            href={step.href}
-            className="bg-white px-4 py-3 transition hover:bg-[#f8fafc]"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-[#171717]">{step.label}</p>
-              <span
-                className={[
-                  "shrink-0 border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
-                  getStatusBadgeClassName(step.complete ? "complete" : "needs_action")
-                ].join(" ")}
-              >
-                {step.complete ? "Done" : "Next step"}
-              </span>
-            </div>
-            <p className="mt-2 text-sm leading-5 text-slate-500">{step.description}</p>
-          </Link>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function FinanceTable({
   widget,
   items
@@ -473,6 +428,7 @@ function FinanceTable({
 
 export function ContractorDashboardSurface({
   header,
+  earlyAccess,
   priorityItems,
   metrics,
   attentionWidget,
@@ -480,6 +436,7 @@ export function ContractorDashboardSurface({
   operationsWidgets,
   financeWidgets,
   onboardingSteps,
+  startHereForceVisible,
   shortcuts
 }: ContractorDashboardSurfaceProps) {
   const [query, setQuery] = useState("");
@@ -604,12 +561,79 @@ export function ContractorDashboardSurface({
       </section>
 
       <div className="space-y-4 px-4 py-4 sm:px-6">
+        {earlyAccess ? (
+          <section
+            className={[
+              "rounded-lg border px-4 py-4",
+              earlyAccess.isLocked
+                ? "border-amber-200 bg-amber-50"
+                : "border-emerald-200 bg-emerald-50"
+            ].join(" ")}
+          >
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <p
+                  className={[
+                    "text-[10px] font-semibold uppercase tracking-[0.18em]",
+                    earlyAccess.isLocked ? "text-amber-700" : "text-emerald-700"
+                  ].join(" ")}
+                >
+                  Status: {earlyAccess.statusLabel}
+                </p>
+                <p
+                  className={[
+                    "mt-1 text-sm leading-6",
+                    earlyAccess.isLocked ? "text-amber-950" : "text-emerald-950"
+                  ].join(" ")}
+                >
+                  {earlyAccess.setupMessage ??
+                    (earlyAccess.isLocked
+                      ? "You can explore the real system and create records now. External sends and payment processing unlock after activation."
+                      : "Account active. Guarded production actions are unlocked for this organization.")}
+                </p>
+                {earlyAccess.billingStatusLabel ? (
+                  <p
+                    className={[
+                      "mt-1 text-xs font-semibold",
+                      earlyAccess.isLocked ? "text-amber-800" : "text-emerald-800"
+                    ].join(" ")}
+                  >
+                    {earlyAccess.billingStatusLabel}
+                  </p>
+                ) : null}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {earlyAccess.setupHref ? (
+                  <Link
+                    href={earlyAccess.setupHref}
+                    className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-[#11100f] px-4 text-xs font-semibold text-white transition hover:bg-[#2b241f]"
+                  >
+                    {earlyAccess.setupCtaLabel ?? "Finish setup"}
+                  </Link>
+                ) : null}
+                <Link
+                  href={earlyAccess.href}
+                  className={[
+                    "inline-flex h-9 shrink-0 items-center justify-center rounded-full border bg-white px-4 text-xs font-semibold transition",
+                    earlyAccess.isLocked
+                      ? "border-amber-300 text-amber-950 hover:bg-amber-100"
+                      : "border-emerald-300 text-emerald-950 hover:bg-emerald-100"
+                  ].join(" ")}
+                >
+                  View activation status
+                </Link>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         <PriorityStrip items={priorityItems} />
 
         <PriorityGrid metrics={metrics} />
 
-        {onboardingSteps && onboardingSteps.some((step) => !step.complete) ? (
-          <OnboardingGuide steps={onboardingSteps} />
+        {onboardingSteps &&
+        (startHereForceVisible || onboardingSteps.some((step) => !step.complete)) ? (
+          <StartHereCard steps={onboardingSteps} forceVisible={startHereForceVisible} />
         ) : null}
 
         <section aria-labelledby="dashboard-work-queues-title" className="space-y-3">

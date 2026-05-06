@@ -58,6 +58,12 @@ export async function updateOrganizationProfile(input: {
   displayName: string;
   slug: string;
   logoUrl: string | null;
+  phone: string | null;
+  email: string | null;
+  websiteUrl: string | null;
+  primaryTrade: string | null;
+  brandAccentColor: string | null;
+  timeZone: string | null;
 }) {
   const supabase = getSupabaseAdminClient();
   const response = await supabase
@@ -67,10 +73,16 @@ export async function updateOrganizationProfile(input: {
       display_name: input.displayName,
       slug: input.slug,
       logo_url: input.logoUrl,
+      phone: input.phone,
+      email: input.email,
+      website_url: input.websiteUrl,
+      primary_trade: input.primaryTrade,
+      brand_accent_color: input.brandAccentColor,
+      time_zone: input.timeZone,
       updated_by: input.userId
     })
     .eq("id", input.organizationId)
-    .select("id, slug, legal_name, display_name, logo_url, tenant_status, lifecycle_state, created_at, updated_at")
+    .select("id, slug, legal_name, display_name, logo_url, phone, email, website_url, primary_trade, brand_accent_color, time_zone, tenant_status, lifecycle_state, created_at, updated_at")
     .single();
 
   if (response.error) {

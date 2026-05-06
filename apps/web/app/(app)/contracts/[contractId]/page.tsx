@@ -32,6 +32,7 @@ import { getContractById, getContractSignatureActionOptions } from "@/lib/contra
 import { listInvoices } from "@/lib/invoices/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { isOrganizationActivatedForProductionAction } from "@/lib/organizations/activation-guard";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
 import { buildScheduleHref } from "@/lib/schedule/links";
@@ -517,6 +518,13 @@ export default async function ContractDetailPage({
         : contractGate.sendBlockers.includes("contract_locked")
           ? "Signature activity or an existing lock prevents this contract from returning to send-ready draft state."
           : "This contract is not ready to send.";
+  const isProductionActionLocked = organizationContext
+    ? !isOrganizationActivatedForProductionAction({
+        id: organizationContext.organization.id,
+        tenantStatus: organizationContext.organization.tenantStatus,
+        lifecycleState: organizationContext.organization.lifecycleState
+      })
+    : false;
   const currentContractorSigner = contract.signers.find(
     (signer) => signer.signerRole === "contractor" && signer.organizationUserId === user.id
   );
@@ -892,6 +900,7 @@ export default async function ContractDetailPage({
                     workflowSettings.requireContractInternalApproval
                   }
                   canSend={contractGate.canSend}
+                  isProductionActionLocked={isProductionActionLocked}
                   sendReadinessMessage={sendReadinessMessage}
                   isLocked={contractGate.isLocked}
                   customerPortalSignerOptions={

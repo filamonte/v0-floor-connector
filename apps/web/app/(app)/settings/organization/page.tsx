@@ -17,6 +17,7 @@ type PageProps = {
 export default async function OrganizationSettingsPage({ searchParams }: PageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const scope = await requireOrganizationAdminScope("/settings/organization");
+  const brandAccentColor = scope.organization.brandAccentColor ?? "#d8731f";
 
   return (
     <div className="space-y-6">
@@ -85,8 +86,91 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
             </span>
           </label>
 
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-800">
+                Company phone
+              </span>
+              <input
+                name="phone"
+                type="tel"
+                defaultValue={scope.organization.phone ?? ""}
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-800">
+                Company email
+              </span>
+              <input
+                name="email"
+                type="email"
+                defaultValue={scope.organization.email ?? ""}
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              />
+            </label>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-800">
+                Website
+              </span>
+              <input
+                name="websiteUrl"
+                type="url"
+                defaultValue={scope.organization.websiteUrl ?? ""}
+                placeholder="https://example.com"
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-800">
+                Primary trade / service type
+              </span>
+              <input
+                name="primaryTrade"
+                defaultValue={scope.organization.primaryTrade ?? ""}
+                placeholder="Epoxy flooring"
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              />
+            </label>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-800">
+                Brand accent color
+              </span>
+              <div className="flex items-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className="h-10 w-10 shrink-0 rounded-full border border-slate-300"
+                  style={{ backgroundColor: brandAccentColor }}
+                />
+                <input
+                  name="brandAccentColor"
+                  defaultValue={scope.organization.brandAccentColor ?? ""}
+                  placeholder="#d8731f"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                />
+              </div>
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-800">
+                Time zone
+              </span>
+              <input
+                name="timeZone"
+                defaultValue={scope.organization.timeZone ?? ""}
+                placeholder="America/New_York"
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              />
+            </label>
+          </div>
+
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
-            Platform status is still controlled by super admin. Contractor admins manage only the organization-owned profile layer here.
+            Platform status is still controlled by super admin. Contractor admins manage only the organization-owned profile layer here. Logo upload remains deferred; use a hosted URL or storage reference.
           </div>
 
           <SaveStateSubmitButton

@@ -7,7 +7,13 @@ export const forgotPasswordPath = "/forgot-password";
 export const updatePasswordPath = "/update-password";
 export const authCallbackPath = "/auth/callback";
 
-const protectedPrefixes = ["/app", "/dashboard", "/portal", "/super-admin"] as const;
+const protectedPrefixes = [
+  "/app",
+  "/dashboard",
+  "/portal",
+  "/setup",
+  "/super-admin"
+] as const;
 
 export type AuthSurfaceContext = {
   surfaceKey: "contractor" | "portal" | "superAdmin";

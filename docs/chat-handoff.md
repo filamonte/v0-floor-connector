@@ -31,6 +31,1105 @@ For stronger implementation control on new tasks, also use:
 - [docs/local-qa-auth-session-note.md](C:/FloorConnector/docs/local-qa-auth-session-note.md)
 - [docs/qa-estimate-send-approval-contract-prerequisites.md](C:/FloorConnector/docs/qa-estimate-send-approval-contract-prerequisites.md)
 
+## Early Access Build Complete
+
+Final early-access onboarding/demo status is documented here for the next session. This is the current operational summary; defer to [docs/current-state.md](C:/FloorConnector/docs/current-state.md) for full implemented truth and [docs/workflows.md](C:/FloorConnector/docs/workflows.md) for canonical workflow rules.
+
+## Stripe Verification Blocked
+
+- `.env.local` currently has blank `STRIPE_SECRET_KEY`.
+- `.env.local` currently has blank `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
+- Required values must be Stripe test-mode keys:
+  - `sk_test_...`
+  - `pk_test_...`
+- After adding keys, restart the dev server.
+- Rerun `/setup/billing`.
+- Verify test card `4242 4242 4242 4242`.
+- Verify declined card `4000 0000 0000 9995`.
+- Verify no charge and no subscription.
+- Verify `companies.stripe_customer_id`.
+- Verify `companies.stripe_payment_method_id`.
+
+## Pricing And Activation Readiness Copy
+
+Completed a minimal pricing + activation-readiness layer without adding billing automation, schema, duplicate account models, or subscription creation.
+
+Files changed in this pass:
+- `apps/web/components/marketing-investor-page.tsx`
+- `apps/web/app/(super-admin)/super-admin/early-access/page.tsx`
+- `apps/web/components/platform-admin/activate-company-form.tsx`
+- `apps/web/app/(app)/dashboard/page.tsx`
+- `apps/web/components/dashboard/contractor-dashboard-surface.tsx`
+- `apps/web/lib/platform-admin/actions.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `docs/chat-handoff.md`
+
+Behavior:
+- The public homepage now includes a pricing section with early-access positioning:
+  - `Starter / Early Access`
+  - `Pro / Coming Soon`
+  - `Enterprise / Contact Us`
+- Homepage pricing copy explicitly says early access is limited, there is no charge during onboarding, pricing is confirmed before activation, and the current flow does not create charges or subscriptions automatically.
+- `/super-admin/early-access` now shows derived activation readiness from existing records only:
+  - company profile started from existing `companies` profile fields
+  - payment method saved from `companies.stripe_payment_method_id`
+  - estimate stage reached from canonical estimate counts
+  - guarded external actions locked until `companies.tenant_status = active` and `companies.lifecycle_state = active`
+- `Mark active` confirmation now warns that active unlocks guarded production actions, while billing or subscription setup remains a separate operator action unless already implemented.
+- Dashboard active-state copy now shows calm `Account active` status. If no payment method exists, it prompts the user to add a billing method. If a payment method exists, it shows `Billing method saved`.
+
+Guardrail status:
+- Activation still uses the existing `companies.tenant_status` and `companies.lifecycle_state` fields.
+- Activation does not create a Stripe charge.
+- Activation does not create a Stripe subscription.
+- Activation does not create or update a duplicate billing, company, account, or tenant model.
+- The existing SetupIntent-only `/setup/billing` path remains the only card-readiness shell.
+
+Remaining Stripe test-card blocker:
+- `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` still need valid Stripe test-mode values in `C:/FloorConnector/.env.local`.
+- Restart the dev server after adding keys.
+- Verify `/setup/billing` with a Stripe test card before claiming payment-method collection is fully tested.
+- Do not claim subscriptions, recurring billing, plan enforcement, or automatic charging are implemented.
+
+## Early Access Intake And Feedback Capture
+
+Completed a minimal early-access intake + feedback layer using existing canonical data only. No tables, schemas, analytics system, sandbox/demo mode, billing logic, activation logic, or canonical lifecycle behavior were added or changed.
+
+Files changed in this pass:
+- `apps/web/components/marketing-investor-page.tsx`
+- `apps/web/components/early-access-request-form.tsx`
+- `apps/web/components/early-access-help-button.tsx`
+- `apps/web/lib/early-access/actions.ts`
+- `apps/web/lib/early-access/intake.ts`
+- `apps/web/lib/early-access/feedback-actions.ts`
+- `apps/web/lib/early-access/feedback.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/app/(super-admin)/super-admin/early-access/page.tsx`
+- `packages/config/src/env/server.ts`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+
+Behavior:
+- `/` now includes an optional `Request Early Access` form alongside `Start Free Trial`.
+- Public request fields are name, email, company name, trade/service type, and short note.
+- Requests write to existing canonical records:
+  - `contacts` with `contact_kind = general_inquiry`
+  - `opportunities` with `source = early_access` and `source_detail = homepage_request`
+- Production public intake must set `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` to the existing canonical company that owns public intake leads.
+- If `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` is missing in production, the public form returns user-friendly fallback copy and does not write to an arbitrary tenant.
+- Non-production fallback uses the oldest existing company only so local/manual QA can submit without adding a setup table.
+- Protected contractor routes now show a floating `Send Feedback` entry.
+- The feedback entry opens a modal with message and optional email.
+- Feedback writes to the existing tenant-scoped `workflow_error_events` table with `action = early_access.feedback`, `subject_type = company`, and `subject_id = companies.id`.
+- `/super-admin/early-access` now shows:
+  - feedback captured / no feedback indicator
+  - recent-feedback link per company
+  - recent-feedback panel on the same page
+  - recent-login signal derived from `company_memberships.last_active_at` and `users.last_sign_in_at`
+  - reached-estimate and reached-contract flags derived from existing estimate/contract counts
+
+Known gap:
+- There is still no purpose-built company-level feedback/internal-note table. Feedback uses `workflow_error_events` because it is the only existing tenant-scoped company-level internal signal store that does not require a project/customer communication thread or daily-log field note.
+- Public pre-auth intake is tenant-owned because `opportunities` are tenant-owned. Production must configure the intake company explicitly with `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID`.
+
+## Early Access Production Readiness
+
+Completed the production-readiness closeout for early-access intake and feedback without adding product features, schema, billing logic, activation logic, analytics, or sandbox/demo mode.
+
+Operational truth:
+- Public early-access intake storage remains existing `contacts` plus `opportunities`.
+- Feedback storage remains existing tenant-scoped `workflow_error_events` rows with `action = early_access.feedback`.
+- `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` is required in production and should point to the canonical company that owns public intake leads.
+- Missing production intake company configuration returns user-facing fallback copy instead of selecting a tenant implicitly.
+- `.env.example` and `README.md` document the required production intake company env var.
+
+Remaining Stripe test-key blocker:
+- `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` still need valid Stripe test-mode values in `C:/FloorConnector/.env.local` or the deployment environment.
+- Restart the app after setting Stripe keys.
+- Verify `/setup/billing` with a Stripe test card before claiming billing-method collection is fully tested.
+
+What not to claim yet:
+- Do not claim subscriptions, recurring billing, plan enforcement, or automatic charging are implemented.
+- Do not claim Stripe card setup is fully verified until valid test keys are configured and a test card is saved through `/setup/billing`.
+- Do not claim pending/trial tenants can send customer-facing estimates/contracts, process checkout payments, or use provider-backed email delivery before activation.
+- Do not claim fake demo data, sandbox/demo mode, analytics funnels, AI takeoff, full dispatch optimization, accounting integrations, external e-sign provider integration, or full payment reconciliation are implemented.
+
+## Early Access Launch Checklist
+
+Use this as the final operator checklist before opening early access in production. It is a deployment checklist only; it does not introduce a new workflow, schema, billing system, analytics layer, sandbox mode, or activation model.
+
+Required env vars:
+- `NEXT_PUBLIC_APP_URL`: production app URL used by auth redirects and setup links.
+- `NEXT_PUBLIC_MARKETING_URL`: production marketing URL when different from the app URL.
+- `NEXT_PUBLIC_SUPABASE_URL`: active production Supabase project URL.
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: active production Supabase anon key.
+- `SUPABASE_SERVICE_ROLE_KEY`: server-only production service role key; never expose in browser code.
+- `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID`: required in production for public `Request Early Access`; must point to the existing canonical `companies.id` that owns public intake leads.
+- `STRIPE_SECRET_KEY`: Stripe test-mode secret key for billing-method readiness verification.
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: matching Stripe test-mode publishable key for Stripe Elements.
+- `STRIPE_WEBHOOK_SECRET`: configure before relying on webhook-backed payment events.
+
+Supabase migration status:
+- Confirm the production Supabase project is linked to the intended environment before applying migrations.
+- Run `supabase migration list` and verify local migration files and remote migration history match the intended release.
+- Apply pending migrations through the normal migration flow before launch; do not patch production schema manually.
+- Confirm the production database includes the existing canonical tables used by early access: `companies`, `company_memberships`, `users`, `contacts`, `opportunities`, `workflow_error_events`, estimates/contracts/jobs/invoices, and the current Stripe reference fields on `companies`.
+- Confirm RLS remains enabled for tenant-owned tables and public intake still writes only through the server-side intake action.
+
+Stripe test-mode verification steps:
+- Set valid matching test-mode values for `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
+- Restart or redeploy the app after setting Stripe env vars.
+- Create a real early-access signup and complete `/setup/company`.
+- Visit `/setup/billing` and confirm Stripe Elements renders.
+- Save a billing method with a Stripe test card such as `4242 4242 4242 4242`.
+- Confirm no charge or subscription is created.
+- Confirm the active company row stores only Stripe reference fields such as `stripe_customer_id` and `stripe_payment_method_id`.
+- Confirm dashboard copy shows `Billing method saved` after setup.
+
+Production intake company ID setup:
+- Create or identify the canonical FloorConnector-owned company that will own public early-access intake leads.
+- Set `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` to that exact `companies.id`.
+- Submit one public `Request Early Access` form from `/`.
+- Confirm it creates an existing `contacts` row and existing `opportunities` row with `source = early_access` and `source_detail = homepage_request` under that company.
+- If the env var is missing in production, the form should fail gracefully with fallback copy and must not write to any arbitrary tenant.
+
+First test signup path:
+- Open `/`.
+- Click `Start Free Trial`.
+- Confirm the route is `/signup?next=/setup/company`.
+- Sign up with a real test user through the implemented Supabase auth flow.
+- Complete `/setup/company`.
+- Visit `/setup/billing` and either save a Stripe test billing method or confirm the billing-later fallback is clear.
+- Continue to `/setup/pending-activation`.
+- Enter `/dashboard` and confirm the user can create internal canonical records while guarded external actions remain locked.
+
+Super-admin monitoring path:
+- Open `/super-admin/early-access` as a platform admin.
+- Confirm the new company appears with tenant status, lifecycle state, company-profile readiness, saved-payment-method status, and project/estimate/contract/invoice counts.
+- Confirm light signals derive from existing data only: recent login, reached estimate, reached contract, and feedback presence.
+- Confirm recent feedback appears when users submit the protected `Send Feedback` modal.
+- Use this page for early-access review before activation.
+
+Activation rules:
+- Activation uses only existing `companies.tenant_status` and `companies.lifecycle_state`.
+- Marking active unlocks guarded production actions for that company.
+- Activation does not create a Stripe charge.
+- Activation does not create a Stripe subscription.
+- Activation does not create a duplicate billing, account, company, or tenant model.
+- Billing/subscription follow-through remains a separate operator action unless later explicitly implemented.
+
+What is intentionally gated before activation:
+- Estimate customer sends.
+- Contract send-for-signature.
+- Customer-facing checkout/payment processing.
+- Provider-backed notification email delivery.
+
+What remains available while pending/trial:
+- Company setup.
+- Dashboard access.
+- Internal projects, opportunities, customers, estimates, contracts, jobs, invoices, and related review surfaces, subject to existing workflow and readiness gates.
+- In-app feedback capture through existing `workflow_error_events`.
+- Super-admin monitoring and operator review.
+
+What not to claim yet:
+- Do not claim live subscription billing, recurring billing, plan enforcement, automatic charging, or automatic plan provisioning.
+- Do not claim Stripe card setup is fully verified until the test-mode keys are present and a test card has been saved through `/setup/billing`.
+- Do not claim pending/trial tenants can send customer-facing estimates/contracts, process checkout payments, or use provider-backed email delivery.
+- Do not claim fake demo data, sandbox/demo mode, analytics funnels, AI takeoff, full dispatch optimization, accounting integrations, external e-sign provider integration, full payment reconciliation, or every target architecture item is implemented.
+
+Rollback / disable notes:
+- If `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` is wrong, remove or correct it immediately; public intake should fail gracefully when missing in production rather than writing to the wrong tenant.
+- If intake was submitted to the wrong company, do not bulk-delete blindly; identify the created `contacts` and `opportunities` rows by `source = early_access`, `source_detail = homepage_request`, timestamp, and submitted email/company details, then plan a targeted data correction.
+- If Stripe keys are missing, mixed live/test, or incorrect, clear or replace `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, redeploy/restart, and use the billing-later path until test-mode verification passes.
+- If Stripe setup behaves unexpectedly, do not mark card collection as verified and do not activate companies based on billing readiness until the issue is resolved.
+- If external sends or payment processing must remain disabled for a company, keep `companies.tenant_status` / `companies.lifecycle_state` in pending/trial states and do not mark the company active.
+- If launch confidence drops, keep homepage `Start Free Trial` available only if onboarding is intended to remain open; otherwise route interested users through the public `Request Early Access` path after confirming intake env is correct.
+
+## Early Access Readiness Verification - 2026-05-06
+
+Verification-only pass against the linked Supabase project and a local production-mode web server at `http://localhost:3020`. No app code, schema, migrations, workflow logic, billing logic, or activation logic was changed.
+
+Checks run:
+- `supabase migration list` connected to the linked remote database and showed local/remote migration history aligned through `20260505194642`.
+- `README.md` and `.env.example` document `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID`, `STRIPE_SECRET_KEY`, and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
+- `.env.local` check: `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` missing, `STRIPE_SECRET_KEY` blank, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` blank, `FLOORCONNECTOR_E2E_EMAIL` present, and `FLOORCONNECTOR_E2E_PASSWORD` present.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `pnpm build` passed.
+- Production-mode server was started with `NODE_ENV=production`, `PORT=3020`, and `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` intentionally absent.
+- Public homepage `/` loaded successfully.
+- Public `Request Early Access` form failed gracefully while the intake company ID was missing, showing the configured user-facing fallback instead of writing to an arbitrary tenant.
+- Homepage `Start Free Trial` href resolves to `/signup?next=%2Fsetup%2Fcompany`.
+- Unauthenticated `/setup/company`, `/setup/billing`, `/setup/pending-activation`, and `/super-admin/early-access` redirected to `/login`.
+- `pnpm e2e:auth` passed against `http://localhost:3020` and refreshed `playwright/.auth/local-user.json`.
+- Authenticated platform-admin check loaded `/super-admin/early-access`.
+- Read-only tenant check for the authenticated QA company showed `tenant_status = trialing`, `lifecycle_state = trial`, a missing saved Stripe payment method, recent activity present, and existing estimates, contracts, jobs, and invoices.
+- Authenticated trial user could open internal workflow routes: `/setup/company`, `/projects`, `/estimates`, `/contracts`, `/jobs`, and `/invoices`.
+- Authenticated trial user saw `/setup/pending-activation` copy confirming internal records remain available while external sends, customer-facing payment processing, and provider-backed emails stay locked until activation.
+- Trial estimate detail verified the `Send estimate` action is disabled with early-access lock copy.
+- Trial contract detail verified the `Send for signature` action is disabled with early-access lock copy.
+- Trial portal invoice detail verified checkout/payment processing is locked during early access.
+
+Pass/fail summary:
+- Passed: migrations aligned on the linked remote database, env docs present, homepage load, missing-intake fallback, signup CTA href, setup-route protection, unauthenticated super-admin protection, platform-admin early-access page load, internal trial workflow access, estimate-send lock, contract-send lock, portal checkout/payment lock, typecheck, lint, and build.
+- Blocked for launch claims: production/staging env values are not ready locally because `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` is missing and both Stripe keys are blank in `.env.local`.
+
+Exact remaining blockers:
+- Set `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` in production/staging before accepting public early-access intake; missing production config correctly fails closed.
+- Set matching Stripe test-mode `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, then verify `/setup/billing` with a Stripe test card before claiming billing-method collection is fully tested.
+- Do not claim subscriptions, automatic charges, live billing, or pending/trial external sends/payments are available.
+
+## Investor Demo Script
+
+Use this script for an investor or customer-facing walkthrough. Keep the language grounded in implemented truth: this is a real early-access product on canonical records, not a fake demo environment, and not a live subscription-billing system.
+
+### 1. Opening pitch
+
+Say:
+"FloorConnector is an operating system for specialty surface contractors. The core idea is simple: keep the whole contractor journey connected from opportunity to customer, project, estimate, contract, job, invoice, and payment, so work does not fracture across spreadsheets, inboxes, disconnected estimating tools, and billing systems."
+
+Emphasize:
+- FloorConnector is built for epoxy flooring, concrete polishing, and specialty surface contractors.
+- The product is not trying to be a generic CRM or generic project-management app.
+- The strongest current story is continuity: records move forward instead of being recreated.
+- Early access is real product access with activation guardrails.
+
+Do not say:
+- Do not say every future module is production-complete.
+- Do not say billing subscriptions are live.
+- Do not say external sends and payment processing are available before activation.
+
+### 2. Homepage talking points
+
+Open `/`.
+
+Talk through:
+- The homepage positions FloorConnector around "lead to payment" continuity.
+- The workflow visual should be described as the product spine: Lead / Project / Estimate / Contract / Job / Invoice / Payment in public-facing language, with the internal canonical lifecycle still anchored on `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`.
+- The platform section separates implemented foundations from planned layers.
+- The comparison section is positioning-focused and should not be represented as an exhaustive competitor audit.
+- The pricing section is intentionally early-access-oriented:
+  - `Starter / Early Access`
+  - `Pro / Coming Soon`
+  - `Enterprise / Contact Us`
+- Pricing is subject to confirmation before activation.
+- No charge is created during onboarding.
+- The current flow does not create subscriptions automatically.
+
+Click:
+- `Start Free Trial`
+
+Expected route:
+- `/signup?next=/setup/company`
+
+### 3. Signup/onboarding talking points
+
+On signup/login:
+- Authentication is real Supabase-backed auth.
+- Users sign up or log in through the existing auth system.
+- There is no fake demo account layer and no sandbox-only persistence.
+- First access bootstraps the user into the existing organization/company and membership model.
+- The `next=/setup/company` handoff preserves the intended onboarding route.
+
+If asked whether this can support real users:
+- Yes, early users enter the real contractor app and create real canonical records.
+- Activation guardrails block irreversible external production actions until the operator marks the company active.
+
+### 4. Company setup talking points
+
+On `/setup/company`:
+- Company setup writes to the existing `companies` organization record.
+- Primary address setup writes through the existing primary `locations` record.
+- There is no `company_registration` table or duplicate tenant model.
+- Optional profile/brand details are progressive; they improve readiness and app identity but do not create a separate onboarding model.
+- This is the first proof point that FloorConnector treats onboarding as part of the real product foundation, not a parallel trial system.
+
+Key fields to mention:
+- legal/display company identity
+- phone/email/website
+- primary trade
+- brand/accent direction
+- time zone
+- primary location/address
+
+### 5. Billing setup caveat
+
+On `/setup/billing`:
+- This is payment-method readiness only.
+- When Stripe test keys are configured, the route uses Stripe SetupIntent / Elements to save a billing method.
+- It does not create a charge.
+- It does not create a subscription.
+- It stores Stripe customer/payment method references on the existing `companies` row.
+- If Stripe keys are missing or setup fails, the user can continue with a safe billing-later path.
+
+Required caveat:
+"We can collect a billing method for readiness once Stripe test keys are configured and verified, but early access still requires operator confirmation before activation. This is not automatic subscription billing."
+
+### 6. Pending activation explanation
+
+On `/setup/pending-activation`:
+- This page uses the existing `companies.tenant_status` and `companies.lifecycle_state`.
+- It lets early users enter the real dashboard.
+- It explains that users can create internal records while external production actions remain locked.
+- Activation is not a new account model; it is a status/lifecycle transition on the existing company record.
+
+Say:
+"Pending activation is the boundary between safe product exploration and production external actions. It lets a contractor start building their real workflow without accidentally sending customer-facing documents or processing payments before review."
+
+### 7. Dashboard/Start Here walkthrough
+
+On `/dashboard`:
+- The dashboard is the contractor command center, not a separate analytics product.
+- It derives from existing canonical records.
+- The Start Here guide points a new company into the first practical workflow:
+  - create or review a project
+  - create an estimate
+  - generate a contract from approved estimate context
+  - continue into job or invoice when the workflow is ready
+- The guide is dismissible for normal users, but `/dashboard?fresh=true` can force it visible in non-production for demos or QA.
+- If the company is active, dashboard copy shows `Account active`.
+- If no billing method exists, it prompts for billing method setup.
+- If a billing method exists, it shows `Billing method saved`.
+
+Demo note:
+- Use the dashboard to show that FloorConnector already has real queues and manager entries for projects, estimates, contracts, jobs, invoices, payments, scheduling, people, vendors, and settings foundations.
+- Do not oversell planned/deeper modules as complete.
+
+### 8. Project workspace workflow strip explanation
+
+Open a Project Workspace.
+
+Explain:
+- Project is the operational hub.
+- The top workflow strip communicates where the job is in the handoff.
+- The strip derives from existing records:
+  - estimate exists / approved estimate exists
+  - contract exists / signed contract exists
+  - job exists
+  - invoice exists
+  - payment activity exists
+- The strip is a clarity layer, not a second workflow engine.
+- It does not create data or bypass readiness gates.
+
+Say:
+"This is the product direction in one screen: the contractor should instantly know what has happened, what is blocked, and what comes next, without jumping between disconnected modules."
+
+### 9. Project -> Estimate -> Contract flow
+
+Walkthrough:
+1. From project context, create or open an estimate.
+2. Explain that estimates stay linked to the project and derived customer.
+3. Explain that estimate line items are canonical estimate rows and the catalog/cost-item foundation feeds estimating without becoming a fake invoice source.
+4. Once an estimate is approved, generate the contract from the approved estimate context.
+5. Open the Contract Workspace and explain that portal signing and contractor-side onsite signing operate on the same canonical contract record.
+
+Important boundaries:
+- Approved estimate does not automatically create invoice, job, payment, or subscription records.
+- Contract generation uses the existing estimate/project/customer chain.
+- Sending externally may be locked while the tenant is pending/trial.
+
+### 10. Super-admin early-access monitoring
+
+Open `/super-admin/early-access` as a platform admin.
+
+Explain:
+- This is platform-admin-only onboarding visibility.
+- It reads existing `companies` and canonical workflow counts.
+- It shows:
+  - company profile readiness
+  - saved payment method presence
+  - project/estimate/contract/invoice activity counts
+  - first workflow progress
+  - estimate-stage progress
+  - guarded external actions lock/unlock state
+- `Mark active` uses the existing company lifecycle/status fields.
+- Activation unlocks guarded production actions.
+- Activation does not create a subscription or charge.
+- The development-only reset is for non-production QA only and is not a demo/sandbox product feature.
+
+### 11. What is intentionally gated
+
+While a company is pending/trial, the activation guard blocks irreversible external production actions, including:
+- estimate customer sends
+- contract send-for-signature
+- customer-facing checkout/payment processing
+- provider-backed notification email delivery
+
+Internal work remains available:
+- company setup
+- dashboard access
+- projects
+- estimates
+- contracts
+- invoices
+- jobs
+- scheduling/review surfaces, subject to existing workflow gates
+- settings and admin foundations where the user has permission
+
+### 12. What is planned/coming soon
+
+Frame these as direction, not current production claims:
+- deeper scheduling/dispatch controls
+- advanced reporting
+- AI-assisted estimating / takeoff
+- richer mobile field workflows
+- deeper communications and delivery proof
+- materials and inventory depth
+- external e-sign provider integration
+- accounting integrations
+- subscription billing and plan enforcement
+- deeper payment reconciliation
+- broader module-dashboard coverage
+
+### 13. What not to claim yet
+
+Do not claim:
+- live subscription billing
+- automatic plan provisioning
+- automatic charges during onboarding
+- Stripe card setup fully verified until test keys and test-card flow are confirmed
+- pending/trial tenants can send customer-facing estimates/contracts or process checkout payments
+- provider-backed email/SMS delivery is enabled for early-access tenants
+- fake demo data or sandbox demo mode exists
+- AI takeoff is implemented
+- full dispatch optimization is implemented
+- accounting integrations are implemented
+- external e-sign provider integration is implemented
+- full payment reconciliation is complete
+- every target architecture document is implemented
+
+## Early User Trial Script
+
+Use this for a contractor tester. The tone should be practical: ask them to try the real workflow, notice where the next action is clear or confusing, and report what feels missing.
+
+### What to try first
+
+Ask the tester to:
+1. Start at `/`.
+2. Use `Start Free Trial`.
+3. Sign up or log in with a real test account.
+4. Complete `/setup/company`.
+5. Visit `/setup/billing`.
+6. Continue through billing setup or use the billing-later fallback if Stripe is not configured.
+7. Enter the dashboard from `/setup/pending-activation`.
+8. Use the Start Here guide on `/dashboard`.
+9. Create or open a project.
+10. Create the first estimate from project context.
+11. Review the Project Workspace workflow strip and next-step panel.
+12. Generate or review a contract when an approved estimate is available.
+13. Browse the Managers for Projects, Estimates, Contracts, Jobs, Invoices, Payments, Schedule, People, Vendors, and Settings.
+
+Focus questions:
+- Did you know what to do next?
+- Did the Project Workspace make the workflow stage obvious?
+- Did the dashboard feel like a useful home base?
+- Did any locked action explain why it was locked?
+- Did any route feel like a separate silo instead of one connected workflow?
+
+### What actions are locked
+
+Tell testers:
+- Early access lets you create real internal records.
+- External production actions remain locked until the company is active.
+- Locked actions include:
+  - sending estimates to customers
+  - sending contracts for signature
+  - customer-facing checkout/payment processing
+  - provider-backed notification email delivery
+- Billing setup is no-charge payment-method readiness only.
+- Activation is operator-reviewed and separate from subscription billing.
+
+### How to ask for help
+
+Ask testers to use:
+- the in-app `Need help?` support entry on protected contractor routes
+- direct support/contact instructions provided by the operator running the test
+- screenshots or screen recordings when a workflow is confusing
+
+Ask them to include:
+- route or page name
+- record type they were working on
+- expected next step
+- what they clicked
+- what happened
+- whether the issue blocked work or was just unclear
+
+### What feedback we want
+
+Prioritize feedback on:
+- first five minutes after signup
+- company setup clarity
+- billing setup trust/caveats
+- pending activation explanation
+- dashboard Start Here usefulness
+- project workflow strip clarity
+- project-to-estimate handoff
+- estimate-to-contract handoff
+- locked-action messaging
+- terminology that feels too technical
+- places where the app feels disconnected or too dense
+
+De-prioritize for this trial:
+- requests for full dispatch optimization
+- requests for AI takeoff
+- requests for accounting sync
+- requests for native mobile apps
+- requests for subscription plan changes
+
+Those are valid product inputs, but they are not the purpose of the first early-user continuity test.
+
+What is implemented:
+- public investor-ready entry at `/` with the primary early-access CTA routing to `/signup?next=/setup/company`
+- real signup/login through the existing auth system, with no fake auth or demo-only account flow
+- `/setup/company`, writing company setup onto the existing `companies` organization record and primary `locations` row
+- `/setup/billing`, using Stripe SetupIntent/Elements only for no-charge payment-method setup when Stripe keys are configured
+- `/setup/pending-activation`, showing existing tenant lifecycle/status and allowing entry into the real contractor app
+- dashboard early-access guidance, including Start Here guidance into the canonical Project -> Estimate -> Contract path
+- protected contractor-route `Send Feedback` early-access entry
+- setup-page dashboard escape hatch with `Finish setup to unlock full access`
+- shared activation guard for pending/trial organizations
+- `/super-admin/early-access` platform-admin view over existing `companies` plus canonical project/estimate/contract/invoice counts
+- non-production `DEV MODE` session-reset control
+- non-production `/dashboard?fresh=true` clean first-user simulation
+- non-production platform-admin onboarding reset for selected early-access test tenants
+
+What is intentionally gated:
+- estimate customer sends
+- contract send-for-signature
+- customer-facing checkout/payment processing
+- provider-backed notification email delivery
+- activation to full access, which still uses existing `companies.tenant_status` and `companies.lifecycle_state`
+
+How to run the investor demo:
+1. Visit `/`.
+2. Click `Start Free Trial`.
+3. Confirm the route goes to `/signup?next=/setup/company`.
+4. Sign up or log in with a real test user.
+5. Complete `/setup/company`.
+6. Visit `/setup/billing`.
+7. If Stripe test keys are configured, save a test billing method; if keys are missing, use the safe billing-later fallback.
+8. Continue to `/setup/pending-activation`.
+9. Click `Enter Dashboard`.
+10. Use Start Here to create or review the real Project -> Estimate -> Contract path.
+11. As a platform admin, open `/super-admin/early-access` to review the tenant and mark active only when appropriate.
+
+How to test a clean onboarding flow:
+- Use a real early-access test user and tenant.
+- In non-production, sign in as a platform admin and open `/super-admin/early-access`.
+- Use `Reset onboarding state` only on the selected test company.
+- Sign out or use `Reset session`, then start again from `/` or `/signup?next=/setup/company`.
+- Confirm setup, dashboard, Start Here, and early-access lock copy still appear without stale local dismissal/session state.
+
+How to use `/dashboard?fresh=true`:
+- Works only in non-production.
+- Forces the existing Start Here onboarding guide visible.
+- Ignores the Start Here localStorage dismissal for that view.
+- Does not create fake records, change tenant data, bypass auth, or bypass canonical record reads.
+
+How to use `/super-admin/early-access`:
+- Requires platform-admin access.
+- Shows existing company status/lifecycle, saved-payment-method presence, and project/estimate/contract/invoice activity counts.
+- Derives first workflow, estimate-stage, and contract-stage badges from canonical record counts only.
+- `Mark active` confirms first and sets the existing company lifecycle/status to active.
+- The dev reset button appears only when `NODE_ENV !== production`.
+
+How dev-only reset works:
+- The action is platform-admin-only and server-guarded to non-production.
+- It is clearly labeled `DEV / TEST ONLY`.
+- It scopes every delete/update to the selected `company_id`.
+- It clears onboarding workflow test records for projects, estimates, contracts, invoices, and dependent workflow rows.
+- It clears `companies.stripe_payment_method_id`.
+- It does not clear `companies.stripe_customer_id`, to avoid duplicate/orphaned Stripe customer assumptions.
+- It resets `companies.tenant_status = trialing` and `companies.lifecycle_state = trial`.
+- It fails safely before deleting anything if `estimate_system_snapshots` or `contract_system_snapshots` exist, because those binding snapshot records intentionally block lightweight deletion.
+
+Stripe test-key blocker:
+- `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` still need real Stripe test-mode values in `C:/FloorConnector/.env.local`.
+- Restart the dev server after adding keys.
+- Verify `/setup/billing` with a Stripe test card before claiming payment-method collection has been fully tested.
+- Missing keys should show the safe `Stripe not configured`/billing-later path; test keys should show `Stripe test mode active`.
+
+What not to claim yet:
+- Do not claim subscriptions, plans, recurring billing, or charging are implemented.
+- Do not claim Stripe card setup is fully verified until test keys are present and a test card is saved through `/setup/billing`.
+- Do not claim pending/trial tenants can send externally or process customer-facing payments.
+- Do not claim provider-backed email delivery is enabled for early-access tenants.
+- Do not claim sandbox/demo mode exists.
+- Do not claim fake demo data exists.
+- Do not claim advanced dispatch, AI takeoff, external e-sign provider integration, accounting integrations, full payment reconciliation, or full subscription billing are complete.
+
+## Early Access QA Reset Workflow
+
+Added a development-only QA reliability layer for repeatedly testing early-access onboarding without adding schema, sandbox/demo mode, analytics, new business models, billing logic changes, or canonical workflow changes.
+
+Files changed in this pass:
+- `apps/web/app/(super-admin)/super-admin/early-access/page.tsx`
+- `apps/web/components/dev-qa-tools.tsx`
+- `apps/web/components/platform-admin/reset-onboarding-state-form.tsx`
+- `apps/web/components/contractor-app-shell.tsx`
+- `apps/web/app/(app)/dashboard/page.tsx`
+- `apps/web/components/dashboard/contractor-dashboard-surface.tsx`
+- `apps/web/components/onboarding/start-here-card.tsx`
+- `apps/web/app/(app)/setup/billing/page.tsx`
+- `apps/web/lib/onboarding/billing-setup.ts`
+- `apps/web/lib/platform-admin/actions.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/lib/platform-admin/schemas.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Behavior:
+- `/super-admin/early-access` shows a clearly labeled `DEV / TEST ONLY` reset action only when `NODE_ENV !== production`.
+- The reset remains platform-admin-only, scopes every delete/update by the selected company id, clears project/estimate/contract/invoice onboarding workflow test records plus dependent workflow rows, clears `companies.stripe_payment_method_id`, and resets `companies.tenant_status = trialing` / `companies.lifecycle_state = trial`.
+- The reset does not clear `companies.stripe_customer_id`; retaining it avoids creating orphaned or duplicate Stripe customer assumptions during repeated QA.
+- The reset fails safely before deleting anything if the company has `estimate_system_snapshots` or `contract_system_snapshots`, because those insert-only binding records intentionally block lightweight deletion.
+- Contractor app routes in non-production show a subtle `DEV MODE` badge with `Reset session`, which clears browser local/session storage, signs out through the existing auth action, and returns to `/login`.
+- `/dashboard?fresh=true` in non-production forces the existing Start Here guide visible and ignores its localStorage dismissal without creating fake records.
+- `/setup/billing` in non-production shows whether Stripe is in test mode, missing, mixed, or live-key configuration.
+
+Validation:
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `pnpm build` passed.
+- `git diff --check` passed with existing LF-to-CRLF warnings only.
+- Manual destructive reset was not executed against live tenant data during implementation.
+
+## Early Access Onboarding Visibility
+
+Added a thin platform-admin visibility layer for onboarding users without adding analytics tables, duplicate tenant models, billing logic, sandbox mode, or canonical workflow changes.
+
+Files changed in this pass:
+- `apps/web/app/(super-admin)/super-admin/early-access/page.tsx`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/lib/platform-admin/actions.ts`
+- `apps/web/lib/platform-admin/schemas.ts`
+- `apps/web/lib/settings/navigation.ts`
+- `apps/web/app/(app)/dashboard/page.tsx`
+- `apps/web/components/dashboard/contractor-dashboard-surface.tsx`
+- `apps/web/components/onboarding/start-here-card.tsx`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+
+Behavior:
+- Platform admins now have `/super-admin/early-access` for cross-tenant onboarding visibility. This intentionally lives under super admin rather than contractor `/settings` so tenant data is not exposed to regular organization admins.
+- The view lists existing `companies` records with company name, created date, tenant status, lifecycle state, payment-method presence derived from `companies.stripe_payment_method_id`, and canonical project/estimate/contract/invoice counts.
+- The view derives onboarding progress from existing records only:
+  - `Reached first workflow step`: at least one project.
+  - `Reached estimate stage`: at least one project and at least one estimate.
+  - `Reached contract stage`: at least one project, at least one estimate, and at least one contract.
+- The operational "aha moment" remains data-derived: a company has reached the first meaningful product workflow once it has at least one project and at least one estimate. Contract generation is visible as the next stage, not a required tracking row.
+- Platform admins can mark a company active from the early-access view using the existing `companies.tenant_status = active` and `companies.lifecycle_state = active` path.
+- Dashboard recovery now redirects users with no completed company profile fields to `/setup/company`.
+- If Stripe is configured and the company has no saved payment method, the dashboard early-access banner gently points to `/setup/billing`; if Stripe is not configured, billing remains non-blocking.
+- Start Here remains the existing dashboard guide, but it is forced visible for zero-project companies and biases to the estimate step once a project exists and no estimate exists.
+
+Guardrail status:
+- The existing shared activation guard is unchanged. It still blocks irreversible production actions such as external sends and payment processing while allowing internal project, estimate, contract, invoice, job, scheduling, setup, and review workflows.
+
+## Early Access Safety + Support Layer
+
+Completed a lightweight first-user safety/support pass without adding schema, analytics, sandbox/demo mode, business models, billing logic, or core workflow changes.
+
+Files changed in this pass:
+- `apps/web/components/early-access-help-button.tsx`
+- `apps/web/components/setup-escape-banner.tsx`
+- `apps/web/components/platform-admin/activate-company-form.tsx`
+- `apps/web/components/contractor-app-shell.tsx`
+- `apps/web/components/settings-feedback.tsx`
+- `apps/web/components/stripe/setup-intent-form.tsx`
+- `apps/web/components/estimates/estimate-records-panel.tsx`
+- `apps/web/components/invoices/invoice-records-panel.tsx`
+- `apps/web/app/error.tsx`
+- `apps/web/app/api/stripe/create-setup-intent/route.ts`
+- `apps/web/app/api/stripe/save-payment-method/route.ts`
+- `apps/web/app/(app)/setup/company/page.tsx`
+- `apps/web/app/(app)/setup/billing/page.tsx`
+- `apps/web/app/(app)/setup/pending-activation/page.tsx`
+- `apps/web/app/(app)/contracts/page.tsx`
+- `apps/web/app/(app)/invoices/page.tsx`
+- `apps/web/app/(super-admin)/super-admin/early-access/page.tsx`
+- `apps/web/lib/onboarding/actions.ts`
+- `apps/web/lib/platform-admin/actions.ts`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+
+Behavior:
+- Protected contractor routes now show a small bottom-right `Need help?` entry that opens a simple early-access support panel with email support and a walkthrough placeholder link.
+- `/setup/company`, `/setup/billing`, and `/setup/pending-activation` now include a dashboard escape hatch banner: `Finish setup to unlock full access`.
+- `/setup/billing` no longer traps users when Stripe is configured but setup fails; Stripe/network/SetupIntent failures show human-readable copy, a retry action, and `Continue and add billing later`.
+- Global app errors no longer render raw error messages.
+- Settings-style feedback masks technical-looking raw errors before display.
+- Projects, estimates, contracts, and invoices first-empty states now carry clearer canonical workflow guidance and primary first-action paths where the workflow can safely provide one.
+- `/super-admin/early-access` now confirms before `Mark active` and returns `Company activated` on success.
+
+Validation still required for this pass:
+- `pnpm typecheck`
+- `pnpm lint`
+- `pnpm build`
+- Browser QA for empty states, setup escape behavior, the Stripe-missing-key path, and super-admin activation confirmation.
+
+## Early Access Demo Readiness
+
+What is ready to show:
+- Public homepage at `/` with the early-access CTA and lead-to-payment positioning.
+- Real signup entry from `Start Free Trial` into `/signup?next=/setup/company`.
+- Early-access setup routes: `/setup/company`, `/setup/billing`, and `/setup/pending-activation`.
+- Dashboard entry at `/dashboard`, including `Start Here` guidance into the canonical Project -> Estimate -> Contract path.
+- Platform-admin visibility at `/super-admin/early-access`, including company status, saved-payment-method presence, project/estimate/contract/invoice counts, workflow-stage badges, and mark-active control.
+
+Exact investor demo flow:
+1. Visit `/`.
+2. Click `Start Free Trial`.
+3. Complete signup and land at `/setup/company`.
+4. Save company basics, then continue to `/setup/billing`.
+5. If Stripe is configured, save a billing method; if Stripe is not configured, use the billing fallback to continue.
+6. Continue to `/setup/pending-activation`.
+7. Click `Enter Dashboard` to reach `/dashboard`.
+8. Use `Start Here`.
+9. Follow Project -> Estimate -> Contract through the existing Quick-Create and workspace flow.
+10. Visit `/super-admin/early-access` as a platform admin to review the tenant, activity counts, workflow-stage badges, and activation control.
+
+Exact early-user signup flow:
+1. User visits `/`.
+2. User clicks `Start Free Trial`.
+3. User creates an account at `/signup?next=/setup/company`.
+4. User completes `/setup/company`.
+5. User visits `/setup/billing`.
+6. User either saves a billing method through Stripe SetupIntent or continues through the safe billing fallback when Stripe is unavailable.
+7. User lands on `/setup/pending-activation`.
+8. User clicks `Enter Dashboard`.
+9. User uses `/dashboard` and `Start Here` to create real internal records.
+10. Operator reviews the tenant at `/super-admin/early-access` and marks active only after review.
+
+What is intentionally gated:
+- Estimate customer sends.
+- Contract send-for-signature.
+- Customer-facing checkout/payment processing.
+- Provider-backed notification email delivery.
+- Activation uses existing `companies.tenant_status` and `companies.lifecycle_state`; no duplicate activation model, sandbox mode, or demo tenant model exists.
+
+What still needs Stripe test keys:
+- `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` must be filled in `C:/FloorConnector/.env.local`.
+- The dev server must be restarted after filling keys.
+- `/setup/billing` must be verified with a Stripe test card before claiming the live card setup path is verified.
+
+What NOT to claim yet:
+- Do not claim subscriptions or billing plans are implemented.
+- Do not claim Stripe card collection has been fully verified until test keys are present and a test card has been saved through `/setup/billing`.
+- Do not claim external sends, payment processing, or provider-backed email are available for pending/trial tenants.
+- Do not claim advanced dispatch, full reporting, AI takeoff, mobile field app, external e-sign, accounting integrations, or full payment reconciliation are complete.
+
+Operator Checklist:
+- Fill Stripe test keys in `.env.local`.
+- Restart dev server.
+- Verify `/setup/billing` with test card.
+- Use `/super-admin/early-access` to monitor users.
+- Mark active only after review.
+
+## Marketing / Onboarding / Early-Access QA Polish
+
+Completed a focused QA + UX polish pass across public marketing, signup entry, early-access setup, billing fallback, pending activation, and dashboard setup guidance.
+
+Files changed in this pass:
+- `apps/web/components/marketing-investor-page.tsx`
+- `apps/web/app/(app)/setup/company/page.tsx`
+- `apps/web/app/(app)/setup/billing/page.tsx`
+- `apps/web/app/(app)/setup/pending-activation/page.tsx`
+- `apps/web/components/stripe/setup-intent-form.tsx`
+- `apps/web/components/onboarding/start-here-card.tsx`
+- `apps/web/components/dashboard/contractor-dashboard-surface.tsx`
+- `apps/web/app/(app)/dashboard/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Behavior:
+- Public homepage copy was tightened around the lead-to-payment workflow without changing routes or adding new product claims.
+- Company setup copy now reads as customer-facing setup instead of implementation notes.
+- `/setup/billing` still uses Stripe SetupIntent only and does not charge, subscribe, store raw card data, or create duplicate billing records.
+- If Stripe keys are blank or card collection fails, billing setup now gives a clear `Continue to activation` path with billing-later copy instead of trapping early-access users.
+- `/setup/pending-activation` now reinforces that the workspace is ready while external sends, payment processing, and provider-backed emails remain locked until activation.
+- Dashboard early-access banner now includes both `Finish setup` and `View activation status`.
+- Start Here copy now directly names the expected project -> estimate -> contract path.
+
+Validation:
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- Browser smoke on `http://localhost:3001` confirmed `/` -> `Start Free Trial` -> `/signup?next=/setup/company`.
+- Authenticated browser QA confirmed `/setup/company` survives refresh, `/setup/billing` shows the Stripe-unconfigured fallback and can continue to `/setup/pending-activation`, pending activation enters `/dashboard`, and dashboard shows both setup and activation links.
+- Authenticated browser QA confirmed `/projects?compose=1`, `/estimates?compose=1`, and `/contracts?compose=1` composer anchors are reachable with no console errors.
+- Authenticated browser QA created real internal project `65ada272-cca5-4270-97ae-ae7e6bd56c43`, draft estimate `86f6dad2-fc4f-4d00-b2d9-1d55f39cee62`, and generated contract `261df341-32a9-435c-91cf-e7c94bb77e38` from an existing approved estimate.
+- Stripe test-card entry was not exercised because `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` are blank in `C:/FloorConnector/.env.local`.
+
+## Early Access Activation Guard
+
+Implemented a minimal shared activation guard for irreversible production actions while keeping early-access users able to explore and create real canonical records.
+
+Files changed:
+- `apps/web/lib/organizations/activation-guard.ts`
+- `apps/web/lib/estimates/actions.ts`
+- `apps/web/lib/contracts/actions.ts`
+- `apps/web/lib/invoices/actions.ts`
+- `apps/web/lib/notifications/system.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Guarded actions:
+- customer-facing checkout/payment processing through `requestPortalInvoicePaymentAction`
+- estimate customer send through `sendEstimateToCustomerAction`
+- contract send-for-signature through `sendContractForSignatureAction`
+- provider-backed notification email delivery through `sendTrackedNotificationEmail`
+
+Not guarded:
+- `/setup/company`
+- `/setup/billing` SetupIntent card collection
+- `/setup/pending-activation`
+- `/dashboard`
+- internal project, estimate, contract, invoice, job, scheduling, setup, review, and draft/generation records
+- contractor-side onsite signature capture and portal review/signature actions once a record has already been externally sent
+
+Behavior:
+- The shared helper reads existing `companies.tenant_status` and `companies.lifecycle_state`; no sandbox/demo mode and no duplicate activation/account/billing/company model was added.
+- Pending/trial organizations receive: `This action is locked during early access. Your account must be activated before sending externally or processing payments.`
+- Active/approved production states are allowed through the shared helper.
+
+Validation:
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `pnpm build` passed.
+- Hosted Supabase verification found two current companies; both are `tenant_status = trialing` and `lifecycle_state = trial`.
+- Direct server-helper verification against hosted Supabase confirmed company `865f87c3-376e-4d89-8d2c-ed4132264719` is blocked with the exact early-access lock message.
+- Direct server-helper verification confirmed `active/active` and `approved/approved` organization states are allowed.
+- Browser verification on `http://localhost:3001/dashboard` confirmed the pending/trial E2E user can still enter the dashboard.
+- Browser verification on `http://localhost:3001/projects?compose=1` created real canonical project `Activation Guard QA 1778022703327` at `/projects/8b9ec527-d7cc-4765-9df4-5f1d3c3d553c`, confirming internal record creation remains available during early access.
+- The estimate send UI was inspected on `/estimates/ebe9f26c-06f9-4fcf-8d16-8dfaa6f3cb2e`; the send button was disabled by existing estimate prerequisites, so the guard was verified through the shared server helper rather than forcing around existing workflow validation.
+- No active tenant exists in the current hosted verification data, so active-org behavior was verified through the helper's active/approved state assertion instead of a live active-user browser session.
+
+## Early Access UX Messaging Polish
+
+Polished the user-facing early-access messaging around locked production actions without changing schema, adding sandbox/demo mode, or changing the activation guard decision rules.
+
+Files changed:
+- `apps/web/components/early-access-lock-notice.tsx`
+- `apps/web/components/dashboard/contractor-dashboard-surface.tsx`
+- `apps/web/app/(app)/dashboard/page.tsx`
+- `apps/web/app/(app)/setup/pending-activation/page.tsx`
+- `apps/web/app/(app)/estimates/[estimateId]/page.tsx`
+- `apps/web/components/contract-status-actions.tsx`
+- `apps/web/app/(app)/contracts/[contractId]/page.tsx`
+- `apps/web/app/(portal)/portal/invoices/[invoiceId]/page.tsx`
+- `apps/web/lib/organizations/activation-guard.ts`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+
+Behavior:
+- Dashboard now shows a `Status: Early access` banner for pending/trial organizations with the copy: `You can explore the real system and create records now. External sends and payment processing unlock after activation.`
+- The banner links to `/setup/pending-activation`.
+- Estimate send, contract send-for-signature, and portal checkout/payment surfaces now share the same visible lock copy:
+  - `Locked during early access`
+  - `You can keep building real records. Sending externally and processing payments unlock after activation.`
+- The guarded UI buttons are disabled for pending/trial organizations, while the server-side activation guard remains the final enforcement boundary.
+- `/setup/pending-activation` now clearly says early-access users may enter the dashboard, create real projects/customers/estimates/contracts/invoices/jobs/scheduling records, and wait for activation before external sends or customer-facing payment processing.
+- Start Here remains optional, dismissible through localStorage preference only, and derived from real canonical project/estimate/contract/invoice/job counts.
+
+Validation:
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `pnpm build` passed.
+- Browser check on `http://localhost:3001/dashboard` confirmed the early-access banner, message, and activation-status link render.
+- Browser check on `http://localhost:3001/setup/pending-activation` confirmed dashboard entry, real-record creation copy, and external-send/payment lock copy render.
+- Browser check on `http://localhost:3001/estimates/ebe9f26c-06f9-4fcf-8d16-8dfaa6f3cb2e` confirmed the guarded estimate-send UI shows the shared lock copy and the send button is disabled.
+
+## Early Access Onboarding Verification Pass
+
+Verification date: 2026-05-05.
+
+Important Supabase note:
+- This repo uses the hosted/linked Supabase project for verification. Do not use local Supabase for this workflow.
+- `supabase db push --linked` reported the remote database is up to date.
+- Remote `companies` columns confirmed: `stripe_customer_id` and `stripe_payment_method_id` exist.
+
+Commands run:
+- `supabase db push --linked`
+- `pnpm typecheck`
+- `pnpm lint`
+- `pnpm build`
+
+Command results:
+- Remote Supabase push passed.
+- Typecheck passed.
+- Lint passed.
+- Build passed.
+
+Browser routes checked against `http://localhost:3001`:
+- `/` rendered and `Start Free Trial` links route to `/signup?next=%2Fsetup%2Fcompany`.
+- `/setup/company` saved and reloaded the canonical company profile and primary location values for the authenticated E2E tenant. The company count stayed at `2` before and after save, so no duplicate organization/company record was created.
+- `/setup/billing` rendered the intended no-charge billing setup shell and Stripe fallback state.
+- `/setup/pending-activation` rendered the early-access state with `tenant_status = trialing`, `lifecycle_state = trial`, and an `Enter Dashboard` link.
+- `/dashboard` loaded after `Enter Dashboard` and rendered canonical dashboard queues.
+
+Stripe verification result:
+- Live card verification could not be completed in this session because `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` are present but blank in `C:/FloorConnector/.env.local`.
+- With those env vars blank, `/setup/billing` correctly shows the Stripe-not-configured fallback and does not render a Payment Element.
+- The active E2E company currently has `stripe_customer_id = null` and `stripe_payment_method_id = null`.
+- Because the card flow could not run, Stripe dashboard confirmation remains pending: no customer/payment-method/no-charge/no-subscription dashboard check was completed.
+
+Dashboard Start Here note:
+- The authenticated E2E tenant already has canonical records (`projects = 4`, `estimates = 8`, `contracts = 3`, `invoices = 3`, `jobs = 6`), so `Start Here` was not visible and dismiss-click behavior was not exercised in that tenant state.
+- Source behavior still derives the card from real canonical counts and hides it when no incomplete step remains.
+
+Activation guardrail finding:
+- Pending users can enter the real contractor dashboard and explore real canonical records.
+- Current code has workflow-specific guards, readiness checks, and payment/checkout validation, but this pass did not find a centralized server-side activation guard that blocks production-risk actions solely because `tenant_status/lifecycle_state` are still pending/trial.
+- Smallest safe follow-up before implementation: add a narrow shared server-side assertion such as `assertActivatedForProductionAction` that reads the active organization context and gates only external sends, customer-facing checkout/payment processing, and other irreversible production actions. Do not add sandbox/demo mode, new billing/account/company models, or duplicate lifecycle state.
+
+## Stripe SetupIntent Card Collection
+
+Real no-charge billing-method collection is now implemented on `/setup/billing` using Stripe Elements and SetupIntent only.
+
+Files changed:
+- `apps/web/app/api/stripe/create-setup-intent/route.ts`
+- `apps/web/app/api/stripe/save-payment-method/route.ts`
+- `apps/web/components/stripe/setup-intent-form.tsx`
+- `apps/web/lib/onboarding/billing-setup.ts`
+- `apps/web/app/(app)/setup/billing/page.tsx`
+- `apps/web/lib/organizations/active-context.ts`
+- `apps/web/package.json`
+- `packages/types/src/index.ts`
+- `pnpm-lock.yaml`
+- `supabase/migrations/20260505194642_organization_stripe_payment_method_refs.sql`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Behavior changed:
+- `/setup/billing` now renders Stripe Elements when `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` and `STRIPE_SECRET_KEY` are configured.
+- The setup route creates or reuses a Stripe customer for the active organization, creates a SetupIntent with automatic payment methods, and returns only the client secret.
+- The client confirms the SetupIntent with `redirect: "if_required"` and does not create a charge or subscription.
+- After confirmation, the app server retrieves and verifies the SetupIntent belongs to the active organization's Stripe customer, stores only `companies.stripe_payment_method_id`, and sets the Stripe customer's default payment method.
+- Stripe remains the source of truth for payment methods; no raw card data, duplicate billing model, subscription table, or fake card storage was added.
+- If Stripe is not configured or SetupIntent/confirmation fails, the billing page shows a fallback/error state and lets early-access users continue to pending activation with billing-later copy.
+
+Validation note:
+- The required validation for this slice is `pnpm typecheck`, `pnpm lint`, and `pnpm build`, plus manual Stripe test-card verification with `4242 4242 4242 4242` after the migration is applied and real Stripe test keys are present.
+
+## Stripe Test-Mode Billing Verification Attempt
+
+Verification date: 2026-05-05.
+
+Scope:
+- Final test-mode verification for `/setup/billing`.
+- No implementation changes, schema changes, subscriptions, charges, sandbox/demo mode, or duplicate billing/account/company models were added.
+
+Pre-checks:
+- `.env.local` contains `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, but both values are currently blank.
+- Because both Stripe values are blank, the live Payment Element and card-confirmation path could not be exercised in this environment.
+- Linked Supabase DB columns exist on `public.companies`: `stripe_customer_id`, `stripe_payment_method_id`.
+- Linked Supabase DB values before/after this attempt remain `null` for both Stripe reference columns on the two current companies, because the card flow could not run without keys.
+
+Commands run:
+- `supabase db query --linked "select column_name from information_schema.columns where table_schema = 'public' and table_name = 'companies' and column_name in ('stripe_customer_id', 'stripe_payment_method_id') order by column_name;"`
+- `supabase db query --linked "select id, stripe_customer_id, stripe_payment_method_id from public.companies order by created_at asc;"`
+- `pnpm typecheck`
+- `pnpm lint`
+- `pnpm build`
+
+Command results:
+- Linked DB column check passed.
+- Linked DB record check confirmed both current company rows have no saved Stripe references yet.
+- Typecheck passed.
+- Lint passed.
+- Build passed.
+
+Browser route checked:
+- `http://localhost:3001/setup/billing`
+
+Browser results with current blank Stripe config:
+- Billing page rendered the `Add your billing method` shell.
+- Early-access no-charge copy rendered.
+- Safe Stripe-not-configured fallback rendered.
+- Stripe Payment Element did not render, as expected with blank keys.
+- Continue-to-activation now remains available with billing-later copy when Stripe config is blank.
+
+Stripe dashboard / API result:
+- Not verified in this session because Stripe test keys are blank in `.env.local`.
+- No customer/payment-method/no-charge/no-subscription dashboard confirmation could be completed from this environment.
+
+Remaining launch blocker:
+- Add real Stripe test-mode values for `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` in `C:/FloorConnector/.env.local`, restart the dev server, and rerun the `/setup/billing` card test with `4242 4242 4242 4242`.
+
+## Public Homepage And Early Access Onboarding
+
+Investor-ready marketing and early-access setup are now implemented without adding fake demo records, sandbox-only flows, duplicate company models, or duplicate billing models.
+
+Follow-up company profile extension implemented:
+- Added `supabase/migrations/20260505192527_company_profile_onboarding_fields.sql` to extend the existing canonical `companies` row with nullable `phone`, `email`, `website_url`, `primary_trade`, `brand_accent_color`, and `time_zone` fields.
+- `/setup/company` now saves those fields through the existing organization setup action alongside legal/display name, logo URL/reference, and primary location.
+- `/settings/organization` can maintain the same canonical organization profile fields after onboarding.
+- The shared organization brand link can use the stored brand accent color where company identity is already rendered.
+- No company-registration table, onboarding profile table, duplicate company record, sandbox model, or primary-location behavior change was added.
+- Logo upload remains deferred; the current implementation stores only a hosted logo URL or storage reference.
+
+Files changed:
+- `apps/web/components/marketing-investor-page.tsx`
+- `apps/web/lib/auth/paths.ts`
+- `apps/web/lib/onboarding/actions.ts`
+- `apps/web/lib/onboarding/company-setup.ts`
+- `apps/web/lib/onboarding/billing-setup.ts`
+- `apps/web/app/(app)/setup/company/page.tsx`
+- `apps/web/app/(app)/setup/billing/page.tsx`
+- `apps/web/app/(app)/setup/pending-activation/page.tsx`
+- `apps/web/components/onboarding/start-here-card.tsx`
+- `apps/web/components/dashboard/contractor-dashboard-surface.tsx`
+- `apps/web/app/(app)/dashboard/page.tsx`
+- `apps/web/app/(app)/projects/page.tsx`
+- `apps/web/components/estimates/estimate-records-panel.tsx`
+- `apps/web/app/(app)/contracts/page.tsx`
+- `apps/web/components/invoices/invoice-records-panel.tsx`
+- `apps/web/app/(app)/settings/organization/page.tsx`
+- `apps/web/components/organization-brand-link.tsx`
+- `apps/web/components/contractor-app-shell.tsx`
+- `apps/web/components/protected-app-top-nav.tsx`
+- `apps/web/components/protected-surface-header.tsx`
+- `apps/web/lib/organizations/active-context.ts`
+- `apps/web/lib/organizations/admin.ts`
+- `apps/web/lib/settings/actions.ts`
+- `apps/web/lib/settings/schemas.ts`
+- `packages/types/src/index.ts`
+- `supabase/migrations/20260505192527_company_profile_onboarding_fields.sql`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Behavior changed:
+- Public `/` is now a premium black/white/warm-orange SaaS homepage with hero CTA to `/signup?next=/setup/company`, lifecycle visual, problem framing, canonical-record differentiation, grouped feature sections, careful competitor positioning, planned/coming-soon section, and early-access CTA.
+- `/setup/company` is a protected owner/admin setup step that writes to existing `companies` fields and the existing primary `locations` address row, creating the primary location if needed.
+- Company setup now stores the deferred contact/profile fields on `companies`: phone, email, website URL, primary trade/service type, brand accent color, and time zone.
+- `/setup/billing` is a no-charge billing setup shell. It checks Stripe env readiness, stores Stripe customer/payment-method references on the existing `companies` organization row, and collects the card through Stripe Elements and SetupIntent only. It does not create subscriptions, charge, or fake card collection.
+- `/setup/pending-activation` reuses existing `companies.tenant_status` and `companies.lifecycle_state` and lets early-access users enter `/dashboard`.
+- Dashboard `Start here` is now optional, dismissible, localStorage-backed preference only, and derives completion from real projects, estimates, contracts, invoices, and jobs.
+- Empty-state copy was tightened for projects, estimates, contracts, and invoices around the canonical workflow.
+
+Deferred:
+- Logo upload/storage UI remains deferred; use the logo URL/reference field for now.
+- Deeper billing, subscription activation, plan selection, reconciliation, and retry workflows remain deferred.
+- No new admin activation model was added because super-admin tenant lifecycle controls already exist.
+
+Validation status:
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `pnpm build` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+- Company profile extension validation: `pnpm typecheck`, `pnpm lint`, and `pnpm build` passed after adding the canonical `companies` fields and setup/settings wiring.
+- `supabase db push --local --dry-run` could not run because local Supabase Postgres was not reachable on `127.0.0.1:54322`; `supabase status` also could not inspect local containers because Docker was not available/running in this session.
+- Browser save/reload verification for `/setup/company` remains blocked until `20260505192527_company_profile_onboarding_fields.sql` is applied to the database used by the local dev server.
+- Browser smoke via Playwright against `http://localhost:3000` confirmed `/` renders and the primary `Start Free Trial` CTA points to `/signup?next=%2Fsetup%2Fcompany`.
+- Browser smoke with saved authenticated state confirmed `/setup/company`, `/setup/billing`, `/setup/pending-activation`, and `/dashboard` load.
+- Browser smoke confirmed `Enter Dashboard` on `/setup/pending-activation` reaches `/dashboard`.
+- Dashboard Start Here was not visible for the current authenticated tenant because the completion conditions were already satisfied, so dismiss-click behavior was not exercised against this tenant state.
+
 ## System Layers First Migration Slice
 
 Schema-only first slice implemented for future product/spec and floor system template foundations.
@@ -95,6 +1194,44 @@ Deferred:
 - no message delivery proof
 - no activity timeline
 - no changes to current Estimate Editoror or estimate builder behavior
+
+## System Snapshot Migration Slice
+
+Schema-only snapshot slice implemented for future selected-system/spec proof at customer-facing estimate and contract review/signature boundaries.
+
+Migration:
+- `supabase/migrations/20260505173600_system_snapshot_foundation.sql`
+
+Tables added:
+- `estimate_system_snapshots`
+- `contract_system_snapshots`
+
+What changed:
+- Added tenant-owned estimate and contract system snapshot tables with required `company_id`.
+- `estimate_system_snapshots` uses same-company composite FKs to `estimates` and `selected_floor_systems`.
+- `contract_system_snapshots` uses same-company composite FKs to `contracts` and `selected_floor_systems`, plus an optional same-company link to `estimate_system_snapshots`.
+- Both tables preserve frozen customer/contract-facing selected-system proof metadata, including system/product/spec fields, area/phase/option labels, quantities, customer-facing description, technical notes, `component_snapshot_json`, and `metadata`.
+- `component_snapshot_json` is constrained to a JSON array; `metadata` is constrained to a JSON object.
+- Snapshot status values are `active`, `superseded`, `retracted`, `void`, and `amended`; normal delete/soft-delete behavior was not added.
+- Partial unique active indexes prevent duplicate active snapshots for the same estimate/contract plus selected system.
+- RLS is enabled and forced with active company membership policies through `public.is_active_company_member(company_id)`.
+- Update triggers call `public.set_updated_at()` without a `WHEN` clause.
+- A database trigger blocks DELETE and restricts UPDATE to `snapshot_status`, `metadata`, `updated_by`, and `updated_at`.
+
+Deferred:
+- no UI
+- no server actions
+- no estimate workflow writes
+- no contract workflow writes
+- no Estimate Builder integration
+- no contract generation integration
+- no creation/update of selected systems from estimates or contracts
+- no `visualizer_sessions`
+- no files or `file_links`
+- no message delivery proof
+- no activity events
+- no seed/demo data
+- no current product behavior changes
 
 ## System Layers Admin/Data Access Layer
 

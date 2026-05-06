@@ -12,6 +12,7 @@ import {
 } from "@/lib/change-orders/data";
 import { getEstimateById } from "@/lib/estimates/data";
 import { getJobById } from "@/lib/jobs/data";
+import { assertInvoiceOrganizationCanPerformProductionAction } from "@/lib/organizations/activation-guard";
 
 import {
   createInvoice,
@@ -411,6 +412,7 @@ export async function requestPortalInvoicePaymentAction(formData: FormData) {
   let checkoutUrl = nextPath;
 
   try {
+    await assertInvoiceOrganizationCanPerformProductionAction(result.data.invoiceId);
     invoice = await requestInvoicePayment(result.data, nextPath);
     const gateway = getPaymentGatewayAdapter();
     const pendingPayment = await ensurePendingPortalInvoicePayment(

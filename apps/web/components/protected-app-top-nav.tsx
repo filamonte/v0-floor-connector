@@ -107,6 +107,7 @@ type ProtectedAppTopNavProps = {
   notifications: ContractorNotificationsSummary;
   organizationName: string;
   organizationLogoUrl?: string | null;
+  organizationBrandAccentColor?: string | null;
   organizationStatus: string;
   userEmail: string;
   timestampLabel: string;
@@ -119,6 +120,7 @@ export function ProtectedAppTopNav({
   notifications,
   organizationName,
   organizationLogoUrl,
+  organizationBrandAccentColor,
   organizationStatus,
   userEmail,
   timestampLabel,
@@ -240,6 +242,7 @@ export function ProtectedAppTopNav({
             href={homeHref}
             organizationName={organizationName}
             logoUrl={organizationLogoUrl}
+            brandAccentColor={organizationBrandAccentColor}
             navigationLabel="Dashboard home"
             className="w-full max-w-[360px] 2xl:max-w-[400px]"
           />

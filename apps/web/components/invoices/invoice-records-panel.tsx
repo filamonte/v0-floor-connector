@@ -43,6 +43,7 @@ type InvoiceRecordsPanelProps = {
   invoices: InvoiceRecord[];
   totalInvoiceCount: number;
   storageKey: string;
+  createHref?: string;
 };
 
 function formatStatusLabel(status: string) {
@@ -104,7 +105,8 @@ function getInvoicePrimaryAction(invoice: InvoiceRecord) {
 export function InvoiceRecordsPanel({
   invoices,
   totalInvoiceCount,
-  storageKey
+  storageKey,
+  createHref
 }: InvoiceRecordsPanelProps) {
   const { rowsPerView } = useRowsPerViewPreference(storageKey);
   const visibleInvoices = applyRowsPerView(invoices, rowsPerView);
@@ -237,8 +239,10 @@ export function InvoiceRecordsPanel({
               description={
                 totalInvoiceCount > 0
                   ? "Try a broader search or switch invoice views to find the financial record you need."
-                  : "Invoices remain canonical financial records tied to the same project, customer, estimate, and job context instead of becoming a disconnected billing module."
+                  : "Create the first invoice from a project, approved scope, completed job, or deposit trigger so billing stays connected to the canonical workflow."
               }
+              actionHref={createHref}
+              actionLabel={totalInvoiceCount > 0 ? undefined : "Create first invoice"}
             />
           </div>
         )}

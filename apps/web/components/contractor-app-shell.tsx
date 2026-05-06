@@ -4,6 +4,8 @@ import type { User } from "@supabase/supabase-js";
 import type { ActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { AppShellMobileNav } from "@/components/app-shell-mobile-nav";
 import { ContractorNotificationsCenter } from "@/components/contractor-notifications-center";
+import { DevQaTools } from "@/components/dev-qa-tools";
+import { EarlyAccessHelpButton } from "@/components/early-access-help-button";
 import { GlobalSearch } from "@/components/global-search";
 import { OrganizationBrandLink } from "@/components/organization-brand-link";
 import { ProtectedAppBreadcrumbs } from "@/components/protected-app-breadcrumbs";
@@ -38,6 +40,7 @@ export async function ContractorAppShell({
   const notifications = await (organizationContext
     ? listContractorNotifications()
     : Promise.resolve({ totalCount: 0, sections: [], visibleItems: [] }));
+  const showDevTools = process.env.NODE_ENV !== "production";
 
   return (
     <div className="min-h-screen bg-[#f4f1ed] text-[#211b16]">
@@ -49,6 +52,7 @@ export async function ContractorAppShell({
               notifications={notifications}
               organizationName={organizationName}
               organizationLogoUrl={organizationContext?.organization.logoUrl}
+              organizationBrandAccentColor={organizationContext?.organization.brandAccentColor}
               organizationStatus={organizationStatus}
               userEmail={user.email ?? "Authenticated user"}
               timestampLabel={timestampLabel}
@@ -63,6 +67,7 @@ export async function ContractorAppShell({
                 href="/dashboard"
                 organizationName={organizationName}
                 logoUrl={organizationContext?.organization.logoUrl}
+                brandAccentColor={organizationContext?.organization.brandAccentColor}
                 supportingLabel="Shared contractor workspace"
                 navigationLabel="Dashboard home"
                 className="min-w-0 flex-1"
@@ -95,6 +100,8 @@ export async function ContractorAppShell({
             ) : null}
 
             {children}
+            {organizationContext ? <EarlyAccessHelpButton /> : null}
+            {showDevTools ? <DevQaTools signOutAction={signOutAction} /> : null}
           </div>
         </main>
 

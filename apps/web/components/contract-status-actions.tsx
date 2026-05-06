@@ -13,6 +13,7 @@ import {
   updateContractInternalApprovalStatusAction,
   updateContractStatusAction
 } from "@/lib/contracts/actions";
+import { EarlyAccessLockNotice } from "@/components/early-access-lock-notice";
 import { SendToContactSelect } from "@/components/send-to-contact-select";
 
 type ContractStatusActionsProps = {
@@ -21,6 +22,7 @@ type ContractStatusActionsProps = {
   currentInternalApprovalStatus: ContractInternalApprovalStatus;
   requireContractInternalApproval: boolean;
   canSend: boolean;
+  isProductionActionLocked: boolean;
   sendReadinessMessage: string;
   isLocked: boolean;
   customerPortalSignerOptions: ContractSignatureParticipantOption[];
@@ -54,6 +56,7 @@ export function ContractStatusActions({
   currentInternalApprovalStatus,
   requireContractInternalApproval,
   canSend,
+  isProductionActionLocked,
   sendReadinessMessage,
   isLocked,
   customerPortalSignerOptions,
@@ -174,6 +177,8 @@ export function ContractStatusActions({
             </p>
           </div>
 
+          {isProductionActionLocked ? <EarlyAccessLockNotice /> : null}
+
           {customerPortalSignerOptions.length === 0 ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
               No eligible customer signer is available for this project. Manage the contact,
@@ -220,7 +225,11 @@ export function ContractStatusActions({
 
               <button
                 type="submit"
-                disabled={!canSend || customerPortalSignerOptions.length === 0}
+                disabled={
+                  isProductionActionLocked ||
+                  !canSend ||
+                  customerPortalSignerOptions.length === 0
+                }
                 className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-900 shadow-sm transition hover:border-amber-400 hover:bg-amber-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
               >
                 Send for signature

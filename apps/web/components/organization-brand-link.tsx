@@ -4,6 +4,7 @@ type OrganizationBrandLinkProps = {
   href: string;
   organizationName: string;
   logoUrl?: string | null;
+  brandAccentColor?: string | null;
   productLabel?: string;
   supportingLabel?: string;
   navigationLabel?: string;
@@ -28,12 +29,15 @@ export function OrganizationBrandLink({
   href,
   organizationName,
   logoUrl,
+  brandAccentColor,
   productLabel = "FloorConnector",
   supportingLabel,
   navigationLabel,
   className = ""
 }: OrganizationBrandLinkProps) {
   const initials = getInitials(organizationName);
+  const logoFrameStyle = brandAccentColor ? { borderColor: brandAccentColor } : undefined;
+  const fallbackMarkStyle = brandAccentColor ? { backgroundColor: brandAccentColor } : undefined;
 
   return (
     <Link
@@ -46,7 +50,10 @@ export function OrganizationBrandLink({
       ].join(" ")}
     >
       {logoUrl ? (
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[4px] border border-[#e0d2c3] bg-white shadow-[0_10px_24px_-20px_rgba(34,26,20,0.4)] sm:h-12 sm:w-12">
+        <span
+          className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[4px] border border-[#e0d2c3] bg-white shadow-[0_10px_24px_-20px_rgba(34,26,20,0.4)] sm:h-12 sm:w-12"
+          style={logoFrameStyle}
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={logoUrl}
@@ -55,7 +62,10 @@ export function OrganizationBrandLink({
           />
         </span>
       ) : (
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] border border-[#d8c8ba] bg-[#17120f] text-sm font-semibold uppercase tracking-[0.12em] text-[#ffd7bb] shadow-[0_10px_24px_-20px_rgba(34,26,20,0.42)] sm:h-12 sm:w-12">
+        <span
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] border border-[#d8c8ba] bg-[#17120f] text-sm font-semibold uppercase tracking-[0.12em] text-white shadow-[0_10px_24px_-20px_rgba(34,26,20,0.42)] sm:h-12 sm:w-12"
+          style={fallbackMarkStyle}
+        >
           {initials}
         </span>
       )}

@@ -166,10 +166,260 @@ type TenantRow = {
     | null;
 };
 
+type EarlyAccessTenantRow = {
+  id: string;
+  slug: string;
+  legal_name: string;
+  display_name: string;
+  logo_url: string | null;
+  phone: string | null;
+  email: string | null;
+  website_url: string | null;
+  primary_trade: string | null;
+  brand_accent_color: string | null;
+  time_zone: string | null;
+  tenant_status: string;
+  lifecycle_state: string;
+  stripe_payment_method_id: string | null;
+  created_at: string;
+};
+
+type EarlyAccessFeedbackRow = {
+  organization_id: string;
+  user_id: string | null;
+  message: string;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+};
+
+type MembershipActivityRow = {
+  company_id: string;
+  last_active_at: string | null;
+  users:
+    | {
+        last_sign_in_at: string | null;
+      }
+    | Array<{
+        last_sign_in_at: string | null;
+      }>
+    | null;
+};
+
+type TenantActivityCounts = {
+  projectCount: number;
+  estimateCount: number;
+  contractCount: number;
+  invoiceCount: number;
+};
+
+const tenantResetDeletableTables = [
+  { name: "notification_deliveries", label: "notification deliveries" },
+  { name: "notifications", label: "notifications" },
+  { name: "notification_events", label: "notification events" },
+  { name: "communication_messages", label: "communication messages" },
+  { name: "communication_threads", label: "communication threads" },
+  { name: "invoice_events", label: "invoice events" },
+  { name: "payment_events", label: "payment events" },
+  { name: "payments", label: "payments" },
+  { name: "invoice_line_items", label: "invoice line items" },
+  { name: "change_order_commercial_snapshot_items", label: "change order snapshot items" },
+  { name: "change_order_commercial_snapshots", label: "change order snapshots" },
+  { name: "change_order_events", label: "change order events" },
+  { name: "change_orders", label: "change orders" },
+  { name: "contract_signature_events", label: "contract signature events" },
+  { name: "contract_signers", label: "contract signers" },
+  { name: "contract_revisions", label: "contract revisions" },
+  { name: "contracts", label: "contracts" },
+  { name: "invoices", label: "invoices" },
+  { name: "job_assignments", label: "job assignments" },
+  { name: "jobs", label: "jobs" },
+  { name: "schedule_of_value_items", label: "schedule of value items" },
+  { name: "schedule_of_values", label: "schedules of value" },
+  { name: "estimate_customer_events", label: "estimate customer events" },
+  { name: "estimate_attachments", label: "estimate attachments" },
+  { name: "estimate_content_blocks", label: "estimate content blocks" },
+  { name: "estimate_commercial_snapshot_items", label: "estimate snapshot items" },
+  { name: "estimate_commercial_snapshots", label: "estimate snapshots" },
+  { name: "estimate_line_items", label: "estimate line items" },
+  { name: "estimates", label: "estimates" },
+  { name: "portal_record_views", label: "portal record views" },
+  { name: "portal_project_access", label: "portal project access" },
+  { name: "daily_logs", label: "daily logs" },
+  { name: "field_notes", label: "field notes" },
+  { name: "execution_attachments", label: "execution attachments" },
+  { name: "punchlist_items", label: "punchlist items" },
+  { name: "projects", label: "projects" }
+] as const;
+
 function normalizeStringArray(value: unknown) {
   return Array.isArray(value) && value.every((item) => typeof item === "string")
     ? value
     : [];
+}
+
+function aggregateCompanyCounts(rows: unknown) {
+  const counts = new Map<string, number>();
+
+  if (!Array.isArray(rows)) {
+    return counts;
+  }
+
+  for (const row of rows) {
+    const companyId =
+      row && typeof row === "object" && typeof (row as { company_id?: unknown }).company_id === "string"
+        ? (row as { company_id: string }).company_id
+        : null;
+
+    if (companyId) {
+      counts.set(companyId, (counts.get(companyId) ?? 0) + 1);
+    }
+  }
+
+  return counts;
+}
+
+function firstRelation<T>(value: T | T[] | null | undefined) {
+  return Array.isArray(value) ? value[0] ?? null : value ?? null;
+}
+
+function getLatestIso(left: string | null, right: string | null) {
+  if (!left) {
+    return right;
+  }
+
+  if (!right) {
+    return left;
+  }
+
+  return right > left ? right : left;
+}
+
+function aggregateCompanyRecentActivity(rows: unknown) {
+  const activity = new Map<
+    string,
+    {
+      lastActivityAt: string | null;
+      hasLoggedInRecently: boolean;
+    }
+  >();
+  const recentCutoffIso = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+
+  if (!Array.isArray(rows)) {
+    return activity;
+  }
+
+  for (const row of rows as MembershipActivityRow[]) {
+    if (!row?.company_id) {
+      continue;
+    }
+
+    const user = firstRelation(row.users);
+    const lastActivityAt = getLatestIso(
+      row.last_active_at,
+      user?.last_sign_in_at ?? null
+    );
+    const current = activity.get(row.company_id) ?? {
+      lastActivityAt: null,
+      hasLoggedInRecently: false
+    };
+    const latestActivityAt = getLatestIso(current.lastActivityAt, lastActivityAt);
+
+    activity.set(row.company_id, {
+      lastActivityAt: latestActivityAt,
+      hasLoggedInRecently:
+        current.hasLoggedInRecently ||
+        Boolean(latestActivityAt && latestActivityAt >= recentCutoffIso)
+    });
+  }
+
+  return activity;
+}
+
+function getFeedbackEmail(metadata: Record<string, unknown> | null) {
+  const email = metadata?.email;
+  return typeof email === "string" && email.trim().length > 0 ? email : null;
+}
+
+function aggregateEarlyAccessFeedback(rows: unknown) {
+  const feedback = new Map<
+    string,
+    {
+      feedbackCount: number;
+      recentFeedback: Array<{
+        message: string;
+        email: string | null;
+        createdAt: string;
+      }>;
+    }
+  >();
+
+  if (!Array.isArray(rows)) {
+    return feedback;
+  }
+
+  for (const row of rows as EarlyAccessFeedbackRow[]) {
+    if (!row?.organization_id) {
+      continue;
+    }
+
+    const current = feedback.get(row.organization_id) ?? {
+      feedbackCount: 0,
+      recentFeedback: []
+    };
+
+    current.feedbackCount += 1;
+
+    if (current.recentFeedback.length < 3) {
+      current.recentFeedback.push({
+        message: row.message,
+        email: getFeedbackEmail(row.metadata),
+        createdAt: row.created_at
+      });
+    }
+
+    feedback.set(row.organization_id, current);
+  }
+
+  return feedback;
+}
+
+function getExactCount(count: number | null) {
+  return typeof count === "number" ? count : 0;
+}
+
+function hasCompletedCompanyProfile(row: EarlyAccessTenantRow) {
+  return [
+    row.logo_url,
+    row.phone,
+    row.email,
+    row.website_url,
+    row.primary_trade,
+    row.brand_accent_color,
+    row.time_zone
+  ].some((value) => Boolean(value?.trim()));
+}
+
+async function getCompanyRecordCount(tableName: string, companyId: string) {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from(tableName)
+    .select("id", { count: "exact", head: true })
+    .eq("company_id", companyId);
+
+  if (response.error) {
+    throw new Error(`Unable to inspect ${tableName} for reset.`);
+  }
+
+  return getExactCount(response.count);
+}
+
+async function deleteCompanyRecords(tableName: string, label: string, companyId: string) {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase.from(tableName).delete().eq("company_id", companyId);
+
+  if (response.error) {
+    throw new Error(`Reset could not clear ${label} for this company.`);
+  }
 }
 
 function mapPlatformTemplateSeed(row: PlatformTemplateSeedRow): PlatformTemplateSeed {
@@ -919,6 +1169,143 @@ export async function listTenantsForPlatformAdmin() {
   });
 }
 
+export async function listEarlyAccessTenantsForPlatformAdmin() {
+  const supabase = getSupabaseAdminClient();
+  const [
+    tenantsResponse,
+    projectsResponse,
+    estimatesResponse,
+    contractsResponse,
+    invoicesResponse,
+    membershipsResponse,
+    feedbackResponse
+  ] = await Promise.all([
+      supabase
+        .from("companies")
+        .select(
+          "id, slug, legal_name, display_name, logo_url, phone, email, website_url, primary_trade, brand_accent_color, time_zone, tenant_status, lifecycle_state, stripe_payment_method_id, created_at"
+        )
+        .order("created_at", { ascending: false }),
+      supabase.from("projects").select("company_id"),
+      supabase.from("estimates").select("company_id"),
+      supabase.from("contracts").select("company_id"),
+      supabase.from("invoices").select("company_id"),
+      supabase
+        .from("company_memberships")
+        .select(
+          `
+            company_id,
+            last_active_at,
+            users!company_memberships_user_id_fkey (
+              last_sign_in_at
+            )
+          `
+        )
+        .eq("membership_status", "active"),
+      supabase
+        .from("workflow_error_events")
+        .select("organization_id, user_id, message, metadata, created_at")
+        .eq("action", "early_access.feedback")
+        .order("created_at", { ascending: false })
+    ]);
+
+  if (tenantsResponse.error) {
+    throw new Error(
+      `Unable to load early-access tenants: ${tenantsResponse.error.message}`
+    );
+  }
+
+  if (projectsResponse.error) {
+    throw new Error(
+      `Unable to load early-access project counts: ${projectsResponse.error.message}`
+    );
+  }
+
+  if (estimatesResponse.error) {
+    throw new Error(
+      `Unable to load early-access estimate counts: ${estimatesResponse.error.message}`
+    );
+  }
+
+  if (contractsResponse.error) {
+    throw new Error(
+      `Unable to load early-access contract counts: ${contractsResponse.error.message}`
+    );
+  }
+
+  if (invoicesResponse.error) {
+    throw new Error(
+      `Unable to load early-access invoice counts: ${invoicesResponse.error.message}`
+    );
+  }
+
+  if (membershipsResponse.error) {
+    throw new Error(
+      `Unable to load early-access login signals: ${membershipsResponse.error.message}`
+    );
+  }
+
+  if (feedbackResponse.error) {
+    throw new Error(
+      `Unable to load early-access feedback signals: ${feedbackResponse.error.message}`
+    );
+  }
+
+  const projectCounts = aggregateCompanyCounts(projectsResponse.data);
+  const estimateCounts = aggregateCompanyCounts(estimatesResponse.data);
+  const contractCounts = aggregateCompanyCounts(contractsResponse.data);
+  const invoiceCounts = aggregateCompanyCounts(invoicesResponse.data);
+  const recentActivity = aggregateCompanyRecentActivity(membershipsResponse.data);
+  const feedbackByCompany = aggregateEarlyAccessFeedback(feedbackResponse.data);
+
+  return ((Array.isArray(tenantsResponse.data) ? tenantsResponse.data : []) as EarlyAccessTenantRow[]).map(
+    (tenant) => {
+      const activitySignals = recentActivity.get(tenant.id) ?? {
+        hasLoggedInRecently: false,
+        lastActivityAt: null
+      };
+      const feedback = feedbackByCompany.get(tenant.id) ?? {
+        feedbackCount: 0,
+        recentFeedback: []
+      };
+      const activity: TenantActivityCounts = {
+        projectCount: projectCounts.get(tenant.id) ?? 0,
+        estimateCount: estimateCounts.get(tenant.id) ?? 0,
+        contractCount: contractCounts.get(tenant.id) ?? 0,
+        invoiceCount: invoiceCounts.get(tenant.id) ?? 0
+      };
+
+      return {
+        id: tenant.id,
+        slug: tenant.slug,
+        legalName: tenant.legal_name,
+        displayName: tenant.display_name,
+        tenantStatus: tenant.tenant_status,
+        lifecycleState: tenant.lifecycle_state,
+        createdAt: tenant.created_at,
+        hasCompanyProfile: hasCompletedCompanyProfile(tenant),
+        hasPaymentMethod: Boolean(tenant.stripe_payment_method_id),
+        guardedExternalActionsLocked:
+          tenant.tenant_status !== "active" || tenant.lifecycle_state !== "active",
+        activity,
+        hasFeedback: feedback.feedbackCount > 0,
+        feedbackCount: feedback.feedbackCount,
+        recentFeedback: feedback.recentFeedback,
+        hasLoggedInRecently: activitySignals.hasLoggedInRecently,
+        lastActivityAt: activitySignals.lastActivityAt,
+        hasReachedEstimate: activity.estimateCount > 0,
+        hasReachedContract: activity.contractCount > 0,
+        reachedFirstWorkflowStep: activity.projectCount > 0,
+        reachedEstimateStage: activity.projectCount > 0 && activity.estimateCount > 0,
+        reachedContractStage:
+          activity.projectCount > 0 &&
+          activity.estimateCount > 0 &&
+          activity.contractCount > 0
+      };
+    }
+  );
+}
+
 export async function updateTenantPlatformStatus(input: {
   companyId: string;
   tenantStatus: string;
@@ -939,6 +1326,68 @@ export async function updateTenantPlatformStatus(input: {
 }
 
 export const updateCompanyTenantStatus = updateTenantPlatformStatus;
+
+export async function resetEarlyAccessTenantOnboardingState(input: {
+  companyId: string;
+}) {
+  const supabase = getSupabaseAdminClient();
+  const [tenantResponse, projectCount, estimateCount, contractCount, invoiceCount] =
+    await Promise.all([
+      supabase
+        .from("companies")
+        .select("id, display_name")
+        .eq("id", input.companyId)
+        .maybeSingle(),
+      getCompanyRecordCount("projects", input.companyId),
+      getCompanyRecordCount("estimates", input.companyId),
+      getCompanyRecordCount("contracts", input.companyId),
+      getCompanyRecordCount("invoices", input.companyId)
+    ]);
+
+  if (tenantResponse.error) {
+    throw new Error("Unable to load the selected company for reset.");
+  }
+
+  if (!tenantResponse.data) {
+    throw new Error("Select a valid early-access company before resetting onboarding.");
+  }
+
+  const [estimateSystemSnapshotCount, contractSystemSnapshotCount] = await Promise.all([
+    getCompanyRecordCount("estimate_system_snapshots", input.companyId),
+    getCompanyRecordCount("contract_system_snapshots", input.companyId)
+  ]);
+
+  if (estimateSystemSnapshotCount > 0 || contractSystemSnapshotCount > 0) {
+    throw new Error(
+      "Reset is blocked because this company has binding system snapshots. Use a clean QA tenant or create a targeted migration-backed repair plan before deleting those records."
+    );
+  }
+
+  for (const table of tenantResetDeletableTables) {
+    await deleteCompanyRecords(table.name, table.label, input.companyId);
+  }
+
+  const companyResponse = await supabase
+    .from("companies")
+    .update({
+      tenant_status: "trialing",
+      lifecycle_state: "trial",
+      stripe_payment_method_id: null
+    })
+    .eq("id", input.companyId);
+
+  if (companyResponse.error) {
+    throw new Error("Reset cleared workflow records but could not reset company setup.");
+  }
+
+  return {
+    companyId: input.companyId,
+    projectCount,
+    estimateCount,
+    contractCount,
+    invoiceCount
+  };
+}
 
 export async function upsertTenantWorkflowNumberingByPlatformAdmin(input: {
   companyId: string;

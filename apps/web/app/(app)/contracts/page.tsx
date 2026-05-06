@@ -552,7 +552,26 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
                 description={
                   contracts.length > 0
                     ? "Try a broader search or switch to another real contract status."
-                    : "Contracts are generated from approved estimates so the signed commercial record stays connected to the same project and customer chain."
+                    : "Contracts are generated from approved estimates so the project and customer chain stays intact."
+                }
+                actionHref={
+                  contracts.length > 0
+                    ? undefined
+                    : approvedEstimates.length > 0
+                      ? buildContractsHref({
+                          q: query,
+                          status: statusFilter,
+                          compose: "1",
+                          estimateId: resolvedSearchParams.estimateId
+                        })
+                      : "/estimates"
+                }
+                actionLabel={
+                  contracts.length > 0
+                    ? undefined
+                    : approvedEstimates.length > 0
+                      ? "Generate first contract"
+                      : "Open estimates"
                 }
               />
             </div>

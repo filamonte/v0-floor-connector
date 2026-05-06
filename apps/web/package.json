@@ -10,13 +10,15 @@
     "typecheck": "tsc --project tsconfig.typecheck.json --noEmit"
   },
   "dependencies": {
+    "@floorconnector/config": "workspace:*",
+    "@floorconnector/db": "workspace:*",
     "@floorconnector/domain": "workspace:*",
     "@floorconnector/integrations": "workspace:*",
     "@floorconnector/types": "workspace:*",
-    "@supabase/ssr": "^0.5.2",
-    "@floorconnector/config": "workspace:*",
-    "@floorconnector/db": "workspace:*",
     "@floorconnector/ui": "workspace:*",
+    "@stripe/react-stripe-js": "^6.3.0",
+    "@stripe/stripe-js": "^9.4.0",
+    "@supabase/ssr": "^0.5.2",
     "next": "^15.2.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

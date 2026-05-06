@@ -78,6 +78,7 @@ Current shared canonical model includes:
 - catalog items / reusable cost items
 - finish products / manufacturer-product-spec metadata foundation
 - floor system templates and template components
+- estimate system snapshots / contract system snapshots schema foundation
 - customers
 - projects
 - estimates
@@ -125,6 +126,11 @@ Compatibility aliases still exist:
 Protected post-auth landing:
 - `/dashboard`
 
+Early-access setup routes:
+- `/setup/company`
+- `/setup/billing`
+- `/setup/pending-activation`
+
 ## Multi-Tenant Foundation
 
 Tenant isolation is already part of the working system.
@@ -138,6 +144,33 @@ Implemented tenant foundation:
 - repeat logins do not duplicate profile/org/membership records
 - tenant-owned tables use Supabase RLS
 - protected app queries are scoped to the active organization membership
+- `/setup/company` now provides a first company setup step after signup:
+  - writes legal name, display name, logo URL/reference, company phone, company email, website URL, primary trade/service type, brand/accent color, and time zone to the existing `companies` organization record
+  - writes the primary address to the existing primary `locations` record, creating that location if needed
+  - does not create a company-registration table or duplicate tenant/company model
+  - logo upload remains deferred; the current setup stores only a safe hosted logo URL or storage reference
+- `/setup/billing` is an early-access billing setup shell:
+  - inspects existing Stripe env configuration and the current `companies` organization row
+  - creates or reuses a Stripe customer for the active organization and stores only the `stripe_customer_id` reference on `companies`
+  - creates a Stripe SetupIntent with automatic payment methods for secure Stripe Elements card collection
+  - confirms the SetupIntent client-side without charging the card or creating a subscription
+  - verifies the completed SetupIntent server-side, sets the saved payment method as the Stripe customer default, and stores only the `stripe_payment_method_id` reference on `companies`
+  - does not store raw card data, create local Stripe-object copies, create a subscription, or charge the user during early access
+  - when Stripe is not configured or card collection fails, shows a safe fallback that lets the user continue to pending activation and finish billing later before activation
+- `/setup/pending-activation` reuses existing `companies.tenant_status` and `companies.lifecycle_state` as the pending/active activation state and lets early users enter the real dashboard for safe app exploration
+- the public homepage now includes an optional `Request Early Access` form in addition to `Start Free Trial`; requests write to existing canonical `contacts` plus `opportunities` with `opportunities.source = 'early_access'` and `source_detail = 'homepage_request'`
+  - in production, `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` must point to the existing company that owns public intake leads; when it is missing, public request submission fails with user-friendly fallback copy instead of silently writing to an arbitrary tenant
+  - in non-production only, the form falls back to the oldest existing company if no explicit intake company is configured
+- a shared server-side activation guard now uses the same existing company status/lifecycle fields to block irreversible external production actions for pending/trial organizations while leaving setup, dashboard access, and internal canonical record creation available
+- guarded production actions currently include estimate customer send, contract send-for-signature, portal checkout/payment processing, and provider-backed notification email delivery
+- early-access UX now consistently explains that users can keep building real records while external sends and payment processing remain locked until activation:
+  - dashboard shows an early-access status banner with links to finish setup and view `/setup/pending-activation`
+  - dashboard redirects users with no completed company profile fields back to `/setup/company`
+  - when Stripe is configured and the company has no saved payment method, the dashboard setup banner points users to `/setup/billing`; when Stripe is not configured, billing remains non-blocking
+  - estimate send, contract send-for-signature, and portal checkout/payment surfaces show the same "Locked during early access" message when the active organization is pending/trial
+  - `/setup/pending-activation` explicitly says users may enter the dashboard, create real projects/estimates/contracts/invoices/jobs, and wait for activation before external sends or payment processing
+  - protected contractor routes now include a lightweight `Send Feedback` floating entry that opens a modal and writes feedback to the existing tenant-scoped `workflow_error_events` log with `action = 'early_access.feedback'`; setup pages include a dashboard escape hatch with `Finish setup to unlock full access` guidance
+  - `/setup/billing` lets users retry secure billing or continue setup and add billing later if SetupIntent creation, network access, or Stripe card confirmation fails
 
 Membership roles currently supported:
 - `owner`
@@ -154,7 +187,7 @@ Current shell behavior:
 - top-level navigation is now the primary contractor app navigation
 - sign out action
 - current organization display
-- tenant-configurable logo support on the shared organization profile, with contractor-shell brand navigation now returning to `/dashboard`
+- tenant-configurable logo and brand-accent support on the shared organization profile, with contractor-shell brand navigation now returning to `/dashboard`
 - organization-aware breadcrumbs
 - role-aware navigation visibility
 - wider main workspace and calmer dashboard-first shell framing
@@ -184,10 +217,13 @@ Current shell behavior:
   - invoice detail treats billing review, balance due, and payment recording as the primary story while keeping line items and payment activity visible
   - job detail treats schedule, crew, status, and project execution state as the primary story while keeping daily logs, time, field, invoice, and support links visible but secondary
   - remaining UI issues are now iterative polish items rather than structural layout breaks
-- first-login onboarding readiness has been polished without adding schema or new workflow logic:
-  - dashboard now shows a lightweight `Start here` setup guide until settings, the first customer, the first project, and the first estimate are present
+- first-login onboarding readiness has been polished without adding schema or duplicate workflow tracking:
+  - dashboard now shows a dismissible `Start here` guide until the first project, estimate, contract, and optional invoice or job are present
+  - guide dismissal uses localStorage only for UI preference state, not business workflow state
+  - zero-project companies always see Start Here so the first project action stays obvious
+  - companies with a project but no estimate are guided toward creating the first estimate next
   - dashboard links now route to the current canonical `/leads` and `/appointments` surfaces
-  - first-empty states on leads, customers, projects, and estimates now include direct Quick-Create actions and clearer "create your first..." guidance
+  - first-empty states on leads, customers, projects, estimates, contracts, and invoices include clearer canonical-workflow guidance and one primary first-action path
   - Quick-Create remains the existing canonical-record-first path and still hands off into the full workspace
 
 ### Contractor UI System
@@ -1193,6 +1229,7 @@ Implemented:
 - tenant-owned `finish_products` foundation for manufacturer/product/spec proof metadata
 - tenant-owned `floor_system_templates` and `floor_system_template_components` foundation for future floor system templates backed by `catalog_items`
 - tenant-owned `selected_floor_systems` foundation for chosen or proposed finish/service systems linked to real tenant workflow records
+- tenant-owned `estimate_system_snapshots` and `contract_system_snapshots` schema foundation for future selected-system/spec proof at customer-facing estimate and contract review/signature boundaries
 - contractor-side System Layers settings at `/settings/system-layers` for admin-only list, create, edit, status progression, archive, and component maintenance over `finish_products`, `floor_system_templates`, and `floor_system_template_components`
 - contractor-side Selected Systems settings at `/settings/selected-systems` for admin-only list, create, edit, status changes, retraction/voiding, and project-primary validation over tenant-owned `selected_floor_systems`
 - estimate line item authoring can add active non-system `catalog_items` from the Estimate Editoror Catalog Items panel, with server-owned snapshot creation
@@ -1213,8 +1250,10 @@ Current design notes:
 - `finish_products` are metadata/proof records only; they do not own cost, pricing, quantity basis, estimate expansion, invoice behavior, or reusable item behavior
 - `floor_system_template_components` require `catalog_items` for cost/pricing/quantity/estimate expansion and may optionally reference `finish_products` only for product/spec proof
 - `selected_floor_systems` rows are tenant-owned through required `company_id`; they are not public/pre-auth visualizer rows and they require at least one canonical workflow anchor such as opportunity, customer, project, estimate, contract, or job
+- `estimate_system_snapshots` and `contract_system_snapshots` now exist as schema foundation only; no estimate workflow, contract workflow, UI, server action, Estimate Builder path, or contract generation path writes these snapshot rows yet
+- system snapshot rows are designed as future proof/approval records: they use status values instead of normal delete/soft-delete behavior, preserve frozen selected-system/product/component metadata, and restrict updates to status/metadata/audit fields
 - `/settings/selected-systems` maintains selected-system records only; it validates same-company template, finish product, and workflow anchors, and automatically unsets other project-primary rows when a selected system is marked primary
-- `/settings/system-layers` and `/settings/selected-systems` are admin/data-access surfaces only; no estimate generation, contract generation, job integration, snapshotting, files, delivery proof, activity timeline, visualizer, or downstream selected-system workflow is implemented yet
+- `/settings/system-layers` and `/settings/selected-systems` are admin/data-access surfaces only; no estimate generation, contract generation, job integration, system snapshot writes, files/file links, delivery proof, activity timeline, visualizer, or downstream selected-system workflow is implemented yet
 - estimate workflows now reuse and snapshot active non-system catalog item data through canonical `estimate_line_items`; future invoice and materials workflows should extend the same shared model instead of creating module-specific item silos
 - inventory is now an optional operational extension of the same catalog item instead of a separate primary inventory workflow
 - inventory availability is now controlled through the shared platform / organization feature policy key `inventory_enabled`
@@ -1466,11 +1505,25 @@ Implemented:
 - platform module controls now include the inventory default policy used by the Cost Items Database module
 - platform admin assignment foundation
 - tenant lifecycle/status administration foundation
+- `/super-admin/early-access` provides a minimal onboarding visibility view over existing `companies` and canonical workflow records:
+  - company name, created date, tenant status, lifecycle state, and saved-payment-method presence derived from `companies.stripe_payment_method_id`
+  - project, estimate, contract, and invoice counts derived from existing canonical tables
+  - first workflow, estimate-stage, and contract-stage progress derived from those counts
+  - light early-user signals derived from existing records only: recent login based on `company_memberships.last_active_at` / `users.last_sign_in_at`, reached-estimate from estimate counts, and reached-contract from contract counts
+  - feedback indicators and recent-feedback drill-in derived from existing `workflow_error_events` rows where `action = 'early_access.feedback'`
+  - mark-active action using existing `companies.tenant_status` and `companies.lifecycle_state`
+  - mark-active includes a confirmation step and returns the concise success feedback `Company activated`
+  - in non-production environments only, platform admins can run a clearly labeled `DEV / TEST ONLY` onboarding reset for a selected company; the reset is tenant-scoped, clears project/estimate/contract/invoice workflow test records and related dependent workflow rows, clears `companies.stripe_payment_method_id`, and returns the company to `tenant_status = trialing` / `lifecycle_state = trial`
+  - the dev reset intentionally keeps `companies.stripe_customer_id` in place and fails safely if insert-only binding system snapshots exist, because those records are canonical and cannot be deleted through a lightweight QA utility
+- non-production contractor app sessions show a subtle `DEV MODE` badge with `Reset session`, which signs out through the real auth action after clearing browser local/session storage
+- non-production `/dashboard?fresh=true` forces the existing Start Here onboarding card visible and ignores the localStorage dismissal state without creating fake data or bypassing canonical record reads
+- non-production `/setup/billing` shows a small Stripe status indicator for test-mode, missing, mixed, or live key configuration
 
 Current design notes:
 - super admin is the source of truth for platform-wide defaults and system controls
 - contractor organizations remain isolated and own their copies after adoption
 - platform admin uses a separate platform-role assignment layer instead of piggybacking on tenant membership roles
+- tenant activation continues to use the existing tenant lifecycle/status administration foundation on `companies.tenant_status` and `companies.lifecycle_state`; no separate activation/account-status model has been added
 - platform workflow defaults now include signature-readiness and financing-readiness baselines that tenant workflow settings can inherit
 - the super-admin surface is now implemented as a real configuration foundation, but deeper enforcement, entitlements, and broader platform governance workflows are still future work
 
@@ -1520,7 +1573,7 @@ Future-looking note:
 - the current vendors, people, compliance, jobs, daily logs, time, communication, notification, and portal access foundations could support future scoped collaboration, but no contractor network, marketplace, open contractor chat, or external subcontractor/vendor collaboration surface is implemented today.
 - the current projects, estimates, estimate line items, reusable catalog item foundations, platform starter catalog foundations, organization-owned catalog items, document-template/settings foundations, selected-system schema foundation, files/attachments foundations, site-assessment fields, communication/notification foundations, and customer/project workflow could support future visual/product/finish selection, selected-system/spec workflows, shared file/evidence linking, delivery proof, activity timelines, measurement-driven estimating, System Template generation, add-ons/options, Templates & Systems administration, Takeoff & Scope Intelligence, and AI Capture.
 - the current lead Scope Intake fields can support future reviewed estimate planning, but they do not currently generate estimate lines, SOW, labor plans, material plans, takeoff records, AI suggestions, invoices, or customer-facing commercial scope automatically.
-- no `visualizer_sessions` table, pre-lead visualizer handoff, estimate/contract selected-system integration, selected-system snapshots, shared multi-record file/evidence layer, delivery-proof lifecycle for commercial sends, company-brain timeline, manual measurement-driven estimate generation, full System Template estimate generation, System Template sharing, dedicated Templates & Systems admin module, add-on/option management workflow, on-screen takeoff, AI Capture, AI takeoff, plan measurement, takeoff-to-cost-item mapping, source traceability, out-of-sync review state, or automated estimate generation exists today.
+- no `visualizer_sessions` table, pre-lead visualizer handoff, estimate/contract selected-system integration, UI/server-action writes into system snapshots, shared multi-record file/evidence layer, delivery-proof lifecycle for commercial sends, company-brain timeline, manual measurement-driven estimate generation, full System Template estimate generation, System Template sharing, dedicated Templates & Systems admin module, add-on/option management workflow, on-screen takeoff, AI Capture, AI takeoff, plan measurement, takeoff-to-cost-item mapping, source traceability, out-of-sync review state, or automated estimate generation exists today.
 - future takeoff must stay separate from implemented truth: Measurements are manual quantity inputs; Takeoff means plan/PDF/drawing-based measurement; AI Capture is a future photo/app/AI-derived input method. Takeoff and measurements would produce quantities, catalog/cost items would define reusable cost, pricing, production, markup, and tax behavior, System Templates would map quantities to grouped estimate content, and estimates would define customer-facing pricing and commercial scope.
 
 ## UI Direction Update (Latest)

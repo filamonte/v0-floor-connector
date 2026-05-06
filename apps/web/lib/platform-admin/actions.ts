@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { requirePlatformAdminUser } from "@/lib/platform-admin/access";
 import {
   assignPlatformAdminByEmail,
+  resetEarlyAccessTenantOnboardingState,
   updateCompanyTenantStatus,
   updatePlatformTemplateSeed,
   upsertTenantWorkflowNumberingByPlatformAdmin,
@@ -20,9 +21,11 @@ import {
   platformCatalogSeedInputSchema,
   platformFeaturePolicyInputSchema,
   platformFinancialDefaultsInputSchema,
+  platformTenantActivationInputSchema,
   platformTemplateSeedInputSchema,
   platformTenantWorkflowNumberingInputSchema,
   platformTenantStatusInputSchema,
+  platformTenantResetInputSchema,
   platformWorkflowDefaultsInputSchema
 } from "./schemas";
 
@@ -57,6 +60,7 @@ function revalidatePlatformAdminSlice() {
   revalidatePath("/super-admin/catalogs");
   revalidatePath("/super-admin/modules");
   revalidatePath("/super-admin/admin");
+  revalidatePath("/super-admin/early-access");
 }
 
 export async function updatePlatformFinancialDefaultsAction(formData: FormData) {
@@ -403,6 +407,96 @@ export async function updateTenantPlatformStatusAction(formData: FormData) {
   redirect(
     buildRedirect("/super-admin/admin", {
       message: "Tenant lifecycle was updated."
+    })
+  );
+}
+
+export async function markEarlyAccessTenantActiveAction(formData: FormData) {
+  await requirePlatformAdminUser("/super-admin/early-access");
+  const result = platformTenantActivationInputSchema.safeParse({
+    companyId: getFieldValue(formData, "companyId")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/super-admin/early-access", {
+        error:
+          result.error.issues[0]?.message ?? "Unable to activate this company."
+      })
+    );
+  }
+
+  try {
+    await updateCompanyTenantStatus({
+      companyId: result.data.companyId,
+      tenantStatus: "active",
+      lifecycleState: "active"
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/super-admin/early-access", {
+        error:
+          error instanceof Error ? error.message : "Unable to activate this company."
+      })
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    buildRedirect("/super-admin/early-access", {
+      message:
+        "Company activated. Guarded production actions are unlocked; billing or subscription setup still requires separate operator action unless already implemented."
+    })
+  );
+}
+
+export async function resetEarlyAccessTenantOnboardingStateAction(formData: FormData) {
+  await requirePlatformAdminUser("/super-admin/early-access");
+
+  if (process.env.NODE_ENV === "production") {
+    redirect(
+      buildRedirect("/super-admin/early-access", {
+        error: "Onboarding reset is available only in development."
+      })
+    );
+  }
+
+  const result = platformTenantResetInputSchema.safeParse({
+    companyId: getFieldValue(formData, "companyId")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/super-admin/early-access", {
+        error:
+          result.error.issues[0]?.message ?? "Unable to reset onboarding state."
+      })
+    );
+  }
+
+  let reset: Awaited<ReturnType<typeof resetEarlyAccessTenantOnboardingState>>;
+
+  try {
+    reset = await resetEarlyAccessTenantOnboardingState({
+      companyId: result.data.companyId
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/super-admin/early-access", {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Reset did not finish. Check the selected company and try again."
+      })
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    buildRedirect("/super-admin/early-access", {
+      message: `DEV / TEST ONLY reset complete: cleared ${reset.projectCount} projects, ${reset.estimateCount} estimates, ${reset.contractCount} contracts, and ${reset.invoiceCount} invoices.`
     })
   );
 }

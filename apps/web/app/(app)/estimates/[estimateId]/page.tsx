@@ -13,6 +13,7 @@ import { DetailPanel } from "@/components/detail-panel";
 import { EstimateStatusActions } from "@/components/estimate-status-actions";
 import { EstimateApprovalNextStepsPanel } from "@/components/estimates/approval-next-steps-panel";
 import { EstimateCustomerTimeline } from "@/components/estimates/estimate-customer-timeline";
+import { EarlyAccessLockNotice } from "@/components/early-access-lock-notice";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
 import {
@@ -40,6 +41,7 @@ import {
 import { listInvoices } from "@/lib/invoices/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { isOrganizationActivatedForProductionAction } from "@/lib/organizations/activation-guard";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
 import { buildScheduleHref } from "@/lib/schedule/links";
 import {
@@ -278,6 +280,13 @@ export default async function EstimateDetailPage({
           projectId: estimate.projectId
         })
       : [];
+  const isProductionActionLocked = organizationContext
+    ? !isOrganizationActivatedForProductionAction({
+        id: organizationContext.organization.id,
+        tenantStatus: organizationContext.organization.tenantStatus,
+        lifecycleState: organizationContext.organization.lifecycleState
+      })
+    : false;
   const estimateContracts = contracts.filter((contract) => contract.estimateId === estimate.id);
   const estimateJobs = jobs.filter((job) => job.estimateId === estimate.id);
   const estimateInvoices = invoices.filter((invoice) => invoice.estimateId === estimate.id);
@@ -893,9 +902,14 @@ export default async function EstimateDetailPage({
                             contact and project access from People before sending.
                           </div>
                         )}
+                        {isProductionActionLocked ? (
+                          <EarlyAccessLockNotice />
+                        ) : null}
                         <button
                           type="submit"
-                          disabled={sendContactOptions.length === 0}
+                          disabled={
+                            isProductionActionLocked || sendContactOptions.length === 0
+                          }
                           className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
                         >
                           Send estimate

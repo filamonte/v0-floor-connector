@@ -196,6 +196,14 @@ export const platformTenantStatusInputSchema = z.object({
   )
 });
 
+export const platformTenantActivationInputSchema = z.object({
+  companyId: z.string().uuid("Company id is required.")
+});
+
+export const platformTenantResetInputSchema = z.object({
+  companyId: z.string().uuid("Company id is required.")
+});
+
 export const platformTenantWorkflowNumberingInputSchema = z.object({
   companyId: z.string().uuid("Company id is required."),
   nextEstimateNumber: positiveIntegerField("Next estimate number"),

@@ -246,12 +246,12 @@ export function EstimateRecordsPanel({
             <AppEmptyState
               eyebrow={totalEstimateCount > 0 ? "No matching estimates" : "No estimates yet"}
               title={
-                totalEstimateCount > 0 ? "Adjust the estimate filters" : "Create the first estimate"
+                totalEstimateCount > 0 ? "Adjust the estimate filters" : "Create your first estimate"
               }
               description={
                 totalEstimateCount > 0
                   ? "Try a broader search or switch estimate views to find the commercial record you need."
-                  : "Next step after the customer and project are ready: create the priced commercial scope that later flows into contracts, jobs, and invoicing."
+                  : "Create your first estimate from a project, then move approved scope into a contract."
               }
               actionHref={createHref}
               actionLabel={totalEstimateCount > 0 ? undefined : "Create your first estimate"}

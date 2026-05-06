@@ -10,6 +10,7 @@ type ProtectedSurfaceHeaderProps = {
   brandHref?: string;
   brandName?: string;
   logoUrl?: string | null;
+  brandAccentColor?: string | null;
   brandSupportingLabel?: string;
 };
 
@@ -20,6 +21,7 @@ export function ProtectedSurfaceHeader({
   brandHref = "/dashboard",
   brandName = "FloorConnector",
   logoUrl,
+  brandAccentColor,
   brandSupportingLabel
 }: ProtectedSurfaceHeaderProps) {
   return (
@@ -30,6 +32,7 @@ export function ProtectedSurfaceHeader({
             href={brandHref}
             organizationName={brandName}
             logoUrl={logoUrl}
+            brandAccentColor={brandAccentColor}
             supportingLabel={brandSupportingLabel}
             className="mb-3"
           />

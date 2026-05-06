@@ -41,6 +41,12 @@ supabase db push
 
 The local environment source of truth is `C:\FloorConnector\.env.local`.
 
+## Production Environment Notes
+
+`FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` is required in production for the public `Request Early Access` form. Set it to the existing canonical `companies.id` value for the FloorConnector-owned company that should receive public early-access intake leads. If it is missing in production, public request submission fails gracefully instead of writing to an arbitrary tenant.
+
+Stripe billing readiness still requires valid test-mode `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` values before claiming `/setup/billing` card collection has been verified. The current early-access flow does not create subscriptions or automatic charges.
+
 ## Documentation Map
 
 Use these docs together:

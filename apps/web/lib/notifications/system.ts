@@ -14,6 +14,7 @@ import type {
 } from "@floorconnector/types";
 
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { assertOrganizationCanPerformProductionAction } from "@/lib/organizations/activation-guard";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { listPortalAccessGrantsForCurrentUser } from "@/lib/portal-access/data";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -400,6 +401,8 @@ async function markNotificationDeliveryFailed(deliveryId: string, errorMessage: 
 }
 
 export async function sendTrackedNotificationEmail(input: SentEmailNotificationInput) {
+  await assertOrganizationCanPerformProductionAction(input.organizationId);
+
   if (!isPostmarkEmailConfigured()) {
     throw new Error(
       "Notification email delivery is not configured. Set POSTMARK_SERVER_TOKEN and POSTMARK_FROM_EMAIL before sending notifications."

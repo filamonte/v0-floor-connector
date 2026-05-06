@@ -19,6 +19,12 @@ type MembershipRow = {
         legal_name: string;
         display_name: string;
         logo_url: string | null;
+        phone: string | null;
+        email: string | null;
+        website_url: string | null;
+        primary_trade: string | null;
+        brand_accent_color: string | null;
+        time_zone: string | null;
         tenant_status: string;
         lifecycle_state: string;
         created_at: string;
@@ -44,6 +50,12 @@ export type ActiveOrganizationContext = {
     legalName: string;
     displayName: string;
     logoUrl: string | null;
+    phone: string | null;
+    email: string | null;
+    websiteUrl: string | null;
+    primaryTrade: string | null;
+    brandAccentColor: string | null;
+    timeZone: string | null;
     tenantStatus: string;
     lifecycleState: string;
     createdAt: string;
@@ -84,6 +96,12 @@ function isMembershipRow(value: unknown): value is MembershipRow {
     typeof company.legal_name === "string" &&
     typeof company.display_name === "string" &&
     (company.logo_url === null || typeof company.logo_url === "string") &&
+    (company.phone === null || typeof company.phone === "string") &&
+    (company.email === null || typeof company.email === "string") &&
+    (company.website_url === null || typeof company.website_url === "string") &&
+    (company.primary_trade === null || typeof company.primary_trade === "string") &&
+    (company.brand_accent_color === null || typeof company.brand_accent_color === "string") &&
+    (company.time_zone === null || typeof company.time_zone === "string") &&
     typeof company.tenant_status === "string" &&
     typeof company.lifecycle_state === "string" &&
     typeof company.created_at === "string" &&
@@ -110,6 +128,12 @@ export const getActiveOrganizationContext = cache(
             legal_name,
             display_name,
             logo_url,
+            phone,
+            email,
+            website_url,
+            primary_trade,
+            brand_accent_color,
+            time_zone,
             tenant_status,
             lifecycle_state,
             created_at,
@@ -156,6 +180,12 @@ export const getActiveOrganizationContext = cache(
         legalName: company.legal_name,
         displayName: company.display_name,
         logoUrl: company.logo_url,
+        phone: company.phone,
+        email: company.email,
+        websiteUrl: company.website_url,
+        primaryTrade: company.primary_trade,
+        brandAccentColor: company.brand_accent_color,
+        timeZone: company.time_zone,
         tenantStatus: company.tenant_status,
         lifecycleState: company.lifecycle_state,
         createdAt: company.created_at,

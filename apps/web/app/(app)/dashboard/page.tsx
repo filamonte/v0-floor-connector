@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 import { ContractorDashboardSurface } from "@/components/dashboard/contractor-dashboard-surface";
 import { listAppointments } from "@/lib/appointments/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
@@ -16,6 +18,8 @@ import { listInvoices } from "@/lib/invoices/data";
 import { quickCreateJobAction } from "@/lib/jobs/actions";
 import { listJobs } from "@/lib/jobs/data";
 import { listContractorNotifications } from "@/lib/notifications/data";
+import { getBillingSetupState } from "@/lib/onboarding/billing-setup";
+import { isOrganizationActivatedForProductionAction } from "@/lib/organizations/activation-guard";
 import { quickCreateOpportunityAction } from "@/lib/opportunities/actions";
 import { listOpportunities } from "@/lib/opportunities/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
@@ -71,9 +75,37 @@ function buildSearchText(...parts: Array<string | null | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
 
-export default async function DashboardPage() {
+function hasCompanyProfileFields(
+  organization: NonNullable<
+    Awaited<ReturnType<typeof getActiveOrganizationContext>>
+  >["organization"]
+) {
+  return [
+    organization.logoUrl,
+    organization.phone,
+    organization.websiteUrl,
+    organization.primaryTrade,
+    organization.brandAccentColor,
+    organization.timeZone
+  ].some((value) => Boolean(value?.trim()));
+}
+
+type DashboardPageProps = {
+  searchParams?: Promise<{
+    fresh?: string;
+  }>;
+};
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const forceFreshOnboarding =
+    process.env.NODE_ENV !== "production" && resolvedSearchParams.fresh === "true";
   const user = await requireAuthenticatedUser("/dashboard");
   const organizationContext = await getActiveOrganizationContext(user.id);
+
+  if (!organizationContext || !hasCompanyProfileFields(organizationContext.organization)) {
+    redirect("/setup/company");
+  }
 
   const [
     customers,
@@ -90,7 +122,8 @@ export default async function DashboardPage() {
     notifications,
     progressBillingWorkspaces,
     financialSettings,
-    workflowSettings
+    workflowSettings,
+    billingSetupState
   ] = await Promise.all([
     listCustomers(),
     listOpportunities(),
@@ -105,12 +138,9 @@ export default async function DashboardPage() {
     listPayments(),
     listContractorNotifications(),
     listProgressBillingWorkspaces(),
-    organizationContext
-      ? getOrganizationFinancialSettings(organizationContext.organization.id)
-      : Promise.resolve(null),
-    organizationContext
-      ? getOrganizationWorkflowSettings(organizationContext.organization.id)
-      : Promise.resolve(null)
+    getOrganizationFinancialSettings(organizationContext.organization.id),
+    getOrganizationWorkflowSettings(organizationContext.organization.id),
+    getBillingSetupState(organizationContext.organization.id)
   ]);
 
   const today = new Date().toISOString().slice(0, 10);
@@ -186,40 +216,40 @@ export default async function DashboardPage() {
   ).length;
   const onboardingSteps = [
     {
-      key: "settings",
-      label: "Review settings",
-      description:
-        "Confirm organization, workflow, financial, and template defaults before the first customer-facing send.",
-      href: "/settings",
-      actionLabel: "Review settings",
-      complete: Boolean(financialSettings && workflowSettings)
-    },
-    {
-      key: "customer",
-      label: "Create first customer",
-      description:
-        "Add the canonical customer account and email that estimates, portal access, invoices, and payments use.",
-      href: "/customers?compose=1#customer-create",
-      actionLabel: "Create first customer",
-      complete: customers.length > 0
-    },
-    {
       key: "project",
-      label: "Create first project",
+      label: "Create your first project",
       description:
-        "Create the project hub that connects estimating, contracts, jobs, invoices, and payments.",
+        "Everything starts from the project once customer and job context are real.",
       href: "/projects?compose=1#project-create",
-      actionLabel: "Create first project",
+      actionLabel: "Create project",
       complete: projects.length > 0
     },
     {
       key: "estimate",
-      label: "Create first estimate",
+      label: "Create your first estimate",
       description:
-        "Start the priced scope from a lead, customer, or project and continue in the estimate workspace.",
+        "Estimates are created from projects and carry priced scope toward contracts.",
       href: "/estimates?compose=1#estimate-create",
-      actionLabel: "Create first estimate",
+      actionLabel: "Create estimate",
       complete: estimates.length > 0
+    },
+    {
+      key: "contract",
+      label: "Generate your first contract",
+      description:
+        "Contracts are generated from approved estimates on the same project chain.",
+      href: "/contracts?compose=1",
+      actionLabel: "Generate contract",
+      complete: contracts.length > 0
+    },
+    {
+      key: "invoice-or-job",
+      label: "Optional: create an invoice or job",
+      description:
+        "Invoices and jobs stay connected to projects, contracts, payments, and execution.",
+      href: jobs.length > 0 ? "/invoices?compose=1#invoice-create" : "/jobs?compose=1#job-create",
+      actionLabel: jobs.length > 0 ? "Create invoice" : "Create job",
+      complete: invoices.length > 0 || jobs.length > 0
     }
   ];
   const recentPayments = payments.filter((payment) => payment.status !== "void").slice(0, 5);
@@ -272,6 +302,17 @@ export default async function DashboardPage() {
   const firstEstimateAwaitingAction = estimatesAwaitingAction[0] ?? null;
   const firstJobNeedingScheduling = jobsNeedingScheduling[0] ?? null;
   const firstJobTodayOrInProgress = jobsTodayOrInProgress[0] ?? null;
+  const isProductionActionLocked = organizationContext
+    ? !isOrganizationActivatedForProductionAction({
+        id: organizationContext.organization.id,
+        tenantStatus: organizationContext.organization.tenantStatus,
+        lifecycleState: organizationContext.organization.lifecycleState
+      })
+    : false;
+  const hasSavedBillingMethod = Boolean(billingSetupState.stripePaymentMethodId);
+  const shouldSuggestBillingSetup =
+    !hasSavedBillingMethod &&
+    (isProductionActionLocked ? billingSetupState.canCollectCardNow : true);
 
   return (
     <ContractorDashboardSurface
@@ -282,6 +323,25 @@ export default async function DashboardPage() {
         roleLabel: organizationContext?.membership.role ?? "member",
         activeProjectCount: activeProjects.length,
         openReceivablesLabel: formatCurrency(openReceivables)
+      }}
+      earlyAccess={{
+        isLocked: isProductionActionLocked,
+        statusLabel: isProductionActionLocked ? "Early access" : "Account active",
+        href: "/setup/pending-activation",
+        setupHref: shouldSuggestBillingSetup ? "/setup/billing" : undefined,
+        setupCtaLabel: shouldSuggestBillingSetup
+          ? isProductionActionLocked
+            ? "Finish billing setup"
+            : "Add billing method"
+          : undefined,
+        setupMessage: isProductionActionLocked
+          ? shouldSuggestBillingSetup
+            ? "Finish setup to unlock full access. You can keep creating internal records now, and payment collection will unlock after your account is active."
+            : undefined
+          : "Account active. Production external actions are available from the existing guarded workflows.",
+        billingStatusLabel: hasSavedBillingMethod
+          ? "Billing method saved"
+          : "No billing method saved yet"
       }}
       priorityItems={[
         primaryAttentionItem
@@ -738,6 +798,7 @@ export default async function DashboardPage() {
         }
       ]}
       onboardingSteps={onboardingSteps}
+      startHereForceVisible={forceFreshOnboarding || projects.length === 0}
       shortcuts={[
         {
           key: "cost-items-database",

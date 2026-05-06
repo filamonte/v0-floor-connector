@@ -31,6 +31,8 @@ import {
   createContractFromEstimateInputSchema,
   updateContractDraftInputSchema
 } from "./schemas";
+import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { assertActiveOrganizationCanPerformProductionAction } from "@/lib/organizations/activation-guard";
 import { recordWorkflowErrorForCurrentUser } from "@/lib/workflow-errors/data";
 
 function getFieldValue(formData: FormData, key: string) {
@@ -434,6 +436,7 @@ export async function sendContractForSignatureAction(formData: FormData) {
     );
   }
 
+  const user = await requireAuthenticatedUser(`/contracts/${result.data.contractId}`);
   const options = await getContractSignatureActionOptions(
     result.data.contractId,
     `/contracts/${result.data.contractId}`
@@ -477,6 +480,7 @@ export async function sendContractForSignatureAction(formData: FormData) {
   let contract;
 
   try {
+    await assertActiveOrganizationCanPerformProductionAction(user.id);
     contract = await sendContractForSignature({
       contractId: result.data.contractId,
       signers: [

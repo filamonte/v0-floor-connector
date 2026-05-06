@@ -345,6 +345,14 @@ export interface Organization {
   legalName: string;
   displayName: string;
   logoUrl: string | null;
+  phone: string | null;
+  email: string | null;
+  websiteUrl: string | null;
+  primaryTrade: string | null;
+  brandAccentColor: string | null;
+  timeZone: string | null;
+  stripeCustomerId: string | null;
+  stripePaymentMethodId: string | null;
   tenantStatus: string;
   lifecycleState: string;
   primaryContactUserId: ProfileId | null;

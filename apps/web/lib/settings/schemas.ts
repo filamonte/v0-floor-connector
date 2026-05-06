@@ -29,6 +29,46 @@ function trimmedNullableString(maxLength: number) {
     .transform((value) => value ?? null);
 }
 
+function optionalEmailField() {
+  return trimmedNullableString(254).refine(
+    (value) => value === null || z.string().email().safeParse(value).success,
+    {
+      message: "Enter a valid company email."
+    }
+  );
+}
+
+function optionalHttpUrlField(label: string) {
+  return trimmedNullableString(2000).refine((value) => {
+    if (value === null) {
+      return true;
+    }
+
+    const parsed = z.string().url().safeParse(value);
+
+    if (!parsed.success) {
+      return false;
+    }
+
+    try {
+      const url = new URL(value);
+      return url.protocol === "http:" || url.protocol === "https:";
+    } catch {
+      return false;
+    }
+  }, {
+    message: `${label} must be a valid http or https URL.`
+  });
+}
+
+function optionalBrandAccentColorField() {
+  return trimmedNullableString(7)
+    .refine((value) => value === null || /^#[0-9a-fA-F]{6}$/.test(value), {
+      message: "Brand accent color must be a hex color like #d8731f."
+    })
+    .transform((value) => value?.toLowerCase() ?? null);
+}
+
 function percentStringField(label: string) {
   return z
     .string()
@@ -190,6 +230,12 @@ export const organizationProfileInputSchema = z.object({
     .refine((value) => value === null || z.string().url().safeParse(value).success, {
       message: "Logo URL must be a valid absolute URL."
     }),
+  phone: trimmedNullableString(40),
+  email: optionalEmailField(),
+  websiteUrl: optionalHttpUrlField("Website URL"),
+  primaryTrade: trimmedNullableString(120),
+  brandAccentColor: optionalBrandAccentColorField(),
+  timeZone: trimmedNullableString(120),
   slug: z
     .string()
     .trim()

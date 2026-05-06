@@ -464,6 +464,18 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             invoices={filteredInvoices}
             totalInvoiceCount={scopedInvoices.length}
             storageKey={INVOICES_ROWS_PER_VIEW_STORAGE_KEY}
+            createHref={
+              buildInvoicesHref({
+                q: query,
+                status: statusFilter,
+                compose: "1",
+                projectId: projectFilterId || undefined,
+                estimateId: estimateFilterId || undefined,
+                jobId: jobFilterId || undefined,
+                changeOrderId: changeOrderFilterId || undefined,
+                workflowRole: workflowRoleFilter
+              }) + "#invoice-create"
+            }
           />
         </div>
 

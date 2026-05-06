@@ -223,6 +223,12 @@ export async function updateOrganizationProfileAction(formData: FormData) {
     legalName: getFieldValue(formData, "legalName"),
     displayName: getFieldValue(formData, "displayName"),
     logoUrl: getFieldValue(formData, "logoUrl"),
+    phone: getFieldValue(formData, "phone"),
+    email: getFieldValue(formData, "email"),
+    websiteUrl: getFieldValue(formData, "websiteUrl"),
+    primaryTrade: getFieldValue(formData, "primaryTrade"),
+    brandAccentColor: getFieldValue(formData, "brandAccentColor"),
+    timeZone: getFieldValue(formData, "timeZone"),
     slug: getFieldValue(formData, "slug")
   });
 

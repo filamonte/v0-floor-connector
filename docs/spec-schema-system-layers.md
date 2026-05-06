@@ -11,7 +11,7 @@ tags: [schema, planning, products, systems, files, communication, delivery-proof
 
 Status: partially implemented schema specification.
 
-This document converts the approved system-layers implementation plan into a PostgreSQL schema specification. The first migration slice is implemented in `supabase/migrations/20260505120000_system_layers_first_slice.sql`. The selected-system-only second slice is implemented in `supabase/migrations/20260505140921_selected_floor_systems_foundation.sql`. Later slices remain planning only.
+This document converts the approved system-layers implementation plan into a PostgreSQL schema specification. The first migration slice is implemented in `supabase/migrations/20260505120000_system_layers_first_slice.sql`. The selected-system-only second slice is implemented in `supabase/migrations/20260505140921_selected_floor_systems_foundation.sql`. The system snapshot schema slice is implemented in `supabase/migrations/20260505173600_system_snapshot_foundation.sql`. Later file, delivery-proof, and activity slices remain planning only.
 
 For implemented status, trust [docs/current-state.md](C:/FloorConnector/docs/current-state.md). This schema spec is future direction until an approved migration task implements it.
 
@@ -472,6 +472,8 @@ Purpose: tenant-owned selected finish/system/spec context after lead intake, cus
 
 Purpose: immutable proof of selected system/spec content included at a customer-facing estimate boundary.
 
+Implementation status: schema foundation only, implemented by `supabase/migrations/20260505173600_system_snapshot_foundation.sql`. No estimate workflow, UI, server action, Estimate Builder path, or customer-facing write path creates these rows yet.
+
 ### Columns
 
 | Column | Type | Required | Default | Notes |
@@ -479,73 +481,76 @@ Purpose: immutable proof of selected system/spec content included at a customer-
 | `id` | `uuid` | yes | `gen_random_uuid()` | Primary key. |
 | `company_id` | `uuid` | yes | none | FK to `public.companies(id)`. |
 | `estimate_id` | `uuid` | yes | none | FK to `estimates(id)`. |
-| `selected_floor_system_id` | `uuid` | no | none | FK to `selected_floor_systems(id)`. Nullable for migration/import edge cases only. |
-| `floor_system_template_id` | `uuid` | no | none | Source template reference metadata. |
-| `status` | `text` | yes | `'active'` | `active`, `superseded`, `retracted`, `void`, `amended`. |
-| `snapshot_trigger` | `text` | yes | none | `customer_facing_estimate`, `estimate_revision`, `option_proposed`, `manual_admin_correction`. |
-| `snapshot_version` | `integer` | yes | `1` | Version within estimate/system context. |
-| `system_name` | `text` | yes | none | Snapshotted selected system name. |
-| `service_family` | `text` | yes | none | Snapshotted service family. |
-| `finish_family` | `text` | no | none | Snapshotted finish family where applicable. |
-| `manufacturer_name` | `text` | no | none | Snapshotted proof metadata. |
-| `product_line` | `text` | no | none | Snapshotted proof metadata. |
-| `product_code` | `text` | no | none | Snapshotted proof metadata. |
-| `sku` | `text` | no | none | Snapshotted proof metadata. |
-| `proof_file_summary` | `jsonb` | yes | `'{}'::jsonb` | Optional denormalized display cache only. Canonical file relationships are `files` + `file_links`. |
-| `customer_facing_description` | `text` | no | none | Customer proof language. |
-| `technical_notes` | `text` | no | none | Technical proof notes. |
-| `area_label` | `text` | no | none | Snapshotted area/room label. |
-| `area_type` | `text` | yes | `'whole_project'` | Snapshotted area type. |
-| `phase_label` | `text` | no | none | Snapshotted phase label. |
-| `option_label` | `text` | no | none | Snapshotted option/alternate label. |
-| `estimated_area_sqft` | `numeric(12,2)` | no | none | Snapshotted planning quantity. |
-| `estimated_linear_ft` | `numeric(12,2)` | no | none | Snapshotted planning quantity. |
-| `component_snapshots` | `jsonb` | yes | `'[]'::jsonb` | Component/catalog item snapshot metadata. |
-| `source_metadata` | `jsonb` | yes | `'{}'::jsonb` | Source selected/template/product ids and proof notes. |
-| `created_by_user_id` | `uuid` | no | none | FK to `public.users(id)`. |
+| `selected_floor_system_id` | `uuid` | yes | none | FK to `selected_floor_systems(id)`. |
+| `snapshot_status` | `text` | yes | `'active'` | `active`, `superseded`, `retracted`, `void`, `amended`. |
+| `system_name_snapshot` | `text` | yes | none | Snapshotted selected system name. |
+| `service_family_snapshot` | `text` | yes | none | Snapshotted service family. |
+| `finish_family_snapshot` | `text` | no | none | Snapshotted finish family where applicable. |
+| `manufacturer_name_snapshot` | `text` | no | none | Snapshotted proof metadata. |
+| `product_line_snapshot` | `text` | no | none | Snapshotted proof metadata. |
+| `product_code_snapshot` | `text` | no | none | Snapshotted proof metadata. |
+| `sku_snapshot` | `text` | no | none | Snapshotted proof metadata. |
+| `finish_product_name_snapshot` | `text` | no | none | Snapshotted finish product/spec display name. |
+| `area_label_snapshot` | `text` | no | none | Snapshotted area/room label. |
+| `area_type_snapshot` | `text` | yes | `'whole_project'` | Snapshotted area type. |
+| `phase_label_snapshot` | `text` | no | none | Snapshotted phase label. |
+| `option_label_snapshot` | `text` | no | none | Snapshotted option/alternate label. |
+| `sort_order_snapshot` | `integer` | yes | `0` | Snapshotted display order. |
+| `estimated_area_sqft_snapshot` | `numeric(12,2)` | no | none | Snapshotted planning quantity. |
+| `estimated_linear_ft_snapshot` | `numeric(12,2)` | no | none | Snapshotted planning quantity. |
+| `quantity_notes_snapshot` | `text` | no | none | Snapshotted quantity notes. |
+| `customer_facing_description_snapshot` | `text` | no | none | Customer proof language. |
+| `technical_notes_snapshot` | `text` | no | none | Technical proof notes. |
+| `component_snapshot_json` | `jsonb` | yes | `'[]'::jsonb` | Frozen component/catalog/product metadata payload. |
+| `metadata` | `jsonb` | yes | `'{}'::jsonb` | Extensible snapshot metadata; image/spec-sheet references are metadata-only until the file layer exists. |
+| `created_by` | `uuid` | no | none | FK to `public.users(id)`. |
+| `updated_by` | `uuid` | no | none | FK to `public.users(id)`. |
 | `created_at` | `timestamptz` | yes | `now()` | Creation timestamp. |
+| `updated_at` | `timestamptz` | yes | `now()` | Updated by trigger for allowed status/metadata/audit updates. |
 
 ### Constraints
 
 - Primary key: `id`.
 - FK: `company_id -> public.companies(id)`.
 - FK: `estimate_id -> estimates(id)`.
-- FK: `selected_floor_system_id -> selected_floor_systems(id)`.
-- FK: `floor_system_template_id -> floor_system_templates(id)`.
-- Check: `status in ('active','superseded','retracted','void','amended')`.
-- Check: `snapshot_trigger in ('customer_facing_estimate','estimate_revision','option_proposed','manual_admin_correction')`.
-- Check: `snapshot_version >= 1`.
+- Same-company FK: `(company_id, estimate_id) -> estimates(company_id, id)`.
+- Same-company FK: `(company_id, selected_floor_system_id) -> selected_floor_systems(company_id, id)`.
+- Check: `snapshot_status in ('active','superseded','retracted','void','amended')`.
 - Check: `service_family in (...)`.
 - Check: `finish_family is null or finish_family in (...)`.
 - Check: `area_type in (...)`.
-- Check: `jsonb_typeof(component_snapshots) = 'array'`.
-- Check: `jsonb_typeof(proof_file_summary) = 'object'`.
-- Unique: partial unique index on `(estimate_id, selected_floor_system_id) where status = 'active' and selected_floor_system_id is not null`.
-- Same-company alignment: estimate, selected system, template source, and file links must resolve to the same `company_id`.
+- Check: nonnegative `sort_order_snapshot`, `estimated_area_sqft_snapshot`, and `estimated_linear_ft_snapshot`.
+- Check: `jsonb_typeof(component_snapshot_json) = 'array'`.
+- Check: `jsonb_typeof(metadata) = 'object'`.
+- Check: required `system_name_snapshot` is nonblank; nullable snapshot text fields must be nonblank when present.
+- Unique: partial unique index on `(company_id, estimate_id, selected_floor_system_id) where snapshot_status = 'active'`.
+- Same-company alignment: estimate and selected system must resolve to the same `company_id`.
 
 ### Recommended Indexes
 
-- `(company_id, estimate_id, status)`.
-- `(company_id, selected_floor_system_id) where selected_floor_system_id is not null`.
-- `(company_id, service_family, finish_family)`.
-- GIN index on `component_snapshots` only if component-level search becomes necessary.
+- `(company_id, estimate_id)`.
+- `(company_id, selected_floor_system_id)`.
+- `(company_id, snapshot_status)`.
+- `(company_id, created_at desc)`.
 
 ### RLS Expectations
 
 - Enable RLS.
-- Tenant users can read/write only through estimate permissions and active organization membership.
-- Portal loaders may expose customer-visible snapshot fields only through estimate/portal access checks.
+- Force RLS.
+- Tenant users can read and insert/update only through active organization membership.
+- Portal loaders are not implemented in this slice and should expose customer-visible snapshot fields later only through estimate/portal access checks.
 - Same-company alignment with estimate and selected system is mandatory.
 
 ### Immutable Fields
 
-- Insert-only by default. All columns are immutable after insert except `status` when marking the row `superseded`, `retracted`, `void`, or `amended`, and only through restricted server write paths.
-- If enforcement cannot be guaranteed at the application layer, add a database trigger that blocks normal UPDATE and DELETE on snapshot rows.
+- Insert-only by default. The implemented trigger blocks DELETE and allows UPDATE only for `snapshot_status`, `metadata`, `updated_by`, and `updated_at`.
 - No normal delete/soft-delete field. Retain binding/audit snapshots and mark status.
 
 ## Table: `contract_system_snapshots`
 
 Purpose: immutable proof of selected system/spec content included at contract review/signature boundary.
+
+Implementation status: schema foundation only, implemented by `supabase/migrations/20260505173600_system_snapshot_foundation.sql`. No contract workflow, UI, server action, contract generation path, or signature path creates these rows yet.
 
 ### Columns
 
@@ -555,69 +560,71 @@ Purpose: immutable proof of selected system/spec content included at contract re
 | `company_id` | `uuid` | yes | none | FK to `public.companies(id)`. |
 | `contract_id` | `uuid` | yes | none | FK to `contracts(id)`. |
 | `estimate_system_snapshot_id` | `uuid` | no | none | FK to `estimate_system_snapshots(id)` when copied from estimate truth. |
-| `selected_floor_system_id` | `uuid` | no | none | FK to `selected_floor_systems(id)`. |
-| `status` | `text` | yes | `'active'` | `active`, `superseded`, `retracted`, `void`, `amended`. |
-| `snapshot_trigger` | `text` | yes | none | `contract_review`, `contract_sent`, `signature_started`, `contract_amendment`, `manual_admin_correction`. |
-| `snapshot_version` | `integer` | yes | `1` | Version within contract/system context. |
-| `system_name` | `text` | yes | none | Snapshotted selected system name. |
-| `service_family` | `text` | yes | none | Snapshotted service family. |
-| `finish_family` | `text` | no | none | Snapshotted finish family where applicable. |
-| `manufacturer_name` | `text` | no | none | Snapshotted proof metadata. |
-| `product_line` | `text` | no | none | Snapshotted proof metadata. |
-| `product_code` | `text` | no | none | Snapshotted proof metadata. |
-| `sku` | `text` | no | none | Snapshotted proof metadata. |
-| `proof_file_summary` | `jsonb` | yes | `'{}'::jsonb` | Optional denormalized display cache only. Canonical file relationships are `files` + `file_links`. |
-| `customer_facing_description` | `text` | no | none | Contract/customer proof language. |
-| `technical_notes` | `text` | no | none | Technical proof notes. |
-| `area_label` | `text` | no | none | Snapshotted area/room label. |
-| `area_type` | `text` | yes | `'whole_project'` | Snapshotted area type. |
-| `phase_label` | `text` | no | none | Snapshotted phase label. |
-| `option_label` | `text` | no | none | Snapshotted option/alternate label. |
-| `estimated_area_sqft` | `numeric(12,2)` | no | none | Snapshotted planning quantity. |
-| `estimated_linear_ft` | `numeric(12,2)` | no | none | Snapshotted planning quantity. |
-| `component_snapshots` | `jsonb` | yes | `'[]'::jsonb` | Component/catalog item snapshot metadata. |
-| `source_metadata` | `jsonb` | yes | `'{}'::jsonb` | Source selected/template/product ids and proof notes. |
-| `locked_at` | `timestamptz` | no | none | Set when sent/signature lock applies. |
-| `created_by_user_id` | `uuid` | no | none | FK to `public.users(id)`. |
+| `selected_floor_system_id` | `uuid` | yes | none | FK to `selected_floor_systems(id)`. |
+| `snapshot_status` | `text` | yes | `'active'` | `active`, `superseded`, `retracted`, `void`, `amended`. |
+| `system_name_snapshot` | `text` | yes | none | Snapshotted selected system name. |
+| `service_family_snapshot` | `text` | yes | none | Snapshotted service family. |
+| `finish_family_snapshot` | `text` | no | none | Snapshotted finish family where applicable. |
+| `manufacturer_name_snapshot` | `text` | no | none | Snapshotted proof metadata. |
+| `product_line_snapshot` | `text` | no | none | Snapshotted proof metadata. |
+| `product_code_snapshot` | `text` | no | none | Snapshotted proof metadata. |
+| `sku_snapshot` | `text` | no | none | Snapshotted proof metadata. |
+| `finish_product_name_snapshot` | `text` | no | none | Snapshotted finish product/spec display name. |
+| `area_label_snapshot` | `text` | no | none | Snapshotted area/room label. |
+| `area_type_snapshot` | `text` | yes | `'whole_project'` | Snapshotted area type. |
+| `phase_label_snapshot` | `text` | no | none | Snapshotted phase label. |
+| `option_label_snapshot` | `text` | no | none | Snapshotted option/alternate label. |
+| `sort_order_snapshot` | `integer` | yes | `0` | Snapshotted display order. |
+| `estimated_area_sqft_snapshot` | `numeric(12,2)` | no | none | Snapshotted planning quantity. |
+| `estimated_linear_ft_snapshot` | `numeric(12,2)` | no | none | Snapshotted planning quantity. |
+| `quantity_notes_snapshot` | `text` | no | none | Snapshotted quantity notes. |
+| `customer_facing_description_snapshot` | `text` | no | none | Contract/customer proof language. |
+| `technical_notes_snapshot` | `text` | no | none | Technical proof notes. |
+| `component_snapshot_json` | `jsonb` | yes | `'[]'::jsonb` | Frozen component/catalog/product metadata payload. |
+| `metadata` | `jsonb` | yes | `'{}'::jsonb` | Extensible snapshot metadata; image/spec-sheet references are metadata-only until the file layer exists. |
+| `created_by` | `uuid` | no | none | FK to `public.users(id)`. |
+| `updated_by` | `uuid` | no | none | FK to `public.users(id)`. |
 | `created_at` | `timestamptz` | yes | `now()` | Creation timestamp. |
+| `updated_at` | `timestamptz` | yes | `now()` | Updated by trigger for allowed status/metadata/audit updates. |
 
 ### Constraints
 
 - Primary key: `id`.
 - FK: `company_id -> public.companies(id)`.
-- FK: `contract_id -> contracts(id)`.
-- FK: `estimate_system_snapshot_id -> estimate_system_snapshots(id)`.
-- FK: `selected_floor_system_id -> selected_floor_systems(id)`.
-- Check: `status in ('active','superseded','retracted','void','amended')`.
-- Check: `snapshot_trigger in ('contract_review','contract_sent','signature_started','contract_amendment','manual_admin_correction')`.
-- Check: `snapshot_version >= 1`.
+- Same-company FK: `(company_id, contract_id) -> contracts(company_id, id)`.
+- Same-company FK: `(company_id, estimate_system_snapshot_id) -> estimate_system_snapshots(company_id, id)`.
+- Same-company FK: `(company_id, selected_floor_system_id) -> selected_floor_systems(company_id, id)`.
+- Check: `snapshot_status in ('active','superseded','retracted','void','amended')`.
 - Check: `service_family in (...)`.
 - Check: `finish_family is null or finish_family in (...)`.
 - Check: `area_type in (...)`.
-- Check: `jsonb_typeof(component_snapshots) = 'array'`.
-- Check: `jsonb_typeof(proof_file_summary) = 'object'`.
-- Unique: partial unique index on `(contract_id, selected_floor_system_id) where status = 'active' and selected_floor_system_id is not null`.
-- Same-company alignment: contract, estimate snapshot, selected system, and file links must resolve to the same `company_id`.
+- Check: nonnegative `sort_order_snapshot`, `estimated_area_sqft_snapshot`, and `estimated_linear_ft_snapshot`.
+- Check: `jsonb_typeof(component_snapshot_json) = 'array'`.
+- Check: `jsonb_typeof(metadata) = 'object'`.
+- Check: required `system_name_snapshot` is nonblank; nullable snapshot text fields must be nonblank when present.
+- Unique: partial unique index on `(company_id, contract_id, selected_floor_system_id) where snapshot_status = 'active'`.
+- Same-company alignment: contract, optional estimate snapshot, and selected system must resolve to the same `company_id`.
 
 ### Recommended Indexes
 
-- `(company_id, contract_id, status)`.
+- `(company_id, contract_id)`.
 - `(company_id, estimate_system_snapshot_id) where estimate_system_snapshot_id is not null`.
-- `(company_id, selected_floor_system_id) where selected_floor_system_id is not null`.
-- `(company_id, service_family, finish_family)`.
+- `(company_id, selected_floor_system_id)`.
+- `(company_id, snapshot_status)`.
+- `(company_id, created_at desc)`.
 
 ### RLS Expectations
 
 - Enable RLS.
-- Tenant users can read/write only through contract permissions and active organization membership.
-- Portal loaders expose customer-visible fields only through contract/portal access checks.
+- Force RLS.
+- Tenant users can read and insert/update only through active organization membership.
+- Portal loaders are not implemented in this slice and should expose customer-visible snapshot fields later only through contract/portal access checks.
 - Same-company alignment with contract, estimate snapshot, and selected system is mandatory.
 
 ### Immutable Fields
 
-- Insert-only by default. All columns are immutable after insert except `status` when marking superseded/retracted/void/amended, and only through restricted server write paths.
-- Once `locked_at` is set, this row is binding contract truth. Never edit in place.
-- If enforcement cannot be guaranteed at the application layer, add a database trigger that blocks normal UPDATE and DELETE on snapshot rows.
+- Insert-only by default. The implemented trigger blocks DELETE and allows UPDATE only for `snapshot_status`, `metadata`, `updated_by`, and `updated_at`.
+- Rows are intended as future binding contract truth. Never edit customer/contract proof fields in place.
 - No normal delete/soft-delete field. Changes require contract amendment, estimate revision where still pre-contract, or change-order style workflow.
 
 ## Table: `files`
@@ -1030,11 +1037,39 @@ Deferred from this slice:
 - message delivery proof
 - activity timeline
 
+### System Snapshot Migration Slice
+
+Implemented by `supabase/migrations/20260505173600_system_snapshot_foundation.sql`:
+1. `estimate_system_snapshots`
+2. `contract_system_snapshots`
+
+Final system-snapshot slice choices:
+- both tables are tenant-owned through required `company_id`
+- `estimate_system_snapshots` requires same-company links to `estimates` and `selected_floor_systems`
+- `contract_system_snapshots` requires same-company links to `contracts` and `selected_floor_systems`, with an optional same-company link to `estimate_system_snapshots`
+- both tables support multiple selected-system snapshots per estimate or contract while guarding against duplicate active snapshots for the same estimate/contract plus selected system
+- snapshot status values are `active`, `superseded`, `retracted`, `void`, and `amended`
+- snapshots preserve frozen selected-system/product/component metadata through snapshot text fields, `component_snapshot_json`, and `metadata`
+- `component_snapshot_json` is JSON array metadata for now; no normalized snapshot component table was added
+- image/spec-sheet references are metadata-only for now; no `files` or `file_links` relationships were added
+- RLS is enabled and forced with active company membership policies
+- update triggers call `public.set_updated_at()` without a `WHEN` clause
+- database trigger enforcement blocks DELETE and restricts UPDATE to `snapshot_status`, `metadata`, `updated_by`, and `updated_at`
+
+Deferred from this slice:
+- estimate workflow writes
+- contract workflow writes
+- Estimate Builder integration
+- contract generation integration
+- UI/routes/server actions
+- public/pre-auth visualizer handoff and `visualizer_sessions`
+- shared files/file links
+- message delivery proof
+- activity timeline
+
 ### Later Migration Slices
 
 Defer until each workflow has an approved implementation plan:
-- `estimate_system_snapshots`
-- `contract_system_snapshots`
 - `files`
 - `file_links`
 - message delivery proof: `message_delivery_attempts`, `message_delivery_events`

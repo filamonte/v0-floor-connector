@@ -6,7 +6,7 @@ import {
   type StatusTone
 } from "../status";
 
-export type WorkflowStepState = "complete" | "current" | "blocked" | "upcoming";
+export type WorkflowStepState = "complete" | "current" | "next" | "blocked" | "upcoming";
 
 export type WorkflowStep = {
   id: string;
@@ -24,6 +24,7 @@ export type WorkflowBarProps = {
 const stepStateTones: Record<WorkflowStepState, StatusTone> = {
   complete: "success",
   current: "info",
+  next: "warning",
   blocked: "danger",
   upcoming: "neutral"
 };

@@ -247,12 +247,24 @@ The current app already supports the following live workflows:
 Implemented flow:
 - user signs in with Google or email/password
 - first access bootstraps profile, organization, and owner membership when needed
-- user lands in the protected contractor app
+- public early-access CTAs can send users to `/signup?next=/setup/company`
+- `/setup/company` updates the existing organization/company record and primary location record; it does not create a separate registration model
+- company setup stores the organization-owned legal/display name, logo URL/reference, contact details, website, primary trade/service type, brand accent color, and time zone on `companies`; primary address remains on the existing primary `locations` row
+- logo upload remains deferred; setup accepts only a hosted logo URL or storage reference
+- `/setup/billing` is a no-charge billing setup shell that uses Stripe Elements and SetupIntent only; it stores Stripe customer and payment-method references on the existing organization row, does not store raw card data, and does not create subscriptions or charges
+- if Stripe is not configured or card collection fails, `/setup/billing` keeps the user moving to pending activation with clear billing-later copy instead of trapping them on setup
+- `/setup/pending-activation` shows the existing tenant status/lifecycle state and lets early-access users enter the real contractor app with guardrails
+- user lands in the protected contractor app and can sample the real system through canonical records
+- pending/trial organizations may create and review real internal canonical records, but the shared activation guard blocks irreversible external production actions until the organization is activated
+- non-production QA can use `/dashboard?fresh=true` to force the existing Start Here onboarding prompts visible without creating fake records or changing tenant data
+- non-production platform admins can reset a selected early-access tenant from `/super-admin/early-access`; this is a development-only utility over existing company and workflow records, not a sandbox/demo mode
 
 Current canonical records involved:
 - profile
 - organization
 - membership
+- location
+- company subscription lifecycle, when present
 
 ### Lead / Opportunity Intake
 
@@ -307,7 +319,10 @@ Implemented flow:
 - system-generated estimate items still use catalog/system component sources and become canonical estimate line-item snapshots
 - `finish_products`, `floor_system_templates`, and `floor_system_template_components` now have a first contractor-side admin/data access layer in `/settings/system-layers`
 - `selected_floor_systems` now has a first contractor-side admin/data access layer in `/settings/selected-systems` for chosen or proposed finish/service systems linked to real workflow records
+- `estimate_system_snapshots` and `contract_system_snapshots` now exist as schema foundation only for future selected-system/spec proof at customer-facing estimate and contract review/signature boundaries
 - System Layers remains foundation-only for workflow purposes: it does not yet change active estimate authoring, estimate generation, contract generation, invoice behavior, files, activity, or approved snapshot lineage
+- no estimate UI, contract UI, server action, Estimate Builder path, or contract generation path writes system snapshots yet
+- no visualizer, files/file links, message delivery, or activity layer was added with the system snapshot foundation
 - selected systems are not public/pre-auth records; no `visualizer_sessions` table or public visualizer handoff exists yet
 - `catalog_items` are the canonical reusable sellable cost item database; physical stock now belongs in `inventory_items`
 - inventory remains optional per organization and never blocks cost item selection in estimates
@@ -379,7 +394,7 @@ Implemented flow:
 - contracts use the shared template foundation
 - draft contracts may be lightly edited
 - unrestricted editing locks once signature activity begins
-- contractor-side send-for-signature and optional countersign workflow now run on the same canonical contract record
+- contractor-side send-for-signature and optional countersign workflow now run on the same canonical contract record; send-for-signature is blocked by the activation guard while the organization is pending/trial
 - portal customers can now review, sign, and decline the same canonical contract through tenant-safe portal access
 - contractor-side onsite signing is implemented for in-person close workflows: when a sent or viewed contract has an eligible unsigned customer signer, the contractor can capture the customer signature on the contractor device
 - portal signing and contractor-side onsite signing both update the same canonical `contracts`, `contract_signers`, and `contract_signature_events` records
@@ -396,7 +411,7 @@ Current canonical records involved:
 
 Future selected-system/spec context:
 - contract review should inherit selected finish/system/spec context from approved estimate truth
-- once contract/signature activity begins, selected systems/specs should be locked or snapshotted
+- once contract/signature activity begins, selected systems/specs should be locked or snapshotted through the shared `contract_system_snapshots` foundation after a future integration slice
 - changes after that point should be handled through revision or change-order style workflows
 
 ### Estimate To Change Order
@@ -462,6 +477,7 @@ Implemented flow:
 - invoice status updates into `partially_paid` and `paid` based on recorded payments
 - customer-facing payment workflow foundations now exist on the same canonical invoice and payment chain
 - payment request, checkout-start, success, failure, and void events now write immutable payment events instead of introducing a second checkout or portal-payment model
+- customer-facing checkout/payment processing is blocked by the activation guard while the contractor organization that owns the invoice is pending/trial
 - contractor-side Invoice Workspace and Project Workspace now surface payment continuity and next-step guidance from the same canonical invoice and payment state
 
 Current canonical records involved:
@@ -480,6 +496,7 @@ Implemented flow:
 - per-user notifications track in-app read state from those events
 - notification deliveries track channel outcomes such as sent, delivered, opened, clicked, and failed
 - canonical communication threads and immutable messages now keep record-attached conversation history on the same customer and project chain
+- provider-backed notification email delivery is blocked by the activation guard while the organization is pending/trial; internal in-app notifications and communication review remain available
 
 Current canonical records involved:
 - notification events

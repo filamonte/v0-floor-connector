@@ -107,6 +107,11 @@ export const platformAdminNavItems: readonly SettingsNavItem[] = [
     description: "Platform feature policy and module availability rules."
   },
   {
+    href: "/super-admin/early-access",
+    label: "Early Access",
+    description: "Onboarding visibility, first workflow progress, and activation control."
+  },
+  {
     href: "/super-admin/admin",
     label: "Platform Admin",
     description: "Platform admins, tenant oversight, and system governance."

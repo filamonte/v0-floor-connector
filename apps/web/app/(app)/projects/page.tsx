@@ -477,12 +477,12 @@ export default async function ProjectsPage({
                 title={
                   projects.length > 0
                     ? "Adjust the filters or search"
-                    : "Create the first project"
+                    : "Create your first project"
                 }
                 description={
                   projects.length > 0
                     ? "Try a broader search or switch to another real project status."
-                    : "Next step after the first customer: create the project hub so estimating, contracts, jobs, and invoicing can move forward without recreating data."
+                    : "Create your first project. Everything starts from the project."
                 }
                 actionHref={buildProjectsHref({
                   q: query,

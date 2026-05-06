@@ -46,6 +46,8 @@ import {
 } from "./schemas";
 import { createCustomer } from "@/lib/customers/data";
 import { customerInputSchema } from "@/lib/customers/schemas";
+import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { assertActiveOrganizationCanPerformProductionAction } from "@/lib/organizations/activation-guard";
 import { recordWorkflowErrorForCurrentUser } from "@/lib/workflow-errors/data";
 
 function getFieldValue(formData: FormData, key: string) {
@@ -1275,9 +1277,11 @@ export async function sendEstimateToCustomerAction(formData: FormData) {
     );
   }
 
+  const user = await requireAuthenticatedUser(`/estimates/${result.data.estimateId}`);
   let estimate;
 
   try {
+    await assertActiveOrganizationCanPerformProductionAction(user.id);
     estimate = await sendEstimateToCustomer(result.data);
   } catch (error) {
     redirect(

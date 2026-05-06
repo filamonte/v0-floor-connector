@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ContextFactsList } from "@/components/context-facts-list";
+import { EarlyAccessLockNotice } from "@/components/early-access-lock-notice";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { NextActionCard } from "@/components/next-action-card";
@@ -15,6 +16,7 @@ import {
 } from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { requestPortalInvoicePaymentAction } from "@/lib/invoices/actions";
+import { getOrganizationProductionActionLockState } from "@/lib/organizations/activation-guard";
 import { getPortalInvoiceReviewData } from "@/lib/portal/data";
 
 type PortalInvoiceReviewPageProps = {
@@ -270,6 +272,10 @@ export default async function PortalInvoiceReviewPage({
     notFound();
   }
 
+  const productionActionLock = await getOrganizationProductionActionLockState(
+    invoice.organizationId
+  );
+  const isProductionActionLocked = productionActionLock.isLocked;
   const nextAction = getNextAction({
     status: invoice.status,
     workflowRole: invoice.workflowRole,
@@ -565,7 +571,9 @@ export default async function PortalInvoiceReviewPage({
         >
           <div className="space-y-4 text-sm leading-6 text-slate-600">
             <p className="max-w-[34ch]">
-              {invoice.paymentWorkflow.canRequestPayment
+              {isProductionActionLocked
+                ? "Checkout is locked during early access. You can still review this real invoice and its payment state."
+                : invoice.paymentWorkflow.canRequestPayment
                 ? "Continue from here into secure checkout on this invoice. The checkout session stays attached to the same canonical invoice and payment chain the contractor sees."
                 : invoice.paymentWorkflow.requestBlockers[0]
                   ? formatPaymentBlocker(invoice.paymentWorkflow.requestBlockers[0])
@@ -578,7 +586,7 @@ export default async function PortalInvoiceReviewPage({
               latestPaymentEventType: invoice.paymentEvents[0]?.eventType ?? null
             })}</p>
 
-            {invoice.paymentWorkflow.canRequestPayment ? (
+            {invoice.paymentWorkflow.canRequestPayment && !isProductionActionLocked ? (
               <form action={requestPortalInvoicePaymentAction} className={portalActionBoxClassName}>
                 <input type="hidden" name="invoiceId" value={invoice.id} />
                 <input type="hidden" name="amount" value={invoice.balanceDueAmount} />
@@ -599,6 +607,8 @@ export default async function PortalInvoiceReviewPage({
                   Continue to checkout for {formatMoney(invoice.balanceDueAmount)}
                 </button>
               </form>
+            ) : isProductionActionLocked ? (
+              <EarlyAccessLockNotice showLink={false} />
             ) : (
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
                 Payment initiation is currently blocked by this invoice's shared workflow state.
