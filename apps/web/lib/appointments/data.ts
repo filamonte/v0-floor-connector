@@ -31,6 +31,9 @@ type AppointmentRow = {
   ends_at: string | null;
   location: string | null;
   notes: string | null;
+  customer_visible: boolean;
+  customer_notes: string | null;
+  internal_notes: string | null;
   status: AppointmentStatus;
   created_by: string | null;
   updated_by: string | null;
@@ -128,6 +131,9 @@ const appointmentSelect = `
   ends_at,
   location,
   notes,
+  customer_visible,
+  customer_notes,
+  internal_notes,
   status,
   created_by,
   updated_by,
@@ -179,6 +185,9 @@ function isAppointmentRow(value: unknown): value is AppointmentRow {
     (row.ends_at === null || typeof row.ends_at === "string") &&
     (row.location === null || typeof row.location === "string") &&
     (row.notes === null || typeof row.notes === "string") &&
+    typeof row.customer_visible === "boolean" &&
+    (row.customer_notes === null || typeof row.customer_notes === "string") &&
+    (row.internal_notes === null || typeof row.internal_notes === "string") &&
     typeof row.status === "string" &&
     typeof row.created_at === "string" &&
     typeof row.updated_at === "string"
@@ -203,6 +212,9 @@ function mapAppointment(row: AppointmentRow): AppointmentRecord {
     endsAt: row.ends_at,
     location: row.location,
     notes: row.notes,
+    customerVisible: row.customer_visible,
+    customerNotes: row.customer_notes,
+    internalNotes: row.internal_notes ?? row.notes,
     status: row.status,
     createdByUserId: row.created_by,
     updatedByUserId: row.updated_by,
@@ -701,6 +713,9 @@ export async function createAppointment(input: AppointmentInput) {
       ends_at: normalizedInput.endsAt,
       location: normalizedInput.location,
       notes: normalizedInput.notes,
+      customer_visible: normalizedInput.customerVisible,
+      customer_notes: normalizedInput.customerNotes,
+      internal_notes: normalizedInput.internalNotes ?? normalizedInput.notes,
       status: normalizedInput.status,
       created_by: scope.userId,
       updated_by: scope.userId
@@ -748,6 +763,9 @@ export async function updateAppointment(
       ends_at: normalizedInput.endsAt,
       location: normalizedInput.location,
       notes: normalizedInput.notes,
+      customer_visible: normalizedInput.customerVisible,
+      customer_notes: normalizedInput.customerNotes,
+      internal_notes: normalizedInput.internalNotes ?? normalizedInput.notes,
       status: normalizedInput.status,
       updated_by: scope.userId
     })

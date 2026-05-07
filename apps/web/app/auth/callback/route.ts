@@ -1,19 +1,24 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { ensureAuthenticatedUserBootstrap } from "@/lib/auth/bootstrap";
-import { sanitizeRedirectPath } from "@/lib/auth/paths";
+import { getSafeInternalRedirectPath } from "@/lib/auth/paths";
+import { resolvePostLoginRedirect } from "@/lib/auth/post-login";
 import { createRouteHandlerSupabaseClient } from "@/lib/supabase/route-handler";
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const next = sanitizeRedirectPath(requestUrl.searchParams.get("next"));
+  const requestedNext = getSafeInternalRedirectPath(
+    requestUrl.searchParams.get("next")
+  );
 
   if (!code) {
     const failureUrl = new URL("/login", request.url);
 
     failureUrl.searchParams.set("error", "Missing authentication code.");
-    failureUrl.searchParams.set("next", next);
+    if (requestedNext) {
+      failureUrl.searchParams.set("next", requestedNext);
+    }
 
     return NextResponse.redirect(failureUrl);
   }
@@ -25,14 +30,20 @@ export async function GET(request: NextRequest) {
     const failureUrl = new URL("/login", request.url);
 
     failureUrl.searchParams.set("error", error.message);
-    failureUrl.searchParams.set("next", next);
+    if (requestedNext) {
+      failureUrl.searchParams.set("next", requestedNext);
+    }
 
     return NextResponse.redirect(failureUrl);
   }
 
-  await ensureAuthenticatedUserBootstrap(supabase);
+  const bootstrap = await ensureAuthenticatedUserBootstrap(supabase);
+  const destinationPath = await resolvePostLoginRedirect({
+    userId: bootstrap.user_id,
+    requestedNext
+  });
 
-  const destination = new URL(next, request.url);
+  const destination = new URL(destinationPath, request.url);
   const redirectResponse = NextResponse.redirect(destination);
 
   response.cookies.getAll().forEach((cookie) => {

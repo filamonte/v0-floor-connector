@@ -3,12 +3,14 @@
 Product, engineering, and rollout documentation lives here.
 
 Canonical repository notes:
+
 - GitHub repo: `https://github.com/filamonte/v0-floor-connector.git`
 - primary branch: `main`
 - local workspace root: `C:\FloorConnector`
 - local web app env source of truth: `C:\FloorConnector\.env.local`
 
 Current foundation priorities to document as the repo grows:
+
 - Google-first authentication with email/password fallback
 - package ownership and shared boundaries
 - Supabase migration and RLS workflow
@@ -19,14 +21,17 @@ Current foundation priorities to document as the repo grows:
 - future UI, directory/contact, tax, Estimate Editoror, workflow-guidance, and project-address alignment before broader demo/investor polish
 
 Environment notes:
+
 - Local `.env.local` files should use valid localhost URLs including `http://`.
 - Vercel environment variables should use the live production domains including `https://`.
 - Moving from local to live should be an environment-variable change, not a code change.
 
 Available setup guides:
+
 - `docs/auth-setup.md` for the planned shared auth model, Google-first plus email/password support, redirect URL expectations, and local auth verification routes.
 
 Document roles:
+
 - `docs/developer-source-of-truth.md`: primary entry point for day-to-day development guardrails
 - `docs/documentation-governance.md`: documentation system rules, archival policy, and doc update expectations
 - `docs/Architecture.md`: target system design
@@ -35,10 +40,18 @@ Document roles:
 - `docs/workflows.md`: canonical business workflows and near-term workflow direction
 - `docs/site-visit-scope-intake-plan.md`: planning guardrails for the lead site visit Scope Intake stage between appointment capture and estimate planning
 - `docs/vision.md`: long-term product direction and platform thesis
+- `docs/ai-assisted-operating-system.md`: target AI-assisted operating system strategy across contractor and FloorConnector-facing AI
+- `docs/ai-contractor-workflows.md`: target contractor-side AI copilot, drafting, summaries, scheduling suggestions, and approval queues
+- `docs/communications-and-ai-intake.md`: target unified communications, website AI chat/intake, AI receptionist, voice, missed-call, consent, and human handoff direction
+- `docs/calendar-and-scheduling-intelligence.md`: target calendar, schedule, resource, external calendar sync, and AI scheduling direction
+- `docs/ai-marketing-and-onboarding.md`: target FloorConnector-facing marketing, sales, onboarding, setup, support, activation, and import AI direction
 - `docs/target-ia.md`: target contractor app navigation and workspace structure
 - `docs/workflow-spec.md`: primary contractor workflow definition
 - `docs/workflow-state-machine.md`: stages, blockers, and transition guidance
 - `docs/system-inventory.md`: implemented/foundation/planned system inventory, including current template/catalog foundations and planned Templates & Systems administration
+- `docs/starter-pack-provisioning-plan.md`: planning-only safety spec for future starter-pack provisioning approval, audit, conflict handling, idempotency, and void strategy
+- `docs/starter-pack-provisioning-execution-readiness.md`: readiness review for starter-pack provisioning execution field mappings, lineage, transaction/RPC feasibility, and void-readiness foundations
+- `docs/starter-pack-provisioning-review.md`: consolidated architecture/operator readiness review for the implemented starter-pack provisioning lifecycle before any real void action
 - `docs/ui-data-model-alignment-backlog.md`: planning backlog for contractor UI consistency, module-page patterns, directory/contact direction, Estimate Editoror polish, tax model alignment, workflow guidance, project address display, and later configurable module/dashboard views
 - `docs/estimate-builder-build-plan.md`: long-lived Estimate Builder master blueprint
 - `docs/estimate-builder-v1-scope.md`: constrained Estimate Builder V1 execution scope
@@ -58,6 +71,7 @@ Document roles:
 - `docs/vision.md` -> where the product is intended to expand over time
 
 Current documentation focus:
+
 - keep `developer-source-of-truth.md` as the primary development entry point
 - keep implemented truth in `current-state.md`
 - keep workflow guidance in `workflows.md`

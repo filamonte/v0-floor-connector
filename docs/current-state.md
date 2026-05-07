@@ -17,6 +17,9 @@ Use these docs together:
 - [docs/estimate-builder-build-plan.md](C:/FloorConnector/docs/estimate-builder-build-plan.md): long-term Estimate Builder blueprint
 - [docs/estimate-builder-v1-scope.md](C:/FloorConnector/docs/estimate-builder-v1-scope.md): constrained Estimate Builder V1 scope
 - [docs/estimate-builder-system-generation-spec.md](C:/FloorConnector/docs/estimate-builder-system-generation-spec.md): future system-generation planning detail
+- [docs/starter-pack-provisioning-plan.md](C:/FloorConnector/docs/starter-pack-provisioning-plan.md): starter-pack provisioning safety model, execution guardrails, and future void planning
+- [docs/starter-pack-provisioning-execution-readiness.md](C:/FloorConnector/docs/starter-pack-provisioning-execution-readiness.md): starter-pack provisioning execution readiness, field mapping, lineage, and void-readiness notes
+- [docs/starter-pack-provisioning-review.md](C:/FloorConnector/docs/starter-pack-provisioning-review.md): consolidated architecture/operator readiness review before any real void action
 - [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): future/planned UI, directory/contact, tax, Estimate Editoror, project-address, and workflow-guidance alignment backlog
 - [docs/ui-patterns.md](C:/FloorConnector/docs/ui-patterns.md): implemented decision-first UI patterns for contractor workspaces, Manager Pages, status color semantics, and portal/super-admin differences
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
@@ -124,7 +127,10 @@ Compatibility aliases still exist:
 - `/sign-up`
 
 Protected post-auth landing:
-- `/dashboard`
+- safe internal `next` values are respected, except `/super-admin` still requires the explicit platform role
+- platform admins with no `next` land on `/super-admin`
+- contractor users with completed company setup land on `/dashboard`
+- authenticated contractor users without completed company setup land on `/setup/company`
 
 Early-access setup routes:
 - `/setup/company`
@@ -158,7 +164,7 @@ Implemented tenant foundation:
   - does not store raw card data, create local Stripe-object copies, create a subscription, or charge the user during early access
   - when Stripe is not configured or card collection fails, shows a safe fallback that lets the user continue to pending activation and finish billing later before activation
 - `/setup/pending-activation` reuses existing `companies.tenant_status` and `companies.lifecycle_state` as the pending/active activation state and lets early users enter the real dashboard for safe app exploration
-- the public homepage now includes an optional `Request Early Access` form in addition to `Start Free Trial`; requests write to existing canonical `contacts` plus `opportunities` with `opportunities.source = 'early_access'` and `source_detail = 'homepage_request'`
+- the public homepage now includes `Log in`, `Start early access`, and optional `Request Early Access` entry points; requests write to existing canonical `contacts` plus `opportunities` with `opportunities.source = 'early_access'` and `source_detail = 'homepage_request'`
   - in production, `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` must point to the existing company that owns public intake leads; when it is missing, public request submission fails with user-friendly fallback copy instead of silently writing to an arbitrary tenant
   - in non-production only, the form falls back to the oldest existing company if no explicit intake company is configured
 - a shared server-side activation guard now uses the same existing company status/lifecycle fields to block irreversible external production actions for pending/trial organizations while leaving setup, dashboard access, and internal canonical record creation available
@@ -363,6 +369,8 @@ Implemented:
 - lead detail page
 - site assessment scheduled/completed date capture on the canonical opportunity record
 - requirements-summary capture on the canonical opportunity record
+- next follow-up timestamp and optional internal follow-up note fields on the canonical opportunity record
+- schema/data foundation for manual opportunity communication before customer/project conversion through canonical communication threads/messages
 - lightweight lead workspace Scope Intake capture for manual measurements and structured observations
 - canonical lead-to-estimate conversion flow that creates or links the downstream customer and project records as needed
 
@@ -1026,6 +1034,7 @@ Implemented:
 - contractor-side appointments manager/list page using the shared Manager Page pattern
 - contractor-side Quick-Create overlay that captures minimum visit or meeting context before routing into the full workspace
 - contractor-side appointment detail/workspace page for timing, linked-record continuity, assignment, notes, and status progression
+- explicit appointment customer-visibility foundation with `customer_visible`, `customer_notes`, and `internal_notes`; existing `notes` remain internal/legacy contractor notes
 - dashboard shortcut and priority visibility replacing the old appointment-management placeholder
 - lead, customer, and project continuity links into the same appointment workflow
 
@@ -1050,6 +1059,8 @@ Appointments currently link to:
 
 Current appointment design notes:
 - appointments are canonical visit, meeting, and planning-block records, not a second execution scheduler
+- customer-visible appointment storage is implemented, but customer portal appointment display is not yet implemented
+- internal appointment notes and legacy notes must not be exposed through future portal/customer loaders; future customer-facing views should use `customer_notes` only when `customer_visible` is true
 - jobs remain the execution source of truth for crew scheduling, field delivery, and work-state progression
 - appointments may support the same project/customer/opportunity chain, but they should not replace jobs or create schedule-only records
 
@@ -1186,13 +1197,16 @@ Current design notes:
 - notifications are now implemented as stored canonical workflow signals rather than ephemeral shell-only state
 - notification deliveries track sent, delivered, opened, clicked, and failed channel outcomes without creating duplicate estimate, invoice, or change-order records
 - communication threads stay attached to the same canonical customer/project chain instead of creating module-specific inboxes
+- communication threads can now attach directly to canonical opportunities for pre-conversion lead communication without creating a duplicate lead-activity table
+- communication messages now include durable message kind, explicit visibility (`internal` or `customer_visible`), and logging/delivery status fields; manual opportunity logs are intended to default internal unless deliberately marked customer-visible
 - communication messages are immutable and extend shared workflow continuity rather than replacing estimate, contract, invoice, or change-order records
+- portal/customer access to opportunity communication is not implemented; the new customer-visible flag is stored for future safe display and RLS blocks internal message reads from portal users
 - the contractor communication surface still stays on the same canonical review queue, but selected existing threads can now accept safe contractor replies without introducing a second inbox, portal-specific copy, or new message model
 - communication triage on the contractor surface updates only the user's canonical `notifications.is_read` and `read_at` fields for communication-category records; it does not mutate `notification_events`, messages, or add message-local read state
 - communication baseline hardening is limited to queue clarity, selected-thread handling, unsupported-source copy, reply validation, and read-state feedback; provider sends and automation execution remain intentionally off
 - `/communications` now also supports compact URL-driven queue filtering by status grouping and supported source record type, plus text search across loaded customer, project, source-record, and preview labels from the same canonical thread list
   - status grouping and source-record filtering now shape the server-side communications loader where safe, using the same canonical `communication_threads` foundation plus per-user communication notifications for unread and needs-response queue state
-  - supported source filters are currently limited to customer, project, estimate, contract, invoice, change order, and payment; unsupported source queries such as `source=job` now render an explicit help state instead of implying unsupported communication coverage
+  - supported source filters are currently limited to lead/opportunity, customer, project, estimate, contract, invoice, change order, and payment; unsupported source queries such as `source=job` now render an explicit help state instead of implying unsupported communication coverage
   - text search currently stays as a client-side fallback over the loaded canonical thread labels and preview text so existing URL search behavior remains unchanged without introducing new indexing, shadow fields, or external search infrastructure
 
 ### Shared Templates
@@ -1451,6 +1465,12 @@ Implemented:
   - automation visibility
   - organization admin
   - module controls
+- `/settings/profile` includes a narrow personal estimate-template preference for active contractor users:
+  - users can choose an active organization-owned estimate document template as their own preferred default
+  - users can reset the preference to the company default
+  - the preference is stored separately from organization defaults and does not mutate company template defaults
+  - new estimate Quick-Create records created by that user store the preferred template on the existing estimate `template_id` when a valid active preference exists
+  - existing estimates, approved snapshots, contracts, invoices, tax behavior, payroll behavior, entitlement behavior, module controls, and workflow enforcement are unchanged
 - organization-scoped tax behavior and tax rate management
 - organization-scoped retainage baseline for new customer creation and lead conversion
 - contractor-side workflow defaults for approved-estimate contract template assignment
@@ -1501,8 +1521,34 @@ Implemented:
 - platform-level workflow defaults
 - platform-owned starter template management
 - platform-owned starter catalog seed management
+- platform-owned starter pack governance:
+  - `platform_starter_packs` stores platform-managed bundle metadata and draft/published/archived status
+  - `platform_starter_pack_items` groups existing `platform_template_seeds` and `platform_catalog_item_seeds`
+  - `platform_starter_pack_assignments` stores planning-only assignment intent for all organizations, a specific organization, onboarding profile, region/state, trade segment, plan tier, or a contractor group key
+  - `contractor_groups` and `contractor_group_memberships` store platform-managed contractor segmentation metadata and manual organization assignments for onboarding targeting, starter-pack targeting previews, rollout cohorts, beta programs, regional/trade segmentation, and future platform packaging; these are not tenant roles and do not enforce contractor permissions
+  - `platform_starter_pack_provisioning_runs` and `platform_starter_pack_provisioning_run_items` provide the audit/run schema for approved dry-run snapshots, idempotency keys, actor references, target organization, item-level source lineage, destination references, and void/failure state
+  - `/super-admin/templates` includes a `Starter Packs` tab/section for creating packs, editing metadata/status, adding existing template/catalog seeds, removing pack items, and managing assignment intent
+  - `/super-admin/templates` also includes a read-only Targeting Preview that explains why assignment intent would match, not match, or remain unavailable for a selected organization using existing organization metadata and explicit contractor group memberships only
+  - `/super-admin/templates` also includes a read-only Provisioning Dry Run that previews which starter-pack template/catalog seeds would create organization-owned document template or catalog item copies, which items already appear adopted by source linkage or conservative normalized match, and which seed references are blocked/unavailable
+  - the Provisioning Dry Run area can create a platform-admin-only approval draft from a fresh server-side dry run when the selected starter pack is published and the dry run has no blocked/unavailable rows; this writes only `platform_starter_pack_provisioning_runs` and `platform_starter_pack_provisioning_run_items` audit rows with status `draft`
+  - the Provisioning Dry Run area also shows a read-only provisioning audit observability panel for recent draft/run rows, status filters, item outcome counts, destination-link counts, safe failed-run messages, and live review blockers when a run is selected
+  - recent draft audit runs can be reviewed in place against a fresh server-side dry run; the review reports fresh/stale/invalid/unavailable status, issue severity, and item-level unchanged/changed/missing/added/invalid comparisons before any audit approval is allowed
+  - fresh, non-blocking draft reviews can be marked `approved` through an audit-only approval gate after typing `APPROVE DRY RUN ONLY`; approval updates only the provisioning run header audit fields (`status`, `approved_by`, `approved_at`, and `confirmation_text`)
+  - approved, fresh, non-blocking provisioning runs can be executed by a platform admin after typing `EXECUTE STARTER PACK`; execution calls a server-only service-role path backed by a private Postgres function, creates only missing organization-owned `document_templates` and `catalog_items` from the approved starter-pack audit items, stores source-seed lineage, sets destination ids on audit items, and completes the audit run
+  - completed provisioning run review shows completed status, requested/approval/start/completion timestamps when available, destination counts, item outcome totals, and item-level audit destination ids where the run item has a created or skipped destination reference; completed runs do not show the execute control
+  - completed provisioning run review now includes a read-only usage/void-readiness check for linked destination templates/catalog items; it counts known references from estimates, invoices, contracts, approved estimate snapshots, organization workflow settings, user estimate-template preferences, estimate/invoice lines, catalog/system components, floor-system components, inventory, and active defaults, but it does not provide any void, rollback, archive, delete, detach, or mutation control
+  - completed provisioning run review now also shows a read-only audit-only void eligibility model; it can report eligible, blocked, already voided, or unavailable status, requires future metadata such as reason and readiness snapshot, and keeps archive/delete/detach strategies clearly future-only
+  - provisioning run audit rows now include audit-only void metadata fields for future actor, reason, strategy, and readiness snapshot evidence; `/super-admin/templates` displays this metadata foundation read-only, and no void action writes it yet
+  - `/super-admin/templates` now also shows read-only operation-attempt visibility for rejected, blocked, failed-before-execution, and already-completed no-op provisioning execution attempts; these attempt rows store safe operator messages only and do not retry, roll back, void, copy, or provision anything
+  - executed starter-pack copies are active contractor-owned records with `is_default = false`; execution does not change organization defaults, estimate creation behavior, catalog behavior, entitlements, tax, payroll, financial calculations, invoice/contract generation, user preferences, or existing contractor-owned templates/catalog items
+  - `docs/starter-pack-provisioning-plan.md` defines the provisioning safety model, including approved-run preconditions, platform-admin/server-only actor requirements, RPC/transaction boundaries, copy rules, audit item updates, idempotency/replay protection, conflict handling, observability, QA gates, and void strategy; rollback/void remains future work
+  - `docs/starter-pack-provisioning-review.md` records the Phase 5T consolidated architecture/operator readiness review for starter-pack provisioning before any real void action; it is documentation-only and does not add void, rollback, archive/delete/detach, assignment enforcement, or new provisioning behavior
+  - starter packs, starter-pack assignments, targeting previews, provisioning dry runs, approval drafts, audit approvals, and provisioning execution remain operator-controlled governance/audit workflows only; they do not auto-provision contractor organizations, affect estimate creation, alter defaults, enforce entitlements, or provide assignment-based runtime enforcement
 - platform-level feature policy management
+- `/super-admin/groups` manages platform-owned contractor groups and manual organization assignments with explicit copy that groups are segmentation metadata only; creating, editing, archiving, assigning, or removing group membership does not change entitlements, modules, pricing, starter-pack provisioning, contractor permissions, tenant defaults, or runtime workflows
 - platform module controls now include the inventory default policy used by the Cost Items Database module
+- `/super-admin` now presents the platform console with left-side super-admin navigation plus target-area top tabs, explicit platform-default / contractor-owned-copy / future-override / future-preference labels, save-state feedback on platform settings forms, grouped starter-template and starter-catalog administration, and a module policy matrix over the existing feature policy records
+- `/super-admin/platform` now includes a read-only Resolution Preview backed by a typed server-side configuration resolution read model for existing platform financial/workflow defaults, selected contractor-owned financial/workflow settings, organization-owned default document templates, adopted platform template seeds, adopted platform catalog items, and inspectable platform starter packs with planning-only assignment counts
 - platform admin assignment foundation backed by `platform_user_roles`
 - `/super-admin` and nested super-admin routes require an explicit platform role assignment; contractor organization owner/admin/manager/member roles do not grant super-admin access
 - first-platform-admin setup is explicit through the local/operator helper (`pnpm platform-admin grant <email>` or `PLATFORM_SUPER_ADMIN_EMAIL`), not automatic on first visit
@@ -1529,7 +1575,11 @@ Current design notes:
 - `jfilamonte@gmail.com` is intended to remain a normal contractor owner/test account and is not granted platform admin by default
 - tenant activation continues to use the existing tenant lifecycle/status administration foundation on `companies.tenant_status` and `companies.lifecycle_state`; no separate activation/account-status model has been added
 - platform workflow defaults now include signature-readiness and financing-readiness baselines that tenant workflow settings can inherit
-- the super-admin surface is now implemented as a real configuration foundation, but deeper enforcement, entitlements, and broader platform governance workflows are still future work
+- the super-admin surface is now implemented as a real configuration foundation with an inspectable read model for current platform default, contractor-owned, platform starter packs, and the one active user-preference layer for preferred estimate templates; deeper enforcement, entitlements, other user preferences, organization override registries, and broader platform governance workflows are still future work
+- starter packs are implemented as platform-governed grouping records with planning-only assignment intent, a read-only targeting explainer, a read-only provisioning dry-run report, draft audit/run capture, stale-draft review, audit approval, the first guarded approved-run execution slice for creating missing contractor-owned template/catalog copies, and safe rejected-attempt/no-op operation logging; automatic starter-pack rollout, entitlement targeting, runtime enforcement, and rollback/void workflows remain future capabilities
+- contractor groups are implemented only as platform-owned segmentation/read-model metadata with manual organization membership; they are not tenant roles, entitlements, pricing packages, module gates, starter-pack auto-provisioning triggers, or contractor-side permission groups
+- visible placeholders for template assignments, entitlements, tax profiles, and platform operations/errors are labeled as future capabilities only; they do not add enforcement, billing behavior, or duplicate configuration models
+- visible Resolution Preview placeholders for organization override registry, other user preferences, and record snapshots remain non-functional; the only implemented user preference is preferred estimate template selection for new estimate Quick-Create preselection/storage, with no entitlement enforcement, tax logic, payroll logic, invoice/contract behavior changes, or runtime configuration enforcement
 
 ## What Is Not Implemented Yet
 

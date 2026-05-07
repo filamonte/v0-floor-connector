@@ -35,6 +35,14 @@ PLAYWRIGHT_BASE_URL=http://localhost:3001
 PLAYWRIGHT_STORAGE_STATE=playwright/.auth/local-user.json
 ```
 
+The public `chromium-public` project also includes the marketing entry-point regression spec:
+
+```bash
+pnpm exec playwright test --project=chromium-public e2e/marketing-login.spec.js
+```
+
+That spec verifies the public homepage exposes `Log in -> /login` and preserves `Start early access -> /signup?next=/setup/company`.
+
 ## Auth Strategy
 
 Protected contractor specs use the shared `chromium-protected` Playwright project. That project depends on the `setup` project, which logs in through the real local `/login` route and saves storage state before protected tests run.
@@ -121,6 +129,7 @@ playwright/.auth/platform-admin.json
 ```
 
 The spec verifies:
+- platform-admin auth setup lands the platform account on `/super-admin` after a normal login when no `next` is supplied
 - platform-admin user can load `/super-admin`
 - contractor-only owner is redirected from `/super-admin` to `/dashboard?error=Platform+admin+access+is+required.`
 - contractor-only owner can still load `/dashboard`, `/projects`, and `/settings`

@@ -70,6 +70,9 @@ function parseAppointmentInput(formData: FormData) {
     endsAt: getFieldValue(formData, "endsAt"),
     location: getFieldValue(formData, "location"),
     notes: getFieldValue(formData, "notes"),
+    customerVisible: getFieldValue(formData, "customerVisible"),
+    customerNotes: getFieldValue(formData, "customerNotes"),
+    internalNotes: getFieldValue(formData, "internalNotes"),
     status: getFieldValue(formData, "status")
   });
 }
@@ -82,7 +85,9 @@ function parseAppointmentQuickCreateInput(formData: FormData) {
     assignedPersonId: getFieldValue(formData, "assignedPersonId"),
     title: getFieldValue(formData, "title"),
     appointmentType: getFieldValue(formData, "appointmentType"),
-    startsAt: getFieldValue(formData, "startsAt")
+    startsAt: getFieldValue(formData, "startsAt"),
+    customerVisible: getFieldValue(formData, "customerVisible"),
+    customerNotes: getFieldValue(formData, "customerNotes")
   });
 }
 
@@ -145,6 +150,7 @@ export async function quickCreateAppointmentAction(formData: FormData) {
       endsAt: null,
       location: null,
       notes: null,
+      internalNotes: null,
       status: "scheduled"
     });
   } catch (error) {

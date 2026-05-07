@@ -3,9 +3,11 @@
 # FloorConnector - Developer Source of Truth
 
 ## PURPOSE
+
 This file is the primary entry point for all development.
 
 You must:
+
 - Read this file first
 - Follow all rules strictly
 - Do not rely on prior chat context
@@ -42,6 +44,7 @@ Lead and intake language may appear in older or broader planning docs, but imple
 - Global context → must select customer + project
 
 Applies to:
+
 - estimates
 - jobs
 - invoices
@@ -60,12 +63,14 @@ Use consistent page terminology across the system:
 - Nested create flows = `Inline <Resource> Quick-Create`
 
 Do not introduce alternate naming such as:
+
 - page
 - screen
 - edit page
 - form
 
 Consistency here is required for:
+
 - developer communication
 - Codex prompts
 - documentation alignment
@@ -75,16 +80,19 @@ Consistency here is required for:
 ## SYSTEM MAP
 
 Core:
+
 - docs/developer-source-of-truth.md
 - docs/current-state.md
 - docs/workflows.md
 - docs/Roadmap.md
 
 UI:
+
 - docs/floorconnector-ui-build-rules.md
 - docs/v0-ui-cleanup-brief-header-project-estimate.md
 
 Execution:
+
 - docs/chat-handoff.md
 
 ---
@@ -106,6 +114,30 @@ Execution:
 
 ---
 
+## FUTURE AI / COMMUNICATIONS / SCHEDULING GUARDRAILS
+
+Future AI, communications, intake, calendar, scheduling, voice, and onboarding work must preserve these rules:
+
+- AI is an operating layer, not a parallel system.
+- AI actions must route through canonical server-side workflows, validated inputs, tenant isolation, permissions, and readiness gates.
+- Do not create duplicate AI-specific business models such as AI-only leads, customers, estimates, projects, calendars, communication logs, invoices, or payments.
+- Communications attach to canonical records such as opportunity, customer, project, estimate, contract, change order, job, invoice, and payment where appropriate.
+- FloorConnector owns the canonical schedule; external calendars may mirror, sync, import busy blocks, or deliver invites.
+- External providers such as Google Calendar, Outlook/Microsoft 365, email/SMS providers, web chat, and AI voice are adapters/integrations, not business sources of truth.
+- Human confirmation is required for risky actions unless a later explicitly approved workflow configures low-risk automation.
+
+Planning docs:
+
+- [docs/ai-assisted-operating-system.md](C:/FloorConnector/docs/ai-assisted-operating-system.md)
+- [docs/ai-contractor-workflows.md](C:/FloorConnector/docs/ai-contractor-workflows.md)
+- [docs/communications-and-ai-intake.md](C:/FloorConnector/docs/communications-and-ai-intake.md)
+- [docs/calendar-and-scheduling-intelligence.md](C:/FloorConnector/docs/calendar-and-scheduling-intelligence.md)
+- [docs/ai-marketing-and-onboarding.md](C:/FloorConnector/docs/ai-marketing-and-onboarding.md)
+
+These are target direction only unless [docs/current-state.md](C:/FloorConnector/docs/current-state.md) says a capability is implemented.
+
+---
+
 ## ↓ EXISTING SYSTEM DETAILS BELOW (DO NOT IGNORE)
 
 Status: implementation guardrail document.
@@ -113,6 +145,7 @@ Status: implementation guardrail document.
 Use this file as the primary developer entry point and short guardrail summary for FloorConnector. It does not replace the deeper docs. It exists to reduce prompt drift and keep implementation work aligned with the current branch reality.
 
 Use these docs together:
+
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary development entry point and guardrails
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth
 - [docs/product-brain.md](C:/FloorConnector/docs/product-brain.md): high-signal product memory and anti-drift rules
@@ -134,6 +167,7 @@ Use these docs together:
 ## What Is Implemented Now
 
 The current branch already includes a real multi-tenant contractor app with:
+
 - Supabase-backed auth and organization bootstrap
 - organization and membership model
 - opportunities / leads
@@ -185,6 +219,7 @@ Estimate Builder implementation should follow [docs/estimate-builder-v1-scope.md
 ## What Is Target Architecture Only
 
 These docs describe target direction, not current implementation truth:
+
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md)
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md)
 - [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md)
@@ -198,6 +233,7 @@ The current canonical lifecycle is:
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
 Important workflow rules:
+
 - projects should become the operational hub over time
 - the current contractor app may still use parallel top-level routes during that transition
 - contracts, invoices, and estimates must stay connected through the shared canonical model
@@ -275,6 +311,7 @@ Treat the current contractor UI direction as implementation guardrail, not loose
 Use [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md) as the canonical UI standardization document before changing contractor app pages.
 
 Do:
+
 - keep top-level navigation as the primary contractor app navigation
 - keep the contractor shell flat and unified: top navigation with integrated breadcrumb/page context, thin command/search strip, then workspace
 - treat the dashboard as the visual reference for contractor Manager Page surfaces
@@ -292,6 +329,7 @@ Do:
 - reserve left-side rails for contextual deeper-screen navigation only when they materially help
 
 Do not:
+
 - do not return to a full-time left sidebar as the primary contractor navigation
 - do not reintroduce blue page bands, blue-heavy command bars, or blue-accented Manager Page chrome on contractor surfaces
 - do not reintroduce dense stacked-panel dashboards as the main contractor dashboard pattern
@@ -342,6 +380,7 @@ The normalization phase is complete enough to stop; further contractor-page work
 ## Documentation Update Rules
 
 When implementation changes, update docs in the same task when relevant:
+
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md) for implemented capabilities
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md) for phase sequencing changes
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md) for architecture-boundary changes
@@ -352,6 +391,7 @@ When implementation changes, update docs in the same task when relevant:
 ## Docs To Treat Carefully
 
 Do not casually edit these as if they were status notes:
+
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md)
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md)
 - [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md)
@@ -364,6 +404,7 @@ These define target direction or documentation policy and should only change whe
 Old docs should be archived, not left in active docs where they can silently compete with current guidance.
 
 Follow [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md):
+
 - keep active docs current
 - archive superseded or historical docs under `docs/archive/`
 - prefer archiving over deletion when older context may still be useful

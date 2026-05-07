@@ -26,6 +26,7 @@ type NotificationEventInsert = {
   severity?: NotificationEventSeverity;
   eventType: string;
   subjectType:
+    | "opportunity"
     | "customer"
     | "project"
     | "estimate"
@@ -213,6 +214,8 @@ function getSubjectLinkPath(
   subjectId: string
 ) {
   switch (subjectType) {
+    case "opportunity":
+      return `/leads/${subjectId}`;
     case "customer":
       return `/customers/${subjectId}`;
     case "project":

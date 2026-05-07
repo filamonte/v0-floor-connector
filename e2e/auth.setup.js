@@ -20,7 +20,7 @@ test("save local authenticated contractor state", async ({ page }) => {
     );
   }
 
-  await loginWithEmail(page, email, password);
+  await loginWithEmail(page, email, password, { expectedPath: "/dashboard" });
   await fs.mkdir(path.dirname(authStatePath), { recursive: true });
   await page.context().storageState({ path: authStatePath });
 });

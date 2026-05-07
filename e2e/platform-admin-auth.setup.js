@@ -23,7 +23,7 @@ test("save local authenticated platform-admin state", async ({ page }) => {
     );
   }
 
-  await loginWithEmail(page, email, password);
+  await loginWithEmail(page, email, password, { expectedPath: "/super-admin" });
   await fs.mkdir(path.dirname(platformAdminAuthStatePath), { recursive: true });
   await page.context().storageState({ path: platformAdminAuthStatePath });
 });

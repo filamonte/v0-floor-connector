@@ -1,5 +1,13 @@
 import { DetailPanel } from "@/components/detail-panel";
+import {
+  SaveStateForm,
+  SaveStateSubmitButton
+} from "@/components/save-feedback/save-state-form";
 import { SettingsFeedback } from "@/components/settings-feedback";
+import {
+  FutureCapabilityPanel,
+  SuperAdminTopTabs
+} from "@/components/super-admin-console";
 import {
   assignPlatformAdminAction,
   updateTenantPlatformStatusAction,
@@ -35,7 +43,33 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
         message={resolvedSearchParams.message}
       />
 
+      <SuperAdminTopTabs
+        tabs={[
+          {
+            href: "#platform-access",
+            label: "Access",
+            description: "Explicit platform admin assignment"
+          },
+          {
+            href: "#tenant-oversight",
+            label: "Tenants",
+            description: "Lifecycle and numbering oversight"
+          },
+          {
+            href: "#roles-permissions",
+            label: "Roles",
+            description: "Platform role registry"
+          },
+          {
+            href: "#platform-operations",
+            label: "Operations",
+            description: "Future non-functional placeholder"
+          }
+        ]}
+      />
+
       <DetailPanel
+        id="platform-access"
         title="Platform Admin Access"
         description="Super-admin access is managed separately from tenant membership so global controls remain explicit and auditable."
         tone="neutral"
@@ -82,8 +116,9 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
       </DetailPanel>
 
       <DetailPanel
+        id="tenant-oversight"
         title="Tenant Oversight"
-        description="Manage global tenant lifecycle state without bypassing tenant-owned business records."
+        description="Manage global tenant lifecycle state and starter numbering without bypassing tenant-owned business records, workflow truth, or contractor-owned settings."
         tone="neutral"
       >
         <div className="space-y-4">
@@ -147,9 +182,10 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
                 </div>
               </form>
 
-              <form
+              <SaveStateForm
                 action={updateTenantWorkflowNumberingAction}
                 className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4"
+                pendingLabel="Saving..."
               >
                 <input type="hidden" name="companyId" value={tenant.id} />
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -226,20 +262,21 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
                   <p className="text-xs leading-5 text-slate-500">
                     Super admin can seed per-contractor numbering before first use. After records exist, the next number can only move upward.
                   </p>
-                  <button
-                    type="submit"
-                    className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
-                  >
-                    Save numbering
-                  </button>
+                  <SaveStateSubmitButton
+                    submitLabel="Save numbering"
+                    pendingLabel="Saving..."
+                    variant="secondary"
+                    className="rounded-full"
+                  />
                 </div>
-              </form>
+              </SaveStateForm>
             </div>
           ))}
         </div>
       </DetailPanel>
 
       <DetailPanel
+        id="roles-permissions"
         title="Platform Roles And Permissions"
         description="The platform role layer stays separate from tenant memberships so super-admin behavior can evolve without fragmenting contractor auth."
         tone="neutral"
@@ -279,6 +316,20 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
           </div>
         </div>
       </DetailPanel>
+
+      <div id="platform-operations" className="grid gap-4 lg:grid-cols-2">
+        <FutureCapabilityPanel title="Platform operations and errors">
+          A future platform operations console can centralize provider errors,
+          delivery failures, and workflow-error triage. This placeholder does
+          not read new queues, create operational logs, or change existing error
+          capture behavior.
+        </FutureCapabilityPanel>
+        <FutureCapabilityPanel title="Contractor groups">
+          Contractor grouping for template assignment, starter-pack rollout, and
+          entitlement policy remains future work. Existing tenant oversight still
+          operates directly on canonical company records.
+        </FutureCapabilityPanel>
+      </div>
     </div>
   );
 }

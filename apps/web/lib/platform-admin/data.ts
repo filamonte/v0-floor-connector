@@ -1,14 +1,66 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
+
 import type {
+  CatalogItem,
+  ContractorGroup,
+  ContractorGroupAssignmentSource,
+  ContractorGroupMembership,
+  ContractorGroupStatus,
+  ContractorGroupType,
+  DocumentTemplate,
   PlatformCatalogItemSeed,
   PlatformFinancialDefaults,
+  PlatformStarterPack,
+  PlatformStarterPackAssignment,
+  PlatformStarterPackAssignmentStatus,
+  PlatformStarterPackAssignmentType,
+  PlatformStarterPackItem,
+  PlatformStarterPackItemType,
+  PlatformStarterPackProvisioningDestinationRecordType,
+  PlatformStarterPackProvisioningAttempt,
+  PlatformStarterPackProvisioningAttemptOutcome,
+  PlatformStarterPackProvisioningAttemptType,
+  PlatformStarterPackProvisioningRun,
+  PlatformStarterPackProvisioningRunDetail,
+  PlatformStarterPackProvisioningRunItem,
+  PlatformStarterPackProvisioningRunItemAction,
+  PlatformStarterPackProvisioningRunItemStatus,
+  PlatformStarterPackProvisioningRunStatus,
+  PlatformStarterPackProvisioningVoidStrategy,
+  PlatformStarterPackStatus,
   PlatformTemplateSeed,
   PlatformWorkflowDefaults
 } from "@floorconnector/types";
 
 import { INVENTORY_ENABLED_FEATURE_POLICY } from "@/lib/organizations/module-settings";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import {
+  buildProvisioningDraftFingerprintPayload,
+  buildProvisioningDraftSnapshot,
+  mapDryRunRowsToProvisioningDraftItems
+} from "@/lib/platform-admin/starter-pack-provisioning-draft-core";
+import {
+  buildStarterPackProvisioningDraftReview,
+  evaluateStarterPackProvisioningApprovalEligibility,
+  type StarterPackProvisioningDraftReview
+} from "@/lib/platform-admin/starter-pack-provisioning-draft-review-core";
+import { buildStarterPackProvisioningDryRun } from "@/lib/platform-admin/starter-pack-provisioning-dry-run-core";
+import { evaluateStarterPackProvisioningExecutionEligibility } from "@/lib/platform-admin/starter-pack-provisioning-execution-core";
+import {
+  attemptContextFromReview,
+  describeProvisioningExecutionAttemptForAlreadyCompleted,
+  describeProvisioningExecutionAttemptForDatabaseGuard,
+  describeProvisioningExecutionAttemptFromIssue,
+  type StarterPackProvisioningExecutionAttemptDescriptor
+} from "@/lib/platform-admin/starter-pack-provisioning-attempts-core";
+import {
+  buildStarterPackProvisioningVoidReadiness,
+  type StarterPackProvisioningDestinationUsageFact,
+  type StarterPackProvisioningDestinationUsageFacts,
+  type StarterPackProvisioningVoidReadiness
+} from "@/lib/platform-admin/starter-pack-provisioning-void-readiness-core";
 
 type PlatformTemplateSeedRow = {
   id: string;
@@ -89,6 +141,279 @@ type PlatformCatalogItemSeedRow = {
   updated_at: string;
 };
 
+type OrganizationDocumentTemplateRow = {
+  id: string;
+  company_id: string;
+  template_type: "estimate" | "invoice" | "contract";
+  source_seed_id: string | null;
+  source_seed_key: string | null;
+  name: string;
+  description: string | null;
+  subject_template: string | null;
+  body_template: string;
+  schema_version: number;
+  status: "active" | "archived";
+  is_default: boolean;
+  merge_field_manifest: unknown;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type OrganizationCatalogItemRow = {
+  id: string;
+  company_id: string;
+  source_seed_id: string | null;
+  source_seed_key: string | null;
+  item_type:
+    | "material"
+    | "labor"
+    | "service"
+    | "equipment"
+    | "subcontractor"
+    | "other"
+    | "system";
+  name: string;
+  description: string | null;
+  internal_notes: string | null;
+  unit: string;
+  default_unit_cost: string | number;
+  default_unit_price: string | number | null;
+  markup_percent: string | number;
+  hidden_markup_percent: string | number;
+  taxable: boolean;
+  tax_code_id: string | null;
+  vendor_id: string | null;
+  category: string | null;
+  cost_code: string | null;
+  sku: string | null;
+  normalized_name: string | null;
+  normalized_sku: string | null;
+  photo_storage_path: string | null;
+  status: "active" | "archived";
+  is_default: boolean;
+  metadata: Record<string, unknown> | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+type PlatformStarterPackRow = {
+  id: string;
+  pack_key: string;
+  name: string;
+  description: string | null;
+  status: PlatformStarterPackStatus;
+  segment_key: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type PlatformStarterPackItemRow = {
+  id: string;
+  starter_pack_id: string;
+  item_type: PlatformStarterPackItemType;
+  template_seed_id: string | null;
+  catalog_seed_id: string | null;
+  sort_order: number;
+  is_required: boolean;
+  created_at: string;
+  template_seed: PlatformTemplateSeedRow | PlatformTemplateSeedRow[] | null;
+  catalog_seed: PlatformCatalogItemSeedRow | PlatformCatalogItemSeedRow[] | null;
+};
+
+type PlatformStarterPackAssignmentRow = {
+  id: string;
+  starter_pack_id: string;
+  assignment_type: PlatformStarterPackAssignmentType;
+  organization_id: string | null;
+  assignment_key: string | null;
+  label: string | null;
+  status: PlatformStarterPackAssignmentStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  organization:
+    | {
+        id: string;
+        slug: string;
+        legal_name: string;
+        display_name: string;
+      }
+    | Array<{
+        id: string;
+        slug: string;
+        legal_name: string;
+        display_name: string;
+      }>
+    | null;
+};
+
+type ContractorGroupMembershipOrganizationRow = {
+  id: string;
+  slug: string;
+  legal_name: string;
+  display_name: string;
+  tenant_status: string;
+};
+
+type ContractorGroupMembershipRow = {
+  id: string;
+  contractor_group_id: string;
+  organization_id: string;
+  assigned_by: string | null;
+  assignment_source: ContractorGroupAssignmentSource;
+  notes: string | null;
+  created_at: string;
+  organization:
+    | ContractorGroupMembershipOrganizationRow
+    | ContractorGroupMembershipOrganizationRow[]
+    | null;
+};
+
+type ContractorGroupRow = {
+  id: string;
+  group_key: string;
+  name: string;
+  description: string | null;
+  status: ContractorGroupStatus;
+  group_type: ContractorGroupType;
+  created_at: string;
+  updated_at: string;
+  contractor_group_memberships:
+    | ContractorGroupMembershipRow[]
+    | ContractorGroupMembershipRow
+    | null;
+};
+
+type PlatformStarterPackProvisioningRunRow = {
+  id: string;
+  starter_pack_id: string;
+  organization_id: string;
+  requested_by: string | null;
+  approved_by: string | null;
+  status: PlatformStarterPackProvisioningRunStatus;
+  dry_run_snapshot: Record<string, unknown> | null;
+  confirmation_text: string | null;
+  idempotency_key: string | null;
+  requested_at: string;
+  approved_at: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  voided_at: string | null;
+  voided_by: string | null;
+  void_reason: string | null;
+  void_strategy: PlatformStarterPackProvisioningVoidStrategy | null;
+  void_readiness_snapshot: Record<string, unknown> | null;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+  starter_pack:
+    | {
+        id: string;
+        pack_key: string;
+        name: string;
+      }
+    | Array<{
+        id: string;
+        pack_key: string;
+        name: string;
+      }>
+    | null;
+  organization:
+    | {
+        id: string;
+        slug: string;
+        legal_name: string;
+        display_name: string;
+      }
+    | Array<{
+        id: string;
+        slug: string;
+        legal_name: string;
+        display_name: string;
+      }>
+    | null;
+};
+
+type PlatformStarterPackProvisioningRunItemCountRow = {
+  run_id: string;
+  destination_record_id: string | null;
+  action: PlatformStarterPackProvisioningRunItemAction;
+  status: PlatformStarterPackProvisioningRunItemStatus;
+};
+
+type PlatformStarterPackProvisioningRunItemRow = {
+  id: string;
+  run_id: string;
+  starter_pack_item_id: string | null;
+  source_item_type: PlatformStarterPackItemType;
+  source_template_seed_id: string | null;
+  source_catalog_seed_id: string | null;
+  destination_record_type: PlatformStarterPackProvisioningDestinationRecordType;
+  destination_record_id: string | null;
+  action: PlatformStarterPackProvisioningRunItemAction;
+  status: PlatformStarterPackProvisioningRunItemStatus;
+  source_snapshot: Record<string, unknown> | null;
+  destination_snapshot: Record<string, unknown> | null;
+  reason: string | null;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type PlatformStarterPackProvisioningAttemptRow = {
+  id: string;
+  run_id: string | null;
+  starter_pack_id: string | null;
+  organization_id: string | null;
+  attempted_by: string | null;
+  attempt_type: PlatformStarterPackProvisioningAttemptType;
+  outcome: PlatformStarterPackProvisioningAttemptOutcome;
+  reason_code: string;
+  safe_message: string;
+  review_status: string | null;
+  run_status: PlatformStarterPackProvisioningRunStatus | null;
+  metadata: Record<string, unknown> | null;
+  attempted_at: string;
+  starter_pack:
+    | {
+        id: string;
+        pack_key: string;
+        name: string;
+      }
+    | Array<{
+        id: string;
+        pack_key: string;
+        name: string;
+      }>
+    | null;
+  organization:
+    | {
+        id: string;
+        slug: string;
+        legal_name: string;
+        display_name: string;
+      }
+    | Array<{
+        id: string;
+        slug: string;
+        legal_name: string;
+        display_name: string;
+      }>
+    | null;
+};
+
+type StarterPackProvisioningExecutionRpcResult = {
+  runId: string;
+  status: PlatformStarterPackProvisioningRunStatus;
+  alreadyCompleted: boolean;
+  createdTemplateCount: number;
+  createdCatalogItemCount: number;
+  skippedCount: number;
+  message: string;
+};
+
 type FeatureFlagRow = {
   id: string;
   company_id: string | null;
@@ -139,9 +464,18 @@ type TenantRow = {
   slug: string;
   legal_name: string;
   display_name: string;
+  primary_trade: string | null;
   tenant_status: string;
   lifecycle_state: string;
   created_at: string;
+  active_location:
+    | Array<{
+        state_region: string | null;
+      }>
+    | {
+        state_region: string | null;
+      }
+    | null;
   organization_workflow_settings:
     | Array<{
         next_estimate_number: number | null;
@@ -472,6 +806,287 @@ function mapPlatformCatalogItemSeed(
   };
 }
 
+function mapOrganizationDocumentTemplate(
+  row: OrganizationDocumentTemplateRow
+): DocumentTemplate {
+  return {
+    id: row.id,
+    organizationId: row.company_id,
+    templateType: row.template_type,
+    sourceSeedId: row.source_seed_id,
+    sourceSeedKey: row.source_seed_key,
+    name: row.name,
+    description: row.description,
+    subjectTemplate: row.subject_template,
+    bodyTemplate: row.body_template,
+    schemaVersion: row.schema_version,
+    status: row.status,
+    isDefault: row.is_default,
+    mergeFieldManifest: normalizeStringArray(row.merge_field_manifest),
+    metadata: row.metadata ?? {},
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function mapOrganizationCatalogItem(row: OrganizationCatalogItemRow): CatalogItem {
+  return {
+    id: row.id,
+    organizationId: row.company_id,
+    sourceSeedId: row.source_seed_id,
+    sourceSeedKey: row.source_seed_key,
+    itemType: row.item_type,
+    name: row.name,
+    description: row.description,
+    internalNotes: row.internal_notes,
+    unit: row.unit,
+    defaultUnitCost: Number(row.default_unit_cost).toFixed(2),
+    defaultUnitPrice:
+      row.default_unit_price == null ? null : Number(row.default_unit_price).toFixed(2),
+    markupPercent: Number(row.markup_percent).toFixed(2),
+    hiddenMarkupPercent: Number(row.hidden_markup_percent).toFixed(2),
+    taxable: row.taxable,
+    taxCodeId: row.tax_code_id,
+    vendorId: row.vendor_id,
+    category: row.category,
+    costCode: row.cost_code,
+    sku: row.sku,
+    normalizedName: row.normalized_name ?? undefined,
+    normalizedSku: row.normalized_sku,
+    photoStoragePath: row.photo_storage_path,
+    status: row.status,
+    isDefault: row.is_default,
+    metadata: row.metadata ?? {},
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function mapStarterPackItem(row: PlatformStarterPackItemRow): PlatformStarterPackItem {
+  const templateSeed = firstRelation(row.template_seed);
+  const catalogSeed = firstRelation(row.catalog_seed);
+
+  return {
+    id: row.id,
+    starterPackId: row.starter_pack_id,
+    itemType: row.item_type,
+    templateSeedId: row.template_seed_id,
+    catalogSeedId: row.catalog_seed_id,
+    sortOrder: row.sort_order,
+    isRequired: row.is_required,
+    templateSeed: templateSeed ? mapPlatformTemplateSeed(templateSeed) : null,
+    catalogSeed: catalogSeed ? mapPlatformCatalogItemSeed(catalogSeed) : null,
+    createdAt: row.created_at
+  };
+}
+
+function mapStarterPackAssignment(
+  row: PlatformStarterPackAssignmentRow
+): PlatformStarterPackAssignment {
+  const organization = firstRelation(row.organization);
+
+  return {
+    id: row.id,
+    starterPackId: row.starter_pack_id,
+    assignmentType: row.assignment_type,
+    organizationId: row.organization_id,
+    organizationName: organization
+      ? organization.display_name || organization.legal_name
+      : null,
+    organizationSlug: organization?.slug ?? null,
+    assignmentKey: row.assignment_key,
+    label: row.label,
+    status: row.status,
+    notes: row.notes,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function mapStarterPack(
+  row: PlatformStarterPackRow,
+  items: PlatformStarterPackItem[],
+  assignments: PlatformStarterPackAssignment[]
+): PlatformStarterPack {
+  return {
+    id: row.id,
+    packKey: row.pack_key,
+    name: row.name,
+    description: row.description,
+    status: row.status,
+    segmentKey: row.segment_key,
+    templateSeedCount: items.filter((item) => item.itemType === "template_seed").length,
+    catalogSeedCount: items.filter((item) => item.itemType === "catalog_seed").length,
+    assignmentCount: assignments.length,
+    activeAssignmentCount: assignments.filter(
+      (assignment) => assignment.status === "active"
+    ).length,
+    items,
+    assignments,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function mapContractorGroupMembership(
+  row: ContractorGroupMembershipRow
+): ContractorGroupMembership {
+  const organization = firstRelation(row.organization);
+
+  return {
+    id: row.id,
+    contractorGroupId: row.contractor_group_id,
+    organizationId: row.organization_id,
+    organizationName: organization
+      ? organization.display_name || organization.legal_name
+      : null,
+    organizationSlug: organization?.slug ?? null,
+    organizationTenantStatus: organization?.tenant_status ?? null,
+    assignedByUserId: row.assigned_by,
+    assignmentSource: row.assignment_source,
+    notes: row.notes,
+    createdAt: row.created_at
+  };
+}
+
+function mapContractorGroup(row: ContractorGroupRow): ContractorGroup {
+  const rawMemberships = Array.isArray(row.contractor_group_memberships)
+    ? row.contractor_group_memberships
+    : row.contractor_group_memberships
+      ? [row.contractor_group_memberships]
+      : [];
+  const memberships = rawMemberships.map(mapContractorGroupMembership);
+
+  return {
+    id: row.id,
+    key: row.group_key,
+    name: row.name,
+    description: row.description,
+    status: row.status,
+    groupType: row.group_type,
+    membershipCount: memberships.length,
+    memberships,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function mapStarterPackProvisioningRun(
+  row: PlatformStarterPackProvisioningRunRow,
+  itemCounts: Map<
+    string,
+    {
+      itemCount: number;
+      destinationRecordCount: number;
+      pendingItemCount: number;
+      completedItemCount: number;
+      skippedItemCount: number;
+      blockedItemCount: number;
+      failedItemCount: number;
+      wouldCreateItemCount: number;
+      skippedExistingItemCount: number;
+      createdItemCount: number;
+    }
+  >
+): PlatformStarterPackProvisioningRun {
+  const starterPack = firstRelation(row.starter_pack);
+  const organization = firstRelation(row.organization);
+  const counts = itemCounts.get(row.id);
+
+  return {
+    id: row.id,
+    starterPackId: row.starter_pack_id,
+    starterPackName: starterPack?.name ?? null,
+    starterPackKey: starterPack?.pack_key ?? null,
+    organizationId: row.organization_id,
+    organizationName: organization
+      ? organization.display_name || organization.legal_name
+      : null,
+    organizationSlug: organization?.slug ?? null,
+    requestedByUserId: row.requested_by,
+    approvedByUserId: row.approved_by,
+    status: row.status,
+    dryRunSnapshot: row.dry_run_snapshot ?? {},
+    confirmationText: row.confirmation_text,
+    idempotencyKey: row.idempotency_key,
+    requestedAt: row.requested_at,
+    approvedAt: row.approved_at,
+    startedAt: row.started_at,
+    completedAt: row.completed_at,
+    voidedAt: row.voided_at,
+    voidedByUserId: row.voided_by,
+    voidReason: row.void_reason,
+    voidStrategy: row.void_strategy,
+    voidReadinessSnapshot: row.void_readiness_snapshot ?? {},
+    errorMessage: row.error_message,
+    itemCount: counts?.itemCount ?? 0,
+    destinationRecordCount: counts?.destinationRecordCount ?? 0,
+    pendingItemCount: counts?.pendingItemCount ?? 0,
+    completedItemCount: counts?.completedItemCount ?? 0,
+    skippedItemCount: counts?.skippedItemCount ?? 0,
+    blockedItemCount: counts?.blockedItemCount ?? 0,
+    failedItemCount: counts?.failedItemCount ?? 0,
+    wouldCreateItemCount: counts?.wouldCreateItemCount ?? 0,
+    skippedExistingItemCount: counts?.skippedExistingItemCount ?? 0,
+    createdItemCount: counts?.createdItemCount ?? 0,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function mapStarterPackProvisioningRunItem(
+  row: PlatformStarterPackProvisioningRunItemRow
+): PlatformStarterPackProvisioningRunItem {
+  return {
+    id: row.id,
+    runId: row.run_id,
+    starterPackItemId: row.starter_pack_item_id,
+    sourceItemType: row.source_item_type,
+    sourceTemplateSeedId: row.source_template_seed_id,
+    sourceCatalogSeedId: row.source_catalog_seed_id,
+    destinationRecordType: row.destination_record_type,
+    destinationRecordId: row.destination_record_id,
+    action: row.action,
+    status: row.status,
+    sourceSnapshot: row.source_snapshot ?? {},
+    destinationSnapshot: row.destination_snapshot ?? {},
+    reason: row.reason,
+    errorMessage: row.error_message,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function mapStarterPackProvisioningAttempt(
+  row: PlatformStarterPackProvisioningAttemptRow
+): PlatformStarterPackProvisioningAttempt {
+  const starterPack = firstRelation(row.starter_pack);
+  const organization = firstRelation(row.organization);
+
+  return {
+    id: row.id,
+    runId: row.run_id,
+    starterPackId: row.starter_pack_id,
+    starterPackName: starterPack?.name ?? null,
+    starterPackKey: starterPack?.pack_key ?? null,
+    organizationId: row.organization_id,
+    organizationName: organization
+      ? organization.display_name || organization.legal_name
+      : null,
+    organizationSlug: organization?.slug ?? null,
+    attemptedByUserId: row.attempted_by,
+    attemptType: row.attempt_type,
+    outcome: row.outcome,
+    reasonCode: row.reason_code,
+    safeMessage: row.safe_message,
+    reviewStatus: row.review_status,
+    runStatus: row.run_status,
+    metadata: row.metadata ?? {},
+    attemptedAt: row.attempted_at
+  };
+}
+
 export async function listPlatformTemplateSeedsAdmin() {
   const supabase = getSupabaseAdminClient();
   const response = await supabase
@@ -488,6 +1103,48 @@ export async function listPlatformTemplateSeedsAdmin() {
 
   const rows = Array.isArray(response.data) ? (response.data as PlatformTemplateSeedRow[]) : [];
   return rows.map(mapPlatformTemplateSeed);
+}
+
+export async function listOrganizationDocumentTemplatesForPlatformAdmin(
+  organizationId: string
+): Promise<DocumentTemplate[]> {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("document_templates")
+    .select(
+      `
+        id,
+        company_id,
+        template_type,
+        source_seed_id,
+        source_seed_key,
+        name,
+        description,
+        subject_template,
+        body_template,
+        schema_version,
+        status,
+        is_default,
+        merge_field_manifest,
+        metadata,
+        created_at,
+        updated_at
+      `
+    )
+    .eq("company_id", organizationId)
+    .order("template_type", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load organization document templates: ${response.error.message}`
+    );
+  }
+
+  const rows = Array.isArray(response.data)
+    ? (response.data as OrganizationDocumentTemplateRow[])
+    : [];
+  return rows.map(mapOrganizationDocumentTemplate);
 }
 
 export async function updatePlatformTemplateSeed(input: {
@@ -757,6 +1414,61 @@ export async function listPlatformCatalogItemSeeds() {
   return rows.map(mapPlatformCatalogItemSeed);
 }
 
+export async function listOrganizationCatalogItemsForPlatformAdmin(
+  organizationId: string
+): Promise<CatalogItem[]> {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("catalog_items")
+    .select(
+      `
+        id,
+        company_id,
+        source_seed_id,
+        source_seed_key,
+        item_type,
+        name,
+        description,
+        internal_notes,
+        unit,
+        default_unit_cost,
+        default_unit_price,
+        markup_percent,
+        hidden_markup_percent,
+        taxable,
+        tax_code_id,
+        vendor_id,
+        category,
+        cost_code,
+        sku,
+        normalized_name,
+        normalized_sku,
+        photo_storage_path,
+        status,
+        is_default,
+        metadata,
+        sort_order,
+        created_at,
+        updated_at
+      `
+    )
+    .eq("company_id", organizationId)
+    .order("item_type", { ascending: true })
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load organization catalog items: ${response.error.message}`
+    );
+  }
+
+  const rows = Array.isArray(response.data)
+    ? (response.data as OrganizationCatalogItemRow[])
+    : [];
+  return rows.map(mapOrganizationCatalogItem);
+}
+
 export async function upsertPlatformCatalogItemSeed(input: {
   seedId?: string | null;
   itemType:
@@ -842,6 +1554,1651 @@ export async function upsertPlatformCatalogItemSeed(input: {
   }
 
   return mapPlatformCatalogItemSeed(response.data as PlatformCatalogItemSeedRow);
+}
+
+export async function listPlatformStarterPacks(): Promise<PlatformStarterPack[]> {
+  const supabase = getSupabaseAdminClient();
+  const [packResponse, itemResponse, assignmentResponse] = await Promise.all([
+    supabase
+      .from("platform_starter_packs")
+      .select("*")
+      .order("status", { ascending: true })
+      .order("pack_key", { ascending: true }),
+    supabase
+      .from("platform_starter_pack_items")
+      .select(
+        `
+          *,
+          template_seed:platform_template_seeds (*),
+          catalog_seed:platform_catalog_item_seeds (*)
+        `
+      )
+      .order("starter_pack_id", { ascending: true })
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("platform_starter_pack_assignments")
+      .select(
+        `
+          *,
+          organization:companies (
+            id,
+            slug,
+            legal_name,
+            display_name
+          )
+        `
+      )
+      .order("starter_pack_id", { ascending: true })
+      .order("assignment_type", { ascending: true })
+      .order("status", { ascending: true })
+      .order("created_at", { ascending: true })
+  ]);
+
+  if (packResponse.error) {
+    throw new Error(
+      `Unable to load platform starter packs: ${packResponse.error.message}`
+    );
+  }
+
+  if (itemResponse.error) {
+    throw new Error(
+      `Unable to load platform starter pack items: ${itemResponse.error.message}`
+    );
+  }
+
+  if (assignmentResponse.error) {
+    throw new Error(
+      `Unable to load platform starter pack assignments: ${assignmentResponse.error.message}`
+    );
+  }
+
+  const itemsByPack = new Map<string, PlatformStarterPackItem[]>();
+  const itemRows = Array.isArray(itemResponse.data)
+    ? (itemResponse.data as PlatformStarterPackItemRow[])
+    : [];
+
+  for (const row of itemRows) {
+    const mappedItem = mapStarterPackItem(row);
+    const current = itemsByPack.get(mappedItem.starterPackId) ?? [];
+    current.push(mappedItem);
+    itemsByPack.set(mappedItem.starterPackId, current);
+  }
+
+  const assignmentsByPack = new Map<string, PlatformStarterPackAssignment[]>();
+  const assignmentRows = Array.isArray(assignmentResponse.data)
+    ? (assignmentResponse.data as PlatformStarterPackAssignmentRow[])
+    : [];
+
+  for (const row of assignmentRows) {
+    const mappedAssignment = mapStarterPackAssignment(row);
+    const current = assignmentsByPack.get(mappedAssignment.starterPackId) ?? [];
+    current.push(mappedAssignment);
+    assignmentsByPack.set(mappedAssignment.starterPackId, current);
+  }
+
+  const packRows = Array.isArray(packResponse.data)
+    ? (packResponse.data as PlatformStarterPackRow[])
+    : [];
+
+  return packRows.map((row) =>
+    mapStarterPack(
+      row,
+      itemsByPack.get(row.id) ?? [],
+      assignmentsByPack.get(row.id) ?? []
+    )
+  );
+}
+
+export async function listContractorGroups(): Promise<ContractorGroup[]> {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("contractor_groups")
+    .select(
+      `
+        *,
+        contractor_group_memberships (
+          id,
+          contractor_group_id,
+          organization_id,
+          assigned_by,
+          assignment_source,
+          notes,
+          created_at,
+          organization:companies (
+            id,
+            slug,
+            legal_name,
+            display_name,
+            tenant_status
+          )
+        )
+      `
+    )
+    .order("status", { ascending: true })
+    .order("group_type", { ascending: true })
+    .order("group_key", { ascending: true });
+
+  if (response.error) {
+    throw new Error(`Unable to load contractor groups: ${response.error.message}`);
+  }
+
+  return (Array.isArray(response.data) ? response.data : []).map((row) =>
+    mapContractorGroup(row as ContractorGroupRow)
+  );
+}
+
+export async function listContractorGroupMemberships(): Promise<
+  ContractorGroupMembership[]
+> {
+  const groups = await listContractorGroups();
+
+  return groups.flatMap((group) => group.memberships);
+}
+
+export async function listOrganizationsInContractorGroup(
+  contractorGroupId: string
+): Promise<ContractorGroupMembership[]> {
+  const groups = await listContractorGroups();
+  const group = groups.find((candidate) => candidate.id === contractorGroupId);
+
+  return group?.memberships ?? [];
+}
+
+export async function listContractorGroupsForOrganization(
+  organizationId: string
+): Promise<ContractorGroup[]> {
+  const groups = await listContractorGroups();
+
+  return groups
+    .map((group) => ({
+      ...group,
+      memberships: group.memberships.filter(
+        (membership) => membership.organizationId === organizationId
+      ),
+      membershipCount: group.memberships.some(
+        (membership) => membership.organizationId === organizationId
+      )
+        ? 1
+        : 0
+    }))
+    .filter((group) => group.memberships.length > 0);
+}
+
+export async function listRecentStarterPackProvisioningRuns(
+  limit = 8
+): Promise<PlatformStarterPackProvisioningRun[]> {
+  const supabase = getSupabaseAdminClient();
+  const runResponse = await supabase
+    .from("platform_starter_pack_provisioning_runs")
+    .select(
+      `
+        *,
+        starter_pack:platform_starter_packs (
+          id,
+          pack_key,
+          name
+        ),
+        organization:companies (
+          id,
+          slug,
+          legal_name,
+          display_name
+        )
+      `
+    )
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (runResponse.error) {
+    throw new Error(
+      `Unable to load starter pack provisioning audit runs: ${runResponse.error.message}`
+    );
+  }
+
+  const rows = Array.isArray(runResponse.data)
+    ? (runResponse.data as PlatformStarterPackProvisioningRunRow[])
+    : [];
+  const runIds = rows.map((row) => row.id);
+  const itemCounts = new Map<
+    string,
+    {
+      itemCount: number;
+      destinationRecordCount: number;
+      pendingItemCount: number;
+      completedItemCount: number;
+      skippedItemCount: number;
+      blockedItemCount: number;
+      failedItemCount: number;
+      wouldCreateItemCount: number;
+      skippedExistingItemCount: number;
+      createdItemCount: number;
+    }
+  >();
+
+  if (runIds.length > 0) {
+    const itemResponse = await supabase
+      .from("platform_starter_pack_provisioning_run_items")
+      .select("run_id, destination_record_id, action, status")
+      .in("run_id", runIds);
+
+    if (itemResponse.error) {
+      throw new Error(
+        `Unable to load starter pack provisioning audit item counts: ${itemResponse.error.message}`
+      );
+    }
+
+    const itemRows = Array.isArray(itemResponse.data)
+      ? (itemResponse.data as PlatformStarterPackProvisioningRunItemCountRow[])
+      : [];
+
+    for (const item of itemRows) {
+      const counts =
+        itemCounts.get(item.run_id) ??
+        {
+          itemCount: 0,
+          destinationRecordCount: 0,
+          pendingItemCount: 0,
+          completedItemCount: 0,
+          skippedItemCount: 0,
+          blockedItemCount: 0,
+          failedItemCount: 0,
+          wouldCreateItemCount: 0,
+          skippedExistingItemCount: 0,
+          createdItemCount: 0
+        };
+
+      counts.itemCount += 1;
+      if (item.destination_record_id) {
+        counts.destinationRecordCount += 1;
+      }
+      if (item.status === "pending") {
+        counts.pendingItemCount += 1;
+      }
+      if (item.status === "completed") {
+        counts.completedItemCount += 1;
+      }
+      if (item.status === "skipped") {
+        counts.skippedItemCount += 1;
+      }
+      if (item.status === "blocked") {
+        counts.blockedItemCount += 1;
+      }
+      if (item.status === "failed") {
+        counts.failedItemCount += 1;
+      }
+      if (item.action === "would_create") {
+        counts.wouldCreateItemCount += 1;
+      }
+      if (item.action === "skipped_existing") {
+        counts.skippedExistingItemCount += 1;
+      }
+      if (item.action === "created") {
+        counts.createdItemCount += 1;
+      }
+
+      itemCounts.set(item.run_id, counts);
+    }
+  }
+
+  return rows.map((row) => mapStarterPackProvisioningRun(row, itemCounts));
+}
+
+export async function listRecentStarterPackProvisioningAttempts(
+  limit = 8
+): Promise<PlatformStarterPackProvisioningAttempt[]> {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("platform_starter_pack_provisioning_attempts")
+    .select(
+      `
+        *,
+        starter_pack:platform_starter_packs (
+          id,
+          pack_key,
+          name
+        ),
+        organization:companies (
+          id,
+          slug,
+          legal_name,
+          display_name
+        )
+      `
+    )
+    .order("attempted_at", { ascending: false })
+    .limit(limit);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load starter pack provisioning operation attempts: ${response.error.message}`
+    );
+  }
+
+  const rows = Array.isArray(response.data)
+    ? (response.data as PlatformStarterPackProvisioningAttemptRow[])
+    : [];
+
+  return rows.map(mapStarterPackProvisioningAttempt);
+}
+
+export async function recordStarterPackProvisioningExecutionAttempt(input: {
+  descriptor: StarterPackProvisioningExecutionAttemptDescriptor;
+  userId: string;
+  runId?: string | null;
+  starterPackId?: string | null;
+  organizationId?: string | null;
+  reviewStatus?: string | null;
+  runStatus?: PlatformStarterPackProvisioningRunStatus | null;
+  metadata?: Record<string, unknown>;
+}) {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("platform_starter_pack_provisioning_attempts")
+    .insert({
+      run_id: input.runId ?? null,
+      starter_pack_id: input.starterPackId ?? null,
+      organization_id: input.organizationId ?? null,
+      attempted_by: input.userId,
+      attempt_type: "execute",
+      outcome: input.descriptor.outcome,
+      reason_code: input.descriptor.reasonCode,
+      safe_message: input.descriptor.safeMessage,
+      review_status: input.reviewStatus ?? null,
+      run_status: input.runStatus ?? null,
+      metadata: input.metadata ?? {}
+    });
+
+  if (response.error) {
+    throw new Error("Unable to record provisioning operation attempt.");
+  }
+}
+
+export async function getStarterPackProvisioningRunDetail(
+  runId: string
+): Promise<PlatformStarterPackProvisioningRunDetail | null> {
+  const supabase = getSupabaseAdminClient();
+  const runResponse = await supabase
+    .from("platform_starter_pack_provisioning_runs")
+    .select(
+      `
+        *,
+        starter_pack:platform_starter_packs (
+          id,
+          pack_key,
+          name
+        ),
+        organization:companies (
+          id,
+          slug,
+          legal_name,
+          display_name
+        )
+      `
+    )
+    .eq("id", runId)
+    .maybeSingle();
+
+  if (runResponse.error) {
+    throw new Error(
+      `Unable to load starter pack provisioning audit run: ${runResponse.error.message}`
+    );
+  }
+
+  if (!runResponse.data) {
+    return null;
+  }
+
+  const itemResponse = await supabase
+    .from("platform_starter_pack_provisioning_run_items")
+    .select("*")
+    .eq("run_id", runId)
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true });
+
+  if (itemResponse.error) {
+    throw new Error(
+      `Unable to load starter pack provisioning audit items: ${itemResponse.error.message}`
+    );
+  }
+
+  const itemRows = Array.isArray(itemResponse.data)
+    ? (itemResponse.data as PlatformStarterPackProvisioningRunItemRow[])
+    : [];
+  const items = itemRows.map(mapStarterPackProvisioningRunItem);
+  const run = mapStarterPackProvisioningRun(
+    runResponse.data as PlatformStarterPackProvisioningRunRow,
+    new Map([
+      [
+        runId,
+        {
+          itemCount: items.length,
+          destinationRecordCount: items.filter((item) =>
+            Boolean(item.destinationRecordId)
+          ).length,
+          pendingItemCount: items.filter((item) => item.status === "pending")
+            .length,
+          completedItemCount: items.filter((item) => item.status === "completed")
+            .length,
+          skippedItemCount: items.filter((item) => item.status === "skipped")
+            .length,
+          blockedItemCount: items.filter((item) => item.status === "blocked")
+            .length,
+          failedItemCount: items.filter((item) => item.status === "failed")
+            .length,
+          wouldCreateItemCount: items.filter(
+            (item) => item.action === "would_create"
+          ).length,
+          skippedExistingItemCount: items.filter(
+            (item) => item.action === "skipped_existing"
+          ).length,
+          createdItemCount: items.filter((item) => item.action === "created")
+            .length
+        }
+      ]
+    ])
+  );
+
+  return {
+    ...run,
+    items
+  };
+}
+
+function uniqueNonNullIds(values: Array<string | null | undefined>) {
+  return [...new Set(values.filter((value): value is string => Boolean(value)))];
+}
+
+function emptyUsageFact(): StarterPackProvisioningDestinationUsageFact {
+  return {
+    destinationExists: false,
+    usageCounts: {}
+  };
+}
+
+function ensureUsageFact(
+  facts: Record<string, StarterPackProvisioningDestinationUsageFact>,
+  destinationId: string
+) {
+  const current = facts[destinationId] ?? emptyUsageFact();
+  facts[destinationId] = current;
+  return current;
+}
+
+function incrementUsageFact(
+  facts: Record<string, StarterPackProvisioningDestinationUsageFact>,
+  destinationId: string | null | undefined,
+  source: string
+) {
+  if (!destinationId) {
+    return;
+  }
+
+  const fact = ensureUsageFact(facts, destinationId);
+  fact.usageCounts[source] = (fact.usageCounts[source] ?? 0) + 1;
+}
+
+async function loadTemplateUsageFacts(input: {
+  organizationId: string;
+  destinationIds: string[];
+}) {
+  const facts = Object.fromEntries(
+    input.destinationIds.map((id) => [id, emptyUsageFact()])
+  ) as Record<string, StarterPackProvisioningDestinationUsageFact>;
+
+  if (input.destinationIds.length === 0) {
+    return facts;
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const [
+    templateResponse,
+    estimateResponse,
+    invoiceResponse,
+    contractResponse,
+    snapshotResponse,
+    workflowSettingsResponse,
+    userPreferenceResponse
+  ] = await Promise.all([
+    supabase
+      .from("document_templates")
+      .select("id, status, is_default")
+      .eq("company_id", input.organizationId)
+      .in("id", input.destinationIds),
+    supabase
+      .from("estimates")
+      .select("template_id")
+      .eq("company_id", input.organizationId)
+      .in("template_id", input.destinationIds),
+    supabase
+      .from("invoices")
+      .select("template_id")
+      .eq("company_id", input.organizationId)
+      .in("template_id", input.destinationIds),
+    supabase
+      .from("contracts")
+      .select("template_id")
+      .eq("company_id", input.organizationId)
+      .in("template_id", input.destinationIds),
+    supabase
+      .from("estimate_commercial_snapshots")
+      .select("template_id")
+      .eq("company_id", input.organizationId)
+      .in("template_id", input.destinationIds),
+    supabase
+      .from("organization_workflow_settings")
+      .select("approved_estimate_contract_template_id")
+      .eq("company_id", input.organizationId)
+      .in("approved_estimate_contract_template_id", input.destinationIds),
+    supabase
+      .from("user_estimate_template_preferences")
+      .select("preferred_estimate_template_id")
+      .eq("organization_id", input.organizationId)
+      .in("preferred_estimate_template_id", input.destinationIds)
+  ]);
+
+  const responses = [
+    templateResponse,
+    estimateResponse,
+    invoiceResponse,
+    contractResponse,
+    snapshotResponse,
+    workflowSettingsResponse,
+    userPreferenceResponse
+  ];
+  const failedResponse = responses.find((response) => response.error);
+
+  if (failedResponse?.error) {
+    throw new Error("Unable to load document template usage for void readiness.");
+  }
+
+  for (const row of Array.isArray(templateResponse.data)
+    ? (templateResponse.data as Array<{
+        id: string;
+        status: "active" | "archived";
+        is_default: boolean;
+      }>)
+    : []) {
+    const fact = ensureUsageFact(facts, row.id);
+    fact.destinationExists = true;
+
+    if (row.status === "active" && row.is_default) {
+      incrementUsageFact(facts, row.id, "activeDefaults");
+    }
+  }
+
+  for (const row of Array.isArray(estimateResponse.data)
+    ? (estimateResponse.data as Array<{ template_id: string | null }>)
+    : []) {
+    incrementUsageFact(facts, row.template_id, "estimates");
+  }
+
+  for (const row of Array.isArray(invoiceResponse.data)
+    ? (invoiceResponse.data as Array<{ template_id: string | null }>)
+    : []) {
+    incrementUsageFact(facts, row.template_id, "invoices");
+  }
+
+  for (const row of Array.isArray(contractResponse.data)
+    ? (contractResponse.data as Array<{ template_id: string | null }>)
+    : []) {
+    incrementUsageFact(facts, row.template_id, "contracts");
+  }
+
+  for (const row of Array.isArray(snapshotResponse.data)
+    ? (snapshotResponse.data as Array<{ template_id: string | null }>)
+    : []) {
+    incrementUsageFact(facts, row.template_id, "estimateCommercialSnapshots");
+  }
+
+  for (const row of Array.isArray(workflowSettingsResponse.data)
+    ? (workflowSettingsResponse.data as Array<{
+        approved_estimate_contract_template_id: string | null;
+      }>)
+    : []) {
+    incrementUsageFact(
+      facts,
+      row.approved_estimate_contract_template_id,
+      "organizationWorkflowSettings"
+    );
+  }
+
+  for (const row of Array.isArray(userPreferenceResponse.data)
+    ? (userPreferenceResponse.data as Array<{
+        preferred_estimate_template_id: string | null;
+      }>)
+    : []) {
+    incrementUsageFact(
+      facts,
+      row.preferred_estimate_template_id,
+      "userEstimateTemplatePreferences"
+    );
+  }
+
+  return facts;
+}
+
+async function loadCatalogUsageFacts(input: {
+  organizationId: string;
+  destinationIds: string[];
+}) {
+  const facts = Object.fromEntries(
+    input.destinationIds.map((id) => [id, emptyUsageFact()])
+  ) as Record<string, StarterPackProvisioningDestinationUsageFact>;
+
+  if (input.destinationIds.length === 0) {
+    return facts;
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const [
+    catalogResponse,
+    estimateLineResponse,
+    invoiceLineResponse,
+    snapshotItemResponse,
+    systemCatalogResponse,
+    systemComponentResponse,
+    floorSystemComponentResponse,
+    inventoryResponse
+  ] = await Promise.all([
+    supabase
+      .from("catalog_items")
+      .select("id, status, is_default")
+      .eq("company_id", input.organizationId)
+      .in("id", input.destinationIds),
+    supabase
+      .from("estimate_line_items")
+      .select("catalog_item_id")
+      .eq("company_id", input.organizationId)
+      .in("catalog_item_id", input.destinationIds),
+    supabase
+      .from("invoice_line_items")
+      .select("catalog_item_id")
+      .eq("company_id", input.organizationId)
+      .in("catalog_item_id", input.destinationIds),
+    supabase
+      .from("estimate_commercial_snapshot_items")
+      .select("catalog_item_id")
+      .eq("company_id", input.organizationId)
+      .in("catalog_item_id", input.destinationIds),
+    supabase
+      .from("catalog_system_components")
+      .select("system_catalog_item_id")
+      .eq("company_id", input.organizationId)
+      .in("system_catalog_item_id", input.destinationIds),
+    supabase
+      .from("catalog_system_components")
+      .select("component_catalog_item_id")
+      .eq("company_id", input.organizationId)
+      .in("component_catalog_item_id", input.destinationIds),
+    supabase
+      .from("floor_system_template_components")
+      .select("catalog_item_id")
+      .eq("company_id", input.organizationId)
+      .in("catalog_item_id", input.destinationIds),
+    supabase
+      .from("inventory_items")
+      .select("catalog_item_id")
+      .eq("company_id", input.organizationId)
+      .in("catalog_item_id", input.destinationIds)
+  ]);
+
+  const responses = [
+    catalogResponse,
+    estimateLineResponse,
+    invoiceLineResponse,
+    snapshotItemResponse,
+    systemCatalogResponse,
+    systemComponentResponse,
+    floorSystemComponentResponse,
+    inventoryResponse
+  ];
+  const failedResponse = responses.find((response) => response.error);
+
+  if (failedResponse?.error) {
+    throw new Error("Unable to load catalog item usage for void readiness.");
+  }
+
+  for (const row of Array.isArray(catalogResponse.data)
+    ? (catalogResponse.data as Array<{
+        id: string;
+        status: "active" | "archived";
+        is_default: boolean;
+      }>)
+    : []) {
+    const fact = ensureUsageFact(facts, row.id);
+    fact.destinationExists = true;
+
+    if (row.status === "active" && row.is_default) {
+      incrementUsageFact(facts, row.id, "activeDefaults");
+    }
+  }
+
+  for (const row of Array.isArray(estimateLineResponse.data)
+    ? (estimateLineResponse.data as Array<{ catalog_item_id: string | null }>)
+    : []) {
+    incrementUsageFact(facts, row.catalog_item_id, "estimateLineItems");
+  }
+
+  for (const row of Array.isArray(invoiceLineResponse.data)
+    ? (invoiceLineResponse.data as Array<{ catalog_item_id: string | null }>)
+    : []) {
+    incrementUsageFact(facts, row.catalog_item_id, "invoiceLineItems");
+  }
+
+  for (const row of Array.isArray(snapshotItemResponse.data)
+    ? (snapshotItemResponse.data as Array<{ catalog_item_id: string | null }>)
+    : []) {
+    incrementUsageFact(facts, row.catalog_item_id, "estimateCommercialSnapshotItems");
+  }
+
+  for (const row of Array.isArray(systemCatalogResponse.data)
+    ? (systemCatalogResponse.data as Array<{
+        system_catalog_item_id: string | null;
+      }>)
+    : []) {
+    incrementUsageFact(facts, row.system_catalog_item_id, "catalogSystemMasters");
+  }
+
+  for (const row of Array.isArray(systemComponentResponse.data)
+    ? (systemComponentResponse.data as Array<{
+        component_catalog_item_id: string | null;
+      }>)
+    : []) {
+    incrementUsageFact(
+      facts,
+      row.component_catalog_item_id,
+      "catalogSystemComponents"
+    );
+  }
+
+  for (const row of Array.isArray(floorSystemComponentResponse.data)
+    ? (floorSystemComponentResponse.data as Array<{
+        catalog_item_id: string | null;
+      }>)
+    : []) {
+    incrementUsageFact(facts, row.catalog_item_id, "floorSystemTemplateComponents");
+  }
+
+  for (const row of Array.isArray(inventoryResponse.data)
+    ? (inventoryResponse.data as Array<{ catalog_item_id: string | null }>)
+    : []) {
+    incrementUsageFact(facts, row.catalog_item_id, "inventoryItems");
+  }
+
+  return facts;
+}
+
+export async function getStarterPackProvisioningRunUsage(
+  runId: string
+): Promise<StarterPackProvisioningVoidReadiness | null> {
+  const run = await getStarterPackProvisioningRunDetail(runId);
+
+  if (!run) {
+    return null;
+  }
+
+  const documentTemplateDestinationIds = uniqueNonNullIds(
+    run.items
+      .filter((item) => item.destinationRecordType === "document_template")
+      .map((item) => item.destinationRecordId)
+  );
+  const catalogItemDestinationIds = uniqueNonNullIds(
+    run.items
+      .filter((item) => item.destinationRecordType === "catalog_item")
+      .map((item) => item.destinationRecordId)
+  );
+  const [documentTemplates, catalogItems] = await Promise.all([
+    loadTemplateUsageFacts({
+      organizationId: run.organizationId,
+      destinationIds: documentTemplateDestinationIds
+    }),
+    loadCatalogUsageFacts({
+      organizationId: run.organizationId,
+      destinationIds: catalogItemDestinationIds
+    })
+  ]);
+  const usageFacts: StarterPackProvisioningDestinationUsageFacts = {
+    documentTemplates,
+    catalogItems
+  };
+
+  return buildStarterPackProvisioningVoidReadiness({
+    run,
+    usageFacts
+  });
+}
+
+export async function getStarterPackProvisioningDraftReview(
+  runId: string
+): Promise<StarterPackProvisioningDraftReview | null> {
+  const run = await getStarterPackProvisioningRunDetail(runId);
+
+  if (!run) {
+    return null;
+  }
+
+  const [starterPacks, tenants] = await Promise.all([
+    listPlatformStarterPacks(),
+    listTenantsForPlatformAdmin()
+  ]);
+  const starterPack =
+    starterPacks.find((candidate) => candidate.id === run.starterPackId) ?? null;
+  const tenant =
+    tenants.find((candidate) => candidate.id === run.organizationId) ?? null;
+  const [organizationTemplates, organizationCatalogItems] = tenant
+    ? await Promise.all([
+        listOrganizationDocumentTemplatesForPlatformAdmin(tenant.id),
+        listOrganizationCatalogItemsForPlatformAdmin(tenant.id)
+      ])
+    : [[], []];
+  const currentDryRun = buildStarterPackProvisioningDryRun({
+    organization: tenant
+      ? {
+          id: tenant.id,
+          name: tenant.display_name || tenant.legal_name,
+          slug: tenant.slug
+        }
+      : null,
+    starterPack,
+    organizationTemplates,
+    organizationCatalogItems
+  });
+
+  return buildStarterPackProvisioningDraftReview({
+    run,
+    currentDryRun
+  });
+}
+
+export async function approveStarterPackProvisioningDraftRun(input: {
+  runId: string;
+  confirmationText: string;
+  userId: string;
+}): Promise<PlatformStarterPackProvisioningRunDetail> {
+  const review = await getStarterPackProvisioningDraftReview(input.runId);
+
+  if (!review) {
+    throw new Error("Unable to load provisioning audit draft for approval.");
+  }
+
+  const eligibility = evaluateStarterPackProvisioningApprovalEligibility({
+    review,
+    confirmationText: input.confirmationText
+  });
+
+  if (!eligibility.eligible) {
+    throw new Error(
+      eligibility.issues[0]?.message ??
+        "This provisioning audit draft is not eligible for approval."
+    );
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("platform_starter_pack_provisioning_runs")
+    .update({
+      status: "approved",
+      approved_by: input.userId,
+      approved_at: new Date().toISOString(),
+      confirmation_text: input.confirmationText
+    })
+    .eq("id", input.runId)
+    .eq("status", "draft")
+    .select("id")
+    .single();
+
+  if (response.error) {
+    throw new Error(
+      `Unable to approve provisioning audit draft: ${response.error.message}`
+    );
+  }
+
+  const approvedRun = await getStarterPackProvisioningRunDetail(input.runId);
+
+  if (!approvedRun) {
+    throw new Error("Unable to load approved provisioning audit draft.");
+  }
+
+  return approvedRun;
+}
+
+function normalizeProvisioningExecutionRpcResult(
+  value: unknown
+): StarterPackProvisioningExecutionRpcResult {
+  const record =
+    value && typeof value === "object"
+      ? (value as Record<string, unknown>)
+      : {};
+
+  const status = record.status;
+
+  if (
+    typeof record.runId !== "string" ||
+    ![
+      "approved",
+      "running",
+      "completed",
+      "completed_with_warnings",
+      "failed"
+    ].includes(typeof status === "string" ? status : "")
+  ) {
+    throw new Error("Provisioning execution returned an invalid response.");
+  }
+
+  return {
+    runId: record.runId,
+    status: status as PlatformStarterPackProvisioningRunStatus,
+    alreadyCompleted: record.alreadyCompleted === true,
+    createdTemplateCount:
+      typeof record.createdTemplateCount === "number"
+        ? record.createdTemplateCount
+        : 0,
+    createdCatalogItemCount:
+      typeof record.createdCatalogItemCount === "number"
+        ? record.createdCatalogItemCount
+        : 0,
+    skippedCount:
+      typeof record.skippedCount === "number" ? record.skippedCount : 0,
+    message:
+      typeof record.message === "string"
+        ? record.message
+        : "Starter-pack provisioning execution completed."
+  };
+}
+
+export async function executeApprovedStarterPackProvisioningRun(input: {
+  runId: string;
+  confirmationText: string;
+  userId: string;
+}): Promise<{
+  run: PlatformStarterPackProvisioningRunDetail;
+  result: StarterPackProvisioningExecutionRpcResult;
+}> {
+  const [run, review] = await Promise.all([
+    getStarterPackProvisioningRunDetail(input.runId),
+    getStarterPackProvisioningDraftReview(input.runId)
+  ]);
+
+  if (!run || !review) {
+    await recordStarterPackProvisioningExecutionAttempt({
+      descriptor: describeProvisioningExecutionAttemptFromIssue(
+        "Unable to load approved provisioning run for execution."
+      ),
+      userId: input.userId,
+      runId: input.runId,
+      metadata: { stage: "review_load" }
+    });
+
+    throw new Error("Unable to load approved provisioning run for execution.");
+  }
+
+  if (run.status === "completed" || run.status === "completed_with_warnings") {
+    await recordStarterPackProvisioningExecutionAttempt({
+      descriptor: describeProvisioningExecutionAttemptForAlreadyCompleted(),
+      userId: input.userId,
+      runId: run.id,
+      starterPackId: run.starterPackId,
+      organizationId: run.organizationId,
+      reviewStatus: review.freshnessStatus,
+      runStatus: run.status,
+      metadata: {
+        stage: "already_completed",
+        destinationRecordCount: run.destinationRecordCount ?? 0
+      }
+    });
+
+    throw new Error(
+      "Provisioning run was already completed. No duplicate records were created."
+    );
+  }
+
+  const eligibility = evaluateStarterPackProvisioningExecutionEligibility({
+    run,
+    review,
+    confirmationText: input.confirmationText
+  });
+
+  if (!eligibility.eligible) {
+    const descriptor = describeProvisioningExecutionAttemptFromIssue(
+      eligibility.issues[0]?.message ??
+        "This provisioning run is not eligible for execution."
+    );
+    const context = attemptContextFromReview({ run, review });
+
+    await recordStarterPackProvisioningExecutionAttempt({
+      descriptor,
+      userId: input.userId,
+      ...context,
+      metadata: {
+        stage: "eligibility",
+        issueCount: eligibility.issues.length,
+        firstIssueSeverity: eligibility.issues[0]?.severity ?? null
+      }
+    });
+
+    throw new Error(
+      eligibility.issues[0]?.message ??
+        "This provisioning run is not eligible for execution."
+    );
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase.rpc(
+    "execute_platform_starter_pack_provisioning_run",
+    {
+      p_run_id: input.runId,
+      p_actor_id: input.userId
+    }
+  );
+
+  if (response.error) {
+    await recordStarterPackProvisioningExecutionAttempt({
+      descriptor: describeProvisioningExecutionAttemptForDatabaseGuard(),
+      userId: input.userId,
+      runId: run.id,
+      starterPackId: run.starterPackId,
+      organizationId: run.organizationId,
+      reviewStatus: review.freshnessStatus,
+      runStatus: run.status,
+      metadata: {
+        stage: "rpc_guard",
+        errorCode: response.error.code ?? null
+      }
+    });
+
+    throw new Error(
+      "Provisioning execution did not complete. Review the operation attempt log for the safe blocker."
+    );
+  }
+
+  const result = normalizeProvisioningExecutionRpcResult(response.data);
+  const executedRun = await getStarterPackProvisioningRunDetail(input.runId);
+
+  if (!executedRun) {
+    throw new Error("Provisioning execution completed but the run could not be loaded.");
+  }
+
+  if (result.alreadyCompleted) {
+    await recordStarterPackProvisioningExecutionAttempt({
+      descriptor: describeProvisioningExecutionAttemptForAlreadyCompleted(),
+      userId: input.userId,
+      runId: executedRun.id,
+      starterPackId: executedRun.starterPackId,
+      organizationId: executedRun.organizationId,
+      reviewStatus: review.freshnessStatus,
+      runStatus: executedRun.status,
+      metadata: {
+        stage: "rpc_noop",
+        createdTemplateCount: result.createdTemplateCount,
+        createdCatalogItemCount: result.createdCatalogItemCount,
+        skippedCount: result.skippedCount
+      }
+    });
+  }
+
+  return {
+    run: executedRun,
+    result
+  };
+}
+
+function buildProvisioningDraftIdempotencyKey(input: {
+  userId: string;
+  organizationId: string;
+  starterPackId: string;
+  fingerprintPayload: Record<string, unknown>;
+}) {
+  const hash = createHash("sha256")
+    .update(
+      JSON.stringify({
+        userId: input.userId,
+        organizationId: input.organizationId,
+        starterPackId: input.starterPackId,
+        fingerprintPayload: input.fingerprintPayload
+      })
+    )
+    .digest("hex")
+    .slice(0, 32);
+
+  return `starter-pack-draft:${hash}`;
+}
+
+export async function createStarterPackProvisioningDraft(input: {
+  organizationId: string;
+  starterPackId: string;
+  userId: string;
+}): Promise<{
+  run: PlatformStarterPackProvisioningRunDetail;
+  reusedExistingDraft: boolean;
+}> {
+  const [starterPacks, tenants] = await Promise.all([
+    listPlatformStarterPacks(),
+    listTenantsForPlatformAdmin()
+  ]);
+  const starterPack =
+    starterPacks.find((pack) => pack.id === input.starterPackId) ?? null;
+  const tenant =
+    tenants.find((candidate) => candidate.id === input.organizationId) ?? null;
+
+  if (!tenant) {
+    throw new Error("Select a valid contractor organization.");
+  }
+
+  if (!starterPack) {
+    throw new Error("Select a valid starter pack.");
+  }
+
+  if (starterPack.status !== "published") {
+    throw new Error(
+      "Only published starter packs can create approval drafts. Draft and archived packs remain inspect-only."
+    );
+  }
+
+  if (starterPack.items.length === 0) {
+    throw new Error("This starter pack has no items to capture in an approval draft.");
+  }
+
+  const [organizationTemplates, organizationCatalogItems] = await Promise.all([
+    listOrganizationDocumentTemplatesForPlatformAdmin(input.organizationId),
+    listOrganizationCatalogItemsForPlatformAdmin(input.organizationId)
+  ]);
+  const report = buildStarterPackProvisioningDryRun({
+    organization: {
+      id: tenant.id,
+      name: tenant.display_name || tenant.legal_name,
+      slug: tenant.slug
+    },
+    starterPack,
+    organizationTemplates,
+    organizationCatalogItems
+  });
+
+  if (report.blockedCount > 0 || report.unavailableCount > 0) {
+    throw new Error(
+      "Resolve blocked or unavailable dry-run rows before creating an approval draft."
+    );
+  }
+
+  const fingerprintPayload = buildProvisioningDraftFingerprintPayload(report);
+  const idempotencyKey = buildProvisioningDraftIdempotencyKey({
+    userId: input.userId,
+    organizationId: input.organizationId,
+    starterPackId: input.starterPackId,
+    fingerprintPayload
+  });
+  const supabase = getSupabaseAdminClient();
+  const existingResponse = await supabase
+    .from("platform_starter_pack_provisioning_runs")
+    .select("id")
+    .eq("idempotency_key", idempotencyKey)
+    .maybeSingle();
+
+  if (existingResponse.error) {
+    throw new Error(
+      `Unable to check existing provisioning draft: ${existingResponse.error.message}`
+    );
+  }
+
+  const existingRunId =
+    existingResponse.data &&
+    typeof (existingResponse.data as { id?: unknown }).id === "string"
+      ? (existingResponse.data as { id: string }).id
+      : null;
+
+  if (existingRunId) {
+    const existingRun = await getStarterPackProvisioningRunDetail(existingRunId);
+
+    if (!existingRun) {
+      throw new Error("Unable to load existing provisioning draft.");
+    }
+
+    return {
+      run: existingRun,
+      reusedExistingDraft: true
+    };
+  }
+
+  const runResponse = await supabase
+    .from("platform_starter_pack_provisioning_runs")
+    .insert({
+      starter_pack_id: input.starterPackId,
+      organization_id: input.organizationId,
+      requested_by: input.userId,
+      status: "draft",
+      dry_run_snapshot: buildProvisioningDraftSnapshot(report),
+      idempotency_key: idempotencyKey
+    })
+    .select("id")
+    .single();
+
+  if (runResponse.error) {
+    throw new Error(
+      `Unable to create provisioning approval draft: ${runResponse.error.message}`
+    );
+  }
+
+  const runId = (runResponse.data as { id: string }).id;
+  const draftItems = mapDryRunRowsToProvisioningDraftItems(report.rows);
+  const itemResponse = await supabase
+    .from("platform_starter_pack_provisioning_run_items")
+    .insert(
+      draftItems.map((item) => ({
+        run_id: runId,
+        starter_pack_item_id: item.starterPackItemId,
+        source_item_type: item.sourceItemType,
+        source_template_seed_id: item.sourceTemplateSeedId,
+        source_catalog_seed_id: item.sourceCatalogSeedId,
+        destination_record_type: item.destinationRecordType,
+        destination_record_id: item.destinationRecordId,
+        action: item.action,
+        status: item.status,
+        source_snapshot: item.sourceSnapshot,
+        destination_snapshot: item.destinationSnapshot,
+        reason: item.reason
+      }))
+    );
+
+  if (itemResponse.error) {
+    await supabase
+      .from("platform_starter_pack_provisioning_runs")
+      .update({
+        status: "failed",
+        error_message:
+          "Approval draft item capture failed. No contractor-owned records were written."
+      })
+      .eq("id", runId);
+
+    throw new Error(
+      `Unable to create provisioning approval draft items: ${itemResponse.error.message}`
+    );
+  }
+
+  const run = await getStarterPackProvisioningRunDetail(runId);
+
+  if (!run) {
+    throw new Error("Unable to load created provisioning approval draft.");
+  }
+
+  return {
+    run,
+    reusedExistingDraft: false
+  };
+}
+
+export async function upsertPlatformStarterPack(input: {
+  packId?: string | null;
+  packKey: string;
+  name: string;
+  description: string | null;
+  status: PlatformStarterPackStatus;
+  segmentKey: string | null;
+  userId: string;
+}) {
+  const supabase = getSupabaseAdminClient();
+  const payload = {
+    pack_key: input.packKey,
+    name: input.name,
+    description: input.description,
+    status: input.status,
+    segment_key: input.segmentKey,
+    updated_by: input.userId
+  };
+
+  const response = input.packId
+    ? await supabase
+        .from("platform_starter_packs")
+        .update(payload)
+        .eq("id", input.packId)
+        .select("*")
+        .single()
+    : await supabase
+        .from("platform_starter_packs")
+        .insert({
+          ...payload,
+          created_by: input.userId
+        })
+        .select("*")
+        .single();
+
+  if (response.error) {
+    throw new Error(
+      `Unable to save platform starter pack: ${response.error.message}`
+    );
+  }
+
+  return mapStarterPack(response.data as PlatformStarterPackRow, [], []);
+}
+
+export async function upsertContractorGroup(input: {
+  contractorGroupId?: string | null;
+  key: string;
+  name: string;
+  description: string | null;
+  status: ContractorGroupStatus;
+  groupType: ContractorGroupType;
+  userId: string;
+}): Promise<ContractorGroup> {
+  const supabase = getSupabaseAdminClient();
+  const payload = {
+    group_key: input.key,
+    name: input.name,
+    description: input.description,
+    status: input.status,
+    group_type: input.groupType,
+    updated_by: input.userId
+  };
+
+  const response = input.contractorGroupId
+    ? await supabase
+        .from("contractor_groups")
+        .update(payload)
+        .eq("id", input.contractorGroupId)
+        .select("*")
+        .single()
+    : await supabase
+        .from("contractor_groups")
+        .insert({
+          ...payload,
+          created_by: input.userId
+        })
+        .select("*")
+        .single();
+
+  if (response.error) {
+    throw new Error(
+      response.error.message.includes("contractor_groups_group_key_unique")
+        ? "A contractor group with that key already exists."
+        : `Unable to save contractor group: ${response.error.message}`
+    );
+  }
+
+  return mapContractorGroup({
+    ...(response.data as ContractorGroupRow),
+    contractor_group_memberships: []
+  });
+}
+
+export async function archiveContractorGroup(input: {
+  contractorGroupId: string;
+  userId: string;
+}): Promise<void> {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("contractor_groups")
+    .update({
+      status: "archived",
+      updated_by: input.userId
+    })
+    .eq("id", input.contractorGroupId);
+
+  if (response.error) {
+    throw new Error(`Unable to archive contractor group: ${response.error.message}`);
+  }
+}
+
+export async function assignOrganizationToContractorGroup(input: {
+  contractorGroupId: string;
+  organizationId: string;
+  assignmentSource: ContractorGroupAssignmentSource;
+  notes: string | null;
+  userId: string;
+}): Promise<void> {
+  const supabase = getSupabaseAdminClient();
+  const groupResponse = await supabase
+    .from("contractor_groups")
+    .select("id, status")
+    .eq("id", input.contractorGroupId)
+    .maybeSingle();
+
+  if (groupResponse.error) {
+    throw new Error(`Unable to inspect contractor group: ${groupResponse.error.message}`);
+  }
+
+  if (!groupResponse.data) {
+    throw new Error("Select a valid contractor group.");
+  }
+
+  if (groupResponse.data.status === "archived") {
+    throw new Error("Archived contractor groups cannot receive new organization assignments.");
+  }
+
+  const organizationResponse = await supabase
+    .from("companies")
+    .select("id")
+    .eq("id", input.organizationId)
+    .maybeSingle();
+
+  if (organizationResponse.error) {
+    throw new Error(
+      `Unable to inspect contractor organization: ${organizationResponse.error.message}`
+    );
+  }
+
+  if (!organizationResponse.data) {
+    throw new Error("Select a valid contractor organization.");
+  }
+
+  const response = await supabase.from("contractor_group_memberships").upsert(
+    {
+      contractor_group_id: input.contractorGroupId,
+      organization_id: input.organizationId,
+      assigned_by: input.userId,
+      assignment_source: input.assignmentSource,
+      notes: input.notes
+    },
+    {
+      onConflict: "contractor_group_id,organization_id"
+    }
+  );
+
+  if (response.error) {
+    throw new Error(
+      response.error.message.includes(
+        "contractor_group_memberships_group_org_unique_idx"
+      )
+        ? "That organization is already assigned to this contractor group."
+        : `Unable to assign organization to contractor group: ${response.error.message}`
+    );
+  }
+}
+
+export async function removeOrganizationFromContractorGroup(
+  membershipId: string
+): Promise<void> {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("contractor_group_memberships")
+    .delete()
+    .eq("id", membershipId);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to remove organization from contractor group: ${response.error.message}`
+    );
+  }
+}
+
+async function getNextStarterPackSortOrder(starterPackId: string) {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("platform_starter_pack_items")
+    .select("sort_order")
+    .eq("starter_pack_id", starterPackId)
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (response.error) {
+    throw new Error(
+      `Unable to inspect starter pack ordering: ${response.error.message}`
+    );
+  }
+
+  const currentSortOrder =
+    response.data && typeof response.data.sort_order === "number"
+      ? response.data.sort_order
+      : -1;
+
+  return currentSortOrder + 1;
+}
+
+export async function addTemplateSeedToStarterPack(input: {
+  starterPackId: string;
+  templateSeedId: string;
+  isRequired: boolean;
+  userId: string;
+}) {
+  const supabase = getSupabaseAdminClient();
+  const sortOrder = await getNextStarterPackSortOrder(input.starterPackId);
+  const response = await supabase.from("platform_starter_pack_items").insert({
+    starter_pack_id: input.starterPackId,
+    item_type: "template_seed",
+    template_seed_id: input.templateSeedId,
+    sort_order: sortOrder,
+    is_required: input.isRequired,
+    created_by: input.userId
+  });
+
+  if (response.error) {
+    throw new Error(
+      response.error.message.includes("platform_starter_pack_items_template_unique_idx")
+        ? "This starter pack already includes that template seed."
+        : `Unable to add template seed to starter pack: ${response.error.message}`
+    );
+  }
+}
+
+export async function addCatalogSeedToStarterPack(input: {
+  starterPackId: string;
+  catalogSeedId: string;
+  isRequired: boolean;
+  userId: string;
+}) {
+  const supabase = getSupabaseAdminClient();
+  const sortOrder = await getNextStarterPackSortOrder(input.starterPackId);
+  const response = await supabase.from("platform_starter_pack_items").insert({
+    starter_pack_id: input.starterPackId,
+    item_type: "catalog_seed",
+    catalog_seed_id: input.catalogSeedId,
+    sort_order: sortOrder,
+    is_required: input.isRequired,
+    created_by: input.userId
+  });
+
+  if (response.error) {
+    throw new Error(
+      response.error.message.includes("platform_starter_pack_items_catalog_unique_idx")
+        ? "This starter pack already includes that catalog seed."
+        : `Unable to add catalog seed to starter pack: ${response.error.message}`
+    );
+  }
+}
+
+export async function removeStarterPackItem(itemId: string) {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("platform_starter_pack_items")
+    .delete()
+    .eq("id", itemId);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to remove starter pack item: ${response.error.message}`
+    );
+  }
+}
+
+function starterPackAssignmentDuplicateMessage(message: string) {
+  if (
+    message.includes(
+      "platform_starter_pack_assignments_active_all_unique_idx"
+    )
+  ) {
+    return "This starter pack already has an active all-organizations assignment.";
+  }
+
+  if (
+    message.includes(
+      "platform_starter_pack_assignments_active_org_unique_idx"
+    )
+  ) {
+    return "This starter pack already has an active assignment for that organization.";
+  }
+
+  if (
+    message.includes(
+      "platform_starter_pack_assignments_active_key_unique_idx"
+    )
+  ) {
+    return "This starter pack already has an active assignment for that target key.";
+  }
+
+  return null;
+}
+
+export async function upsertStarterPackAssignment(input: {
+  assignmentId?: string | null;
+  starterPackId: string;
+  assignmentType: PlatformStarterPackAssignmentType;
+  organizationId: string | null;
+  assignmentKey: string | null;
+  label: string | null;
+  status: PlatformStarterPackAssignmentStatus;
+  notes: string | null;
+  userId: string;
+}) {
+  const supabase = getSupabaseAdminClient();
+  const payload = {
+    starter_pack_id: input.starterPackId,
+    assignment_type: input.assignmentType,
+    organization_id:
+      input.assignmentType === "organization" ? input.organizationId : null,
+    assignment_key:
+      input.assignmentType === "all_organizations" ||
+      input.assignmentType === "organization"
+        ? null
+        : input.assignmentKey,
+    label: input.label,
+    status: input.status,
+    notes: input.notes,
+    updated_by: input.userId
+  };
+
+  const response = input.assignmentId
+    ? await supabase
+        .from("platform_starter_pack_assignments")
+        .update(payload)
+        .eq("id", input.assignmentId)
+    : await supabase.from("platform_starter_pack_assignments").insert({
+        ...payload,
+        created_by: input.userId
+      });
+
+  if (response.error) {
+    const duplicateMessage = starterPackAssignmentDuplicateMessage(
+      response.error.message
+    );
+
+    throw new Error(
+      duplicateMessage ??
+        `Unable to save starter pack assignment intent: ${response.error.message}`
+    );
+  }
+}
+
+export async function removeStarterPackAssignment(assignmentId: string) {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("platform_starter_pack_assignments")
+    .delete()
+    .eq("id", assignmentId);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to remove starter pack assignment intent: ${response.error.message}`
+    );
+  }
 }
 
 export async function listPlatformFeaturePolicies() {
@@ -939,7 +3296,7 @@ export async function listPlatformAdmins() {
       `
         id,
         user_id,
-        users (
+        users!platform_user_roles_user_id_fkey (
           id,
           email,
           full_name
@@ -967,6 +3324,11 @@ export async function listPlatformAdmins() {
             email: string;
             full_name: string | null;
           }>
+        | {
+            id: string;
+            email: string;
+            full_name: string | null;
+          }
         | null;
       roles:
         | Array<{
@@ -974,14 +3336,23 @@ export async function listPlatformAdmins() {
             key: string;
             name: string;
           }>
+        | {
+            id: string;
+            key: string;
+            name: string;
+          }
         | null;
     };
 
     return {
       id: record.id,
       user_id: record.user_id,
-      users: Array.isArray(record.users) ? (record.users[0] ?? null) : null,
-      roles: Array.isArray(record.roles) ? (record.roles[0] ?? null) : null
+      users: Array.isArray(record.users)
+        ? (record.users[0] ?? null)
+        : record.users,
+      roles: Array.isArray(record.roles)
+        ? (record.roles[0] ?? null)
+        : record.roles
     } satisfies PlatformAdminAssignmentRow;
   });
 }
@@ -1084,9 +3455,13 @@ export async function listTenantsForPlatformAdmin() {
         slug,
         legal_name,
         display_name,
+        primary_trade,
         tenant_status,
         lifecycle_state,
         created_at,
+        active_location:locations!companies_active_location_id_fkey (
+          state_region
+        ),
         organization_workflow_settings (
           next_estimate_number,
           next_invoice_number,
@@ -1117,9 +3492,18 @@ export async function listTenantsForPlatformAdmin() {
       slug: string;
       legal_name: string;
       display_name: string;
+      primary_trade: string | null;
       tenant_status: string;
       lifecycle_state: string;
       created_at: string;
+      active_location:
+        | Array<{
+            state_region: string | null;
+          }>
+        | {
+            state_region: string | null;
+          }
+        | null;
       organization_workflow_settings:
         | Array<{
             next_estimate_number: number | null;
@@ -1149,9 +3533,11 @@ export async function listTenantsForPlatformAdmin() {
       slug: record.slug,
       legal_name: record.legal_name,
       display_name: record.display_name,
+      primary_trade: record.primary_trade,
       tenant_status: record.tenant_status,
       lifecycle_state: record.lifecycle_state,
       created_at: record.created_at,
+      active_location: record.active_location,
       organization_workflow_settings: Array.isArray(record.organization_workflow_settings)
         ? record.organization_workflow_settings
         : null,

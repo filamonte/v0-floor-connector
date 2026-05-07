@@ -272,6 +272,8 @@ Current canonical records involved:
 Implemented flow:
 - contractor creates an opportunity in `/leads`
 - opportunity can be reviewed and updated
+- opportunity can store a next follow-up timestamp and optional internal follow-up note for later lead follow-through UI
+- manual opportunity communication can be stored on canonical `communication_threads` / `communication_messages` before customer/project conversion, with explicit internal versus customer-visible message visibility
 - the lead workspace includes lightweight site visit Scope Intake capture for manual measurements and structured observations
 - starting the estimate path creates or links the downstream customer and project records as needed
 
@@ -279,6 +281,7 @@ Current canonical records involved:
 - opportunity
 - optional linked customer
 - optional linked project
+- communication threads/messages for manual lead communication
 
 ### Customer To Project
 
@@ -497,6 +500,8 @@ Implemented flow:
 - per-user notifications track in-app read state from those events
 - notification deliveries track channel outcomes such as sent, delivered, opened, clicked, and failed
 - canonical communication threads and immutable messages now keep record-attached conversation history on the same customer and project chain
+- opportunity-linked communication threads/messages now support pre-conversion lead communication without a separate lead-activity model
+- manual communication logs must default internal unless a contractor deliberately marks the message customer-visible in a future UI
 - provider-backed notification email delivery is blocked by the activation guard while the organization is pending/trial; internal in-app notifications and communication review remain available
 
 Current canonical records involved:

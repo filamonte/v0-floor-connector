@@ -35,7 +35,7 @@ module.exports = defineConfig({
     },
     {
       name: "chromium-public",
-      testMatch: /(?:save-state-form|ui-primitives)\.spec\.js/,
+      testMatch: /(?:marketing-login|save-state-form|ui-primitives)\.spec\.js/,
       use: { ...devices["Desktop Chrome"] }
     },
     {

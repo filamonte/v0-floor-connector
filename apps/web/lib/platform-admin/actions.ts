@@ -5,7 +5,19 @@ import { redirect } from "next/navigation";
 
 import { requirePlatformAdminUser } from "@/lib/platform-admin/access";
 import {
+  addCatalogSeedToStarterPack,
+  addTemplateSeedToStarterPack,
+  approveStarterPackProvisioningDraftRun,
+  archiveContractorGroup,
   assignPlatformAdminByEmail,
+  assignOrganizationToContractorGroup,
+  createStarterPackProvisioningDraft,
+  executeApprovedStarterPackProvisioningRun,
+  getStarterPackProvisioningRunDetail,
+  recordStarterPackProvisioningExecutionAttempt,
+  removeStarterPackAssignment,
+  removeStarterPackItem,
+  removeOrganizationFromContractorGroup,
   resetEarlyAccessTenantOnboardingState,
   updateCompanyTenantStatus,
   updatePlatformTemplateSeed,
@@ -13,14 +25,30 @@ import {
   upsertPlatformCatalogItemSeed,
   upsertPlatformFeaturePolicy,
   upsertPlatformFinancialDefaults,
-  upsertPlatformWorkflowDefaults
+  upsertPlatformStarterPack,
+  upsertPlatformWorkflowDefaults,
+  upsertStarterPackAssignment,
+  upsertContractorGroup
 } from "@/lib/platform-admin/data";
 
 import {
+  contractorGroupArchiveInputSchema,
+  contractorGroupInputSchema,
+  contractorGroupMembershipInputSchema,
+  contractorGroupMembershipRemoveInputSchema,
   platformAdminAssignmentInputSchema,
   platformCatalogSeedInputSchema,
   platformFeaturePolicyInputSchema,
   platformFinancialDefaultsInputSchema,
+  platformStarterPackCatalogItemInputSchema,
+  platformStarterPackAssignmentInputSchema,
+  platformStarterPackAssignmentRemoveInputSchema,
+  platformStarterPackProvisioningApprovalInputSchema,
+  platformStarterPackProvisioningDraftInputSchema,
+  platformStarterPackProvisioningExecutionInputSchema,
+  platformStarterPackInputSchema,
+  platformStarterPackRemoveItemInputSchema,
+  platformStarterPackTemplateItemInputSchema,
   platformTenantActivationInputSchema,
   platformTemplateSeedInputSchema,
   platformTenantWorkflowNumberingInputSchema,
@@ -28,6 +56,7 @@ import {
   platformTenantResetInputSchema,
   platformWorkflowDefaultsInputSchema
 } from "./schemas";
+import { describeProvisioningExecutionAttemptForSchemaFailure } from "./starter-pack-provisioning-attempts-core";
 
 function getFieldValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -53,12 +82,21 @@ function buildRedirect(pathname: string, params: Record<string, string | undefin
   return query ? `${pathname}?${query}` : pathname;
 }
 
+function validUuidOrNull(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    value
+  )
+    ? value
+    : null;
+}
+
 function revalidatePlatformAdminSlice() {
   revalidatePath("/super-admin");
   revalidatePath("/super-admin/platform");
   revalidatePath("/super-admin/templates");
   revalidatePath("/super-admin/catalogs");
   revalidatePath("/super-admin/modules");
+  revalidatePath("/super-admin/groups");
   revalidatePath("/super-admin/admin");
   revalidatePath("/super-admin/early-access");
 }
@@ -284,6 +322,598 @@ export async function upsertPlatformCatalogSeedAction(formData: FormData) {
     buildRedirect("/super-admin/catalogs", {
       message: "Platform starter catalog item was saved."
     })
+  );
+}
+
+export async function upsertContractorGroupAction(formData: FormData) {
+  const scope = await requirePlatformAdminUser("/super-admin/groups");
+  const result = contractorGroupInputSchema.safeParse({
+    contractorGroupId: getFieldValue(formData, "contractorGroupId"),
+    key: getFieldValue(formData, "key"),
+    name: getFieldValue(formData, "name"),
+    description: getFieldValue(formData, "description"),
+    status: getFieldValue(formData, "status"),
+    groupType: getFieldValue(formData, "groupType")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/super-admin/groups", {
+        error:
+          result.error.issues[0]?.message ?? "Unable to save contractor group."
+      })
+    );
+  }
+
+  try {
+    await upsertContractorGroup({
+      ...result.data,
+      userId: scope.userId
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/super-admin/groups", {
+        error:
+          error instanceof Error ? error.message : "Unable to save contractor group."
+      })
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    buildRedirect("/super-admin/groups", {
+      message: "Contractor group was saved."
+    })
+  );
+}
+
+export async function archiveContractorGroupAction(formData: FormData) {
+  const scope = await requirePlatformAdminUser("/super-admin/groups");
+  const result = contractorGroupArchiveInputSchema.safeParse({
+    contractorGroupId: getFieldValue(formData, "contractorGroupId")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/super-admin/groups", {
+        error:
+          result.error.issues[0]?.message ?? "Unable to archive contractor group."
+      })
+    );
+  }
+
+  try {
+    await archiveContractorGroup({
+      contractorGroupId: result.data.contractorGroupId,
+      userId: scope.userId
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/super-admin/groups", {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to archive contractor group."
+      })
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    buildRedirect("/super-admin/groups", {
+      message: "Contractor group was archived."
+    })
+  );
+}
+
+export async function assignContractorGroupMembershipAction(formData: FormData) {
+  const scope = await requirePlatformAdminUser("/super-admin/groups");
+  const result = contractorGroupMembershipInputSchema.safeParse({
+    contractorGroupId: getFieldValue(formData, "contractorGroupId"),
+    organizationId: getFieldValue(formData, "organizationId"),
+    assignmentSource: getFieldValue(formData, "assignmentSource") || "manual",
+    notes: getFieldValue(formData, "notes")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/super-admin/groups", {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to assign organization to contractor group."
+      })
+    );
+  }
+
+  try {
+    await assignOrganizationToContractorGroup({
+      ...result.data,
+      userId: scope.userId
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/super-admin/groups", {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to assign organization to contractor group."
+      })
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    buildRedirect("/super-admin/groups", {
+      message: "Organization assignment was saved."
+    })
+  );
+}
+
+export async function removeContractorGroupMembershipAction(formData: FormData) {
+  await requirePlatformAdminUser("/super-admin/groups");
+  const result = contractorGroupMembershipRemoveInputSchema.safeParse({
+    membershipId: getFieldValue(formData, "membershipId")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/super-admin/groups", {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to remove organization assignment."
+      })
+    );
+  }
+
+  try {
+    await removeOrganizationFromContractorGroup(result.data.membershipId);
+  } catch (error) {
+    redirect(
+      buildRedirect("/super-admin/groups", {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to remove organization assignment."
+      })
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    buildRedirect("/super-admin/groups", {
+      message: "Organization assignment was removed."
+    })
+  );
+}
+
+export async function upsertPlatformStarterPackAction(formData: FormData) {
+  const scope = await requirePlatformAdminUser("/super-admin/templates");
+  const result = platformStarterPackInputSchema.safeParse({
+    packId: getFieldValue(formData, "packId"),
+    packKey: getFieldValue(formData, "packKey"),
+    name: getFieldValue(formData, "name"),
+    description: getFieldValue(formData, "description"),
+    status: getFieldValue(formData, "status"),
+    segmentKey: getFieldValue(formData, "segmentKey")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/super-admin/templates", {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to save platform starter pack."
+      })
+    );
+  }
+
+  try {
+    await upsertPlatformStarterPack({
+      ...result.data,
+      userId: scope.userId
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/super-admin/templates", {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to save platform starter pack."
+      })
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    buildRedirect("/super-admin/templates", {
+      message: "Platform starter pack was saved."
+    })
+  );
+}
+
+export async function addTemplateSeedToStarterPackAction(formData: FormData) {
+  const scope = await requirePlatformAdminUser("/super-admin/templates");
+  const result = platformStarterPackTemplateItemInputSchema.safeParse({
+    starterPackId: getFieldValue(formData, "starterPackId"),
+    templateSeedId: getFieldValue(formData, "templateSeedId"),
+    isRequired: getCheckboxValue(formData, "isRequired")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/super-admin/templates", {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to add template seed to starter pack."
+      })
+    );
+  }
+
+  try {
+    await addTemplateSeedToStarterPack({
+      ...result.data,
+      userId: scope.userId
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/super-admin/templates", {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to add template seed to starter pack."
+      })
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    buildRedirect("/super-admin/templates", {
+      message: "Template seed was added to the starter pack."
+    })
+  );
+}
+
+export async function addCatalogSeedToStarterPackAction(formData: FormData) {
+  const scope = await requirePlatformAdminUser("/super-admin/templates");
+  const result = platformStarterPackCatalogItemInputSchema.safeParse({
+    starterPackId: getFieldValue(formData, "starterPackId"),
+    catalogSeedId: getFieldValue(formData, "catalogSeedId"),
+    isRequired: getCheckboxValue(formData, "isRequired")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/super-admin/templates", {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to add catalog seed to starter pack."
+      })
+    );
+  }
+
+  try {
+    await addCatalogSeedToStarterPack({
+      ...result.data,
+      userId: scope.userId
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/super-admin/templates", {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to add catalog seed to starter pack."
+      })
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    buildRedirect("/super-admin/templates", {
+      message: "Catalog seed was added to the starter pack."
+    })
+  );
+}
+
+export async function removeStarterPackItemAction(formData: FormData) {
+  await requirePlatformAdminUser("/super-admin/templates");
+  const result = platformStarterPackRemoveItemInputSchema.safeParse({
+    itemId: getFieldValue(formData, "itemId")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/super-admin/templates", {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to remove starter pack item."
+      })
+    );
+  }
+
+  try {
+    await removeStarterPackItem(result.data.itemId);
+  } catch (error) {
+    redirect(
+      buildRedirect("/super-admin/templates", {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to remove starter pack item."
+      })
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    buildRedirect("/super-admin/templates", {
+      message: "Starter pack item was removed."
+    })
+  );
+}
+
+export async function upsertStarterPackAssignmentAction(formData: FormData) {
+  const scope = await requirePlatformAdminUser("/super-admin/templates");
+  const result = platformStarterPackAssignmentInputSchema.safeParse({
+    assignmentId: getFieldValue(formData, "assignmentId"),
+    starterPackId: getFieldValue(formData, "starterPackId"),
+    assignmentType: getFieldValue(formData, "assignmentType"),
+    organizationId: getFieldValue(formData, "organizationId"),
+    assignmentKey: getFieldValue(formData, "assignmentKey"),
+    label: getFieldValue(formData, "label"),
+    status: getFieldValue(formData, "status"),
+    notes: getFieldValue(formData, "notes")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/super-admin/templates", {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to save starter pack assignment intent."
+      })
+    );
+  }
+
+  try {
+    await upsertStarterPackAssignment({
+      ...result.data,
+      userId: scope.userId
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/super-admin/templates", {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to save starter pack assignment intent."
+      })
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    buildRedirect("/super-admin/templates", {
+      message: "Starter pack assignment intent was saved."
+    })
+  );
+}
+
+export async function removeStarterPackAssignmentAction(formData: FormData) {
+  await requirePlatformAdminUser("/super-admin/templates");
+  const result = platformStarterPackAssignmentRemoveInputSchema.safeParse({
+    assignmentId: getFieldValue(formData, "assignmentId")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/super-admin/templates", {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to remove starter pack assignment intent."
+      })
+    );
+  }
+
+  try {
+    await removeStarterPackAssignment(result.data.assignmentId);
+  } catch (error) {
+    redirect(
+      buildRedirect("/super-admin/templates", {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to remove starter pack assignment intent."
+      })
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    buildRedirect("/super-admin/templates", {
+      message: "Starter pack assignment intent was removed."
+    })
+  );
+}
+
+export async function createStarterPackProvisioningDraftAction(formData: FormData) {
+  const scope = await requirePlatformAdminUser("/super-admin/templates");
+  const result = platformStarterPackProvisioningDraftInputSchema.safeParse({
+    organizationId: getFieldValue(formData, "organizationId"),
+    starterPackId: getFieldValue(formData, "starterPackId")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/super-admin/templates", {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to create starter-pack approval draft."
+      })
+    );
+  }
+
+  let draft: Awaited<ReturnType<typeof createStarterPackProvisioningDraft>>;
+
+  try {
+    draft = await createStarterPackProvisioningDraft({
+      ...result.data,
+      userId: scope.userId
+    });
+  } catch (error) {
+    redirect(
+      `${buildRedirect("/super-admin/templates", {
+        dryRunOrganizationId: result.data.organizationId,
+        dryRunStarterPackId: result.data.starterPackId,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to create starter-pack approval draft."
+      })}#starter-pack-provisioning-dry-run`
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    `${buildRedirect("/super-admin/templates", {
+      dryRunOrganizationId: result.data.organizationId,
+      dryRunStarterPackId: result.data.starterPackId,
+      draftRunId: draft.run.id,
+      message: draft.reusedExistingDraft
+        ? `Existing approval draft ${draft.run.id} is ready for review.`
+        : `Approval draft ${draft.run.id} was created with ${draft.run.itemCount} audit items.`
+    })}#starter-pack-provisioning-dry-run`
+  );
+}
+
+export async function approveStarterPackProvisioningDraftAction(
+  formData: FormData
+) {
+  const scope = await requirePlatformAdminUser("/super-admin/templates");
+  const result = platformStarterPackProvisioningApprovalInputSchema.safeParse({
+    runId: getFieldValue(formData, "runId"),
+    confirmationText: getFieldValue(formData, "confirmationText")
+  });
+  const fallbackRunId = getFieldValue(formData, "runId");
+
+  if (!result.success) {
+    redirect(
+      `${buildRedirect("/super-admin/templates", {
+        reviewRunId: fallbackRunId,
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to approve provisioning audit draft."
+      })}#starter-pack-provisioning-dry-run`
+    );
+  }
+
+  try {
+    await approveStarterPackProvisioningDraftRun({
+      ...result.data,
+      userId: scope.userId
+    });
+  } catch (error) {
+    redirect(
+      `${buildRedirect("/super-admin/templates", {
+        reviewRunId: result.data.runId,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to approve provisioning audit draft."
+      })}#starter-pack-provisioning-dry-run`
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    `${buildRedirect("/super-admin/templates", {
+      reviewRunId: result.data.runId,
+      message: `Provisioning audit draft ${result.data.runId} was approved for future execution only. No contractor-owned records were created.`
+    })}#starter-pack-provisioning-dry-run`
+  );
+}
+
+export async function executeStarterPackProvisioningRunAction(
+  formData: FormData
+) {
+  const scope = await requirePlatformAdminUser("/super-admin/templates");
+  const fallbackRunId = getFieldValue(formData, "runId");
+  const fallbackConfirmationText = getFieldValue(formData, "confirmationText");
+  const result = platformStarterPackProvisioningExecutionInputSchema.safeParse({
+    runId: fallbackRunId,
+    confirmationText: fallbackConfirmationText
+  });
+
+  if (!result.success) {
+    const validFallbackRunId = validUuidOrNull(fallbackRunId);
+    const fallbackRun = validFallbackRunId
+      ? await getStarterPackProvisioningRunDetail(validFallbackRunId)
+      : null;
+
+    await recordStarterPackProvisioningExecutionAttempt({
+      descriptor: describeProvisioningExecutionAttemptForSchemaFailure({
+        runId: fallbackRunId,
+        confirmationText: fallbackConfirmationText
+      }),
+      userId: scope.userId,
+      runId: validFallbackRunId,
+      starterPackId: fallbackRun?.starterPackId ?? null,
+      organizationId: fallbackRun?.organizationId ?? null,
+      runStatus: fallbackRun?.status ?? null,
+      metadata: {
+        stage: "schema_validation",
+        hasRunContext: Boolean(fallbackRun)
+      }
+    });
+
+    redirect(
+      `${buildRedirect("/super-admin/templates", {
+        reviewRunId: fallbackRunId,
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to execute approved provisioning run."
+      })}#starter-pack-provisioning-dry-run`
+    );
+  }
+
+  let execution: Awaited<ReturnType<typeof executeApprovedStarterPackProvisioningRun>>;
+
+  try {
+    execution = await executeApprovedStarterPackProvisioningRun({
+      ...result.data,
+      userId: scope.userId
+    });
+  } catch (error) {
+    redirect(
+      `${buildRedirect("/super-admin/templates", {
+        reviewRunId: result.data.runId,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to execute approved provisioning run."
+      })}#starter-pack-provisioning-dry-run`
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    `${buildRedirect("/super-admin/templates", {
+      reviewRunId: result.data.runId,
+      message: `${execution.result.message} Created ${execution.result.createdTemplateCount} template copy/copies and ${execution.result.createdCatalogItemCount} catalog item copy/copies; skipped ${execution.result.skippedCount}.`
+    })}#starter-pack-provisioning-dry-run`
   );
 }
 

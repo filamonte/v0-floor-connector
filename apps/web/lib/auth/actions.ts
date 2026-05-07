@@ -7,12 +7,13 @@ import { redirect } from "next/navigation";
 import {
   defaultAuthenticatedPath,
   forgotPasswordPath,
-  sanitizeRedirectPath,
+  getSafeInternalRedirectPath,
   signInPath,
   signUpPath,
   updatePasswordPath
 } from "./paths";
 import { ensureAuthenticatedUserBootstrap } from "./bootstrap";
+import { resolvePostLoginRedirect } from "./post-login";
 import { getAuthCallbackUrl, getRequestOrigin } from "./urls";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -42,13 +43,13 @@ function buildRedirect(
 export async function signInWithPasswordAction(formData: FormData) {
   const email = getFieldValue(formData, "email");
   const password = getFieldValue(formData, "password");
-  const next = sanitizeRedirectPath(getFieldValue(formData, "next"));
+  const requestedNext = getSafeInternalRedirectPath(getFieldValue(formData, "next"));
 
   if (!email || !password) {
     redirect(
       buildRedirect(signInPath, {
         error: "Email and password are required.",
-        next
+        next: requestedNext ?? undefined
       })
     );
   }
@@ -63,25 +64,30 @@ export async function signInWithPasswordAction(formData: FormData) {
     redirect(
       buildRedirect(signInPath, {
         error: error.message,
-        next
+        next: requestedNext ?? undefined
       })
     );
   }
 
-  await ensureAuthenticatedUserBootstrap(supabase);
+  const bootstrap = await ensureAuthenticatedUserBootstrap(supabase);
+  const destination = await resolvePostLoginRedirect({
+    userId: bootstrap.user_id,
+    requestedNext
+  });
+
   revalidatePath("/", "layout");
-  redirect(next);
+  redirect(destination);
 }
 
 export async function signInWithGoogleAction(formData: FormData) {
-  const next = sanitizeRedirectPath(getFieldValue(formData, "next"));
+  const requestedNext = getSafeInternalRedirectPath(getFieldValue(formData, "next"));
   const requestHeaders = await headers();
   const origin = getRequestOrigin(requestHeaders);
   const supabase = await getSupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: getAuthCallbackUrl(next, origin)
+      redirectTo: getAuthCallbackUrl(requestedNext, origin)
     }
   });
 
@@ -89,7 +95,7 @@ export async function signInWithGoogleAction(formData: FormData) {
     redirect(
       buildRedirect(signInPath, {
         error: error?.message ?? "Unable to start Google sign-in.",
-        next
+        next: requestedNext ?? undefined
       })
     );
   }
@@ -100,7 +106,7 @@ export async function signInWithGoogleAction(formData: FormData) {
 export async function signUpAction(formData: FormData) {
   const email = getFieldValue(formData, "email");
   const password = getFieldValue(formData, "password");
-  const next = sanitizeRedirectPath(getFieldValue(formData, "next"));
+  const requestedNext = getSafeInternalRedirectPath(getFieldValue(formData, "next"));
   const requestHeaders = await headers();
   const origin = getRequestOrigin(requestHeaders);
 
@@ -108,7 +114,7 @@ export async function signUpAction(formData: FormData) {
     redirect(
       buildRedirect(signUpPath, {
         error: "Email and password are required.",
-        next
+        next: requestedNext ?? undefined
       })
     );
   }
@@ -118,7 +124,7 @@ export async function signUpAction(formData: FormData) {
     email,
     password,
     options: {
-      emailRedirectTo: getAuthCallbackUrl(next, origin)
+      emailRedirectTo: getAuthCallbackUrl(requestedNext, origin)
     }
   });
 
@@ -126,7 +132,7 @@ export async function signUpAction(formData: FormData) {
     redirect(
       buildRedirect(signUpPath, {
         error: error.message,
-        next
+        next: requestedNext ?? undefined
       })
     );
   }
@@ -134,14 +140,19 @@ export async function signUpAction(formData: FormData) {
   revalidatePath("/", "layout");
 
   if (data.session) {
-    await ensureAuthenticatedUserBootstrap(supabase);
-    redirect(next);
+    const bootstrap = await ensureAuthenticatedUserBootstrap(supabase);
+    const destination = await resolvePostLoginRedirect({
+      userId: bootstrap.user_id,
+      requestedNext
+    });
+
+    redirect(destination);
   }
 
   redirect(
     buildRedirect(signInPath, {
       message: "Check your email to confirm your account before signing in.",
-      next
+      next: requestedNext ?? undefined
     })
   );
 }

@@ -5,6 +5,7 @@ Status: target contractor app information architecture.
 This document defines the **target information architecture** for the contractor app.
 
 It is intended to guide future navigation, workspace structure, and route decisions without forcing an immediate refactor of the current application. It should be read alongside:
+
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): source of truth for what is implemented today
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
@@ -18,6 +19,7 @@ This document describes the intended contractor app structure over time. It shou
 The contractor app is intended to become more **project-centered** over time while still supporting global lists, queues, and financial work areas.
 
 This document exists to answer:
+
 - what the contractor app top-level navigation should become
 - what each top-level area is responsible for
 - how projects act as the operational root in UX terms
@@ -50,6 +52,7 @@ This target IA should remain compatible with future organization-level module en
 ## Target Contractor App Top-Level Navigation
 
 The target top-level contractor app navigation should be:
+
 - Dashboard
 - Customers
 - Projects
@@ -58,9 +61,12 @@ The target top-level contractor app navigation should be:
 - Field
 - Documents
 - Communications
+- AI Assistant, if implemented as a durable top-level operating surface later
 - Settings
 
 This does **not** mean every section is fully implemented today. It defines the intended structure as the contractor app grows.
+
+Future AI should also appear contextually inside Record Workspaces, communication threads, scheduling surfaces, and onboarding/support flows. A top-level AI Assistant may be useful for cross-record questions and approval queues, but contextual AI should remain the primary operating pattern for record-specific work.
 
 ## Top-Level Areas
 
@@ -69,6 +75,7 @@ This does **not** mean every section is fully implemented today. It defines the 
 Dashboard should be the high-level operating overview for the contractor organization.
 
 It should eventually include:
+
 - company-wide activity summary
 - upcoming work
 - overdue financial items
@@ -84,6 +91,7 @@ Dashboard is not the operational root. It is the summary and prioritization surf
 Customers should hold account and relationship context.
 
 This area should include:
+
 - customer list
 - customer detail
 - customer contact and address information
@@ -92,6 +100,7 @@ This area should include:
 - customer notes and communications later
 
 Customers should answer:
+
 - who the customer is
 - what work has been done for them
 - what open opportunities or balances exist
@@ -103,6 +112,7 @@ Customers should not become the main execution workspace.
 Projects should be the primary operational root of the contractor app.
 
 This area should include:
+
 - project list
 - project detail
 - project workspace sections
@@ -111,6 +121,7 @@ This area should include:
 - future takeoff status, generated quantities, linked estimate context, and scope summary
 
 Projects should answer:
+
 - what work is being delivered
 - what stage it is in
 - what execution records and financial records are attached to it
@@ -122,6 +133,7 @@ Projects should answer:
 Financials should be the cross-project finance area.
 
 This area should include:
+
 - global estimate list and approval queues
 - invoices
 - payments
@@ -137,6 +149,7 @@ Financials is where users work across many projects at once, especially for acco
 People should be the cross-organization workforce and relationship management area.
 
 This area should include:
+
 - employees
 - customer contacts and linked customer relationships
 - portal invite/access administration on canonical access records
@@ -154,8 +167,10 @@ People should support staffing and accountability, not project execution alone.
 Field should group execution-oriented workflows that happen during delivery.
 
 This area should eventually include:
+
 - jobs/work orders
 - schedule
+- calendar
 - daily logs
 - inspections
 - punch lists
@@ -170,6 +185,7 @@ Field is different from Projects because it is the cross-project execution work 
 Documents should be the organization-wide document and file system.
 
 This area should include:
+
 - project files
 - estimate and invoice attachments
 - photos
@@ -186,6 +202,7 @@ This area should include:
 Documents should support both project-level and organization-level retrieval.
 
 Target boundary:
+
 - Documents should become a shared file/evidence layer, not a module-specific attachment silo.
 - Files should be linkable to multiple canonical records such as project, opportunity, estimate, contract, job, invoice, payment, change order, daily log, field note, selected system/spec, and finish product.
 - Existing execution attachments are the current implementation baseline; the shared file/evidence layer is future direction.
@@ -195,6 +212,7 @@ Target boundary:
 Communications should be the cross-channel messaging and interaction layer.
 
 This area should eventually include:
+
 - internal communication tied to canonical records
 - customer communication tied to canonical records
 - subcontractor, vendor, and project partner communication tied to canonical records later
@@ -203,20 +221,71 @@ This area should eventually include:
 - portal communications later
 - activity notifications later
 - email, SMS, portal, app, and manual-log communication views later
+- website forms, website AI chat, calls, voicemail, missed-call text-back, and AI receptionist intake where those channels are implemented later
+- human escalation and handoff queues for low-confidence, sensitive, urgent, billing, legal, or customer-commitment cases
 
 Communications should group conversation flows rather than scattering them across modules. Future communication should be record-based over free-floating chat, with threads attached to projects, jobs, change orders, invoices, daily logs, field notes, or other canonical records.
 
 Target delivery-proof behavior:
+
 - sending estimates, invoices, contracts, change orders, portal invites, and payment requests should create canonical communication/delivery records
 - delivery events should include queued, sent, delivered, opened, clicked, deferred, bounced, blocked, dropped, and failed when provider data supports those states
 - provider data is delivery telemetry, not the business source of truth
 - open and click tracking should be treated as useful signal, not perfect legal certainty
+
+Target AI intake behavior:
+
+- AI may summarize, classify, draft, and prepare intake or reply actions
+- accepted intake should resolve into canonical opportunity/customer/project workflows
+- AI should not own separate lead, customer, project, estimate, calendar, or communication records
+
+## Calendar / Schedule
+
+Calendar and schedule should become the cross-project time and capacity layer for contractor operations.
+
+This area may appear as part of Field, as a dedicated Calendar/Schedule navigation item, or both if the product needs a global calendar plus field-dispatch workspace. The route strategy should preserve the current `/schedule` direction until a specific refactor is approved.
+
+Target scope:
+
+- company calendar
+- user calendars
+- crew/resource calendars
+- sales appointments and site assessments
+- production jobs
+- PTO, vacations, and holidays
+- equipment reservations
+- availability and capacity
+- conflict detection
+- Google Calendar and Outlook/Microsoft 365 sync
+- AI scheduling suggestions
+
+Boundary:
+
+- FloorConnector owns the canonical schedule
+- Google Calendar and Outlook/Microsoft 365 are integrations, not the business source of truth
+- production scheduling stays on canonical jobs and job assignments
+- appointments stay canonical visits/meetings on the opportunity/customer/project chain
+- do not create an AI-only calendar or disconnected dispatch model
+
+## AI Assistant
+
+AI Assistant is a future target surface, not a current route claim.
+
+Target IA direction:
+
+- contextual AI inside Record Workspaces should help draft, summarize, explain blockers, prepare next actions, and answer record-specific questions
+- a top-level AI Assistant may later provide cross-record operating questions such as "what should I do next?", approval queues, and operational intelligence
+- AI approval queues should link back to canonical records and approved server-side actions
+- AI should not replace Manager Pages, Record Workspaces, Settings, Communications, Schedule, or the canonical lifecycle
+
+Risky AI-prepared actions should require human approval before they affect customer communications, pricing, contracts, billing, scheduling commitments, permissions, or compliance.
 
 ## Settings
 
 Settings should be the organization administration area.
 
 This area should include:
+
 - company profile
 - roles and permissions
 - module enable/disable
@@ -230,6 +299,7 @@ This area should include:
 Settings should remain administrative, not operational.
 
 The future Templates & Systems area under Settings should manage:
+
 - document templates for estimates, invoices, contracts, proposals/SOW, and future work orders
 - System Templates for reusable floor systems such as epoxy flake, urethane cement, polishing, garage, and commercial systems
 - add-ons/options backed by catalog/cost items
@@ -239,6 +309,7 @@ The future Templates & Systems area under Settings should manage:
 Templates & Systems should not become a separate estimating or document silo. Estimates, invoices, contracts, jobs, and payments still move through the canonical workflow. The settings area governs reusable configuration; record workspaces use those configurations.
 
 Important boundary:
+
 - contractor `Settings` is tenant-scoped organization administration
 - platform-wide defaults and rollout policy belong in the separate super-admin surface
 
@@ -247,6 +318,7 @@ Important boundary:
 In UX terms, a project should become the primary record that organizes delivery work.
 
 Target project workspace sections:
+
 - Overview
 - Takeoff & Scope later
 - Finish / System Spec later
@@ -331,6 +403,7 @@ The activity timeline is the project/company-brain memory layer over canonical r
 ## Standalone Global Routes That Should Still Exist
 
 Even in a project-centered system, these should still exist as global list pages or work queues:
+
 - Customers Manager Page (`/customers`)
 - Projects Manager Page (`/projects`)
 - Estimates Manager Page (`/estimates`)
@@ -340,6 +413,7 @@ Even in a project-centered system, these should still exist as global list pages
 - People Manager Page (`/people`)
 
 These routes are still useful because users often need:
+
 - cross-project filtering
 - approval queues
 - global finance review
@@ -348,6 +422,7 @@ These routes are still useful because users often need:
 - list-based search and reporting
 
 The important distinction is:
+
 - project pages are the primary operational workspace
 - standalone routes are the global queue and management surfaces
 
@@ -356,6 +431,7 @@ The important distinction is:
 The current route structure does not need an immediate full refactor.
 
 Practical direction:
+
 - keep current standalone routes for direct access and incremental development
 - increase project-centric linking between records
 - evolve project detail into a richer project workspace over time
@@ -365,6 +441,7 @@ Practical direction:
 ## Shared Record Workspace Pattern
 
 Target contractor record pages should converge on the same structural pattern:
+
 - header band: title, status, primary action, secondary actions
 - workflow summary band: readiness, blockers, next best action
 - primary workspace: the main review or execution surface for that record
@@ -372,12 +449,14 @@ Target contractor record pages should converge on the same structural pattern:
 - secondary sections: lower-priority editing, history, labor, files, or related modules
 
 Page-role guidance inside that shared pattern:
+
 - project detail is the authoritative workflow and readiness hub
 - estimate and contract detail support document review and workflow progression, including onsite signature action when an eligible sent contract has an unsigned customer signer, then point back to the project hub for broader handoff state
 - invoice detail should be structured as review-first billing workspace, not primarily as a top-heavy edit form
 - job detail should use the same shared page language rather than a separate ad hoc detail pattern
 
 Current implementation note:
+
 - the first major contractor workspace UI polish pass is now complete enough to stop
 - project, estimate, contract, invoice, and job detail pages now broadly follow this shared pattern on the current branch
 - further layout work should be treated as incremental polish unless a future structural break is introduced
@@ -389,11 +468,13 @@ This means a route like `/jobs` can continue to exist while the long-term UX emp
 This target IA should remain compatible with future organization-level module control.
 
 Examples:
+
 - a company might disable `Communications` or `Field`
 - `Financials` may be partially enabled depending on plan or setup
 - modules can disappear from top-level navigation while canonical data still stays shared
 
 Module toggles should affect:
+
 - navigation visibility
 - route access
 - settings visibility
@@ -434,6 +515,7 @@ They should **not** create duplicate models or parallel architecture.
 ## Current Implementation Note
 
 Today the contractor app still includes parallel top-level routes such as:
+
 - Customers Manager Page (`/customers`)
 - Projects Manager Page (`/projects`)
 - Estimates Manager Page (`/estimates`)

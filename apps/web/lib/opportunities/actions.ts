@@ -6,9 +6,14 @@ import { redirect } from "next/navigation";
 import { quickCreateEstimateFromContext } from "@/lib/estimates/data";
 import {
   createOpportunity,
-  updateOpportunity
+  updateOpportunity,
+  updateOpportunityFollowUp
 } from "./data";
-import { opportunityInputSchema, opportunityQuickCreateInputSchema } from "./schemas";
+import {
+  opportunityFollowUpInputSchema,
+  opportunityInputSchema,
+  opportunityQuickCreateInputSchema
+} from "./schemas";
 
 function getFieldValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -213,6 +218,14 @@ function parseOpportunityQuickCreateInput(formData: FormData) {
   });
 }
 
+function parseOpportunityFollowUpInput(formData: FormData) {
+  return opportunityFollowUpInputSchema.safeParse({
+    opportunityId: getFieldValue(formData, "opportunityId"),
+    nextFollowUpAt: getFieldValue(formData, "nextFollowUpAt"),
+    nextFollowUpNote: getFieldValue(formData, "nextFollowUpNote")
+  });
+}
+
 export async function createOpportunityAction(formData: FormData) {
   const result = parseOpportunityInput(formData);
 
@@ -350,6 +363,44 @@ export async function updateOpportunityAction(formData: FormData) {
   redirect(
     buildRedirect(`/leads/${opportunity.id}`, {
       message: `${opportunity.title} was updated successfully.`
+    })
+  );
+}
+
+export async function updateOpportunityFollowUpAction(formData: FormData) {
+  const opportunityId = getFieldValue(formData, "opportunityId");
+  const result = parseOpportunityFollowUpInput(formData);
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(opportunityId ? `/leads/${opportunityId}` : "/leads", {
+        error: result.error.issues[0]?.message ?? "Unable to update lead follow-up."
+      })
+    );
+  }
+
+  let opportunity;
+
+  try {
+    opportunity = await updateOpportunityFollowUp(result.data);
+  } catch (error) {
+    redirect(
+      buildRedirect(`/leads/${result.data.opportunityId}`, {
+        error:
+          error instanceof Error ? error.message : "Unable to update lead follow-up."
+      })
+    );
+  }
+
+  revalidatePath("/leads");
+  revalidatePath(`/leads/${result.data.opportunityId}`);
+  revalidatePath("/dashboard");
+
+  redirect(
+    buildRedirect(`/leads/${result.data.opportunityId}`, {
+      message: opportunity
+        ? `${opportunity.title} follow-up was updated.`
+        : "Lead follow-up was updated."
     })
   );
 }

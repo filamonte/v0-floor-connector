@@ -1,9 +1,13 @@
 import "server-only";
 
 import type {
+  CommunicationMessageDeliveryStatus,
+  CommunicationMessageKind,
+  CommunicationMessageVisibility,
   CommunicationMessage,
   CommunicationThread
 } from "@floorconnector/types";
+import { getOpportunityById } from "@/lib/opportunities/data";
 
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import {
@@ -16,20 +20,15 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 type CommunicationThreadRow = {
   id: string;
   company_id: string;
-  customer_id: string;
-  project_id: string;
-  subject_type:
-    | "customer"
-    | "project"
-    | "estimate"
-    | "contract"
-    | "invoice"
-    | "change_order"
-    | "payment";
+  opportunity_id: string | null;
+  customer_id: string | null;
+  project_id: string | null;
+  subject_type: CommunicationThread["subjectType"];
   subject_id: string;
   created_by_user_id: string | null;
   last_message_at: string | null;
   last_message_preview: string | null;
+  last_message_visibility: CommunicationMessageVisibility;
   created_at: string;
   updated_at: string;
 };
@@ -38,10 +37,14 @@ type CommunicationMessageRow = {
   id: string;
   company_id: string;
   thread_id: string;
-  customer_id: string;
-  project_id: string;
+  opportunity_id: string | null;
+  customer_id: string | null;
+  project_id: string | null;
   sender_type: "organization_user" | "portal_user" | "system";
   sender_user_id: string | null;
+  message_kind: CommunicationMessageKind;
+  visibility: CommunicationMessageVisibility;
+  delivery_status: CommunicationMessageDeliveryStatus;
   body: string;
   payload: Record<string, unknown> | null;
   created_at: string;
@@ -54,8 +57,9 @@ type CommunicationActorContext = {
 
 type GetOrCreateThreadInput = {
   organizationId: string;
-  customerId: string;
-  projectId: string;
+  opportunityId?: string | null;
+  customerId: string | null;
+  projectId: string | null;
   subjectType: CommunicationThread["subjectType"];
   subjectId: string;
 };
@@ -63,13 +67,18 @@ type GetOrCreateThreadInput = {
 type PostCommunicationMessageInput = {
   threadId: string;
   body: string;
+  messageKind?: CommunicationMessageKind;
+  visibility?: CommunicationMessageVisibility;
+  deliveryStatus?: CommunicationMessageDeliveryStatus;
   payload?: Record<string, unknown> | null;
+  createNotification?: boolean;
 };
 
 function mapThread(row: CommunicationThreadRow): CommunicationThread {
   return {
     id: row.id,
     organizationId: row.company_id,
+    opportunityId: row.opportunity_id,
     customerId: row.customer_id,
     projectId: row.project_id,
     subjectType: row.subject_type,
@@ -77,6 +86,7 @@ function mapThread(row: CommunicationThreadRow): CommunicationThread {
     createdByUserId: row.created_by_user_id,
     lastMessageAt: row.last_message_at,
     lastMessagePreview: row.last_message_preview,
+    lastMessageVisibility: row.last_message_visibility,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -87,10 +97,14 @@ function mapMessage(row: CommunicationMessageRow): CommunicationMessage {
     id: row.id,
     organizationId: row.company_id,
     threadId: row.thread_id,
+    opportunityId: row.opportunity_id,
     customerId: row.customer_id,
     projectId: row.project_id,
     senderType: row.sender_type,
     senderUserId: row.sender_user_id,
+    messageKind: row.message_kind,
+    visibility: row.visibility,
+    deliveryStatus: row.delivery_status,
     body: row.body,
     payload: row.payload,
     createdAt: row.created_at
@@ -99,6 +113,8 @@ function mapMessage(row: CommunicationMessageRow): CommunicationMessage {
 
 function getThreadLinkPath(thread: Pick<CommunicationThread, "subjectType" | "subjectId">) {
   switch (thread.subjectType) {
+    case "opportunity":
+      return `/leads/${thread.subjectId}`;
     case "customer":
       return `/customers/${thread.subjectId}`;
     case "project":
@@ -132,6 +148,10 @@ async function resolveCommunicationActorContext(
     };
   }
 
+  if (!thread.customer_id || !thread.project_id) {
+    throw new Error("Portal communication requires a customer and project thread.");
+  }
+
   await assertPortalUserCanPostCommunication({
     organizationId: thread.company_id,
     customerId: thread.customer_id,
@@ -156,6 +176,7 @@ export async function listCommunicationThreadsForSubject(
       `
         id,
         company_id,
+        opportunity_id,
         customer_id,
         project_id,
         subject_type,
@@ -163,6 +184,7 @@ export async function listCommunicationThreadsForSubject(
         created_by_user_id,
         last_message_at,
         last_message_preview,
+        last_message_visibility,
         created_at,
         updated_at
       `
@@ -185,6 +207,7 @@ export async function getOrCreateCommunicationThread(
   const placeholderThread: CommunicationThreadRow = {
     id: "",
     company_id: input.organizationId,
+    opportunity_id: input.opportunityId ?? null,
     customer_id: input.customerId,
     project_id: input.projectId,
     subject_type: input.subjectType,
@@ -192,6 +215,7 @@ export async function getOrCreateCommunicationThread(
     created_by_user_id: null,
     last_message_at: null,
     last_message_preview: null,
+    last_message_visibility: "customer_visible",
     created_at: "",
     updated_at: ""
   };
@@ -203,6 +227,7 @@ export async function getOrCreateCommunicationThread(
       `
         id,
         company_id,
+        opportunity_id,
         customer_id,
         project_id,
         subject_type,
@@ -210,6 +235,7 @@ export async function getOrCreateCommunicationThread(
         created_by_user_id,
         last_message_at,
         last_message_preview,
+        last_message_visibility,
         created_at,
         updated_at
       `
@@ -232,6 +258,7 @@ export async function getOrCreateCommunicationThread(
     .from("communication_threads")
     .insert({
       company_id: input.organizationId,
+      opportunity_id: input.opportunityId ?? null,
       customer_id: input.customerId,
       project_id: input.projectId,
       subject_type: input.subjectType,
@@ -242,6 +269,7 @@ export async function getOrCreateCommunicationThread(
       `
         id,
         company_id,
+        opportunity_id,
         customer_id,
         project_id,
         subject_type,
@@ -249,6 +277,7 @@ export async function getOrCreateCommunicationThread(
         created_by_user_id,
         last_message_at,
         last_message_preview,
+        last_message_visibility,
         created_at,
         updated_at
       `
@@ -274,10 +303,14 @@ export async function listCommunicationMessages(threadId: string) {
         id,
         company_id,
         thread_id,
+        opportunity_id,
         customer_id,
         project_id,
         sender_type,
         sender_user_id,
+        message_kind,
+        visibility,
+        delivery_status,
         body,
         payload,
         created_at
@@ -293,6 +326,77 @@ export async function listCommunicationMessages(threadId: string) {
   return ((response.data as CommunicationMessageRow[] | null) ?? []).map(mapMessage);
 }
 
+export async function getOrCreateOpportunityCommunicationThread(
+  opportunityId: string,
+  next = "/leads"
+) {
+  const opportunity = await getOpportunityById(opportunityId, next);
+
+  if (!opportunity) {
+    throw new Error("Lead not found for this organization.");
+  }
+
+  return getOrCreateCommunicationThread(
+    {
+      organizationId: opportunity.organizationId,
+      opportunityId: opportunity.id,
+      customerId: opportunity.customerId,
+      projectId: opportunity.projectId,
+      subjectType: "opportunity",
+      subjectId: opportunity.id
+    },
+    next
+  );
+}
+
+export async function listOpportunityCommunicationMessages(
+  opportunityId: string,
+  next = "/leads"
+) {
+  const opportunity = await getOpportunityById(opportunityId, next);
+
+  if (!opportunity) {
+    throw new Error("Lead not found for this organization.");
+  }
+
+  const threads = await listCommunicationThreadsForSubject("opportunity", opportunity.id);
+  const thread = threads.find(
+    (candidate) => candidate.organizationId === opportunity.organizationId
+  );
+
+  if (!thread) {
+    return [];
+  }
+
+  return listCommunicationMessages(thread.id);
+}
+
+export async function createOpportunityManualCommunicationMessage(
+  input: {
+    opportunityId: string;
+    body: string;
+    messageKind: Exclude<CommunicationMessageKind, "customer_message">;
+    visibility?: CommunicationMessageVisibility;
+    payload?: Record<string, unknown> | null;
+  },
+  next = "/leads"
+) {
+  const thread = await getOrCreateOpportunityCommunicationThread(input.opportunityId, next);
+
+  return postCommunicationMessage(
+    {
+      threadId: thread.id,
+      body: input.body,
+      messageKind: input.messageKind,
+      visibility: input.visibility ?? "internal",
+      deliveryStatus: "logged",
+      payload: input.payload ?? null,
+      createNotification: false
+    },
+    next
+  );
+}
+
 export async function postCommunicationMessage(
   input: PostCommunicationMessageInput,
   next = "/dashboard"
@@ -304,6 +408,7 @@ export async function postCommunicationMessage(
       `
         id,
         company_id,
+        opportunity_id,
         customer_id,
         project_id,
         subject_type,
@@ -311,6 +416,7 @@ export async function postCommunicationMessage(
         created_by_user_id,
         last_message_at,
         last_message_preview,
+        last_message_visibility,
         created_at,
         updated_at
       `
@@ -329,6 +435,12 @@ export async function postCommunicationMessage(
 
   const actor = await resolveCommunicationActorContext(threadRow, next);
   const trimmedBody = input.body.trim();
+  const messageKind = input.messageKind ?? "customer_message";
+  const visibility =
+    actor.senderType === "portal_user"
+      ? "customer_visible"
+      : input.visibility ?? "internal";
+  const deliveryStatus = input.deliveryStatus ?? "logged";
 
   if (trimmedBody.length === 0) {
     throw new Error("Communication messages cannot be empty.");
@@ -339,10 +451,14 @@ export async function postCommunicationMessage(
     .insert({
       company_id: threadRow.company_id,
       thread_id: threadRow.id,
+      opportunity_id: threadRow.opportunity_id,
       customer_id: threadRow.customer_id,
       project_id: threadRow.project_id,
       sender_type: actor.senderType,
       sender_user_id: actor.userId,
+      message_kind: actor.senderType === "portal_user" ? "customer_message" : messageKind,
+      visibility,
+      delivery_status: deliveryStatus,
       body: trimmedBody,
       payload: input.payload ?? null
     })
@@ -351,10 +467,14 @@ export async function postCommunicationMessage(
         id,
         company_id,
         thread_id,
+        opportunity_id,
         customer_id,
         project_id,
         sender_type,
         sender_user_id,
+        message_kind,
+        visibility,
+        delivery_status,
         body,
         payload,
         created_at
@@ -375,7 +495,8 @@ export async function postCommunicationMessage(
     .from("communication_threads")
     .update({
       last_message_at: nowIso,
-      last_message_preview: preview
+      last_message_preview: preview,
+      last_message_visibility: visibility
     })
     .eq("id", threadRow.id);
 
@@ -385,35 +506,37 @@ export async function postCommunicationMessage(
     );
   }
 
-  await createNotificationEvent({
-    organizationId: threadRow.company_id,
-    category: "communication",
-    severity: actor.senderType === "portal_user" ? "warning" : "neutral",
-    eventType: "communication.message_posted",
-    subjectType: threadRow.subject_type,
-    subjectId: threadRow.subject_id,
-    customerId: threadRow.customer_id,
-    projectId: threadRow.project_id,
-    actorType: actor.senderType,
-    actorUserId: actor.senderType === "organization_user" ? actor.userId : null,
-    portalUserId: actor.senderType === "portal_user" ? actor.userId : null,
-    title:
-      actor.senderType === "portal_user"
-        ? "New customer message"
-        : "New internal message",
-    message: preview,
-    linkPath: getThreadLinkPath({
+  if (input.createNotification ?? true) {
+    await createNotificationEvent({
+      organizationId: threadRow.company_id,
+      category: "communication",
+      severity: actor.senderType === "portal_user" ? "warning" : "neutral",
+      eventType: "communication.message_posted",
       subjectType: threadRow.subject_type,
-      subjectId: threadRow.subject_id
-    }),
-    groupKey: `communication:${threadRow.id}`,
-    payload: {
-      threadId: threadRow.id,
-      messageId: messageRow.id
-    },
-    occurredAt: nowIso,
-    markReadUserIds: actor.senderType === "organization_user" ? [actor.userId] : []
-  });
+      subjectId: threadRow.subject_id,
+      customerId: threadRow.customer_id,
+      projectId: threadRow.project_id,
+      actorType: actor.senderType,
+      actorUserId: actor.senderType === "organization_user" ? actor.userId : null,
+      portalUserId: actor.senderType === "portal_user" ? actor.userId : null,
+      title:
+        actor.senderType === "portal_user"
+          ? "New customer message"
+          : "New internal message",
+      message: preview,
+      linkPath: getThreadLinkPath({
+        subjectType: threadRow.subject_type,
+        subjectId: threadRow.subject_id
+      }),
+      groupKey: `communication:${threadRow.id}`,
+      payload: {
+        threadId: threadRow.id,
+        messageId: messageRow.id
+      },
+      occurredAt: nowIso,
+      markReadUserIds: actor.senderType === "organization_user" ? [actor.userId] : []
+    });
+  }
 
   return mapMessage(messageRow);
 }

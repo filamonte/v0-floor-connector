@@ -52,6 +52,13 @@ function optionalDateTimeField(message: string) {
     .transform((value) => (value ? new Date(value).toISOString() : null));
 }
 
+function optionalBooleanField() {
+  return z
+    .union([z.boolean(), z.string()])
+    .optional()
+    .transform((value) => value === true || value === "true" || value === "on");
+}
+
 export const appointmentTypeSchema = z.enum(appointmentTypes);
 export const appointmentStatusSchema = z.enum(appointmentStatuses);
 
@@ -78,6 +85,9 @@ export const appointmentInputSchema = z
     endsAt: optionalDateTimeField("Enter a valid end time."),
     location: optionalTrimmedString(240),
     notes: optionalTrimmedString(4000),
+    customerVisible: optionalBooleanField(),
+    customerNotes: optionalTrimmedString(4000),
+    internalNotes: optionalTrimmedString(4000),
     status: appointmentStatusSchema.default("scheduled")
   })
   .superRefine((value, context) => {
@@ -108,7 +118,9 @@ export const appointmentQuickCreateInputSchema = z.object({
     .refine((value) => !Number.isNaN(new Date(value).getTime()), {
       message: "Enter a valid start time."
     })
-    .transform((value) => new Date(value).toISOString())
+    .transform((value) => new Date(value).toISOString()),
+  customerVisible: optionalBooleanField().default(false),
+  customerNotes: optionalTrimmedString(4000)
 });
 
 export type AppointmentInput = z.infer<typeof appointmentInputSchema>;

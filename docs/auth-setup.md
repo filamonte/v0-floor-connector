@@ -25,6 +25,18 @@ Today the web app already includes:
 
 This foundation is real, but the shared auth/account model and long-term package ownership are still being documented and hardened.
 
+## Post-Login Routing
+
+After login, signup, or `/auth/callback`, the app resolves the destination centrally:
+
+1. A safe internal `next` path is respected. External URLs and protocol-relative paths are rejected.
+2. `next=/super-admin` is honored only when the authenticated user has the platform `platform_admin` role from `platform_user_roles`.
+3. Platform admins without an explicit destination land on `/super-admin`.
+4. Contractor users with completed company setup land on `/dashboard`.
+5. Authenticated contractor users without completed company setup land on `/setup/company`.
+
+The public homepage exposes both `Log in -> /login` and `Start early access -> /signup?next=/setup/company`. Contractor organization owner/admin roles do not grant platform routing or `/super-admin` access.
+
 ## Local Environment Source Of Truth
 For local development, the web app reads:
 

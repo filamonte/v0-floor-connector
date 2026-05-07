@@ -31,8 +31,13 @@ function loadRootEnv() {
   }
 }
 
-async function loginWithEmail(page, email, password) {
-  await page.goto("/login");
+async function loginWithEmail(page, email, password, options = {}) {
+  const loginPath = options.next
+    ? `/login?next=${encodeURIComponent(options.next)}`
+    : "/login";
+  const expectedPath = options.expectedPath ?? "/dashboard";
+
+  await page.goto(loginPath);
 
   const emailLoginButton = page.getByRole("button", { name: "Log in with email" });
   const emailLoginForm = page.locator("form").filter({ has: emailLoginButton });
@@ -44,8 +49,10 @@ async function loginWithEmail(page, email, password) {
   await passwordInput.fill(password);
   await emailLoginForm.getByRole("button", { name: "Log in with email" }).click();
 
-  await page.waitForURL((url) => url.pathname === "/dashboard", { timeout: 30_000 });
-  await expect(page.locator("body")).toContainText(/Dashboard|FloorConnector/i);
+  await page.waitForURL((url) => url.pathname === expectedPath, { timeout: 30_000 });
+  await expect(page.locator("body")).toContainText(
+    /Dashboard|FloorConnector|Platform configuration|Global scope/i
+  );
 }
 
 module.exports = {

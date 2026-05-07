@@ -5,6 +5,7 @@ Status: target sales and commercial workflow design.
 This document describes the broader sales, commercial, and readiness workflow FloorConnector is intended to support from first inquiry through production readiness.
 
 It complements:
+
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
@@ -31,6 +32,7 @@ Data should move forward through the same canonical chain:
 Financial readiness, scheduling readiness, production readiness, and similar checkpoints are supporting workflow stages operating on the same canonical record chain. They do not introduce new record types, replace the lifecycle, become replacement records, or create a separate module-owned lifecycle.
 
 That flow may tighten over time into a more project-centered UX, but the key rule is unchanged:
+
 - no duplicate re-entry of core business data at later stages
 - no disconnected contract, billing, or production records
 - no visualizer-only, file-only, communication-only, or module-local records presented as business truth when the same context belongs on the shared chain
@@ -40,6 +42,7 @@ Future pre-lead visual/product/finish selection may happen before a formal oppor
 ### 2. Project As Operational Root
 
 Once work becomes real enough to deliver, the project should become the operational home for:
+
 - commercial context
 - execution readiness
 - job planning
@@ -56,6 +59,7 @@ That includes files, product selections, spec sheets, visualizer renders, delive
 ### 4. Financing And Financial Readiness Are Workflow Stages
 
 Financial readiness may include:
+
 - deposit requirements
 - financing qualification or approval
 - internal commercial approval
@@ -68,7 +72,12 @@ The point is not simply whether an invoice exists. The point is whether sold wor
 ### 1. Lead Intake
 
 Possible sources:
+
 - website contact form
+- website AI chat
+- AI receptionist / phone intake
+- human-assisted intake
+- AI-assisted qualification
 - inbound phone or email
 - inspection request
 - manual sales entry
@@ -76,6 +85,7 @@ Possible sources:
 - future room visualizer or product/finish selection entry points
 
 Core intake data:
+
 - name
 - contact information
 - address
@@ -85,14 +95,22 @@ Core intake data:
 - selected finish/system/spec context when a future pre-lead visual or product selection exists
 
 Future visual/product/finish selection:
+
 - a customer can choose a finish/system visually before becoming a full lead or customer
 - supported future finish families include decorative flake, metallic epoxy, decorative quartz, solid color, and future surface systems
 - manufacturer/product metadata should support Torginol-style vendor, product line, product code, product image, spec sheet, and technical note fields without hardcoding a vendor dependency
 - visual selections should later become canonical selected-system/spec records when they are used operationally, not disposable session-only data
 
+Future AI intake direction:
+
+- website AI chat, AI receptionist/voice, missed-call text-back, website forms, email, SMS, and human-assisted intake should all resolve into canonical opportunity workflows
+- AI may classify the source, summarize the inquiry, identify missing qualification fields, and prepare follow-up or appointment suggestions
+- AI should not create AI-only lead/customer/project records or make customer-facing commitments without human confirmation and validated workflows
+
 ### 2. Qualification And Customer Creation
 
 Qualified leads become:
+
 - canonical customer records
 - optionally linked opportunities if intake started before the customer record existed
 
@@ -101,9 +119,11 @@ Customer becomes the shared relationship record for all future work.
 ### 3. Opportunity And Site Assessment
 
 Purpose:
+
 - preserve real job context before final scope is priced
 
 May include:
+
 - Measurements such as length x width, direct square footage, direct linear footage, and counts
 - photos
 - uploaded plans or drawings later
@@ -114,6 +134,7 @@ May include:
 - scope notes
 
 Input sources may be:
+
 - on-site inspection
 - customer-provided measurements and requirements
 - customer-provided plans and photos later
@@ -122,6 +143,7 @@ Input sources may be:
 - future pre-lead visualizer/product selection handoff
 
 Future Takeoff & Scope Intelligence:
+
 - site assessment may feed project-scoped takeoff work before estimate creation
 - manual measurements are not takeoff; Takeoff means plan, PDF, or drawing-based measurement
 - AI Capture is a future photo, app, or AI-derived input method
@@ -132,6 +154,7 @@ Future Takeoff & Scope Intelligence:
 ### 4. Estimate Creation
 
 Estimate creation may eventually support:
+
 - Quick Build, where the contractor selects a System Template, enters minimal measurements, and generates grouped estimate lines for review
 - Detailed Build, where the contractor uses multiple rooms/zones, options, conditions, waste factors, optional components, overrides, and review before generation
 - custom quote workflows
@@ -151,11 +174,13 @@ Current product direction keeps the estimate as the canonical commercial scope r
 In the future flow, Measurements, Takeoff, and AI Capture should produce reviewed quantities and scope items that flow through System Templates and reusable catalog/cost items before generating estimate line items. The estimate remains where the contractor decides what to charge. Human review and approval are required before generated line items become part of a customer-facing estimate.
 
 Example measurement behavior:
+
 - L x W can generate floor square footage.
 - `(L x 2) + (W x 2)` can generate perimeter linear footage.
 - integrated cove base and vinyl cove base are measured in linear feet and may be generated from perimeter or entered directly.
 
 Pricing behavior:
+
 - catalog/cost item default cost, markup, price, labor, production, and tax behavior are internal
 - customer-facing estimate output should show only customer-facing description, quantity, unit price, and total
 - markup and cost should not appear on customer-facing estimate output
@@ -165,6 +190,7 @@ Pricing behavior:
 - past estimates should not mutate when catalog defaults change
 
 Display-template behavior:
+
 - clean grouped customer-facing output should be the default
 - detailed line-item output should be available when the contractor wants transparency or itemized presentation
 - SOW plus price output should be available when the contractor wants a concise proposal format
@@ -182,6 +208,7 @@ Site info, measurements, plans, photos, Measurement, Takeoff, AI Capture, System
 Takeoff and measurement quantities should eventually help with material requirements, labor estimation, production readiness, and job planning. The financial record path still runs through the canonical estimate workflow; there should be no direct takeoff-to-invoice workflow.
 
 Current implementation note:
+
 - the live estimate workspace is inventory-first, using shared `catalog_items` plus reusable systems/components instead of disconnected manual estimate rows
 - canonical pricing truth lives in `estimate_line_items`
 - defaults hydrate only when estimate content is initially empty, then stop reapplying automatically after user edits
@@ -189,6 +216,7 @@ Current implementation note:
 ### 5. Estimate Review
 
 The estimate stage should support:
+
 - draft
 - sent
 - customer review
@@ -200,6 +228,7 @@ The estimate stage should support:
 Approved estimates should make the work eligible for contract generation.
 
 Contracts should be:
+
 - generated from approved estimates
 - merged with project and customer context
 - editable while still in draft
@@ -207,6 +236,7 @@ Contracts should be:
 - informed by the selected finish/system/spec context that represents what is being sold and installed
 
 Future selected-system/spec behavior:
+
 - finish systems are not loose estimate line-item descriptions
 - selected systems/specs represent the actual sold and installed surface system
 - selected system/spec context should flow into estimate, contract, job, portal review, closeout, and warranty context
@@ -216,18 +246,21 @@ Future selected-system/spec behavior:
 ### 7. Contract Approval And Signature Readiness
 
 This stage may include:
+
 - internal approval requirements
 - send readiness
 - customer signature through portal signing or contractor-assisted onsite signing
 - contractor countersign later where needed
 
 Current implementation note:
+
 - contractor-side onsite signing supports in-person close workflows and acts on the same canonical contract, signer, and signature-event records as portal signing
 - onsite signing can satisfy signature readiness only when all required signers are complete; financial readiness after signature remains conditional on organization deposit or financing settings
 
 ### 8. Financial Readiness
 
 After contract completion, the work may require:
+
 - deposit collection
 - financing approval
 - internal green-light checks
@@ -239,14 +272,22 @@ If deposit readiness is required, deposit invoicing and payment collection shoul
 ### 9. Scheduling And Production Readiness
 
 Once work is commercially and financially ready, operations should be able to:
+
 - create or confirm the job/work order
 - assign schedule readiness
 - move toward crew assignment and production planning later
 - prepare a future subcontractor, vendor, or partner-contractor handoff when an external collaborator is needed for scoped work
 
+Target appointment scheduling from lead/opportunity:
+
+- lead or opportunity intake should support scheduling a sales appointment or site assessment before a full project exists
+- the appointment should attach to the canonical opportunity and later preserve customer/project links when the workflow advances
+- AI may suggest appointment windows based on availability, location, external busy blocks, and contractor preferences, but the committed appointment should be confirmed through canonical scheduling workflows
+
 ### 10. Job Execution
 
 Later operational depth should support:
+
 - field execution tracking
 - crew workflows
 - daily logs
@@ -259,6 +300,7 @@ Later operational depth should support:
 Billing should stay connected to the same project, customer, estimate, contract, and optional job context.
 
 This stage should support:
+
 - invoice creation
 - payment recording
 - balance tracking
@@ -270,6 +312,7 @@ This stage should support:
 This is target architecture only.
 
 Future shared file/evidence behavior should support:
+
 - product images
 - room photos
 - visualizer renders
@@ -294,6 +337,7 @@ The broader workflow depends on configuration at two layers.
 ### Platform / Super Admin
 
 Super admin should define:
+
 - platform starter document templates for estimates, invoices, contracts, proposals/SOW, and future work orders
 - platform starter catalogs
 - platform starter systems / System Templates
@@ -309,6 +353,7 @@ Super admin should define:
 ### Contractor Organization
 
 Contractor admins should manage:
+
 - organization-owned document templates
 - organization-owned reusable items
 - adoption of platform-seeded System Templates
@@ -323,6 +368,7 @@ Contractor admins should manage:
 - allowed feature overrides
 
 Templates & Systems direction:
+
 - these controls should eventually live in a dedicated Templates & Systems settings/admin area instead of being scattered across estimate, invoice, contract, and catalog surfaces
 - platform defaults should be copied into contractor-owned templates or systems on adoption
 - promoted platform versions should become available for other contractors to adopt, but should not silently update existing contractor local copies
@@ -330,6 +376,7 @@ Templates & Systems direction:
 ## What We Avoid
 
 FloorConnector should avoid:
+
 - duplicate data between modules
 - disconnected contract and invoice systems
 - module-specific template silos
@@ -343,6 +390,8 @@ FloorConnector should avoid:
 - direct takeoff-to-invoice behavior that bypasses reviewed estimate line items and approved commercial scope
 - pricing directly inside raw takeoff measurements
 - AI-generated customer-facing estimates without contractor approval
+- AI-only leads, customers, estimates, projects, calendars, or communication logs
+- AI-generated customer commitments, scheduling commitments, contract actions, invoices, payment requests, or permission changes without approved workflow confirmation
 - duplicate project, estimate, catalog, invoice, or template models for takeoff or estimating
 - takeoff behavior that weakens tenant isolation or breaks canonical workflow continuity
 - generated estimate content with no source traceability back to System Template, measurement/takeoff input, and source file or photo where applicable
@@ -354,6 +403,7 @@ FloorConnector should avoid:
 ## Future Extensions
 
 Future workflow expansion may include:
+
 - richer estimator tooling
 - pre-lead visualizer handoff into canonical opportunity/customer/project workflows
 - product/finish/spec management for decorative flake, metallic epoxy, decorative quartz, solid color, and future surface systems

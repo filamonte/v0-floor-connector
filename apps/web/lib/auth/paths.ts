@@ -45,6 +45,14 @@ export function sanitizeRedirectPath(next: string | null | undefined) {
   return next;
 }
 
+export function getSafeInternalRedirectPath(next: string | null | undefined) {
+  if (!next || !next.startsWith("/") || next.startsWith("//")) {
+    return null;
+  }
+
+  return next;
+}
+
 export function toSafeNextPath(pathname: string, search = "") {
   return sanitizeRedirectPath(`${pathname}${search}`);
 }

@@ -205,6 +205,23 @@ export const opportunityInputSchema = z.object({
 });
 
 export type OpportunityInput = z.infer<typeof opportunityInputSchema>;
+
+export const opportunityFollowUpInputSchema = z.object({
+  opportunityId: z.string().uuid("A valid lead is required."),
+  nextFollowUpAt: z
+    .string()
+    .trim()
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .optional()
+    .refine((value) => value == null || !Number.isNaN(new Date(value).getTime()), {
+      message: "Enter a valid follow-up date and time."
+    })
+    .transform((value) => (value ? new Date(value).toISOString() : null)),
+  nextFollowUpNote: optionalTrimmedString(1000)
+});
+
+export type OpportunityFollowUpInput = z.infer<typeof opportunityFollowUpInputSchema>;
 export const opportunityQuickCreateInputSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required.").max(80),
   lastName: z.string().trim().min(1, "Last name is required.").max(80),

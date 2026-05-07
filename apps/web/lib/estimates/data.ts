@@ -56,6 +56,10 @@ import { syncProjectCommercialReadiness } from "@/lib/projects/readiness";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import {
+  getCurrentUserPreferredEstimateTemplate,
+  resolvePreferredEstimateTemplateForCreate
+} from "@/lib/user-preferences/estimate-template-preference";
+import {
   buildEstimatePortalEmailContent
 } from "./email";
 import {
@@ -2197,7 +2201,9 @@ export async function getEstimateById(
   };
 }
 
-export async function createEstimate(input: EstimateInput) {
+export async function createEstimate(
+  input: EstimateInput & { templateId?: string | null }
+) {
   const scope = await requireEstimateScope("/estimates");
   const project = await resolveScopedProject(input.projectId, "/estimates");
   const plainNotes = stripHtmlToPlainText(input.content.notesHtml) ?? input.notes;
@@ -2209,6 +2215,7 @@ export async function createEstimate(input: EstimateInput) {
       opportunity_id: input.opportunityId,
       customer_id: project.customerId,
       project_id: project.id,
+      template_id: input.templateId ?? null,
       title: input.title,
       status: input.status,
       estimate_date: input.estimateDate,
@@ -3421,9 +3428,12 @@ export async function quickCreateEstimateFromContext(input: {
     }
   }
 
+  const preferredTemplate = await getCurrentUserPreferredEstimateTemplate("/estimates");
+
   return createEstimate({
     opportunityId: flow.opportunityId,
     projectId: flow.projectId,
+    templateId: resolvePreferredEstimateTemplateForCreate(preferredTemplate),
     title: input.title,
     status: "draft",
     estimateDate: null,

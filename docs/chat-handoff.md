@@ -5,6 +5,7 @@ Before doing anything, developers must read:
 docs/developer-source-of-truth.md
 
 `docs/developer-source-of-truth.md` defines:
+
 - system rules
 - canonical lifecycle
 - workflow constraints
@@ -19,6 +20,7 @@ Status: compact operational handoff for the current branch.
 Use this file for fast orientation after reading [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md). For exact implemented truth, defer to [docs/current-state.md](C:/FloorConnector/docs/current-state.md).
 
 For stronger implementation control on new tasks, also use:
+
 - [docs/product-brain.md](C:/FloorConnector/docs/product-brain.md)
 - [docs/decisions.md](C:/FloorConnector/docs/decisions.md)
 - [docs/build-sequence.md](C:/FloorConnector/docs/build-sequence.md)
@@ -26,14 +28,251 @@ For stronger implementation control on new tasks, also use:
 - [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md)
 - [docs/internal-qa-workflow-checklist.md](C:/FloorConnector/docs/internal-qa-workflow-checklist.md)
 - [docs/phase-a-completion-and-phase-b-readiness.md](C:/FloorConnector/docs/phase-a-completion-and-phase-b-readiness.md)
+
+## Communications Typecheck Reconciliation
+
+This narrow repair/reconciliation pass investigated the reported `pnpm typecheck` blocker in `apps/web/app/(app)/communications/page.tsx`.
+
+Root cause classification:
+
+- The prior failure was from intentional current communications upgrades that added canonical opportunity/lead communication support, plus stale type drift while that work was still being reconciled.
+- The current branch already aligns `opportunity` across `CanonicalRecordSubjectType`, the lead communication migration, communication server actions, communication data loaders, contractor communication summary/list types, and the `/communications` source filter.
+- No unsupported subject value was found in the current implementation.
+- No broad revert was performed.
+
+Evidence inspected:
+
+- `apps/web/app/(app)/communications/page.tsx`
+- `apps/web/lib/communications/actions.ts`
+- `apps/web/lib/communications/contractor-data.ts`
+- `apps/web/lib/communications/data.ts`
+- `packages/types/src/index.ts`
+- `supabase/migrations/20260507180043_lead_communication_appointment_visibility.sql`
+- Recent `docs/chat-handoff.md` notes for lead communication and customer-visible appointment foundations.
+
+Current validation:
+
+- `pnpm typecheck` passed.
+- `pnpm --filter @floorconnector/web typecheck` passed directly through `tsc --project tsconfig.typecheck.json --noEmit`.
+- No application code change was needed in this reconciliation pass because the current dirty branch already contains the intended type alignment.
+
+Guardrails preserved:
+
+- No migrations, new communication features, SMS/email sending, provider integration, AI, portal behavior change, financial/tax/payroll/entitlement change, starter-pack/provisioning change, contractor group behavior change, contractor navigation change, or broad refactor was added.
+
+Recommended next prompt:
+
+- "Implement Phase 6C contractor group read-model hardening and observability only. Summarize group memberships across organizations and starter-pack targeting previews without entitlement enforcement, auto-provisioning, pricing/package behavior, contractor permission changes, or runtime behavior."
+
+## Super Admin Platform Console Phase 6B
+
+Phase 6B completed contractor group operator QA and live-environment verification. The Phase 6A contractor groups migration was applied to the linked Supabase project during this pass, and browser QA confirmed `/super-admin/groups` plus starter-pack targeting preview behavior. No entitlement enforcement, module gating, pricing/package enforcement, starter-pack auto-provisioning, contractor-side permission behavior, tenant-owned template/catalog write, contractor navigation change, tax/payroll/financial change, invoice/contract generation change, user-preference behavior change, or runtime behavior was added.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Migration/application status:
+
+- `20260507173254_contractor_groups_foundation.sql` was local-only at the start of Phase 6B.
+- `pnpm exec supabase db push --linked --yes` applied the migration to the linked Supabase project.
+- `pnpm exec supabase migration list --linked` then showed `20260507173254 | 20260507173254 | 2026-05-07 17:32:54`.
+
+Schema, constraint, RLS, and grant verification:
+
+- Live service-role reads confirmed `contractor_groups` and `contractor_group_memberships` exist.
+- Migration text confirms both tables enable and force RLS, revoke all broad `anon` / `authenticated` table grants, reference `public.companies(id)` for memberships, and keep platform-admin management server-side.
+- Direct anon REST reads were denied for both group tables with `permission denied for table contractor_groups` and `permission denied for table contractor_group_memberships`.
+- Direct authenticated REST denial was not independently verified because the local Playwright storage state did not expose a Supabase auth token; the migration still explicitly revokes direct `authenticated` table grants.
+- Live constraint checks rejected invalid group status (`contractor_groups_status_check`), invalid group type (`contractor_groups_group_type_check`), invalid membership assignment source (`contractor_group_memberships_assignment_source_check`), and duplicate organization/group membership (`contractor_group_memberships_group_org_unique_idx`).
+- Supabase CLI direct query introspection was blocked by linked DB password/pooler auth (`SUPABASE_DB_PASSWORD` / temp-role auth), and Supabase MCP SQL execution was denied for the project, so live verification used the app's server-side Supabase service client and safe REST denial checks.
+
+Browser QA records:
+
+- QA group: `Phase 6B QA Group 1778176931161`
+- QA group key: `phase-6b-qa-1778176931161`
+- QA group id: `d9f7ffef-14b6-4c0c-b852-20b40d655d16`
+- Assigned/member organization for targeting preview: `platform (trialing)` / `e19c182b-923b-402d-996b-c4c20728a79f`
+- Non-member organization for targeting preview: `QA Early Access (active)` / `b434be1d-2340-4fd9-95e4-43b2a3c5e9c1`
+- Starter pack used for temporary targeting assignment: `Phase 5G QA Execution Pack` / `2a92b429-69bf-4b62-9574-345462e0dbe4`
+
+Browser QA results:
+
+- `/super-admin/groups` loaded for the authenticated platform-admin session.
+- The page displayed the expected safety copy: "Platform segmentation only", "Contractor groups do not affect contractor permissions", and "Future entitlements".
+- Created the QA contractor group, edited metadata, assigned `platform (trialing)`, saw the organization count update, removed the organization, and archived the group.
+- Duplicate membership was rejected by the live unique constraint during direct constraint verification.
+- A temporary `future_contractor_group` starter-pack assignment matched only the explicitly assigned member organization and showed the reason `explicitly assigned to active contractor group Phase 6B QA Group 1778176931161`.
+- The non-member organization showed `not explicitly assigned to that group`.
+- The temporary starter-pack assignment was deleted after preview QA. The QA group remains archived as evidence, with zero memberships.
+- No starter-pack auto-provisioning occurred.
+
+Count checks:
+
+| Table | Before | After | Result |
+| --- | ---: | ---: | --- |
+| `contractor_groups` | 0 | 1 | QA group remains archived as evidence |
+| `contractor_group_memberships` | 0 | 0 | Assignment was removed |
+| `document_templates` | 4 | 4 | Unchanged |
+| `catalog_items` | 9 | 9 | Unchanged |
+| `platform_starter_pack_provisioning_runs` | 4 | 4 | Unchanged |
+| `platform_starter_pack_provisioning_run_items` | 5 | 5 | Unchanged |
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-groups.test.ts apps/web/lib/platform-admin/starter-pack-targeting.test.ts` passed: 11 tests, 0 failures.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+- `pnpm typecheck` failed during Phase 6B on communication page subject-type errors in `apps/web/app/(app)/communications/page.tsx` around `CanonicalRecordSubjectType | "all"` including `"opportunity"`. The follow-up Communications Typecheck Reconciliation pass above confirmed this was intentional communications type drift and that the current branch now typechecks.
+
+Recommended next prompt:
+
+- "First fix the unrelated communications typecheck blocker by aligning the communication subject filter types with `CanonicalRecordSubjectType` / supported filter values, then rerun typecheck. After validation is green, implement Phase 6C as contractor group read-model hardening and observability only: summarize group memberships across organizations and starter-pack targeting previews without entitlement enforcement, auto-provisioning, pricing/package behavior, or contractor permission changes."
+
+## Super Admin Platform Console Phase 6A
+
+Phase 6A is implemented as a Contractor Groups foundation/read-model pass. Contractor groups are platform-owned segmentation metadata for onboarding targeting, starter-pack targeting previews, rollout cohorts, beta programs, regional/trade segmentation, and future platform packaging. They are not tenant roles, contractor-owned permission groups, entitlements, pricing packages, module gates, or runtime behavior.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260507173254_contractor_groups_foundation.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/lib/platform-admin/actions.ts`
+- `apps/web/lib/platform-admin/schemas.ts`
+- `apps/web/lib/platform-admin/starter-pack-targeting-core.ts`
+- `apps/web/lib/platform-admin/starter-pack-targeting.test.ts`
+- `apps/web/lib/platform-admin/contractor-groups.test.ts`
+- `apps/web/components/contractor-group-manager.tsx`
+- `apps/web/components/starter-pack-targeting-preview.tsx`
+- `apps/web/components/platform-starter-pack-manager.tsx`
+- `apps/web/app/(super-admin)/super-admin/groups/page.tsx`
+- `apps/web/app/(super-admin)/super-admin/templates/page.tsx`
+- `apps/web/lib/settings/navigation.ts`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+- `docs/starter-pack-provisioning-plan.md`
+- `docs/starter-pack-provisioning-review.md`
+
+Implemented:
+
+- Added `contractor_groups` and `contractor_group_memberships` with constrained status/type/source values, platform actor references, company references, timestamps, and one membership per organization/group.
+- Enabled and forced RLS on both tables and revoked broad `anon` / `authenticated` grants. Platform-admin management stays behind the existing server-side platform role check and service-role-backed server utilities.
+- Added platform-admin helpers/actions to list groups, create/update/archive groups, assign organizations, remove assignments, and list group memberships.
+- Added `/super-admin/groups` with group metadata, status/type chips, organization counts, manual assignment/removal, and explicit "platform segmentation only" copy.
+- Added contractor group membership context to `/super-admin/templates` Targeting Preview. `future_contractor_group` assignment intent now matches only explicit membership to the referenced group key and remains planning-only.
+
+Guardrails preserved:
+
+- No entitlement enforcement, module gating, pricing/package enforcement, starter-pack auto-provisioning, assignment enforcement, contractor permission change, contractor navigation change, tax/payroll/financial change, invoice/contract generation change, user preference behavior change, or runtime behavior was added.
+- Contractor groups are separate from contractor organization membership roles and do not create a duplicate tenant-role system.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-groups.test.ts apps/web/lib/platform-admin/starter-pack-targeting.test.ts` passed.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Implement Phase 6B as contractor-group operator QA and live-environment verification. Apply/verify the contractor-groups migration, confirm RLS/grants, browser-QA `/super-admin/groups`, verify starter-pack targeting preview reflects explicit group membership, and confirm no entitlement/runtime/provisioning/default behavior changed."
 - [docs/phase-b-progress-checkpoint.md](C:/FloorConnector/docs/phase-b-progress-checkpoint.md)
 - [docs/phase-b-internal-validation-runbook.md](C:/FloorConnector/docs/phase-b-internal-validation-runbook.md)
 - [docs/local-qa-auth-session-note.md](C:/FloorConnector/docs/local-qa-auth-session-note.md)
 - [docs/qa-estimate-send-approval-contract-prerequisites.md](C:/FloorConnector/docs/qa-estimate-send-approval-contract-prerequisites.md)
 
+## AI-Assisted Operating System Planning Docs
+
+Documentation-only planning pass added target AI-assisted operating system direction.
+
+New docs:
+
+- [docs/ai-assisted-operating-system.md](C:/FloorConnector/docs/ai-assisted-operating-system.md)
+- [docs/ai-contractor-workflows.md](C:/FloorConnector/docs/ai-contractor-workflows.md)
+- [docs/communications-and-ai-intake.md](C:/FloorConnector/docs/communications-and-ai-intake.md)
+- [docs/calendar-and-scheduling-intelligence.md](C:/FloorConnector/docs/calendar-and-scheduling-intelligence.md)
+- [docs/ai-marketing-and-onboarding.md](C:/FloorConnector/docs/ai-marketing-and-onboarding.md)
+
+Updated planning/source docs now point to those files: `docs/developer-source-of-truth.md`, `docs/vision.md`, `docs/Roadmap.md`, `docs/sales-to-production.md`, `docs/target-ia.md`, `docs/system-overview.md`, and `docs/README.md`.
+
+Future Codex sessions must treat these AI, communications, intake, calendar, scheduling, voice, onboarding, and support assistant docs as target planning only unless [docs/current-state.md](C:/FloorConnector/docs/current-state.md) says a capability is implemented. Preserve the guardrails that AI is an operating layer, not a parallel system; communications attach to canonical records; FloorConnector owns the canonical schedule; external providers are adapters; and risky AI actions require human confirmation through approved workflows.
+
+## Lead Communication And Customer-Visible Appointment Foundation
+
+Schema/data foundation implemented for the first lead communication plus appointment scheduling slice.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260507180043_lead_communication_appointment_visibility.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/opportunities/data.ts`
+- `apps/web/lib/opportunities/actions.ts`
+- `apps/web/lib/opportunities/schemas.ts`
+- `apps/web/lib/communications/data.ts`
+- `apps/web/lib/communications/actions.ts`
+- `apps/web/lib/communications/contractor-data.ts`
+- `apps/web/lib/notifications/system.ts`
+- `apps/web/lib/appointments/data.ts`
+- `apps/web/lib/appointments/actions.ts`
+- `apps/web/lib/appointments/schemas.ts`
+- `apps/web/components/appointment-form.tsx`
+- `apps/web/components/appointment-quick-create-form.tsx`
+- `apps/web/components/communication-reply-form.tsx`
+- `apps/web/components/communication-notification-triage-form.tsx`
+- `apps/web/app/(app)/communications/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/communications-and-ai-intake.md`
+- `docs/calendar-and-scheduling-intelligence.md`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- `opportunities` now has nullable `next_follow_up_at` and `next_follow_up_note`.
+- `communication_threads` can attach to `opportunity` subjects with `opportunity_id` before customer/project conversion.
+- `communication_messages` now have `message_kind`, `visibility`, and `delivery_status`; manual opportunity log utilities default to internal/logged and suppress notification fan-out.
+- `appointments` now has explicit `customer_visible`, `customer_notes`, and `internal_notes`; legacy `notes` remains internal.
+- RLS was tightened so portal users cannot read internal communication messages, cannot reach opportunity-only communication threads, and only see customer/project thread previews when the latest preview is customer-visible.
+
+Still not implemented:
+
+- visible lead communication UI
+- visible follow-up editor UI
+- visible customer-visible appointment controls
+- portal appointment display
+- provider-backed SMS/email/chat/voice
+- Google/Outlook calendar sync
+- AI drafting, summaries, scheduling, or receptionist behavior
+
+Validation:
+
+- `pnpm typecheck` passed after adding the new communication source type to existing form props.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+- `pnpm exec supabase migration list` succeeded and showed `20260507180043` as a local pending migration, not yet applied remotely.
+- No generated Supabase database type file was found in the repo during this pass, so no generated database type file was updated.
+
+## Login Entry Points And Post-Login Routing
+
+The public homepage now includes explicit `Log in -> /login` entry points in the header and hero while preserving `Start early access -> /signup?next=/setup/company`.
+
+Post-auth routing is centralized:
+
+- safe internal `next` paths are honored, but `next=/super-admin` requires a real platform `platform_admin` role from `platform_user_roles`
+- platform admins without an explicit `next` land on `/super-admin`
+- contractor users with completed company setup land on `/dashboard`
+- authenticated contractor users without completed company setup land on `/setup/company`
+
+Focused regression coverage:
+
+- `e2e/marketing-login.spec.js` verifies the marketing login and early-access CTAs
+- `pnpm e2e:super-admin` regenerates contractor and platform storage states through the real `/login` flow; the platform setup now expects the default platform login to land on `/super-admin`
+
 ## Platform Super Admin Access Cleanup
 
 Super-admin authorization now stays strictly on the platform role assignment layer:
+
 - `/super-admin` and nested routes require a `platform_user_roles` assignment to the existing platform `platform_admin` role.
 - Contractor organization roles (`owner`, `admin`, `manager`, `member`) do not imply super-admin access.
 - The old first-visitor bootstrap behavior in the super-admin access helper was removed; visiting `/super-admin` no longer grants platform access when no assignments exist.
@@ -44,18 +283,1558 @@ Super-admin authorization now stays strictly on the platform role assignment lay
 - Focused Playwright coverage now lives in `e2e/super-admin-access.spec.js` with the `chromium-super-admin-access` project and `pnpm e2e:super-admin`. It uses contractor auth from `FLOORCONNECTOR_E2E_EMAIL` / `FLOORCONNECTOR_E2E_PASSWORD` and platform auth from `FLOORCONNECTOR_PLATFORM_E2E_EMAIL` / `FLOORCONNECTOR_PLATFORM_E2E_PASSWORD`.
 
 Manual QA checklist:
+
 - Sign in as the configured platform admin and open `/super-admin`; confirm the platform admin surface loads.
 - Sign in as `jfilamonte@gmail.com` or another contractor-only owner and open `/super-admin`; confirm it redirects to `/dashboard?error=Platform+admin+access+is+required.`.
 - As the contractor-only account, open normal contractor routes such as `/dashboard`, `/projects`, and `/settings`; confirm contractor access still works.
 - Run `pnpm platform-admin status jfilamonte@gmail.com` and confirm `Platform roles: none`.
 
 Latest verification note:
+
 - `platform@floorconnector.com` now exists as a real auth/canonical user and `pnpm platform-admin status platform@floorconnector.com` confirms `Platform roles: platform_admin`.
 - After real login, the existing auth bootstrap may also create a normal contractor owner membership for the platform account; that membership is not required for `/super-admin` and does not grant platform access.
 - `pnpm platform-admin status jfilamonte@gmail.com` confirms `Platform roles: none` and contractor membership `jfilamonte: owner (active)`.
 - `.env.local` includes the local-only dual-account Playwright variables for `FLOORCONNECTOR_E2E_EMAIL` / `FLOORCONNECTOR_E2E_PASSWORD` and `FLOORCONNECTOR_PLATFORM_E2E_EMAIL` / `FLOORCONNECTOR_PLATFORM_E2E_PASSWORD`.
 - `jfilamonte@gmail.com` completed the real `/setup/company` flow through the app UI during verification so contractor route-continuity checks can reach `/dashboard`, `/projects`, and `/settings`.
 - `pnpm e2e:super-admin` passes and generates both local auth storage states through the real login flow.
+
+## Super Admin Platform Console Phase 1
+
+Phase 1 of the super-admin platform console UI pass is complete as a presentation-layer/configuration-clarity pass.
+
+Files changed in this pass:
+
+- `apps/web/app/(super-admin)/super-admin/page.tsx`
+- `apps/web/app/(super-admin)/super-admin/platform/page.tsx`
+- `apps/web/app/(super-admin)/super-admin/templates/page.tsx`
+- `apps/web/app/(super-admin)/super-admin/catalogs/page.tsx`
+- `apps/web/app/(super-admin)/super-admin/modules/page.tsx`
+- `apps/web/app/(super-admin)/super-admin/admin/page.tsx`
+- `apps/web/components/super-admin-console.tsx`
+- `apps/web/components/detail-panel.tsx`
+- `apps/web/components/settings-section-card.tsx`
+- `apps/web/components/platform-template-seed-card.tsx`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+
+Behavior:
+
+- The existing super-admin left-side navigation remains in place.
+- Target super-admin areas now have lightweight top tab navigation for local orientation.
+- The overview and platform defaults surfaces explain platform defaults, contractor-owned copies, future organization overrides, and future user preferences more explicitly.
+- Platform financial defaults and workflow defaults now use the shared save-state form/button pattern: unchanged forms show `Saved`, dirty forms show `Save`, submitting shows `Saving...`, and successful saves return to a saved state after the existing action redirect.
+- Starter templates are grouped by estimate, invoice, and contract with save-state feedback on existing starter-template actions.
+- Starter catalogs are grouped by item type with clearer seed counts and save-state feedback on existing catalog-seed actions.
+- Module controls now render as an admin policy matrix over the existing platform feature-policy records instead of a loose card stack.
+- Platform admin keeps tenant status actions and wraps tenant numbering edits in the shared save-state pattern.
+- Future capability placeholders are labeled non-functional for template assignments, starter packs, contractor groups, entitlements, tax profiles, and platform operations/errors.
+
+Guardrails preserved:
+
+- no database migrations
+- no new tables
+- no RLS changes
+- no schema, workflow, financial, tax, payroll, entitlement-enforcement, contractor navigation, or canonical data-model changes
+- existing platform admin role checks, data access functions, and server actions remain the write path
+
+Phase 2 recommendation:
+
+- Build the configuration resolver as an explicit read model before adding enforcement: platform default -> contractor-owned setting/copy -> future organization override -> future user preference.
+- Keep resolver output inspectable in super admin before any entitlement or tenant-runtime enforcement work.
+
+## Super Admin Platform Console Phase 2A
+
+Phase 2A is implemented as a read-model and inspection pass only. It adds a typed server-side configuration resolution preview for current platform defaults, selected contractor-owned settings/copies, and clearly labeled future layers.
+
+Files changed in this pass:
+
+- `apps/web/lib/platform-admin/configuration-resolution.ts`
+- `apps/web/components/super-admin-console.tsx`
+- `apps/web/app/(super-admin)/super-admin/platform/page.tsx`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+
+Behavior:
+
+- `/super-admin/platform` now has a `Resolution Preview` tab/section.
+- Platform admins can inspect platform-only resolution or select an existing tenant from platform tenant oversight data.
+- The resolver returns inspectable objects with key, label, category, effective value, source layer, source id, inherited/contractor-owned flags, future-user-override flag, and explanatory notes.
+- Current implemented layers are platform defaults, organization-owned financial/workflow settings when present, organization-owned default document templates, adopted platform template seed copies, and adopted platform catalog item copies.
+- Future organization override registry, user preferences, and record snapshots are visible as non-functional placeholders only.
+
+Guardrails preserved:
+
+- No migrations, new tables, RLS changes, entitlement enforcement, tax/payroll logic, financial calculations, estimate/invoice/contract generation behavior, contractor navigation, starter packs, contractor groups, tax profiles, user preferences, or runtime flags were added.
+- Existing platform admin role checks and existing platform/organization/template/catalog tables remain the source of truth.
+
+Testing note:
+
+- No unit test was added because the repo currently has Playwright specs but no stable lightweight unit-test harness for server utilities.
+
+Recommended Phase 2B:
+
+- Add user-level preference planning and read-model stubs only after deciding the exact preference scope, storage model, and precedence rules. Keep it inspectable in super admin first, with no runtime enforcement until the resolver contract is reviewed.
+
+## Super Admin Platform Console Phase 2B
+
+Phase 2B is implemented as the first narrow real user-preference foundation.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260506194133_user_estimate_template_preferences.sql`
+- `apps/web/lib/user-preferences/estimate-template-preference.ts`
+- `apps/web/components/preferred-estimate-template-card.tsx`
+- `apps/web/app/(app)/settings/profile/page.tsx`
+- `apps/web/lib/settings/actions.ts`
+- `apps/web/lib/estimates/data.ts`
+- `apps/web/lib/platform-admin/configuration-resolution.ts`
+- `apps/web/app/(super-admin)/super-admin/platform/page.tsx`
+- `apps/web/components/super-admin-console.tsx`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+
+Behavior:
+
+- Active contractor users can set or reset a personal preferred estimate document template from `/settings/profile`.
+- The preference can only point to an active organization-owned estimate template visible in the current organization.
+- The preference is stored separately from organization template defaults and never mutates the company default template.
+- Estimate Quick-Create stores the user's valid preferred template on the new estimate's existing `template_id`; if no preference exists, the existing organization/default-template behavior remains unchanged.
+- Existing estimates, contracts, invoices, approved snapshots, taxes, payroll, entitlements, module controls, and workflow enforcement are not changed.
+- `/super-admin/platform` Resolution Preview can inspect the real user-preference layer when a tenant and user are selected. Other user preference layers remain future placeholders.
+
+Security/RLS:
+
+- `user_estimate_template_preferences` is tenant-owned by `organization_id` and `user_id`.
+- RLS allows authenticated users to read, insert, update, and delete only their own preference in an organization where they are active members.
+- Normal user preference reads/writes use the regular Supabase server client, not service-role shortcuts.
+- Platform-admin inspection remains through existing platform-admin server paths.
+
+Testing note:
+
+- No focused unit test was added because the repo still does not have a stable lightweight unit-test harness for server utilities. Validation used typecheck, lint, and diff whitespace checks.
+
+Recommended Phase 2C:
+
+- Add a small resolver contract test or test harness for configuration resolution before broadening user preferences. Keep Phase 2C limited to review/QA unless the next preference scope is explicitly approved.
+
+## Super Admin Platform Console Phase 2C
+
+Phase 2C is implemented as a hardening and verification pass only. No new preference types or product features were added.
+
+Files changed in this pass:
+
+- `apps/web/lib/user-preferences/estimate-template-preference-core.ts`
+- `apps/web/lib/user-preferences/estimate-template-preference.ts`
+- `apps/web/lib/user-preferences/estimate-template-preference.test.ts`
+- `apps/web/lib/platform-admin/configuration-resolution-core.ts`
+- `apps/web/lib/platform-admin/configuration-resolution.ts`
+- `apps/web/lib/platform-admin/configuration-resolution.test.ts`
+- `apps/web/lib/estimates/data.ts`
+- `supabase/migrations/20260506194133_user_estimate_template_preferences.sql`
+- `docs/chat-handoff.md`
+
+Verification added:
+
+- A minimal Node/tsx server-utility test path now covers pure configuration/preference behavior without needing a browser session or live Supabase data.
+- Preference validation coverage confirms active same-organization estimate templates are accepted, cross-organization templates are rejected, inactive templates are rejected, and non-estimate templates are rejected.
+- Quick-Create template resolution coverage confirms a valid personal preference returns the template id, while no preference or invalid stored preference resolves to `null` so existing company/default behavior remains in place.
+- Resolver coverage confirms source-layer reporting for platform default, organization-owned default, real user preference, and the inspectable fallback state when no user is selected.
+
+Security/RLS review:
+
+- The migration still uses a one-purpose table rather than a generic preference blob.
+- RLS remains scoped to `authenticated`, active organization membership, and `user_id = auth.uid()`.
+- The policies now explicitly require `auth.uid()` to be non-null.
+- Insert/update policies still require the preferred template to be an active same-organization estimate template.
+- Normal user preference reads/writes continue to use the regular Supabase server client; platform-admin inspection remains on existing platform-admin server paths.
+- Server helper persistence errors now return generic user-safe messages instead of forwarding database error detail.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/user-preferences/estimate-template-preference.test.ts apps/web/lib/platform-admin/configuration-resolution.test.ts` passes.
+- `pnpm typecheck`, `pnpm lint`, and `git diff --check` were run for the pass.
+
+Recommended next prompt:
+
+- "Implement Phase 2D as a docs-and-operator verification pass for applying the new migration in the target Supabase environment and manually QAing `/settings/profile` plus `/super-admin/platform` against real tenant data. Do not add new preference types."
+
+## Super Admin Platform Console Phase 2D
+
+Phase 2D is complete as an operator/live-environment verification pass with one narrow security/UI fix. No new preference types or product features were added.
+
+Files changed in this pass:
+
+- `apps/web/lib/settings/actions.ts`
+- `supabase/migrations/20260506213000_tighten_user_estimate_template_preference_grants.sql`
+- `docs/chat-handoff.md`
+
+Migration/application status:
+
+- `20260506194133_user_estimate_template_preferences.sql` was not yet applied to the linked remote Supabase project at the start of this pass.
+- `pnpm exec supabase db push --linked --dry-run` showed only `20260506194133_user_estimate_template_preferences.sql` pending, then `pnpm exec supabase db push --linked --yes` applied it.
+- A follow-up grants-only hardening migration, `20260506213000_tighten_user_estimate_template_preference_grants.sql`, was added and applied after live metadata showed broader inherited/default table privileges than this narrow preference table needs.
+- Live migration list now shows both `20260506194133` and `20260506213000` applied locally and remotely.
+
+Live schema/RLS/security checks:
+
+- Live table metadata confirms `public.user_estimate_template_preferences` exists with RLS enabled and forced.
+- Live policy metadata confirms the four intended policies exist: select, insert, update, and delete own preference.
+- Insert/update policy text confirms active membership, `user_id = auth.uid()`, same-organization template, `template_type = 'estimate'`, and `status = 'active'` checks.
+- Live grants now show only `authenticated` with `DELETE, INSERT, SELECT, UPDATE`; `anon` has no table privileges.
+- An unauthenticated/anon read attempt is blocked with Postgres error code `42501`.
+- Authenticated write spot-check blocked a same-organization active non-estimate template with error code `42501`.
+- Cross-organization active estimate and same-organization inactive estimate spot-checks were skipped because the live QA dataset did not contain candidate records.
+
+Browser QA:
+
+- Browser MCP was not exposed in this session, so authenticated UI QA used Playwright against the already-running local app at `http://localhost:3000`.
+- Contractor QA user id: `e839f92c-fc0d-403b-beef-8fac2e0dce5a`.
+- Contractor organization id: `865f87c3-376e-4d89-8d2c-ed4132264719`.
+- Estimate template used: `Default Estimate Template` (`0ab37a74-e9bd-4b06-8c63-6ad66a0b29a4`).
+- Project context used for Quick-Create: `Demo Warehouse Floor` (`a4bbe66f-5c62-41a3-a13a-178189a17492`).
+- `/settings/profile` displays `Your estimate template preference` for the active contractor user.
+- Saving the template now shows the shared save-state behavior and persists after reload.
+- Resetting to company default deletes the preference row and persists after reload.
+- Quick-Create with a saved preference created estimate `3366` (`96b50651-e526-4ae7-9bbf-25c45f01894c`) and stored `template_id = 0ab37a74-e9bd-4b06-8c63-6ad66a0b29a4`.
+- Quick-Create after reset created estimate `3367` (`9a675a78-d518-4e85-915c-c76244f7dc83`) and preserved the existing no-preference baseline, `template_id = null`.
+- Dataset caveat: this organization currently has one active estimate template, so the preferred-template path and any company-default template are not visually distinguishable by name. The database check distinguishes preference-on (`template_id` stored) from preference-reset baseline (`template_id = null`).
+- `/super-admin/platform?tenantId=865f87c3-376e-4d89-8d2c-ed4132264719&userId=e839f92c-fc0d-403b-beef-8fac2e0dce5a#resolution-preview` renders Resolution Preview, `User preferred estimate template`, real personal preference language while the preference is saved, and future/non-functional layer language.
+
+Bug fixes made:
+
+- The preference server action now returns through the shared save-state form instead of redirecting on success/error, so the button can show `Saved`, `Save`, and `Saving...` correctly.
+- A grants-only migration revokes table privileges from `anon` and reduces `authenticated` privileges to CRUD on the preference table.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/user-preferences/estimate-template-preference.test.ts apps/web/lib/platform-admin/configuration-resolution.test.ts` passes, 8/8.
+- `pnpm typecheck` passes.
+- `pnpm lint` passes.
+- `git diff --check` passes with existing LF-to-CRLF warnings only.
+
+Recommended next prompt:
+
+- "Implement Phase 4A template governance/starter packs as a platform-admin governance pass over existing template seed/adoption models. Do not add entitlement enforcement, tax profiles, payroll, or duplicate template models."
+
+## Super Admin Platform Console Phase 4A
+
+Phase 4A is implemented as the first real template governance / starter pack foundation. Starter packs are platform-owned bundles over existing platform template seeds and platform catalog item seeds only; they are inspectable and manageable in super admin, but they do not provision tenant records or change runtime behavior.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260506223000_platform_starter_packs.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/lib/platform-admin/actions.ts`
+- `apps/web/lib/platform-admin/schemas.ts`
+- `apps/web/lib/platform-admin/configuration-resolution.ts`
+- `apps/web/lib/platform-admin/configuration-resolution-core.ts`
+- `apps/web/components/platform-starter-pack-manager.tsx`
+- `apps/web/app/(super-admin)/super-admin/templates/page.tsx`
+- `apps/web/app/(super-admin)/super-admin/catalogs/page.tsx`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+
+Schema:
+
+- `platform_starter_packs` stores platform pack metadata: `pack_key`, name, description, status (`draft`, `published`, `archived`), optional `segment_key`, audit users, and timestamps.
+- `platform_starter_pack_items` stores pack membership rows referencing either one existing `platform_template_seeds.id` or one existing `platform_catalog_item_seeds.id`.
+- Constraints enforce valid item types, exactly one seed reference per item row, non-negative sort order, and no duplicate template/catalog seed inside the same pack.
+- The schema is relational and does not duplicate template, catalog, tax, billing, entitlement, or contractor settings models.
+
+Security/RLS:
+
+- RLS is enabled and forced on both starter-pack tables.
+- `anon` and `authenticated` table privileges are revoked.
+- Platform pack reads/writes go through existing platform-admin server paths using the existing explicit platform-admin role check before service-role-backed data access.
+- Contractor organizations cannot mutate platform starter packs through normal tenant-scoped routes, and no tenant-owned templates/catalog items are touched by pack actions.
+
+UI:
+
+- `/super-admin/templates` now includes a `Starter Packs` top tab/section.
+- Platform admins can create starter packs, edit pack metadata/status, add existing platform template seeds, add existing platform catalog item seeds, and remove pack items.
+- `/super-admin/catalogs` now points starter-pack management back to Super Admin Templates and states that packs do not provision tenant catalog items.
+- `/super-admin/platform` Resolution Preview includes starter packs as inspectable platform-governed bundles only; starter packs do not affect default resolution.
+
+Manual QA:
+
+- Migration `20260506223000_platform_starter_packs.sql` was applied to the linked remote Supabase target after `supabase db push --linked --dry-run` showed only that migration pending.
+- Live metadata confirmed both starter-pack tables have RLS enabled and forced, and no `anon`/`authenticated` grants.
+- Authenticated UI QA used the platform-admin account against `http://localhost:3000`.
+- QA pack: `Phase 4A QA Starter Pack 1778108719396` / `phase-4a-qa-1778108719396` / id `e80832dd-7b20-4598-a713-3c26868e0081`.
+- Added template seed `Default Estimate Template` (`02321564-adb5-4c99-9ec4-370d8680683b`) and catalog seed `Resinous Basecoat` (`b212540b-6875-4039-8071-2dd1ced731fc`), confirmed grouping/count display, removed one item, and archived the pack.
+- Contractor-owned `document_templates` count stayed `3` before/after, and contractor-owned `catalog_items` count stayed `8` before/after.
+- Transient debug QA packs created during verification were removed; the archived QA pack remains as the auditable Phase 4A record with one remaining catalog-seed item.
+
+Validation:
+
+- `pnpm typecheck` passes.
+- `pnpm lint` passes.
+- `git diff --check` passes with existing LF-to-CRLF warnings only.
+
+Guardrails preserved:
+
+- No estimate creation behavior, template adoption behavior, catalog adoption behavior, contractor organization templates/catalog items, entitlements, tax profiles, payroll, runtime flags, financial calculations, invoice/contract generation behavior, or user preference behavior changed.
+
+Recommended next prompt:
+
+- "Implement Phase 4B starter-pack assignment planning as an inspectable platform-admin read model for future contractor groups and onboarding profiles. Do not auto-provision packs, enforce entitlements, or mutate contractor-owned templates/catalog items."
+
+## Super Admin Platform Console Phase 4B
+
+Phase 4B is implemented as a starter-pack assignment planning/read-model foundation. Assignment intent is platform-owned metadata that says who a starter pack may target later; it does not provision tenant records or change runtime behavior.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260506224500_platform_starter_pack_assignments.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/lib/platform-admin/actions.ts`
+- `apps/web/lib/platform-admin/schemas.ts`
+- `apps/web/components/platform-starter-pack-manager.tsx`
+- `apps/web/components/super-admin-console.tsx`
+- `apps/web/app/(super-admin)/super-admin/templates/page.tsx`
+- `apps/web/lib/platform-admin/configuration-resolution.ts`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+
+Schema/security:
+
+- New table: `platform_starter_pack_assignments`.
+- Supported assignment types: `all_organizations`, `organization`, `onboarding_profile`, `region`, `trade_segment`, `plan_tier`, and `future_contractor_group`.
+- Supported statuses: `draft`, `active`, and `inactive`.
+- Constraints require organization assignments to reference `companies.id`, non-organization keyed assignments to provide `assignment_key`, and all-organizations assignments to have no organization/key target.
+- Partial unique indexes prevent duplicate active assignment intent for the same pack/type/target where practical.
+- RLS is enabled and forced; `anon` and `authenticated` table privileges are revoked.
+- Platform assignment reads/writes go through existing platform-admin server paths behind the existing platform-admin role check before service-role-backed data access.
+
+UI/read model:
+
+- `/super-admin/templates` Starter Packs now includes an Assignment intent section per pack.
+- Platform admins can add all-organizations, organization-specific, onboarding-profile, region/state, trade-segment, plan-tier, and future-contractor-group assignment intent; edit status/label/notes; and remove intent rows.
+- Organization assignment uses existing platform tenant oversight data from `companies`; no new tenant-management model was added.
+- `/super-admin/platform` Resolution Preview now shows starter-pack assignment intent counts as planning-only context. Assignment intent does not affect effective configuration.
+
+Manual QA:
+
+- Migration `20260506224500_platform_starter_pack_assignments.sql` was applied to the linked remote Supabase target after dry run showed only that migration pending.
+- Live metadata confirmed `platform_starter_pack_assignments` has RLS enabled and forced, and no `anon`/`authenticated` grants.
+- Authenticated UI QA used the platform-admin account against `http://localhost:3000`.
+- QA pack reused: `Phase 4A QA Starter Pack 1778108719396` / `phase-4a-qa-1778108719396` / id `e80832dd-7b20-4598-a713-3c26868e0081`.
+- Created an active all-organizations assignment intent, changed it to inactive, and removed it.
+- Created an active region assignment intent for `TX`, confirmed target-key display, and removed it.
+- Created a draft organization assignment intent using the existing tenant selector, confirmed display, and removed it.
+- Confirmed `/super-admin/platform` Resolution Preview renders assignment intent counts.
+- Contractor-owned `document_templates` count stayed `3`, contractor-owned `catalog_items` count stayed `8`, and `estimates` count stayed `15`; no contractor-owned templates/catalog items or estimates were changed.
+- QA assignment rows were removed after verification; the Phase 4A archived QA pack remains with zero assignment intents.
+
+Validation:
+
+- `pnpm typecheck` passes.
+- `pnpm lint` passes.
+- `git diff --check` passes.
+
+Guardrails preserved:
+
+- No auto-provisioning, template/catalog copying, contractor-default changes, estimate/catalog behavior changes, entitlements, tax profiles, payroll, runtime flags, financial calculation changes, invoice/contract generation changes, user-preference changes, duplicate template/catalog/settings models, or contractor navigation changes were added.
+
+Recommended next prompt:
+
+- "Implement Phase 4C starter-pack assignment resolver preview as a read-only targeting explainer. It should calculate which planning assignments would match a selected organization by existing company fields and labels only, without provisioning, entitlement enforcement, contractor groups, or runtime behavior changes."
+
+## Super Admin Platform Console Phase 4C
+
+Phase 4C is implemented as a read-only starter-pack assignment targeting explainer. It evaluates existing assignment intent against selected organization metadata so platform admins can see why a pack would match before any provisioning/enforcement workflow exists.
+
+Files changed in this pass:
+
+- `apps/web/lib/platform-admin/starter-pack-targeting-core.ts`
+- `apps/web/lib/platform-admin/starter-pack-targeting.test.ts`
+- `apps/web/components/starter-pack-targeting-preview.tsx`
+- `apps/web/app/(super-admin)/super-admin/templates/page.tsx`
+- `apps/web/lib/platform-admin/data.ts`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+
+Behavior:
+
+- `/super-admin/templates` now includes a `Targeting Preview` top tab/section below the Starter Packs manager.
+- Platform admins can select an existing organization from tenant oversight data and inspect matched, not matched/possible, and unavailable starter-pack assignment intent.
+- Matching rules are deterministic and read-only:
+  - `all_organizations` matches active organizations.
+  - `organization` matches exact `organization_id`.
+  - `region` uses the selected company's active location `state_region` when available.
+  - `trade_segment` uses `companies.primary_trade` when available.
+  - `plan_tier` uses current subscription plan key/name when available.
+  - `onboarding_profile` remains unavailable because no durable onboarding profile field exists.
+  - `future_contractor_group` remains unavailable because contractor groups do not exist.
+- The preview returns and displays organization metadata, matched/unmatched/unavailable pack groups, assignment-level reasons, and explicit planning-only copy.
+
+Manual QA:
+
+- Authenticated UI QA used the platform-admin account against `http://localhost:3000`.
+- QA pack reused: `Phase 4A QA Starter Pack 1778108719396` / `phase-4a-qa-1778108719396` / id `e80832dd-7b20-4598-a713-3c26868e0081`.
+- Created active all-organizations, organization-specific, and future-contractor-group assignment intents through the UI.
+- Selected active organization `QA Early Access` / `b434be1d-2340-4fd9-95e4-43b2a3c5e9c1` and confirmed:
+  - all-organizations intent matched because the organization is active
+  - organization-specific intent matched the selected organization
+  - future contractor group displayed as planning-only/unavailable
+- Selected non-target organization `platform` / `e19c182b-923b-402d-996b-c4c20728a79f` and confirmed the organization-specific intent did not match.
+- Removed the QA assignment rows after verification.
+- Contractor-owned `document_templates` count stayed `3`, contractor-owned `catalog_items` count stayed `8`, and `estimates` count stayed `15`; no contractor-owned templates/catalog items or estimates were changed.
+- The archived Phase 4A QA pack remains with zero assignment intents after cleanup.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/starter-pack-targeting.test.ts` passes.
+- `pnpm typecheck` passes.
+- `pnpm lint` passes.
+- `git diff --check` passes.
+
+Guardrails preserved:
+
+- No migrations, new tables, RLS changes, auto-provisioning, template/catalog copying, contractor-default changes, estimate/catalog behavior changes, entitlements, contractor groups, tax profiles, payroll, runtime flags, financial calculation changes, invoice/contract generation changes, user-preference behavior changes, or duplicate template/catalog/settings models were added.
+
+Recommended next prompt:
+
+- "Implement Phase 4D starter-pack provisioning plan review as a read-only dry-run report. It should show exactly which template/catalog seed copies would be created for a selected organization if provisioning were later approved, but it must not write tenant-owned templates/catalog items or change defaults."
+
+## Super Admin Platform Console Phase 4D
+
+Phase 4D is implemented as a read-only starter-pack provisioning dry-run report. It explains what organization-owned document template and catalog item copies would be created from a selected starter pack for a selected organization, without writing tenant-owned records or adding any provisioning action.
+
+Files changed in this pass:
+
+- `apps/web/lib/platform-admin/starter-pack-provisioning-dry-run-core.ts`
+- `apps/web/lib/platform-admin/starter-pack-provisioning-dry-run.test.ts`
+- `apps/web/components/starter-pack-provisioning-dry-run.tsx`
+- `apps/web/app/(super-admin)/super-admin/templates/page.tsx`
+- `apps/web/lib/platform-admin/data.ts`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+
+Behavior:
+
+- `/super-admin/templates` now includes a `Dry Run` top tab/section below the Targeting Preview.
+- Platform admins can select an existing organization and starter pack, then inspect read-only summary counts for templates to create, catalog items to create, already adopted items, blocked items, and unavailable seed references.
+- Item rows show source seed type/id/name, destination record type, action, source status/type/category, exact or conservative match type, matching organization-owned record id when detected, and reason text.
+- Template seed matching prefers exact `source_seed_id` / `source_seed_key` linkage on organization-owned `document_templates`; when no linkage exists it uses conservative normalized matching by template type and name.
+- Catalog seed matching prefers exact `source_seed_id` / `source_seed_key` linkage on organization-owned `catalog_items`; when no linkage exists it uses conservative normalized matching by item type, category, and name.
+- Inactive platform seeds are marked blocked. Missing seed references are marked unavailable.
+- Draft or archived starter packs show an explicit warning, but remain inspectable because this is a dry run only.
+
+Validation and QA:
+
+- Focused dry-run utility coverage added with the existing Node/tsx harness.
+- `pnpm exec tsx --test apps/web/lib/platform-admin/starter-pack-provisioning-dry-run.test.ts` passes.
+- `pnpm typecheck` passes.
+- `pnpm lint` passes.
+- `git diff --check` passes with the existing LF-to-CRLF working-copy warnings only.
+- Authenticated browser QA used the platform-admin account against `http://localhost:3000`.
+- QA organization reused: `QA Early Access` / `b434be1d-2340-4fd9-95e4-43b2a3c5e9c1`.
+- QA starter pack reused: `Phase 4A QA Starter Pack 1778108719396` / `phase-4a-qa-1778108719396` / id `e80832dd-7b20-4598-a713-3c26868e0081`, currently archived.
+- Opened `/super-admin/templates?dryRunOrganizationId=b434be1d-2340-4fd9-95e4-43b2a3c5e9c1&dryRunStarterPackId=e80832dd-7b20-4598-a713-3c26868e0081` and confirmed:
+  - `Starter-pack copy impact report` rendered
+  - `Dry run only. No contractor-owned records are created.` rendered
+  - archived-pack warning rendered
+  - dry-run action rows rendered
+  - no button named `Provision`, `Apply`, or `Copy to organization` was present
+  - no browser console errors were captured
+- Remote Supabase count check before and after browser QA stayed `document_templates = 3` and `catalog_items = 8`, confirming this pass did not write tenant-owned template/catalog records.
+
+Guardrails preserved:
+
+- No migrations, new tables, RLS changes, tenant-owned writes, template/catalog copying, contractor-default changes, estimate/catalog behavior changes, entitlements, contractor groups, tax profiles, payroll, runtime flags, financial calculation changes, invoice/contract generation changes, user-preference behavior changes, or duplicate template/catalog/settings models were added.
+
+Recommended next prompt:
+
+- "Implement Phase 4E starter-pack provisioning approval design as a planning/safety spec only. Define the future server-side guardrails, audit requirements, conflict handling, and rollback strategy for eventual provisioning, but do not add a provisioning action yet."
+
+## Super Admin Platform Console Phase 4E
+
+Phase 4E is complete as a planning/specification pass only. It defines the future starter-pack provisioning safety model before any real tenant-owned writes are introduced.
+
+Files changed in this pass:
+
+- `docs/starter-pack-provisioning-plan.md`
+- `apps/web/components/starter-pack-provisioning-dry-run.tsx`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+- `docs/README.md`
+
+Planning/spec behavior:
+
+- Added `docs/starter-pack-provisioning-plan.md` as the future approval design for starter-pack provisioning.
+- The plan defines the future workflow, operator approval requirements, dry-run review requirements, server-side guardrails, transaction boundaries, audit run/item model, idempotency strategy, conflict handling, rollback/void strategy, partial failure handling, permissions, service-role boundary guidance, tenant-owned record creation rules, snapshot requirements, source seed lineage requirements, draft/archived/published pack rules, and pre-release tests.
+- At the time of Phase 4E, the plan explicitly said it was not implemented behavior and that no provisioning action, provisioning run table, audit table, rollback action, background job, entitlement enforcement, tenant-owned write, or template/catalog copy behavior existed yet. Phase 5A now adds the audit schema only; provisioning actions and tenant-owned writes remain unimplemented.
+- `/super-admin/templates` Dry Run area now includes a non-functional information panel pointing operators to the future approval design and repeating that the current surface is inspect-only.
+
+Implementation checklist before any future real provisioning action:
+
+- Add provisioning run and item audit schema with RLS/grant review.
+- Keep the server action behind the existing platform-admin role check before service-role data access.
+- Rebuild the dry run server-side immediately before approval writes.
+- Require a fresh dry-run fingerprint and reject stale approval.
+- Block draft and archived packs.
+- Block approval when dry-run rows are `blocked` or `unavailable`.
+- Create only `would_create` rows and skip already-adopted/equivalent rows.
+- Store source seed lineage on every created tenant-owned record.
+- Preserve existing organization defaults, existing organization-owned templates/catalog items, estimates, invoices, contracts, taxes, payroll, entitlements, modules, and workflow settings.
+- Prove transaction, idempotency, retry, partial failure, and void behavior before enabling a production action.
+
+Validation required for the future provisioning implementation:
+
+- unit coverage for draft/archived block, clean published approval, stale dry-run rejection, source-linkage skip, conservative-match skip, created-record lineage, unchanged organization defaults, no unrelated business-record changes, retry idempotency, transaction rollback, platform-admin allow, and contractor-only reject
+- browser QA confirming explicit confirmation copy, no single-click provisioning, audit result visibility, and no hidden background retry
+- remote Supabase migration status verification before any production run
+
+Guardrails preserved:
+
+- No migrations, new tables, RLS changes, tenant-owned writes, actual provisioning action, template/catalog copying, contractor-default changes, estimate/catalog behavior changes, entitlements, contractor groups, tax profiles, payroll, runtime flags, financial calculation changes, invoice/contract generation changes, user-preference behavior changes, duplicate template/catalog/settings models, provisioning persistence, rollback action, or background jobs were added during Phase 4E. Phase 5A later adds only the audit schema.
+
+Recommended next prompt:
+
+- "Implement Phase 5A starter-pack provisioning audit schema only. Add run/item audit tables and RLS/grants for future provisioning, but do not add a provisioning action or tenant-owned writes."
+
+## Super Admin Platform Console Phase 5A
+
+Phase 5A is implemented as starter-pack provisioning audit schema only. It adds durable future run/item audit tables and read-only super-admin visibility, but no approval, execution, rollback, background job, or tenant-owned write path exists.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260507001940_platform_starter_pack_provisioning_audit.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/components/starter-pack-provisioning-dry-run.tsx`
+- `apps/web/app/(super-admin)/super-admin/templates/page.tsx`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+- `docs/starter-pack-provisioning-plan.md`
+
+Schema added:
+
+- `platform_starter_pack_provisioning_runs` references `platform_starter_packs` and `companies`, stores requested/approved actor references, status, dry-run snapshot, confirmation text, idempotency key, lifecycle timestamps, error message, and timestamps.
+- `platform_starter_pack_provisioning_run_items` references a provisioning run, optional starter-pack item, one matching template or catalog source seed, destination record type/id, action, status, source/destination snapshots, reason/error, and timestamps.
+- Constraints keep template seed rows paired with `document_template`, catalog seed rows paired with `catalog_item`, require exactly one matching source seed reference, validate run/item statuses and actions, require JSON object snapshots, and keep idempotency keys unique when present.
+
+RLS/grants:
+
+- RLS is enabled and forced on both audit tables.
+- Broad `anon` and `authenticated` grants are revoked.
+- No client write path, server action, approval action, provisioning action, rollback action, or background job was added.
+- Future platform-admin writes must still go through the planned platform-admin server path after explicit role checks.
+
+UI/read helper:
+
+- Added read-only `listRecentStarterPackProvisioningRuns()` for platform-admin server rendering.
+- `/super-admin/templates` Dry Run area now shows a read-only Provisioning Audit Foundation panel with recent run rows when they exist, or an empty state explaining that no approval/execution exists yet.
+- No create/approve/run/provision/copy/void button was added.
+
+Validation status:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- Remote Supabase dry run showed `20260507001940_platform_starter_pack_provisioning_audit.sql` pending, then `pnpm exec supabase db push --linked --yes` applied it.
+- Remote `schema_migrations` contains version `20260507001940`.
+- Remote metadata confirms both audit tables have RLS enabled and forced.
+- Remote grant check returned no `anon` or `authenticated` table grants for either audit table.
+- Remote count check returned `provisioning_runs = 0`, `provisioning_run_items = 0`, `document_templates = 3`, and `catalog_items = 8`; tenant-owned template/catalog counts matched the pre-migration check.
+- `git diff --check` passed with the existing LF-to-CRLF working-copy warnings only.
+
+Guardrails preserved:
+
+- No real provisioning action, tenant-owned writes, template/catalog copying, dry-run approval action, contractor default changes, estimate/catalog behavior changes, entitlements, contractor groups, tax profiles, payroll, runtime flags, financial calculation changes, invoice/contract generation changes, user-preference changes, duplicate template/catalog/settings models, or background jobs were added.
+
+Recommended next prompt:
+
+- "Implement Phase 5B starter-pack provisioning approval draft/read model. Let platform admins create an approval draft from a fresh dry run into the audit tables, but do not execute provisioning or write tenant-owned template/catalog records."
+
+## Super Admin Platform Console Phase 5B
+
+Phase 5B is implemented as a starter-pack provisioning approval draft/read-model pass. Platform admins can create a durable draft audit run from a fresh server-side dry run, but the draft is not approved, not executed, and not provisioning.
+
+Files changed in this pass:
+
+- `apps/web/lib/platform-admin/starter-pack-provisioning-draft-core.ts`
+- `apps/web/lib/platform-admin/starter-pack-provisioning-draft.test.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/lib/platform-admin/actions.ts`
+- `apps/web/lib/platform-admin/schemas.ts`
+- `apps/web/components/starter-pack-provisioning-dry-run.tsx`
+- `apps/web/app/(super-admin)/super-admin/templates/page.tsx`
+- `packages/types/src/index.ts`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+- `docs/starter-pack-provisioning-plan.md`
+
+Behavior:
+
+- `/super-admin/templates` Dry Run area now includes `Create approval draft`.
+- The action requires the existing platform-admin role check before service-role data access.
+- The server action accepts only organization id and starter pack id, then recomputes the dry run server-side at submit time.
+- Missing organizations, missing starter packs, draft packs, archived packs, empty packs, blocked dry-run rows, and unavailable dry-run rows are rejected.
+- Clean published-pack dry runs create one `platform_starter_pack_provisioning_runs` row with status `draft` and matching `platform_starter_pack_provisioning_run_items` rows.
+- `would_create` rows become draft item action/status `would_create` / `pending`.
+- `already_exists` rows become `skipped_existing` / `skipped`.
+- Draft item rows keep `destination_record_id = null` because nothing is created.
+- A stable draft idempotency key prevents duplicate drafts for repeated submission by the same operator against the same organization, starter pack, and dry-run fingerprint.
+- The Provisioning Audit panel lists recent draft/runs with pack, organization, status, and item count.
+
+Manual QA:
+
+- QA organization: `QA Early Access` / `b434be1d-2340-4fd9-95e4-43b2a3c5e9c1`.
+- QA starter pack: `Phase 4A QA Starter Pack 1778108719396` / `e80832dd-7b20-4598-a713-3c26868e0081`.
+- The QA starter pack was temporarily set from archived to published to create one approval draft through the authenticated `/super-admin/templates` UI, then restored to archived.
+- Created draft run `80afd530-e4fd-42c6-b1d6-2b47b618623f` with status `draft` and one audit item.
+- Draft item `6bdddc41-b066-40d0-866d-24e1fc6e1a6a` mirrors the dry-run catalog seed row as `would_create` / `pending`, has `destination_record_id = null`, and references source catalog seed `b212540b-6875-4039-8071-2dd1ced731fc`.
+- Browser QA confirmed the created draft banner renders and no enabled button named approve, run, execute, provision, copy to organization, rollback, or void appears.
+- After restoring the pack to archived, browser QA confirmed `Create approval draft` is disabled for that archived pack.
+- Remote count check after QA returned `document_templates = 3`, `catalog_items = 8`, `provisioning_runs = 1`, and `provisioning_run_items = 1`; tenant-owned template/catalog counts did not change.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/starter-pack-provisioning-dry-run.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-draft.test.ts` passes.
+- `pnpm typecheck` passes.
+- `pnpm lint` passes after tightening one Supabase response id cast.
+- `git diff --check` passes with the existing LF-to-CRLF working-copy warnings only.
+
+Guardrails preserved:
+
+- No tenant-owned `document_templates` writes, tenant-owned `catalog_items` writes, provisioning execution, approval execution, rollback/void action, contractor-default changes, estimate/catalog behavior changes, entitlements, contractor groups, tax profiles, payroll, runtime flags, financial calculation changes, invoice/contract generation changes, user-preference changes, duplicate template/catalog/settings models, or client/browser service-role usage were added.
+
+Recommended next prompt:
+
+- "Implement Phase 5C starter-pack provisioning approval review hardening. Add read-only draft detail inspection and stale-dry-run comparison, but do not approve, execute, provision, copy tenant records, or add rollback."
+
+## Super Admin Platform Console Phase 5C
+
+Phase 5C is implemented as starter-pack provisioning draft review hardening. Platform admins can inspect an existing draft audit run against a fresh server-side dry run, but there is still no approval, execution, provisioning, copy, rollback, or void behavior.
+
+Files changed in this pass:
+
+- `apps/web/lib/platform-admin/starter-pack-provisioning-draft-review-core.ts`
+- `apps/web/lib/platform-admin/starter-pack-provisioning-draft-review.test.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/components/starter-pack-provisioning-dry-run.tsx`
+- `apps/web/app/(super-admin)/super-admin/templates/page.tsx`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+- `docs/starter-pack-provisioning-plan.md`
+
+Behavior:
+
+- `/super-admin/templates` Provisioning Audit rows now include a read-only `Review` link.
+- The review loads the stored provisioning run header/items, target organization, starter pack, and a fresh current dry run rebuilt through the existing dry-run read model.
+- The review reports freshness as `fresh`, `stale`, `invalid`, or `unavailable`.
+- Issue rows are labeled `info`, `warning`, or `blocking`.
+- Item comparisons are labeled `unchanged`, `changed`, `missing_from_current`, `added_in_current`, or `invalid_now`.
+- Stale checks cover pack status, organization/pack identity, item count, source ids/types, actions, already-existing destination matches, and blocked/unavailable source state.
+- The UI copy explicitly says review is inspection only and does not approve, execute, provision, copy, roll back, void, or mutate contractor-owned records.
+
+Testing:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/starter-pack-provisioning-draft-review.test.ts` passes.
+- Coverage includes fresh draft, archived-pack invalidation, removed item, added item, action changed from `would_create` to `already_exists`, and source seed unavailable.
+
+Guardrails preserved:
+
+- No migrations, new tables, RLS/grant changes, tenant-owned writes, approval action, execution/provisioning action, rollback/void action, template/catalog copying, contractor-default changes, estimate/catalog behavior changes, entitlements, contractor groups, tax profiles, payroll, runtime flags, financial calculation changes, invoice/contract generation changes, user-preference changes, duplicate template/catalog/settings models, or client/browser service-role usage were added.
+
+Recommended next prompt:
+
+- "Implement Phase 5D starter-pack provisioning approval gate design or audit-only approval status transition, but do not execute provisioning or create contractor-owned template/catalog copies."
+
+## Super Admin Platform Console Phase 5D
+
+Phase 5D is implemented as an audit-only provisioning approval gate. Platform admins can mark a fresh, non-blocking draft provisioning run as `approved` for future execution only; no execution/provisioning/copy/rollback/void behavior exists.
+
+Files changed in this pass:
+
+- `apps/web/lib/platform-admin/starter-pack-provisioning-draft-review-core.ts`
+- `apps/web/lib/platform-admin/starter-pack-provisioning-draft-review.test.ts`
+- `apps/web/lib/platform-admin/schemas.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/lib/platform-admin/actions.ts`
+- `apps/web/components/starter-pack-provisioning-dry-run.tsx`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+- `docs/starter-pack-provisioning-plan.md`
+
+Behavior:
+
+- `/super-admin/templates` Provisioning Audit review now shows an `Approve audit draft` control for draft runs only.
+- The approval form requires typing `APPROVE DRY RUN ONLY` exactly.
+- The server action recomputes the Phase 5C draft review at submit time and approves only when the run is `draft`, the starter pack is still `published`, freshness is `fresh`, there are no blocking issues, and the run has at least one item.
+- Approval updates only the provisioning run header audit fields: `status`, `approved_by`, `approved_at`, and `confirmation_text`.
+- Approved runs display approved metadata and remain explicitly labeled as future-execution audit records only.
+- No run items are updated and no `destination_record_id` is set by approval.
+
+Testing:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/starter-pack-provisioning-dry-run.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-draft.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-draft-review.test.ts` passes.
+- Approval eligibility coverage includes fresh draft allowed, stale draft blocked, invalid draft blocked, non-draft status blocked, blocking issue blocked, missing confirmation blocked, and exact confirmation accepted.
+
+Manual/remote QA notes:
+
+- Browser QA was not rerun in this pass.
+- Read-only remote count check returned `document_templates = 3`, `catalog_items = 8`, `provisioning_runs = 1`, `provisioning_run_items = 1`, and `run_items_with_destination = 0`; no tenant-owned template/catalog copy or destination record linkage was created by this pass.
+
+Guardrails preserved:
+
+- No migrations, new tables, RLS/grant changes, tenant-owned writes, execution/provisioning action, rollback/void action, template/catalog copying, contractor-default changes, estimate/catalog behavior changes, entitlements, contractor groups, tax profiles, payroll, runtime flags, financial calculation changes, invoice/contract generation changes, user-preference changes, duplicate template/catalog/settings models, or client/browser service-role usage were added.
+
+Recommended next prompt:
+
+- "Implement Phase 5E starter-pack provisioning execution design and transaction/RPC plan only. Use the approved audit run model to specify execution guardrails, but do not add execution, tenant-owned writes, or copy behavior yet."
+
+## Super Admin Platform Console Phase 5E
+
+Phase 5E is complete as a planning/specification pass only. It defines the future starter-pack provisioning execution design for approved audit runs, but it does not add execution, tenant-owned writes, copy behavior, an RPC, a server action, a background job, or a provisioning button.
+
+Files changed in this pass:
+
+- `docs/starter-pack-provisioning-plan.md`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+
+Design summary:
+
+- Future execution preconditions are now explicit: run must be `approved`, target organization must still exist/eligible, starter pack must still be `published`, Phase 5C review must still be `fresh`, no blocking issues may exist, run items must still match the current dry run, and destination ids must remain unset unless a later idempotent-resume design is implemented.
+- Actor boundaries are platform-admin only, server-side only, and never client/service-role exposed.
+- The recommended future split is a server action that validates platform-admin access and fresh review, then calls a private/unexposed Postgres RPC such as `private.execute_platform_starter_pack_provisioning_run(p_run_id uuid, p_actor_user_id uuid)`.
+- The recommended transaction model locks the approved run and its items, transitions `approved -> running`, creates tenant-owned copies, updates audit item outcomes/destination ids, and transitions to `completed`, `completed_with_warnings`, or `failed` in one transaction.
+- Document template copy rules specify existing `document_templates` fields, source seed lineage, active non-default copy behavior, and no default mutation.
+- Catalog item copy rules specify existing `catalog_items` fields, source seed lineage, active non-default copy behavior, vendor-reference caution, and no tax/estimate/invoice behavior changes.
+- Audit update rules, idempotency/replay protection, status transitions, concurrency locking, rollback/void posture, partial failure handling, operations/error visibility, and pre-release QA gates are now spelled out.
+
+Guardrails preserved:
+
+- No migrations, new tables, RLS/grant changes, tenant-owned writes, execution/provisioning action, RPC/function implementation, provisioning button, rollback/void action, template/catalog copying, contractor-default changes, estimate/catalog behavior changes, entitlements, contractor groups, tax profiles, payroll, runtime flags, financial calculation changes, invoice/contract generation changes, user-preference changes, or duplicate template/catalog/settings models were added.
+
+Validation:
+
+- `pnpm typecheck` passes.
+- `pnpm lint` passes.
+- `git diff --check` passes with existing LF/CRLF warnings only.
+
+Recommended next prompt:
+
+- "Implement Phase 5F starter-pack provisioning execution RPC/server-action readiness review. Before writing execution code, verify destination table constraints, source-lineage uniqueness, transaction feasibility, and exact copy field mappings against the live Supabase schema. Return an implementation plan and do not add tenant-owned writes yet."
+
+## Super Admin Platform Console Phase 5F
+
+Phase 5F is complete as a provisioning execution readiness review only. It verifies the live schema, source-lineage fields, destination copy mappings, uniqueness assumptions, audit schema readiness, and transaction/RPC feasibility for a future starter-pack provisioning execution implementation.
+
+Files changed in this pass:
+
+- `docs/starter-pack-provisioning-execution-readiness.md`
+- `docs/starter-pack-provisioning-plan.md`
+- `docs/chat-handoff.md`
+
+Readiness verdict:
+
+- Ready with caveats.
+- No schema blocker was found for a first conservative execution implementation.
+- The first real execution pass should still be platform-admin-only, server-side only, and implemented through one transaction/private RPC or an equivalent atomic boundary.
+
+Live/read-only inspection:
+
+- `platform_template_seeds`, `document_templates`, `platform_catalog_item_seeds`, `catalog_items`, `platform_starter_pack_provisioning_runs`, and `platform_starter_pack_provisioning_run_items` columns were inspected through linked Supabase metadata.
+- Destination lineage fields exist on both destination tables: `document_templates.source_seed_id/source_seed_key` and `catalog_items.source_seed_id/source_seed_key`.
+- Live uniqueness indexes exist for destination source lineage: `document_templates_company_seed_unique_idx` and `catalog_items_company_seed_unique_idx`.
+- Phase 4D dry-run matching already uses the same source-lineage fields future execution should use.
+- Audit run/item tables support the needed run statuses, item statuses/actions, snapshots, and `destination_record_id`.
+
+Caveats to resolve in the implementation prompt:
+
+- Decide whether catalog `sort_order` copies seed order or appends after the organization's current max sort order.
+- Treat platform catalog seed `vendor_id` as null unless same-tenant/reference safety is explicitly proven.
+- Generate destination `created_by`, `updated_by`, timestamps, normalized catalog fields, and `tax_code_id` intentionally rather than copying them blindly.
+- Decide whether skipped existing rows keep `destination_record_id = null` or store matched existing ids with clear destination-snapshot semantics.
+- Keep failed pre-write execution status behavior explicit: either leave the run `approved` or mark it `failed` outside the rolled-back tenant-write transaction.
+
+Validation:
+
+- `pnpm typecheck` passes.
+- `pnpm lint` passes.
+- `git diff --check` passes with existing LF/CRLF warnings only.
+
+Guardrails preserved:
+
+- No migrations, new tables, RLS/grant changes, execution/provisioning action, RPC/function implementation, tenant-owned writes, template/catalog copying, contractor-default changes, estimate/catalog behavior changes, entitlements, contractor groups, tax profiles, payroll, runtime flags, financial calculation changes, invoice/contract generation changes, user-preference changes, or duplicate template/catalog/settings models were added.
+
+Recommended next prompt:
+
+- "Implement Phase 5G starter-pack provisioning execution as the first real guarded execution slice. Use a private/unexposed transaction/RPC, require an approved fresh run, create only missing tenant-owned document_templates/catalog_items from source seeds, update audit items, and keep all financial/tax/payroll/entitlement/workflow behavior unchanged."
+
+## Super Admin Platform Console Phase 5G
+
+Phase 5G is implemented as the first guarded starter-pack provisioning execution slice. This is the first pass that can create tenant-owned copies, and it is intentionally limited to one approved, fresh, non-blocking provisioning audit run at a time.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260507025730_starter_pack_provisioning_execution.sql`
+- `apps/web/lib/platform-admin/starter-pack-provisioning-execution-core.ts`
+- `apps/web/lib/platform-admin/starter-pack-provisioning-execution.test.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/lib/platform-admin/actions.ts`
+- `apps/web/lib/platform-admin/schemas.ts`
+- `apps/web/components/starter-pack-provisioning-dry-run.tsx`
+- `apps/web/app/(super-admin)/super-admin/templates/page.tsx`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+- `docs/starter-pack-provisioning-plan.md`
+- `docs/starter-pack-provisioning-execution-readiness.md`
+
+Behavior:
+
+- Added private function `private.execute_platform_starter_pack_provisioning_run(p_run_id uuid, p_actor_id uuid)` and locked-down public wrapper `public.execute_platform_starter_pack_provisioning_run(p_run_id uuid, p_actor_id uuid)` for the existing Supabase RPC path.
+- The wrapper is granted to `service_role` only; `anon` and `authenticated` do not have execute privilege.
+- The platform-admin server action requires existing platform-admin access, recomputes the Phase 5C review server-side, requires the run to be `approved`, fresh, published-pack, non-blocking, and requires exact confirmation `EXECUTE STARTER PACK`.
+- Execution locks the run and run items, transitions `approved -> running -> completed`, creates only missing organization-owned `document_templates` and `catalog_items`, stores `source_seed_id/source_seed_key`, updates item actions to `created` / `completed`, and sets `destination_record_id`.
+- Completed runs are idempotent: rerunning the same completed run returns an already-completed result and creates no duplicate tenant records.
+- Catalog copies append after the organization's current max `sort_order`, do not copy `vendor_id`, set `tax_code_id = null`, set `status = active`, and set `is_default = false`.
+- Document template copies set `status = active`, `is_default = false`, and preserve platform template seed lineage.
+- Skipped existing audit rows remain skipped and store a matched destination id when the approved snapshot includes a valid same-organization match.
+
+Manual QA:
+
+- Migration `20260507025730_starter_pack_provisioning_execution.sql` was applied to the linked Supabase target.
+- Function privilege check confirmed both private and public execution functions are not executable by `anon` or `authenticated`, and are executable by `service_role`.
+- QA organization: `qa-early-access-1778025789203` / `b049ad3d-5066-44a8-b114-441c0eb9514e`.
+- QA starter pack: `Phase 5G QA Execution Pack` / `2a92b429-69bf-4b62-9574-345462e0dbe4`.
+- QA run: `9251e67b-97ca-43f4-a01a-17dbd7196c8c`.
+- Before execution for the QA organization: `document_templates = 0`, `catalog_items = 0`, `provisioning_runs = 0`, `provisioning_run_items = 0`.
+- Execution result: `completed`, `createdTemplateCount = 1`, `createdCatalogItemCount = 1`, `skippedCount = 0`.
+- After execution for the QA organization: `document_templates = 1`, `catalog_items = 1`, `provisioning_runs = 1`, `provisioning_run_items = 2`.
+- Created document template lineage: `source_seed_id = 02321564-adb5-4c99-9ec4-370d8680683b`, `source_seed_key = default-estimate-v1`, `status = active`, `is_default = false`.
+- Created catalog item lineage: `source_seed_id = 0da1057e-cb6b-4ade-9c6f-9201e8f66cf3`, `source_seed_key = diamond-grinding-prep-v1`, `status = active`, `is_default = false`, `vendor_id = null`, `tax_code_id = null`, `sort_order = 10`.
+- Run item audit rows both ended `action = created`, `status = completed`, with non-null `destination_record_id`.
+- Re-running the completed run returned `alreadyCompleted = true`; counts remained `document_templates = 1`, `catalog_items = 1`, and `runItemsWithDestination = 2`.
+- Linked Supabase CLI checks hit intermittent pooler temp-role auth/circuit-breaker failures during parallel follow-up queries; final lineage/idempotency verification was completed through the app's server-side service-role Supabase client without printing secrets.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/starter-pack-provisioning-execution.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-draft-review.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-draft.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-dry-run.test.ts` passes.
+- `pnpm typecheck` passes.
+- `pnpm lint` pending for this session.
+- `git diff --check` pending for this session.
+
+Guardrails preserved:
+
+- No broad provisioning beyond approved audit run execution, unapproved run execution, draft run execution, stale run execution, rollback/void action, entitlements, contractor groups, tax profiles, payroll, runtime flags, financial calculation changes, invoice/contract generation changes, user-preference behavior changes, contractor navigation changes, duplicate template/catalog/settings models, default mutation, catalog `vendor_id` copying, or client/browser service-role exposure was added.
+
+Recommended next prompt:
+
+- "Implement Phase 5H starter-pack provisioning post-execution hardening. Add focused tests/QA for stale approved-run rejection, draft-run rejection, skipped-existing destination id handling, and UI review of completed runs. Do not add rollback/void or assignment-based auto-provisioning."
+
+## Super Admin Platform Console Phase 5H
+
+Phase 5H is complete as a post-execution hardening and QA pass over the existing Phase 5G guarded starter-pack provisioning execution path.
+
+Files changed in this pass:
+
+- `apps/web/lib/platform-admin/starter-pack-provisioning-execution.test.ts`
+- `apps/web/components/starter-pack-provisioning-dry-run.tsx`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+- `docs/starter-pack-provisioning-plan.md`
+- `docs/starter-pack-provisioning-execution-readiness.md`
+
+Tests added/updated:
+
+- execution eligibility now covers fresh approved execution, stale review rejection, unavailable review rejection, invalid review rejection, draft-run rejection, completed-run UI/action ineligibility, blocking review issue rejection, missing/wrong confirmation rejection, create item with destination id rejection, and skipped-existing item eligibility
+- static migration guard coverage verifies the Phase 5G execution function returns completed runs idempotently before insert work, stores destination ids for created and skipped items, keeps provisioned records active but not defaults, and leaves copied catalog `vendor_id` / `tax_code_id` null
+
+UI hardening:
+
+- completed provisioning run review still shows completed status and destination counts
+- item-level review rows now also show the audit item action/status and `destination_record_id` when the selected run item has a created or skipped destination reference
+- the execute control remains limited to approved runs with fresh/non-blocking review state; completed runs do not show the execute form
+- rollback/void remains explicitly unavailable
+
+Server-path QA:
+
+- QA organization: `qa-early-access-1778025789203` / `b049ad3d-5066-44a8-b114-441c0eb9514e`
+- QA starter pack: `Phase 5G QA Execution Pack` / `2a92b429-69bf-4b62-9574-345462e0dbe4`
+- rejected draft run: `9ebf7f20-13a4-4d58-8cf2-8c335900b876`
+- rejected stale approved run: `904391d6-0285-4e0f-a238-a27d41b55d74`
+- before rejected attempts: `document_templates = 1`, `catalog_items = 1`
+- draft execution attempt failed safely with `Only approved provisioning runs can be executed.`
+- stale approved attempt failed safely with `Template seed is already linked to an organization-owned template. Rerun dry-run review.`
+- after rejected attempts: `document_templates = 1`, `catalog_items = 1`
+- rejected draft run remained `draft` with no `started_at` or `completed_at`
+- rejected stale approved run remained `approved` with no `started_at` or `completed_at`
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/starter-pack-provisioning-execution.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-draft-review.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-draft.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-dry-run.test.ts` was run for this pass.
+- `pnpm typecheck`, `pnpm lint`, and `git diff --check` should be rerun before handoff completion if this section is being read mid-turn.
+
+Guardrails preserved:
+
+- No rollback/void action, new provisioning feature, assignment enforcement, entitlement behavior, contractor groups, tax profiles, payroll, runtime flags, financial calculation changes, invoice/contract generation changes, user-preference behavior changes, contractor navigation changes, duplicate template/catalog/settings models, defaults mutation, catalog `vendor_id` copying, or client/browser service-role exposure was added.
+
+Recommended next prompt:
+
+- "Implement Phase 5I starter-pack provisioning operator observability as a read-only operations/errors panel for completed/rejected/failed provisioning audit runs. Do not add rollback/void, assignment-based auto-provisioning, or new tenant-owned write behavior."
+
+## Super Admin Platform Console Phase 5I
+
+Phase 5I is implemented as read-only operator observability over the existing starter-pack provisioning audit run history. It does not add new execution behavior, rollback, void, rejected-attempt persistence, tenant-owned writes, or assignment enforcement.
+
+Files changed in this pass:
+
+- `packages/types/src/index.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/lib/platform-admin/starter-pack-provisioning-observability-core.ts`
+- `apps/web/lib/platform-admin/starter-pack-provisioning-observability.test.ts`
+- `apps/web/components/starter-pack-provisioning-dry-run.tsx`
+- `apps/web/app/(super-admin)/super-admin/templates/page.tsx`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+- `docs/starter-pack-provisioning-plan.md`
+- `docs/starter-pack-provisioning-execution-readiness.md`
+
+Behavior:
+
+- The `/super-admin/templates` Provisioning Audit area now shows observability summary counts for total, draft, approved, completed, failed, attention-needed, destination-linked, and last completed run state.
+- Audit filters cover all, draft, approved, completed, failed, and attention-needed runs.
+- Recent runs show read-only health chips for draft, approved, completed, failed, needs-review, stale, and execution-unavailable states.
+- Run summaries include item outcome counts, destination-link counts, safe error messages when present, and review links.
+- Selected run review now surfaces request/approval/start/completion timestamps, item action/status totals, destination ids, and item-level reason/error copy.
+- Rejected execution attempts are not persisted as a separate operations table yet; the UI surfaces stored failed run state and live review blockers only.
+
+Tests added:
+
+- `apps/web/lib/platform-admin/starter-pack-provisioning-observability.test.ts` covers completed run summaries, draft/approved counts, stale review attention state, safe failed-run display, and blocking review health mapping.
+
+Guardrails preserved:
+
+- No migrations, new tables, RLS/grant changes, tenant-owned writes, rollback/void action, new provisioning execution behavior, assignment enforcement, entitlement behavior, contractor groups, tax profiles, payroll, runtime flags, financial calculation changes, invoice/contract generation changes, user-preference behavior changes, contractor navigation changes, duplicate template/catalog/settings models, or client/browser service-role exposure were added.
+
+Manual QA notes:
+
+- Browser QA should confirm `/super-admin/templates` shows the Provisioning Audit summary, filters work, completed run review has no execute control, destination ids are visible, and no rollback/void/provision-copy controls were added.
+- Rejected attempts should still be checked by count comparisons when operator credentials and a QA run are available; this pass itself adds no rejected-attempt write logging.
+
+Recommended next prompt:
+
+- "Implement Phase 5J starter-pack provisioning operations/rejected-attempt audit logging. Add a narrow server-side operations log for rejected execution attempts and surfaced blockers without adding rollback/void, assignment enforcement, or new tenant-owned writes."
+
+## Super Admin Platform Console Phase 5J
+
+Phase 5J is implemented as narrow operations/rejected-attempt audit logging for starter-pack provisioning execution attempts. It does not add rollback, void, new provisioning behavior, assignment enforcement, or tenant-owned writes from rejected attempts.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260507035025_platform_starter_pack_provisioning_attempts.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/platform-admin/starter-pack-provisioning-attempts-core.ts`
+- `apps/web/lib/platform-admin/starter-pack-provisioning-attempts.test.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/lib/platform-admin/actions.ts`
+- `apps/web/components/starter-pack-provisioning-dry-run.tsx`
+- `apps/web/app/(super-admin)/super-admin/templates/page.tsx`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+- `docs/starter-pack-provisioning-plan.md`
+- `docs/starter-pack-provisioning-execution-readiness.md`
+
+Behavior:
+
+- New table `platform_starter_pack_provisioning_attempts` stores server-side `execute` attempts with outcomes `rejected`, `blocked`, `failed_before_execution`, and `already_completed`.
+- The execute action logs schema-validation failures such as missing/wrong confirmation and invalid run id before redirecting.
+- The execute server utility logs run-load failures, stale/non-fresh eligibility failures, blocking review issues, database guard rejections, and completed-run no-op attempts using safe messages.
+- Successful executions remain represented by `platform_starter_pack_provisioning_runs` and `platform_starter_pack_provisioning_run_items`; they are not duplicated into the attempt log.
+- `/super-admin/templates` Provisioning Audit now includes a read-only Operation Attempts section with attempted time, run/pack/org labels where available, outcome, reason code, safe message, run status, and review status.
+
+Security/RLS:
+
+- Attempt logging table has RLS enabled and forced.
+- Broad `anon` and `authenticated` table grants are revoked.
+- Platform-admin read/write remains server-side through existing platform-admin checks and service-role server utilities.
+- Attempt metadata is intentionally small and safe: no secrets, raw provider errors, raw database details, or template/catalog payloads.
+
+Tests added:
+
+- `apps/web/lib/platform-admin/starter-pack-provisioning-attempts.test.ts` covers missing confirmation, invalid run id, stale review, blocking review issue, already-completed no-op, and safe database-guard message mapping.
+
+Manual QA notes:
+
+- After applying the migration in the target Supabase environment, attempt execution with a wrong confirmation and with a draft/stale run, then confirm attempts appear in `/super-admin/templates`.
+- Confirm `document_templates` and `catalog_items` counts do not change for rejected attempts.
+- Confirm completed/idempotent paths still do not duplicate tenant-owned records.
+- Confirm no retry, rollback, void, assignment enforcement, or new provisioning controls appear.
+
+Recommended next prompt:
+
+- "Implement Phase 5K starter-pack provisioning operations QA. Apply the Phase 5J attempts migration in the target Supabase environment, verify RLS/grants, perform browser QA for wrong-confirmation and stale/draft execution attempts, and confirm tenant-owned template/catalog counts stay unchanged."
+
+## Super Admin Platform Console Phase 5K
+
+Phase 5K is complete as an operator QA and live-environment verification pass for Phase 5J rejected/no-op provisioning attempt logging. No rollback, void, assignment enforcement, new provisioning behavior, or rejected-attempt tenant-owned writes were added.
+
+Migration/application status:
+
+- `pnpm exec supabase migration list --linked` initially showed local migration `20260507035025_platform_starter_pack_provisioning_attempts.sql` pending remotely.
+- `pnpm exec supabase db push --linked --dry-run` confirmed only `20260507035025_platform_starter_pack_provisioning_attempts.sql` would be applied.
+- `pnpm exec supabase db push --linked --yes` applied the migration to the linked Supabase project.
+- A follow-up dry run reported `Remote database is up to date`.
+- `supabase_migrations.schema_migrations` now contains version `20260507035025`.
+
+Live RLS/grant verification:
+
+- `public.platform_starter_pack_provisioning_attempts` exists.
+- `pg_class.relrowsecurity = true`.
+- `pg_class.relforcerowsecurity = true`.
+- `information_schema.role_table_grants` returned no direct `anon` or `authenticated` grants for the attempts table.
+- Platform-admin visibility remains through the existing server-side platform-admin data path.
+
+QA records used:
+
+- QA organization: `qa-early-access-1778025789203` (`b049ad3d-5066-44a8-b114-441c0eb9514e`).
+- Starter pack: `Phase 5G QA Execution Pack` (`2a92b429-69bf-4b62-9574-345462e0dbe4`, published).
+- Approved stale run: `904391d6-0285-4e0f-a238-a27d41b55d74`.
+- Draft run: `9ebf7f20-13a4-4d58-8cf2-8c335900b876`.
+- Completed run: `9251e67b-97ca-43f4-a01a-17dbd7196c8c`.
+
+Operator QA completed:
+
+- Refreshed the platform-admin browser session through the real `/login` fallback email/password path using local QA credentials from `.env.local`; no secrets were printed.
+- `/super-admin/templates` renders the Provisioning Audit Operation Attempts section for the platform admin.
+- Wrong-confirmation execution attempt was rejected and logged with reason `missing_or_invalid_confirmation`; after the fix below, the attempt row includes run, starter pack, organization, and run-status context.
+- Draft-run execution attempt was blocked and logged with reason `run_not_approved`.
+- Stale approved-run execution attempt was blocked and logged with reason `review_not_fresh`.
+- Completed-run no-op attempt was logged with outcome `already_completed`; no duplicates were created.
+- The normal UI already disables/hides execution controls for stale, draft, and completed states. For server-side rejection QA, the existing execute form was submitted through browser DOM instrumentation so the server action could prove it blocks those paths; this did not bypass server validation or write tenant-owned records.
+- Operation Attempts UI shows safe reason/message text only and includes no retry, rollback, void, assignment-enforcement, provision-copy, or raw service-error controls.
+
+Before/after counts for QA organization:
+
+- Before rejected/no-op attempts: `document_templates = 1`, `catalog_items = 1`, `platform_starter_pack_provisioning_attempts = 0`.
+- After rejected/no-op attempts and one wrong-confirmation retest after the context-label fix: `document_templates = 1`, `catalog_items = 1`, `platform_starter_pack_provisioning_attempts = 6`.
+- Run status spot-check after QA: approved run remained `approved` with no `started_at` / `completed_at`; draft run remained `draft`; completed run remained `completed`.
+
+Defect fixed:
+
+- Valid run-id schema-validation failures, such as wrong execution confirmation, previously logged only `run_id`, causing the Operation Attempts UI to show unknown starter pack/organization labels. `executeStarterPackProvisioningRunAction` now loads the run context for valid run ids before writing the attempt row and stores starter pack id, organization id, and run status when available.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/starter-pack-provisioning-attempts.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-execution.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-observability.test.ts`
+- `pnpm typecheck`
+- `pnpm lint`
+- `git diff --check`
+
+Recommended next prompt:
+
+- "Implement Phase 5L as a rollback/void design pass only for completed starter-pack provisioning runs. Define void eligibility, downstream-usage checks, archive-vs-retain rules, audit requirements, and UI copy, but do not add a void action, rollback action, new tables, or tenant-owned writes."
+
+## Super Admin Platform Console Phase 5L
+
+Phase 5L is complete as a rollback/void design pass only for completed starter-pack provisioning runs. No rollback action, void action, schema, migration, RLS/grant change, tenant-owned write, archive, delete, detach-lineage behavior, assignment enforcement, or new provisioning behavior was added.
+
+Files changed:
+
+- `docs/starter-pack-provisioning-plan.md`
+- `docs/starter-pack-provisioning-execution-readiness.md`
+- `docs/chat-handoff.md`
+- `apps/web/components/starter-pack-provisioning-dry-run.tsx`
+
+Design summary:
+
+- Rollback is treated as an operator request that must resolve into an explicit strategy; it is not an automatic undo.
+- Void is defined as an audit state, not automatic deletion, archive, or lineage removal.
+- Archive is a real tenant-owned mutation and must require usage checks.
+- Detach lineage is deferred because source lineage is also used for dry-run duplicate detection and operator explainability.
+- Hard delete is not recommended because provisioned templates/catalog items become contractor-owned records that may be referenced by canonical workflow records.
+
+Recommended first safe void strategy:
+
+- audit-only void first
+- allow only `completed` / `completed_with_warnings` runs with destination records into void review
+- require platform-admin role, explicit confirmation, impacted-record review, and a safe reason
+- update only provisioning audit state in the first implementation
+- leave contractor-owned `document_templates` and `catalog_items` untouched
+
+Future usage checks documented:
+
+- document templates: estimates, invoices, contracts, approved estimate snapshots, organization workflow default contract template, user estimate-template preferences, active defaults, and future generated-document snapshots
+- catalog items: estimate lines, invoice lines, approved estimate snapshot items, catalog system components, floor-system template components, inventory links, active defaults, and future material/job-cost/production records
+
+Future void blockers/caveats:
+
+- current run schema supports `voided` and `voided_at`, and item rows support `voided`, but there is no `voided_by`, `void_reason`, `void_strategy`, or durable usage-check snapshot field yet
+- audit-only void likely needs a small audit metadata migration for operator-grade actor/reason reporting
+- archive/detach strategies require centralized usage helper coverage before implementation
+- skipped-existing records must never be archived as part of a provisioning-run void because the run did not create them
+
+UI copy:
+
+- Completed provisioning run review now explicitly says void/rollback is not implemented and that future action requires usage checks.
+- No button, form, disabled control, server action, or mutation path was added.
+
+Validation:
+
+- `pnpm typecheck` passed
+- `pnpm lint` passed
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only
+
+Recommended next prompt:
+
+- "Implement Phase 5M as rollback/void readiness utilities only. Add pure read-model helpers and tests that compute template/catalog usage for completed provisioning run destinations, but do not add a void action, schema, tenant writes, archive/delete/detach behavior, or UI mutation control."
+
+## Super Admin Platform Console Phase 5M
+
+Phase 5M is implemented as rollback/void readiness utilities only. No rollback action, void action, schema, migration, RLS/grant change, tenant-owned write, archive, delete, detach-lineage behavior, assignment enforcement, default change, or new provisioning behavior was added.
+
+Files changed:
+
+- `apps/web/lib/platform-admin/starter-pack-provisioning-void-readiness-core.ts`
+- `apps/web/lib/platform-admin/starter-pack-provisioning-void-readiness.test.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/components/starter-pack-provisioning-dry-run.tsx`
+- `apps/web/app/(super-admin)/super-admin/templates/page.tsx`
+- `docs/current-state.md`
+- `docs/starter-pack-provisioning-plan.md`
+- `docs/starter-pack-provisioning-execution-readiness.md`
+- `docs/chat-handoff.md`
+
+Read-only behavior added:
+
+- `buildStarterPackProvisioningVoidReadiness` computes item-level usage status for completed provisioning run destinations: `unused`, `used`, `unknown`, or `missing_destination`.
+- The model reports audit-only void readiness, archive-unused readiness, blocking usage count, warning count, usage source counts, and item-level reasons.
+- `getStarterPackProvisioningRunUsage(runId)` loads a run and counts current same-organization references for linked destination ids.
+- `/super-admin/templates` completed-run review shows a `Void readiness usage check` panel with read-only status, counts, and source usage. It includes no void, rollback, archive, delete, detach, or mutation controls.
+
+Usage sources counted:
+
+- document templates: `estimates.template_id`, `invoices.template_id`, `contracts.template_id`, `estimate_commercial_snapshots.template_id`, `organization_workflow_settings.approved_estimate_contract_template_id`, `user_estimate_template_preferences.preferred_estimate_template_id`, and active default templates
+- catalog items: `estimate_line_items.catalog_item_id`, `invoice_line_items.catalog_item_id`, `estimate_commercial_snapshot_items.catalog_item_id`, `catalog_system_components.system_catalog_item_id`, `catalog_system_components.component_catalog_item_id`, `floor_system_template_components.catalog_item_id`, `inventory_items.catalog_item_id`, and active default catalog items
+
+Conservative decisions:
+
+- used destination records block archive-unused readiness
+- unknown usage blocks archive-unused readiness
+- missing created destination ids or destination records block archive-unused readiness
+- skipped-existing destinations are warnings because the run did not create those records and must not archive them as part of future void work
+- non-completed runs cannot be considered for audit-only void or archive-unused readiness
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/starter-pack-provisioning-void-readiness.test.ts` passed
+- `pnpm typecheck` passed
+- `pnpm lint` passed
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only
+
+Manual QA status:
+
+- Browser QA was not run in this pass before handoff text was updated. If a completed run is available, verify `/super-admin/templates?reviewRunId=<completed-run-id>#starter-pack-provisioning-dry-run` shows the read-only usage panel and no void/rollback/archive/delete/detach controls.
+
+Recommended next prompt:
+
+- "Implement Phase 5N as a rollback/void readiness QA pass. Verify the Phase 5M read-only usage panel against a completed provisioning run, record template/catalog counts before and after review, confirm no mutation controls exist, and fix only read-only display or counting defects."
+
+## Super Admin Platform Console Phase 5N
+
+Phase 5N completed the operator QA pass for the Phase 5M read-only void-readiness panel. No rollback action, void action, schema change, migration, RLS/grant change, tenant-owned write, archive, delete, detach-lineage behavior, default change, or new provisioning behavior was added.
+
+Files changed:
+
+- `docs/chat-handoff.md`
+
+QA records used:
+
+- completed provisioning run: `9251e67b-97ca-43f4-a01a-17dbd7196c8c`
+- starter pack id: `2a92b429-69bf-4b62-9574-345462e0dbe4`
+- organization id: `b049ad3d-5066-44a8-b114-441c0eb9514e`
+- run status: `completed`
+- run item summary before UI review: 2 total items, 2 linked destinations, 2 created actions
+
+Before counts:
+
+- `document_templates`: 4
+- `catalog_items`: 9
+- `platform_starter_pack_provisioning_runs`: 4
+- `platform_starter_pack_provisioning_run_items`: 5
+
+Browser QA:
+
+- In-app Browser reached the local login page for `/super-admin/templates`, but the local email-submit interaction did not progress in that browser surface. The authenticated UI QA was completed with Chromium using the repo's existing `playwright/.auth/platform-admin.json` platform-admin storage state against the same running localhost app.
+- Opened `/super-admin/templates?reviewRunId=9251e67b-97ca-43f4-a01a-17dbd7196c8c#starter-pack-provisioning-dry-run`.
+- Confirmed the completed provisioning run review loaded without redirecting to `/login`.
+- Confirmed `Void readiness usage check` appears for the completed run.
+- Confirmed the panel shows `Read only`, audit-only void review status, archive-unused review status, blocking usage count, warning count, item-level `UNUSED` statuses, and destination ids.
+- Confirmed completed-run review still shows linked destination ids and completed-run context.
+- Confirmed Provisioning Audit observability remains visible with summary counts, filters, run health chips, and operation attempts.
+- Confirmed no void, rollback, archive, delete, detach, or execute mutation button is visible for the completed run.
+
+After counts:
+
+- `document_templates`: 4
+- `catalog_items`: 9
+- `platform_starter_pack_provisioning_runs`: 4
+- `platform_starter_pack_provisioning_run_items`: 5
+
+Security/behavior spot-check:
+
+- The Phase 5M panel is rendered from `getStarterPackProvisioningRunUsage(runId)` and the pure `buildStarterPackProvisioningVoidReadiness` model.
+- No new server action was added for void readiness.
+- No tenant-owned tables changed during the QA pass.
+- Existing unrelated platform-admin utilities still include other mutation paths, but no void/rollback/archive/delete/detach mutation path exists for provisioning run review.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/starter-pack-provisioning-void-readiness.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-observability.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-execution.test.ts` passed: 25 tests
+- `pnpm typecheck` passed
+- `pnpm lint` passed
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only
+
+Recommended next prompt:
+
+- "Implement Phase 5O as audit-only void schema planning or minimal audit metadata foundation for completed starter-pack provisioning runs. Do not add a void action yet; define or add only the metadata needed for a future audit-only void review, including actor, reason, strategy, and durable usage snapshot requirements."
+
+## Super Admin Platform Console Phase 5O
+
+Phase 5O adds the audit-only void metadata foundation for completed starter-pack provisioning runs. It adds durable run-header metadata fields and read-only super-admin visibility only. No void action, rollback action, archive/delete/detach behavior, tenant-owned write, default change, or new provisioning behavior was added.
+
+Files changed:
+
+- `supabase/migrations/20260507150044_platform_starter_pack_provisioning_void_metadata.sql`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/components/starter-pack-provisioning-dry-run.tsx`
+- `apps/web/lib/platform-admin/starter-pack-provisioning-draft-review.test.ts`
+- `apps/web/lib/platform-admin/starter-pack-provisioning-execution.test.ts`
+- `apps/web/lib/platform-admin/starter-pack-provisioning-observability.test.ts`
+- `apps/web/lib/platform-admin/starter-pack-provisioning-void-readiness.test.ts`
+- `docs/starter-pack-provisioning-plan.md`
+- `docs/starter-pack-provisioning-execution-readiness.md`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+
+Migration:
+
+- `20260507150044_platform_starter_pack_provisioning_void_metadata.sql`
+
+Schema summary:
+
+- Adds `voided_by uuid` referencing `public.users(id)` for a future audit-only void actor.
+- Adds `void_reason text` for a future operator-safe reason.
+- Adds constrained `void_strategy text` supporting `audit_only`, `archive_unused_future`, and `detach_lineage_future`.
+- Adds `void_readiness_snapshot jsonb not null default '{}'::jsonb` for future usage/readiness evidence.
+- Preserves/adds `voided_at` idempotently.
+- Adds coherence checks so `voided` runs require `voided_at` plus `void_strategy`, and any populated `voided_at` requires a strategy.
+- Re-enables/forces RLS and revokes broad `anon` / `authenticated` grants on the run table.
+
+UI/read-model behavior:
+
+- Platform-admin data mapping now exposes void metadata fields on provisioning run details.
+- `/super-admin/templates` selected-run review shows a read-only `Void metadata foundation` panel.
+- The panel states the future first strategy is audit-only and that no void action exists; it includes no button, form, or mutation control.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/starter-pack-provisioning-void-readiness.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-observability.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-execution.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-draft-review.test.ts` passed: 37 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+
+Manual verification:
+
+- `pnpm exec supabase migration new platform_starter_pack_provisioning_void_metadata` created `20260507150044_platform_starter_pack_provisioning_void_metadata.sql`.
+- `pnpm exec supabase migration list --linked` showed the migration pending before apply.
+- `pnpm exec supabase db push --linked --yes` applied the migration to the linked Supabase project; Supabase CLI noted `voided_at` already existed and skipped that idempotent column add.
+- `pnpm exec supabase migration list --linked` then showed `20260507150044` applied remotely.
+- Live service-role read confirmed the new run columns can be selected: `voided_at`, `voided_by`, `void_reason`, `void_strategy`, and `void_readiness_snapshot`.
+- Before counts: `document_templates` 4, `catalog_items` 9, `platform_starter_pack_provisioning_runs` 4, `platform_starter_pack_provisioning_run_items` 5.
+- After counts: `document_templates` 4, `catalog_items` 9, `platform_starter_pack_provisioning_runs` 4, `platform_starter_pack_provisioning_run_items` 5.
+- RLS/grant posture is preserved in the migration by forcing RLS on `platform_starter_pack_provisioning_runs` and revoking broad `anon` / `authenticated` grants. Direct live catalog introspection was not available in this session: the Supabase MCP SQL tool rejected the metadata query for permissions, and `supabase db dump --linked --schema public` requires Docker, which is not available in this Windows environment.
+- Browser QA with the existing `playwright/.auth/platform-admin.json` storage state opened `/super-admin/templates?reviewRunId=9251e67b-97ca-43f4-a01a-17dbd7196c8c#starter-pack-provisioning-dry-run`, confirmed `Void metadata foundation`, `Metadata only`, and `No void action exists here` are visible, and found no void/rollback/archive/delete/detach mutation controls.
+
+Recommended next prompt:
+
+- "Implement Phase 5P as operator QA/live-environment verification for the Phase 5O audit-only void metadata migration and read-only UI. Verify columns, constraints, RLS/grants, completed-run review copy, and unchanged tenant-owned counts; fix only defects."
+
+## Super Admin Platform Console Phase 5P
+
+Phase 5P completed operator QA and live-environment verification for the Phase 5O audit-only void metadata foundation. No defects were found, and no code, schema, RLS/grant, tenant-owned write, void action, rollback action, archive/delete/detach behavior, default change, or new provisioning behavior was added.
+
+Files changed:
+
+- `docs/chat-handoff.md`
+
+QA records used:
+
+- completed provisioning run: `9251e67b-97ca-43f4-a01a-17dbd7196c8c`
+- route checked: `/super-admin/templates?reviewRunId=9251e67b-97ca-43f4-a01a-17dbd7196c8c#starter-pack-provisioning-dry-run`
+- linked Supabase project ref: `jcnoraopbwdhshcmplgb`
+
+Migration verification:
+
+- `pnpm exec supabase migration list --linked` confirmed `20260507150044` is present locally and remotely.
+- Live metadata query confirmed `platform_starter_pack_provisioning_runs` has:
+  - `voided_by uuid nullable`
+  - `void_reason text nullable`
+  - `void_strategy text nullable`
+  - `void_readiness_snapshot jsonb not null default '{}'::jsonb`
+  - `voided_at timestamptz nullable`
+- Live row read for `9251e67b-97ca-43f4-a01a-17dbd7196c8c` confirmed the new void metadata fields can be selected and the run remains `completed` with no stored void metadata.
+
+Constraint verification:
+
+- Live `pg_constraint` query confirmed:
+  - `platform_starter_pack_provisioning_runs_void_strategy_check`
+  - `platform_starter_pack_provisioning_runs_void_reason_check`
+  - `platform_starter_pack_provisioning_runs_void_snapshot_check`
+  - `platform_starter_pack_provisioning_runs_void_metadata_check`
+- The strategy check constrains values to `audit_only`, `archive_unused_future`, and `detach_lineage_future`.
+- The metadata check requires `voided` rows to have `voided_at` plus `void_strategy`, and any populated `voided_at` to have a strategy.
+
+RLS/grant verification:
+
+- Live `pg_class` query confirmed `relrowsecurity = true` and `relforcerowsecurity = true` for `platform_starter_pack_provisioning_runs`.
+- Live `information_schema.role_table_grants` query returned no direct grants for `anon` or `authenticated` on `platform_starter_pack_provisioning_runs`.
+- Platform-admin access remains server-side through the existing super-admin data loaders/actions; no client/browser direct write path was added.
+
+Before counts:
+
+- `document_templates`: 4
+- `catalog_items`: 9
+- `platform_starter_pack_provisioning_runs`: 4
+- `platform_starter_pack_provisioning_run_items`: 5
+
+Browser QA:
+
+- Used the existing `playwright/.auth/platform-admin.json` platform-admin storage state against the running localhost app.
+- Opened `/super-admin/templates?reviewRunId=9251e67b-97ca-43f4-a01a-17dbd7196c8c#starter-pack-provisioning-dry-run`.
+- Confirmed completed-run review loaded for the selected run.
+- Confirmed `Void metadata foundation` appears.
+- Confirmed the panel explains no void action exists and that contractor-owned templates/catalog items are not changed.
+- Confirmed `Provisioning audit` observability still renders.
+- Confirmed `Operation attempts` still renders.
+- Confirmed `Void readiness usage check` still renders.
+- Confirmed completed-run review still shows `2 linked destination ids` and item-level `DESTINATION ID` labels.
+- Confirmed no void, rollback, archive, delete, or detach button/input/textarea mutation controls exist. Broad page selects still include normal starter-pack status values like `Archived`, but they are existing pack-management controls, not void/rollback controls.
+
+After counts:
+
+- `document_templates`: 4
+- `catalog_items`: 9
+- `platform_starter_pack_provisioning_runs`: 4
+- `platform_starter_pack_provisioning_run_items`: 5
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/starter-pack-provisioning-void-readiness.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-observability.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-execution.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-draft-review.test.ts` passed: 37 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Implement Phase 5Q as audit-only void action design-to-implementation readiness. Define the exact server-action/RPC preconditions, confirmation phrase, audit-only status update behavior, and QA plan for marking a completed provisioning run voided without touching tenant-owned templates/catalog items. Do not implement the action until the design is reviewed."
+
+## Super Admin Platform Console Phase 5Q
+
+Phase 5Q adds audit-only void action design-to-implementation readiness. It does not add a void server action, rollback action, archive/delete/detach action, migration, new table, RLS/grant change, tenant-owned write, template/catalog mutation, default change, or new provisioning behavior.
+
+Files changed:
+
+- `docs/starter-pack-provisioning-plan.md`
+- `docs/starter-pack-provisioning-execution-readiness.md`
+- `apps/web/components/starter-pack-provisioning-dry-run.tsx`
+- `docs/chat-handoff.md`
+
+Design summary:
+
+- Adds a dedicated `Audit-Only Void Action Implementation Plan` section to `docs/starter-pack-provisioning-plan.md`.
+- Defines future server action shape: `voidCompletedStarterPackProvisioningRunAction(formData)`.
+- Defines future confirmation phrase: `VOID AUDIT ONLY`.
+- Defines preferred future private RPC shape: `private.audit_only_void_platform_starter_pack_provisioning_run(p_run_id uuid, p_actor_id uuid, p_void_reason text, p_void_readiness_snapshot jsonb)`.
+- Defines allowed future transitions: `completed -> voided` and `completed_with_warnings -> voided`.
+- Explicitly blocks future void from `draft`, `approved`, `running`, and `failed` runs.
+- Defines already-voided idempotency as readback only: no metadata overwrite.
+- Requires a fresh server-side void-readiness usage recomputation at submit time.
+- Clarifies that Phase 5C dry-run freshness is not the audit-only void gate for completed runs because completed runs are expected to differ after copies exist.
+- Requires future audit-only update to write only run-header metadata:
+  - `status = 'voided'`
+  - `voided_by`
+  - `void_reason`
+  - `void_strategy = 'audit_only'`
+  - `voided_at`
+  - `void_readiness_snapshot`
+- Documents safe error messages, lock/concurrency expectations, observability behavior, operator warning copy, and QA gates.
+- Documents future archive-unused boundaries and explains why archive/detach remain separate later work.
+
+Readiness summary:
+
+- Existing helpers ready: `getStarterPackProvisioningRunDetail(runId)`, `getStarterPackProvisioningRunUsage(runId)`, `buildStarterPackProvisioningVoidReadiness(...)`, and existing platform-admin action guard patterns.
+- Existing schema is ready for audit-only void metadata because Phase 5O added run-level actor/reason/strategy/snapshot fields.
+- Remaining blockers before a real audit-only void action:
+  - no eligibility helper/test exists yet for `VOID AUDIT ONLY`
+  - no void server action exists
+  - no private void RPC/transaction helper exists
+  - no UI form/control exists
+  - no rejected-void attempt logging exists
+- Current usage-readiness model is sufficient as evidence for audit-only void because it does not mutate tenant-owned records. It is not sufficient by itself for archive/delete/detach release.
+
+UI copy:
+
+- Completed/selected run review now states: `Audit-only void action is not yet implemented.`
+- No button, disabled button, form, action, or mutation control was added.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Implement Phase 5R as a pure eligibility/read-model and test pass for future audit-only void. Add no server action, migration, tenant writes, archive/delete/detach behavior, or UI mutation control."
+
+## Super Admin Platform Console Phase 5R
+
+Phase 5R adds a pure audit-only void eligibility/read model and focused tests. It does not add a void server action, rollback action, archive/delete/detach action, migration, new table, RLS/grant change, tenant-owned write, template/catalog mutation, default change, or new provisioning behavior.
+
+Files changed:
+
+- `apps/web/lib/platform-admin/starter-pack-provisioning-void-eligibility-core.ts`
+- `apps/web/lib/platform-admin/starter-pack-provisioning-void-eligibility.test.ts`
+- `apps/web/components/starter-pack-provisioning-dry-run.tsx`
+- `docs/current-state.md`
+- `docs/starter-pack-provisioning-plan.md`
+- `docs/starter-pack-provisioning-execution-readiness.md`
+- `docs/chat-handoff.md`
+
+Read-model behavior:
+
+- `evaluateStarterPackProvisioningVoidEligibility(...)` accepts a provisioning run detail plus the Phase 5M void-readiness usage result.
+- The model returns run id, eligible boolean, recommended strategy `audit_only`, confirmation phrase `VOID AUDIT ONLY`, status (`eligible`, `blocked`, `already_voided`, or `unavailable`), issue list, safe operator summary, and required future metadata.
+- `completed` and `completed_with_warnings` runs can be eligible when usage readiness is available and the run has a completed or destination-linked item.
+- `draft`, `approved`, `running`, and `failed` runs are blocked.
+- `voided` runs return an idempotent already-voided state and should not overwrite existing void metadata in a future action.
+- used, unknown, and missing destination usage rows create warning issues but do not block audit-only eligibility because audit-only void would not mutate contractor-owned records.
+- `archive_unused_future` and `detach_lineage_future` are always unavailable/future-only in this model.
+
+UI:
+
+- `/super-admin/templates` completed/selected run review now shows a read-only `Audit-only void eligibility` panel.
+- The panel shows eligibility status, required future metadata, issue list, and copy that no void action exists yet.
+- No button, disabled button, form, input, server action, or mutation control was added.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/starter-pack-provisioning-void-eligibility.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-void-readiness.test.ts` passed: 13 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Implement Phase 5S as operator/browser QA for the Phase 5R read-only audit-only void eligibility panel. Verify completed, blocked, and already-voided/readiness-unavailable display states where feasible; confirm no void/rollback/archive/delete/detach controls exist and no tenant-owned counts change. Fix only read-only display or eligibility defects."
+
+## Super Admin Platform Console Phase 5S
+
+Phase 5S completed operator/browser QA for the Phase 5R read-only audit-only void eligibility panel. No defects were found. No migration, schema change, RLS/grant change, tenant-owned write, void action, rollback action, archive/delete/detach behavior, default change, or new provisioning behavior was added.
+
+Files changed:
+
+- `docs/chat-handoff.md`
+
+QA records used:
+
+- completed provisioning run: `9251e67b-97ca-43f4-a01a-17dbd7196c8c`
+- draft provisioning run: `9ebf7f20-13a4-4d58-8cf2-8c335900b876`
+- approved provisioning run: `904391d6-0285-4e0f-a238-a27d41b55d74`
+- organization id for those runs: `b049ad3d-5066-44a8-b114-441c0eb9514e`
+- starter pack id for those runs: `2a92b429-69bf-4b62-9574-345462e0dbe4`
+- route checked: `/super-admin/templates?reviewRunId=9251e67b-97ca-43f4-a01a-17dbd7196c8c#starter-pack-provisioning-dry-run`
+
+Before counts:
+
+- `document_templates`: 4
+- `catalog_items`: 9
+- `platform_starter_pack_provisioning_runs`: 4
+- `platform_starter_pack_provisioning_run_items`: 5
+
+Browser QA:
+
+- Used the in-app Browser runtime against the already-open localhost tab and reloaded the selected completed-run URL.
+- Completed run `9251e67b-97ca-43f4-a01a-17dbd7196c8c` showed `Audit-only void eligibility`.
+- Confirmed the completed run shows the eligible copy: `Eligible for future audit-only void review`.
+- Confirmed the completed run shows the future confirmation phrase `VOID AUDIT ONLY`.
+- Confirmed the completed run shows archive/delete/detach future-only copy: `Archive, delete, and detach-lineage strategies are future-only`.
+- Confirmed `Void readiness usage check` still renders.
+- Confirmed `Provisioning audit observability` still renders.
+- Confirmed `Operation attempts` still renders.
+- Confirmed no `Void`, `Rollback`, `Archive`, `Delete`, or `Detach` button exists.
+- Confirmed no `void` input or textarea exists.
+- Confirmed browser error logs for the completed-run page were empty.
+
+Feasible state checks:
+
+- Draft run `9ebf7f20-13a4-4d58-8cf2-8c335900b876` showed `Audit-only void eligibility`, `Blocked`, and the blocking copy that only completed or completed-with-warnings runs can be considered.
+- Approved run `904391d6-0285-4e0f-a238-a27d41b55d74` showed `Audit-only void eligibility`, `Blocked`, and the same completed-run-only blocking copy.
+- Already-voided UI state was not available because the QA dataset has no `voided` provisioning run.
+- Unavailable state remains covered by unit/read-model tests; no UI record with missing usage-readiness data was available.
+
+After counts:
+
+- `document_templates`: 4
+- `catalog_items`: 9
+- `platform_starter_pack_provisioning_runs`: 4
+- `platform_starter_pack_provisioning_run_items`: 5
+
+Count check caveat:
+
+- Supabase MCP SQL was available but returned a project permission error for direct count queries. Counts were collected through the repo's local server-side Supabase environment using the service-role key without printing secret values.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/starter-pack-provisioning-void-eligibility.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-void-readiness.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-observability.test.ts apps/web/lib/platform-admin/starter-pack-provisioning-execution.test.ts` passed: 32 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Implement Phase 5T as audit-only void action planning final review or first implementation only after approval. If implementing, keep it run-header audit metadata only, platform-admin-only, exact confirmation `VOID AUDIT ONLY`, no tenant-owned writes, no archive/delete/detach, and include rejected-attempt logging only if explicitly scoped."
+
+## Super Admin Platform Console Phase 5T
+
+Phase 5T completed a final starter-pack provisioning architecture/operator readiness review before any real void action. This was a documentation/review pass only. No migration, schema change, RLS/grant change, new RPC, new server action, tenant-owned write, void action, rollback action, archive/delete/detach behavior, assignment enforcement, default change, or new provisioning behavior was added.
+
+Files changed:
+
+- `docs/starter-pack-provisioning-review.md`
+- `docs/README.md`
+- `docs/current-state.md`
+- `docs/starter-pack-provisioning-plan.md`
+- `docs/starter-pack-provisioning-execution-readiness.md`
+- `docs/chat-handoff.md`
+
+Readiness review summary:
+
+- Reviewed the full Phase 4A through Phase 5S lifecycle: starter packs, assignment intent, targeting preview, dry run, approval draft, freshness review, audit approval, guarded execution, observability, operation attempts, void readiness, void metadata, and audit-only void eligibility.
+- Strongest current guarantees: platform-admin-only server boundaries, server-recomputed dry runs/reviews, separate approval/execution stages, private locked execution function, source-seed lineage, non-default tenant-owned copies, safe rejected/no-op attempt logging, and read-only void readiness/eligibility before any void lever exists.
+- Biggest remaining risks: no real void/rollback path, conservative duplicate matching can still require operator judgment, no rejected-void attempt logging because no void action exists, observability is not a full operations/errors center, and future archive/detach would need item-level outcome metadata plus stricter usage/default checks.
+- The review verdict is ready for a narrow future audit-only void action only after explicit approval. It is not ready for archive/delete/detach, assignment auto-provisioning, tenant self-service adoption, entitlement-driven provisioning, or batch/background provisioning.
+
+Operator UX/copy review:
+
+- No UI wording change was made in this pass. Existing `/super-admin/templates` copy already distinguishes dry run, audit approval, execution, operation attempts, void readiness, and audit-only void eligibility, and it states that void/rollback/archive/delete/detach controls do not exist.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Implement Phase 5U as the first audit-only void action only. It must transition only completed/completed-with-warnings provisioning runs to `voided`, require `VOID AUDIT ONLY`, recompute void-readiness usage server-side, write only run-header void metadata, log rejected void attempts only if explicitly scoped, and never mutate contractor-owned templates/catalog items or defaults."
 
 ## Early Access Build Complete
 
@@ -81,6 +1860,7 @@ Final early-access onboarding/demo status is documented here for the next sessio
 Completed a minimal pricing + activation-readiness layer without adding billing automation, schema, duplicate account models, or subscription creation.
 
 Files changed in this pass:
+
 - `apps/web/components/marketing-investor-page.tsx`
 - `apps/web/app/(super-admin)/super-admin/early-access/page.tsx`
 - `apps/web/components/platform-admin/activate-company-form.tsx`
@@ -91,6 +1871,7 @@ Files changed in this pass:
 - `docs/chat-handoff.md`
 
 Behavior:
+
 - The public homepage now includes a pricing section with early-access positioning:
   - `Starter / Early Access`
   - `Pro / Coming Soon`
@@ -105,6 +1886,7 @@ Behavior:
 - Dashboard active-state copy now shows calm `Account active` status. If no payment method exists, it prompts the user to add a billing method. If a payment method exists, it shows `Billing method saved`.
 
 Guardrail status:
+
 - Activation still uses the existing `companies.tenant_status` and `companies.lifecycle_state` fields.
 - Activation does not create a Stripe charge.
 - Activation does not create a Stripe subscription.
@@ -112,6 +1894,7 @@ Guardrail status:
 - The existing SetupIntent-only `/setup/billing` path remains the only card-readiness shell.
 
 Remaining Stripe test-card blocker:
+
 - `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` still need valid Stripe test-mode values in `C:/FloorConnector/.env.local`.
 - Restart the dev server after adding keys.
 - Verify `/setup/billing` with a Stripe test card before claiming payment-method collection is fully tested.
@@ -122,6 +1905,7 @@ Remaining Stripe test-card blocker:
 Completed a minimal early-access intake + feedback layer using existing canonical data only. No tables, schemas, analytics system, sandbox/demo mode, billing logic, activation logic, or canonical lifecycle behavior were added or changed.
 
 Files changed in this pass:
+
 - `apps/web/components/marketing-investor-page.tsx`
 - `apps/web/components/early-access-request-form.tsx`
 - `apps/web/components/early-access-help-button.tsx`
@@ -136,6 +1920,7 @@ Files changed in this pass:
 - `docs/chat-handoff.md`
 
 Behavior:
+
 - `/` now includes an optional `Request Early Access` form alongside `Start Free Trial`.
 - Public request fields are name, email, company name, trade/service type, and short note.
 - Requests write to existing canonical records:
@@ -155,6 +1940,7 @@ Behavior:
   - reached-estimate and reached-contract flags derived from existing estimate/contract counts
 
 Known gap:
+
 - There is still no purpose-built company-level feedback/internal-note table. Feedback uses `workflow_error_events` because it is the only existing tenant-scoped company-level internal signal store that does not require a project/customer communication thread or daily-log field note.
 - Public pre-auth intake is tenant-owned because `opportunities` are tenant-owned. Production must configure the intake company explicitly with `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID`.
 
@@ -163,6 +1949,7 @@ Known gap:
 Completed the production-readiness closeout for early-access intake and feedback without adding product features, schema, billing logic, activation logic, analytics, or sandbox/demo mode.
 
 Operational truth:
+
 - Public early-access intake storage remains existing `contacts` plus `opportunities`.
 - Feedback storage remains existing tenant-scoped `workflow_error_events` rows with `action = early_access.feedback`.
 - `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` is required in production and should point to the canonical company that owns public intake leads.
@@ -170,11 +1957,13 @@ Operational truth:
 - `.env.example` and `README.md` document the required production intake company env var.
 
 Remaining Stripe test-key blocker:
+
 - `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` still need valid Stripe test-mode values in `C:/FloorConnector/.env.local` or the deployment environment.
 - Restart the app after setting Stripe keys.
 - Verify `/setup/billing` with a Stripe test card before claiming billing-method collection is fully tested.
 
 What not to claim yet:
+
 - Do not claim subscriptions, recurring billing, plan enforcement, or automatic charging are implemented.
 - Do not claim Stripe card setup is fully verified until valid test keys are configured and a test card is saved through `/setup/billing`.
 - Do not claim pending/trial tenants can send customer-facing estimates/contracts, process checkout payments, or use provider-backed email delivery before activation.
@@ -185,6 +1974,7 @@ What not to claim yet:
 Use this as the final operator checklist before opening early access in production. It is a deployment checklist only; it does not introduce a new workflow, schema, billing system, analytics layer, sandbox mode, or activation model.
 
 Required env vars:
+
 - `NEXT_PUBLIC_APP_URL`: production app URL used by auth redirects and setup links.
 - `NEXT_PUBLIC_MARKETING_URL`: production marketing URL when different from the app URL.
 - `NEXT_PUBLIC_SUPABASE_URL`: active production Supabase project URL.
@@ -196,6 +1986,7 @@ Required env vars:
 - `STRIPE_WEBHOOK_SECRET`: configure before relying on webhook-backed payment events.
 
 Supabase migration status:
+
 - Confirm the production Supabase project is linked to the intended environment before applying migrations.
 - Run `supabase migration list` and verify local migration files and remote migration history match the intended release.
 - Apply pending migrations through the normal migration flow before launch; do not patch production schema manually.
@@ -203,6 +1994,7 @@ Supabase migration status:
 - Confirm RLS remains enabled for tenant-owned tables and public intake still writes only through the server-side intake action.
 
 Stripe test-mode verification steps:
+
 - Set valid matching test-mode values for `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
 - Restart or redeploy the app after setting Stripe env vars.
 - Create a real early-access signup and complete `/setup/company`.
@@ -213,6 +2005,7 @@ Stripe test-mode verification steps:
 - Confirm dashboard copy shows `Billing method saved` after setup.
 
 Production intake company ID setup:
+
 - Create or identify the canonical FloorConnector-owned company that will own public early-access intake leads.
 - Set `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` to that exact `companies.id`.
 - Submit one public `Request Early Access` form from `/`.
@@ -220,6 +2013,7 @@ Production intake company ID setup:
 - If the env var is missing in production, the form should fail gracefully with fallback copy and must not write to any arbitrary tenant.
 
 First test signup path:
+
 - Open `/`.
 - Click `Start Free Trial`.
 - Confirm the route is `/signup?next=/setup/company`.
@@ -230,6 +2024,7 @@ First test signup path:
 - Enter `/dashboard` and confirm the user can create internal canonical records while guarded external actions remain locked.
 
 Super-admin monitoring path:
+
 - Open `/super-admin/early-access` as a platform admin.
 - Confirm the new company appears with tenant status, lifecycle state, company-profile readiness, saved-payment-method status, and project/estimate/contract/invoice counts.
 - Confirm light signals derive from existing data only: recent login, reached estimate, reached contract, and feedback presence.
@@ -237,6 +2032,7 @@ Super-admin monitoring path:
 - Use this page for early-access review before activation.
 
 Activation rules:
+
 - Activation uses only existing `companies.tenant_status` and `companies.lifecycle_state`.
 - Marking active unlocks guarded production actions for that company.
 - Activation does not create a Stripe charge.
@@ -245,12 +2041,14 @@ Activation rules:
 - Billing/subscription follow-through remains a separate operator action unless later explicitly implemented.
 
 What is intentionally gated before activation:
+
 - Estimate customer sends.
 - Contract send-for-signature.
 - Customer-facing checkout/payment processing.
 - Provider-backed notification email delivery.
 
 What remains available while pending/trial:
+
 - Company setup.
 - Dashboard access.
 - Internal projects, opportunities, customers, estimates, contracts, jobs, invoices, and related review surfaces, subject to existing workflow and readiness gates.
@@ -258,12 +2056,14 @@ What remains available while pending/trial:
 - Super-admin monitoring and operator review.
 
 What not to claim yet:
+
 - Do not claim live subscription billing, recurring billing, plan enforcement, automatic charging, or automatic plan provisioning.
 - Do not claim Stripe card setup is fully verified until the test-mode keys are present and a test card has been saved through `/setup/billing`.
 - Do not claim pending/trial tenants can send customer-facing estimates/contracts, process checkout payments, or use provider-backed email delivery.
 - Do not claim fake demo data, sandbox/demo mode, analytics funnels, AI takeoff, full dispatch optimization, accounting integrations, external e-sign provider integration, full payment reconciliation, or every target architecture item is implemented.
 
 Rollback / disable notes:
+
 - If `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` is wrong, remove or correct it immediately; public intake should fail gracefully when missing in production rather than writing to the wrong tenant.
 - If intake was submitted to the wrong company, do not bulk-delete blindly; identify the created `contacts` and `opportunities` rows by `source = early_access`, `source_detail = homepage_request`, timestamp, and submitted email/company details, then plan a targeted data correction.
 - If Stripe keys are missing, mixed live/test, or incorrect, clear or replace `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, redeploy/restart, and use the billing-later path until test-mode verification passes.
@@ -276,6 +2076,7 @@ Rollback / disable notes:
 Verification-only pass against the linked Supabase project and a local production-mode web server at `http://localhost:3020`. No app code, schema, migrations, workflow logic, billing logic, or activation logic was changed.
 
 Checks run:
+
 - `supabase migration list` connected to the linked remote database and showed local/remote migration history aligned through `20260505194642`.
 - `README.md` and `.env.example` document `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID`, `STRIPE_SECRET_KEY`, and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
 - `.env.local` check: `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` missing, `STRIPE_SECRET_KEY` blank, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` blank, `FLOORCONNECTOR_E2E_EMAIL` present, and `FLOORCONNECTOR_E2E_PASSWORD` present.
@@ -297,10 +2098,12 @@ Checks run:
 - Trial portal invoice detail verified checkout/payment processing is locked during early access.
 
 Pass/fail summary:
+
 - Passed: migrations aligned on the linked remote database, env docs present, homepage load, missing-intake fallback, signup CTA href, setup-route protection, unauthenticated super-admin protection, platform-admin early-access page load, internal trial workflow access, estimate-send lock, contract-send lock, portal checkout/payment lock, typecheck, lint, and build.
 - Blocked for launch claims: production/staging env values are not ready locally because `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` is missing and both Stripe keys are blank in `.env.local`.
 
 Exact remaining blockers:
+
 - Set `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` in production/staging before accepting public early-access intake; missing production config correctly fails closed.
 - Set matching Stripe test-mode `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, then verify `/setup/billing` with a Stripe test card before claiming billing-method collection is fully tested.
 - Do not claim subscriptions, automatic charges, live billing, or pending/trial external sends/payments are available.
@@ -315,12 +2118,14 @@ Say:
 "FloorConnector is an operating system for specialty surface contractors. The core idea is simple: keep the whole contractor journey connected from opportunity to customer, project, estimate, contract, job, invoice, and payment, so work does not fracture across spreadsheets, inboxes, disconnected estimating tools, and billing systems."
 
 Emphasize:
+
 - FloorConnector is built for epoxy flooring, concrete polishing, and specialty surface contractors.
 - The product is not trying to be a generic CRM or generic project-management app.
 - The strongest current story is continuity: records move forward instead of being recreated.
 - Early access is real product access with activation guardrails.
 
 Do not say:
+
 - Do not say every future module is production-complete.
 - Do not say billing subscriptions are live.
 - Do not say external sends and payment processing are available before activation.
@@ -330,6 +2135,7 @@ Do not say:
 Open `/`.
 
 Talk through:
+
 - The homepage positions FloorConnector around "lead to payment" continuity.
 - The workflow visual should be described as the product spine: Lead / Project / Estimate / Contract / Job / Invoice / Payment in public-facing language, with the internal canonical lifecycle still anchored on `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`.
 - The platform section separates implemented foundations from planned layers.
@@ -343,14 +2149,17 @@ Talk through:
 - The current flow does not create subscriptions automatically.
 
 Click:
+
 - `Start Free Trial`
 
 Expected route:
+
 - `/signup?next=/setup/company`
 
 ### 3. Signup/onboarding talking points
 
 On signup/login:
+
 - Authentication is real Supabase-backed auth.
 - Users sign up or log in through the existing auth system.
 - There is no fake demo account layer and no sandbox-only persistence.
@@ -358,12 +2167,14 @@ On signup/login:
 - The `next=/setup/company` handoff preserves the intended onboarding route.
 
 If asked whether this can support real users:
+
 - Yes, early users enter the real contractor app and create real canonical records.
 - Activation guardrails block irreversible external production actions until the operator marks the company active.
 
 ### 4. Company setup talking points
 
 On `/setup/company`:
+
 - Company setup writes to the existing `companies` organization record.
 - Primary address setup writes through the existing primary `locations` record.
 - There is no `company_registration` table or duplicate tenant model.
@@ -371,6 +2182,7 @@ On `/setup/company`:
 - This is the first proof point that FloorConnector treats onboarding as part of the real product foundation, not a parallel trial system.
 
 Key fields to mention:
+
 - legal/display company identity
 - phone/email/website
 - primary trade
@@ -381,6 +2193,7 @@ Key fields to mention:
 ### 5. Billing setup caveat
 
 On `/setup/billing`:
+
 - This is payment-method readiness only.
 - When Stripe test keys are configured, the route uses Stripe SetupIntent / Elements to save a billing method.
 - It does not create a charge.
@@ -394,6 +2207,7 @@ Required caveat:
 ### 6. Pending activation explanation
 
 On `/setup/pending-activation`:
+
 - This page uses the existing `companies.tenant_status` and `companies.lifecycle_state`.
 - It lets early users enter the real dashboard.
 - It explains that users can create internal records while external production actions remain locked.
@@ -405,6 +2219,7 @@ Say:
 ### 7. Dashboard/Start Here walkthrough
 
 On `/dashboard`:
+
 - The dashboard is the contractor command center, not a separate analytics product.
 - It derives from existing canonical records.
 - The Start Here guide points a new company into the first practical workflow:
@@ -418,6 +2233,7 @@ On `/dashboard`:
 - If a billing method exists, it shows `Billing method saved`.
 
 Demo note:
+
 - Use the dashboard to show that FloorConnector already has real queues and manager entries for projects, estimates, contracts, jobs, invoices, payments, scheduling, people, vendors, and settings foundations.
 - Do not oversell planned/deeper modules as complete.
 
@@ -426,6 +2242,7 @@ Demo note:
 Open a Project Workspace.
 
 Explain:
+
 - Project is the operational hub.
 - The top workflow strip communicates where the job is in the handoff.
 - The strip derives from existing records:
@@ -443,6 +2260,7 @@ Say:
 ### 9. Project -> Estimate -> Contract flow
 
 Walkthrough:
+
 1. From project context, create or open an estimate.
 2. Explain that estimates stay linked to the project and derived customer.
 3. Explain that estimate line items are canonical estimate rows and the catalog/cost-item foundation feeds estimating without becoming a fake invoice source.
@@ -450,6 +2268,7 @@ Walkthrough:
 5. Open the Contract Workspace and explain that portal signing and contractor-side onsite signing operate on the same canonical contract record.
 
 Important boundaries:
+
 - Approved estimate does not automatically create invoice, job, payment, or subscription records.
 - Contract generation uses the existing estimate/project/customer chain.
 - Sending externally may be locked while the tenant is pending/trial.
@@ -459,6 +2278,7 @@ Important boundaries:
 Open `/super-admin/early-access` as a platform admin.
 
 Explain:
+
 - This is platform-admin-only onboarding visibility.
 - It reads existing `companies` and canonical workflow counts.
 - It shows:
@@ -476,12 +2296,14 @@ Explain:
 ### 11. What is intentionally gated
 
 While a company is pending/trial, the activation guard blocks irreversible external production actions, including:
+
 - estimate customer sends
 - contract send-for-signature
 - customer-facing checkout/payment processing
 - provider-backed notification email delivery
 
 Internal work remains available:
+
 - company setup
 - dashboard access
 - projects
@@ -495,6 +2317,7 @@ Internal work remains available:
 ### 12. What is planned/coming soon
 
 Frame these as direction, not current production claims:
+
 - deeper scheduling/dispatch controls
 - advanced reporting
 - AI-assisted estimating / takeoff
@@ -510,6 +2333,7 @@ Frame these as direction, not current production claims:
 ### 13. What not to claim yet
 
 Do not claim:
+
 - live subscription billing
 - automatic plan provisioning
 - automatic charges during onboarding
@@ -531,6 +2355,7 @@ Use this for a contractor tester. The tone should be practical: ask them to try 
 ### What to try first
 
 Ask the tester to:
+
 1. Start at `/`.
 2. Use `Start Free Trial`.
 3. Sign up or log in with a real test account.
@@ -546,6 +2371,7 @@ Ask the tester to:
 13. Browse the Managers for Projects, Estimates, Contracts, Jobs, Invoices, Payments, Schedule, People, Vendors, and Settings.
 
 Focus questions:
+
 - Did you know what to do next?
 - Did the Project Workspace make the workflow stage obvious?
 - Did the dashboard feel like a useful home base?
@@ -555,6 +2381,7 @@ Focus questions:
 ### What actions are locked
 
 Tell testers:
+
 - Early access lets you create real internal records.
 - External production actions remain locked until the company is active.
 - Locked actions include:
@@ -568,11 +2395,13 @@ Tell testers:
 ### How to ask for help
 
 Ask testers to use:
+
 - the in-app `Need help?` support entry on protected contractor routes
 - direct support/contact instructions provided by the operator running the test
 - screenshots or screen recordings when a workflow is confusing
 
 Ask them to include:
+
 - route or page name
 - record type they were working on
 - expected next step
@@ -583,6 +2412,7 @@ Ask them to include:
 ### What feedback we want
 
 Prioritize feedback on:
+
 - first five minutes after signup
 - company setup clarity
 - billing setup trust/caveats
@@ -596,6 +2426,7 @@ Prioritize feedback on:
 - places where the app feels disconnected or too dense
 
 De-prioritize for this trial:
+
 - requests for full dispatch optimization
 - requests for AI takeoff
 - requests for accounting sync
@@ -605,6 +2436,7 @@ De-prioritize for this trial:
 Those are valid product inputs, but they are not the purpose of the first early-user continuity test.
 
 What is implemented:
+
 - public investor-ready entry at `/` with the primary early-access CTA routing to `/signup?next=/setup/company`
 - real signup/login through the existing auth system, with no fake auth or demo-only account flow
 - `/setup/company`, writing company setup onto the existing `companies` organization record and primary `locations` row
@@ -620,6 +2452,7 @@ What is implemented:
 - non-production platform-admin onboarding reset for selected early-access test tenants
 
 What is intentionally gated:
+
 - estimate customer sends
 - contract send-for-signature
 - customer-facing checkout/payment processing
@@ -627,6 +2460,7 @@ What is intentionally gated:
 - activation to full access, which still uses existing `companies.tenant_status` and `companies.lifecycle_state`
 
 How to run the investor demo:
+
 1. Visit `/`.
 2. Click `Start Free Trial`.
 3. Confirm the route goes to `/signup?next=/setup/company`.
@@ -640,6 +2474,7 @@ How to run the investor demo:
 11. As a platform admin, open `/super-admin/early-access` to review the tenant and mark active only when appropriate.
 
 How to test a clean onboarding flow:
+
 - Use a real early-access test user and tenant.
 - In non-production, sign in as a platform admin and open `/super-admin/early-access`.
 - Use `Reset onboarding state` only on the selected test company.
@@ -647,12 +2482,14 @@ How to test a clean onboarding flow:
 - Confirm setup, dashboard, Start Here, and early-access lock copy still appear without stale local dismissal/session state.
 
 How to use `/dashboard?fresh=true`:
+
 - Works only in non-production.
 - Forces the existing Start Here onboarding guide visible.
 - Ignores the Start Here localStorage dismissal for that view.
 - Does not create fake records, change tenant data, bypass auth, or bypass canonical record reads.
 
 How to use `/super-admin/early-access`:
+
 - Requires platform-admin access.
 - Shows existing company status/lifecycle, saved-payment-method presence, and project/estimate/contract/invoice activity counts.
 - Derives first workflow, estimate-stage, and contract-stage badges from canonical record counts only.
@@ -660,6 +2497,7 @@ How to use `/super-admin/early-access`:
 - The dev reset button appears only when `NODE_ENV !== production`.
 
 How dev-only reset works:
+
 - The action is platform-admin-only and server-guarded to non-production.
 - It is clearly labeled `DEV / TEST ONLY`.
 - It scopes every delete/update to the selected `company_id`.
@@ -670,12 +2508,14 @@ How dev-only reset works:
 - It fails safely before deleting anything if `estimate_system_snapshots` or `contract_system_snapshots` exist, because those binding snapshot records intentionally block lightweight deletion.
 
 Stripe test-key blocker:
+
 - `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` still need real Stripe test-mode values in `C:/FloorConnector/.env.local`.
 - Restart the dev server after adding keys.
 - Verify `/setup/billing` with a Stripe test card before claiming payment-method collection has been fully tested.
 - Missing keys should show the safe `Stripe not configured`/billing-later path; test keys should show `Stripe test mode active`.
 
 What not to claim yet:
+
 - Do not claim subscriptions, plans, recurring billing, or charging are implemented.
 - Do not claim Stripe card setup is fully verified until test keys are present and a test card is saved through `/setup/billing`.
 - Do not claim pending/trial tenants can send externally or process customer-facing payments.
@@ -689,6 +2529,7 @@ What not to claim yet:
 Added a development-only QA reliability layer for repeatedly testing early-access onboarding without adding schema, sandbox/demo mode, analytics, new business models, billing logic changes, or canonical workflow changes.
 
 Files changed in this pass:
+
 - `apps/web/app/(super-admin)/super-admin/early-access/page.tsx`
 - `apps/web/components/dev-qa-tools.tsx`
 - `apps/web/components/platform-admin/reset-onboarding-state-form.tsx`
@@ -706,6 +2547,7 @@ Files changed in this pass:
 - `docs/chat-handoff.md`
 
 Behavior:
+
 - `/super-admin/early-access` shows a clearly labeled `DEV / TEST ONLY` reset action only when `NODE_ENV !== production`.
 - The reset remains platform-admin-only, scopes every delete/update by the selected company id, clears project/estimate/contract/invoice onboarding workflow test records plus dependent workflow rows, clears `companies.stripe_payment_method_id`, and resets `companies.tenant_status = trialing` / `companies.lifecycle_state = trial`.
 - The reset does not clear `companies.stripe_customer_id`; retaining it avoids creating orphaned or duplicate Stripe customer assumptions during repeated QA.
@@ -715,6 +2557,7 @@ Behavior:
 - `/setup/billing` in non-production shows whether Stripe is in test mode, missing, mixed, or live-key configuration.
 
 Validation:
+
 - `pnpm typecheck` passed.
 - `pnpm lint` passed.
 - `pnpm build` passed.
@@ -726,6 +2569,7 @@ Validation:
 Added a thin platform-admin visibility layer for onboarding users without adding analytics tables, duplicate tenant models, billing logic, sandbox mode, or canonical workflow changes.
 
 Files changed in this pass:
+
 - `apps/web/app/(super-admin)/super-admin/early-access/page.tsx`
 - `apps/web/lib/platform-admin/data.ts`
 - `apps/web/lib/platform-admin/actions.ts`
@@ -738,6 +2582,7 @@ Files changed in this pass:
 - `docs/chat-handoff.md`
 
 Behavior:
+
 - Platform admins now have `/super-admin/early-access` for cross-tenant onboarding visibility. This intentionally lives under super admin rather than contractor `/settings` so tenant data is not exposed to regular organization admins.
 - The view lists existing `companies` records with company name, created date, tenant status, lifecycle state, payment-method presence derived from `companies.stripe_payment_method_id`, and canonical project/estimate/contract/invoice counts.
 - The view derives onboarding progress from existing records only:
@@ -751,6 +2596,7 @@ Behavior:
 - Start Here remains the existing dashboard guide, but it is forced visible for zero-project companies and biases to the estimate step once a project exists and no estimate exists.
 
 Guardrail status:
+
 - The existing shared activation guard is unchanged. It still blocks irreversible production actions such as external sends and payment processing while allowing internal project, estimate, contract, invoice, job, scheduling, setup, and review workflows.
 
 ## Early Access Safety + Support Layer
@@ -758,6 +2604,7 @@ Guardrail status:
 Completed a lightweight first-user safety/support pass without adding schema, analytics, sandbox/demo mode, business models, billing logic, or core workflow changes.
 
 Files changed in this pass:
+
 - `apps/web/components/early-access-help-button.tsx`
 - `apps/web/components/setup-escape-banner.tsx`
 - `apps/web/components/platform-admin/activate-company-form.tsx`
@@ -781,6 +2628,7 @@ Files changed in this pass:
 - `docs/chat-handoff.md`
 
 Behavior:
+
 - Protected contractor routes now show a small bottom-right `Need help?` entry that opens a simple early-access support panel with email support and a walkthrough placeholder link.
 - `/setup/company`, `/setup/billing`, and `/setup/pending-activation` now include a dashboard escape hatch banner: `Finish setup to unlock full access`.
 - `/setup/billing` no longer traps users when Stripe is configured but setup fails; Stripe/network/SetupIntent failures show human-readable copy, a retry action, and `Continue and add billing later`.
@@ -790,6 +2638,7 @@ Behavior:
 - `/super-admin/early-access` now confirms before `Mark active` and returns `Company activated` on success.
 
 Validation still required for this pass:
+
 - `pnpm typecheck`
 - `pnpm lint`
 - `pnpm build`
@@ -798,6 +2647,7 @@ Validation still required for this pass:
 ## Early Access Demo Readiness
 
 What is ready to show:
+
 - Public homepage at `/` with the early-access CTA and lead-to-payment positioning.
 - Real signup entry from `Start Free Trial` into `/signup?next=/setup/company`.
 - Early-access setup routes: `/setup/company`, `/setup/billing`, and `/setup/pending-activation`.
@@ -805,6 +2655,7 @@ What is ready to show:
 - Platform-admin visibility at `/super-admin/early-access`, including company status, saved-payment-method presence, project/estimate/contract/invoice counts, workflow-stage badges, and mark-active control.
 
 Exact investor demo flow:
+
 1. Visit `/`.
 2. Click `Start Free Trial`.
 3. Complete signup and land at `/setup/company`.
@@ -817,6 +2668,7 @@ Exact investor demo flow:
 10. Visit `/super-admin/early-access` as a platform admin to review the tenant, activity counts, workflow-stage badges, and activation control.
 
 Exact early-user signup flow:
+
 1. User visits `/`.
 2. User clicks `Start Free Trial`.
 3. User creates an account at `/signup?next=/setup/company`.
@@ -829,6 +2681,7 @@ Exact early-user signup flow:
 10. Operator reviews the tenant at `/super-admin/early-access` and marks active only after review.
 
 What is intentionally gated:
+
 - Estimate customer sends.
 - Contract send-for-signature.
 - Customer-facing checkout/payment processing.
@@ -836,17 +2689,20 @@ What is intentionally gated:
 - Activation uses existing `companies.tenant_status` and `companies.lifecycle_state`; no duplicate activation model, sandbox mode, or demo tenant model exists.
 
 What still needs Stripe test keys:
+
 - `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` must be filled in `C:/FloorConnector/.env.local`.
 - The dev server must be restarted after filling keys.
 - `/setup/billing` must be verified with a Stripe test card before claiming the live card setup path is verified.
 
 What NOT to claim yet:
+
 - Do not claim subscriptions or billing plans are implemented.
 - Do not claim Stripe card collection has been fully verified until test keys are present and a test card has been saved through `/setup/billing`.
 - Do not claim external sends, payment processing, or provider-backed email are available for pending/trial tenants.
 - Do not claim advanced dispatch, full reporting, AI takeoff, mobile field app, external e-sign, accounting integrations, or full payment reconciliation are complete.
 
 Operator Checklist:
+
 - Fill Stripe test keys in `.env.local`.
 - Restart dev server.
 - Verify `/setup/billing` with test card.
@@ -858,6 +2714,7 @@ Operator Checklist:
 Completed a focused QA + UX polish pass across public marketing, signup entry, early-access setup, billing fallback, pending activation, and dashboard setup guidance.
 
 Files changed in this pass:
+
 - `apps/web/components/marketing-investor-page.tsx`
 - `apps/web/app/(app)/setup/company/page.tsx`
 - `apps/web/app/(app)/setup/billing/page.tsx`
@@ -871,6 +2728,7 @@ Files changed in this pass:
 - `docs/chat-handoff.md`
 
 Behavior:
+
 - Public homepage copy was tightened around the lead-to-payment workflow without changing routes or adding new product claims.
 - Company setup copy now reads as customer-facing setup instead of implementation notes.
 - `/setup/billing` still uses Stripe SetupIntent only and does not charge, subscribe, store raw card data, or create duplicate billing records.
@@ -880,6 +2738,7 @@ Behavior:
 - Start Here copy now directly names the expected project -> estimate -> contract path.
 
 Validation:
+
 - `pnpm typecheck` passed.
 - `pnpm lint` passed.
 - Browser smoke on `http://localhost:3001` confirmed `/` -> `Start Free Trial` -> `/signup?next=/setup/company`.
@@ -893,6 +2752,7 @@ Validation:
 Implemented a minimal shared activation guard for irreversible production actions while keeping early-access users able to explore and create real canonical records.
 
 Files changed:
+
 - `apps/web/lib/organizations/activation-guard.ts`
 - `apps/web/lib/estimates/actions.ts`
 - `apps/web/lib/contracts/actions.ts`
@@ -903,12 +2763,14 @@ Files changed:
 - `docs/chat-handoff.md`
 
 Guarded actions:
+
 - customer-facing checkout/payment processing through `requestPortalInvoicePaymentAction`
 - estimate customer send through `sendEstimateToCustomerAction`
 - contract send-for-signature through `sendContractForSignatureAction`
 - provider-backed notification email delivery through `sendTrackedNotificationEmail`
 
 Not guarded:
+
 - `/setup/company`
 - `/setup/billing` SetupIntent card collection
 - `/setup/pending-activation`
@@ -917,11 +2779,13 @@ Not guarded:
 - contractor-side onsite signature capture and portal review/signature actions once a record has already been externally sent
 
 Behavior:
+
 - The shared helper reads existing `companies.tenant_status` and `companies.lifecycle_state`; no sandbox/demo mode and no duplicate activation/account/billing/company model was added.
 - Pending/trial organizations receive: `This action is locked during early access. Your account must be activated before sending externally or processing payments.`
 - Active/approved production states are allowed through the shared helper.
 
 Validation:
+
 - `pnpm typecheck` passed.
 - `pnpm lint` passed.
 - `pnpm build` passed.
@@ -938,6 +2802,7 @@ Validation:
 Polished the user-facing early-access messaging around locked production actions without changing schema, adding sandbox/demo mode, or changing the activation guard decision rules.
 
 Files changed:
+
 - `apps/web/components/early-access-lock-notice.tsx`
 - `apps/web/components/dashboard/contractor-dashboard-surface.tsx`
 - `apps/web/app/(app)/dashboard/page.tsx`
@@ -951,6 +2816,7 @@ Files changed:
 - `docs/chat-handoff.md`
 
 Behavior:
+
 - Dashboard now shows a `Status: Early access` banner for pending/trial organizations with the copy: `You can explore the real system and create records now. External sends and payment processing unlock after activation.`
 - The banner links to `/setup/pending-activation`.
 - Estimate send, contract send-for-signature, and portal checkout/payment surfaces now share the same visible lock copy:
@@ -961,6 +2827,7 @@ Behavior:
 - Start Here remains optional, dismissible through localStorage preference only, and derived from real canonical project/estimate/contract/invoice/job counts.
 
 Validation:
+
 - `pnpm typecheck` passed.
 - `pnpm lint` passed.
 - `pnpm build` passed.
@@ -973,23 +2840,27 @@ Validation:
 Verification date: 2026-05-05.
 
 Important Supabase note:
+
 - This repo uses the hosted/linked Supabase project for verification. Do not use local Supabase for this workflow.
 - `supabase db push --linked` reported the remote database is up to date.
 - Remote `companies` columns confirmed: `stripe_customer_id` and `stripe_payment_method_id` exist.
 
 Commands run:
+
 - `supabase db push --linked`
 - `pnpm typecheck`
 - `pnpm lint`
 - `pnpm build`
 
 Command results:
+
 - Remote Supabase push passed.
 - Typecheck passed.
 - Lint passed.
 - Build passed.
 
 Browser routes checked against `http://localhost:3001`:
+
 - `/` rendered and `Start Free Trial` links route to `/signup?next=%2Fsetup%2Fcompany`.
 - `/setup/company` saved and reloaded the canonical company profile and primary location values for the authenticated E2E tenant. The company count stayed at `2` before and after save, so no duplicate organization/company record was created.
 - `/setup/billing` rendered the intended no-charge billing setup shell and Stripe fallback state.
@@ -997,16 +2868,19 @@ Browser routes checked against `http://localhost:3001`:
 - `/dashboard` loaded after `Enter Dashboard` and rendered canonical dashboard queues.
 
 Stripe verification result:
+
 - Live card verification could not be completed in this session because `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` are present but blank in `C:/FloorConnector/.env.local`.
 - With those env vars blank, `/setup/billing` correctly shows the Stripe-not-configured fallback and does not render a Payment Element.
 - The active E2E company currently has `stripe_customer_id = null` and `stripe_payment_method_id = null`.
 - Because the card flow could not run, Stripe dashboard confirmation remains pending: no customer/payment-method/no-charge/no-subscription dashboard check was completed.
 
 Dashboard Start Here note:
+
 - The authenticated E2E tenant already has canonical records (`projects = 4`, `estimates = 8`, `contracts = 3`, `invoices = 3`, `jobs = 6`), so `Start Here` was not visible and dismiss-click behavior was not exercised in that tenant state.
 - Source behavior still derives the card from real canonical counts and hides it when no incomplete step remains.
 
 Activation guardrail finding:
+
 - Pending users can enter the real contractor dashboard and explore real canonical records.
 - Current code has workflow-specific guards, readiness checks, and payment/checkout validation, but this pass did not find a centralized server-side activation guard that blocks production-risk actions solely because `tenant_status/lifecycle_state` are still pending/trial.
 - Smallest safe follow-up before implementation: add a narrow shared server-side assertion such as `assertActivatedForProductionAction` that reads the active organization context and gates only external sends, customer-facing checkout/payment processing, and other irreversible production actions. Do not add sandbox/demo mode, new billing/account/company models, or duplicate lifecycle state.
@@ -1016,6 +2890,7 @@ Activation guardrail finding:
 Real no-charge billing-method collection is now implemented on `/setup/billing` using Stripe Elements and SetupIntent only.
 
 Files changed:
+
 - `apps/web/app/api/stripe/create-setup-intent/route.ts`
 - `apps/web/app/api/stripe/save-payment-method/route.ts`
 - `apps/web/components/stripe/setup-intent-form.tsx`
@@ -1031,6 +2906,7 @@ Files changed:
 - `docs/chat-handoff.md`
 
 Behavior changed:
+
 - `/setup/billing` now renders Stripe Elements when `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` and `STRIPE_SECRET_KEY` are configured.
 - The setup route creates or reuses a Stripe customer for the active organization, creates a SetupIntent with automatic payment methods, and returns only the client secret.
 - The client confirms the SetupIntent with `redirect: "if_required"` and does not create a charge or subscription.
@@ -1039,6 +2915,7 @@ Behavior changed:
 - If Stripe is not configured or SetupIntent/confirmation fails, the billing page shows a fallback/error state and lets early-access users continue to pending activation with billing-later copy.
 
 Validation note:
+
 - The required validation for this slice is `pnpm typecheck`, `pnpm lint`, and `pnpm build`, plus manual Stripe test-card verification with `4242 4242 4242 4242` after the migration is applied and real Stripe test keys are present.
 
 ## Stripe Test-Mode Billing Verification Attempt
@@ -1046,16 +2923,19 @@ Validation note:
 Verification date: 2026-05-05.
 
 Scope:
+
 - Final test-mode verification for `/setup/billing`.
 - No implementation changes, schema changes, subscriptions, charges, sandbox/demo mode, or duplicate billing/account/company models were added.
 
 Pre-checks:
+
 - `.env.local` contains `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, but both values are currently blank.
 - Because both Stripe values are blank, the live Payment Element and card-confirmation path could not be exercised in this environment.
 - Linked Supabase DB columns exist on `public.companies`: `stripe_customer_id`, `stripe_payment_method_id`.
 - Linked Supabase DB values before/after this attempt remain `null` for both Stripe reference columns on the two current companies, because the card flow could not run without keys.
 
 Commands run:
+
 - `supabase db query --linked "select column_name from information_schema.columns where table_schema = 'public' and table_name = 'companies' and column_name in ('stripe_customer_id', 'stripe_payment_method_id') order by column_name;"`
 - `supabase db query --linked "select id, stripe_customer_id, stripe_payment_method_id from public.companies order by created_at asc;"`
 - `pnpm typecheck`
@@ -1063,6 +2943,7 @@ Commands run:
 - `pnpm build`
 
 Command results:
+
 - Linked DB column check passed.
 - Linked DB record check confirmed both current company rows have no saved Stripe references yet.
 - Typecheck passed.
@@ -1070,9 +2951,11 @@ Command results:
 - Build passed.
 
 Browser route checked:
+
 - `http://localhost:3001/setup/billing`
 
 Browser results with current blank Stripe config:
+
 - Billing page rendered the `Add your billing method` shell.
 - Early-access no-charge copy rendered.
 - Safe Stripe-not-configured fallback rendered.
@@ -1080,10 +2963,12 @@ Browser results with current blank Stripe config:
 - Continue-to-activation now remains available with billing-later copy when Stripe config is blank.
 
 Stripe dashboard / API result:
+
 - Not verified in this session because Stripe test keys are blank in `.env.local`.
 - No customer/payment-method/no-charge/no-subscription dashboard confirmation could be completed from this environment.
 
 Remaining launch blocker:
+
 - Add real Stripe test-mode values for `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` in `C:/FloorConnector/.env.local`, restart the dev server, and rerun the `/setup/billing` card test with `4242 4242 4242 4242`.
 
 ## Public Homepage And Early Access Onboarding
@@ -1091,6 +2976,7 @@ Remaining launch blocker:
 Investor-ready marketing and early-access setup are now implemented without adding fake demo records, sandbox-only flows, duplicate company models, or duplicate billing models.
 
 Follow-up company profile extension implemented:
+
 - Added `supabase/migrations/20260505192527_company_profile_onboarding_fields.sql` to extend the existing canonical `companies` row with nullable `phone`, `email`, `website_url`, `primary_trade`, `brand_accent_color`, and `time_zone` fields.
 - `/setup/company` now saves those fields through the existing organization setup action alongside legal/display name, logo URL/reference, and primary location.
 - `/settings/organization` can maintain the same canonical organization profile fields after onboarding.
@@ -1099,6 +2985,7 @@ Follow-up company profile extension implemented:
 - Logo upload remains deferred; the current implementation stores only a hosted logo URL or storage reference.
 
 Files changed:
+
 - `apps/web/components/marketing-investor-page.tsx`
 - `apps/web/lib/auth/paths.ts`
 - `apps/web/lib/onboarding/actions.ts`
@@ -1130,6 +3017,7 @@ Files changed:
 - `docs/chat-handoff.md`
 
 Behavior changed:
+
 - Public `/` is now a premium black/white/warm-orange SaaS homepage with hero CTA to `/signup?next=/setup/company`, lifecycle visual, problem framing, canonical-record differentiation, grouped feature sections, careful competitor positioning, planned/coming-soon section, and early-access CTA.
 - `/setup/company` is a protected owner/admin setup step that writes to existing `companies` fields and the existing primary `locations` address row, creating the primary location if needed.
 - Company setup now stores the deferred contact/profile fields on `companies`: phone, email, website URL, primary trade/service type, brand accent color, and time zone.
@@ -1139,11 +3027,13 @@ Behavior changed:
 - Empty-state copy was tightened for projects, estimates, contracts, and invoices around the canonical workflow.
 
 Deferred:
+
 - Logo upload/storage UI remains deferred; use the logo URL/reference field for now.
 - Deeper billing, subscription activation, plan selection, reconciliation, and retry workflows remain deferred.
 - No new admin activation model was added because super-admin tenant lifecycle controls already exist.
 
 Validation status:
+
 - `pnpm typecheck` passed.
 - `pnpm lint` passed.
 - `pnpm build` passed.
@@ -1161,20 +3051,24 @@ Validation status:
 Schema-only first slice implemented for future product/spec and floor system template foundations.
 
 Migration:
+
 - `supabase/migrations/20260505120000_system_layers_first_slice.sql`
 
 Tables added:
+
 - `finish_products`
 - `floor_system_templates`
 - `floor_system_template_components`
 
 What changed:
+
 - Added tenant-owned product/spec metadata foundation with `company_id`, `created_by`, `updated_by`, generated normalized lookup fields, CHECK constraints, useful indexes, update triggers, RLS enable/force RLS, and membership-based RLS policies.
 - Added tenant-owned floor system template and component foundation.
 - `floor_system_template_components.catalog_item_id` is required and same-company enforced through composite FK to `catalog_items(company_id, id)`.
 - `floor_system_template_components.finish_product_id` is optional product/spec proof metadata and uses column-scoped `on delete set null (finish_product_id)`.
 
 Deferred:
+
 - no selected systems
 - no visualizer sessions
 - no estimate or contract snapshots
@@ -1185,6 +3079,7 @@ Deferred:
 - no app UI, routes, APIs, server actions, tests, or product behavior
 
 Validation:
+
 - targeted migration grep checks passed for forbidden later-slice tables and `organization_id`
 - `git diff --check` passed for the migration and touched docs
 - `pnpm typecheck` passed
@@ -1196,12 +3091,15 @@ Validation:
 Schema-only second slice implemented for selected system/spec workflow foundations.
 
 Migration:
+
 - `supabase/migrations/20260505140921_selected_floor_systems_foundation.sql`
 
 Table added:
+
 - `selected_floor_systems`
 
 What changed:
+
 - Added tenant-owned selected floor system/spec foundation with required `company_id`.
 - Rows require at least one real canonical workflow anchor: opportunity, customer, project, estimate, contract, or job.
 - Same-company composite FKs are enforced for existing canonical workflow links plus `floor_system_templates` and `finish_products`.
@@ -1211,6 +3109,7 @@ What changed:
 - Update trigger calls `public.set_updated_at()` without a `WHEN` clause.
 
 Deferred:
+
 - no UI
 - no selected-system server actions
 - no estimate or contract integration
@@ -1226,13 +3125,16 @@ Deferred:
 Schema-only snapshot slice implemented for future selected-system/spec proof at customer-facing estimate and contract review/signature boundaries.
 
 Migration:
+
 - `supabase/migrations/20260505173600_system_snapshot_foundation.sql`
 
 Tables added:
+
 - `estimate_system_snapshots`
 - `contract_system_snapshots`
 
 What changed:
+
 - Added tenant-owned estimate and contract system snapshot tables with required `company_id`.
 - `estimate_system_snapshots` uses same-company composite FKs to `estimates` and `selected_floor_systems`.
 - `contract_system_snapshots` uses same-company composite FKs to `contracts` and `selected_floor_systems`, plus an optional same-company link to `estimate_system_snapshots`.
@@ -1245,6 +3147,7 @@ What changed:
 - A database trigger blocks DELETE and restricts UPDATE to `snapshot_status`, `metadata`, `updated_by`, and `updated_at`.
 
 Deferred:
+
 - no UI
 - no server actions
 - no estimate workflow writes
@@ -1264,6 +3167,7 @@ Deferred:
 Implemented the first admin/data access layer for the already-created first-slice system tables. This is an admin foundation only and does not add downstream workflow behavior.
 
 Files changed:
+
 - `apps/web/lib/system-layers/constants.ts`
 - `apps/web/lib/system-layers/schemas.ts`
 - `apps/web/lib/system-layers/data.ts`
@@ -1276,6 +3180,7 @@ Files changed:
 - `docs/chat-handoff.md`
 
 Behavior changed:
+
 - `/settings/system-layers` now lists, creates, edits, and archives tenant-owned `finish_products`.
 - `/settings/system-layers` now lists, creates, edits, and archives tenant-owned `floor_system_templates`.
 - Template components can be added, removed, reordered, and edited from the same settings surface.
@@ -1285,6 +3190,7 @@ Behavior changed:
 - Template service/finish family structural changes increment `template_version`.
 
 Still not added:
+
 - no `visualizer_sessions`
 - no estimate integration
 - no contract integration
@@ -1299,6 +3205,7 @@ Still not added:
 Implemented the first admin/data access layer for the already-created `selected_floor_systems` table. This is validation of the selected-system foundation only and does not add downstream workflow behavior.
 
 Files changed:
+
 - `apps/web/lib/selected-systems/constants.ts`
 - `apps/web/lib/selected-systems/schemas.ts`
 - `apps/web/lib/selected-systems/data.ts`
@@ -1311,6 +3218,7 @@ Files changed:
 - `docs/chat-handoff.md`
 
 Behavior changed:
+
 - `/settings/selected-systems` now lists tenant-owned selected floor systems.
 - Admin users can create and edit selected systems against existing same-company floor system templates, finish products, and real workflow anchors.
 - Server actions validate selected-system check values for status, source, area type, and spec-completeness status.
@@ -1321,6 +3229,7 @@ Behavior changed:
 - Admin users can change status, retract, void, and toggle project-primary state without touching downstream records.
 
 Still not added:
+
 - no estimate integration
 - no contract integration
 - no job integration
@@ -1337,6 +3246,7 @@ Still not added:
 Implemented a UI/workflow handoff from signed contract readiness into existing job and schedule foundations. No schema, RLS, auth, route architecture, or duplicate scheduling model was added.
 
 Files changed:
+
 - `apps/web/components/ready-to-schedule-action-panel.tsx`
 - `apps/web/app/(app)/contracts/[contractId]/page.tsx`
 - `apps/web/app/(app)/projects/[projectId]/page.tsx`
@@ -1345,6 +3255,7 @@ Files changed:
 - `docs/chat-handoff.md`
 
 Behavior changed:
+
 - Contract detail now shows a ready-to-schedule action panel only when the contract is fully signed and the existing project readiness snapshot is ready to schedule.
 - Project detail now shows the same panel whenever the existing project readiness snapshot is ready to schedule.
 - The panel routes to existing canonical job Quick-Create with project context, preserves approved estimate context where available, and links to the existing project-filtered `/schedule` surface.
@@ -1357,6 +3268,7 @@ Behavior changed:
 Focused refactor completed to make People the intended management home for customer-contact identity and portal access administration. No schema, RLS, auth, backend route, data-model, financial calculation, signature state-machine, payment-logic, or workflow-table changes were made.
 
 Follow-up workflow recipient cleanup:
+
 - Estimate send now exposes a shared `Send to contact` selector when active project-scoped portal access already provides eligible customer/contact recipients, preferring the main related contact or the only available recipient.
 - Estimate send no longer presents recipient/access setup as estimate-owned management; if no eligible contact exists, the estimate page points users back to People.
 - Contract send now uses the same `Send to contact` selector copy for eligible portal signers while preserving the existing signer routing and permission guards.
@@ -1364,6 +3276,7 @@ Follow-up workflow recipient cleanup:
 - The stale manual-estimate Playwright resolver was updated to locate a real estimate detail page that actually exposes the current manual decision UI before running the mutation test.
 
 Files changed:
+
 - `apps/web/app/(app)/people/page.tsx`
 - `apps/web/components/people-portal-access-panel.tsx`
 - `apps/web/components/customer-contact-form.tsx`
@@ -1393,6 +3306,7 @@ Files changed:
 - `docs/chat-handoff.md`
 
 Behavior changed:
+
 - `/people` now loads related customer contacts, portal grants, stored contact-permission readiness, and project visibility using existing canonical loaders.
 - Added a People customer-access panel for contact edit/create, main-contact selection, portal invite/access ensure, grant contact-linking, stored permission editing, revoke/reactivate, and project visibility using existing actions and existing canonical tables.
 - Existing contact and portal-access server actions now accept an optional safe `returnTo` path for `/people` so the same actions can be hosted from People without duplicating action logic.
@@ -1400,17 +3314,20 @@ Behavior changed:
 - Customer surfaces now describe People as the portal access administration home while retaining contextual access visibility.
 
 Existing risky access paths found:
+
 - Customer detail was still the full portal access management surface: invite creation, grant linking, stored permission editing, revoke/reactivate, and project visibility were all presented there.
 - `/people` copy and implementation were workforce-only and explicitly excluded customer recipient contacts, which conflicted with the new product direction.
 - Invoice send is still an invoice status transition rather than a full contact-recipient picker; copy and server comments now make the customer/account fallback explicit.
 
 Validation so far:
+
 - `pnpm typecheck` passed.
 - `pnpm lint` passed.
 - `git diff --check` passed with LF-to-CRLF working-copy warnings only.
 - Previous Playwright attempt: `pnpm exec playwright test e2e/estimate-manual-approval-action.spec.js --project=chromium-protected` ran auth setup successfully but failed because the stale resolver selected an estimate detail page without the current manual decision UI. The resolver has since been updated to search candidate details for the active decision UI before running the mutation.
 
 Deferred items:
+
 - A deeper removal of duplicate customer-detail portal management controls can be done in a follow-up if the team wants Customer Detail to become read-only/context-only for access.
 - A fuller invoice recipient picker is deferred until invoice sending grows a dedicated recipient-selection action; People remains the management home in the meantime.
 
@@ -1419,12 +3336,14 @@ Deferred items:
 Phase 14 completed as documentation and safe cleanup for the implemented decision-first UI refactor. No UI redesign, backend, schema, auth, RLS, server-action, data-model, route, or workflow changes were made.
 
 Docs changed:
+
 - `docs/current-state.md`
 - `docs/ui-patterns.md`
 - `docs/chat-handoff.md`
 - `packages/ui/README.md`
 
 Cleanup performed:
+
 - Updated `docs/current-state.md` only where implemented UI behavior materially changed, replacing the stale latest UI direction note that still described unresolved clarity gaps.
 - Created `docs/ui-patterns.md` as the current pattern guide for decision-first page structure, `ActionBar`, `WorkflowBar`, `ProjectStateSummary`, status color semantics, the orange CTA rule, Manager/List Page guidance, and portal/super-admin differences.
 - Added `packages/ui/README.md` to document exported decision-first components, shared status helpers, theme exports, and package guardrails.
@@ -1432,6 +3351,7 @@ Cleanup performed:
 - No docs or components were removed; the export/reference inventory did not show a clearly obsolete component that was safe to delete.
 
 Validation:
+
 - `pnpm typecheck` passed.
 - `pnpm lint` passed.
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings.
@@ -1440,6 +3360,7 @@ Validation:
 - Protected detail smoke tests were not rerun in Phase 14 because localhost was not running and this phase changed documentation/package docs only; the Phase 13 authenticated targeted run remains the latest protected decision-first smoke evidence.
 
 Final Phase 1-14 summary:
+
 - Phase 1 established shared `@floorconnector/ui` foundation pieces: theme constants, `ActionBar`, `WorkflowBar`, `ProjectStateSummary`, `PrimarySection`, `SecondarySection`, and shared semantic status helpers.
 - Phase 2 added contractor layout section wrappers for core workflow, execution, and support sections.
 - Phase 3 captured the pre-refactor audit in `docs/ui-refactor-audit.md`.
@@ -1451,6 +3372,7 @@ Final Phase 1-14 summary:
 - Phase 14 documented the implemented UI baseline and package exports.
 
 Deferred items:
+
 - No broad visual snapshot suite was added.
 - No mutation workflow tests were added for approve/send/sign/schedule/payment flows.
 - No portal/super-admin structural redesign was started.
@@ -1461,6 +3383,7 @@ Deferred items:
 Phase 13 completed as a tests-only expansion for the decision-first UI system. No UI redesign, backend, schema, auth, RLS, server-action, data-model, route, or workflow changes were made.
 
 Files changed:
+
 - `e2e/ui-primitives.spec.js`
 - `e2e/detail-workspace-ui.spec.js`
 - `e2e/dashboard-ui.spec.js`
@@ -1468,6 +3391,7 @@ Files changed:
 - `docs/chat-handoff.md`
 
 Tests added or updated:
+
 - Added isolated public Playwright coverage for shared UI primitives: `ActionBar`, `WorkflowBar`, and `ProjectStateSummary`, including console error capture.
 - Added authenticated dashboard smoke coverage for the PriorityStrip surface.
 - Added authenticated project detail and estimate detail smoke coverage for decision-first regions.
@@ -1487,12 +3411,14 @@ Tests added or updated:
 - Updated Playwright project matching so public primitive tests stay public and protected decision-first smoke tests run only under authenticated protected coverage.
 
 Fixtures required:
+
 - Invoice, job, and contract fixtures listed above.
 - Project detail fallback: `/projects/797ec5b1-4417-4a36-934e-e82498efef5a`, overrideable with `FLOORCONNECTOR_E2E_PROJECT_DETAIL_PATH`.
 - Estimate detail fallback: `/estimates/a58c10b5-9b3b-4c1a-a03b-44e3cdaa1c5e`, overrideable with `FLOORCONNECTOR_E2E_ESTIMATE_DETAIL_PATH`.
 - Authenticated Playwright storage from `e2e/auth.setup.js` using the existing `FLOORCONNECTOR_E2E_EMAIL` and `FLOORCONNECTOR_E2E_PASSWORD` credentials.
 
 Validation:
+
 - `PLAYWRIGHT_SKIP_WEB_SERVER=1 pnpm exec playwright test --list` passed; 19 tests listed.
 - `PLAYWRIGHT_BASE_URL=http://localhost:3000 pnpm e2e:auth` passed.
 - Targeted Phase 13 Playwright run passed: `PLAYWRIGHT_BASE_URL=http://localhost:3000 PLAYWRIGHT_SKIP_WEB_SERVER=1 pnpm exec playwright test e2e/ui-primitives.spec.js e2e/dashboard-ui.spec.js e2e/project-detail-ui.spec.js e2e/detail-workspace-ui.spec.js --project=chromium-public --project=chromium-protected --no-deps` reported 14 passed.
@@ -1501,6 +3427,7 @@ Validation:
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings.
 
 Deferred coverage:
+
 - Mutation workflows remain intentionally out of scope: approve/send/sign/schedule/unschedule/payment actions were not exercised.
 - Portal and super-admin test expansion remains deferred.
 - Visual snapshot and style-only assertions remain deferred; Phase 13 uses resilient role/text checks and console/error capture.
@@ -1510,6 +3437,7 @@ Deferred coverage:
 Phase 12B completed as a UI-only cleanup limited to the `safe now` items from [docs/portal-superadmin-ui-audit.md](C:/FloorConnector/docs/portal-superadmin-ui-audit.md).
 
 Files changed:
+
 - `apps/web/app/(portal)/portal/page.tsx`
 - `apps/web/app/(portal)/portal/projects/[projectId]/page.tsx`
 - `apps/web/app/(portal)/portal/estimates/[estimateId]/page.tsx`
@@ -1532,6 +3460,7 @@ Files changed:
 - `docs/chat-handoff.md`
 
 Exact cleanup:
+
 - Added neutral visual variants to shared settings shell/card/nav components and applied them only to the super-admin surface, preserving the existing warm defaults for contractor settings.
 - Added a neutral `DetailPanel` variant and applied it to super-admin configuration panels where dense admin forms benefit from flatter card chrome.
 - Added small shared portal review UI helpers for hero panels, state panels, inset panels, action boxes, secondary links, document panels, and status badges.
@@ -1540,16 +3469,19 @@ Exact cleanup:
 - Quieted portal secondary return/review links so approve/sign/pay actions remain the clearest customer CTAs.
 
 QA results:
+
 - authenticated Playwright smoke QA used `playwright/.auth/local-user.json` against `http://localhost:3000`
 - `/portal` loaded with status 200, stayed on `/portal`, rendered `Customer Portal`, and produced no console errors, page errors, or 500 responses
 - `/super-admin` loaded with status 200, stayed on `/super-admin`, rendered `Platform Admin`, and produced no console errors, page errors, or 500 responses
 
 Validation:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
 
 Deferred items:
+
 - portal visual language/density decisions remain deferred beyond this safe cleanup
 - deeper portal semantic color policy remains deferred beyond conservative shared badge use
 - no contractor ActionBar/WorkflowBar pattern was copied into portal or super-admin
@@ -1560,10 +3492,12 @@ Deferred items:
 Audit-only Phase 12A completed. No application implementation changes were made.
 
 Files changed:
+
 - `docs/portal-superadmin-ui-audit.md`
 - `docs/chat-handoff.md`
 
 Audit summary:
+
 - Portal is correctly customer-facing and project-scoped, but uses repeated large rounded/glassy cards, gradients, passive brand-accent eyebrows, and neutral status chips that make some review/sign/pay states harder to scan.
 - Portal primary actions are generally clear (`Approve`, `Sign`, `Continue to checkout`), but secondary return/open links often use pill styling similar to status chips.
 - Super-admin should not copy contractor orange CTA behavior; its slate/black primary save/admin actions fit platform governance.
@@ -1572,16 +3506,19 @@ Audit summary:
 - Contractor patterns that should not be copied directly: Manager Page command bars, Quick-Create/universal-create behavior, contractor operational ActionBar/WorkflowBar assumptions, project-readiness/crew/schedule internals, and orange contractor CTA language.
 
 Recommended phases:
+
 - safe now: neutralize super-admin settings shell chrome, normalize portal/super-admin card radius and border language, apply shared status helpers where purely presentational, and quiet secondary portal links.
 - needs design decision: portal softness/density, portal semantic color policy, and whether super-admin remains settings-shell based or gets a dedicated platform-admin shell later.
 - defer: portal access/auth/RLS/sign/pay/approval workflow changes, super-admin permissions/tenant lifecycle/module-policy/data-loader changes, route changes, and blanket ActionBar/WorkflowBar rollout.
 
 Validation:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
 
 Deferred items:
+
 - no auth, portal access, record loader, super-admin permission, route, schema, backend, RLS, workflow logic, or application UI implementation changes were made
 
 ## Decision-First UI Refactor Phase 11
@@ -1589,6 +3526,7 @@ Deferred items:
 Global component polish completed as a UI-only shared contractor-component pass. Scope stayed on shared contractor UI primitives and small consistency fixes affecting the already-refactored contractor pages.
 
 Files changed:
+
 - `apps/web/components/app-empty-state.tsx`
 - `apps/web/components/contractor-workspace-page.tsx`
 - `apps/web/components/detail-page-header.tsx`
@@ -1605,12 +3543,14 @@ Files changed:
 - `docs/chat-handoff.md`
 
 Inventory before editing:
+
 - Shared workflow/detail primitives already used `rounded-lg` shells and semantic status helpers.
 - `ManagerDashboardCard` already had shared status badge support from the manager-page cleanup.
 - Remaining reusable drift was concentrated in warm beige/orange shell chrome: manager headers, command bars, empty states, linked record cards, detail headers, quick-create sheets, and the universal-create menu.
 - Orange appeared in several passive eyebrow/header/link treatments, not only primary CTAs.
 
 Exact polish made:
+
 - Neutralized shared contractor manager headers, command bars, empty states, linked record cards, detail headers, quick-create sheet chrome, and universal-create menu panels to white/gray system surfaces.
 - Kept orange on actual primary create/CTA buttons; removed orange from passive eyebrows, menu group labels, back links, empty-state chrome, and hover-only card emphasis.
 - Standardized shared contractor cards and rows around `rounded-lg`, `#e2e5e9` borders, white backgrounds, `#f8fafc` hover/empty surfaces, and gray secondary text.
@@ -1619,6 +3559,7 @@ Exact polish made:
 - Preserved existing component props, links, forms, conditionals, and status-helper behavior.
 
 QA results:
+
 - authenticated Playwright browser QA ran against `http://localhost:3000` using `playwright/.auth/local-user.json`
 - `/dashboard` loaded with status 200 and no console errors, page errors, or 500 responses
 - `/projects` and project detail `/projects/797ec5b1-4417-4a36-934e-e82498efef5a` loaded with status 200 and no console errors, page errors, or 500 responses
@@ -1629,11 +3570,13 @@ QA results:
 - `/customers` loaded with status 200; opened customer detail `/customers/a0ab94ab-d7c6-4397-a98e-0b38af96707d` from the customer list path with status 200 and no console errors, page errors, or 500 responses
 
 Validation:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
 
 Deferred items:
+
 - no portal, super-admin, settings, new page layouts, or broader app-shell navigation polish was attempted
 - no mutation QA was performed because this phase was visual/component-only
 - no backend, schema, auth, RLS, server-action, data-model, route, or workflow changes were made
@@ -1643,15 +3586,18 @@ Deferred items:
 Customers list/manager page cleanup completed as a UI-only contractor-app pass. Scope stayed on `/customers` only.
 
 Files changed:
+
 - `apps/web/app/(app)/customers/page.tsx`
 - `docs/chat-handoff.md`
 
 Inventory before editing:
+
 - Customers manager preserved existing search, `New customer` quick-create link, success/error messages, queue card links, recent-record customer links, empty-state create path, `WorkspaceComposerSheet`, `CustomerQuickCreateForm`, and `quickCreateCustomerAction`.
 - Existing loaded customer, project, and financial-settings data only was used; no invoice/balance data was introduced because the page does not currently load customer balance context.
 - No new filters, server actions, routes, data fetches, workflow states, or mutation paths were introduced.
 
 Exact UI changes:
+
 - Customers summary tiles were normalized to the same compact neutral-card treatment used by the other decision-first manager pages.
 - Customer queue cards now use semantic badges for action-oriented records such as missing contact/address and project-linked customers.
 - A linked-project count map now supports existing-data project continuity cues without changing data loading.
@@ -1660,16 +3606,19 @@ Exact UI changes:
 - The primary `New customer` action, search behavior, quick-create overlay, and empty-state create path remain unchanged.
 
 QA results:
+
 - authenticated Playwright browser QA ran against `http://localhost:3000` using `playwright/.auth/local-user.json`
 - `/customers` loaded with status 200, `New customer` was visible, customer detail links were present, continuity cues rendered, and no console errors or bad responses were captured
 - opened customer detail from the list candidate `/customers/a0ab94ab-d7c6-4397-a98e-0b38af96707d`; it loaded authenticated with status 200 and no console errors or bad responses
 
 Validation:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
 
 Deferred items:
+
 - no customer detail, portal, super-admin, settings, or other manager page changes were made
 - no backend, schema, auth, RLS, server-action, data-model, route, workflow, balance logic, portal-access logic, or customer-create behavior changes were made
 - no mutation QA was performed for customer creation or customer editing in this UI-only phase
@@ -1679,6 +3628,7 @@ Deferred items:
 Invoices, Jobs, and Contracts list/manager page cleanup completed as a UI-only contractor-app pass. Scope stayed on `/invoices`, `/jobs`, `/contracts`, and the invoice records panel used by the Invoices manager.
 
 Files changed:
+
 - `apps/web/app/(app)/invoices/page.tsx`
 - `apps/web/app/(app)/jobs/page.tsx`
 - `apps/web/app/(app)/contracts/page.tsx`
@@ -1686,12 +3636,14 @@ Files changed:
 - `docs/chat-handoff.md`
 
 Inventory before editing:
+
 - Invoices manager preserved existing search, invoice status filters, context hidden inputs, rows-per-view control, `New invoice` quick-create link, queue card links, paid-context links, scoped-context clear link, `WorkspaceComposerSheet`, `InvoiceQuickCreateForm`, and `quickCreateInvoiceAction`.
 - Jobs manager preserved existing search, job view filters, project scoping, `New job` quick-create link, queue card links, recent-record job links, empty states, `WorkspaceComposerSheet`, `JobQuickCreateForm`, and `quickCreateJobAction`.
 - Contracts manager preserved existing search, status filters, `New contract` quick-create link, snapshot-repair estimate link, queue card links, recent-record contract links, empty states, `WorkspaceComposerSheet`, `ContractQuickCreateForm`, and `quickCreateContractFromEstimateAction`.
 - Existing loaded data only was used for continuity cues; no new data fetches, filters, server actions, routes, workflow states, or mutation paths were introduced.
 
 Exact UI changes:
+
 - Invoices manager summary, command filters, billing posture, scoped-context notice, paid queue, and invoice records panel were neutralized to reduce passive beige/orange noise while leaving `New invoice` as the clear primary action.
 - Invoice records now use shared `getStatusBadgeClassName()` status badges and show a light continuity cue such as finish billing detail, collect payment, settled, or voided from existing status/due-date data.
 - Invoice queue cards now use semantic invoice status badges and balance-focused continuity copy while preserving existing balance-due calculations.
@@ -1702,6 +3654,7 @@ Exact UI changes:
 - Contracts keep green/completed styling limited to `signed` records; sent/viewed/readiness states remain warning/neutral/info rather than completed.
 
 QA results:
+
 - authenticated Playwright browser QA ran against `http://localhost:3000` using `playwright/.auth/local-user.json`
 - `/invoices` loaded with status 200, `New invoice` was visible, a real invoice detail/edit link was present, continuity cues rendered, and no console errors were captured
 - `/jobs` loaded with status 200, `New job` was visible, real job detail links were present, schedule/crew cues rendered, and no console errors were captured
@@ -1712,11 +3665,13 @@ QA results:
 - note: the initially running dev server had stale dynamic chunks that produced 404 console noise for jobs/contracts; restarting the local dev server cleared the stale chunk state, and the final QA run had no console errors or bad responses
 
 Validation:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed after removing one obsolete invoice helper
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
 
 Deferred items:
+
 - no customers, portal, super-admin, settings, or detail-page refactors were made
 - no backend, schema, auth, RLS, server-action, data-model, route, workflow, balance logic, scheduling logic, crew logic, or signature logic changes were made
 - no mutation QA was performed for invoice creation, job creation, contract generation, scheduling, crew assignment, payment, send, sign, or countersign flows in this UI-only phase
@@ -1726,17 +3681,20 @@ Deferred items:
 Projects and Estimates list/manager page cleanup completed as a UI-only contractor-app pass. Scope stayed on `/projects`, `/estimates`, and the estimate records panel used by the Estimates manager.
 
 Files changed:
+
 - `apps/web/app/(app)/projects/page.tsx`
 - `apps/web/app/(app)/estimates/page.tsx`
 - `apps/web/components/estimates/estimate-records-panel.tsx`
 - `docs/chat-handoff.md`
 
 Inventory before editing:
+
 - Projects manager preserved existing search form, status filters, `New project` quick-create link, queue-card links, recent-record detail links, empty-state create link, `WorkspaceComposerSheet`, `ProjectQuickCreateForm`, and `quickCreateProjectAction`.
 - Estimates manager preserved existing search form, status filters, rows-per-view control, `Add estimate` quick-create link, estimate detail/edit links, queue cards, status breakdown links, empty-state create path, `WorkspaceComposerSheet`, `EstimateQuickCreateForm`, `quickCreateEstimateAction`, and inline customer quick-create action.
 - Existing loaded data only was used for continuity cues; no new data fetches, actions, filters, routes, or workflow states were introduced.
 
 Exact UI changes:
+
 - Projects manager summary tiles were lightly normalized with the same compact rounded neutral-card treatment used by the decision-first manager direction.
 - Projects workflow queue cards now show semantic status/finance badges through the existing `ManagerDashboardCard` status-badge path and use existing project readiness/status fields for concise continuity cues.
 - Projects recent records now use shared `getStatusBadgeClassName()` status badges and replace the plain commercial-state column with a clearer continuity column derived from existing readiness/status fields.
@@ -1745,6 +3703,7 @@ Exact UI changes:
 - Estimate records panel now uses shared status badge classes, neutral table chrome, tighter hover/divider treatment, and a light `Next:` continuity line derived from existing estimate status/customer-view fields.
 
 QA results:
+
 - authenticated Playwright browser QA ran against `http://localhost:3001` using `playwright/.auth/local-user.json`
 - `/projects` loaded authenticated, `New project` quick-create entry was visible, real project detail links were present, and no browser console errors were captured
 - opened real project detail `/projects/797ec5b1-4417-4a36-934e-e82498efef5a` from the list-link set; it loaded authenticated with expected project-detail content and no browser console errors
@@ -1752,11 +3711,13 @@ QA results:
 - opened real estimate detail `/estimates/a58c10b5-9b3b-4c1a-a03b-44e3cdaa1c5e` from the list-link set; it loaded authenticated with expected estimate-detail content and no browser console errors
 
 Validation:
+
 - `pnpm typecheck` passed after aligning the project continuity helper with the real `CommercialReadinessStatus` enum (`not_ready`, not `not_started`)
 - `pnpm lint` passed
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
 
 Deferred items:
+
 - no customer, invoice, job, contract, portal, super-admin, route, workflow, backend, schema, auth, RLS, server-action, or data-model changes were made
 - no deeper list-page IA expansion, new ActionBar, new filters, new queues, or mutation QA was added in this phase
 
@@ -1765,10 +3726,12 @@ Deferred items:
 Contract Detail sent/awaiting fixture setup and QA completed through existing contractor UI/server actions only. No direct contract-state writes or readiness/signer guard bypasses were used.
 
 Files changed:
+
 - `apps/web/app/(app)/contracts/[contractId]/page.tsx`
 - `docs/chat-handoff.md`
 
 Fixture setup:
+
 - started from draft contract `/contracts/7d7b34bd-872a-4831-846b-6c99f500211f`
 - used the existing Customer Workspace Portal Access invite form for customer `/customers/a0ab94ab-d7c6-4397-a98e-0b38af96707d`
 - scoped the existing active local QA login email to project `/projects/797ec5b1-4417-4a36-934e-e82498efef5a` through the normal customer-level portal access path
@@ -1776,10 +3739,12 @@ Fixture setup:
 - stopped before any customer signature, onsite signature, decline, or contractor countersign action
 
 Sent fixture:
+
 - sent/awaiting contract: `/contracts/7d7b34bd-872a-4831-846b-6c99f500211f`
 - state verified: `sent`, `Awaiting customer`, `0/1 signed`, locked because signature activity has started
 
 Exact UI/QA results:
+
 - authenticated Playwright auth setup passed against `http://localhost:3000`
 - draft fixture `/contracts/a0ce5ce7-a305-48f8-bda3-d6e8e5a171c8` loaded with no console errors, kept draft send readiness visible, showed no standalone `Sign` action, kept signer routing and recent signature events visible, and had no green/emerald styling
 - sent fixture `/contracts/7d7b34bd-872a-4831-846b-6c99f500211f` loaded with no console errors, showed `Await customer signature`, showed no `Send for signature`, showed no standalone `Sign`, showed no contractor countersign action, kept onsite customer signature available as the valid unsigned-customer path, kept sent PDF snapshot visible, kept signer routing and recent signature events visible, and had no green/emerald styling before full signature completion
@@ -1788,11 +3753,13 @@ Exact UI/QA results:
 - small UI-only follow-up made during QA: Contract Detail WorkflowBar no longer marks the upstream Estimate step complete/green until the contract itself is fully signed, satisfying the no-green-before-signed rule
 
 Validation:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
 
 Deferred items:
+
 - portal customer sign/decline mutation testing remains intentionally unexercised for this pass
 - contractor countersign mutation testing remains deferred because this fixture was sent without a required contractor countersigner
 - no backend, schema, auth, RLS, server action, data model, route, or workflow changes were made
@@ -1802,16 +3769,19 @@ Deferred items:
 Contract Detail decision-first refactor completed as a UI-only contractor-app change. Scope stayed on the Contract Review workspace and the contract detail action component used by that workspace.
 
 Files changed:
+
 - `apps/web/app/(app)/contracts/[contractId]/page.tsx`
 - `apps/web/components/contract-status-actions.tsx`
 - `docs/chat-handoff.md`
 
 Inventory before editing:
+
 - actions/forms preserved: draft edit link, internal approval status updates, send-for-signature customer signer selection, optional contractor countersigner selection, contractor countersign, onsite customer signature modal, void action, and sent PDF snapshot link
 - links preserved: contracts manager, source estimate, project readiness hub, customer/project context, project schedule, linked jobs, linked invoices, related conversations, and generated/sent PDF context
 - conditional states preserved: draft send readiness, internal approval blockers, signature lock/editability, sent/viewed awaiting customer, declined, void, signed/completed, customer signer routing, optional contractor countersign, signature events/history, and deposit/project-readiness follow-through
 
 Exact UI changes:
+
 - replaced the old agreement identity/next-action summary band with `ActionBar`, `WorkflowBar`, and `ProjectStateSummary`
 - made the top `ActionBar` choose the truthful next signature step: edit/review draft readiness, send for signature, await customer, contractor countersign, signature complete, declined, or void
 - added a conservative `WorkflowBar` for `Estimate -> Contract -> Job -> Invoice -> Payment`, with green completion only when the existing linked records prove completion
@@ -1821,6 +3791,7 @@ Exact UI changes:
 - changed pre-completion contract action styling so internal approval and contractor countersign states no longer use green; green is reserved for fully signed/completed contract state
 
 QA results:
+
 - authenticated Playwright auth setup passed against `http://localhost:3000`
 - draft contract `/contracts/7d7b34bd-872a-4831-846b-6c99f500211f` loaded with no console errors, showed the new `ActionBar`, `Contract workflow`, `Signature state`, and `Contract content`, kept `Edit draft`, draft-only send readiness, workflow actions, signer routing, schedule handoff, connected workflow links, and recent signature events visible, and showed no standalone `Sign` action
 - signed contract `/contracts/d31947d6-8879-4d91-a0c5-bc45165c47a4` loaded with no console errors, showed `Signature complete`, conservative downstream workflow state from real linked jobs/invoices/payments, signer progress `1/1 signed`, locked edit state, sent PDF snapshot, signer routing, connected workflow, and recent signature events, with no send, edit, void, sign, or countersign controls visible
@@ -1828,11 +3799,13 @@ QA results:
 - sent/awaiting browser QA was not exercised because no sent/viewed contract exists locally, and both available draft contracts lacked an eligible customer signer for a safe UI-only send action
 
 Validation:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
 
 Deferred items:
+
 - sent/viewed awaiting-customer Contract Detail QA remains pending until a real sent/viewed contract fixture exists or a safe eligible customer signer is available through normal UI setup
 - customer portal sign/decline and contractor countersign mutation testing were not performed in this UI-only pass
 - no backend, schema, auth, RLS, server action, data model, route, or workflow changes were made
@@ -1842,15 +3815,18 @@ Deferred items:
 Job Detail decision-first refactor completed as a UI-only contractor-app change. Scope stayed on the Job Workspace only.
 
 Files changed:
+
 - `apps/web/app/(app)/jobs/[jobId]/page.tsx`
 - `docs/chat-handoff.md`
 
 Inventory before editing:
+
 - actions/forms preserved: `updateJobAction` status progression, `scheduleJobAction`, `unscheduleJobAction`, `assignCrewAction`, and `unassignCrewAction`
 - links preserved: jobs manager, project hub, customer workspace, linked estimate, linked invoice, invoice creation from completed uninvoiced jobs, time cards, punchlists, and daily logs
 - conditional states preserved: job dispatch status progression, completed-job invoice handoff, operational blockers for unscheduled/unassigned/uninvoiced-completed jobs, schedule edit visibility, unschedule visibility, crew assignment rows, and empty states for punchlists/daily logs
 
 Exact UI changes:
+
 - replaced the old top summary band with `ActionBar`, `WorkflowBar`, and `ProjectStateSummary`
 - made the top story execution-first: current job action, schedule state, crew state, dispatch status, and project context
 - promoted `Schedule and crew` to the first primary working section, with schedule save/unschedule and crew assign/unassign controls kept together
@@ -1859,6 +3835,7 @@ Exact UI changes:
 - removed duplicate status/schedule/crew summaries from the side rail
 
 QA results:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
@@ -1866,6 +3843,7 @@ QA results:
 - authenticated `/jobs` browser QA reached the Jobs Manager Page with no console errors, but the local contractor account currently has 0 jobs, so unscheduled/scheduled/in-progress/completed Job Workspace QA could not be exercised without creating or mutating data
 
 Deferred items:
+
 - browser QA on real unscheduled, scheduled, in-progress, and completed Job Workspace records remains pending until local QA data includes jobs
 - no mutation testing of schedule, unschedule, crew assignment, crew unassignment, status progression, or invoice creation was performed in this UI-only pass
 - no backend, schema, auth, RLS, server action, data model, route, or workflow changes were made
@@ -1875,19 +3853,23 @@ Deferred items:
 Job Detail QA fixture setup and verification completed against the preferred `24 Investor Way` QA chain using existing contractor-app UI and server actions only.
 
 Files changed:
+
 - `apps/web/app/(app)/jobs/[jobId]/page.tsx`
 - `docs/chat-handoff.md`
 
 Exact UI change:
+
 - tightened the Job Workspace unschedule visibility guard so `Unschedule job` renders only for `scheduled` jobs, not `unscheduled`, `in_progress`, or `completed` jobs
 
 QA fixtures created or used:
+
 - unscheduled job: `/jobs/acd2daf7-0d02-4196-99d2-1a4164095886`
 - scheduled job: `/jobs/7a99c1a5-b658-4f46-8328-e73a8f5966c4`
 - in-progress job: `/jobs/e1fff7e6-7823-4a9a-80f3-358ea16f5e80`
 - project: `/projects/6922a413-1350-496c-89d9-6b03dcbad0f1`
 
 Exact QA results:
+
 - authenticated Playwright auth setup passed against `http://localhost:3000`
 - the unscheduled, scheduled, and in-progress Job Workspace pages all loaded as authenticated protected pages with no browser console errors
 - `ActionBar` truthfulness verified: unscheduled shows `Mark scheduled`, scheduled shows `Start work`, in-progress shows `Mark complete`
@@ -1898,11 +3880,13 @@ Exact QA results:
 - project, customer, daily execution context, time, and invoice context remained visible on all three fixture detail pages
 
 Validation:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
 
 Deferred items:
+
 - completed-job fixture QA was not created in this pass; the safe existing UI path was stopped at in-progress
 - crew unassignment was not exercised because no assignable crew/person/vendor options were available in the existing assignment UI
 - no backend, schema, auth, RLS, server action, data model, route, or workflow changes were made
@@ -1912,10 +3896,12 @@ Deferred items:
 Job Detail polish and regression review completed against the existing Phase 8.1 fixtures. No new job fixtures were created.
 
 Files changed:
+
 - `apps/web/app/(app)/jobs/[jobId]/page.tsx`
 - `docs/chat-handoff.md`
 
 Exact polish made:
+
 - changed the schedule form heading to `Set schedule` for unscheduled jobs and `Update schedule` for scheduled or in-progress jobs
 - kept unscheduled schedule entry as an explicit `Save schedule` action instead of showing an initial `Saved` state before any schedule exists
 - kept the existing schedule save action wiring unchanged for all statuses where schedule updates remain visible
@@ -1924,6 +3910,7 @@ Exact polish made:
 - left estimate and invoice context in the secondary connected-record area and kept estimate totals out of the job page
 
 QA results:
+
 - authenticated Playwright auth setup passed against `http://localhost:3000`
 - unscheduled fixture `/jobs/acd2daf7-0d02-4196-99d2-1a4164095886` loaded with no console errors, showed `Mark scheduled`, showed `Set schedule` with `Save schedule`, did not show `Unschedule job` or `Start work`, kept the conservative workflow/state summary visible, and showed the softened no-crew-options note
 - scheduled fixture `/jobs/7a99c1a5-b658-4f46-8328-e73a8f5966c4` loaded with no console errors, showed `Start work`, showed `Update schedule`, showed exactly one `Unschedule job`, kept the WorkflowBar conservative, and showed the softened no-crew-options note
@@ -1932,11 +3919,13 @@ QA results:
 - browser QA required refreshing the Playwright storage state before individual fixture checks because the local Supabase session rotated during repeated scratch-script page loads; this did not require any app change or data mutation
 
 Validation:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
 
 Deferred items:
+
 - completed-job fixture QA remains deferred
 - crew assignment and unassignment were not mutation-tested because the existing QA organization has no assignable people or labor-provider vendors available
 - no Contract Detail work was started
@@ -1947,6 +3936,7 @@ Deferred items:
 Focused shared-component UI cleanup completed after the Project Detail decision-first refactor. This was UI-only polish, not a new feature phase or page-layout refactor.
 
 Files changed:
+
 - `packages/ui/src/components/action-bar.tsx`
 - `packages/ui/src/components/workflow-bar.tsx`
 - `packages/ui/src/components/project-state-summary.tsx`
@@ -1958,6 +3948,7 @@ Files changed:
 - `docs/chat-handoff.md`
 
 Exact UI cleanup made:
+
 - standardized the new decision-first shells on neutral `8px` radius cards with consistent neutral borders
 - changed `WorkflowBar` current/in-progress styling from amber to blue, matching the status-color rule
 - split `ProjectStateSummary` tones so active/current can be blue while needs-action/readiness blockers use yellow
@@ -1967,11 +3958,13 @@ Exact UI cleanup made:
 - updated project detail readiness warning mapping to use the new `needsAction` state summary tone
 
 Behavior preserved:
+
 - no project detail actions, links, forms, guards, server actions, readiness calculations, data loaders, workflow behavior, auth, RLS, route architecture, schema, backend, or data model changed
 - dashboard, estimates, invoices, jobs, contracts, portal, super-admin, and list pages were not refactored into new layouts
 - the completed Project Detail structure remains intact: `ActionBar`, `WorkflowBar`, `ProjectStateSummary`, and core Estimate/Contract/Job/Invoice workflow grouping remain in place
 
 Validation:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
@@ -1984,6 +3977,7 @@ Validation:
   - screenshots were saved under `test-results/ui-cleanup-*.png`
 
 Intentionally deferred cleanup:
+
 - no `DetailPanel`, portal, or super-admin card restyling in this pass because those shared surfaces cross the contractor-only scope
 - no dashboard, estimate, invoice, job, contract, or list-page layout refactors
 - no mutation testing of create/save actions; this pass only verified visibility, navigation/auth continuity, and rendering stability
@@ -1993,6 +3987,7 @@ Intentionally deferred cleanup:
 Focused post-cleanup hardening completed before the Dashboard phase. This was a UI-only and test-infra-only pass scoped to shared contractor UI components, Project Detail, and protected Playwright setup.
 
 Files changed:
+
 - `packages/ui/src/status.ts`
 - `packages/ui/src/components/action-bar.tsx`
 - `packages/ui/src/components/workflow-bar.tsx`
@@ -2007,6 +4002,7 @@ Files changed:
 - `docs/chat-handoff.md`
 
 Exact hardening made:
+
 - added one shared `@floorconnector/ui` status presentation helper for status tone mapping and status badge/connector classes
 - centralized semantic status colors for gray neutral/draft/not-started, blue active/current/in-progress, yellow needs-action/waiting/readiness-warning, red blocked/error/failed, and green complete/approved/paid/signed
 - updated `ActionBar`, `WorkflowBar`, `ProjectStateSummary`, project detail badges, and contractor manager-card badges to use shared status presentation instead of local status-color strings
@@ -2018,11 +4014,13 @@ Exact hardening made:
 - added `e2e/project-detail-ui.spec.js` to smoke-test the Project Detail `ActionBar`, `WorkflowBar`, `ProjectStateSummary`, and `Core Workflow`
 
 Behavior preserved:
+
 - no backend, schema, auth logic, RLS, route architecture, server action, data loading, readiness calculation, workflow behavior, forms, permissions, or guards changed
 - no dashboard, estimate, invoice, job, contract, portal, super-admin, or list-page layout refactor was started
 - Project Detail remains the decision-first workflow/readiness hub with `ActionBar`, `WorkflowBar`, `ProjectStateSummary`, and core Estimate/Contract/Job/Invoice grouping intact
 
 Validation:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
@@ -2034,6 +4032,7 @@ Validation:
 - no browser console errors were captured during the passing QA checks
 
 Intentionally deferred:
+
 - no further global card system changes outside the requested shared components
 - no portal/super-admin consistency pass
 - no Dashboard phase work or other page-level layout refactors
@@ -2044,6 +4043,7 @@ Intentionally deferred:
 Dashboard decision-center refactor completed as a UI-only contractor-app change. Scope stayed on the contractor dashboard surface and dashboard smoke QA; no estimate, invoice, job, contract, portal, super-admin, or list-page layout refactor was started.
 
 Files changed:
+
 - `apps/web/app/(app)/dashboard/page.tsx`
 - `apps/web/components/dashboard/contractor-dashboard-surface.tsx`
 - `apps/web/components/dashboard/priority-strip.tsx`
@@ -2052,12 +4052,14 @@ Files changed:
 - `docs/chat-handoff.md`
 
 Inventory before editing:
+
 - visible actions and links included Universal Create, top shortcuts to Projects, Schedule manager, Payments manager, and Cost items database, metric links to Leads, Estimates, Schedule, and Appointments, queue links into attention items, leads, estimates, contracts, projects, jobs, appointments, invoices, payments, and project context links, plus onboarding links to Settings, Customers quick-create, Projects quick-create, and Estimates quick-create
 - metrics included leads needing follow-up, estimates awaiting action, jobs needing schedule, appointments today, jobs today/live, role, active projects, open receivables, scheduled appointments, unscheduled jobs, open punchlists, ready progress-billing workspaces, customer count, estimate count, and open receivables
 - conditional sections included high-signal attention, onboarding setup guide, commercial queues, operations queues, finance queues, empty states, top shortcut metrics, and quick-create access
 - existing data loaders and server actions remained the same: customer, opportunity, estimate, approved-estimate, project, contract, job, appointment, punchlist, invoice, payment, notification, progress-billing, financial settings, workflow settings, and quick-create actions for lead/customer/project/estimate/contract/job/invoice/change order
 
 Exact UI changes:
+
 - added dashboard-only `PriorityStrip` at the top of the dashboard content, derived from existing notification, receivables, estimate, and job queues
 - reordered the visible dashboard structure to Priority Strip -> Key Metrics -> Onboarding when needed -> Work Queues
 - renamed the metric grid treatment to a clearer key-metrics section: `Pipeline and execution snapshot`
@@ -2068,11 +4070,13 @@ Exact UI changes:
 - added a protected Playwright dashboard smoke test for the decision-center headings, Universal Create visibility, Projects navigation, and console-error check
 
 Behavior preserved:
+
 - no backend, schema, auth logic, RLS, route architecture, server action, data model, workflow behavior, guards, or data loading changed
 - quick-create access remains visible from the dashboard header
 - existing dashboard actions and links remain visible where their original conditions apply
 
 Validation:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
@@ -2084,6 +4088,7 @@ Validation:
   - no browser console errors were captured during the passing dashboard QA run
 
 Intentionally deferred:
+
 - no mutation testing of create/save actions
 - no dashboard data-loader or priority algorithm changes beyond existing loaded data
 - no refactor of dashboard placeholders or non-rendered quick-create prop plumbing
@@ -2094,11 +4099,13 @@ Intentionally deferred:
 Focused dashboard-only review and polish completed after the Phase 5 decision-center refactor. This remained UI-only and did not expand into other contractor pages or downstream record workspaces.
 
 Files changed:
+
 - `apps/web/components/dashboard/priority-strip.tsx`
 - `apps/web/components/dashboard/contractor-dashboard-surface.tsx`
 - `docs/chat-handoff.md`
 
 Exact polish made:
+
 - reviewed the Phase 5 dashboard diff for action placement, priority-strip usefulness, metric placement, queue grouping, and passive color noise
 - removed the orange CTA from `PriorityStrip` so Universal Create remains the clear primary orange dashboard CTA
 - changed `PriorityStrip` count pills from status-colored badges to neutral count markers, reducing duplicate status emphasis above the queues
@@ -2107,10 +4114,12 @@ Exact polish made:
 - added a quiet `Work queues` heading before the queue grids so the dashboard clearly transitions from priority and metrics into follow-up lists
 
 Behavior preserved:
+
 - all dashboard data loaders, quick-create server actions, links, filters, search behavior, empty states, and queue destinations were preserved
 - no backend, schema, auth, RLS, server action, data model, route, workflow behavior, estimates, invoices, jobs, contracts, portal, super-admin, or list-page behavior changed
 
 Validation:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
@@ -2122,6 +4131,7 @@ Validation:
   - no browser console errors were captured during the passing dashboard QA run
 
 Deferred:
+
 - no mutation testing of quick-create actions
 - no visual polish outside the dashboard
 - no additional dashboard data prioritization rules beyond the existing loaded queues
@@ -2131,10 +4141,12 @@ Deferred:
 Estimate Detail decision-first refactor completed as a UI-only contractor-app change. Scope stayed on the estimate detail page and preserved the existing editor, estimate calculations, catalog/system insertion, approval states, server actions, and workflow guards.
 
 Files changed:
+
 - `apps/web/app/(app)/estimates/[estimateId]/page.tsx`
 - `docs/chat-handoff.md`
 
 Inventory before editing:
+
 - visible actions included Back to estimates, Back to edit, Generate contract for approved estimates, Open project workspace, the preferred next-action link, approved-estimate contract/SOV/snapshot recovery actions, Send estimate, Manage customer portal access, Open customer, Review linked lead, manual estimate status actions, connected project/contract/job/invoice links, schedule links, and communication links
 - links included estimates list, estimate editor, project workspace, contracts, invoices, jobs, schedule, customers, leads, and related communications where records exist
 - readiness and blocker messages included estimate status meaning, project readiness status, active project blockers, send prerequisites, missing customer email blocker copy, approval/contract-generation snapshot recovery guidance, schedule approval blockers, and customer timeline events
@@ -2143,6 +4155,7 @@ Inventory before editing:
 - conditional rendering preserved approved-only next steps, draft/rejected send actions, customer email prerequisites, manual decision actions, customer/lead blockers, schedule handoff copy, linked downstream records, and empty downstream workflow messaging
 
 Exact UI behavior changed:
+
 - replaced the older top summary band with the shared `ActionBar`, `WorkflowBar`, and `ProjectStateSummary` directly under the estimate header
 - made the ActionBar the dominant next-action surface and moved Back to edit/Open project workspace into neutral secondary actions
 - added an Estimate -> Contract -> Job -> Invoice WorkflowBar derived from existing linked records and statuses only
@@ -2152,11 +4165,13 @@ Exact UI behavior changed:
 - switched connected workflow badges to the shared status badge helper for consistent neutral/status-only color usage
 
 Behavior preserved:
+
 - no backend, schema, auth, RLS, server action, data model, route architecture, estimate calculation, tax, discount, line item, catalog/system generation, approval, approved-snapshot, or workflow behavior changed
 - estimate editor functionality and save behavior were not refactored
 - no dashboard, invoice, job, contract, portal, super-admin, or list-page layout work was started
 
 Validation:
+
 - `pnpm typecheck` passed after correcting display-only status assumptions in the new WorkflowBar/state summary mapping
 - `pnpm lint` passed
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
@@ -2169,6 +4184,7 @@ Validation:
   - screenshot saved at `test-results/estimate-detail-phase-6.png`
 
 Deferred:
+
 - no test file was added in this phase because the existing protected QA flow covered the required real estimate detail and editor smoke checks without introducing a new framework or broad test surface
 - no deeper estimate editor layout refactor; this phase kept edits to the estimate detail page
 - no mutation testing of send/approval/contract-generation actions beyond visibility and navigation checks
@@ -2178,10 +4194,12 @@ Deferred:
 Focused estimate-detail-only review and polish completed after the Phase 6 decision-first refactor. This remained UI-only and did not expand into the estimate edit layout, dashboard, invoices, jobs, contracts, portal, super-admin, or list pages.
 
 Files changed:
+
 - `apps/web/app/(app)/estimates/[estimateId]/page.tsx`
 - `docs/chat-handoff.md`
 
 Exact polish made:
+
 - reviewed the Phase 6 estimate detail diff for ActionBar placement, WorkflowBar state accuracy, summary duplication, totals/line-item hierarchy, and preserved links/actions
 - changed draft estimate ActionBar guidance from approval-oriented copy to `Review and send estimate`, linking to the existing estimate editor instead of the manual decision anchor
 - clarified sent estimate ActionBar copy as `Record customer decision`, keeping manual approval/rejection framed for offline/non-portal decisions only
@@ -2191,10 +4209,12 @@ Exact polish made:
 - removed the duplicate Status card from `ProjectStateSummary`; status remains visible in the ActionBar, while the summary now focuses on total, tax/discount, line items, and project readiness
 
 Behavior preserved:
+
 - existing estimate detail data loading, send actions, manual decision actions, linked record links, project navigation, approved-estimate next-step panel, readiness messages, line item display, forms, guards, editor handoff, and catalog/system workflow behavior were preserved
 - no backend, schema, auth, RLS, server action, data model, route, estimate calculation, tax, discount, approval, catalog, system, or workflow behavior changed
 
 Validation:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
@@ -2210,6 +4230,7 @@ Validation:
   - no browser console errors were captured during the passing QA run
 
 Deferred:
+
 - no new permanent Playwright spec was added during this polish pass because the existing protected auth setup plus targeted one-off browser QA covered the required draft and approved estimate checks
 - no estimate editor visual refactor was attempted
 - no mutation testing of send, approval, rejection, contract generation, SOV, or deposit actions beyond existing visibility/navigation checks
@@ -2219,10 +4240,12 @@ Deferred:
 Invoice Detail decision-first refactor completed as a UI-only contractor-app change. Scope stayed on the invoice detail page and preserved the existing invoice editor, calculations, line items, tax, retainage, balances, payment recording form/action wiring, statuses, server actions, and workflow guards.
 
 Files changed:
+
 - `apps/web/app/(app)/invoices/[invoiceId]/page.tsx`
 - `docs/chat-handoff.md`
 
 Inventory before editing:
+
 - visible actions included Back to invoices, Record payment, Open progress billing workspace for AIA progress invoices, Open project readiness hub, continuity links to progress billing or project workspace, the payment recording form, the invoice edit/progress-source panel, linked schedule/job actions, connected-record links, and related-conversation actions
 - links included invoices list, project readiness hub, progress billing workspace, customer, estimate, job, schedule, change orders, and related communications where records exist
 - readiness and blocker messages included resolved route error/message banners, online payment readiness copy, customer payment/progress copy, recent payment signal copy, void-invoice payment blocking copy, progress billing missing-workspace copy, project readiness metadata, and schedule/job/crew context notices
@@ -2231,6 +4254,7 @@ Inventory before editing:
 - conditional rendering preserved void/draft/sent/partially-paid/paid next-action handling, payment-event messaging, payment recording visibility for non-void invoices, progress-billing workspace handoff, linked job versus project schedule context, connected records, and paid/partially-paid status derivation inside the existing invoice form
 
 Exact UI behavior changed:
+
 - replaced the older top identity/summary band with shared `ActionBar`, `WorkflowBar`, and `ProjectStateSummary` directly below the invoice header
 - made the ActionBar the dominant billing next-action surface; sent/partially-paid/open invoices still point at existing payment recording, paid invoices point back to the project hub, void invoices stay review-only, and draft invoices now point to the existing invoice-editing section instead of implying payment collection
 - added an Estimate -> Contract -> Job -> Invoice -> Payment WorkflowBar derived only from existing linked records, project readiness snapshot, invoice status, payments, and balance state
@@ -2241,10 +4265,12 @@ Exact UI behavior changed:
 - kept payment activity visible below line items and billing notes as secondary review context
 
 Behavior preserved:
+
 - no backend, schema, auth, RLS, server action, data model, route architecture, invoice calculation, tax, retainage, balance, payment recording, line item, status, readiness, or workflow behavior changed
 - no dashboard, estimate, job, contract, portal, super-admin, or list-page layout work was started
 
 Validation:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed after removing dead display helpers made obsolete by the top-stack replacement
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
@@ -2254,20 +4280,24 @@ Validation:
 - no browser console errors were captured while checking the authenticated invoice manager/create surface
 
 Deferred:
+
 - no permanent Playwright spec was added during initial implementation because fixture coverage was added later through real authenticated QA invoices
 
 ## Phase 7 Invoice Detail Fixture Polish
 
 Focused invoice-detail-only review and polish completed against the new real QA fixtures:
+
 - unpaid: `/invoices/7598e4ef-f875-4543-93fb-d2d846896ed7`
 - partial: `/invoices/c9131b30-dea7-45a5-b476-8ba2bf3fc502`
 - paid: `/invoices/894d1e3a-c3f2-4572-869b-545f00aef027`
 
 Files changed:
+
 - `apps/web/app/(app)/invoices/[invoiceId]/page.tsx`
 - `docs/chat-handoff.md`
 
 Exact polish made:
+
 - verified the ActionBar remains truthful for sent/unpaid, partially paid, and paid invoice states
 - preserved the `Record payment` primary CTA and existing payment form for unpaid and partially paid invoices
 - removed misleading payment-recording prompts from settled/paid invoices by replacing the form area with a secondary `Payment Activity` review state
@@ -2277,20 +4307,24 @@ Exact polish made:
 - preserved line items as the primary billing workspace and payment activity as secondary review context
 
 Behavior preserved:
+
 - no backend, schema, auth, RLS, server action, data model, route, invoice calculation, tax, retainage, balance, status, line item, payment recording, or workflow behavior changed
 - no dashboard, estimates, jobs, contracts, portal, super-admin, list pages, invoice editor, or payment-provider behavior changed
 
 QA results:
+
 - unpaid fixture showed sent invoice state, ActionBar `Record the next payment`, visible `Record payment` link and form, balance due `$594.59`, Payment step `No payment recorded`, and no console errors
 - partial fixture showed partially paid invoice state, ActionBar `Collect the remaining deposit balance`, visible `Record payment` link and form, balance due `$394.59`, Payment step `1 recorded payment`, and no console errors
 - paid fixture showed paid invoice state, ActionBar `Billing review is current`, no `Record payment` link or form, balance due `$0.00`, settled payment activity copy, Payment step `1 recorded payment`, and no console errors
 
 Validation:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
 
 Deferred:
+
 - no broader invoice list/editor, dashboard, estimate, job, contract, portal, or super-admin cleanup was attempted
 - no permanent Playwright spec was added in this polish pass; coverage remained targeted authenticated browser QA on the three real invoice fixtures
 
@@ -2316,6 +4350,7 @@ FloorConnector is a production-first specialty-contractor operating system built
 - Validation run for this fix: `pnpm typecheck` and `pnpm lint` passed. Playwright spec discovery passed with `PLAYWRIGHT_SKIP_WEB_SERVER=1`; a headless `/contracts?compose=1&estimateId=<id>&error=<encoded message>` check reached the local app but redirected to `/login` because no saved contractor auth state or E2E credentials were available in this session.
 
 Current stage:
+
 - Phase B first-pass foundations are now implemented for onboarding readiness polish, reporting basics, Sales Tax Summary, and manual notification-only automation
 - Inventory / Cost Item Database Phase 1 audit is recorded in [docs/inventory-cost-item-database-plan.md](C:/FloorConnector/docs/inventory-cost-item-database-plan.md). The safe implementation decision is to keep `catalog_items` as the canonical reusable cost item database, with optional stock tracking through linked `inventory_items` and audited `inventory_transactions`; no new `contractor_cost_items` table was added.
 - Catalog item hardening follow-up is documented in [docs/catalog-items-hardening-test-plan.md](C:/FloorConnector/docs/catalog-items-hardening-test-plan.md), and a read-only duplicate-name report lives at [scripts/catalog-items-duplicate-normalized-name-report.sql](C:/FloorConnector/scripts/catalog-items-duplicate-normalized-name-report.sql). No automated test harness exists yet, so no new framework was introduced.
@@ -2391,6 +4426,7 @@ Added systems:
 ## Built Now
 
 Implemented on the current branch:
+
 - auth, tenant bootstrap, organization-aware access control
 - leads, customers, projects, estimates
 - first read-only `/directory` workspace over canonical customers, related customer contacts, workforce people, vendors, and leads, with each row routing back into the existing canonical detail page
@@ -2486,6 +4522,7 @@ Implemented on the current branch:
   - the existing item grid is the safe admin surface for catalog management; it now includes clearer reusable-cost-item empty-state copy without wiring the database into new estimate or invoice behavior
 
 Current Directory-direction reminder:
+
 - a future `Directory` workspace should unify contractor-facing account and contact browsing over canonical records
 - customer entries in that future Directory remain full canonical customer/account records
 - additional customer contacts remain related contacts beneath the canonical customer/account
@@ -2496,6 +4533,7 @@ Current Directory-direction reminder:
 ## Stable Baseline
 
 Treat these as current implementation guardrails:
+
 - top-nav-first contractor shell
 - shared Manager Page pattern
 - shared Record Workspace pattern for detail pages; do not invent new page structures
@@ -2515,6 +4553,7 @@ Treat these as current implementation guardrails:
 FloorConnector is not a collection of module apps.
 
 Direction now locked in:
+
 - one shared lifecycle system
 - continuity over module silos
 - dashboards are entry surfaces, not separate product worlds
@@ -2523,6 +4562,7 @@ Direction now locked in:
 ## Not Built Yet
 
 Still intentionally not implemented:
+
 - full dispatch-grade scheduling system
 - deeper dispatch automation
 - a fully finished page-by-page contractor reskin on every lower-traffic surface
@@ -2536,6 +4576,7 @@ Still intentionally not implemented:
 ## Next Build Phase
 
 Primary focus for the next phase:
+
 - run and record seed-free Phase B validation from [docs/phase-b-internal-validation-runbook.md](C:/FloorConnector/docs/phase-b-internal-validation-runbook.md)
 - reporting and Sales Tax Summary accuracy checks
 - manual automation duplicate-guard and recipient validation
@@ -2543,6 +4584,7 @@ Primary focus for the next phase:
 - contractor onboarding runbook and beta candidate criteria
 
 Goal:
+
 - prove the current foundation before contractor beta, then fix only validation-blocking defects before adding more breadth
 
 ## Estimate Editoror Group-First Planning
@@ -2572,31 +4614,37 @@ Non-visual follow-up items discovered: several lower-traffic Manager Pages still
 Latest v0/CF-inspired visual review pass stayed visual/UI-only. No schema, migration, auth, workflow, estimate calculation, invoice calculation, or catalog insertion behavior was changed.
 
 Directory visual audit completed:
+
 - `/directory` render path was traced to `apps/web/app/(app)/directory/page.tsx`, `apps/web/components/contractor-workspace-page.tsx`, `apps/web/components/workspace-command-bar.tsx`, and the empty-state fallback in `apps/web/components/app-empty-state.tsx`.
 - `/directory` now opts into the shared workspace header's dark FloorConnector/CF-inspired header tone, keeps the page read-only, and uses existing customer, related-contact, workforce, vendor, and opportunity data only.
 - Confirmed stale accent cleanup in the active Directory render path: `AppEmptyState` no longer uses the older `brand-*` empty-state accent when Directory filters return no records.
 - Directory search, filters, summary panels, helper panels, status badges, and register rows were visually tightened with warm neutral, black/gray, and orange accents. No routes, actions, permissions, data loading, workflows, or canonical models changed.
 
 Confirmed non-visual follow-up:
+
 - Invoice creation can still be blocked by the existing commercial-readiness guard when the project does not have the required signed-contract and deposit/financing readiness state. This is expected business behavior, not a visual regression. Next validation should use a project that has completed the signed-contract/readiness prerequisites, then verify deposit, completed-job, approved-estimate, and approved-change-order invoice creation paths end to end.
 
 Confirmed behavior issue addressed in this pass:
+
 - Change-order invoice Quick-Create context could be lost when entering `/invoices` with only `changeOrderId` or while moving through invoice manager filters. The UI now resolves the change order's project context and preserves `changeOrderId` across the invoice create sheet and manager links.
 
 ## Account Menu / Profile Settings Follow-Up
 
 Profile / Account Settings surface added:
+
 - `/settings/profile` now provides a protected personal account settings surface using the existing Supabase auth user, canonical `public.users` profile extension, and active organization membership context.
 - The top-right account menu now links to `Profile / Account settings` while preserving Organization settings, Settings home, and the existing sign-out action.
 - The profile page is read-only because this pass found the canonical profile table and self-update RLS, but no existing app-level personal profile update action/helper wired for safe editing.
 - Existing organization settings remain admin-gated; the settings layout can render the personal profile page for active members, and admin-only settings pages continue to require organization owner/admin scope.
 
 Confirmed non-visual follow-up:
+
 - Add an explicit personal profile update action only after the intended editable fields, validation rules, and auth/profile sync behavior are approved.
 
 ## Black / Gray / Orange Palette Direction
 
 Visual-only contractor-app palette update completed:
+
 - FloorConnector's preferred contractor-app palette is black / gray / orange / white.
 - Shared brand tokens now point to the warm orange action palette instead of green/teal, so existing `brand-*` buttons, links, checkboxes, and focus rings resolve to the approved accent direction.
 - Shared shell, workspace/sidebar chrome, settings navigation, empty states, and manager headings were normalized away from prior dark-green and bluish heading values.
@@ -2606,6 +4654,7 @@ Visual-only contractor-app palette update completed:
 ## System-Wide Palette Standardization
 
 Visual-only system-wide palette standardization completed:
+
 - Official contractor-app palette is black / gray / orange / white.
 - Shared contractor shell, top navigation, workspace/page wrappers, command bars, manager cards, tables/registers, composer sheets, settings surfaces, forms, inputs, empty states, and document rendering styles were audited for stale blue/green/teal/violet utility accents.
 - Confirmed non-semantic blue, sky, cyan, indigo, teal, violet, navy, and blue-tinted neutral accents were removed from the protected app/shared contractor component scan.
@@ -2618,22 +4667,26 @@ Visual-only system-wide palette standardization completed:
 Decision-first UI refactor foundation is started from `plan/refactor-decision-first-ui-1.md`. The prompt referenced `docs/refactor-decision-first-ui-1.md`, but that exact path was not present; the matching plan was found under `plan/`.
 
 Completed in this staged subset:
+
 - Phase 1 foundation components only: shared theme constants, `ActionBar`, `WorkflowBar`, `ProjectStateSummary`, `PrimarySection`, and `SecondarySection` were added to `@floorconnector/ui`.
 - Phase 2 section layout components: contractor app wrappers `CoreWorkflowSection`, `ExecutionSection`, and `SupportSection` were added under `apps/web/components/layout`.
 - Phase 3 UI audit: [docs/ui-refactor-audit.md](C:/FloorConnector/docs/ui-refactor-audit.md) records decision-first anti-patterns and page-level risks before visual implementation.
 
 Behavior preserved:
+
 - no major pages were refactored
 - no server actions, forms, permissions, workflows, routes, schema, auth, RLS, Supabase policies, data models, calculations, estimate behavior, invoice behavior, contract behavior, job behavior, or portal/super-admin behavior changed
 - project detail remains the primary workflow/readiness hub
 - the contractor top-nav-first shell and shared Manager Page direction remain intact
 
 Validation for this subset passed:
+
 - `pnpm typecheck`
 - `pnpm lint`
 - `git diff --check` with exit code 0; it reported only the usual LF-to-CRLF working-copy warning on `packages/ui/src/index.ts`
 
 Follow-up risk:
+
 - Phase 4 should be handled as its own careful project-detail pass because that page carries the densest readiness and workflow sequencing. Preserve all existing project links/actions and server-side readiness logic when adding `ActionBar`, `WorkflowBar`, and `ProjectStateSummary`.
 
 ## Decision-First UI Refactor Phase 4
@@ -2641,10 +4694,12 @@ Follow-up risk:
 Project Detail refactor completed as a UI-only contractor-app change in `apps/web/app/(app)/projects/[projectId]/page.tsx`.
 
 Files changed:
+
 - `apps/web/app/(app)/projects/[projectId]/page.tsx`
 - `docs/chat-handoff.md`
 
 Inventory before editing:
+
 - visible actions included Create Estimate, Generate contract when an approved estimate exists without a contract, Create appointment, Create deposit invoice when deposit is required and unsatisfied, Create invoice for completed uninvoiced jobs, primary next-action links, secondary next-action links, follow-up action queue links, financing-status save, project edit save, empty-state create links for appointments, punchlists, daily logs, and change orders, plus schedule handoff actions
 - links included projects back link, estimates, contracts, appointments, jobs, punchlists, daily logs, change orders, progress billing, invoices, payments, leads, customers, time cards, schedule, and communications
 - readiness and blocker messages included project readiness status, ready-to-schedule date, active blocker list, readiness-stage details, `nextAction.blockerCopy`, deposit/financing/readiness copy, scheduling handoff copy, and the financing form note
@@ -2653,6 +4708,7 @@ Inventory before editing:
 - conditional rendering included status/readiness badges, approved-estimate contract generation, deposit invoice creation, completed-job invoice creation, blocker/no-blocker state, readiness stages, empty states, schedule focus, related-record lists, and sidebar continuity cards
 
 Exact UI behavior changed:
+
 - `ActionBar` now appears directly under the existing project page header and carries the current primary next action, secondary action, readiness status, blocker copy, and customer/location meta
 - `WorkflowBar` now appears below `ActionBar`, mapping the existing readiness-stage data into the project readiness workflow without changing readiness logic
 - `ProjectStateSummary` now appears near the top, summarizing project, readiness, financial, and schedule state from existing computed values
@@ -2662,17 +4718,20 @@ Exact UI behavior changed:
 - Documents now uses `SupportSection`; Operations Hub now uses `ExecutionSection`
 
 Behavior preserved:
+
 - no data loading, server actions, forms, route architecture, permissions, readiness calculations, links, workflow guards, schema, auth, RLS, Supabase policy, estimates, contracts, jobs, invoices, portal, super-admin, dashboard, or global list pages changed
 - project detail remains the primary workflow/readiness hub
 - existing project detail actions and links remain visible where their original conditions apply
 
 Validation:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed after removing dead code from the replaced overview stack
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
 - browser QA attempted against real project `/projects/cbb32597-59c6-424b-9c3c-77f2b40ba0d0` on `localhost:3000` using `playwright/.auth/local-user.json`, but the saved contractor auth session was stale and redirected to `/login?next=%2Fpeople`; no local `FLOORCONNECTOR_E2E_EMAIL` or `FLOORCONNECTOR_E2E_PASSWORD` values were present in `.env.local`, so authenticated project-detail browser QA is intentionally deferred until a fresh real contractor session is available
 
 Intentionally deferred project-detail polish:
+
 - no deeper visual tuning of lower support panels
 - no click-through mutation testing of create/save actions without a fresh authenticated QA session
 - no dashboard, estimates, invoices, jobs, contracts, portal, super-admin, or list-page changes
@@ -2682,6 +4741,7 @@ Intentionally deferred project-detail polish:
 Full review and refinement pass completed for the Phase 1-4 decision-first UI work. This was a UI-only QA/refinement pass, not a new feature phase.
 
 Files changed:
+
 - `apps/web/app/(app)/projects/[projectId]/page.tsx`
 - `packages/ui/src/components/action-bar.tsx`
 - `packages/ui/src/components/workflow-bar.tsx`
@@ -2689,6 +4749,7 @@ Files changed:
 - `docs/chat-handoff.md`
 
 Exact UI improvements made:
+
 - Project header actions remain visible, but the duplicate orange `Create Estimate` header CTA was changed to a neutral secondary action so the `ActionBar` owns the dominant next action.
 - Duplicate project/readiness status badges were removed from the project header because the same information is now present in `ActionBar` and `ProjectStateSummary`.
 - `ActionBar`'s non-clickable next-action label now uses neutral styling instead of orange, preserving orange for the primary CTA.
@@ -2698,11 +4759,13 @@ Exact UI improvements made:
 - The empty job card's create link now preserves the existing project-scoped jobs handoff path (`/jobs?projectId=...`) instead of introducing a broader query shape.
 
 Behavior preserved:
+
 - existing project detail actions and links remain visible where their original conditions apply
 - no data loading, server actions, forms, permissions, route architecture, workflow guards, readiness calculations, schema, auth, RLS, Supabase policy, backend, dashboard, estimates, invoices, jobs, contracts, portal, super-admin, or list pages changed
 - project detail remains the primary workflow/readiness hub
 
 Validation:
+
 - `pnpm typecheck` passed
 - `pnpm lint` passed after removing one unused readiness badge helper made obsolete by the header cleanup
 - `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
@@ -2715,6 +4778,7 @@ Validation:
   - screenshot saved locally at `test-results/project-detail-review-pass.png`
 
 Follow-up risks:
+
 - lower project support panels can still receive normal iterative visual polish later, but no structural issue was found in this review
 - `e2e/auth.setup.js` currently clicks the first submit button on `/login`, which is the Google flow; protected QA used a focused Playwright login path that targets the email/password submit button instead
 
@@ -2740,6 +4804,7 @@ Focused Playwright browser QA infrastructure was added for protected contractor 
 - Running instructions live at [docs/e2e-browser-qa.md](C:/FloorConnector/docs/e2e-browser-qa.md).
 
 Dependency repair / validation status:
+
 - The previous install issue was caused by stale running FloorConnector dev-server processes locking native `next` and `turbo` files while pnpm tried to reconcile `node_modules`.
 - The local dependency tree was repaired by stopping only those FloorConnector dev-server process trees, removing workspace `node_modules` artifacts, and rerunning `pnpm install --config.offline=false --reporter=append-only`.
 - Playwright is installed (`pnpm exec playwright --version` reports 1.59.1), and Chromium was installed with `pnpm exec playwright install chromium`.
@@ -2752,11 +4817,13 @@ Dependency repair / validation status:
 Final pre-next-phase documentation consistency review completed. Reviewed, in order: `docs/chat-handoff.md`, `docs/developer-source-of-truth.md`, `docs/current-state.md`, `docs/workflows.md`, `docs/Roadmap.md`, `docs/system-overview.md`, `docs/sales-to-production.md`, `docs/target-ia.md`, `docs/vision.md`, and `README.md`, with `docs/documentation-governance.md` checked for archival rules.
 
 Corrections made were documentation-only:
+
 - `docs/reporting-basics-plan.md` now clearly says the first `/reports` basics surface is implemented and that the plan is retained as guardrail/context, not an unstarted build plan.
 - `docs/Roadmap.md` now identifies the current Phase B focus as validation and foundation hardening instead of implying first-pass scheduling, communications, reporting, and automation UI are still future work.
 - `docs/system-overview.md` now distinguishes implemented first-pass `/communications`, `/schedule`, `/reports`, and Sales Tax Summary foundations from deeper target-only communication, dispatch, and analytics work.
 
 Known remaining doc risks:
+
 - several detailed implementation plans remain active because they still provide useful guardrails; they should be archived only after the next validation pass confirms they no longer prevent drift.
 - no broad link rewrite was done; active source-of-truth docs still use absolute `C:/FloorConnector/...` links by convention.
 - the next build phase should remain validation-first: run and record seed-free Phase B validation before adding feature breadth.
@@ -2764,6 +4831,7 @@ Known remaining doc risks:
 ## System Rules
 
 Keep these short rules in mind:
+
 - no duplicate business models
 - no portal-only copies of shared records
 - no module-local silos

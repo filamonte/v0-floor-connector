@@ -107,6 +107,11 @@ export const platformAdminNavItems: readonly SettingsNavItem[] = [
     description: "Platform feature policy and module availability rules."
   },
   {
+    href: "/super-admin/groups",
+    label: "Contractor Groups",
+    description: "Platform segmentation for cohorts and future targeting."
+  },
+  {
     href: "/super-admin/early-access",
     label: "Early Access",
     description: "Onboarding visibility, first workflow progress, and activation control."

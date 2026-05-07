@@ -9,6 +9,7 @@ import {
   signInPath
 } from "./paths";
 import { ensureAuthenticatedUserBootstrap } from "./bootstrap";
+import { resolvePostLoginRedirect } from "./post-login";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export const getCurrentUser = cache(async () => {
@@ -39,14 +40,19 @@ export async function requireAuthenticatedUser(next = defaultAuthenticatedPath) 
   return user;
 }
 
-export async function redirectIfAuthenticated(next = defaultAuthenticatedPath) {
+export async function redirectIfAuthenticated(next?: string | null) {
   const supabase = await getSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
 
   if (user) {
-    await ensureAuthenticatedUserBootstrap(supabase);
-    redirect(sanitizeRedirectPath(next));
+    const bootstrap = await ensureAuthenticatedUserBootstrap(supabase);
+    const destination = await resolvePostLoginRedirect({
+      userId: bootstrap.user_id,
+      requestedNext: next
+    });
+
+    redirect(destination);
   }
 }

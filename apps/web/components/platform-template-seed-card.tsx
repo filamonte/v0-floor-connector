@@ -1,8 +1,13 @@
 import type { PlatformTemplateSeed, TemplateType } from "@floorconnector/types";
 
+import {
+  SaveStateForm,
+  SaveStateSubmitButton
+} from "@/components/save-feedback/save-state-form";
 import { updatePlatformTemplateSeedAction } from "@/lib/platform-admin/actions";
 
 type PlatformTemplateSeedCardProps = {
+  id?: string;
   templateType: TemplateType;
   seeds: PlatformTemplateSeed[];
 };
@@ -21,11 +26,15 @@ function getLabel(templateType: TemplateType) {
 }
 
 export function PlatformTemplateSeedCard({
+  id,
   templateType,
   seeds
 }: PlatformTemplateSeedCardProps) {
   return (
-    <section className="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
+    <section
+      id={id}
+      className="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-5 sm:p-6"
+    >
       <p className="text-base font-semibold text-slate-950">{getLabel(templateType)}</p>
       <p className="mt-2 text-sm leading-6 text-slate-600">
         Platform starter templates are the global defaults contractor organizations can adopt as editable tenant-owned copies.
@@ -33,10 +42,11 @@ export function PlatformTemplateSeedCard({
 
       <div className="mt-6 space-y-4">
         {seeds.map((seed) => (
-          <form
+          <SaveStateForm
             key={seed.id}
             action={updatePlatformTemplateSeedAction}
             className="rounded-[1.5rem] border border-slate-200 bg-white p-5"
+            pendingLabel="Saving..."
           >
             <input type="hidden" name="seedId" value={seed.id} />
             <div className="flex flex-wrap items-center gap-2">
@@ -135,14 +145,13 @@ export function PlatformTemplateSeedCard({
               <p className="text-xs leading-5 text-slate-500">
                 Schema version {seed.schemaVersion}
               </p>
-              <button
-                type="submit"
-                className="inline-flex items-center rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-              >
-                Save starter template
-              </button>
+              <SaveStateSubmitButton
+                submitLabel="Save starter template"
+                pendingLabel="Saving..."
+                className="rounded-full"
+              />
             </div>
-          </form>
+          </SaveStateForm>
         ))}
       </div>
     </section>

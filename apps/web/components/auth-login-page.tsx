@@ -9,6 +9,7 @@ import {
 } from "@/lib/auth/actions";
 import {
   getAuthSurfaceContext,
+  getSafeInternalRedirectPath,
   forgotPasswordPath,
   sanitizeRedirectPath,
   signUpPath
@@ -26,9 +27,11 @@ type AuthLoginPageProps = {
 export async function AuthLoginPage({ searchParams }: AuthLoginPageProps) {
   const params = (await searchParams) ?? {};
   const next = sanitizeRedirectPath(params.next);
+  const formNext = getSafeInternalRedirectPath(params.next) ?? "";
+  const nextQuery = formNext ? `?next=${encodeURIComponent(formNext)}` : "";
   const surfaceContext = getAuthSurfaceContext(next);
 
-  await redirectIfAuthenticated(next);
+  await redirectIfAuthenticated(formNext);
 
   return (
     <AuthShell
@@ -42,7 +45,7 @@ export async function AuthLoginPage({ searchParams }: AuthLoginPageProps) {
         <>
           Need an account?{" "}
           <Link
-            href={`${signUpPath}?next=${encodeURIComponent(next)}`}
+            href={`${signUpPath}${nextQuery}`}
             className="font-medium text-brand-700"
           >
             Create one
@@ -62,7 +65,7 @@ export async function AuthLoginPage({ searchParams }: AuthLoginPageProps) {
         </div>
 
         <form action={signInWithGoogleAction} className="space-y-3">
-          <input type="hidden" name="next" value={next} />
+          <input type="hidden" name="next" value={formNext} />
           <AuthSubmitButton pendingLabel="Redirecting to Google..." className="sm:w-full">
             <span className="text-base" aria-hidden="true">
               G
@@ -83,7 +86,7 @@ export async function AuthLoginPage({ searchParams }: AuthLoginPageProps) {
         </div>
 
         <form action={signInWithPasswordAction} className="space-y-4">
-          <input type="hidden" name="next" value={next} />
+          <input type="hidden" name="next" value={formNext} />
           <div className="grid gap-4">
             <AuthField
               label="Email"

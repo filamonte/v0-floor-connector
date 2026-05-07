@@ -2,8 +2,7 @@ import { getPublicEnv } from "@floorconnector/config";
 
 import {
   authCallbackPath,
-  defaultAuthenticatedPath,
-  sanitizeRedirectPath
+  getSafeInternalRedirectPath
 } from "./paths";
 
 export function getAppOrigin() {
@@ -35,10 +34,12 @@ export function getAuthCallbackUrl(
   next?: string | null,
   origin = getAppOrigin()
 ) {
-  const safeNext = sanitizeRedirectPath(next ?? defaultAuthenticatedPath);
+  const safeNext = getSafeInternalRedirectPath(next);
   const callbackUrl = new URL(authCallbackPath, origin);
 
-  callbackUrl.searchParams.set("next", safeNext);
+  if (safeNext) {
+    callbackUrl.searchParams.set("next", safeNext);
+  }
 
   return callbackUrl.toString();
 }

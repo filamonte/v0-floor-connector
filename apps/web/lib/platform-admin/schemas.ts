@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+import { STARTER_PACK_PROVISIONING_APPROVAL_CONFIRMATION } from "./starter-pack-provisioning-draft-review-core";
+import { STARTER_PACK_PROVISIONING_EXECUTION_CONFIRMATION } from "./starter-pack-provisioning-execution-core";
+
 function trimmedNullableString(maxLength: number) {
   return z
     .string()
@@ -171,6 +174,165 @@ export const platformFeaturePolicyInputSchema = z.object({
   moduleKey: trimmedNullableString(80),
   surface: trimmedNullableString(80),
   enabled: z.boolean()
+});
+
+export const platformStarterPackInputSchema = z.object({
+  packId: optionalUuidField("Select a valid starter pack."),
+  packKey: z
+    .string()
+    .trim()
+    .min(1, "Starter pack key is required.")
+    .max(120)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+      message: "Starter pack key must use lowercase letters, numbers, and hyphens only."
+    }),
+  name: z.string().trim().min(1, "Starter pack name is required.").max(120),
+  description: trimmedNullableString(500),
+  status: z.enum(["draft", "published", "archived"] as const),
+  segmentKey: trimmedNullableString(120)
+});
+
+export const contractorGroupInputSchema = z.object({
+  contractorGroupId: optionalUuidField("Select a valid contractor group."),
+  key: z
+    .string()
+    .trim()
+    .min(1, "Contractor group key is required.")
+    .max(120)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+      message:
+        "Contractor group key must use lowercase letters, numbers, and hyphens only."
+    }),
+  name: z.string().trim().min(1, "Contractor group name is required.").max(120),
+  description: trimmedNullableString(500),
+  status: z.enum(["active", "inactive", "archived"] as const),
+  groupType: z.enum(
+    [
+      "trade_segment",
+      "onboarding",
+      "beta",
+      "internal",
+      "future_plan",
+      "future_entitlement",
+      "regional",
+      "custom"
+    ] as const
+  )
+});
+
+export const contractorGroupArchiveInputSchema = z.object({
+  contractorGroupId: z.string().uuid("Contractor group id is required.")
+});
+
+export const contractorGroupMembershipInputSchema = z.object({
+  contractorGroupId: z.string().uuid("Contractor group id is required."),
+  organizationId: z.string().uuid("Select a valid contractor organization."),
+  assignmentSource: z.enum(
+    ["manual", "targeting_preview", "future_auto_assignment"] as const
+  ),
+  notes: trimmedNullableString(1000)
+});
+
+export const contractorGroupMembershipRemoveInputSchema = z.object({
+  membershipId: z.string().uuid("Contractor group membership id is required.")
+});
+
+export const platformStarterPackTemplateItemInputSchema = z.object({
+  starterPackId: z.string().uuid("Starter pack id is required."),
+  templateSeedId: z.string().uuid("Select a valid template seed."),
+  isRequired: z.boolean()
+});
+
+export const platformStarterPackCatalogItemInputSchema = z.object({
+  starterPackId: z.string().uuid("Starter pack id is required."),
+  catalogSeedId: z.string().uuid("Select a valid catalog seed."),
+  isRequired: z.boolean()
+});
+
+export const platformStarterPackRemoveItemInputSchema = z.object({
+  itemId: z.string().uuid("Starter pack item id is required.")
+});
+
+export const platformStarterPackAssignmentInputSchema = z
+  .object({
+    assignmentId: optionalUuidField("Select a valid starter pack assignment."),
+    starterPackId: z.string().uuid("Starter pack id is required."),
+    assignmentType: z.enum(
+      [
+        "all_organizations",
+        "organization",
+        "onboarding_profile",
+        "region",
+        "trade_segment",
+        "plan_tier",
+        "future_contractor_group"
+      ] as const
+    ),
+    organizationId: optionalUuidField("Select a valid organization."),
+    assignmentKey: trimmedNullableString(120),
+    label: trimmedNullableString(160),
+    status: z.enum(["draft", "active", "inactive"] as const),
+    notes: trimmedNullableString(2000)
+  })
+  .superRefine((value, context) => {
+    if (value.assignmentType === "all_organizations") {
+      return;
+    }
+
+    if (value.assignmentType === "organization") {
+      if (!value.organizationId) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Select an organization for organization assignment intent.",
+          path: ["organizationId"]
+        });
+      }
+
+      return;
+    }
+
+    if (!value.assignmentKey) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Enter a target key for this assignment intent.",
+        path: ["assignmentKey"]
+      });
+    }
+  });
+
+export const platformStarterPackAssignmentRemoveInputSchema = z.object({
+  assignmentId: z.string().uuid("Starter pack assignment id is required.")
+});
+
+export const platformStarterPackProvisioningDraftInputSchema = z.object({
+  organizationId: z.string().uuid("Select a valid contractor organization."),
+  starterPackId: z.string().uuid("Select a valid starter pack.")
+});
+
+export const platformStarterPackProvisioningApprovalInputSchema = z.object({
+  runId: z.string().uuid("Select a valid provisioning audit run."),
+  confirmationText: z
+    .string()
+    .trim()
+    .refine(
+      (value) => value === STARTER_PACK_PROVISIONING_APPROVAL_CONFIRMATION,
+      {
+        message: `Type ${STARTER_PACK_PROVISIONING_APPROVAL_CONFIRMATION} exactly to approve this audit draft.`
+      }
+    )
+});
+
+export const platformStarterPackProvisioningExecutionInputSchema = z.object({
+  runId: z.string().uuid("Select a valid approved provisioning run."),
+  confirmationText: z
+    .string()
+    .trim()
+    .refine(
+      (value) => value === STARTER_PACK_PROVISIONING_EXECUTION_CONFIRMATION,
+      {
+        message: `Type ${STARTER_PACK_PROVISIONING_EXECUTION_CONFIRMATION} exactly to execute this starter pack.`
+      }
+    )
 });
 
 export const platformAdminAssignmentInputSchema = z.object({

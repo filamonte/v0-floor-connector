@@ -32,6 +32,7 @@ type CommunicationsPageProps = {
 
 const communicationSourceFilters = [
   { key: "all", label: "All sources" },
+  { key: "opportunity", label: "Lead" },
   { key: "customer", label: "Customer" },
   { key: "project", label: "Project" },
   { key: "estimate", label: "Estimate" },
@@ -561,7 +562,7 @@ export default async function CommunicationsPage({ searchParams }: Communication
             {unsupportedSource ? (
               <div className="border-b border-amber-200 bg-amber-50 px-5 py-3 text-sm leading-6 text-amber-900 sm:px-6">
                 Source <span className="font-semibold">{unsupportedSource}</span> is not available
-                yet. Communications currently support customer, project, estimate, contract,
+                yet. Communications currently support lead, customer, project, estimate, contract,
                 invoice, change order, and payment threads only. Unsupported source filters do not
                 create placeholder queues.
               </div>

@@ -3,6 +3,7 @@
 Status: synthesis overview of the currently implemented system and the next logical layers ahead.
 
 This document is designed to do three jobs at once:
+
 - explain FloorConnector clearly to non-technical readers, including investors and advisors
 - align product and engineering teams around what the system actually is today
 - prevent documentation drift by restating the core architectural rules in one place
@@ -28,6 +29,7 @@ The current branch already contains a real multi-tenant contractor app, a real c
 ### Commercial Flow
 
 What users can do now:
+
 - create and manage opportunities and leads
 - create and manage customers
 - create and manage projects
@@ -42,6 +44,7 @@ In practical terms, the commercial path is already live. Contractors can start w
 ### Contract Signature Workflow
 
 What users can do now:
+
 - generate canonical contracts from approved estimate and project context
 - edit contracts while they are still in draft
 - require internal approval before send when configured
@@ -56,6 +59,7 @@ The important point is that portal signing and contractor-side onsite signing ar
 ### Invoice And Payment Workflow
 
 What users can do now:
+
 - create and manage canonical invoices with line items
 - record contractor-side payments directly against invoices
 - automatically recalculate invoice balance and paid state
@@ -71,6 +75,7 @@ This is not just payment intent capture. Gateway-backed completion now lands on 
 ### Contractor-Side System
 
 What contractor teams can do now:
+
 - work inside a protected multi-tenant app shell
 - navigate organization-aware modules
 - use project detail as the main readiness and workflow hub
@@ -86,6 +91,7 @@ Shared estimate attachments and related documents now live in one tenant-safe `d
 ### Customer Portal
 
 What customers can do now:
+
 - access only the projects explicitly shared with them
 - use a real portal shell and portal home workspace
 - open project-centered portal workspaces
@@ -99,6 +105,7 @@ The portal is not a duplicate product with duplicate records. It is a customer-f
 ### Workforce And Time
 
 What teams can do now:
+
 - manage canonical people records
 - manage vendors and vendor-linked subcontract labor foundations
 - manage compliance records on people and vendors
@@ -112,6 +119,7 @@ This is a real workforce and time foundation, even though deeper scheduling, dis
 ### Field Execution
 
 What teams can do now:
+
 - create and manage canonical daily logs
 - create and manage canonical field notes attached to daily logs
 - attach lightweight execution files and photos
@@ -139,6 +147,7 @@ The system operates on this same canonical lifecycle. Contractor actions, custom
 ### Step 1: Contractor -> System
 
 The contractor creates and manages the canonical records:
+
 - leads and opportunities
 - customers
 - projects
@@ -152,6 +161,7 @@ The contractor is not building parallel versions of the same project in multiple
 ### Step 2: System Holds The Truth
 
 Once those records exist, the system becomes the source of truth for the workflow:
+
 - approved estimates feed contracts
 - contracts carry signature state
 - invoices carry billing state
@@ -163,6 +173,7 @@ This matters because the system is not passing around snapshots, exports, or por
 ### Step 3: Customer -> System
 
 The customer enters through the portal and acts on those same records:
+
 - opens the shared project
 - reviews the shared contract
 - signs or declines the shared contract
@@ -174,6 +185,7 @@ The customer is not acting on a second portal-specific version of the contract o
 ### Step 4: System Updates State
 
 After the customer acts, the system updates the canonical workflow state:
+
 - contract signature status changes
 - signer routing advances
 - onsite signature events can mark the customer signer signed and complete the contract when all required signers are complete
@@ -187,6 +199,7 @@ This update happens in the shared system, not in a disconnected customer-facing 
 ### Step 5: Contractor Continues From Updated Truth
 
 The contractor then continues operating from the updated state:
+
 - sees the contract is now signed
 - sees the invoice is now paid or partially paid
 - sees payment failures or voids if they occur
@@ -205,6 +218,7 @@ The implemented contractor-side lifecycle can be summarized as:
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
 In practical terms:
+
 - a contractor starts with opportunity or lead intake
 - the system creates or links the canonical customer and project
 - estimating happens on that shared project chain
@@ -225,6 +239,7 @@ One simple visual summary of the shared customer-facing operating chain is:
 `Opportunity -> Customer -> Project -> Estimate -> Contract -> Change Order -> Job -> Invoice -> Payment`
 
 In practical terms:
+
 - the customer enters through project-scoped portal access
 - the portal shows only the projects explicitly shared with that customer
 - inside each project, the customer can open the connected contract and invoice records
@@ -240,6 +255,7 @@ FloorConnector is built on a few disciplined principles that define how the prod
 Major business records exist once and are reused across the system.
 
 That includes:
+
 - opportunities
 - customers
 - projects
@@ -260,6 +276,7 @@ This is the product's central rule. If the same customer, project, contract, inv
 ### Modular Monolith
 
 FloorConnector is implemented as a modular monolith:
+
 - one codebase
 - one shared tenant model
 - one shared database foundation
@@ -272,6 +289,7 @@ This gives the product clean module boundaries without fragmenting the source of
 The contractor app and the portal are not two separate systems.
 
 They are two surfaces on the same underlying records:
+
 - contractors manage the records
 - customers review and act on those records
 - the system updates shared state
@@ -282,6 +300,7 @@ The portal constrains visibility. It does not redefine the business objects.
 ### Signatures Extend Canonical Contracts
 
 Signature workflow extends the contract through:
+
 - canonical status and timestamp fields on contracts
 - supporting contract signer records
 - immutable contract signature events
@@ -291,6 +310,7 @@ Portal signing and contractor-side onsite signing both act on those same records
 ### Payments Extend Canonical Invoices And Payments
 
 Payment workflow extends the billing chain through:
+
 - canonical invoices
 - canonical payments
 - immutable payment events
@@ -307,18 +327,21 @@ The right way to describe the current product is not "unfinished in general." Th
 These are still later layers:
 
 #### Communications
+
 - broader send/reply workflows beyond the current safe contractor reply composer
 - provider-backed customer messaging and delivery
 - job, daily-log, field-note, and broader source coverage beyond the currently supported canonical thread filters
 - richer notification and conversation workflows
 
 #### Scheduling And Dispatch
+
 - full dispatch-grade scheduling workflows beyond the current first-pass `/schedule` planner and board
 - drag-and-drop rescheduling, route optimization, and deeper crew-calendar coordination
 - broader crew assignment automation beyond the current canonical `job_assignments` review/assignment foundation
 - deeper operational scheduling controls
 
 #### Deeper Payment Features
+
 - refunds
 - disputes
 - subscriptions
@@ -327,11 +350,13 @@ These are still later layers:
 - broader accounting integrations
 
 #### Deeper E-Sign Features
+
 - external e-sign provider integration
 - richer provider lifecycle tooling
 - deeper provider-driven signature workflows on top of the current canonical contract flow
 
 #### Advanced Reporting And Analytics
+
 - broader reporting beyond the current read-only `/reports` basics and Sales Tax Summary
 - cross-module analytics
 - management dashboards
@@ -346,29 +371,65 @@ The product already has a connected operating core. What remains is not "basic f
 The next layers should follow the current roadmap direction in a disciplined order:
 
 1. Project-centered workflow tightening
+
 - strengthen project as the operational hub
 - tighten readiness, blockers, and next-best-action guidance
 - keep reducing page-to-page friction
 
 2. Scheduling and dispatch depth
+
 - dispatch-grade scheduling workflows beyond the current planner/board foundation
 - deeper crew coordination on canonical jobs and `job_assignments`
 - route optimization, drag-and-drop rescheduling, and operational automation
 
 3. Materials, reusable catalogs, and richer shared document tooling
+
 - deepen reusable operational content on the same canonical system
 
 4. External integrations
+
 - deeper e-sign provider integration
 - deeper payment-provider and reconciliation tooling
 - deeper PDF and document delivery beyond the current contract PDF snapshot foundation
 - tax and accounting adapters
 
 5. Broader portal and communication expansion
+
 - richer customer-facing workflows
 - communication layers on top of the same shared records
 
+6. AI-assisted operating layers
+
+- contractor-facing AI copilot, communication drafting, scheduling suggestions, project summaries, collections assistance, and action approval queues on top of canonical records
+- FloorConnector-facing AI for marketing Q&A, demo support, onboarding/setup guidance, support triage, first-workflow activation, and migration/import help
+- website chat, AI receptionist/voice, and operational intelligence only after consent, provider, handoff, schedule, permission, and workflow safety rules are designed
+
 This is a sequence of next layers, not speculation about a different product direction.
+
+## Section 6A -- Future AI, Communications, And Scheduling Layers
+
+This section is target direction only. It does not claim AI chat, AI receptionist, broad AI execution, full unified inbox, or external calendar sync is implemented.
+
+AI should become an operating layer around the current core, not a parallel system. It can draft, suggest, summarize, classify, prepare, and orchestrate work, but accepted actions must route through canonical FloorConnector records and approved server-side workflows.
+
+Future communications should extend the current communication foundations into website forms, website AI chat, SMS, email, calls, voicemail, missed-call text-back, AI receptionist, portal messages, app messages, and manual logs. FloorConnector communication records remain the business source of truth; providers deliver or enrich messages.
+
+Future scheduling should extend the current `/schedule`, job, appointment, and job-assignment foundations into company calendars, user calendars, crew/resource calendars, PTO/holidays, equipment reservations, external busy-block import, conflict detection, and AI schedule suggestions. FloorConnector owns the canonical schedule; Google Calendar and Outlook/Microsoft 365 are adapters.
+
+Future AI must preserve:
+
+- the canonical lifecycle: `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
+- tenant isolation and permissions
+- readiness gates and validated server-side actions
+- human confirmation for risky customer-facing, commercial, legal, billing, scheduling, permission, or compliance actions
+
+Planning docs:
+
+- [docs/ai-assisted-operating-system.md](C:/FloorConnector/docs/ai-assisted-operating-system.md)
+- [docs/ai-contractor-workflows.md](C:/FloorConnector/docs/ai-contractor-workflows.md)
+- [docs/communications-and-ai-intake.md](C:/FloorConnector/docs/communications-and-ai-intake.md)
+- [docs/calendar-and-scheduling-intelligence.md](C:/FloorConnector/docs/calendar-and-scheduling-intelligence.md)
+- [docs/ai-marketing-and-onboarding.md](C:/FloorConnector/docs/ai-marketing-and-onboarding.md)
 
 ## Section 7 -- Reality Check (Anti-Drift Section)
 
@@ -391,6 +452,7 @@ This section exists to keep the system honest as it grows.
 This is the main product difference versus many disconnected contractor software stacks.
 
 In many systems:
+
 - the portal is a copy
 - the signature tool is a side system
 - the payment tool is a side system
@@ -398,6 +460,7 @@ In many systems:
 - the contractor team has to manually translate state back into operations
 
 In FloorConnector, the goal is the opposite:
+
 - the contractor creates the canonical records
 - the customer acts on those same records
 - the system updates those records
@@ -408,6 +471,7 @@ That is the anti-silo value proposition in practical terms.
 ### Where Future Drift Could Happen
 
 The biggest drift risks are still:
+
 - introducing portal-specific copies of commercial or billing records
 - letting provider integrations become separate source-of-truth models
 - adding scheduling, messaging, or reporting as disconnected modules instead of extensions of the shared project chain
@@ -416,12 +480,14 @@ The biggest drift risks are still:
 ### The Discipline Going Forward
 
 The operating rule should remain:
+
 - one canonical shared data model
 - one connected workflow chain
 - one system with multiple surfaces
 - no duplicate business records per module
 
 Future features should extend the canonical record chain rather than introduce parallel models. That means:
+
 - no portal copies
 - no second signed-contract model
 - no separate checkout-payment model

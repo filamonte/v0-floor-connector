@@ -41,6 +41,10 @@ import {
   getDocumentTemplateById,
   updateDocumentTemplateForOrganization
 } from "@/lib/templates/data";
+import {
+  clearCurrentUserPreferredEstimateTemplate,
+  setCurrentUserPreferredEstimateTemplate
+} from "@/lib/user-preferences/estimate-template-preference";
 
 import {
   catalogItemSettingsInputSchema,
@@ -114,6 +118,7 @@ async function requireSettingsScope() {
 
 function revalidateSettingsSlice() {
   revalidatePath("/settings");
+  revalidatePath("/settings/profile");
   revalidatePath("/settings/organization");
   revalidatePath("/settings/templates");
   revalidatePath("/settings/catalogs");
@@ -133,6 +138,33 @@ function revalidateSettingsSlice() {
   revalidatePath("/invoices");
   revalidatePath("/customers");
   revalidatePath("/leads");
+}
+
+export async function updatePreferredEstimateTemplateAction(formData: FormData) {
+  const returnTo = getFieldValue(formData, "returnTo") || "/settings/profile";
+  const preferredEstimateTemplateId = getFieldValue(
+    formData,
+    "preferredEstimateTemplateId"
+  );
+
+  try {
+    if (preferredEstimateTemplateId) {
+      await setCurrentUserPreferredEstimateTemplate(
+        preferredEstimateTemplateId,
+        returnTo
+      );
+    } else {
+      await clearCurrentUserPreferredEstimateTemplate(returnTo);
+    }
+  } catch (error) {
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : "Unable to update your estimate template preference."
+    );
+  }
+
+  revalidateSettingsSlice();
 }
 
 export async function updateDocumentTemplateSettingsAction(formData: FormData) {

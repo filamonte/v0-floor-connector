@@ -17,7 +17,7 @@ import {
   updateContactForOrganization,
   upsertCustomerContactLink
 } from "@/lib/contacts/data";
-import type { OpportunityInput } from "./schemas";
+import type { OpportunityFollowUpInput, OpportunityInput } from "./schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
@@ -49,6 +49,8 @@ type OpportunityRow = {
   postal_code: string | null;
   country_code: string | null;
   notes: string | null;
+  next_follow_up_at: string | null;
+  next_follow_up_note: string | null;
   site_assessment_status: SiteAssessmentStatus;
   site_assessment_scheduled_at: string | null;
   site_assessment_completed_at: string | null;
@@ -211,6 +213,8 @@ const opportunitySelect = `
   postal_code,
   country_code,
   notes,
+  next_follow_up_at,
+  next_follow_up_note,
   site_assessment_status,
   site_assessment_scheduled_at,
   site_assessment_completed_at,
@@ -437,6 +441,8 @@ function mapOpportunity(row: OpportunityRow, primaryContact?: OpportunityListIte
     postalCode: row.postal_code,
     countryCode: row.country_code,
     notes: row.notes,
+    nextFollowUpAt: row.next_follow_up_at,
+    nextFollowUpNote: row.next_follow_up_note,
     siteAssessmentStatus: row.site_assessment_status,
     siteAssessmentScheduledAt: row.site_assessment_scheduled_at,
     siteAssessmentCompletedAt: row.site_assessment_completed_at,
@@ -1176,6 +1182,34 @@ export async function updateOpportunity(opportunityId: string, input: Opportunit
   }
 
   return updated;
+}
+
+export async function updateOpportunityFollowUp(input: OpportunityFollowUpInput) {
+  const scope = await requireOpportunityScope(`/leads/${input.opportunityId}`);
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("opportunities")
+    .update({
+      next_follow_up_at: input.nextFollowUpAt,
+      next_follow_up_note: input.nextFollowUpNote,
+      updated_by: scope.userId
+    })
+    .eq("company_id", scope.organizationId)
+    .eq("id", input.opportunityId)
+    .select(opportunitySelect)
+    .maybeSingle();
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(`Unable to update the lead follow-up: ${response.error.message}`);
+  }
+
+  if (!isOpportunityRow(data)) {
+    throw new Error("Lead not found for this organization.");
+  }
+
+  const hydrated = await hydrateOpportunityListItems(scope.organizationId, [data]);
+  return hydrated[0] ?? null;
 }
 
 export async function getOpportunityByProjectId(

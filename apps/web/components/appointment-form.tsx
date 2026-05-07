@@ -46,6 +46,9 @@ type AppointmentFormValue = {
   endsAt: string | null;
   location: string | null;
   notes: string | null;
+  customerVisible?: boolean;
+  customerNotes?: string | null;
+  internalNotes?: string | null;
   status: "scheduled" | "completed" | "canceled" | "no_show";
 };
 
@@ -116,6 +119,12 @@ export function AppointmentForm({
   return (
     <SaveStateForm action={action} pendingLabel="Saving..." className="space-y-5">
       <input type="hidden" name="appointmentId" value={appointment.id} />
+      <input
+        type="hidden"
+        name="customerVisible"
+        value={appointment.customerVisible ? "true" : "false"}
+      />
+      <input type="hidden" name="customerNotes" value={appointment.customerNotes ?? ""} />
       {redirectTo ? <input type="hidden" name="redirectTo" value={redirectTo} /> : null}
 
       <div className="grid gap-4 md:grid-cols-2">

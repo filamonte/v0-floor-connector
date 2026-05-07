@@ -22,6 +22,14 @@ export type PaymentEventId = string;
 export type ScheduleOfValuesId = string;
 export type TemplateId = string;
 export type PlatformTemplateSeedId = string;
+export type PlatformStarterPackId = string;
+export type PlatformStarterPackItemId = string;
+export type PlatformStarterPackAssignmentId = string;
+export type PlatformStarterPackProvisioningRunId = string;
+export type PlatformStarterPackProvisioningRunItemId = string;
+export type PlatformStarterPackProvisioningAttemptId = string;
+export type ContractorGroupId = string;
+export type ContractorGroupMembershipId = string;
 export type ContractId = string;
 export type ContractRevisionId = string;
 export type ContractSignerId = string;
@@ -104,6 +112,7 @@ export type NotificationDeliveryStatus =
   | "clicked"
   | "failed";
 export type CanonicalRecordSubjectType =
+  | "opportunity"
   | "customer"
   | "project"
   | "estimate"
@@ -215,6 +224,16 @@ export type CommunicationMessageSenderType =
   | "organization_user"
   | "portal_user"
   | "system";
+export type CommunicationMessageKind =
+  | "customer_message"
+  | "manual_call"
+  | "manual_email_note"
+  | "manual_text_note"
+  | "voicemail"
+  | "internal_note"
+  | "appointment_note";
+export type CommunicationMessageVisibility = "internal" | "customer_visible";
+export type CommunicationMessageDeliveryStatus = "logged" | "draft" | "sent";
 export type TaxBehavior = "exclusive" | "inclusive" | "none";
 export type InventoryTransactionType =
   | "purchase"
@@ -446,6 +465,8 @@ export interface Opportunity {
   postalCode: string | null;
   countryCode: string | null;
   notes: string | null;
+  nextFollowUpAt: string | null;
+  nextFollowUpNote: string | null;
   siteAssessmentStatus: SiteAssessmentStatus;
   siteAssessmentScheduledAt: string | null;
   siteAssessmentCompletedAt: string | null;
@@ -1174,13 +1195,15 @@ export interface InvoiceEvent {
 export interface CommunicationThread {
   id: CommunicationThreadId;
   organizationId: OrganizationId;
-  customerId: CustomerId;
-  projectId: ProjectId;
+  opportunityId: OpportunityId | null;
+  customerId: CustomerId | null;
+  projectId: ProjectId | null;
   subjectType: CanonicalRecordSubjectType;
   subjectId: string;
   createdByUserId: ProfileId | null;
   lastMessageAt: string | null;
   lastMessagePreview: string | null;
+  lastMessageVisibility: CommunicationMessageVisibility;
   createdAt: string;
   updatedAt: string;
 }
@@ -1189,10 +1212,14 @@ export interface CommunicationMessage {
   id: CommunicationMessageId;
   organizationId: OrganizationId;
   threadId: CommunicationThreadId;
-  customerId: CustomerId;
-  projectId: ProjectId;
+  opportunityId: OpportunityId | null;
+  customerId: CustomerId | null;
+  projectId: ProjectId | null;
   senderType: CommunicationMessageSenderType;
   senderUserId: ProfileId | null;
+  messageKind: CommunicationMessageKind;
+  visibility: CommunicationMessageVisibility;
+  deliveryStatus: CommunicationMessageDeliveryStatus;
   body: string;
   payload: Record<string, unknown> | null;
   createdAt: string;
@@ -1291,6 +1318,220 @@ export interface PlatformCatalogItemSeed {
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export type PlatformStarterPackStatus = "draft" | "published" | "archived";
+export type PlatformStarterPackItemType = "template_seed" | "catalog_seed";
+export type PlatformStarterPackAssignmentType =
+  | "all_organizations"
+  | "organization"
+  | "onboarding_profile"
+  | "region"
+  | "trade_segment"
+  | "plan_tier"
+  | "future_contractor_group";
+export type PlatformStarterPackAssignmentStatus = "draft" | "active" | "inactive";
+export type PlatformStarterPackProvisioningRunStatus =
+  | "draft"
+  | "approved"
+  | "running"
+  | "completed"
+  | "completed_with_warnings"
+  | "failed"
+  | "voided";
+export type PlatformStarterPackProvisioningVoidStrategy =
+  | "audit_only"
+  | "archive_unused_future"
+  | "detach_lineage_future";
+export type PlatformStarterPackProvisioningRunItemAction =
+  | "would_create"
+  | "skipped_existing"
+  | "created"
+  | "blocked"
+  | "failed"
+  | "voided";
+export type PlatformStarterPackProvisioningRunItemStatus =
+  | "pending"
+  | "completed"
+  | "skipped"
+  | "blocked"
+  | "failed"
+  | "voided";
+export type PlatformStarterPackProvisioningDestinationRecordType =
+  | "document_template"
+  | "catalog_item";
+export type PlatformStarterPackProvisioningAttemptType = "execute";
+export type PlatformStarterPackProvisioningAttemptOutcome =
+  | "rejected"
+  | "blocked"
+  | "failed_before_execution"
+  | "already_completed";
+export type ContractorGroupStatus = "active" | "inactive" | "archived";
+export type ContractorGroupType =
+  | "trade_segment"
+  | "onboarding"
+  | "beta"
+  | "internal"
+  | "future_plan"
+  | "future_entitlement"
+  | "regional"
+  | "custom";
+export type ContractorGroupAssignmentSource =
+  | "manual"
+  | "targeting_preview"
+  | "future_auto_assignment";
+
+export interface ContractorGroupMembership {
+  id: ContractorGroupMembershipId;
+  contractorGroupId: ContractorGroupId;
+  organizationId: OrganizationId;
+  organizationName: string | null;
+  organizationSlug: string | null;
+  organizationTenantStatus: string | null;
+  assignedByUserId: ProfileId | null;
+  assignmentSource: ContractorGroupAssignmentSource;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface ContractorGroup {
+  id: ContractorGroupId;
+  key: string;
+  name: string;
+  description: string | null;
+  status: ContractorGroupStatus;
+  groupType: ContractorGroupType;
+  membershipCount: number;
+  memberships: ContractorGroupMembership[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlatformStarterPackItem {
+  id: PlatformStarterPackItemId;
+  starterPackId: PlatformStarterPackId;
+  itemType: PlatformStarterPackItemType;
+  templateSeedId: PlatformTemplateSeedId | null;
+  catalogSeedId: PlatformCatalogItemSeedId | null;
+  sortOrder: number;
+  isRequired: boolean;
+  templateSeed: PlatformTemplateSeed | null;
+  catalogSeed: PlatformCatalogItemSeed | null;
+  createdAt: string;
+}
+
+export interface PlatformStarterPackAssignment {
+  id: PlatformStarterPackAssignmentId;
+  starterPackId: PlatformStarterPackId;
+  assignmentType: PlatformStarterPackAssignmentType;
+  organizationId: OrganizationId | null;
+  organizationName: string | null;
+  organizationSlug: string | null;
+  assignmentKey: string | null;
+  label: string | null;
+  status: PlatformStarterPackAssignmentStatus;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlatformStarterPack {
+  id: PlatformStarterPackId;
+  packKey: string;
+  name: string;
+  description: string | null;
+  status: PlatformStarterPackStatus;
+  segmentKey: string | null;
+  templateSeedCount: number;
+  catalogSeedCount: number;
+  assignmentCount: number;
+  activeAssignmentCount: number;
+  items: PlatformStarterPackItem[];
+  assignments: PlatformStarterPackAssignment[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlatformStarterPackProvisioningRun {
+  id: PlatformStarterPackProvisioningRunId;
+  starterPackId: PlatformStarterPackId;
+  starterPackName: string | null;
+  starterPackKey: string | null;
+  organizationId: OrganizationId;
+  organizationName: string | null;
+  organizationSlug: string | null;
+  requestedByUserId: ProfileId | null;
+  approvedByUserId: ProfileId | null;
+  status: PlatformStarterPackProvisioningRunStatus;
+  dryRunSnapshot: Record<string, unknown>;
+  confirmationText: string | null;
+  idempotencyKey: string | null;
+  requestedAt: string;
+  approvedAt: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  voidedAt: string | null;
+  voidedByUserId: ProfileId | null;
+  voidReason: string | null;
+  voidStrategy: PlatformStarterPackProvisioningVoidStrategy | null;
+  voidReadinessSnapshot: Record<string, unknown>;
+  errorMessage: string | null;
+  itemCount: number;
+  destinationRecordCount?: number;
+  pendingItemCount?: number;
+  completedItemCount?: number;
+  skippedItemCount?: number;
+  blockedItemCount?: number;
+  failedItemCount?: number;
+  wouldCreateItemCount?: number;
+  skippedExistingItemCount?: number;
+  createdItemCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlatformStarterPackProvisioningRunItem {
+  id: PlatformStarterPackProvisioningRunItemId;
+  runId: PlatformStarterPackProvisioningRunId;
+  starterPackItemId: PlatformStarterPackItemId | null;
+  sourceItemType: PlatformStarterPackItemType;
+  sourceTemplateSeedId: PlatformTemplateSeedId | null;
+  sourceCatalogSeedId: PlatformCatalogItemSeedId | null;
+  destinationRecordType: PlatformStarterPackProvisioningDestinationRecordType;
+  destinationRecordId: string | null;
+  action: PlatformStarterPackProvisioningRunItemAction;
+  status: PlatformStarterPackProvisioningRunItemStatus;
+  sourceSnapshot: Record<string, unknown>;
+  destinationSnapshot: Record<string, unknown>;
+  reason: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlatformStarterPackProvisioningRunDetail
+  extends PlatformStarterPackProvisioningRun {
+  items: PlatformStarterPackProvisioningRunItem[];
+}
+
+export interface PlatformStarterPackProvisioningAttempt {
+  id: PlatformStarterPackProvisioningAttemptId;
+  runId: PlatformStarterPackProvisioningRunId | null;
+  starterPackId: PlatformStarterPackId | null;
+  starterPackName: string | null;
+  starterPackKey: string | null;
+  organizationId: OrganizationId | null;
+  organizationName: string | null;
+  organizationSlug: string | null;
+  attemptedByUserId: ProfileId | null;
+  attemptType: PlatformStarterPackProvisioningAttemptType;
+  outcome: PlatformStarterPackProvisioningAttemptOutcome;
+  reasonCode: string;
+  safeMessage: string;
+  reviewStatus: string | null;
+  runStatus: PlatformStarterPackProvisioningRunStatus | null;
+  metadata: Record<string, unknown>;
+  attemptedAt: string;
 }
 
 export interface Vendor {
@@ -1464,6 +1705,9 @@ export interface Appointment {
   endsAt: string | null;
   location: string | null;
   notes: string | null;
+  customerVisible: boolean;
+  customerNotes: string | null;
+  internalNotes: string | null;
   status: AppointmentStatus;
   createdByUserId: ProfileId | null;
   updatedByUserId: ProfileId | null;

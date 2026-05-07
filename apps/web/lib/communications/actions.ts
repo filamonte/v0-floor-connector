@@ -23,6 +23,7 @@ const communicationReplyInputSchema = z.object({
   source: z
     .enum([
       "all",
+      "opportunity",
       "customer",
       "project",
       "estimate",
@@ -41,6 +42,7 @@ const communicationTriageInputSchema = z.object({
   source: z
     .enum([
       "all",
+      "opportunity",
       "customer",
       "project",
       "estimate",

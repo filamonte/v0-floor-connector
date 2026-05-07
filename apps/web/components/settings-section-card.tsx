@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 type SettingsSectionCardProps = {
+  id?: string;
   eyebrow: string;
   title: string;
   description: string;
@@ -9,6 +10,7 @@ type SettingsSectionCardProps = {
 };
 
 export function SettingsSectionCard({
+  id,
   eyebrow,
   title,
   description,
@@ -19,6 +21,7 @@ export function SettingsSectionCard({
 
   return (
     <section
+      id={id}
       className={[
         "border bg-white p-6 sm:p-8",
         neutral

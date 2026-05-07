@@ -10,8 +10,9 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 type CommunicationThreadRow = {
   id: string;
   company_id: string;
-  customer_id: string;
-  project_id: string;
+  opportunity_id: string | null;
+  customer_id: string | null;
+  project_id: string | null;
   subject_type: CanonicalRecordSubjectType;
   subject_id: string;
   created_by_user_id: string | null;
@@ -30,6 +31,12 @@ type CustomerRow = {
 type ProjectRow = {
   id: string;
   name: string;
+};
+
+type OpportunityRow = {
+  id: string;
+  title: string;
+  prospect_name: string;
 };
 
 type EstimateRow = {
@@ -252,6 +259,7 @@ function getSubjectDescriptor(input: {
   thread: CommunicationThreadRow;
   customersById: Map<string, CustomerRow>;
   projectsById: Map<string, ProjectRow>;
+  opportunitiesById: Map<string, OpportunityRow>;
   estimatesById: Map<string, EstimateRow>;
   contractsById: Map<string, ContractRow>;
   invoicesById: Map<string, InvoiceRow>;
@@ -261,6 +269,16 @@ function getSubjectDescriptor(input: {
   const { thread } = input;
 
   switch (thread.subject_type) {
+    case "opportunity": {
+      const opportunity = input.opportunitiesById.get(thread.subject_id);
+
+      return {
+        label: opportunity
+          ? `Lead - ${opportunity.title || opportunity.prospect_name}`
+          : "Lead",
+        href: `/leads/${thread.subject_id}`
+      };
+    }
     case "customer": {
       const customer = input.customersById.get(thread.subject_id);
 
@@ -373,6 +391,7 @@ const listContractorCommunicationThreadSummaryCached = cache(
         recentCount: 0,
         linkedProjectCount: 0,
         sourceCounts: {
+          opportunity: 0,
           customer: 0,
           project: 0,
           estimate: 0,
@@ -411,6 +430,7 @@ const listContractorCommunicationThreadSummaryCached = cache(
     const threadRows = (threadsResponse.data as CommunicationThreadSummaryRow[] | null) ?? [];
     const unreadByThreadId = buildUnreadByThreadId(unreadCommunicationNotificationRows);
     const sourceCounts: ContractorCommunicationThreadSummary["sourceCounts"] = {
+      opportunity: 0,
       customer: 0,
       project: 0,
       estimate: 0,
@@ -447,7 +467,11 @@ const listContractorCommunicationThreadSummaryCached = cache(
       needsResponseCount,
       unreadCount,
       recentCount,
-      linkedProjectCount: new Set(threadRows.map((thread) => thread.project_id)).size,
+      linkedProjectCount: new Set(
+        threadRows
+          .map((thread) => thread.project_id)
+          .filter((projectId): projectId is string => Boolean(projectId))
+      ).size,
       sourceCounts
     };
   }
@@ -491,6 +515,7 @@ const listContractorCommunicationThreadsCached = cache(
         `
           id,
           company_id,
+          opportunity_id,
           customer_id,
           project_id,
           subject_type,
@@ -530,9 +555,24 @@ const listContractorCommunicationThreadsCached = cache(
       return [];
     }
 
-    const customerIds = [...new Set(threadRows.map((thread) => thread.customer_id))];
-    const projectIds = [...new Set(threadRows.map((thread) => thread.project_id))];
+    const customerIds = [
+      ...new Set(
+        threadRows
+          .map((thread) => thread.customer_id)
+          .filter((customerId): customerId is string => Boolean(customerId))
+      )
+    ];
+    const projectIds = [
+      ...new Set(
+        threadRows
+          .map((thread) => thread.project_id)
+          .filter((projectId): projectId is string => Boolean(projectId))
+      )
+    ];
     const subjectIdsByType = {
+      opportunity: threadRows
+        .filter((thread) => thread.subject_type === "opportunity")
+        .map((thread) => thread.subject_id),
       customer: threadRows
         .filter((thread) => thread.subject_type === "customer")
         .map((thread) => thread.subject_id),
@@ -559,6 +599,7 @@ const listContractorCommunicationThreadsCached = cache(
     const [
       customerRows,
       projectRows,
+      opportunityRows,
       estimateRows,
       contractRows,
       invoiceRows,
@@ -567,6 +608,12 @@ const listContractorCommunicationThreadsCached = cache(
     ] = await Promise.all([
       loadSubjectRows<CustomerRow>("customers", "id, name, company_name", customerIds, organizationId),
       loadSubjectRows<ProjectRow>("projects", "id, name", projectIds, organizationId),
+      loadSubjectRows<OpportunityRow>(
+        "opportunities",
+        "id, title, prospect_name",
+        [...new Set(subjectIdsByType.opportunity)],
+        organizationId
+      ),
       loadSubjectRows<EstimateRow>(
         "estimates",
         "id, reference_number",
@@ -620,6 +667,7 @@ const listContractorCommunicationThreadsCached = cache(
 
     const customersById = new Map(customerRows.map((row) => [row.id, row]));
     const projectsById = new Map(projectRows.map((row) => [row.id, row]));
+    const opportunitiesById = new Map(opportunityRows.map((row) => [row.id, row]));
     const estimatesById = new Map(estimateRows.map((row) => [row.id, row]));
     const contractsById = new Map(contractRows.map((row) => [row.id, row]));
     const invoicesById = new Map(invoiceRows.map((row) => [row.id, row]));
@@ -628,13 +676,14 @@ const listContractorCommunicationThreadsCached = cache(
 
     return threadRows
       .map((thread) => {
-        const customer = customersById.get(thread.customer_id);
-        const project = projectsById.get(thread.project_id);
+        const customer = thread.customer_id ? customersById.get(thread.customer_id) : undefined;
+        const project = thread.project_id ? projectsById.get(thread.project_id) : undefined;
         const unreadState = unreadByThreadId.get(thread.id);
         const subject = getSubjectDescriptor({
           thread,
           customersById,
           projectsById,
+          opportunitiesById,
           estimatesById,
           contractsById,
           invoicesById,
@@ -645,14 +694,14 @@ const listContractorCommunicationThreadsCached = cache(
         return {
           id: thread.id,
           customer: {
-            id: thread.customer_id,
+            id: thread.customer_id ?? "",
             label: mapCustomerLabel(customer),
-            href: `/customers/${thread.customer_id}`
+            href: thread.customer_id ? `/customers/${thread.customer_id}` : subject.href
           },
           project: {
-            id: thread.project_id,
+            id: thread.project_id ?? "",
             label: project?.name ?? "Unknown project",
-            href: `/projects/${thread.project_id}`
+            href: thread.project_id ? `/projects/${thread.project_id}` : subject.href
           },
           subject: {
             type: thread.subject_type,

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { EarlyAccessRequestForm } from "@/components/early-access-request-form";
 
 const signupHref = "/signup?next=%2Fsetup%2Fcompany";
+const loginHref = "/login";
 
 const workflow = [
   "Lead",
@@ -199,7 +200,15 @@ export function MarketingInvestorPage() {
               Pricing
             </a>
           </nav>
-          <MarketingLink href={signupHref}>Start Free Trial</MarketingLink>
+          <div className="flex items-center gap-3">
+            <Link
+              href={loginHref}
+              className="text-sm font-semibold text-[#111217] transition hover:text-[#f97316]"
+            >
+              Log in
+            </Link>
+            <MarketingLink href={signupHref}>Start early access</MarketingLink>
+          </div>
         </div>
       </header>
 
@@ -214,9 +223,9 @@ export function MarketingInvestorPage() {
             estimate, contract, job, invoice, and payment.
           </p>
           <div className="mt-10 flex flex-wrap gap-3">
-            <MarketingLink href={signupHref}>Start Free Trial</MarketingLink>
-            <MarketingLink href="#early-access" variant="secondary">
-              See early access
+            <MarketingLink href={signupHref}>Start early access</MarketingLink>
+            <MarketingLink href={loginHref} variant="secondary">
+              Log in
             </MarketingLink>
           </div>
         </div>
@@ -474,7 +483,7 @@ export function MarketingInvestorPage() {
               No charge during early access onboarding.
             </p>
             <div className="mt-8">
-              <MarketingLink href={signupHref}>Start Free Trial</MarketingLink>
+              <MarketingLink href={signupHref}>Start early access</MarketingLink>
             </div>
           </div>
           <div className="rounded-[1.35rem] border border-white/10 bg-white/[0.055] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:p-6">

@@ -24,6 +24,7 @@ import { quickCreateOpportunityAction } from "@/lib/opportunities/actions";
 import { listOpportunities } from "@/lib/opportunities/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
+import { hasCompanyProfileFields } from "@/lib/organizations/setup-status";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { listPayments } from "@/lib/payments/data";
 import { listPunchlistItems } from "@/lib/punchlists/data";
@@ -73,21 +74,6 @@ function isOverdueInvoice(dueDate: string | null, today: string) {
 
 function buildSearchText(...parts: Array<string | null | undefined>) {
   return parts.filter(Boolean).join(" ");
-}
-
-function hasCompanyProfileFields(
-  organization: NonNullable<
-    Awaited<ReturnType<typeof getActiveOrganizationContext>>
-  >["organization"]
-) {
-  return [
-    organization.logoUrl,
-    organization.phone,
-    organization.websiteUrl,
-    organization.primaryTrade,
-    organization.brandAccentColor,
-    organization.timeZone
-  ].some((value) => Boolean(value?.trim()));
 }
 
 type DashboardPageProps = {

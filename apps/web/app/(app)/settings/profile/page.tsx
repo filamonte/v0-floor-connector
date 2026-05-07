@@ -1,9 +1,13 @@
 import { redirect } from "next/navigation";
 
+import { PreferredEstimateTemplateCard } from "@/components/preferred-estimate-template-card";
+import { SettingsFeedback } from "@/components/settings-feedback";
 import { SettingsSectionCard } from "@/components/settings-section-card";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { listDocumentTemplates } from "@/lib/templates/data";
+import { getCurrentUserPreferredEstimateTemplate } from "@/lib/user-preferences/estimate-template-preference";
 
 type ProfileRow = {
   id: string;
@@ -14,6 +18,13 @@ type ProfileRow = {
   last_sign_in_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+type ProfileSettingsPageProps = {
+  searchParams?: Promise<{
+    error?: string;
+    message?: string;
+  }>;
 };
 
 function isProfileRow(value: unknown): value is ProfileRow {
@@ -72,7 +83,10 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default async function ProfileSettingsPage() {
+export default async function ProfileSettingsPage({
+  searchParams
+}: ProfileSettingsPageProps) {
+  const resolvedSearchParams = (await searchParams) ?? {};
   const user = await requireAuthenticatedUser("/settings/profile");
   const organizationContext = await getActiveOrganizationContext(user.id);
 
@@ -81,13 +95,18 @@ export default async function ProfileSettingsPage() {
   }
 
   const supabase = await getSupabaseServerClient();
-  const profileResponse = await supabase
-    .from("users")
-    .select(
-      "id, email, full_name, avatar_url, lifecycle_state, last_sign_in_at, created_at, updated_at"
-    )
-    .eq("id", user.id)
-    .maybeSingle();
+  const [profileResponse, estimateTemplates, estimateTemplatePreference] =
+    await Promise.all([
+      supabase
+        .from("users")
+        .select(
+          "id, email, full_name, avatar_url, lifecycle_state, last_sign_in_at, created_at, updated_at"
+        )
+        .eq("id", user.id)
+        .maybeSingle(),
+      listDocumentTemplates("estimate"),
+      getCurrentUserPreferredEstimateTemplate("/settings/profile")
+    ]);
 
   if (profileResponse.error) {
     throw new Error(`Unable to load account profile: ${profileResponse.error.message}`);
@@ -125,12 +144,17 @@ export default async function ProfileSettingsPage() {
     .toUpperCase();
 
   return (
-    <SettingsSectionCard
-      eyebrow="Personal Account"
-      title="Profile / Account Settings"
-      description="Review the authenticated profile FloorConnector uses for sign-in, membership context, and the shared contractor workspace."
-    >
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+    <div className="space-y-5">
+      <SettingsFeedback
+        error={resolvedSearchParams.error}
+        message={resolvedSearchParams.message}
+      />
+      <SettingsSectionCard
+        eyebrow="Personal Account"
+        title="Profile / Account Settings"
+        description="Review the authenticated profile FloorConnector uses for sign-in, membership context, and the shared contractor workspace."
+      >
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
         <section className="border border-[#d9cdc2] bg-[#fbf7f2] p-5">
           <div className="flex items-start gap-4">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[4px] bg-[#171717] text-xl font-semibold text-white">
@@ -183,9 +207,9 @@ export default async function ProfileSettingsPage() {
             />
           </dl>
         </section>
-      </div>
+        </div>
 
-      <section className="mt-5 border border-[#d9cdc2] bg-white p-5">
+        <section className="mt-5 border border-[#d9cdc2] bg-white p-5">
         <h3 className="text-sm font-semibold text-[#221a14]">Current organization context</h3>
         <dl className="mt-3 grid gap-px border border-[#d9cdc2] bg-[#d9cdc2] md:grid-cols-3">
           <div className="bg-[#fbf7f2] px-4 py-3">
@@ -213,7 +237,15 @@ export default async function ProfileSettingsPage() {
             </dd>
           </div>
         </dl>
-      </section>
-    </SettingsSectionCard>
+        </section>
+
+        <div className="mt-5">
+          <PreferredEstimateTemplateCard
+            templates={estimateTemplates}
+            preference={estimateTemplatePreference}
+          />
+        </div>
+      </SettingsSectionCard>
+    </div>
   );
 }

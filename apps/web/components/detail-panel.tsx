@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 type DetailPanelProps = {
+  id?: string;
   title: string;
   description?: string;
   tone?: "soft" | "neutral";
@@ -8,6 +9,7 @@ type DetailPanelProps = {
 };
 
 export function DetailPanel({
+  id,
   title,
   description,
   tone = "soft",
@@ -17,6 +19,7 @@ export function DetailPanel({
 
   return (
     <section
+      id={id}
       className={[
         "border p-7 sm:p-8",
         neutral

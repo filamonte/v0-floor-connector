@@ -92,6 +92,8 @@ export function AppointmentQuickCreateForm({
 
   return (
     <form action={action} className="space-y-5">
+      <input type="hidden" name="customerVisible" value="false" />
+      <input type="hidden" name="customerNotes" value="" />
       <QuickCreateFormShell
         eyebrow="Quick create"
         title="Create appointment"

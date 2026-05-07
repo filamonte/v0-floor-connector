@@ -5,15 +5,18 @@ FloorConnector is building a vertical operating system for epoxy flooring, concr
 This document describes the long-term product vision. It is intentionally high-level and should not be treated as the source of truth for what is already implemented.
 
 Related documents:
+
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): what is implemented today
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md): current and near-term business workflows
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): next-phase build order
+- [docs/ai-assisted-operating-system.md](C:/FloorConnector/docs/ai-assisted-operating-system.md): long-term AI-assisted operating system direction
 
 ## Who FloorConnector Is For
 
 FloorConnector is for specialty surface contractors who need more than a lightweight CRM or disconnected field tool.
 
 Primary users include:
+
 - epoxy flooring contractors
 - concrete polishing companies
 - resinous flooring installers
@@ -25,6 +28,7 @@ These companies often manage high-value projects with real handoffs between esti
 ## Core Problem
 
 Specialty contractors usually run the business across disconnected systems:
+
 - leads in one tool or inbox
 - customers and projects somewhere else
 - estimates in a document or spreadsheet workflow
@@ -33,6 +37,7 @@ Specialty contractors usually run the business across disconnected systems:
 - invoices and payments disconnected from what was actually sold and completed
 
 That fragmentation creates predictable problems:
+
 - duplicate data entry
 - scope loss between sales and execution
 - weak handoffs between office, field, and finance teams
@@ -46,6 +51,7 @@ The result is not just inconvenience. It creates operational drag and revenue le
 The long-term thesis is that specialty surface contractors need a shared system of record and workflow progression, not another isolated point solution.
 
 FloorConnector should unify the contractor revenue path so that:
+
 - work starts in one intake and qualification flow
 - future visual/product/finish selection can start before formal lead intake while still becoming part of the same canonical record chain later
 - future site data, plans, photos, and takeoff quantities can become reviewed estimate inputs instead of disconnected spreadsheet or drawing artifacts
@@ -56,6 +62,7 @@ FloorConnector should unify the contractor revenue path so that:
 - every team sees the same project context, with the next best action made clear by status and readiness
 
 In short:
+
 - what is sold should flow into what is contracted
 - what is contracted should flow into what is scheduled and executed
 - what is executed should flow into what is billed and collected
@@ -71,6 +78,7 @@ The platform direction is to become connected business infrastructure across fiv
 ### 1. Operational Layer
 
 This is the backbone of the system:
+
 - opportunities and intake
 - customers
 - projects
@@ -85,6 +93,7 @@ This layer creates operational continuity from first contact through closeout.
 ### 2. Financial Layer
 
 Beyond basic invoicing, FloorConnector is intended to support a fuller contractor financial workflow over time:
+
 - tax-aware billing
 - retainage handling
 - schedule-of-values and progress billing support
@@ -98,6 +107,7 @@ The goal is not generic accounting replacement. It is contractor-specific financ
 Long term, FloorConnector should become the readable memory layer for the contractor organization. This is target architecture, not implemented status.
 
 The company brain direction means:
+
 - canonical records remain the source of truth across sales, operations, finance, portal, and field surfaces
 - project becomes the practical memory hub for selected finishes, scope decisions, files, communications, delivery proof, signatures, invoices, payments, field evidence, and closeout context
 - timelines summarize important canonical events without replacing the records that created those events
@@ -111,6 +121,7 @@ Future activity timelines should read across the lifecycle: finish selected, est
 Future visual and product selection should be able to start before lead intake. A customer may choose a finish or system visually before becoming a full opportunity or customer, but those choices should later become real canonical selected-system/spec records when the contractor accepts the work into the shared chain.
 
 Supported future finish families include:
+
 - decorative flake
 - metallic epoxy
 - decorative quartz
@@ -124,6 +135,7 @@ Visual selections should never become fake session-only business truth. They may
 ### 5. Materials And Production Layer
 
 As the system matures, FloorConnector should expand into the operational inputs behind the work itself:
+
 - reusable materials and item catalogs
 - estimating and invoicing consistency through shared catalogs
 - System Templates that combine reusable catalog/cost items, formulas, grouping rules, optional components, and required inputs into repeatable estimating systems
@@ -156,6 +168,7 @@ Future Finish System / System Specification behavior should build on this same d
 ### 6. Customer And Communication Layer
 
 The platform should eventually support the customer-facing parts of the same workflow:
+
 - estimate review and approval
 - contract review and signature workflows
 - invoice visibility and payment touchpoints
@@ -169,6 +182,7 @@ Future communication depth should include delivery proof across email, SMS, port
 ### 7. Connected Platform Layer
 
 Over the longer term, FloorConnector can grow beyond internal operations into broader platform infrastructure for the contractor business:
+
 - marketing and lead capture connected to the same downstream revenue records
 - service and integration adapters that reduce operational re-entry across systems
 - contractor network collaboration, or networked work, where trusted subcontractors, vendors, and partner contractors can participate through scoped project or job access
@@ -179,6 +193,7 @@ This should happen carefully. Expansion only makes sense if it strengthens the c
 The contractor network direction is not general contractor chat and not an immediate open marketplace. The practical path is record-based collaboration around canonical projects, jobs, change orders, invoices, daily logs, field notes, and payments. FloorConnector may eventually help contractors make more money through trusted partner work, overflow jobs, specialty subcontractors, and regional coverage, but only where that reinforces the `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment` chain.
 
 Early networked-work concepts should stay invite-based:
+
 - invite a known subcontractor, vendor, or partner contractor to a project or job
 - define scope, dates, access level, file and photo visibility, communication thread, and whether pricing is visible
 - allow limited status updates, photo uploads, field notes, and job progress updates tied to that record
@@ -188,6 +203,7 @@ Later concepts may include trusted contractor connections, private referral or o
 ### 8. Administration And Control Layer
 
 As the platform grows, FloorConnector should also mature its administrative infrastructure:
+
 - organization settings and administration
 - module controls and entitlements
 - platform-level super-admin oversight
@@ -195,11 +211,35 @@ As the platform grows, FloorConnector should also mature its administrative infr
 
 These layers are important because a vertical operating system eventually needs controlled rollout, organization-aware configuration, and a clean boundary between contractor administration and platform administration.
 
+### 9. AI-Assisted Operating Layer
+
+The long-term AI direction is to reduce friction across both contractor operations and FloorConnector's own growth, onboarding, support, and activation workflows.
+
+AI should be an operating layer over the shared system, not a parallel product with duplicate records. It may draft, suggest, summarize, prepare, classify, and orchestrate work, but customer commitments, pricing, contracts, billing, scheduling readiness, permissions, and compliance must continue to flow through canonical FloorConnector workflows with human confirmation where risk exists.
+
+Two audiences matter:
+
+- contractor-facing AI helps contractors run their business through the existing lifecycle: `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
+- FloorConnector-facing AI helps FloorConnector market, sell, onboard, support, activate, and retain contractor customers
+
+Long-term AI layers include contractor copilot behavior, unified communications, calendar and scheduling intelligence, website chat and intake, AI receptionist/voice, onboarding and setup assistance, support assistance, operational intelligence, and human escalation/approval queues.
+
+Detailed planning lives in:
+
+- [docs/ai-assisted-operating-system.md](C:/FloorConnector/docs/ai-assisted-operating-system.md)
+- [docs/ai-contractor-workflows.md](C:/FloorConnector/docs/ai-contractor-workflows.md)
+- [docs/communications-and-ai-intake.md](C:/FloorConnector/docs/communications-and-ai-intake.md)
+- [docs/calendar-and-scheduling-intelligence.md](C:/FloorConnector/docs/calendar-and-scheduling-intelligence.md)
+- [docs/ai-marketing-and-onboarding.md](C:/FloorConnector/docs/ai-marketing-and-onboarding.md)
+
+These are target direction docs. They do not mean AI chat, AI receptionist, external calendar sync, or broad AI workflow execution is currently implemented.
+
 ## How The Platform Expands Beyond Today
 
 The current product already covers the core workflow from intake through payment recording. The long-term expansion is about deepening and connecting that system, not replacing it with unrelated modules.
 
 The expansion path is:
+
 - first, strengthen workflow continuity across the existing operational chain
 - then make `Project` the practical operational hub for active work
 - then deepen scheduling, materials, execution, notifications, and financial controls
@@ -214,6 +254,7 @@ That means future platform growth should feel like a widening circle around the 
 This document does not mean all of these layers are already implemented.
 
 It does not replace:
+
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md) for implemented truth
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md) for current and near-term workflow behavior
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md) for sequencing what gets built next

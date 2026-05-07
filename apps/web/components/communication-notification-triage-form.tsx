@@ -11,6 +11,7 @@ type CommunicationNotificationTriageFormProps = {
   view: "all" | "needs_response" | "unread" | "recent";
   source:
     | "all"
+    | "opportunity"
     | "customer"
     | "project"
     | "estimate"
