@@ -123,10 +123,25 @@ Handoff should include the conversation transcript or summary, current canonical
 Implemented foundation:
 
 - canonical `communication_threads` can now attach to opportunities as well as downstream customer/project/subject records
+- canonical `communication_threads` and `communication_messages` can now attach to canonical appointments for contractor-side appointment confirmation history without creating an `appointment_confirmations` table
 - canonical `communication_messages` now have explicit message kind, visibility, and logging/delivery status fields
-- manual opportunity communication can be stored before customer/project conversion without creating `lead_activities` or AI-only communication records
-- internal visibility remains the safe default for manual lead communication; customer-visible content must be explicitly marked
-- portal display of opportunity communication is not implemented yet, and internal messages must remain hidden from customer/portal loaders
+- appointment workspaces now expose a contractor-only Customer Confirmation panel that can preview editable customer-safe confirmation copy, show eligibility blockers, list eligible email recipients, create a customer-visible `appointment_confirmation` communication message with `delivery_status = logged`, and manually send an email confirmation after explicit contractor confirmation
+- server-side appointment confirmation email utilities can resolve eligible project/customer email recipients, reuse or create the canonical appointment confirmation message, send customer-safe content through the existing Postmark-backed notification email path, and link the provider attempt through `notification_deliveries.communication_message_id`; `communication_messages.delivery_status` is updated to `sent` only after provider success
+- the appointment workspace UI supports manual email confirmation sends only; SMS/voice/chat delivery is not implemented, provider-backed reminders are not scheduled, portal confirmation actions are not exposed, and appointment confirmation logging or sending does not mutate the appointment
+- `appointment_reminder` is available as a durable message classification for future planning/logging; automated reminder scheduling and delivery are not implemented
+- `communication_preferences` now store contractor-managed, organization-scoped customer/contact delivery preferences for email and future SMS categories; current server utilities use them for appointment reminder readiness and manual email reminder sends, and customer detail now gives contractor admins a UI for email appointment-reminder preferences with no portal preference UI and no customer-facing preference management yet
+- appointment reminder utilities can build customer-safe reminder preview copy, resolve eligible email recipients through the existing appointment confirmation recipient path, filter those recipients by explicit `allowed`, `opted_out`, or `suppressed` appointment-reminder preferences, and manually send reminder email through the existing Postmark-backed notification email path after an explicit server call; SMS recipients are not resolved
+- manual appointment reminder email delivery uses the canonical `communication_messages` row as communication history and `notification_deliveries.communication_message_id` as provider-attempt audit linkage; successful sends mark the message `sent`, failed sends leave it unsent, and duplicate successful reminder emails to the same recipient for the same appointment are blocked
+- the appointment workspace now exposes this as a contractor-only manual Customer Reminder panel with editable customer-safe copy, preference-filtered recipient selection, a customer preference-management cue when no eligible recipient remains, explicit email send, and recent reminder delivery state; no reminder schedules, SMS reminders, portal reminder actions, or automated sends are implemented
+- missing email appointment-reminder preference rows default to allowed for readiness only, while explicit opted-out or suppressed rows block the recipient before any future reminder send can be built
+- manual opportunity communication can be logged from the lead workspace before customer/project conversion without creating `lead_activities` or AI-only communication records
+- internal visibility remains the safe default for manual lead communication; customer-visible content must be explicitly marked in the contractor UI
+- the lead workspace can show recent opportunity communication activity and current internal follow-up context
+- dashboard and lead-manager follow-up visibility now read from canonical opportunity follow-up fields plus opportunity communication recency, giving contractor users an internal overdue/due/upcoming/no-follow-up queue without sending provider-backed reminders or auto-creating work items
+- internal `work_items` now provide a small contractor-only action foundation for manually created ownership, due dates, assignment, completion, dismissal, and future human handoff context linked back to canonical records
+- dashboard and lead workspace UI now make manually created internal work items usable: the dashboard shows assigned open work first with a safe company fallback, and lead workspaces can create, complete, and dismiss opportunity-linked work items without auto-generating them from follow-up state
+- follow-up cues on dashboard and the lead manager can now open a prefilled opportunity-linked work-item form for human confirmation; this is an explicit manual bridge and does not auto-create tasks, send reminders, or mutate opportunity follow-up fields
+- portal display of opportunity or appointment communication is not implemented yet, and internal messages must remain hidden from customer/portal loaders
 
 Target direction:
 
@@ -162,6 +177,9 @@ Unless [docs/current-state.md](C:/FloorConnector/docs/current-state.md) says oth
 - full provider-backed SMS/email communication sync
 - full consent and opt-out automation
 - AI customer follow-up automation
+- external reminder delivery
+- automation-created work items
+- portal/customer task visibility
 - unified inbox across every channel
 
 Existing communication and notification foundations should be treated as the base to extend, not as the full target.

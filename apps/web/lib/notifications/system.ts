@@ -27,6 +27,7 @@ type NotificationEventInsert = {
   eventType: string;
   subjectType:
     | "opportunity"
+    | "appointment"
     | "customer"
     | "project"
     | "estimate"
@@ -53,6 +54,7 @@ type NotificationEventInsert = {
 type NotificationDeliveryInsert = {
   organizationId: string;
   notificationEventId: string;
+  communicationMessageId?: string | null;
   recipientEmail: string;
   recipientUserId?: string | null;
   trackingToken?: string | null;
@@ -63,6 +65,7 @@ type NotificationDeliveryRow = {
   id: string;
   company_id: string;
   notification_event_id: string;
+  communication_message_id: string | null;
   channel: "in_app" | "email" | "sms";
   provider: string | null;
   status: "pending" | "sent" | "delivered" | "opened" | "clicked" | "failed";
@@ -188,6 +191,7 @@ type ChangeOrderNotificationEventInput = {
 type SentEmailNotificationInput = {
   organizationId: string;
   notificationEventId: string;
+  communicationMessageId?: string | null;
   recipientEmail: string;
   recipientUserId?: string | null;
   trackingToken?: string | null;
@@ -216,6 +220,8 @@ function getSubjectLinkPath(
   switch (subjectType) {
     case "opportunity":
       return `/leads/${subjectId}`;
+    case "appointment":
+      return `/appointments/${subjectId}`;
     case "customer":
       return `/customers/${subjectId}`;
     case "project":
@@ -345,6 +351,7 @@ async function createNotificationDelivery(input: NotificationDeliveryInsert) {
     .insert({
       company_id: input.organizationId,
       notification_event_id: input.notificationEventId,
+      communication_message_id: input.communicationMessageId ?? null,
       channel: "email",
       provider: "postmark",
       status: "pending",
@@ -415,6 +422,7 @@ export async function sendTrackedNotificationEmail(input: SentEmailNotificationI
   const deliveryId = await createNotificationDelivery({
     organizationId: input.organizationId,
     notificationEventId: input.notificationEventId,
+    communicationMessageId: input.communicationMessageId,
     recipientEmail: input.recipientEmail,
     recipientUserId: input.recipientUserId,
     trackingToken: input.trackingToken,
@@ -448,6 +456,7 @@ async function getDeliveryByTrackingToken(trackingToken: string) {
         id,
         company_id,
         notification_event_id,
+        communication_message_id,
         channel,
         provider,
         status,

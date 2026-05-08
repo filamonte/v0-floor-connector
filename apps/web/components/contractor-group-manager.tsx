@@ -1,5 +1,23 @@
 import type { ContractorGroup } from "@floorconnector/types";
 
+import type {
+  ContractorGroupAssignmentAuditReadiness
+} from "@/lib/platform-admin/contractor-group-assignment-audit-readiness-core";
+import {
+  buildContractorGroupAssignmentProposalManualReviewChecklist,
+  type ContractorGroupAssignmentProposalManualReviewChecklist,
+  ContractorGroupAssignmentProposalConfidence,
+  ContractorGroupAssignmentProposalReadModel,
+  ContractorGroupAssignmentProposalStatus
+} from "@/lib/platform-admin/contractor-group-assignment-proposals-core";
+import type {
+  ContractorGroupAuditObservability,
+  ContractorGroupAuditTimeline
+} from "@/lib/platform-admin/contractor-group-audit-events-core";
+import type {
+  ContractorGroupObservability,
+  ContractorGroupObservabilityOrganizationSummary
+} from "@/lib/platform-admin/contractor-group-observability-core";
 import {
   archiveContractorGroupAction,
   assignContractorGroupMembershipAction,
@@ -18,14 +36,63 @@ type TenantOption = {
 type ContractorGroupManagerProps = {
   groups: ContractorGroup[];
   tenants: TenantOption[];
+  observability: ContractorGroupObservability;
+  assignmentAuditReadiness: ContractorGroupAssignmentAuditReadiness;
+  assignmentProposals: ContractorGroupAssignmentProposalReadModel;
+  auditObservability: ContractorGroupAuditObservability;
+  auditTimeline: ContractorGroupAuditTimeline;
+  selectedStatus: string;
+  selectedType: string;
+  selectedOrganizationId: string | null;
+  selectedAuditEventType: string;
+  selectedProposalStatus: string;
+  selectedProposalConfidence: string;
+  selectedProposalGroupType: string;
 };
 
 function inputClassName() {
   return "w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100";
 }
 
+const groupStatuses = ["active", "inactive", "archived"] as const;
+const groupTypes = [
+  "trade_segment",
+  "onboarding",
+  "beta",
+  "internal",
+  "future_plan",
+  "future_entitlement",
+  "regional",
+  "custom"
+] as const;
+const auditEventTypes = [
+  "group_created",
+  "group_updated",
+  "group_archived",
+  "group_activated",
+  "group_deactivated",
+  "organization_assigned",
+  "organization_removed",
+  "assignment_source_changed"
+] as const;
+const proposalStatuses = [
+  "proposed",
+  "already_assigned",
+  "not_applicable",
+  "unavailable"
+] as const;
+const proposalConfidences = ["high", "medium", "low", "unavailable"] as const;
+
+function eventTypeLabel(type: (typeof auditEventTypes)[number]) {
+  return type.replace(/_/g, " ");
+}
+
 function groupTypeLabel(type: ContractorGroup["groupType"]) {
   return type.replace(/_/g, " ");
+}
+
+function organizationLabel(tenant: TenantOption) {
+  return tenant.display_name || tenant.legal_name || tenant.slug;
 }
 
 function statusClassName(status: ContractorGroup["status"]) {
@@ -39,10 +106,69 @@ function statusClassName(status: ContractorGroup["status"]) {
   }
 }
 
+function normalizeStatusFilter(value: string) {
+  return groupStatuses.some((status) => status === value) ? value : "all";
+}
+
+function normalizeTypeFilter(value: string) {
+  return groupTypes.some((type) => type === value) ? value : "all";
+}
+
+function normalizeProposalStatusFilter(
+  value: string
+): ContractorGroupAssignmentProposalStatus | "all" {
+  switch (value) {
+    case "proposed":
+    case "already_assigned":
+    case "not_applicable":
+    case "unavailable":
+      return value;
+    default:
+      return "all";
+  }
+}
+
+function normalizeProposalConfidenceFilter(
+  value: string
+): ContractorGroupAssignmentProposalConfidence | "all" {
+  switch (value) {
+    case "high":
+    case "medium":
+    case "low":
+    case "unavailable":
+      return value;
+    default:
+      return "all";
+  }
+}
+
+function dateLabel(value: string | null | undefined) {
+  if (!value) {
+    return "Not recorded";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short"
+  }).format(new Date(value));
+}
+
 function GroupMetadataForm({ group }: { group?: ContractorGroup }) {
+  const formLabel = group
+    ? `Edit contractor group ${group.name}`
+    : "Create contractor group";
+  const submitLabel = group
+    ? `Save contractor group ${group.name}`
+    : "Create contractor group";
+
   return (
     <form
       action={upsertContractorGroupAction}
+      aria-label={formLabel}
+      data-contractor-group-key={group?.key}
+      data-testid={
+        group ? "contractor-group-update-form" : "contractor-group-create-form"
+      }
       className="rounded-[1.5rem] border border-slate-200 bg-white p-5"
     >
       {group ? (
@@ -113,6 +239,7 @@ function GroupMetadataForm({ group }: { group?: ContractorGroup }) {
       </label>
       <button
         type="submit"
+        aria-label={submitLabel}
         className="mt-5 inline-flex h-9 items-center rounded-full border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
       >
         {group ? "Save group" : "Create contractor group"}
@@ -136,7 +263,13 @@ function AssignmentForm({
   );
 
   return (
-    <form action={assignContractorGroupMembershipAction} className="space-y-3">
+    <form
+      action={assignContractorGroupMembershipAction}
+      aria-label={`Assign organization to contractor group ${group.name}`}
+      data-contractor-group-key={group.key}
+      data-testid="contractor-group-assignment-form"
+      className="space-y-3"
+    >
       <input type="hidden" name="contractorGroupId" value={group.id} />
       <input type="hidden" name="assignmentSource" value="manual" />
       <label className="block">
@@ -170,6 +303,7 @@ function AssignmentForm({
       </label>
       <button
         type="submit"
+        aria-label={`Assign organization to contractor group ${group.name}`}
         disabled={group.status === "archived" || availableTenants.length === 0}
         className="inline-flex h-9 items-center rounded-full border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
@@ -207,10 +341,25 @@ function MembershipList({ group }: { group: ContractorGroup }) {
               {membership.notes ? ` · ${membership.notes}` : ""}
             </p>
           </div>
-          <form action={removeContractorGroupMembershipAction}>
+          <form
+            action={removeContractorGroupMembershipAction}
+            aria-label={`Remove ${
+              membership.organizationName ??
+              membership.organizationSlug ??
+              "organization"
+            } from contractor group ${group.name}`}
+            data-contractor-group-key={group.key}
+            data-organization-id={membership.organizationId}
+            data-testid="contractor-group-remove-membership-form"
+          >
             <input type="hidden" name="membershipId" value={membership.id} />
             <button
               type="submit"
+              aria-label={`Remove ${
+                membership.organizationName ??
+                membership.organizationSlug ??
+                "organization"
+              } from contractor group ${group.name}`}
               className="inline-flex h-8 items-center rounded-full border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               Remove
@@ -222,34 +371,1135 @@ function MembershipList({ group }: { group: ContractorGroup }) {
   );
 }
 
+function SummaryTile({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 px-4 py-3">
+      <p className="text-xl font-semibold text-slate-950">{value}</p>
+      <p className="text-xs text-slate-500">{label}</p>
+    </div>
+  );
+}
+
+function ContractorGroupFilters({
+  selectedStatus,
+  selectedType
+}: {
+  selectedStatus: string;
+  selectedType: string;
+}) {
+  return (
+    <form
+      action="/super-admin/groups"
+      className="grid gap-4 rounded-[1.5rem] border border-slate-200 bg-white p-5 md:grid-cols-[1fr_1fr_auto]"
+    >
+      <label className="block">
+        <span className="mb-2 block text-sm font-medium text-slate-800">
+          Status filter
+        </span>
+        <select
+          name="groupStatus"
+          defaultValue={selectedStatus}
+          className={inputClassName()}
+        >
+          <option value="all">All statuses</option>
+          {groupStatuses.map((status) => (
+            <option key={status} value={status}>
+              {status}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="block">
+        <span className="mb-2 block text-sm font-medium text-slate-800">
+          Type filter
+        </span>
+        <select name="groupType" defaultValue={selectedType} className={inputClassName()}>
+          <option value="all">All types</option>
+          {groupTypes.map((type) => (
+            <option key={type} value={type}>
+              {groupTypeLabel(type)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="flex items-end">
+        <button
+          type="submit"
+          className="inline-flex h-11 items-center rounded-full border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+        >
+          Apply filters
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function StarterPackReferenceList({
+  references
+}: {
+  references: ContractorGroupObservability["groupDetails"][number]["starterPackAssignmentReferences"];
+}) {
+  if (references.length === 0) {
+    return (
+      <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+        No future starter-pack assignment intent currently references this group key.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {references.map((reference) => (
+        <div
+          key={reference.assignmentId}
+          className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+        >
+          <p className="text-sm font-semibold text-slate-950">
+            {reference.starterPackName}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            {reference.starterPackStatus} pack · {reference.assignmentStatus} assignment ·{" "}
+            {reference.assignmentLabel ?? reference.assignmentKey ?? "unlabeled group target"}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ObservabilitySection({
+  observability
+}: {
+  observability: ContractorGroupObservability;
+}) {
+  const populatedTypes = groupTypes.filter(
+    (type) => observability.summary.groupsByType[type] > 0
+  );
+
+  return (
+    <div className="grid gap-5 xl:grid-cols-3">
+      <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
+        <p className="text-sm font-semibold text-slate-950">Groups by type</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {(populatedTypes.length > 0 ? populatedTypes : groupTypes.slice(0, 1)).map(
+            (type) => (
+              <span
+                key={type}
+                className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700"
+              >
+                {groupTypeLabel(type)}: {observability.summary.groupsByType[type]}
+              </span>
+            )
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
+        <p className="text-sm font-semibold text-slate-950">
+          Multi-group organizations
+        </p>
+        <div className="mt-3 space-y-2">
+          {observability.summary.organizationsAssignedToMultipleGroups
+            .slice(0, 5)
+            .map((summary) => (
+              <p key={summary.organization.id} className="text-sm text-slate-600">
+                <span className="font-semibold text-slate-950">
+                  {summary.organization.name}
+                </span>{" "}
+                belongs to {summary.groups.length} groups.
+              </p>
+            ))}
+          {observability.summary.organizationsAssignedToMultipleGroups.length === 0 ? (
+            <p className="text-sm leading-6 text-slate-600">
+              No organizations are assigned to multiple groups.
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
+        <p className="text-sm font-semibold text-slate-950">
+          Recently assigned memberships
+        </p>
+        <div className="mt-3 space-y-2">
+          {observability.summary.recentlyAssignedMemberships.map((membership) => (
+            <p key={membership.id} className="text-sm leading-6 text-slate-600">
+              <span className="font-semibold text-slate-950">
+                {membership.organizationName ?? membership.organizationSlug ?? membership.organizationId}
+              </span>{" "}
+              in {membership.groupName} on {dateLabel(membership.createdAt)}
+            </p>
+          ))}
+          {observability.summary.recentlyAssignedMemberships.length === 0 ? (
+            <p className="text-sm leading-6 text-slate-600">
+              No organization memberships have been assigned yet.
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AssignmentAuditReadinessPanel({
+  readiness
+}: {
+  readiness: ContractorGroupAssignmentAuditReadiness;
+}) {
+  return (
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-slate-950">
+            Assignment history readiness
+          </p>
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
+            Read-only audit planning over current group and membership rows. Current
+            inferred history is limited, membership removal cannot be reconstructed
+            unless an audit event was written, and action write wiring must be
+            audited before groups power enforcement or automation.
+          </p>
+        </div>
+        <div className="grid min-w-[17rem] grid-cols-3 gap-2">
+          <SummaryTile
+            label="Created inferred"
+            value={readiness.summary.inferredGroupCreatedEvents}
+          />
+          <SummaryTile
+            label="Assigned inferred"
+            value={readiness.summary.inferredOrganizationAssignedEvents}
+          />
+          <SummaryTile
+            label="Archived inferred"
+            value={readiness.summary.inferredArchivedGroupEvents}
+          />
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Recent inferred events
+          </p>
+          <div className="mt-3 space-y-3">
+            {readiness.events.map((event) => (
+              <div
+                key={event.id}
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
+              >
+                <p className="text-sm font-semibold text-slate-950">
+                  {event.summary}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  {event.eventType.replace(/_/g, " ")} · {dateLabel(event.occurredAt)}
+                  {event.assignmentSource
+                    ? ` · ${event.assignmentSource.replace(/_/g, " ")}`
+                    : ""}
+                  {event.performedByUserId
+                    ? ` · actor ${event.performedByUserId}`
+                    : ""}
+                </p>
+                {event.caveat ? (
+                  <p className="mt-2 text-xs leading-5 text-amber-700">
+                    {event.caveat}
+                  </p>
+                ) : null}
+              </div>
+            ))}
+            {readiness.events.length === 0 ? (
+              <p className="text-sm leading-6 text-slate-600">
+                No contractor group audit-like events can be inferred yet.
+              </p>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {readiness.caveats.map((caveat) => (
+            <div
+              key={caveat.key}
+              className={`rounded-2xl border px-4 py-3 ${
+                caveat.severity === "warning"
+                  ? "border-amber-200 bg-amber-50"
+                  : "border-slate-200 bg-slate-50"
+              }`}
+            >
+              <p
+                className={`text-sm font-semibold ${
+                  caveat.severity === "warning"
+                    ? "text-amber-900"
+                    : "text-slate-950"
+                }`}
+              >
+                {caveat.title}
+              </p>
+              <p
+                className={`mt-1 text-sm leading-6 ${
+                  caveat.severity === "warning"
+                    ? "text-amber-800"
+                    : "text-slate-600"
+                }`}
+              >
+                {caveat.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function auditEventChipClassName(eventType: string) {
+  if (eventType.includes("removed") || eventType.includes("archived")) {
+    return "border-amber-200 bg-amber-50 text-amber-800";
+  }
+
+  if (eventType.includes("assigned") || eventType.includes("activated")) {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+
+  return "border-slate-200 bg-slate-50 text-slate-600";
+}
+
+function proposalStatusClassName(status: string) {
+  switch (status) {
+    case "proposed":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    case "already_assigned":
+      return "border-sky-200 bg-sky-50 text-sky-700";
+    case "unavailable":
+      return "border-amber-200 bg-amber-50 text-amber-800";
+    default:
+      return "border-slate-200 bg-slate-50 text-slate-600";
+  }
+}
+
+function ManualReviewChecklist({
+  checklist
+}: {
+  checklist: ContractorGroupAssignmentProposalManualReviewChecklist;
+}) {
+  const visibleEvidence = checklist.evidenceItems.slice(0, 4);
+  const visibleChecks = checklist.requiredFutureOperatorChecks.slice(0, 3);
+
+  return (
+    <div className="mt-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+        Manual review checklist
+      </p>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{checklist.note}</p>
+      <p className="mt-2 text-xs leading-5 text-slate-500">
+        Future action will require manual reason and audited assignment. Not implemented yet.
+      </p>
+      <div className="mt-3 grid gap-2 md:grid-cols-2">
+        {visibleEvidence.map((item) => (
+          <div
+            key={`${item.label}:${item.value}`}
+            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+              {item.label}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-slate-700">{item.value}</p>
+          </div>
+        ))}
+      </div>
+      {checklist.blockingCaveats.length > 0 ? (
+        <div className="mt-3 space-y-1">
+          {checklist.blockingCaveats.slice(0, 3).map((caveat) => (
+            <p key={caveat} className="text-xs leading-5 text-amber-800">
+              {caveat}
+            </p>
+          ))}
+        </div>
+      ) : null}
+      <div className="mt-3 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2">
+        <p className="text-xs leading-5 text-sky-800">
+          Future checks: {visibleChecks.join(" ")}
+        </p>
+        <p className="mt-1 text-xs leading-5 text-sky-800">
+          Suggested future reason: {checklist.suggestedFutureReasonText}
+        </p>
+      </div>
+      <p className="mt-3 text-xs leading-5 text-slate-500">
+        {checklist.manualAssignmentPathLabel} Action available: no.
+      </p>
+    </div>
+  );
+}
+
+function AssignmentProposalsPanel({
+  proposals,
+  tenants,
+  selectedOrganizationId,
+  selectedProposalStatus,
+  selectedProposalConfidence,
+  selectedProposalGroupType,
+  selectedGroupStatus,
+  selectedGroupType,
+  selectedAuditEventType
+}: {
+  proposals: ContractorGroupAssignmentProposalReadModel;
+  tenants: TenantOption[];
+  selectedOrganizationId: string | null;
+  selectedProposalStatus: string;
+  selectedProposalConfidence: string;
+  selectedProposalGroupType: string;
+  selectedGroupStatus: string;
+  selectedGroupType: string;
+  selectedAuditEventType: string;
+}) {
+  const visibleProposals = proposals.proposals.slice(
+    0,
+    selectedOrganizationId ? 12 : 8
+  );
+  const selectedOrganizationSummary = proposals.selectedOrganizationSummary;
+  const visibleReasonSummaries =
+    selectedOrganizationSummary?.topReasons.filter((reason) => reason.count > 0) ??
+    [];
+  const visibleCaveatSummaries =
+    selectedOrganizationSummary?.topCaveats.filter((caveat) => caveat.count > 0) ??
+    [];
+
+  return (
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-slate-950">
+            Assignment proposals
+          </p>
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
+            Read-only decision support from current organization metadata and
+            contractor group definitions. No assignment is applied here; platform
+            admins must still use the existing audited manual assignment flow. This
+            does not trigger entitlement, provisioning, pricing, permission, or
+            runtime behavior.
+          </p>
+        </div>
+        <div className="grid min-w-[18rem] grid-cols-4 gap-2">
+          <SummaryTile label="Visible" value={proposals.summary.totalProposals} />
+          <SummaryTile label="Proposed" value={proposals.summary.proposedCount} />
+          <SummaryTile
+            label="Already assigned"
+            value={proposals.summary.alreadyAssignedCount}
+          />
+          <SummaryTile
+            label="Unavailable"
+            value={proposals.summary.unavailableCount}
+          />
+        </div>
+      </div>
+
+      <form
+        action="/super-admin/groups"
+        className="mt-5 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[1.2fr_1fr_1fr_1fr_auto]"
+      >
+        <input type="hidden" name="groupStatus" value={selectedGroupStatus} />
+        <input type="hidden" name="groupType" value={selectedGroupType} />
+        <input type="hidden" name="auditEventType" value={selectedAuditEventType} />
+        <label className="block">
+          <span className="mb-2 block text-sm font-medium text-slate-800">
+            Proposal organization
+          </span>
+          <select
+            name="organizationId"
+            defaultValue={selectedOrganizationId ?? ""}
+            className={inputClassName()}
+          >
+            <option value="">All organizations</option>
+            {tenants.map((tenant) => (
+              <option key={tenant.id} value={tenant.id}>
+                {organizationLabel(tenant)} ({tenant.tenant_status})
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="mb-2 block text-sm font-medium text-slate-800">
+            Proposal status
+          </span>
+          <select
+            name="proposalStatus"
+            defaultValue={selectedProposalStatus}
+            className={inputClassName()}
+          >
+            <option value="all">All statuses</option>
+            {proposalStatuses.map((status) => (
+              <option key={status} value={status}>
+                {status.replace(/_/g, " ")}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="mb-2 block text-sm font-medium text-slate-800">
+            Confidence
+          </span>
+          <select
+            name="proposalConfidence"
+            defaultValue={selectedProposalConfidence}
+            className={inputClassName()}
+          >
+            <option value="all">All confidence</option>
+            {proposalConfidences.map((confidence) => (
+              <option key={confidence} value={confidence}>
+                {confidence}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="mb-2 block text-sm font-medium text-slate-800">
+            Group type
+          </span>
+          <select
+            name="proposalGroupType"
+            defaultValue={selectedProposalGroupType}
+            className={inputClassName()}
+          >
+            <option value="all">All group types</option>
+            {groupTypes.map((type) => (
+              <option key={type} value={type}>
+                {groupTypeLabel(type)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="flex items-end">
+          <button
+            type="submit"
+            className="inline-flex h-11 items-center rounded-full border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            Filter proposals
+          </button>
+        </div>
+      </form>
+
+      <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_0.45fr]">
+        <div className="space-y-3">
+          {selectedOrganizationSummary ? (
+            <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3">
+              <p className="text-sm font-semibold text-sky-950">
+                {selectedOrganizationSummary.organizationName} proposal summary
+              </p>
+              <p className="mt-1 text-sm leading-6 text-sky-800">
+                {selectedOrganizationSummary.totalProposals} total ·{" "}
+                {selectedOrganizationSummary.proposedCount} proposed ·{" "}
+                {selectedOrganizationSummary.alreadyAssignedCount} already assigned ·{" "}
+                {selectedOrganizationSummary.unavailableCount} unavailable.
+              </p>
+              {visibleReasonSummaries.length > 0 ? (
+                <p className="mt-2 text-xs leading-5 text-sky-800">
+                  Top reasons:{" "}
+                  {visibleReasonSummaries
+                    .map((reason) => `${reason.label} (${reason.count})`)
+                    .join(", ")}
+                </p>
+              ) : null}
+              {visibleCaveatSummaries.length > 0 ? (
+                <div className="mt-2 space-y-1">
+                  {visibleCaveatSummaries.map((caveat) => (
+                    <p key={caveat.label} className="text-xs leading-5 text-amber-800">
+                      {caveat.label} ({caveat.count})
+                    </p>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          {visibleProposals.map((proposal) => {
+            const checklist =
+              buildContractorGroupAssignmentProposalManualReviewChecklist(
+                proposal
+              );
+
+            return (
+              <div
+                key={proposal.id}
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`rounded-full border px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${proposalStatusClassName(
+                      proposal.status
+                    )}`}
+                  >
+                    {proposal.status.replace(/_/g, " ")}
+                  </span>
+                  <span className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-600">
+                    {proposal.confidence} confidence
+                  </span>
+                  <span className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-600">
+                    {proposal.source.replace(/_/g, " ")}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm font-semibold text-slate-950">
+                  {proposal.organizationName}
+                  {" -> "}
+                  {proposal.contractorGroupName}
+                </p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  {proposal.reason}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Group: {proposal.contractorGroupKey} ·{" "}
+                  {groupTypeLabel(proposal.contractorGroupType)} ·{" "}
+                  {proposal.contractorGroupStatus} · assignment applied: no
+                </p>
+                {proposal.caveats.length > 0 ? (
+                  <div className="mt-2 space-y-1">
+                    {proposal.caveats.map((caveat) => (
+                      <p key={caveat} className="text-xs leading-5 text-amber-800">
+                        {caveat}
+                      </p>
+                    ))}
+                  </div>
+                ) : null}
+                <ManualReviewChecklist checklist={checklist} />
+              </div>
+            );
+          })}
+          {visibleProposals.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+              No assignment proposals are available for the current group and
+              organization data.
+            </p>
+          ) : null}
+        </div>
+
+        <div className="space-y-3">
+          {proposals.caveats.map((caveat) => (
+            <p
+              key={caveat}
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600"
+            >
+              {caveat}
+            </p>
+          ))}
+          <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
+            No apply-all, auto-assign, provisioning, entitlement, or runtime
+            control exists in this proposal panel.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ContractorGroupAuditObservabilityPanel({
+  auditObservability
+}: {
+  auditObservability: ContractorGroupAuditObservability;
+}) {
+  const visibleEventTypes = auditEventTypes.filter(
+    (eventType) => auditObservability.summary.eventsByType[eventType] > 0
+  );
+
+  return (
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-slate-950">
+            Audit observability
+          </p>
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
+            Read-only operational view of durable contractor group audit events.
+            This is audit evidence only: segmentation does not enforce
+            entitlements, contractor permissions, pricing, provisioning, or runtime
+            behavior.
+          </p>
+        </div>
+        <div className="grid min-w-[18rem] grid-cols-3 gap-2">
+          <SummaryTile
+            label="Events"
+            value={auditObservability.summary.totalEvents}
+          />
+          <SummaryTile
+            label="With metadata"
+            value={auditObservability.summary.metadataPresentCount}
+          />
+          <SummaryTile
+            label="Context gaps"
+            value={auditObservability.summary.missingContextIssues.length}
+          />
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-4 xl:grid-cols-3">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Events by type
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {(visibleEventTypes.length > 0 ? visibleEventTypes : auditEventTypes.slice(0, 1)).map(
+              (eventType) => (
+                <span
+                  key={eventType}
+                  className={`rounded-full border px-3 py-1 text-xs font-semibold ${auditEventChipClassName(
+                    eventType
+                  )}`}
+                >
+                  {eventTypeLabel(eventType)}:{" "}
+                  {auditObservability.summary.eventsByType[eventType]}
+                </span>
+              )
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Groups with recent activity
+          </p>
+          <div className="mt-3 space-y-2">
+            {auditObservability.summary.groupsWithRecentActivity
+              .slice(0, 5)
+              .map((group) => (
+                <p key={group.id} className="text-sm leading-6 text-slate-600">
+                  <span className="font-semibold text-slate-950">
+                    {group.label}
+                  </span>{" "}
+                  has {group.count} event{group.count === 1 ? "" : "s"}; last{" "}
+                  {dateLabel(group.lastEventAt)}.
+                </p>
+              ))}
+            {auditObservability.summary.groupsWithRecentActivity.length === 0 ? (
+              <p className="text-sm leading-6 text-slate-600">
+                No durable group audit activity is loaded yet.
+              </p>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Organizations with assignment activity
+          </p>
+          <div className="mt-3 space-y-2">
+            {auditObservability.summary.organizationsWithRecentAssignmentActivity
+              .slice(0, 5)
+              .map((organization) => (
+                <p key={organization.id} className="text-sm leading-6 text-slate-600">
+                  <span className="font-semibold text-slate-950">
+                    {organization.label}
+                  </span>{" "}
+                  has {organization.count} assignment/removal event
+                  {organization.count === 1 ? "" : "s"}.
+                </p>
+              ))}
+            {auditObservability.summary.organizationsWithRecentAssignmentActivity
+              .length === 0 ? (
+              <p className="text-sm leading-6 text-slate-600">
+                No organization assignment/removal activity is loaded yet.
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1fr]">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Assignment source
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {Object.entries(auditObservability.summary.eventsByAssignmentSource).map(
+              ([source, count]) => (
+                <span
+                  key={source}
+                  className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600"
+                >
+                  {source.replace(/_/g, " ")}: {count}
+                </span>
+              )
+            )}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Audit context checks
+          </p>
+          {auditObservability.summary.missingContextIssues.length > 0 ? (
+            <div className="mt-3 space-y-2">
+              {auditObservability.summary.missingContextIssues
+                .slice(0, 4)
+                .map((issue) => (
+                  <p key={issue.id} className="text-sm leading-6 text-amber-800">
+                    {issue.message}
+                  </p>
+                ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Loaded audit events include expected group and organization context.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ContractorGroupAuditHistoryPanel({
+  timeline,
+  selectedAuditEventType,
+  selectedStatus,
+  selectedType,
+  selectedOrganizationId
+}: {
+  timeline: ContractorGroupAuditTimeline;
+  selectedAuditEventType: string;
+  selectedStatus: string;
+  selectedType: string;
+  selectedOrganizationId: string | null;
+}) {
+  return (
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-slate-950">Audit history</p>
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
+            Read-only durable audit-event storage for contractor group lifecycle
+            and assignment history. This evidence does not enforce entitlements,
+            permissions, pricing, starter-pack provisioning, or runtime behavior.
+            Export and retention tooling is planned; audit events are platform
+            evidence and should not be manually deleted.
+          </p>
+        </div>
+        <div className="grid min-w-[17rem] grid-cols-3 gap-2">
+          <SummaryTile label="Audit events" value={timeline.summary.totalEvents} />
+          <SummaryTile
+            label="Assignment events"
+            value={timeline.summary.assignmentEvents}
+          />
+          <SummaryTile
+            label="Lifecycle events"
+            value={timeline.summary.groupLifecycleEvents}
+          />
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Recent durable events
+            </p>
+            <form action="/super-admin/groups" className="flex flex-col gap-2 sm:flex-row">
+              <input type="hidden" name="groupStatus" value={selectedStatus} />
+              <input type="hidden" name="groupType" value={selectedType} />
+              {selectedOrganizationId ? (
+                <input
+                  type="hidden"
+                  name="organizationId"
+                  value={selectedOrganizationId}
+                />
+              ) : null}
+              <select
+                name="auditEventType"
+                defaultValue={selectedAuditEventType}
+                className="rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              >
+                <option value="all">All event types</option>
+                {auditEventTypes.map((eventType) => (
+                  <option key={eventType} value={eventType}>
+                    {eventTypeLabel(eventType)}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="submit"
+                className="inline-flex h-9 items-center rounded-full border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                Filter events
+              </button>
+            </form>
+          </div>
+          <div className="mt-3 space-y-3">
+            {timeline.events.map((event) => (
+              <div
+                key={event.id}
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`rounded-full border px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${auditEventChipClassName(
+                      event.eventType
+                    )}`}
+                  >
+                    {event.label}
+                  </span>
+                  {event.contractorGroupName || event.contractorGroupKey ? (
+                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600">
+                      {event.contractorGroupName ?? event.contractorGroupKey}
+                    </span>
+                  ) : null}
+                  {event.organizationName || event.organizationSlug ? (
+                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600">
+                      {event.organizationName ?? event.organizationSlug}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  {event.detail}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  {dateLabel(event.occurredAt)}
+                  {event.assignmentSource
+                    ? ` · ${event.assignmentSource.replace(/_/g, " ")}`
+                    : ""}
+                  {event.actorUserId ? ` · actor ${event.actorUserId}` : ""}
+                </p>
+                {event.reason ? (
+                  <p className="mt-2 text-xs leading-5 text-slate-500">
+                    Reason: {event.reason}
+                  </p>
+                ) : null}
+                {event.metadataSummary.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {event.metadataSummary.map((metadataItem) => (
+                      <span
+                        key={metadataItem}
+                        className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600"
+                      >
+                        {metadataItem}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+            {timeline.events.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm leading-6 text-slate-600">
+                No durable contractor group audit events exist yet. New group
+                management actions append events through transaction-aware
+                server RPCs once the audit-write migration is applied; older
+                pre-audit changes may still appear only in the inferred readiness
+                panel.
+              </p>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {timeline.caveats.map((caveat) => (
+            <p
+              key={caveat}
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600"
+            >
+              {caveat}
+            </p>
+          ))}
+          <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
+            Audit writes are intentionally not used for assignment automation,
+            entitlements, pricing, starter-pack auto-provisioning, or contractor
+            permission changes.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OrganizationGroupPanel({
+  tenants,
+  selectedOrganizationId,
+  organizationSummary,
+  auditOrganizationSummary
+}: {
+  tenants: TenantOption[];
+  selectedOrganizationId: string | null;
+  organizationSummary: ContractorGroupObservabilityOrganizationSummary | null;
+  auditOrganizationSummary:
+    | ContractorGroupAuditObservability["organizationSummaries"][number]
+    | null;
+}) {
+  return (
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-slate-950">
+            Groups for selected contractor
+          </p>
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
+            Organization-centric read model only. Membership does not change
+            permissions, entitlements, pricing, or starter-pack provisioning.
+          </p>
+        </div>
+        <form action="/super-admin/groups" className="w-full max-w-md">
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-800">
+              Contractor organization
+            </span>
+            <select
+              name="organizationId"
+              defaultValue={selectedOrganizationId ?? ""}
+              className={inputClassName()}
+            >
+              <option value="">Select organization</option>
+              {tenants.map((tenant) => (
+                <option key={tenant.id} value={tenant.id}>
+                  {organizationLabel(tenant)} ({tenant.tenant_status})
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="submit"
+            className="mt-3 inline-flex h-9 items-center rounded-full border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            Inspect groups
+          </button>
+        </form>
+      </div>
+
+      {organizationSummary ? (
+        <div className="mt-5 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-sm font-semibold text-slate-950">
+              {organizationSummary.organization.name}
+            </p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              {organizationSummary.activeGroupCount} active ·{" "}
+              {organizationSummary.inactiveGroupCount} inactive ·{" "}
+              {organizationSummary.archivedGroupCount} archived groups
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {organizationSummary.groups.map((group) => (
+                <span
+                  key={group.membershipId}
+                  className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${statusClassName(
+                    group.status
+                  )}`}
+                >
+                  {group.name} · {group.status}
+                </span>
+              ))}
+              {organizationSummary.groups.length === 0 ? (
+                <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+                  No groups assigned
+                </span>
+              ) : null}
+            </div>
+          </div>
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Future starter-pack references
+            </p>
+            <StarterPackReferenceList
+              references={organizationSummary.starterPackAssignmentReferences}
+            />
+          </div>
+          <div className="lg:col-span-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Organization audit history
+            </p>
+            {auditOrganizationSummary ? (
+              <div className="mt-3 grid gap-3 lg:grid-cols-[0.35fr_0.65fr]">
+                <div className="space-y-2 text-sm leading-6 text-slate-600">
+                  <p>
+                    {auditOrganizationSummary.totalEvents} durable event
+                    {auditOrganizationSummary.totalEvents === 1 ? "" : "s"} ·{" "}
+                    {auditOrganizationSummary.assignmentEventCount} assignment/removal ·{" "}
+                    {auditOrganizationSummary.removalEventCount} removal.
+                  </p>
+                  <p>Last event: {dateLabel(auditOrganizationSummary.lastEventAt)}</p>
+                  <p>{auditOrganizationSummary.note}</p>
+                </div>
+                <div className="space-y-2">
+                  {auditOrganizationSummary.timeline.slice(0, 4).map((event) => (
+                    <div
+                      key={event.id}
+                      className="rounded-2xl border border-slate-200 bg-white px-3 py-2"
+                    >
+                      <p className="text-sm font-semibold text-slate-950">
+                        {event.label}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        {dateLabel(event.occurredAt)} ·{" "}
+                        {event.contractorGroupName ?? event.contractorGroupKey ?? "group context unavailable"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                No durable assignment/removal audit events are loaded for this
+                organization.
+              </p>
+            )}
+          </div>
+        </div>
+      ) : (
+        <p className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+          Select an organization to inspect group membership and future
+          starter-pack targeting references.
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function ContractorGroupManager({
   groups,
-  tenants
+  tenants,
+  observability,
+  assignmentAuditReadiness,
+  assignmentProposals,
+  auditObservability,
+  auditTimeline,
+  selectedStatus,
+  selectedType,
+  selectedOrganizationId,
+  selectedAuditEventType,
+  selectedProposalStatus,
+  selectedProposalConfidence,
+  selectedProposalGroupType
 }: ContractorGroupManagerProps) {
-  const activeCount = groups.filter((group) => group.status === "active").length;
-  const assignedOrganizationCount = new Set(
-    groups.flatMap((group) =>
-      group.memberships.map((membership) => membership.organizationId)
-    )
-  ).size;
+  const normalizedStatusFilter = normalizeStatusFilter(selectedStatus);
+  const normalizedTypeFilter = normalizeTypeFilter(selectedType);
+  const normalizedProposalStatusFilter =
+    normalizeProposalStatusFilter(selectedProposalStatus);
+  const normalizedProposalConfidenceFilter = normalizeProposalConfidenceFilter(
+    selectedProposalConfidence
+  );
+  const normalizedProposalGroupTypeFilter = normalizeTypeFilter(
+    selectedProposalGroupType
+  );
+  const filteredGroups = groups.filter((group) => {
+    const statusMatches =
+      normalizedStatusFilter === "all" || group.status === normalizedStatusFilter;
+    const typeMatches =
+      normalizedTypeFilter === "all" || group.groupType === normalizedTypeFilter;
+
+    return statusMatches && typeMatches;
+  });
+  const selectedOrganizationSummary =
+    observability.organizationSummaries.find(
+      (summary) => summary.organization.id === selectedOrganizationId
+    ) ?? null;
+  const selectedAuditOrganizationSummary =
+    auditObservability.organizationSummaries.find(
+      (summary) => summary.organizationId === selectedOrganizationId
+    ) ?? null;
 
   return (
     <section id="contractor-groups" className="space-y-5">
-      <div className="grid gap-3 md:grid-cols-3">
-        <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 px-4 py-3">
-          <p className="text-xl font-semibold text-slate-950">{groups.length}</p>
-          <p className="text-xs text-slate-500">Total groups</p>
-        </div>
-        <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 px-4 py-3">
-          <p className="text-xl font-semibold text-slate-950">{activeCount}</p>
-          <p className="text-xs text-slate-500">Active groups</p>
-        </div>
-        <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 px-4 py-3">
-          <p className="text-xl font-semibold text-slate-950">
-            {assignedOrganizationCount}
-          </p>
-          <p className="text-xs text-slate-500">Organizations assigned</p>
-        </div>
+      <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <SummaryTile label="Total groups" value={observability.summary.totalGroups} />
+        <SummaryTile label="Active" value={observability.summary.activeGroups} />
+        <SummaryTile label="Inactive" value={observability.summary.inactiveGroups} />
+        <SummaryTile label="Archived" value={observability.summary.archivedGroups} />
+        <SummaryTile
+          label="Memberships"
+          value={observability.summary.totalMemberships}
+        />
+        <SummaryTile
+          label="No-group orgs"
+          value={observability.summary.organizationsAssignedToNoGroups.length}
+        />
       </div>
 
       <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 p-5">
@@ -264,14 +1514,62 @@ export function ContractorGroupManager({
         </p>
       </div>
 
+      <ObservabilitySection observability={observability} />
+
+      <AssignmentAuditReadinessPanel readiness={assignmentAuditReadiness} />
+
+      <AssignmentProposalsPanel
+        proposals={assignmentProposals}
+        tenants={tenants}
+        selectedOrganizationId={selectedOrganizationId}
+        selectedProposalStatus={normalizedProposalStatusFilter}
+        selectedProposalConfidence={normalizedProposalConfidenceFilter}
+        selectedProposalGroupType={normalizedProposalGroupTypeFilter}
+        selectedGroupStatus={normalizedStatusFilter}
+        selectedGroupType={normalizedTypeFilter}
+        selectedAuditEventType={selectedAuditEventType}
+      />
+
+      <ContractorGroupAuditObservabilityPanel
+        auditObservability={auditObservability}
+      />
+
+      <ContractorGroupAuditHistoryPanel
+        timeline={auditTimeline}
+        selectedAuditEventType={selectedAuditEventType}
+        selectedStatus={normalizedStatusFilter}
+        selectedType={normalizedTypeFilter}
+        selectedOrganizationId={selectedOrganizationId}
+      />
+
+      <ContractorGroupFilters
+        selectedStatus={normalizedStatusFilter}
+        selectedType={normalizedTypeFilter}
+      />
+
+      <OrganizationGroupPanel
+        tenants={tenants}
+        selectedOrganizationId={selectedOrganizationId}
+        organizationSummary={selectedOrganizationSummary}
+        auditOrganizationSummary={selectedAuditOrganizationSummary}
+      />
+
       <GroupMetadataForm />
 
       <div className="space-y-5">
-        {groups.map((group) => (
-          <article
-            key={group.id}
-            className="rounded-[1.5rem] border border-slate-200 bg-white p-5"
-          >
+        {filteredGroups.map((group) => {
+          const groupDetail = observability.groupDetails.find(
+            (detail) => detail.group.id === group.id
+          );
+          const groupAuditSummary = auditObservability.groupSummaries.find(
+            (summary) => summary.groupId === group.id
+          );
+
+          return (
+            <article
+              key={group.id}
+              className="rounded-[1.5rem] border border-slate-200 bg-white p-5"
+            >
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -301,10 +1599,16 @@ export function ContractorGroupManager({
                 </p>
               </div>
               {group.status !== "archived" ? (
-                <form action={archiveContractorGroupAction}>
+                <form
+                  action={archiveContractorGroupAction}
+                  aria-label={`Archive contractor group ${group.name}`}
+                  data-contractor-group-key={group.key}
+                  data-testid="contractor-group-archive-form"
+                >
                   <input type="hidden" name="contractorGroupId" value={group.id} />
                   <button
                     type="submit"
+                    aria-label={`Archive contractor group ${group.name}`}
                     className="inline-flex h-9 items-center rounded-full border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                   >
                     Archive group
@@ -329,13 +1633,102 @@ export function ContractorGroupManager({
                 <MembershipList group={group} />
               </div>
             </div>
-          </article>
-        ))}
+            <div className="mt-5 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
+              <p className="text-sm font-semibold text-slate-950">
+                Starter-pack assignment references
+              </p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                Read-only references where assignment intent targets this group key.
+                These references do not auto-provision or enforce runtime behavior.
+              </p>
+              <div className="mt-4">
+                <StarterPackReferenceList
+                  references={
+                    groupDetail?.starterPackAssignmentReferences ?? []
+                  }
+                />
+              </div>
+            </div>
+            <div className="mt-5 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-slate-950">
+                    Group audit summary
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                    Read-only durable activity for this group. Current membership
+                    count and historical removal events are intentionally shown as
+                    separate facts.
+                  </p>
+                </div>
+                <div className="grid min-w-[18rem] grid-cols-3 gap-2">
+                  <SummaryTile
+                    label="Events"
+                    value={groupAuditSummary?.totalEvents ?? 0}
+                  />
+                  <SummaryTile
+                    label="Assign/remove"
+                    value={groupAuditSummary?.assignmentEventCount ?? 0}
+                  />
+                  <SummaryTile
+                    label="Current members"
+                    value={groupAuditSummary?.currentMembershipCount ?? 0}
+                  />
+                </div>
+              </div>
+              <div className="mt-4 grid gap-3 lg:grid-cols-[0.7fr_0.3fr]">
+                <div className="space-y-2">
+                  {(groupAuditSummary?.timeline ?? []).slice(0, 4).map((event) => (
+                    <div
+                      key={event.id}
+                      className="rounded-2xl border border-slate-200 bg-white px-3 py-2"
+                    >
+                      <p className="text-sm font-semibold text-slate-950">
+                        {event.label}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        {dateLabel(event.occurredAt)}
+                        {event.organizationName || event.organizationSlug
+                          ? ` · ${event.organizationName ?? event.organizationSlug}`
+                          : ""}
+                        {event.actorUserId ? ` · actor ${event.actorUserId}` : ""}
+                      </p>
+                    </div>
+                  ))}
+                  {(groupAuditSummary?.timeline ?? []).length === 0 ? (
+                    <p className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm leading-6 text-slate-600">
+                      No durable audit events are loaded for this group.
+                    </p>
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  {(groupAuditSummary?.caveats ?? []).map((caveat) => (
+                    <p
+                      key={caveat}
+                      className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800"
+                    >
+                      {caveat}
+                    </p>
+                  ))}
+                  <p className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs leading-5 text-slate-600">
+                    Last event: {dateLabel(groupAuditSummary?.lastEventAt)}
+                  </p>
+                </div>
+              </div>
+            </div>
+            </article>
+          );
+        })}
 
         {groups.length === 0 ? (
           <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-sm leading-6 text-slate-600">
             No contractor groups exist yet. Create the first platform segmentation
             group before using contractor-group targeting previews.
+          </div>
+        ) : null}
+        {groups.length > 0 && filteredGroups.length === 0 ? (
+          <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-sm leading-6 text-slate-600">
+            No contractor groups match the selected read-only filters.
           </div>
         ) : null}
       </div>

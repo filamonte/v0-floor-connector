@@ -52,7 +52,7 @@ The long-term thesis is that specialty surface contractors need a shared system 
 
 FloorConnector should unify the contractor revenue path so that:
 
-- work starts in one intake and qualification flow
+- public acquisition, contractor-owned website pages, intake, and qualification all feed one canonical workflow instead of separate marketing or CRM databases
 - future visual/product/finish selection can start before formal lead intake while still becoming part of the same canonical record chain later
 - future site data, plans, photos, and takeoff quantities can become reviewed estimate inputs instead of disconnected spreadsheet or drawing artifacts
 - selected finish, system, product, and specification context follows the work from opportunity through closeout instead of staying trapped in a visualizer, catalog, estimate, or document silo
@@ -73,12 +73,13 @@ The long-term product direction can be described as a company brain: shared cano
 
 FloorConnector starts with contractor operations, but the long-term direction is broader than job tracking alone.
 
-The platform direction is to become connected business infrastructure across five layers.
+The platform direction is to become connected business infrastructure across the layers below.
 
 ### 1. Operational Layer
 
 This is the backbone of the system:
 
+- public acquisition that resolves into canonical opportunities
 - opportunities and intake
 - customers
 - projects
@@ -88,7 +89,7 @@ This is the backbone of the system:
 - scheduling, crews, and field readiness
 - invoices and payments
 
-This layer creates operational continuity from first contact through closeout.
+This layer creates operational continuity from first public visit or referral through closeout.
 
 ### 2. Financial Layer
 
@@ -179,16 +180,28 @@ The purpose is not to create a separate system. Customer interaction can happen 
 
 Future communication depth should include delivery proof across email, SMS, portal, app, and manual logs. Sending estimates, invoices, contracts, change orders, portal invites, and payment requests should create canonical communication/delivery records. Provider telemetry such as queued, sent, delivered, opened, clicked, deferred, bounced, blocked, dropped, and failed is useful signal, but provider data is not the business source of truth. Open and click tracking should help teams understand engagement without being treated as perfect legal certainty.
 
-### 7. Connected Platform Layer
+### 7. Public Acquisition And Connected Platform Layer
 
-Over the longer term, FloorConnector can grow beyond internal operations into broader platform infrastructure for the contractor business:
+Over the longer term, FloorConnector can grow beyond internal operations into broader platform infrastructure for contractor-owned acquisition and growth:
 
-- marketing and lead capture connected to the same downstream revenue records
+- contractor-owned public websites and tenant-owned domains
+- landing pages for services, locations, campaigns, and offers
+- SEO/service/location pages that publish contractor-owned content
+- public forms, website chat, and intake surfaces that create or enrich canonical opportunities
+- campaign/source attribution that follows work from visit to opportunity, estimate, contract, invoice, and payment
+- AI-assisted content generation for site pages, service copy, project proof, and intake summaries
+- later review, reputation, testimonial, before/after gallery, and project-proof workflows that attach back to canonical customers, projects, jobs, and closeout evidence where appropriate
 - service and integration adapters that reduce operational re-entry across systems
 - contractor network collaboration, or networked work, where trusted subcontractors, vendors, and partner contractors can participate through scoped project or job access
 - materials, purchasing, or marketplace-style extensions only where they reinforce the same canonical workflow chain
 
 This should happen carefully. Expansion only makes sense if it strengthens the contractor operating system instead of fragmenting it.
+
+The public acquisition layer should be the public edge of the same contractor operating system, not a separate website builder, CRM, marketing database, or AI knowledge silo. The intended continuity is:
+
+`public acquisition -> opportunity -> customer -> project -> estimate -> contract -> payment -> scheduling -> execution -> follow-up`
+
+Contractor websites, public forms, landing pages, SEO pages, attribution, AI intake, generated marketing content, portals, communications, and operational workflows should all reinforce that same graph.
 
 The contractor network direction is not general contractor chat and not an immediate open marketplace. The practical path is record-based collaboration around canonical projects, jobs, change orders, invoices, daily logs, field notes, and payments. FloorConnector may eventually help contractors make more money through trusted partner work, overflow jobs, specialty subcontractors, and regional coverage, but only where that reinforces the `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment` chain.
 
@@ -216,6 +229,8 @@ These layers are important because a vertical operating system eventually needs 
 The long-term AI direction is to reduce friction across both contractor operations and FloorConnector's own growth, onboarding, support, and activation workflows.
 
 AI should be an operating layer over the shared system, not a parallel product with duplicate records. It may draft, suggest, summarize, prepare, classify, and orchestrate work, but customer commitments, pricing, contracts, billing, scheduling readiness, permissions, and compliance must continue to flow through canonical FloorConnector workflows with human confirmation where risk exists.
+
+The value of AI comes from the connected operational graph. AI can be useful in public acquisition, website content generation, intake qualification, communication drafting, scheduling suggestions, estimating support, and operational summaries because those activities are tied to canonical records. It should not become a disconnected assistant layer with its own lead list, content knowledge base, project memory, communication log, or workflow truth.
 
 Two audiences matter:
 
@@ -245,7 +260,8 @@ The expansion path is:
 - then deepen scheduling, materials, execution, notifications, and financial controls
 - then add project-scoped Takeoff & Scope Intelligence where plans, photos, and measurements feed catalog-mapped estimate line items
 - then extend outward into customer-facing experiences and external integrations
-- then consider broader connected platform layers such as marketing attribution, materials ecosystems, contractor network collaboration, or marketplace behavior where they align with the same job lifecycle
+- then extend the public acquisition layer through contractor-owned websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, campaign attribution, AI-assisted content generation, and review/reputation/project-proof loops that feed the same canonical opportunity and revenue chain
+- then consider broader connected platform layers such as materials ecosystems, contractor network collaboration, or marketplace behavior where they align with the same job lifecycle
 
 That means future platform growth should feel like a widening circle around the same shared contractor workflow, not a collection of disconnected products.
 
@@ -263,6 +279,6 @@ It also does not imply that every future idea should be built. The product visio
 
 ## Vision Summary
 
-FloorConnector is meant to become the operating system specialty surface contractors use to run the business from opportunity to payment, with one connected record chain across sales, operations, and finance.
+FloorConnector is meant to become the operating system specialty surface contractors use to run the business from public acquisition to follow-up, with one connected record chain across sales, operations, finance, customer experience, and growth.
 
-The long-term opportunity is not just better estimating or better invoicing. It is a system where contractor work, financial activity, customer interaction, and future connected services all reinforce the same underlying project and job lifecycle.
+The long-term opportunity is not just better estimating, better invoicing, or a website layer. It is a system where contractor-owned public acquisition, contractor work, financial activity, customer interaction, AI assistance, and future connected services all reinforce the same underlying project and job lifecycle.

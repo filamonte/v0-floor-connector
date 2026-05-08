@@ -30,6 +30,8 @@ export type PlatformStarterPackProvisioningRunItemId = string;
 export type PlatformStarterPackProvisioningAttemptId = string;
 export type ContractorGroupId = string;
 export type ContractorGroupMembershipId = string;
+export type ContractorGroupAuditEventId = string;
+export type WorkItemId = string;
 export type ContractId = string;
 export type ContractRevisionId = string;
 export type ContractSignerId = string;
@@ -38,6 +40,7 @@ export type ChangeOrderId = string;
 export type ChangeOrderEventId = string;
 export type CommunicationThreadId = string;
 export type CommunicationMessageId = string;
+export type CommunicationPreferenceId = string;
 export type CatalogItemId = string;
 export type InventoryItemId = string;
 export type InventoryTransactionId = string;
@@ -113,6 +116,7 @@ export type NotificationDeliveryStatus =
   | "failed";
 export type CanonicalRecordSubjectType =
   | "opportunity"
+  | "appointment"
   | "customer"
   | "project"
   | "estimate"
@@ -231,9 +235,51 @@ export type CommunicationMessageKind =
   | "manual_text_note"
   | "voicemail"
   | "internal_note"
-  | "appointment_note";
+  | "appointment_note"
+  | "appointment_confirmation"
+  | "appointment_reminder";
 export type CommunicationMessageVisibility = "internal" | "customer_visible";
 export type CommunicationMessageDeliveryStatus = "logged" | "draft" | "sent";
+export type CommunicationPreferenceSubjectType =
+  | "customer"
+  | "customer_contact"
+  | "contact";
+export type CommunicationPreferenceChannel = "email" | "sms";
+export type CommunicationPreferenceMessageCategory =
+  | "appointment_confirmation"
+  | "appointment_reminder";
+export type CommunicationPreferenceStatus = "allowed" | "opted_out" | "suppressed";
+export type CommunicationPreferenceSource =
+  | "manual"
+  | "portal"
+  | "provider"
+  | "import"
+  | "system";
+export type WorkItemStatus = "open" | "completed" | "dismissed";
+export type WorkItemPriority = "low" | "normal" | "high" | "urgent";
+export type WorkItemKind =
+  | "manual"
+  | "lead_follow_up"
+  | "appointment_confirmation_prep"
+  | "appointment_follow_up"
+  | "estimate_follow_up"
+  | "invoice_follow_up"
+  | "human_handoff";
+export type WorkItemSourceType =
+  | "opportunity"
+  | "appointment"
+  | "customer"
+  | "project"
+  | "estimate"
+  | "contract"
+  | "change_order"
+  | "job"
+  | "invoice"
+  | "payment"
+  | "communication_thread"
+  | "notification_event"
+  | "workflow_error_event";
+export type WorkItemVisibility = "internal";
 export type TaxBehavior = "exclusive" | "inclusive" | "none";
 export type InventoryTransactionType =
   | "purchase"
@@ -710,6 +756,7 @@ export interface NotificationDelivery {
   id: NotificationDeliveryId;
   organizationId: OrganizationId;
   notificationEventId: NotificationEventId;
+  communicationMessageId: CommunicationMessageId | null;
   channel: NotificationChannel;
   provider: string | null;
   status: NotificationDeliveryStatus;
@@ -725,6 +772,49 @@ export interface NotificationDelivery {
   openedAt: string | null;
   clickedAt: string | null;
   failedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CommunicationPreference {
+  id: CommunicationPreferenceId;
+  organizationId: OrganizationId;
+  subjectType: CommunicationPreferenceSubjectType;
+  subjectId: string;
+  channel: CommunicationPreferenceChannel;
+  messageCategory: CommunicationPreferenceMessageCategory;
+  status: CommunicationPreferenceStatus;
+  source: CommunicationPreferenceSource;
+  reason: string | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkItem {
+  id: WorkItemId;
+  organizationId: OrganizationId;
+  title: string;
+  description: string | null;
+  status: WorkItemStatus;
+  priority: WorkItemPriority;
+  kind: WorkItemKind;
+  dueAt: string | null;
+  assignedPersonId: PersonId | null;
+  sourceType: WorkItemSourceType | null;
+  sourceId: string | null;
+  customerId: CustomerId | null;
+  projectId: ProjectId | null;
+  linkPath: string | null;
+  visibility: WorkItemVisibility;
+  dedupeKey: string | null;
+  metadata: Record<string, unknown>;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  completedByUserId: ProfileId | null;
+  completedAt: string | null;
+  dismissedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1196,6 +1286,7 @@ export interface CommunicationThread {
   id: CommunicationThreadId;
   organizationId: OrganizationId;
   opportunityId: OpportunityId | null;
+  appointmentId: AppointmentId | null;
   customerId: CustomerId | null;
   projectId: ProjectId | null;
   subjectType: CanonicalRecordSubjectType;
@@ -1213,6 +1304,7 @@ export interface CommunicationMessage {
   organizationId: OrganizationId;
   threadId: CommunicationThreadId;
   opportunityId: OpportunityId | null;
+  appointmentId: AppointmentId | null;
   customerId: CustomerId | null;
   projectId: ProjectId | null;
   senderType: CommunicationMessageSenderType;
@@ -1380,6 +1472,15 @@ export type ContractorGroupAssignmentSource =
   | "manual"
   | "targeting_preview"
   | "future_auto_assignment";
+export type ContractorGroupAuditEventType =
+  | "group_created"
+  | "group_updated"
+  | "group_archived"
+  | "group_activated"
+  | "group_deactivated"
+  | "organization_assigned"
+  | "organization_removed"
+  | "assignment_source_changed";
 
 export interface ContractorGroupMembership {
   id: ContractorGroupMembershipId;
@@ -1405,6 +1506,23 @@ export interface ContractorGroup {
   memberships: ContractorGroupMembership[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ContractorGroupAuditEvent {
+  id: ContractorGroupAuditEventId;
+  contractorGroupId: ContractorGroupId | null;
+  contractorGroupKey: string | null;
+  contractorGroupName: string | null;
+  organizationId: OrganizationId | null;
+  organizationName: string | null;
+  organizationSlug: string | null;
+  membershipId: ContractorGroupMembershipId | null;
+  actorUserId: ProfileId | null;
+  eventType: ContractorGroupAuditEventType;
+  assignmentSource: ContractorGroupAssignmentSource | null;
+  reason: string | null;
+  metadata: Record<string, unknown>;
+  occurredAt: string;
 }
 
 export interface PlatformStarterPackItem {

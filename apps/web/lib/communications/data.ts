@@ -21,6 +21,7 @@ type CommunicationThreadRow = {
   id: string;
   company_id: string;
   opportunity_id: string | null;
+  appointment_id: string | null;
   customer_id: string | null;
   project_id: string | null;
   subject_type: CommunicationThread["subjectType"];
@@ -38,6 +39,7 @@ type CommunicationMessageRow = {
   company_id: string;
   thread_id: string;
   opportunity_id: string | null;
+  appointment_id: string | null;
   customer_id: string | null;
   project_id: string | null;
   sender_type: "organization_user" | "portal_user" | "system";
@@ -58,6 +60,7 @@ type CommunicationActorContext = {
 type GetOrCreateThreadInput = {
   organizationId: string;
   opportunityId?: string | null;
+  appointmentId?: string | null;
   customerId: string | null;
   projectId: string | null;
   subjectType: CommunicationThread["subjectType"];
@@ -79,6 +82,7 @@ function mapThread(row: CommunicationThreadRow): CommunicationThread {
     id: row.id,
     organizationId: row.company_id,
     opportunityId: row.opportunity_id,
+    appointmentId: row.appointment_id,
     customerId: row.customer_id,
     projectId: row.project_id,
     subjectType: row.subject_type,
@@ -98,6 +102,7 @@ function mapMessage(row: CommunicationMessageRow): CommunicationMessage {
     organizationId: row.company_id,
     threadId: row.thread_id,
     opportunityId: row.opportunity_id,
+    appointmentId: row.appointment_id,
     customerId: row.customer_id,
     projectId: row.project_id,
     senderType: row.sender_type,
@@ -115,6 +120,8 @@ function getThreadLinkPath(thread: Pick<CommunicationThread, "subjectType" | "su
   switch (thread.subjectType) {
     case "opportunity":
       return `/leads/${thread.subjectId}`;
+    case "appointment":
+      return `/appointments/${thread.subjectId}`;
     case "customer":
       return `/customers/${thread.subjectId}`;
     case "project":
@@ -177,6 +184,7 @@ export async function listCommunicationThreadsForSubject(
         id,
         company_id,
         opportunity_id,
+        appointment_id,
         customer_id,
         project_id,
         subject_type,
@@ -208,6 +216,7 @@ export async function getOrCreateCommunicationThread(
     id: "",
     company_id: input.organizationId,
     opportunity_id: input.opportunityId ?? null,
+    appointment_id: input.appointmentId ?? null,
     customer_id: input.customerId,
     project_id: input.projectId,
     subject_type: input.subjectType,
@@ -228,6 +237,7 @@ export async function getOrCreateCommunicationThread(
         id,
         company_id,
         opportunity_id,
+        appointment_id,
         customer_id,
         project_id,
         subject_type,
@@ -259,6 +269,7 @@ export async function getOrCreateCommunicationThread(
     .insert({
       company_id: input.organizationId,
       opportunity_id: input.opportunityId ?? null,
+      appointment_id: input.appointmentId ?? null,
       customer_id: input.customerId,
       project_id: input.projectId,
       subject_type: input.subjectType,
@@ -270,6 +281,7 @@ export async function getOrCreateCommunicationThread(
         id,
         company_id,
         opportunity_id,
+        appointment_id,
         customer_id,
         project_id,
         subject_type,
@@ -304,6 +316,7 @@ export async function listCommunicationMessages(threadId: string) {
         company_id,
         thread_id,
         opportunity_id,
+        appointment_id,
         customer_id,
         project_id,
         sender_type,
@@ -409,6 +422,7 @@ export async function postCommunicationMessage(
         id,
         company_id,
         opportunity_id,
+        appointment_id,
         customer_id,
         project_id,
         subject_type,
@@ -452,6 +466,7 @@ export async function postCommunicationMessage(
       company_id: threadRow.company_id,
       thread_id: threadRow.id,
       opportunity_id: threadRow.opportunity_id,
+      appointment_id: threadRow.appointment_id,
       customer_id: threadRow.customer_id,
       project_id: threadRow.project_id,
       sender_type: actor.senderType,
@@ -468,6 +483,7 @@ export async function postCommunicationMessage(
         company_id,
         thread_id,
         opportunity_id,
+        appointment_id,
         customer_id,
         project_id,
         sender_type,

@@ -5,6 +5,8 @@ import { createHash } from "node:crypto";
 import type {
   CatalogItem,
   ContractorGroup,
+  ContractorGroupAuditEvent,
+  ContractorGroupAuditEventType,
   ContractorGroupAssignmentSource,
   ContractorGroupMembership,
   ContractorGroupStatus,
@@ -283,6 +285,45 @@ type ContractorGroupRow = {
   contractor_group_memberships:
     | ContractorGroupMembershipRow[]
     | ContractorGroupMembershipRow
+    | null;
+};
+
+type ContractorGroupAuditEventRow = {
+  id: string;
+  contractor_group_id: string | null;
+  organization_id: string | null;
+  membership_id: string | null;
+  event_type: ContractorGroupAuditEventType;
+  actor_user_id: string | null;
+  assignment_source: ContractorGroupAssignmentSource | null;
+  reason: string | null;
+  metadata: Record<string, unknown> | null;
+  occurred_at: string;
+  contractor_group:
+    | {
+        id: string;
+        group_key: string;
+        name: string;
+      }
+    | Array<{
+        id: string;
+        group_key: string;
+        name: string;
+      }>
+    | null;
+  organization:
+    | {
+        id: string;
+        slug: string;
+        legal_name: string;
+        display_name: string;
+      }
+    | Array<{
+        id: string;
+        slug: string;
+        legal_name: string;
+        display_name: string;
+      }>
     | null;
 };
 
@@ -969,6 +1010,32 @@ function mapContractorGroup(row: ContractorGroupRow): ContractorGroup {
     memberships,
     createdAt: row.created_at,
     updatedAt: row.updated_at
+  };
+}
+
+function mapContractorGroupAuditEvent(
+  row: ContractorGroupAuditEventRow
+): ContractorGroupAuditEvent {
+  const contractorGroup = firstRelation(row.contractor_group);
+  const organization = firstRelation(row.organization);
+
+  return {
+    id: row.id,
+    contractorGroupId: row.contractor_group_id,
+    contractorGroupKey: contractorGroup?.group_key ?? null,
+    contractorGroupName: contractorGroup?.name ?? null,
+    organizationId: row.organization_id,
+    organizationName: organization
+      ? organization.display_name || organization.legal_name
+      : null,
+    organizationSlug: organization?.slug ?? null,
+    membershipId: row.membership_id,
+    actorUserId: row.actor_user_id,
+    eventType: row.event_type,
+    assignmentSource: row.assignment_source,
+    reason: row.reason,
+    metadata: row.metadata ?? {},
+    occurredAt: row.occurred_at
   };
 }
 
@@ -1688,6 +1755,14 @@ export async function listContractorGroups(): Promise<ContractorGroup[]> {
   );
 }
 
+async function getContractorGroupById(
+  contractorGroupId: string
+): Promise<ContractorGroup | null> {
+  const groups = await listContractorGroups();
+
+  return groups.find((group) => group.id === contractorGroupId) ?? null;
+}
+
 export async function listContractorGroupMemberships(): Promise<
   ContractorGroupMembership[]
 > {
@@ -1723,6 +1798,64 @@ export async function listContractorGroupsForOrganization(
         : 0
     }))
     .filter((group) => group.memberships.length > 0);
+}
+
+export async function listContractorGroupAuditEvents(input: {
+  contractorGroupId?: string | null;
+  organizationId?: string | null;
+  limit?: number;
+} = {}): Promise<ContractorGroupAuditEvent[]> {
+  const supabase = getSupabaseAdminClient();
+  let query = supabase
+    .from("contractor_group_audit_events")
+    .select(
+      `
+        *,
+        contractor_group:contractor_groups (
+          id,
+          group_key,
+          name
+        ),
+        organization:companies (
+          id,
+          slug,
+          legal_name,
+          display_name
+        )
+      `
+    )
+    .order("occurred_at", { ascending: false })
+    .limit(input.limit ?? 25);
+
+  if (input.contractorGroupId) {
+    query = query.eq("contractor_group_id", input.contractorGroupId);
+  }
+
+  if (input.organizationId) {
+    query = query.eq("organization_id", input.organizationId);
+  }
+
+  const response = await query;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load contractor group audit events: ${response.error.message}`
+    );
+  }
+
+  const rows = Array.isArray(response.data)
+    ? (response.data as ContractorGroupAuditEventRow[])
+    : [];
+
+  return rows.map(mapContractorGroupAuditEvent);
+}
+
+export async function getContractorGroupAuditTimeline(input: {
+  contractorGroupId?: string | null;
+  organizationId?: string | null;
+  limit?: number;
+} = {}): Promise<ContractorGroupAuditEvent[]> {
+  return listContractorGroupAuditEvents(input);
 }
 
 export async function listRecentStarterPackProvisioningRuns(
@@ -2880,43 +3013,36 @@ export async function upsertContractorGroup(input: {
   userId: string;
 }): Promise<ContractorGroup> {
   const supabase = getSupabaseAdminClient();
-  const payload = {
-    group_key: input.key,
-    name: input.name,
-    description: input.description,
-    status: input.status,
-    group_type: input.groupType,
-    updated_by: input.userId
-  };
-
-  const response = input.contractorGroupId
-    ? await supabase
-        .from("contractor_groups")
-        .update(payload)
-        .eq("id", input.contractorGroupId)
-        .select("*")
-        .single()
-    : await supabase
-        .from("contractor_groups")
-        .insert({
-          ...payload,
-          created_by: input.userId
-        })
-        .select("*")
-        .single();
+  const response = await supabase.rpc("upsert_contractor_group_with_audit", {
+    p_contractor_group_id: input.contractorGroupId ?? null,
+    p_group_key: input.key,
+    p_name: input.name,
+    p_description: input.description,
+    p_status: input.status,
+    p_group_type: input.groupType,
+    p_actor_id: input.userId
+  });
 
   if (response.error) {
     throw new Error(
-      response.error.message.includes("contractor_groups_group_key_unique")
+      response.error.message.includes("contractor_groups_group_key_unique") ||
+        response.error.message.includes("duplicate key")
         ? "A contractor group with that key already exists."
-        : `Unable to save contractor group: ${response.error.message}`
+        : "Unable to save contractor group."
     );
   }
 
-  return mapContractorGroup({
-    ...(response.data as ContractorGroupRow),
-    contractor_group_memberships: []
-  });
+  const contractorGroupId =
+    typeof response.data === "string" ? response.data : input.contractorGroupId;
+  const group = contractorGroupId
+    ? await getContractorGroupById(contractorGroupId)
+    : null;
+
+  if (!group) {
+    throw new Error("Contractor group was saved but could not be reloaded.");
+  }
+
+  return group;
 }
 
 export async function archiveContractorGroup(input: {
@@ -2924,16 +3050,13 @@ export async function archiveContractorGroup(input: {
   userId: string;
 }): Promise<void> {
   const supabase = getSupabaseAdminClient();
-  const response = await supabase
-    .from("contractor_groups")
-    .update({
-      status: "archived",
-      updated_by: input.userId
-    })
-    .eq("id", input.contractorGroupId);
+  const response = await supabase.rpc("archive_contractor_group_with_audit", {
+    p_contractor_group_id: input.contractorGroupId,
+    p_actor_id: input.userId
+  });
 
   if (response.error) {
-    throw new Error(`Unable to archive contractor group: ${response.error.message}`);
+    throw new Error("Unable to archive contractor group.");
   }
 }
 
@@ -2945,76 +3068,48 @@ export async function assignOrganizationToContractorGroup(input: {
   userId: string;
 }): Promise<void> {
   const supabase = getSupabaseAdminClient();
-  const groupResponse = await supabase
-    .from("contractor_groups")
-    .select("id, status")
-    .eq("id", input.contractorGroupId)
-    .maybeSingle();
-
-  if (groupResponse.error) {
-    throw new Error(`Unable to inspect contractor group: ${groupResponse.error.message}`);
-  }
-
-  if (!groupResponse.data) {
-    throw new Error("Select a valid contractor group.");
-  }
-
-  if (groupResponse.data.status === "archived") {
-    throw new Error("Archived contractor groups cannot receive new organization assignments.");
-  }
-
-  const organizationResponse = await supabase
-    .from("companies")
-    .select("id")
-    .eq("id", input.organizationId)
-    .maybeSingle();
-
-  if (organizationResponse.error) {
-    throw new Error(
-      `Unable to inspect contractor organization: ${organizationResponse.error.message}`
-    );
-  }
-
-  if (!organizationResponse.data) {
-    throw new Error("Select a valid contractor organization.");
-  }
-
-  const response = await supabase.from("contractor_group_memberships").upsert(
+  const response = await supabase.rpc(
+    "assign_contractor_group_membership_with_audit",
     {
-      contractor_group_id: input.contractorGroupId,
-      organization_id: input.organizationId,
-      assigned_by: input.userId,
-      assignment_source: input.assignmentSource,
-      notes: input.notes
-    },
-    {
-      onConflict: "contractor_group_id,organization_id"
+      p_contractor_group_id: input.contractorGroupId,
+      p_organization_id: input.organizationId,
+      p_assignment_source: input.assignmentSource,
+      p_notes: input.notes,
+      p_actor_id: input.userId
     }
   );
 
   if (response.error) {
     throw new Error(
-      response.error.message.includes(
-        "contractor_group_memberships_group_org_unique_idx"
-      )
-        ? "That organization is already assigned to this contractor group."
-        : `Unable to assign organization to contractor group: ${response.error.message}`
+      response.error.message.includes("Archived contractor groups")
+        ? "Archived contractor groups cannot receive new organization assignments."
+        : response.error.message.includes("valid contractor organization")
+          ? "Select a valid contractor organization."
+          : response.error.message.includes("valid contractor group")
+            ? "Select a valid contractor group."
+            : "Unable to assign organization to contractor group."
     );
   }
 }
 
-export async function removeOrganizationFromContractorGroup(
-  membershipId: string
-): Promise<void> {
+export async function removeOrganizationFromContractorGroup(input: {
+  membershipId: string;
+  userId: string;
+}): Promise<void> {
   const supabase = getSupabaseAdminClient();
-  const response = await supabase
-    .from("contractor_group_memberships")
-    .delete()
-    .eq("id", membershipId);
+  const response = await supabase.rpc(
+    "remove_contractor_group_membership_with_audit",
+    {
+      p_membership_id: input.membershipId,
+      p_actor_id: input.userId
+    }
+  );
 
   if (response.error) {
     throw new Error(
-      `Unable to remove organization from contractor group: ${response.error.message}`
+      response.error.message.includes("valid contractor group membership")
+        ? "Select a valid contractor group membership."
+        : "Unable to remove organization from contractor group."
     );
   }
 }

@@ -19,10 +19,11 @@ When implementation status matters, defer to [docs/current-state.md](C:/FloorCon
 
 ## Platform Overview
 
-FloorConnector is intended to be a multi-tenant SaaS platform for contractor operations, growth, and ecosystem expansion.
+FloorConnector is intended to be a multi-tenant SaaS platform for contractor operations, public acquisition, growth, and ecosystem expansion.
 
 The target platform includes:
 - Marketing Site
+- Contractor-owned public websites
 - Contractor App
 - Customer Portal
 - Platform Admin
@@ -124,9 +125,34 @@ Operational concerns are intended to include:
 ### Growth
 
 Growth-oriented capabilities are intended to include:
-- websites
-- SEO
-- lead capture
+- contractor-owned websites
+- tenant-owned domains
+- SEO/service/location pages
+- landing pages
+- public forms and lead capture
+- campaign/source attribution
+- AI-assisted acquisition and generated marketing content
+- reviews, reputation, galleries, and project proof later
+
+Growth is the public acquisition surface of the same contractor operating system. It should not introduce a separate marketing database, website lead model, public-contact silo, or website-only project/customer model.
+
+### Public Edge Layer
+
+The target public edge layer should support contractor-owned websites, tenant-owned domains, SEO/service/location pages, landing pages, public forms, media delivery, edge caching, and future public AI interactions.
+
+Public acquisition traffic should be able to scale independently from protected operational workflows. That scaling boundary is infrastructure and delivery-oriented only; it does not split the business source of truth.
+
+Public edge outputs should enter or enrich canonical workflows:
+
+`public acquisition -> opportunity -> customer -> project -> estimate -> contract -> payment -> scheduling -> execution -> follow-up`
+
+Conceptual future infrastructure may include CDN/edge delivery, image optimization, asynchronous publishing, AI generation queues, SEO publishing pipelines, webhook processing, and media processing. These should stay behind platform boundaries and should not hard-commit the architecture to one provider before implementation is scoped.
+
+### Operational Core
+
+The operational core remains the source of truth for auth, tenant isolation, workflows, contracts, payments, scheduling, canonical records, communications, and AI orchestration.
+
+Public websites, forms, attribution, reviews, galleries, and public AI interactions should call into controlled platform services or produce reviewable workflow inputs. They should not bypass server-side validation, tenant boundaries, canonical workflow state, or human approval where customer commitments, pricing, scheduling, billing, permissions, or compliance are involved.
 
 ### Ecosystem
 
@@ -139,16 +165,13 @@ Ecosystem capabilities are intended to include:
 
 The intended primary operational flow is:
 
-Opportunity  
--> Customer  
--> Project  
--> Estimate  
--> Contract  
--> Job  
--> Invoice  
--> Payment
+`opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
 This is the target workflow model, even if parts of it are still being implemented in phases.
+
+The broader target public-acquisition flow is:
+
+`public acquisition -> opportunity -> customer -> project -> estimate -> contract -> payment -> scheduling -> execution -> follow-up`
 
 Additional workflow rules in the target model:
 - contracts are generated from approved estimates and their connected projects rather than authored from disconnected duplicate data
@@ -196,6 +219,9 @@ The target communication system is intended to support:
 - operational notifications and tasks
 - contractor to customer communication
 - platform to contractor communication
+- website forms, public AI chat, campaign inquiries, and public intake where implemented
+
+Communication records should attach to canonical records and preserve source attribution where useful. Provider data, website events, and public AI context enrich the workflow; they do not become a separate business source of truth.
 
 ## Customer Portal
 
@@ -206,6 +232,8 @@ The target customer portal is intended to support:
 - invoice review
 - payments
 - messaging
+
+The portal is a constrained customer-facing surface on canonical records. It should not become a portal-only customer, project, contract, invoice, payment, review, or communication system.
 
 ## Template System
 

@@ -21,9 +21,12 @@ import {
   buildScheduleHref,
   type CrewViewKey,
   type ScheduleActionKey,
+  type ScheduleItemViewKey,
   type ScheduleLayoutKey,
   type ScheduleViewKey
 } from "@/lib/schedule/links";
+import { buildScheduleItems, type ScheduleItem } from "@/lib/schedule/read-model";
+import { listAppointments } from "@/lib/appointments/data";
 import { listVendors } from "@/lib/vendors/data";
 
 const SCHEDULE_VIEW_OPTIONS = [
@@ -47,6 +50,12 @@ const SCHEDULE_LAYOUT_OPTIONS = [
   { value: "board", label: "Board" }
 ] as const;
 
+const SCHEDULE_ITEM_VIEW_OPTIONS = [
+  { value: "all", label: "All" },
+  { value: "jobs", label: "Jobs" },
+  { value: "appointments", label: "Appointments" }
+] as const;
+
 const DAY_TIMELINE_HOURS = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
 type RawScheduleSearchParams = {
   q?: string | string[];
@@ -54,6 +63,7 @@ type RawScheduleSearchParams = {
   view?: string | string[];
   crew?: string | string[];
   layout?: string | string[];
+  item?: string | string[];
   date?: string | string[];
   action?: string | string[];
   jobId?: string | string[];
@@ -218,6 +228,16 @@ function normalizeScheduleLayout(value?: string | string[]): ScheduleLayoutKey {
   }
 }
 
+function normalizeScheduleItemView(value?: string | string[]): ScheduleItemViewKey {
+  switch (normalizeOptionalSearchParam(value)) {
+    case "jobs":
+    case "appointments":
+      return normalizeOptionalSearchParam(value) as Exclude<ScheduleItemViewKey, "all">;
+    default:
+      return "all";
+  }
+}
+
 function normalizeScheduleDate(
   value: string | string[] | undefined,
   fallbackDateKey: string
@@ -241,6 +261,7 @@ function normalizeScheduleSearchParams(
     view: normalizeScheduleView(searchParams?.view),
     crew: normalizeCrewView(searchParams?.crew),
     layout: normalizeScheduleLayout(searchParams?.layout),
+    item: normalizeScheduleItemView(searchParams?.item),
     date: normalizeScheduleDate(searchParams?.date, fallbackDateKey),
     action: normalizeScheduleAction(searchParams?.action),
     jobId: normalizeOptionalSearchParam(searchParams?.jobId) ?? null,
@@ -720,6 +741,43 @@ function formatScheduleTimeWindow(job: {
   return "Time not set";
 }
 
+function formatAppointmentTimeWindow(appointment: {
+  startsAt: string;
+  endsAt: string | null;
+}) {
+  const startLabel = new Date(appointment.startsAt).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit"
+  });
+
+  if (!appointment.endsAt) {
+    return startLabel;
+  }
+
+  const endLabel = new Date(appointment.endsAt).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit"
+  });
+
+  return `${startLabel} - ${endLabel}`;
+}
+
+function formatScheduleItemTimeWindow(item: ScheduleItem) {
+  if (item.type === "job") {
+    return item.startsAt
+      ? formatScheduleTimeWindow({
+          scheduledStartAt: item.startsAt,
+          scheduledEndAt: item.endsAt
+        })
+      : "Time not set";
+  }
+
+  return formatAppointmentTimeWindow({
+    startsAt: item.startsAt,
+    endsAt: item.endsAt
+  });
+}
+
 function getDispatchStatusBadgeClass(status: string) {
   switch (status) {
     case "in_progress":
@@ -731,6 +789,16 @@ function getDispatchStatusBadgeClass(status: string) {
     default:
       return "border-amber-200 bg-amber-50 text-amber-700";
   }
+}
+
+function getScheduleItemSurfaceClass(item: ScheduleItem) {
+  if (item.type === "appointment") {
+    return item.status === "scheduled"
+      ? "border-[#d6d6d6] bg-[#f4f8fc]"
+      : "border-[#e5e5e5] bg-[#f8f8f8]";
+  }
+
+  return "border-[#e5e5e5] bg-white";
 }
 
 function getPlannerEmptyState(input: {
@@ -794,6 +862,17 @@ function getCrewViewSummaryLabel(value: CrewViewKey) {
       return "Needs crew";
     default:
       return "All crew states";
+  }
+}
+
+function getItemViewSummaryLabel(value: ScheduleItemViewKey) {
+  switch (value) {
+    case "jobs":
+      return "Jobs";
+    case "appointments":
+      return "Appointments";
+    default:
+      return "All items";
   }
 }
 
@@ -882,8 +961,9 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
     );
   }
 
-  const [jobs, people, vendors] = await Promise.all([
+  const [jobs, appointments, people, vendors] = await Promise.all([
     listJobs(),
+    listAppointments(),
     listPeople(),
     listVendors()
   ]);
@@ -908,6 +988,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
   const projectFilterId = resolvedSearchParams.projectId;
   const view = resolvedSearchParams.view;
   const crewFilter = resolvedSearchParams.crew;
+  const itemFilter = resolvedSearchParams.item;
   const selectedAction = resolvedSearchParams.action;
   const explicitSelectedJobId = resolvedSearchParams.jobId;
 
@@ -942,7 +1023,10 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
   });
   const activeProjectFilter =
     projectFilterId
-      ? jobsWithAssignments.find((job) => job.projectId === projectFilterId)?.project ?? null
+      ? jobsWithAssignments.find((job) => job.projectId === projectFilterId)?.project ??
+        appointments.find((appointment) => appointment.projectId === projectFilterId)
+          ?.project ??
+        null
       : null;
   const activeProjectSummary = getProjectFilterSummary({
     project: activeProjectFilter
@@ -966,6 +1050,16 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
     ...scheduledTodayJobs.filter((job) => job.dispatchStatus !== "in_progress")
   ];
   const scheduledJobs = jobsWithAssignments.filter((job) => job.scheduledDate !== null);
+  const scheduledAppointments = appointments.filter(
+    (appointment) => appointment.status === "scheduled"
+  );
+  const todayAppointments = scheduledAppointments.filter(
+    (appointment) => new Date(appointment.startsAt).toISOString().slice(0, 10) === todayDateKey
+  );
+  const upcomingAppointments = scheduledAppointments.filter((appointment) => {
+    const dateKey = new Date(appointment.startsAt).toISOString().slice(0, 10);
+    return dateKey > todayDateKey && dateKey < toDateKey(upcomingHorizon);
+  });
   const latestScheduledJobs = [...scheduledJobs]
     .sort((left, right) => getScheduledSortTime(right) - getScheduledSortTime(left))
     .slice(0, 3);
@@ -1053,6 +1147,64 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
             .includes(normalizedQuery);
 
     return matchesProject && matchesView && matchesCrew && matchesQuery;
+  });
+  const visibleAppointments = appointments.filter((appointment) => {
+    const appointmentDateKey = new Date(appointment.startsAt).toISOString().slice(0, 10);
+    const matchesProject = projectFilterId
+      ? appointment.projectId === projectFilterId
+      : true;
+    const matchesView =
+      view === "all"
+        ? true
+        : view === "scheduled"
+          ? appointment.status === "scheduled"
+          : view === "today"
+            ? appointmentDateKey === todayDateKey
+            : view === "upcoming"
+              ? appointmentDateKey > todayDateKey &&
+                appointmentDateKey < toDateKey(upcomingHorizon)
+              : view === "in_progress"
+                ? false
+                : false;
+    const matchesCrew =
+      crewFilter === "all"
+        ? true
+        : crewFilter === "assigned"
+          ? Boolean(appointment.assignedPersonId)
+          : !appointment.assignedPersonId;
+    const matchesQuery =
+      normalizedQuery.length === 0
+        ? true
+        : [
+            appointment.title,
+            appointment.appointmentType,
+            appointment.status,
+            appointment.customer?.name ?? "",
+            appointment.project?.name ?? "",
+            appointment.opportunity?.title ?? "",
+            appointment.assignedPerson?.displayName ?? "",
+            appointment.location ?? ""
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(normalizedQuery);
+
+    return matchesProject && matchesView && matchesCrew && matchesQuery;
+  });
+  const visibleScheduleItems = buildScheduleItems({
+    jobs: visibleJobs,
+    appointments: visibleAppointments,
+    rangeStart: plannerRangeStart,
+    rangeEnd: plannerRangeEnd,
+    itemFilter
+  });
+  const visibleListItems = buildScheduleItems({
+    jobs: visibleJobs,
+    appointments: visibleAppointments,
+    rangeStart: addDays(today, -3650),
+    rangeEnd: addDays(today, 365),
+    itemFilter,
+    includeUndatedJobs: true
   });
 
   const tomorrowDateKey = toDateKey(tomorrow);
@@ -1162,14 +1314,20 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
   const visibleScheduledJobs = visibleJobs
     .filter((job) => isDateInRange(job.scheduledDate, plannerRangeStart, plannerRangeEnd))
     .sort((left, right) => getScheduledSortTime(left) - getScheduledSortTime(right));
+  const visiblePlannerAppointments = visibleScheduleItems.filter(
+    (item) => item.type === "appointment"
+  );
   const scheduledBoardGroups = plannerDays
     .map((day) => ({
       date: day.dateKey,
       jobs: visibleScheduledJobs.filter((job) => job.scheduledDate === day.dateKey),
+      appointments: visiblePlannerAppointments.filter((item) => item.dateKey === day.dateKey),
       isToday: day.dateKey === todayDateKey
     }))
-    .filter((group) => group.jobs.length > 0);
+    .filter((group) => group.jobs.length > 0 || group.appointments.length > 0);
   const plannerJobCount = visibleScheduledJobs.length;
+  const plannerAppointmentCount = visiblePlannerAppointments.length;
+  const plannerItemCount = plannerJobCount + plannerAppointmentCount;
   const plannerNeedsCrewCount = visibleScheduledJobs.filter(
     (job) => job.assignmentCount === 0
   ).length;
@@ -1214,6 +1372,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
   });
   const selectedDayGroup =
     scheduledBoardGroups.find((group) => group.date === plannerDateKey) ?? null;
+  const selectedDayAppointments = selectedDayGroup?.appointments ?? [];
   const dayTimelineBuckets = DAY_TIMELINE_HOURS.map((hour) => ({
     hour,
     jobs:
@@ -1234,6 +1393,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
     view,
     crew: crewFilter,
     layout: scheduleLayout,
+    item: itemFilter,
     date: plannerDateKey,
     action: selectedAction,
     jobId: selectedJobId ?? undefined
@@ -1244,6 +1404,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
     view?: ScheduleViewKey;
     crew?: CrewViewKey;
     layout?: ScheduleLayoutKey;
+    item?: ScheduleItemViewKey;
     date?: string;
     action?: ScheduleActionKey;
     jobId?: string;
@@ -1254,12 +1415,14 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
       view,
       crew: crewFilter,
       layout: scheduleLayout,
+      item: itemFilter,
       date: plannerDateKey,
       ...input
     });
   const clearProjectFilterHref = buildCurrentScheduleHref({ projectId: undefined });
   const clearSearchHref = buildCurrentScheduleHref({ q: "" });
   const clearCrewFilterHref = buildCurrentScheduleHref({ crew: "all" });
+  const clearItemFilterHref = buildCurrentScheduleHref({ item: "all" });
   const clearSelectedContextHref = buildCurrentScheduleHref({
     action: undefined,
     jobId: undefined
@@ -1268,6 +1431,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
     Boolean(projectFilterId) ||
     query.length > 0 ||
     crewFilter !== "all" ||
+    itemFilter !== "all" ||
     Boolean(selectedAction && selectedJobId);
   const assignablePeople = people.filter((person) => person.isActive && person.isAssignable);
   const laborVendors = vendors.filter((vendor) => vendor.isActive && vendor.isLaborProvider);
@@ -1286,9 +1450,18 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                 ? upcomingJobs.length
                 : inProgressJobs.length
   }));
+  const itemViews = SCHEDULE_ITEM_VIEW_OPTIONS.map((option) => ({
+    ...option,
+    count:
+      option.value === "all"
+        ? visibleJobs.length + visibleAppointments.length
+        : option.value === "jobs"
+          ? visibleJobs.length
+          : visibleAppointments.length
+  }));
   const crewViews = CREW_VIEW_OPTIONS;
   const listEmptyState = getScheduleListEmptyState({
-    jobCount: jobs.length,
+    jobCount: jobs.length + appointments.length,
     query,
     projectName: activeProjectFilter?.name ?? null,
     view,
@@ -1316,7 +1489,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
     {
       key: "today",
       label: "Scheduled today",
-      value: scheduledTodayJobs.length,
+      value: scheduledTodayJobs.length + todayAppointments.length,
       href: buildScheduleHref({
         q: query,
         projectId: projectFilterId ?? undefined,
@@ -1352,7 +1525,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
     {
       key: "upcoming",
       label: "Upcoming",
-      value: upcomingJobs.length,
+      value: upcomingJobs.length + upcomingAppointments.length,
       href: buildScheduleHref({
         q: query,
         projectId: projectFilterId ?? undefined,
@@ -1502,6 +1675,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
           <form action="/schedule" className="flex flex-col gap-2 sm:flex-row">
             {view !== "all" ? <input type="hidden" name="view" value={view} /> : null}
             {crewFilter !== "all" ? <input type="hidden" name="crew" value={crewFilter} /> : null}
+            {itemFilter !== "all" ? <input type="hidden" name="item" value={itemFilter} /> : null}
             {projectFilterId ? <input type="hidden" name="projectId" value={projectFilterId} /> : null}
             {scheduleLayout !== "week" ? (
               <input type="hidden" name="layout" value={scheduleLayout} />
@@ -1524,6 +1698,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
               <Link
                 href={buildScheduleHref({
                   projectId: projectFilterId ?? undefined,
+                  item: itemFilter,
                   layout: scheduleLayout,
                   date: plannerDateKey
                 })}
@@ -1550,6 +1725,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                     projectId: projectFilterId ?? undefined,
                     view: scheduleView.value,
                     crew: crewFilter,
+                    item: itemFilter,
                     layout: scheduleLayout,
                     date: plannerDateKey
                   })}
@@ -1588,6 +1764,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                     projectId: projectFilterId ?? undefined,
                     view,
                     crew: crewView.value,
+                    item: itemFilter,
                     layout: scheduleLayout,
                     date: plannerDateKey
                   })}
@@ -1599,6 +1776,45 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                   ].join(" ")}
                 >
                   {crewView.label}
+                </Link>
+              );
+            })}
+          </div>,
+          <div key="item-view-group" className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Items
+            </span>
+            {itemViews.map((itemView) => {
+              const isActive = itemFilter === itemView.value;
+
+              return (
+                <Link
+                  key={`item-view-${itemView.value}`}
+                  href={buildScheduleHref({
+                    q: query,
+                    projectId: projectFilterId ?? undefined,
+                    view,
+                    crew: crewFilter,
+                    item: itemView.value,
+                    layout: scheduleLayout,
+                    date: plannerDateKey
+                  })}
+                  className={[
+                    "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
+                    isActive
+                      ? "bg-[#171717] text-white"
+                      : "border border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"
+                  ].join(" ")}
+                >
+                  <span>{itemView.label}</span>
+                  <span
+                    className={[
+                      "rounded-full px-2 py-0.5 text-xs font-semibold",
+                      isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                    ].join(" ")}
+                  >
+                    {itemView.count}
+                  </span>
                 </Link>
               );
             })}
@@ -1662,6 +1878,13 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                     label="Crew"
                     value={getCrewViewSummaryLabel(crewFilter)}
                     clearHref={clearCrewFilterHref}
+                  />
+                ) : null}
+                {itemFilter !== "all" ? (
+                  <ScheduleFilterChip
+                    label="Items"
+                    value={getItemViewSummaryLabel(itemFilter)}
+                    clearHref={clearItemFilterHref}
                   />
                 ) : null}
                 {selectedAction && selectedJobId ? (
@@ -1952,8 +2175,8 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
               <div className="mt-4 flex flex-col gap-3 border-t border-[#eef2f6] pt-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="inline-flex items-center rounded-full border border-[#d6d6d6] bg-[#f4f8fc] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#3f3f3f]">
-                    {scheduleLayout === "board" ? visibleJobs.length : plannerJobCount}{" "}
-                    {scheduleLayout === "board" ? "visible" : "scheduled"}
+                    {scheduleLayout === "board" ? visibleJobs.length : plannerItemCount}{" "}
+                    {scheduleLayout === "board" ? "visible jobs" : "scheduled items"}
                   </span>
                   <span className="inline-flex items-center rounded-full border border-[#f0d8c4] bg-[#fff8ef] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8e5c1c]">
                     {scheduleLayout === "board"
@@ -1995,7 +2218,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
               </div>
             </div>
 
-            {plannerJobCount > 0 ? (
+            {plannerItemCount > 0 ? (
               scheduleLayout === "day" ? (
                 <div className="px-5 py-4 sm:px-6">
                   <div className="flex items-center justify-between gap-3 border-b border-[#eef2f6] pb-4">
@@ -2004,7 +2227,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                         {formatLongDateFromDate(plannerAnchorDate)}
                       </p>
                       <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-500">
-                        {plannerJobCount} scheduled on this day
+                        {(selectedDayGroup?.jobs.length ?? 0) + selectedDayAppointments.length} scheduled item{(selectedDayGroup?.jobs.length ?? 0) + selectedDayAppointments.length === 1 ? "" : "s"} on this day
                       </p>
                     </div>
                     {plannerAnchorDate.getTime() === today.getTime() ? (
@@ -2078,6 +2301,62 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                             </div>
                           );
                         })}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {selectedDayAppointments.length > 0 ? (
+                    <div className="mt-4 rounded-[4px] border border-[#d6d6d6] bg-[#f4f8fc] p-4">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        Appointments
+                      </p>
+                      <div className="mt-3 space-y-3">
+                        {selectedDayAppointments.map((appointment) => (
+                          <div
+                            key={`appointment-${appointment.id}`}
+                            className={`rounded-[4px] border px-3 py-3 ${getScheduleItemSurfaceClass(appointment)}`}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                  Appointment · {formatStatusLabel(appointment.appointmentType)}
+                                </p>
+                                <Link
+                                  href={appointment.href}
+                                  className="mt-1 block text-sm font-semibold text-slate-900 transition hover:text-brand-700"
+                                >
+                                  {appointment.title}
+                                </Link>
+                                <p className="mt-1 text-xs leading-5 text-slate-500">
+                                  {formatScheduleItemTimeWindow(appointment)} · {appointment.assigneeLabel}
+                                </p>
+                                <p className="mt-2 text-sm leading-6 text-slate-600">
+                                  {appointment.subtitle}
+                                  {appointment.location ? ` · ${appointment.location}` : ""}
+                                </p>
+                              </div>
+                              <span className="inline-flex items-center rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                {appointment.customerVisible ? "Customer-visible" : "Internal"}
+                              </span>
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {appointment.contextHref && appointment.contextLabel ? (
+                                <Link
+                                  href={appointment.contextHref}
+                                  className="inline-flex items-center rounded-[4px] px-2.5 py-1.5 text-xs font-medium text-slate-500 transition hover:text-slate-900"
+                                >
+                                  {appointment.contextLabel}
+                                </Link>
+                              ) : null}
+                              <Link
+                                href={appointment.href}
+                                className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
+                              >
+                                Open appointment
+                              </Link>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ) : null}
@@ -2174,7 +2453,11 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                     const dayJobs = visibleScheduledJobs.filter(
                       (job) => job.scheduledDate === day.dateKey
                     );
+                    const dayAppointments = visiblePlannerAppointments.filter(
+                      (appointment) => appointment.dateKey === day.dateKey
+                    );
                     const boardDate = getBoardDatePresentation(day.dateKey, today);
+                    const dayItemCount = dayJobs.length + dayAppointments.length;
 
                     return (
                       <section
@@ -2195,7 +2478,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                           </div>
                           <div className="flex flex-col items-end gap-1">
                             <span className="inline-flex items-center rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                              {dayJobs.length} job{dayJobs.length === 1 ? "" : "s"}
+                              {dayItemCount} item{dayItemCount === 1 ? "" : "s"}
                             </span>
                             {day.dateKey === todayDateKey ? (
                               <span className="inline-flex items-center rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
@@ -2206,8 +2489,9 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                         </div>
 
                         <div className="mt-4 space-y-3">
-                          {dayJobs.length > 0 ? (
-                            dayJobs.map((job) => {
+                          {dayItemCount > 0 ? (
+                            <>
+                            {dayJobs.map((job) => {
                               const crewState = getCrewState(job);
                               const primaryAction = getBoardPrimaryAction(job);
                               const boardCardState = getBoardCardState(job);
@@ -2270,7 +2554,59 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                                   />
                                 </div>
                               );
-                            })
+                            })}
+                            {dayAppointments.map((appointment) => (
+                              <div
+                                key={appointment.id}
+                                className={`rounded-[4px] border px-3 py-3 ${getScheduleItemSurfaceClass(appointment)}`}
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                      Appointment · {formatStatusLabel(appointment.appointmentType)}
+                                    </p>
+                                    <Link
+                                      href={appointment.href}
+                                      className="mt-1 block text-sm font-semibold text-slate-900 transition hover:text-brand-700"
+                                    >
+                                      {appointment.title}
+                                    </Link>
+                                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                                      {appointment.subtitle}
+                                    </p>
+                                  </div>
+                                  {appointment.customerVisible ? (
+                                    <span className="inline-flex items-center rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                      Customer-visible
+                                    </span>
+                                  ) : null}
+                                </div>
+                                <p className="mt-3 text-xs font-medium text-slate-700">
+                                  {formatScheduleItemTimeWindow(appointment)}
+                                </p>
+                                <p className="mt-2 text-sm leading-6 text-slate-600">
+                                  {appointment.assigneeLabel}
+                                  {appointment.location ? ` · ${appointment.location}` : ""}
+                                </p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  {appointment.contextHref && appointment.contextLabel ? (
+                                    <Link
+                                      href={appointment.contextHref}
+                                      className="inline-flex items-center rounded-[4px] px-2.5 py-1.5 text-xs font-medium text-slate-500 transition hover:text-slate-900"
+                                    >
+                                      {appointment.contextLabel}
+                                    </Link>
+                                  ) : null}
+                                  <Link
+                                    href={appointment.href}
+                                    className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
+                                  >
+                                    Open appointment
+                                  </Link>
+                                </div>
+                              </div>
+                            ))}
+                            </>
                           ) : (
                             <div className="rounded-[4px] border border-dashed border-[#e5e5e5] bg-[#f8f8f8] px-3 py-8 text-center text-xs uppercase tracking-[0.14em] text-slate-400">
                               Open day
@@ -2457,14 +2793,109 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                   </p>
                 </div>
                 <p className="text-sm leading-6 text-slate-500">
-                  {visibleJobs.length} visible
+                  {visibleListItems.length} visible
                 </p>
               </div>
             </div>
 
             <div className="divide-y divide-slate-200">
-              {visibleJobs.length > 0 ? (
-                visibleJobs.map((job) => {
+              {visibleListItems.length > 0 ? (
+                visibleListItems.map((item) => {
+                  if (item.type === "appointment") {
+                    return (
+                      <div key={`appointment-${item.id}`} className="px-5 py-4 sm:px-6">
+                        <div className="grid gap-4 md:grid-cols-[minmax(0,1.3fr)_1fr_170px_170px_190px] md:items-start">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                Appointment
+                              </p>
+                              <span className="inline-flex items-center rounded-full border border-[#d6d6d6] bg-[#f4f8fc] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                {formatStatusLabel(item.status)}
+                              </span>
+                              {item.customerVisible ? (
+                                <span className="inline-flex items-center rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                  Customer-visible
+                                </span>
+                              ) : null}
+                            </div>
+                            <Link
+                              href={item.href}
+                              className="mt-2 block text-base font-semibold text-slate-950 transition hover:text-brand-700"
+                            >
+                              {item.title}
+                            </Link>
+                            <p className="mt-2 text-sm font-medium text-slate-800">
+                              {formatStatusLabel(item.appointmentType)}
+                            </p>
+                            <p className="mt-2 text-sm leading-6 text-slate-500">
+                              {item.location ?? "Location pending"}
+                            </p>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                              Context
+                            </p>
+                            <p className="text-sm font-medium text-slate-700">
+                              {item.customerName ?? item.opportunityTitle ?? "Lead appointment"}
+                            </p>
+                            <p className="mt-1 text-sm leading-6 text-slate-500">
+                              {item.projectName ?? item.subtitle}
+                            </p>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                              Assigned
+                            </p>
+                            <p className="text-sm font-medium text-slate-700">
+                              {item.assigneeLabel}
+                            </p>
+                            <p className="mt-1 text-sm leading-6 text-slate-500">
+                              Person assignment
+                            </p>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                              Date
+                            </p>
+                            <p className="text-sm font-medium text-slate-700">
+                              {formatDate(item.dateKey)}
+                            </p>
+                            <p className="mt-1 text-sm leading-6 text-slate-500">
+                              {formatScheduleItemTimeWindow(item)}
+                            </p>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2 md:justify-end">
+                            {item.contextHref && item.contextLabel ? (
+                              <Link
+                                href={item.contextHref}
+                                className="inline-flex items-center rounded-[4px] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 transition hover:text-slate-900"
+                              >
+                                {item.contextLabel}
+                              </Link>
+                            ) : null}
+                            <Link
+                              href={item.href}
+                              className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
+                            >
+                              Open appointment
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  const job = visibleJobs.find((visibleJob) => visibleJob.id === item.id);
+
+                  if (!job) {
+                    return null;
+                  }
+
                   const crewState = getCrewState(job);
                   const primaryAction = getPrimaryScheduleAction(job);
                   const boardCardState = getBoardCardState(job);

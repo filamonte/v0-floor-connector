@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { AppEmptyState } from "@/components/app-empty-state";
 import { CustomerContactForm } from "@/components/customer-contact-form";
+import { CustomerCommunicationPreferencesPanel } from "@/components/customer-communication-preferences-panel";
 import { CustomerForm } from "@/components/customer-form";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
@@ -20,6 +21,8 @@ import {
 import { listAppointmentsByCustomer } from "@/lib/appointments/data";
 import { getCurrentUser } from "@/lib/auth/session";
 import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
+import { updateCustomerAppointmentReminderPreferenceAction } from "@/lib/communications/actions";
+import { listCustomerAppointmentReminderPreferenceSummary } from "@/lib/communications/communication-preferences";
 import { updateCustomerAction } from "@/lib/customers/actions";
 import { getCustomerById } from "@/lib/customers/data";
 import { listEstimates } from "@/lib/estimates/data";
@@ -160,6 +163,7 @@ export default async function CustomerDetailPage({
     portalAccessGrants,
     customerContactPortalPermissions,
     customerAppointments,
+    communicationPreferenceSummary,
     communicationThreads
   ] = await Promise.all([
     getCustomerById(customerId, `/customers/${customerId}`),
@@ -171,6 +175,7 @@ export default async function CustomerDetailPage({
     listPortalAccessGrantsByCustomer(customerId, `/customers/${customerId}`),
     listCustomerContactPortalPermissionsByCustomer(customerId, `/customers/${customerId}`),
     listAppointmentsByCustomer(customerId, `/customers/${customerId}`),
+    listCustomerAppointmentReminderPreferenceSummary(customerId, `/customers/${customerId}`),
     listCommunicationThreadsForSubject("customer", customerId)
   ]);
 
@@ -595,6 +600,20 @@ export default async function CustomerDetailPage({
                 description="Use related contacts for account-side participants without replacing the canonical customer record or changing the account-level estimate and billing recipient fields yet."
               />
             )}
+          </div>
+        </DetailPanel>
+
+        <DetailPanel
+          title="Communication Preferences"
+          description="Contractor-admin controls for customer reminder eligibility. These preferences only affect email appointment reminders in this phase."
+        >
+          <div id="communication-preferences">
+            <CustomerCommunicationPreferencesPanel
+              customerId={customer.id}
+              preferences={communicationPreferenceSummary}
+              canManage={canManageCustomerContacts}
+              action={updateCustomerAppointmentReminderPreferenceAction}
+            />
           </div>
         </DetailPanel>
 

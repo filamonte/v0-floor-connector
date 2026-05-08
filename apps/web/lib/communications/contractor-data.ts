@@ -39,6 +39,13 @@ type OpportunityRow = {
   prospect_name: string;
 };
 
+type AppointmentRow = {
+  id: string;
+  title: string;
+  appointment_type: string;
+  starts_at: string;
+};
+
 type EstimateRow = {
   id: string;
   reference_number: string;
@@ -260,6 +267,7 @@ function getSubjectDescriptor(input: {
   customersById: Map<string, CustomerRow>;
   projectsById: Map<string, ProjectRow>;
   opportunitiesById: Map<string, OpportunityRow>;
+  appointmentsById: Map<string, AppointmentRow>;
   estimatesById: Map<string, EstimateRow>;
   contractsById: Map<string, ContractRow>;
   invoicesById: Map<string, InvoiceRow>;
@@ -277,6 +285,14 @@ function getSubjectDescriptor(input: {
           ? `Lead - ${opportunity.title || opportunity.prospect_name}`
           : "Lead",
         href: `/leads/${thread.subject_id}`
+      };
+    }
+    case "appointment": {
+      const appointment = input.appointmentsById.get(thread.subject_id);
+
+      return {
+        label: appointment ? `Appointment - ${appointment.title}` : "Appointment",
+        href: `/appointments/${thread.subject_id}`
       };
     }
     case "customer": {
@@ -392,6 +408,7 @@ const listContractorCommunicationThreadSummaryCached = cache(
         linkedProjectCount: 0,
         sourceCounts: {
           opportunity: 0,
+          appointment: 0,
           customer: 0,
           project: 0,
           estimate: 0,
@@ -431,6 +448,7 @@ const listContractorCommunicationThreadSummaryCached = cache(
     const unreadByThreadId = buildUnreadByThreadId(unreadCommunicationNotificationRows);
     const sourceCounts: ContractorCommunicationThreadSummary["sourceCounts"] = {
       opportunity: 0,
+      appointment: 0,
       customer: 0,
       project: 0,
       estimate: 0,
@@ -573,6 +591,9 @@ const listContractorCommunicationThreadsCached = cache(
       opportunity: threadRows
         .filter((thread) => thread.subject_type === "opportunity")
         .map((thread) => thread.subject_id),
+      appointment: threadRows
+        .filter((thread) => thread.subject_type === "appointment")
+        .map((thread) => thread.subject_id),
       customer: threadRows
         .filter((thread) => thread.subject_type === "customer")
         .map((thread) => thread.subject_id),
@@ -600,6 +621,7 @@ const listContractorCommunicationThreadsCached = cache(
       customerRows,
       projectRows,
       opportunityRows,
+      appointmentRows,
       estimateRows,
       contractRows,
       invoiceRows,
@@ -612,6 +634,12 @@ const listContractorCommunicationThreadsCached = cache(
         "opportunities",
         "id, title, prospect_name",
         [...new Set(subjectIdsByType.opportunity)],
+        organizationId
+      ),
+      loadSubjectRows<AppointmentRow>(
+        "appointments",
+        "id, title, appointment_type, starts_at",
+        [...new Set(subjectIdsByType.appointment)],
         organizationId
       ),
       loadSubjectRows<EstimateRow>(
@@ -668,6 +696,7 @@ const listContractorCommunicationThreadsCached = cache(
     const customersById = new Map(customerRows.map((row) => [row.id, row]));
     const projectsById = new Map(projectRows.map((row) => [row.id, row]));
     const opportunitiesById = new Map(opportunityRows.map((row) => [row.id, row]));
+    const appointmentsById = new Map(appointmentRows.map((row) => [row.id, row]));
     const estimatesById = new Map(estimateRows.map((row) => [row.id, row]));
     const contractsById = new Map(contractRows.map((row) => [row.id, row]));
     const invoicesById = new Map(invoiceRows.map((row) => [row.id, row]));
@@ -684,6 +713,7 @@ const listContractorCommunicationThreadsCached = cache(
           customersById,
           projectsById,
           opportunitiesById,
+          appointmentsById,
           estimatesById,
           contractsById,
           invoicesById,

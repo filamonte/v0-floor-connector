@@ -12,15 +12,17 @@ This document is a synthesis, not the implementation source of truth. When exact
 
 ## Section 1 -- Product Overview
 
-FloorConnector is one operating system for specialty flooring contractors, especially epoxy flooring, concrete polishing, and related surface-work businesses. It connects sales, contracts, billing, payments, workforce tracking, and field execution into one continuous workflow instead of forcing teams to manage the same job across disconnected tools.
+FloorConnector is one operating system for specialty flooring contractors, especially epoxy flooring, concrete polishing, and related surface-work businesses. It connects public acquisition, sales, contracts, billing, payments, workforce tracking, and field execution into one continuous workflow instead of forcing teams to manage the same job across disconnected tools.
 
 It is built for contractor organizations that need one system to carry work from commercial intake through customer approval, billing, payment, workforce tracking, and field execution.
 
-Why this is different is simple: most contractor software splits the same project across separate systems. Leads live in one place. Proposals in another. Contracts and signatures in another. Invoices and payments in another. Field execution and labor records somewhere else. Customers often experience the same project through PDFs, email threads, and isolated portals that are not connected back to the operating system.
+Why this is different is simple: most contractor software splits the same project across separate systems. Websites, forms, campaigns, and attribution live in one place. Leads live in another. Proposals in another. Contracts and signatures in another. Invoices and payments in another. Field execution and labor records somewhere else. Customers often experience the same project through PDFs, email threads, and isolated portals that are not connected back to the operating system.
 
-FloorConnector is designed to replace that fragmentation with one shared system. The contractor creates the work once. The system holds the truth. The customer interacts with that same work through the portal. The system updates in place. The contractor continues from the updated truth instead of reconciling copies, sync gaps, or module-specific records.
+FloorConnector is designed to replace that fragmentation with one shared system. The public acquisition layer feeds the same opportunity graph. The contractor creates the work once. The system holds the truth. The customer interacts with that same work through the portal. The system updates in place. The contractor continues from the updated truth instead of reconciling copies, sync gaps, marketing databases, website records, portal copies, or module-specific records.
 
-That is the core product idea: one connected contractor workflow, not a collection of separate software modules.
+That is the core product idea: one connected contractor workflow, not a collection of separate software modules. The target public-acquisition continuity is:
+
+`public acquisition -> opportunity -> customer -> project -> estimate -> contract -> payment -> scheduling -> execution -> follow-up`
 
 ## Section 2 -- What Is Built (Implemented System)
 
@@ -297,6 +299,24 @@ They are two surfaces on the same underlying records:
 
 The portal constrains visibility. It does not redefine the business objects.
 
+### Operational Core And Public Edge
+
+The target architecture should distinguish the operational core from the public edge without splitting the product into two systems.
+
+Operational Core:
+
+- auth, organization membership, tenant isolation, permissions, and admin controls
+- canonical workflows, records, readiness gates, contracts, payments, scheduling, communications, and AI orchestration
+- server-validated actions that move `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
+
+Public Edge Layer:
+
+- contractor-owned websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, and media delivery
+- campaign/source attribution, public intake, future public AI interactions, and review/reputation/project-proof experiences
+- edge caching, CDN/media delivery, and publishing mechanics where they help public traffic scale independently from protected operational workflows
+
+The public edge should scale for website traffic and acquisition needs, while the operational core remains the source of truth for workflow state, money, permissions, and customer commitments. Public website visits, forms, chat, attribution, AI intake, reviews, galleries, and generated content should feed or read from the canonical graph through controlled boundaries. They should not become a second CRM, a second project system, a disconnected website database, or a separate AI knowledge silo.
+
 ### Signatures Extend Canonical Contracts
 
 Signature workflow extends the contract through:
@@ -398,11 +418,17 @@ The next layers should follow the current roadmap direction in a disciplined ord
 - richer customer-facing workflows
 - communication layers on top of the same shared records
 
-6. AI-assisted operating layers
+6. Public acquisition and growth layer
+
+- contractor-owned websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, campaign/source attribution, and generated marketing content
+- website-generated opportunities feeding the canonical commercial path instead of a separate lead database
+- review, reputation, testimonial, before/after gallery, and project-proof loops tied back to canonical customer/project/job/closeout evidence where appropriate
+
+7. AI-assisted operating layers
 
 - contractor-facing AI copilot, communication drafting, scheduling suggestions, project summaries, collections assistance, and action approval queues on top of canonical records
 - FloorConnector-facing AI for marketing Q&A, demo support, onboarding/setup guidance, support triage, first-workflow activation, and migration/import help
-- website chat, AI receptionist/voice, and operational intelligence only after consent, provider, handoff, schedule, permission, and workflow safety rules are designed
+- contractor-facing public AI for website chat, intake qualification, service/location content support, AI receptionist/voice, and operational intelligence only after consent, provider, handoff, schedule, permission, and workflow safety rules are designed
 
 This is a sequence of next layers, not speculation about a different product direction.
 
@@ -412,7 +438,7 @@ This section is target direction only. It does not claim AI chat, AI receptionis
 
 AI should become an operating layer around the current core, not a parallel system. It can draft, suggest, summarize, classify, prepare, and orchestrate work, but accepted actions must route through canonical FloorConnector records and approved server-side workflows.
 
-Future communications should extend the current communication foundations into website forms, website AI chat, SMS, email, calls, voicemail, missed-call text-back, AI receptionist, portal messages, app messages, and manual logs. FloorConnector communication records remain the business source of truth; providers deliver or enrich messages.
+Future communications should extend the current communication foundations into website forms, website AI chat, SMS, email, calls, voicemail, missed-call text-back, AI receptionist, portal messages, app messages, and manual logs. Website and campaign context should resolve into canonical opportunities and source attribution instead of a separate marketing contact database. FloorConnector communication records remain the business source of truth; providers deliver or enrich messages.
 
 Future scheduling should extend the current `/schedule`, job, appointment, and job-assignment foundations into company calendars, user calendars, crew/resource calendars, PTO/holidays, equipment reservations, external busy-block import, conflict detection, and AI schedule suggestions. FloorConnector owns the canonical schedule; Google Calendar and Outlook/Microsoft 365 are adapters.
 
@@ -474,7 +500,8 @@ The biggest drift risks are still:
 
 - introducing portal-specific copies of commercial or billing records
 - letting provider integrations become separate source-of-truth models
-- adding scheduling, messaging, or reporting as disconnected modules instead of extensions of the shared project chain
+- adding public websites, marketing attribution, scheduling, messaging, or reporting as disconnected modules instead of extensions of the shared opportunity/project/revenue chain
+- creating a separate marketing contact database, website lead store, portal-only customer copy, or AI-only knowledge silo
 - describing target capabilities as if they are already fully implemented
 
 ### The Discipline Going Forward
@@ -489,6 +516,7 @@ The operating rule should remain:
 Future features should extend the canonical record chain rather than introduce parallel models. That means:
 
 - no portal copies
+- no website/public-acquisition copies
 - no second signed-contract model
 - no separate checkout-payment model
 - no disconnected field-execution silo
@@ -517,7 +545,7 @@ The service layer provides read-only enrichment over canonical data:
 
 - Marketplace: Supplier/distributor integration.
 
-- Marketing Automation.
+- Marketing Automation: Campaign/source attribution, generated content, public intake enrichment, and follow-up suggestions over canonical opportunities and customers, not a separate marketing database.
 
 - Benchmarking / Forecasting.
 

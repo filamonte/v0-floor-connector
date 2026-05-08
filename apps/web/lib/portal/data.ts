@@ -21,6 +21,11 @@ import type {
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { normalizeEstimateWorkspaceContent } from "@/lib/estimates/workspace";
 import { recordInvoiceNotificationEvent } from "@/lib/notifications/system";
+import {
+  mapPortalSafeAppointment,
+  type PortalAppointmentSafeRow,
+  type PortalSafeAppointmentListItem
+} from "@/lib/portal/appointment-visibility";
 import { listPortalAccessGrantsForCurrentUser } from "@/lib/portal-access/data";
 import { STORAGE_BUCKET_NAMES } from "@floorconnector/config";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -437,6 +442,10 @@ export type PortalProjectChangeOrderListItem = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type PortalProjectAppointmentListItem = PortalSafeAppointmentListItem;
+
+export type PortalUpcomingAppointmentListItem = PortalSafeAppointmentListItem;
 
 type PortalProjectLatestInvoiceRow = {
   id: string;
@@ -861,6 +870,42 @@ const portalChangeOrderSelect = `
     reference_number,
     status,
     balance_due_amount
+  )
+`;
+
+const portalAppointmentSelect = `
+  id,
+  company_id,
+  customer_id,
+  project_id,
+  title,
+  appointment_type,
+  starts_at,
+  ends_at,
+  location,
+  customer_notes,
+  status,
+  created_at,
+  updated_at
+`;
+
+const portalAppointmentWithProjectSelect = `
+  id,
+  company_id,
+  customer_id,
+  project_id,
+  title,
+  appointment_type,
+  starts_at,
+  ends_at,
+  location,
+  customer_notes,
+  status,
+  created_at,
+  updated_at,
+  projects (
+    id,
+    name
   )
 `;
 
@@ -1570,6 +1615,66 @@ export async function listPortalProjectChangeOrders(
   }
 
   return rows.map(mapPortalProjectChangeOrder);
+}
+
+export async function listPortalProjectAppointments(
+  projectId: string,
+  next = "/portal"
+): Promise<PortalProjectAppointmentListItem[]> {
+  const scope = await getPortalScope(next);
+
+  if (!scope.accessibleProjectIds.includes(projectId)) {
+    return [];
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("appointments")
+    .select(portalAppointmentSelect)
+    .eq("project_id", projectId)
+    .eq("customer_visible", true)
+    .order("starts_at", { ascending: true });
+  const rows = (response.data as PortalAppointmentSafeRow[] | null) ?? [];
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load portal appointments for the project: ${response.error.message}`
+    );
+  }
+
+  return rows
+    .filter((row) => row.project_id === projectId)
+    .map(mapPortalSafeAppointment);
+}
+
+export async function listPortalUpcomingAppointments(
+  next = "/portal",
+  limit = 5
+): Promise<PortalUpcomingAppointmentListItem[]> {
+  const scope = await getPortalScope(next);
+
+  if (scope.accessibleProjectIds.length === 0) {
+    return [];
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("appointments")
+    .select(portalAppointmentWithProjectSelect)
+    .in("project_id", scope.accessibleProjectIds)
+    .eq("customer_visible", true)
+    .gte("starts_at", new Date().toISOString())
+    .order("starts_at", { ascending: true })
+    .limit(limit);
+  const rows = (response.data as PortalAppointmentSafeRow[] | null) ?? [];
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load portal upcoming appointments: ${response.error.message}`
+    );
+  }
+
+  return rows.map(mapPortalSafeAppointment);
 }
 
 export async function getPortalEstimateReviewData(

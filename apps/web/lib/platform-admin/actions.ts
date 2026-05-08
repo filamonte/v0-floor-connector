@@ -453,7 +453,7 @@ export async function assignContractorGroupMembershipAction(formData: FormData) 
 }
 
 export async function removeContractorGroupMembershipAction(formData: FormData) {
-  await requirePlatformAdminUser("/super-admin/groups");
+  const scope = await requirePlatformAdminUser("/super-admin/groups");
   const result = contractorGroupMembershipRemoveInputSchema.safeParse({
     membershipId: getFieldValue(formData, "membershipId")
   });
@@ -469,7 +469,10 @@ export async function removeContractorGroupMembershipAction(formData: FormData) 
   }
 
   try {
-    await removeOrganizationFromContractorGroup(result.data.membershipId);
+    await removeOrganizationFromContractorGroup({
+      membershipId: result.data.membershipId,
+      userId: scope.userId
+    });
   } catch (error) {
     redirect(
       buildRedirect("/super-admin/groups", {

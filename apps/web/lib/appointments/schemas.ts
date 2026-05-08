@@ -120,7 +120,8 @@ export const appointmentQuickCreateInputSchema = z.object({
     })
     .transform((value) => new Date(value).toISOString()),
   customerVisible: optionalBooleanField().default(false),
-  customerNotes: optionalTrimmedString(4000)
+  customerNotes: optionalTrimmedString(4000),
+  internalNotes: optionalTrimmedString(4000)
 });
 
 export type AppointmentInput = z.infer<typeof appointmentInputSchema>;

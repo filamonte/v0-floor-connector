@@ -114,10 +114,13 @@ Execution:
 
 ---
 
-## FUTURE AI / COMMUNICATIONS / SCHEDULING GUARDRAILS
+## FUTURE PUBLIC ACQUISITION / AI / COMMUNICATIONS / SCHEDULING GUARDRAILS
 
-Future AI, communications, intake, calendar, scheduling, voice, and onboarding work must preserve these rules:
+Future public acquisition, contractor websites, marketing attribution, AI, communications, intake, calendar, scheduling, voice, and onboarding work must preserve these rules:
 
+- Contractor websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, campaign attribution, reviews, galleries, portals, communications, and operational workflows must reinforce the same canonical workflow graph.
+- Target public acquisition continuity is `public acquisition -> opportunity -> customer -> project -> estimate -> contract -> payment -> scheduling -> execution -> follow-up`.
+- Do not create duplicate marketing/contact databases, website-only lead stores, portal-only customer copies, disconnected website systems, or separate AI knowledge silos.
 - AI is an operating layer, not a parallel system.
 - AI actions must route through canonical server-side workflows, validated inputs, tenant isolation, permissions, and readiness gates.
 - Do not create duplicate AI-specific business models such as AI-only leads, customers, estimates, projects, calendars, communication logs, invoices, or payments.

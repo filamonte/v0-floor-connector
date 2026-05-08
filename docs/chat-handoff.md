@@ -29,6 +29,1461 @@ For stronger implementation control on new tasks, also use:
 - [docs/internal-qa-workflow-checklist.md](C:/FloorConnector/docs/internal-qa-workflow-checklist.md)
 - [docs/phase-a-completion-and-phase-b-readiness.md](C:/FloorConnector/docs/phase-a-completion-and-phase-b-readiness.md)
 
+## Phase 6S Contractor Group Assignment Proposal Read-Model Enrichment
+
+Phase 6S read-model enrichment promoted contractor group assignment proposal manual-review readiness into first-class proposal fields. The proposal model now exposes `manualReviewReadiness`, `readinessLabel`, `readinessExplanation`, stable `reasonCode`, structured `evidenceItems`, structured `caveatItems`, `futureApplyPreview`, `starterPackImpactPreview`, `runtimeEffect: "none"`, `actionAvailable: false`, and the existing manual-review checklist on each proposal. Starter-pack impact is read-only targeting context only and has `provisioningEffect: "none"`. This pass did not add apply/approve/dismiss controls, assignment automation, membership writes, audit writes, proposal dismissal writes, entitlement enforcement, module gating, pricing/package behavior, starter-pack provisioning behavior, runtime behavior, contractor-side permission changes, tenant-owned template/catalog writes, migrations, schema changes, RLS/grant changes, or background jobs.
+
+Files changed in this pass:
+
+- `apps/web/lib/platform-admin/contractor-group-assignment-proposals-core.ts`
+- `apps/web/lib/platform-admin/contractor-group-assignment-proposals.test.ts`
+- `apps/web/app/(super-admin)/super-admin/groups/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-group-assignment-proposals.test.ts apps/web/lib/platform-admin/contractor-group-observability.test.ts apps/web/lib/platform-admin/starter-pack-targeting.test.ts apps/web/lib/platform-admin/contractor-group-assignment-audit-readiness.test.ts` passed: 39 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing CRLF-normalization warnings only.
+
+Recommended next prompt:
+
+- "Implement the read-only `/super-admin/groups` display pass for the new contractor group proposal readiness fields. Show readiness labels, reason codes, evidence/caveat summaries, future apply preview, and starter-pack impact context without adding apply controls, membership writes, audit writes, provisioning, entitlements, schema, RLS/grant changes, or runtime behavior."
+
+## Phase 6T Contractor Group Proposal-To-Manual-Assignment Design
+
+Phase 6T is complete as a design-only pass for a future human-confirmed proposal-to-manual-assignment workflow. `docs/contractor-groups-plan.md` now defines the future `createContractorGroupAssignmentFromProposal(...)` shape, required inputs, server-side proposal recomputation, allowed/blocked proposal states, idempotency/concurrency expectations, audit metadata expectations, platform-admin security requirements, UI workflow, and QA gates before any implementation. `/super-admin/groups` manual-review checklist copy now explicitly says a future action would require manual reason and audited assignment and is not implemented yet. This pass did not add a server action, RPC, migration, schema/RLS/grant change, assignment write, button, form, input, disabled fake button, proposal decision history, entitlement behavior, starter-pack provisioning behavior, runtime behavior, or background job.
+
+Files changed in this pass:
+
+- `docs/contractor-groups-plan.md`
+- `apps/web/components/contractor-group-manager.tsx`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF/CRLF normalization warnings only.
+
+Recommended next prompt:
+
+- "Implement Phase 6U as contractor group proposal-to-manual-assignment design QA/read-only verification. Verify the new design section and read-only checklist copy, run validation, and confirm no assignment/server-action/RPC/mutation/provisioning/runtime behavior exists."
+
+## Phase 6S Contractor Group Assignment Proposal Manual-Review Readiness
+
+Phase 6S added read-only manual-review readiness for contractor group assignment proposals. The proposal model now exposes a pure manual-review checklist builder with evidence items, future operator checks, blocking caveats, suggested future reason text, a manual assignment path label, and `actionAvailable: false`. `/super-admin/groups` shows the checklist for visible proposal rows. This does not add apply/approve/dismiss controls, assignment automation, membership writes, proposal dismissal writes, entitlement enforcement, module gating, pricing/package behavior, starter-pack auto-provisioning, runtime behavior, contractor-side permission changes, tenant-owned template/catalog writes, migrations, schema changes, RLS/grant changes, or background jobs.
+
+Files changed in this pass:
+
+- `apps/web/lib/platform-admin/contractor-group-assignment-proposals-core.ts`
+- `apps/web/lib/platform-admin/contractor-group-assignment-proposals.test.ts`
+- `apps/web/components/contractor-group-manager.tsx`
+- `docs/contractor-groups-plan.md`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-group-assignment-proposals.test.ts` passed: 18 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing CRLF-normalization warnings only.
+
+Browser/operator QA:
+
+- In-app Browser reproduced the known shared shell caveat on `/super-admin/groups`, showing `Preparing your workspace`; this was not treated as a Phase 6S defect because authenticated Playwright loaded the page successfully.
+- Authenticated Playwright loaded `/super-admin/groups` with platform-admin storage state.
+- Confirmed `Assignment proposals` renders.
+- Confirmed 8 visible `Manual review checklist` panels render on the default proposal view.
+- Confirmed each visible checklist shows `Action available: no`, `Future checks`, and `Suggested future reason` copy.
+- Confirmed the existing copy still says the audited manual assignment flow remains required and no apply-all/auto-assign/provisioning/entitlement/runtime control exists.
+- Confirmed no `Apply all`, `Auto assign`, `Approve`, or `Dismiss` buttons were visible.
+- QA screenshot was written to `%TEMP%\phase-6s-groups-manual-review.png`.
+
+Before/after read-only count checks matched:
+
+- `contractor_groups=6`
+- `contractor_group_memberships=0`
+- `contractor_group_audit_events=27`
+- `document_templates=4`
+- `catalog_items=9`
+- `platform_starter_pack_provisioning_runs=4`
+- `platform_starter_pack_provisioning_run_items=5`
+
+Recommended next prompt:
+
+- "Implement Phase 6T as contractor group assignment proposal manual-review operator QA/read-only verification. Verify the manual review checklist UI, docs, validation, and count stability only; do not add apply/approve/dismiss controls, assignment automation, membership writes, entitlement behavior, provisioning behavior, schema, or runtime change."
+
+## Customer Communication Preference UI
+
+Customer detail now includes contractor-admin communication preference management for email appointment reminders. This sits on the existing `communication_preferences` foundation and does not add schema, SMS controls, portal preference UI, automated reminder settings, appointment confirmation preferences, AI, Google/Outlook sync, customer self-scheduling, provider changes, or reminder scheduling.
+
+Files changed in this pass:
+
+- `apps/web/app/(app)/customers/[customerId]/page.tsx`
+- `apps/web/app/(app)/appointments/[appointmentId]/page.tsx`
+- `apps/web/components/customer-communication-preferences-panel.tsx`
+- `apps/web/components/appointment-reminder-panel.tsx`
+- `apps/web/lib/communications/actions.ts`
+- `apps/web/lib/communications/communication-preferences.ts`
+- `apps/web/lib/communications/communication-preferences-schema.ts`
+- `apps/web/lib/communications/customer-communication-preferences-core.ts`
+- `apps/web/lib/communications/appointment-reminders.test.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/communications-and-ai-intake.md`
+- `docs/calendar-and-scheduling-intelligence.md`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- Customer detail now loads customer-level and linked `customer_contact` email appointment-reminder preference summaries.
+- Missing preference rows display as `Allowed by default`.
+- Contractor admins can save `allowed`, `opted_out`, or `suppressed` preferences with an optional reason.
+- Customer-level `opted_out` or `suppressed` blocks all appointment reminder recipients for that customer; customer-contact blocks apply only to that linked contact.
+- Appointment Customer Reminder panel links back to the customer communication preference section when no eligible recipient remains after preference filtering.
+
+Not implemented:
+
+- SMS controls, portal preference UI, automated reminders, appointment confirmation preferences, global organization defaults, AI, Google/Outlook sync, customer self-scheduling, provider changes, schema changes, or appointment status/note mutation.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/communications/appointment-reminders.test.ts` passed: 9 tests.
+- `pnpm typecheck` passed.
+
+Recommended next prompt:
+
+- "Create a focused implementation plan for automated appointment reminder schedules or SMS consent/opt-out foundations. Planning only; do not implement scheduling, SMS delivery, AI, Google/Outlook sync, portal preference UI, or customer self-scheduling."
+
+## Phase 6R Contractor Group Assignment Proposal QA
+
+Phase 6R completed read-only operator verification for the contractor group assignment proposal filters and selected-organization proposal summary. No proposal defects were found and no assignment automation, automatic membership write, entitlement enforcement, module gating, pricing/package behavior, starter-pack auto-provisioning, runtime behavior, contractor-side permission change, tenant-owned template/catalog write, migration, schema change, RLS/grant change, or background job was added.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-group-assignment-proposals.test.ts apps/web/lib/platform-admin/contractor-group-observability.test.ts apps/web/lib/platform-admin/contractor-group-audit-events.test.ts apps/web/lib/platform-admin/starter-pack-targeting.test.ts` passed: 37 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing CRLF-normalization warnings only.
+
+Browser/operator QA:
+
+- In-app Browser retried the current filtered URL and stayed on the shared `Preparing your workspace` shell for `/super-admin/groups`; this reproduced the known browser/session caveat and was not treated as a Phase 6Q page defect.
+- Created/updated the normal Playwright platform-admin storage state through `pnpm exec playwright test --project=setup-platform-admin` against `http://localhost:3000`.
+- Authenticated Playwright loaded `/super-admin/groups` with platform-admin auth and confirmed `Assignment proposals` renders.
+- Confirmed the proposal organization, proposal status, confidence, and group type filters render.
+- Confirmed status/confidence/group-type filters submit and update URL state for `proposalStatus=unavailable`, `proposalConfidence=unavailable`, and `proposalGroupType=future_entitlement`.
+- Confirmed the future-entitlement caveat remains understandable: future plan and future entitlement groups are never proposed automatically in this phase.
+- Confirmed the selected organization filter updates the selected organization proposal summary. QA selected organization `e19c182b-923b-402d-996b-c4c20728a79f`; visible summary was `platform proposal summary` with `6 total`, `0 proposed`, `0 already assigned`, and `6 unavailable`.
+- Confirmed top reasons render for the selected organization and proposal rows show `assignment applied: no`.
+- Confirmed safety copy says no assignment is applied here and the existing audited manual assignment flow remains required.
+- Confirmed no actionable `Apply all`, `Auto assign`, bulk, entitlement, starter-pack provisioning, or runtime controls were visible. The page intentionally contains safety copy saying no apply-all/auto-assign control exists.
+- Playwright console captured one React hydration warning showing browser-injected `caret-color: transparent` style attributes on form fields. The page rendered and QA checks passed; this was documented as browser/environment noise, not a proposal read-model defect.
+- QA screenshot was written to `%TEMP%\phase-6r-groups-proposals.png`.
+
+Before/after read-only count checks matched:
+
+- `contractor_groups=6`
+- `contractor_group_memberships=0`
+- `contractor_group_audit_events=27`
+- `document_templates=4`
+- `catalog_items=9`
+- `platform_starter_pack_provisioning_runs=4`
+- `platform_starter_pack_provisioning_run_items=5`
+
+Recommended next prompt:
+
+- "Implement Phase 6S as contractor group assignment proposal manual-review readiness planning/read-model only. Define what a future human-reviewed proposal-to-assignment workflow would require, but add no apply action, automation, membership writes, entitlement behavior, provisioning behavior, schema, or runtime change."
+
+## Phase 6Q Contractor Group Assignment Proposal UX/Read-Model Hardening
+
+Phase 6Q hardened the read-only contractor group assignment proposal model and `/super-admin/groups` proposal inspection UI. No assignment automation, automatic membership write, entitlement enforcement, module gating, pricing/package behavior, starter-pack auto-provisioning, runtime behavior, contractor-side permission change, tenant-owned template/catalog write, migration, schema change, RLS/grant change, or background job was added.
+
+Files changed in this pass:
+
+- `apps/web/lib/platform-admin/contractor-group-assignment-proposals-core.ts`
+- `apps/web/lib/platform-admin/contractor-group-assignment-proposals.test.ts`
+- `apps/web/app/(super-admin)/super-admin/groups/page.tsx`
+- `apps/web/components/contractor-group-manager.tsx`
+- `docs/contractor-groups-plan.md`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+
+Implemented read-only behavior:
+
+- Proposal read model now supports filters for proposal status, confidence, and group type in addition to organization.
+- Proposal read model now returns organization summaries with total, proposed, already-assigned, unavailable, not-applicable, top reason, and top caveat counts.
+- `/super-admin/groups` now includes proposal filters for organization, proposal status, confidence, and group type.
+- Selecting an organization shows proposal summary counts and the most common proposal reasons/caveats.
+- Proposal rows still carry `assignmentApplied: false`, and the UI continues to state that manual audited assignment remains required.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-group-assignment-proposals.test.ts` passed: 13 tests.
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-group-assignment-proposals.test.ts apps/web/lib/platform-admin/contractor-group-observability.test.ts apps/web/lib/platform-admin/contractor-group-audit-events.test.ts` passed: 30 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing CRLF-normalization warnings only.
+
+Browser/operator QA:
+
+- In-app Browser loaded `http://localhost:3000/super-admin/groups?groupStatus=archived&groupType=custom&proposalStatus=unavailable&proposalConfidence=unavailable&proposalGroupType=future_entitlement` with the platform-admin session.
+- Confirmed `Assignment proposals` renders with `Proposal organization`, `Proposal status`, `Confidence`, and `Group type` filters plus the `Filter proposals` control.
+- Confirmed copy still says no assignment is applied, manual audited assignment remains required, and no entitlement/provisioning/pricing/permission/runtime behavior is triggered.
+- Confirmed filtered proposal state renders visible summary counts and future-only/future-entitlement copy.
+- Confirmed no `Apply all` or `Auto assign` mutation control exists. Visible controls remain existing navigation/filter/group-management controls plus the new read-only `Filter proposals` submit.
+- The in-app Browser verified the new panel once, then later direct navigation between filtered organization states stayed on the shared `Preparing your workspace` shell. This matches prior Browser/session caveats and should be rechecked in Phase 6R before treating it as a page defect; static validation and focused tests passed.
+- Browser console history still includes stale Phase 6O JSX parse errors from before the current fix; current typecheck/lint are clean.
+
+Read-only count check after QA:
+
+- `contractor_groups=6`
+- `contractor_group_memberships=0`
+- `contractor_group_audit_events=27`
+- `document_templates=4`
+- `catalog_items=9`
+- `platform_starter_pack_provisioning_runs=4`
+- `platform_starter_pack_provisioning_run_items=5`
+
+Recommended next prompt:
+
+- "Implement Phase 6R as contractor group assignment proposal operator QA/read-only verification. Verify the new proposal filters and selected-organization summary in `/super-admin/groups`, record before/after counts, and fix only read-only UI/docs defects."
+
+## Phase 6P Contractor Group Assignment Proposal QA
+
+Phase 6P completed read-only operator/browser verification for the contractor group assignment proposal panel. No code defects were found and no assignment automation, automatic membership write, entitlement enforcement, module gating, pricing/package behavior, starter-pack auto-provisioning, runtime behavior, contractor-side permission change, tenant-owned template/catalog write, migration, schema change, RLS/grant change, or background job was added.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-group-assignment-proposals.test.ts apps/web/lib/platform-admin/contractor-group-observability.test.ts apps/web/lib/platform-admin/contractor-group-audit-events.test.ts apps/web/lib/platform-admin/starter-pack-targeting.test.ts` passed: 31 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing CRLF-normalization warnings only.
+
+Browser/operator QA:
+
+- In-app Browser loaded `http://localhost:3000/super-admin/groups?groupStatus=archived&groupType=custom` with the platform-admin session.
+- Confirmed `Assignment proposals` renders.
+- Confirmed the proposal panel says it is read-only decision support, says no assignment is applied, and says the existing audited manual assignment flow remains required.
+- Confirmed proposal rows show `assignment applied: no`.
+- Confirmed unavailable/future-only proposal copy renders, including the caveat that future plan and future entitlement groups are never proposed automatically in this phase.
+- Confirmed no `Apply all`, `Auto assign`, provisioning, entitlement, or runtime mutation button/control is present. Visible buttons were existing controls only: sign out, filter events, apply filters, inspect groups, create contractor group, save group, and assign organization.
+- Confirmed the current QA data has no active contractor group memberships, so `already_assigned` could not be browser-verified from live data; it remains covered by the focused pure test.
+- Confirmed current live proposal data includes unavailable states; focused tests cover exact region match, exact trade match, archived group unavailable, future entitlement unavailable, insufficient metadata unavailable, and existing membership mapping.
+- Browser console history still included stale dev-server errors from the earlier Phase 6O JSX parse issue, but the current DOM rendered the page and validation passed. No current framework error overlay was visible.
+
+Before/after read-only count checks matched:
+
+- `contractor_groups=6`
+- `contractor_group_memberships=0`
+- `contractor_group_audit_events=27`
+- `document_templates=4`
+- `catalog_items=9`
+- `platform_starter_pack_provisioning_runs=4`
+- `platform_starter_pack_provisioning_run_items=5`
+
+Recommended next prompt:
+
+- "Implement Phase 6Q as contractor group assignment proposal UX/read-model hardening only. Improve read-only filtering or organization-focused proposal inspection if needed, add no mutation controls, and keep proposals non-enforcing/non-automated."
+
+## Appointment Reminder Manual Email Send UI
+
+Appointment workspaces now expose contractor-side manual email reminder sending in a separate Customer Reminder panel. This uses the existing reminder readiness, customer-safe reminder preview, communication preferences, canonical `appointment_reminder` communication messages, and notification delivery audit foundation. It does not add SMS, automated reminder schedules, cron, AI, Google/Outlook sync, portal reminder actions, customer self-scheduling, or automation.
+
+Files changed in this pass:
+
+- `apps/web/app/(app)/appointments/[appointmentId]/page.tsx`
+- `apps/web/components/appointment-reminder-panel.tsx`
+- `apps/web/lib/communications/actions.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/communications-and-ai-intake.md`
+- `docs/calendar-and-scheduling-intelligence.md`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- Appointment detail now loads reminder readiness, customer-safe reminder preview, preference-filtered eligible email recipients, recent reminder logs, and linked reminder delivery attempts.
+- The Customer Reminder panel shows readiness blockers, "Email only", "Manual send", and "No SMS or automated reminders yet" boundaries.
+- Contractors can edit customer-safe reminder body copy and manually send one email reminder to a selected eligible recipient.
+- `sendAppointmentReminderEmailAction` validates input server-side, calls `sendAppointmentReminderEmail`, revalidates appointment/communications/dashboard surfaces, and returns safe redirect messages.
+- Recent reminder logs and the latest sent/failed delivery attempt are shown separately from appointment confirmations.
+- Duplicate successful reminder emails to the same recipient for the same appointment remain blocked by the server and surface as a safe action error.
+
+Not implemented:
+
+- SMS, automated reminder scheduling, cron, AI, Google/Outlook sync, portal reminder actions, customer self-scheduling, dashboard reminder-send UI, or appointment status/note mutation.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/communications/appointment-reminders.test.ts apps/web/lib/communications/appointment-confirmations.test.ts apps/web/lib/communications/appointment-confirmation-email-core.test.ts apps/web/lib/portal/appointment-visibility.test.ts` passed: 15 tests.
+- `pnpm typecheck` passed.
+
+Recommended next prompt:
+
+- "Create a focused implementation plan for customer/contact communication preference UI and preference management. Plan only; do not add SMS implementation, automated reminders, AI, Google/Outlook sync, portal preference UI, or customer self-scheduling unless the plan explicitly scopes a later phase."
+
+## Manual Email Appointment Reminder Send Foundation
+
+Manual appointment reminder email sending now exists as a schema-free server/data foundation only. It reuses canonical appointments, customer-safe reminder previews, `communication_preferences`, appointment-linked `communication_messages`, `notification_events`, and `notification_deliveries`. It does not add reminder UI, automated scheduling, cron, SMS, AI, Google/Outlook sync, portal reminder actions, customer self-scheduling, or automation.
+
+Files changed in this pass:
+
+- `apps/web/lib/communications/appointment-reminder-core.ts`
+- `apps/web/lib/communications/appointment-reminders.ts`
+- `apps/web/lib/communications/appointment-reminders.test.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/communications-and-ai-intake.md`
+- `docs/calendar-and-scheduling-intelligence.md`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- `sendAppointmentReminderEmail` validates active organization scope, reminder readiness, selected recipient membership in the preference-filtered recipient set, and customer-safe reminder body content.
+- Manual reminder sends create or reuse an appointment-linked `appointment_reminder` communication message with `visibility = customer_visible`.
+- Reminder email sends use the existing Postmark-backed `sendTrackedNotificationEmail` path and link delivery attempts to canonical messages through `notification_deliveries.communication_message_id`.
+- `communication_messages.delivery_status` is updated to `sent` only after provider success.
+- Provider failures remain failed notification delivery audit rows and do not mark the communication message sent.
+- Duplicate successful reminder emails to the same recipient for the same appointment are blocked without introducing persisted reminder schedule rows.
+
+Not implemented:
+
+- Reminder UI, automated reminder scheduling, cron, SMS, AI, Google/Outlook sync, portal reminder actions, customer self-scheduling, or appointment status/note mutation.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/communications/appointment-reminders.test.ts` passed: 7 tests.
+- `pnpm exec tsx --test apps/web/lib/communications/appointment-reminders.test.ts apps/web/lib/communications/appointment-confirmations.test.ts apps/web/lib/communications/appointment-confirmation-email-core.test.ts apps/web/lib/portal/appointment-visibility.test.ts` passed: 15 tests.
+- `pnpm typecheck` passed.
+
+Recommended next prompt:
+
+- "Implement appointment detail UI for manually sending email appointment reminders. Reuse the existing reminder readiness, customer-safe preview, preference-filtered recipient resolver, and `sendAppointmentReminderEmail` utility. Keep the UI explicit/manual and do not add SMS, automated scheduling, AI, external calendar sync, portal reminder actions, or customer self-scheduling."
+
+## Communication Preferences And Appointment Reminder Readiness Foundation
+
+Customer communication preference storage and appointment reminder readiness utilities now exist as a schema/data foundation only. This does not add UI, provider sends, automated reminder scheduling, SMS, AI, Google/Outlook sync, portal preference UI, customer self-scheduling, or automation.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260508000315_communication_preferences_reminder_readiness.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/communications/communication-preferences-schema.ts`
+- `apps/web/lib/communications/communication-preferences.ts`
+- `apps/web/lib/communications/appointment-reminder-core.ts`
+- `apps/web/lib/communications/appointment-reminder-preview.ts`
+- `apps/web/lib/communications/appointment-reminders.ts`
+- `apps/web/lib/communications/appointment-reminders.test.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/communications-and-ai-intake.md`
+- `docs/calendar-and-scheduling-intelligence.md`
+- `docs/chat-handoff.md`
+
+Implemented behavior:
+
+- `communication_preferences` stores organization-scoped customer, customer-contact, and contact preference rows for email and future SMS categories, with active-member RLS and no portal/customer policies.
+- Server utilities validate preference subjects against canonical `customers`, `customer_contacts`, or `contacts` before upsert.
+- Appointment reminder readiness can build customer-safe reminder preview copy, resolve email recipients through the existing appointment-confirmation recipient path, and filter those recipients through appointment-reminder preferences.
+- Explicit `opted_out` or `suppressed` preferences block reminder recipients; missing email appointment-reminder preference rows default to allowed for readiness only.
+- Readiness suppresses non-customer-visible appointments, missing customer/project context, canceled/no-show/completed appointments, missing start times, and missing eligible email recipients.
+
+Still intentionally not implemented:
+
+- Reminder sending, automated reminders, persisted reminder schedules, SMS, provider-backed reminder delivery, AI, Google/Outlook sync, portal preference UI, customer self-scheduling, or reminder UI.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/communications/appointment-reminders.test.ts` passed: 6 tests.
+- `pnpm typecheck` passed.
+
+Recommended next prompt:
+
+- "Implement the manual email appointment reminder send foundation. Reuse appointment reminder readiness, customer-safe reminder preview, communication preferences, canonical appointment communication messages with `message_kind = appointment_reminder`, and `notification_deliveries` provider audit. Do not add UI, SMS, automated scheduling, AI, Google/Outlook sync, portal actions, or customer self-scheduling."
+
+## Phase 6O Contractor Group Assignment Proposals
+
+Phase 6O added contractor group assignment proposal planning/read-model behavior only. `/super-admin/groups` now shows a read-only `Assignment proposals` panel built from current contractor group definitions, current organization metadata, and explicit current memberships. No assignment automation, automatic membership writes, entitlement enforcement, module gating, pricing/package behavior, starter-pack auto-provisioning, runtime behavior, contractor-side permission change, tenant-owned template/catalog write, schema change, RLS/grant change, background job, or service-role browser exposure was added.
+
+Files changed in this pass:
+
+- `apps/web/lib/platform-admin/contractor-group-assignment-proposals-core.ts`
+- `apps/web/lib/platform-admin/contractor-group-assignment-proposals.test.ts`
+- `apps/web/app/(super-admin)/super-admin/groups/page.tsx`
+- `apps/web/components/contractor-group-manager.tsx`
+- `docs/contractor-groups-plan.md`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+
+Implemented behavior:
+
+- The proposal read model returns `proposed`, `already_assigned`, `not_applicable`, or `unavailable` rows with confidence, source, reason, caveats, group status/type, and an explicit `assignmentApplied: false` marker.
+- Regional proposals require exact state/region-to-group matching.
+- Trade segment proposals require exact primary-trade-to-group matching.
+- Existing memberships always show as `already_assigned`.
+- Archived groups are not proposed for new assignments.
+- Future plan and future entitlement groups are marked future-only/unavailable.
+- Insufficient organization metadata returns unavailable instead of guessing.
+- The `/super-admin/groups` panel states proposals are read-only and that existing audited manual assignment remains required.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-group-assignment-proposals.test.ts` passed: 7 tests.
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-group-assignment-proposals.test.ts apps/web/lib/platform-admin/contractor-group-observability.test.ts apps/web/lib/platform-admin/contractor-group-audit-events.test.ts` passed: 24 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed, with existing CRLF-normalization warnings only.
+
+Read-only browser/count QA:
+
+- In-app Browser loaded `http://localhost:3000/super-admin/groups?groupStatus=archived&groupType=custom`.
+- Confirmed the page rendered `Assignment proposals`, read-only proposal copy, and no apply-all or auto-assign mutation buttons.
+- Visible buttons remained existing controls: sign out, filter events, apply filters, inspect groups, create contractor group, save group, and assign organization.
+- Before/after read-only count checks matched: `contractor_groups=6`, `contractor_group_memberships=0`, `contractor_group_audit_events=27`, `document_templates=4`, `catalog_items=9`, `platform_starter_pack_provisioning_runs=4`, `platform_starter_pack_provisioning_run_items=5`.
+
+Recommended next prompt:
+
+- "Implement Phase 6P as contractor group assignment proposal operator QA/read-only verification. Verify the `/super-admin/groups` proposal panel with a platform-admin browser session, record before/after counts for contractor groups, memberships, audit events, document templates, catalog items, and provisioning runs/items, confirm no apply/auto-assign/provisioning controls exist, and fix only read-only UI/docs defects."
+
+## Appointment Confirmation Manual Email Send UI
+
+Appointment workspaces now expose contractor-side manual email sending for customer appointment confirmations. This reuses the existing customer-safe preview, canonical appointment confirmation communication message, and notification delivery audit foundation. It does not add SMS, automated reminders, AI, Google/Outlook sync, customer self-scheduling, portal confirmation actions, or automation.
+
+Files changed in this pass:
+
+- `apps/web/app/(app)/appointments/[appointmentId]/page.tsx`
+- `apps/web/components/appointment-confirmation-panel.tsx`
+- `apps/web/components/auth-submit-button.tsx`
+- `apps/web/lib/communications/actions.ts`
+- `apps/web/lib/communications/appointment-confirmations.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/communications-and-ai-intake.md`
+- `docs/calendar-and-scheduling-intelligence.md`
+- `docs/chat-handoff.md`
+
+Implemented behavior:
+
+- Appointment detail now loads confirmation preview, eligibility, recent confirmation logs, eligible email recipients, linked email delivery attempts, and organization send-lock state.
+- The Customer Confirmation panel shows readiness blockers, editable customer-safe preview content, a single-recipient email selector, logged-only action, manual email send action, and latest sent/failed email delivery state.
+- Manual email send uses `sendAppointmentConfirmationEmailAction`, validates the selected recipient server-side through the existing resolver, and revalidates appointment, communications, and dashboard surfaces after the action.
+- Email send remains explicit and human-confirmed. Successful provider delivery marks the communication message `sent`; failed provider attempts stay in delivery history and do not mark the message sent.
+- Appointment status, schedule fields, customer-visible flags, customer notes, internal notes, legacy notes, work items, portal visibility, automation runs, and external calendar state are not mutated.
+
+Still intentionally not implemented:
+
+- SMS, voice, chat, automated reminders, Google/Outlook sync, customer self-scheduling, portal confirmation actions, provider-backed reminder scheduling, AI, or automated confirmation sends.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `pnpm exec tsx --test apps/web/lib/communications/appointment-confirmation-email-core.test.ts apps/web/lib/communications/appointment-confirmations.test.ts apps/web/lib/communications/appointment-confirmation-eligibility.test.ts apps/web/lib/portal/appointment-visibility.test.ts` passed: 11 tests.
+
+Recommended next prompt:
+
+- "Create a focused implementation plan for appointment reminders and communication preferences. Plan only; do not implement code, schema, UI, SMS, automation, AI, or external calendar sync. Evaluate customer consent/preferences, quiet hours, reminder schedule records, manual versus automated reminder phases, and how future reminders reuse canonical appointments, communication messages, and notification delivery audit."
+
+## Appointment Confirmation Email Delivery Foundation
+
+Manual provider-backed email delivery now has a schema/data/server foundation for appointment confirmations. This is not a UI slice and does not add SMS, automated reminders, AI, Google/Outlook sync, customer self-scheduling, portal confirmation actions, or automation.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260507232414_appointment_confirmation_email_delivery_foundation.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/notifications/system.ts`
+- `apps/web/lib/communications/appointment-confirmation-email-core.ts`
+- `apps/web/lib/communications/appointment-confirmation-email-core.test.ts`
+- `apps/web/lib/communications/appointment-confirmations.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/communications-and-ai-intake.md`
+- `docs/calendar-and-scheduling-intelligence.md`
+- `docs/chat-handoff.md`
+
+Implemented behavior:
+
+- `notification_deliveries.communication_message_id` can now link a provider delivery attempt back to the canonical customer communication message it attempted to deliver.
+- Appointment confirmation email recipient resolution validates the active organization, requires a customer-visible project/customer-linked appointment, and resolves valid email recipients from active project-scoped portal access, customer contacts, and canonical customer email fallback.
+- Appointment confirmation email sending uses the existing Postmark-backed notification email path and customer-safe appointment confirmation preview content.
+- Sending can create a new customer-visible `appointment_confirmation` communication message or reuse a selected existing appointment confirmation message.
+- `communication_messages.delivery_status` is updated to `sent` only after provider success.
+- Failed provider attempts are recorded through `notification_deliveries` and do not mark the communication message sent.
+- Appointment status, schedule fields, customer-visible flags, customer notes, internal notes, legacy notes, work items, portal visibility, automation runs, and external calendar state are not mutated.
+
+Still intentionally not implemented:
+
+- Appointment detail email-send UI.
+- SMS, voice, chat, automated reminders, Google/Outlook sync, customer self-scheduling, portal confirmation actions, provider-backed reminder scheduling, or AI.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/communications/appointment-confirmation-email-core.test.ts apps/web/lib/communications/appointment-confirmations.test.ts apps/web/lib/portal/appointment-visibility.test.ts` passed: 8 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+- `pnpm exec supabase migration list --linked` succeeded and showed `20260507232414` as local-only/pending.
+- `pnpm exec supabase migration list --local` could not connect because local Postgres on `127.0.0.1:54322` was not running.
+
+Recommended next prompt:
+
+- "Implement the appointment detail UI for manual email sending of customer appointment confirmations. Reuse the existing Customer Confirmation panel, show eligible email recipients, require explicit contractor confirmation, call the existing send utility, and display sent/failed delivery state. Do not add SMS, automated reminders, AI, Google/Outlook sync, portal confirmation actions, or customer self-scheduling."
+
+## Contractor Group Audit Export And Retention QA
+
+Phase 6N completed verification for contractor group audit export/retention planning and the read-only `/super-admin/groups` operator copy. No export behavior, CSV/JSON generation, API route, download button, retention/deletion job, audit-event deletion/archive behavior, migration, schema change, RLS/grant change, entitlement behavior, runtime behavior, assignment automation, starter-pack provisioning behavior, contractor permission behavior, or tenant-owned write path was added.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Documentation verification:
+
+- Confirmed `docs/contractor-groups-plan.md` contains `Audit Retention, Export, And Support Readiness`.
+- Confirmed the section covers audit purpose, retention expectations, why audit events should not be casually deleted, future CSV/JSON/support-bundle export shapes, platform-admin-only export access, safe export fields, excluded/redacted fields, actor/user and organization label handling, metadata sanitization, support investigation workflows, future retention/deletion caveats, future legal/compliance caveats, and a future audit export QA checklist.
+
+Browser/operator QA:
+
+- The in-app Browser runtime reached `http://localhost:3000/super-admin/groups?groupStatus=archived&groupType=custom` but remained on the shared `Preparing your workspace` loading shell with no relevant console errors. This matches the Phase 6L Browser/session caveat and was not treated as a confirmed page defect.
+- Authenticated Playwright QA against the same local server and platform-admin E2E credentials loaded `/super-admin/groups?groupStatus=archived&groupType=custom`.
+- Confirmed `Audit observability` renders.
+- Confirmed `Audit history` renders.
+- Confirmed the Audit History copy includes `Export and retention tooling is planned`, `audit events are platform evidence`, and `should not be manually deleted`.
+- Confirmed no export/download/retention/delete/archive-audit-event controls were visible. The rendered button set was limited to existing navigation, filters, inspection, and current contractor group management controls.
+- Confirmed safety copy remains visible for no entitlement enforcement, no contractor permission changes, no starter-pack auto-provisioning/provisioning behavior, and no runtime behavior.
+- Confirmed no browser console warnings or errors during the authenticated Playwright QA run.
+
+Read-only count check:
+
+| Table | Before | After |
+| --- | ---: | ---: |
+| `catalog_items` | 9 | 9 |
+| `contractor_group_audit_events` | 27 | 27 |
+| `contractor_group_memberships` | 0 | 0 |
+| `contractor_groups` | 6 | 6 |
+| `document_templates` | 4 | 4 |
+| `platform_starter_pack_provisioning_run_items` | 5 | 5 |
+| `platform_starter_pack_provisioning_runs` | 4 | 4 |
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Implement Phase 6O as contractor group assignment proposal planning/read-model only. Define future preview-first automated assignment proposals, operator approval requirements, audit-event expectations, rejection/attempt visibility, and explicit no-entitlement/no-provisioning boundaries. Do not add automation, jobs, schema, entitlements, runtime behavior, or contractor permission changes."
+
+## Contractor Group Audit Export And Retention Planning
+
+Phase 6M completed a planning/support-readiness pass for contractor group audit retention and future exports. No export action, retention job, deletion behavior, archive automation, migration, schema change, RLS/grant change, server action, API route, entitlement behavior, runtime behavior, assignment automation, starter-pack provisioning behavior, contractor permission behavior, or tenant-owned write path was added.
+
+Files changed in this pass:
+
+- `docs/contractor-groups-plan.md`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+- `apps/web/components/contractor-group-manager.tsx`
+
+Plan summary:
+
+- Added `Audit Retention, Export, And Support Readiness` to `docs/contractor-groups-plan.md`.
+- Defines contractor group audit events as platform evidence for support/governance investigations, not disposable UI activity logs.
+- Recommends retaining audit events for the life of the platform account unless a later legal/compliance policy requires a narrower window.
+- Defines future export formats as CSV, JSON, and bounded support bundles.
+- Limits future export access to platform admins first, with any support-role access requiring explicit server-side scope and audit.
+- Lists safe export fields, excluded/redacted fields, actor/organization label handling, metadata sanitization rules, support investigation workflows, retention/deletion caveats, legal/compliance caveats, and a future export QA checklist.
+
+UI copy:
+
+- `/super-admin/groups` Audit History now states that export and retention tooling is planned and that audit events are platform evidence that should not be manually deleted.
+- No export button, download control, API route, retention/deletion control, background job, or mutation path was added.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Implement Phase 6N as contractor group audit export/retention operator QA and documentation verification only. Confirm the Audit History copy renders, validate no export/download/delete/retention controls exist, run typecheck/lint/diff-check, and fix only documentation or copy defects."
+
+## Contractor Group Audit Operator QA
+
+Phase 6L completed read-only operator verification for contractor group audit observability. No application code, schema, RLS/grants, or contractor group behavior changed in this pass.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-group-audit-events.test.ts apps/web/lib/platform-admin/contractor-group-observability.test.ts apps/web/lib/platform-admin/contractor-groups.test.ts apps/web/lib/platform-admin/starter-pack-targeting.test.ts` passed: 28 tests.
+
+Browser/operator QA:
+
+- The in-app Browser plugin remained on the `Preparing your workspace` loading shell for the existing `/super-admin/groups?groupStatus=archived&groupType=custom` tab and a fresh tab, even after restarting the local dev server. Browser console output only showed stale historical schema-cache/page errors plus current Next.js smooth-scroll warnings, so this was recorded as an in-app Browser/session caveat rather than a confirmed page defect.
+- Authenticated Playwright QA against the same local server and platform-admin E2E credentials loaded `/super-admin/groups?groupStatus=archived&groupType=custom` successfully.
+- Confirmed `Audit observability` renders.
+- Confirmed `Audit history` renders.
+- Confirmed the event-type filter renders and selected `organization_removed`, updating the URL with `auditEventType=organization_removed`.
+- Confirmed group-level audit summary sections render for archived/custom groups with audit events.
+- Confirmed organization-centric audit history renders for organization `b434be1d-2340-4fd9-95e4-43b2a3c5e9c1` (`QA Early Access`) and shows assignment/removal activity.
+- Confirmed metadata summaries render without raw database errors or secrets.
+- Confirmed the context check copy reports loaded audit events include expected group and organization context; no missing-context warning was present in the QA data.
+- Confirmed safety copy remains visible: platform segmentation only, no entitlement enforcement, no contractor permission changes, and no starter-pack auto-provisioning/runtime behavior.
+
+Read-only count check:
+
+| Table | Before | After |
+| --- | ---: | ---: |
+| `catalog_items` | 9 | 9 |
+| `contractor_group_audit_events` | 27 | 27 |
+| `contractor_group_memberships` | 0 | 0 |
+| `contractor_groups` | 6 | 6 |
+| `document_templates` | 4 | 4 |
+| `platform_starter_pack_provisioning_run_items` | 5 | 5 |
+| `platform_starter_pack_provisioning_runs` | 4 | 4 |
+
+Security/behavior spot-check:
+
+- No Phase 6K mutation controls were added; existing Phase 6A group management controls remain the only mutation controls on `/super-admin/groups`.
+- No client/browser service-role exposure was found in `apps` or `packages`.
+- No entitlement, runtime, pricing/package, starter-pack provisioning, assignment automation, contractor permission, tenant-owned template/catalog, tax, payroll, financial, invoice/contract generation, user preference, or navigation behavior changed.
+
+Recommended next prompt:
+
+- "Implement Phase 6M as contractor group audit event retention/export planning and support-readiness only. Define how operators should preserve, search, and eventually export group audit history before groups power entitlements or onboarding. Do not add export behavior, entitlement enforcement, assignment automation, provisioning, schema changes, or contractor permission behavior."
+
+## Appointment Customer Confirmation Panel
+
+The contractor-side appointment workspace now has a Customer Confirmation panel. It uses the existing appointment-linked communication foundation to preview and manually log customer-visible appointment confirmations, but it still does not send anything externally.
+
+Files changed in this pass:
+
+- `apps/web/app/(app)/appointments/[appointmentId]/page.tsx`
+- `apps/web/components/appointment-confirmation-panel.tsx`
+- `apps/web/lib/communications/actions.ts`
+- `apps/web/lib/communications/data.ts`
+- `apps/web/lib/communications/appointment-confirmation-eligibility.ts`
+- `apps/web/lib/communications/appointment-confirmation-eligibility.test.ts`
+- `apps/web/lib/communications/appointment-confirmations.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/communications-and-ai-intake.md`
+- `docs/calendar-and-scheduling-intelligence.md`
+- `docs/chat-handoff.md`
+
+Implemented behavior:
+
+- Appointment workspaces load confirmation eligibility, customer-safe preview content, and recent appointment confirmation logs.
+- The Customer Confirmation panel shows whether the appointment is ready to log, including blockers for missing customer visibility, customer context, project context, start time, or title.
+- Eligible appointments show editable customer-safe confirmation copy generated from allowed appointment/customer/project/company fields.
+- Contractors can manually log the confirmation from the appointment workspace.
+- Logging creates a customer-visible `appointment_confirmation` communication message with `delivery_status = logged`, revalidates appointment/communications/dashboard paths, and redirects back with a logged-only success message.
+- The panel shows recent logged appointment confirmation messages with timestamp, message kind, delivery status, body, and creator id when available.
+
+Safety boundaries:
+
+- No `appointment_confirmations` table was created.
+- No SMS/email/voice/chat provider delivery, reminder scheduling, AI, Google/Outlook sync, customer self-scheduling, portal confirmation UI, or automation was added.
+- Logging does not mutate appointment status, `customer_visible`, `customer_notes`, `internal_notes`, legacy `notes`, portal visibility, notification deliveries, automation runs, work items, or external calendar state.
+- Portal appointment loaders and portal UI remain unchanged.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/communications/appointment-confirmation-eligibility.test.ts apps/web/lib/communications/appointment-confirmations.test.ts apps/web/lib/portal/appointment-visibility.test.ts` passed: 8 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with line-ending normalization warnings only.
+
+Recommended next prompt:
+
+- "Create the provider-delivery planning spec for appointment confirmations and reminders. Include consent, opt-out, quiet hours, templates, provider adapters, delivery audit events, retry/failure behavior, and human confirmation rules. Do not implement provider delivery yet."
+
+## Validation Reconciliation After Communications Migration Push
+
+Validation was rechecked after first inspecting the linked Supabase migration state. This pass made no application-code changes.
+
+Migration state:
+
+- `pnpm exec supabase migration list --linked` now shows all local migrations through `20260507224205` applied remotely.
+- The previously noted local-only communications migration `20260507224205_appointment_confirmation_communication_foundation.sql` is now present in the linked migration history.
+- No unrelated migration was applied in this pass.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+
+Root cause classification:
+
+- Already resolved / no longer reproducible.
+- The earlier communications blocker was intentional appointment/communications type drift that had already been reconciled by the appointment confirmation logging foundation work.
+- No stale communications, appointment, contractor group, starter-pack, provisioning, financial, tax, payroll, entitlement, or navigation behavior was changed here.
+
+Recommended next prompt:
+
+- "Implement Phase 6L contractor group audit operator QA/read-only verification. Re-check contractor group audit observability and security after the validation reconciliation pass, without adding entitlement, runtime, assignment automation, provisioning, or contractor permission behavior."
+
+## Appointment Customer Confirmation Logging Foundation
+
+Appointment customer confirmation logging now has a schema/data foundation over canonical communication history. This is not a UI, provider delivery, reminder, automation, AI, external-calendar, customer self-scheduling, or portal confirmation-action slice.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260507224205_appointment_confirmation_communication_foundation.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/communications/data.ts`
+- `apps/web/lib/communications/contractor-data.ts`
+- `apps/web/lib/communications/actions.ts`
+- `apps/web/lib/communications/appointment-confirmation-preview.ts`
+- `apps/web/lib/communications/appointment-confirmations.ts`
+- `apps/web/lib/communications/appointment-confirmations.test.ts`
+- `apps/web/lib/notifications/system.ts`
+- `apps/web/app/(app)/communications/page.tsx`
+- `apps/web/components/communication-reply-form.tsx`
+- `apps/web/components/communication-notification-triage-form.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/communications-and-ai-intake.md`
+- `docs/calendar-and-scheduling-intelligence.md`
+- `docs/chat-handoff.md`
+
+Implemented behavior:
+
+- `communication_threads` and `communication_messages` can now link to canonical appointments with tenant-scoped appointment context.
+- `communication_message_kind` now includes `appointment_confirmation` and `appointment_reminder`; reminder is classification only and does not schedule or send anything.
+- Server utilities can build customer-safe appointment confirmation previews from appointment title/type, date/time, status, safe location, `customer_notes`, safe customer/project context, and company name.
+- Server utilities can manually log a customer-visible appointment confirmation as a canonical communication message with `delivery_status = logged`, after validating the appointment belongs to the active organization and is `customer_visible = true`.
+- Contractor communications source filtering now recognizes appointment threads.
+
+Safety boundaries:
+
+- No `appointment_confirmations` table was created.
+- Logging a confirmation does not mutate appointment status, appointment visibility fields, notes, portal visibility, notification deliveries, automation runs, work items, or external calendar state.
+- Preview/logging utilities must not include `internal_notes`, legacy `notes`, work items, internal communication, assignment internals, or provider payloads.
+- Portal appointment loaders remain customer-safe and portal communication visibility was not broadened for appointment threads.
+- No SMS/email/voice/chat provider delivery, reminder scheduling, AI, Google/Outlook sync, customer self-scheduling, portal confirmation UI, or automation was added.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/communications/appointment-confirmations.test.ts apps/web/lib/lead-communication-foundation.test.ts apps/web/lib/portal/appointment-visibility.test.ts` passed: 9 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with line-ending normalization warnings only.
+- `pnpm exec supabase migration list --linked` confirmed `20260507224205` is local-only and not applied remotely; no migration push was performed.
+
+Recommended next prompt:
+
+- "Implement appointment confirmation logging UI on appointment detail. Add a contractor-only preview/log button that uses the existing customer-safe preview and manual logging utility. Do not send SMS/email, schedule reminders, add AI, sync external calendars, expose portal confirmation actions, or mutate appointment status."
+
+## Appointment Work Items UI Slice
+
+Appointment-detail work item integration is implemented for internal contractor users. It reuses the existing `work_items` foundation and shared work-item UI so contractors can manually create, view, complete, and dismiss appointment-linked internal work items without adding auto-generation, provider delivery, AI, external calendar sync, customer reminders, portal task visibility, customer self-scheduling, or a generic workflow engine.
+
+Files changed in this pass:
+
+- `apps/web/app/(app)/appointments/[appointmentId]/page.tsx`
+- `apps/web/components/work-items/work-item-create-form.tsx`
+- `apps/web/lib/work-items/work-items.test.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/calendar-and-scheduling-intelligence.md`
+- `docs/chat-handoff.md`
+
+Implemented behavior:
+
+- Appointment workspaces now load work items where `source_type = appointment` and `source_id` is the current appointment.
+- Appointment workspaces include a contractor-only Work Items section with explicit create and linked-list panels.
+- Appointment-linked work item creation source-locks the current appointment, points `link_path` back to the appointment workspace, preserves appointment customer/project context when present, and defaults assignment to the appointment's assigned person when that person is active and assignable.
+- The default work-item kind is context-aware but still manually confirmed: scheduled/upcoming appointments default to `appointment_confirmation_prep`, completed/canceled/no-show appointments default to `appointment_follow_up`, and other states fall back to `manual`.
+- Contractors can complete or dismiss open appointment-linked work items from the appointment workspace.
+- Completing or dismissing appointment-linked work items does not mutate appointment status, schedule fields, customer-visible appointment notes, portal visibility, notifications, automation runs, or workflow error events.
+
+Boundaries:
+
+- No appointment work items are auto-created from appointment status, no-show/canceled cues, follow-up queues, AI, providers, notifications, automation runs, or workflow errors.
+- No portal/customer loader or portal UI imports or displays work items.
+- No `/work-items` manager route was added.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/work-items/work-items.test.ts` passed: 7 tests.
+- `pnpm exec tsx --test apps/web/lib/portal/appointment-visibility.test.ts` passed: 3 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with line-ending normalization warnings only.
+
+Recommended next prompt:
+
+- "Implement explicit create-work-item bridge actions from follow-up queue and no-show/canceled appointment cues. Keep every bridge manually confirmed, prefill source/kind/due context, and do not add auto-generation, provider reminders, AI, external calendar sync, portal visibility, or a generic workflow engine."
+
+## Internal Work Items UI Slice
+
+The first V1 internal work-item UI slice is implemented for dashboard and lead workspaces. It makes manually created internal work items usable without adding auto-generation, provider delivery, AI, external calendar sync, customer reminders, portal task visibility, or a generic workflow engine.
+
+Files changed in this pass:
+
+- `apps/web/app/(app)/dashboard/page.tsx`
+- `apps/web/app/(app)/leads/[leadId]/page.tsx`
+- `apps/web/components/dashboard/contractor-dashboard-surface.tsx`
+- `apps/web/components/work-items/work-item-create-form.tsx`
+- `apps/web/components/work-items/work-item-list.tsx`
+- `apps/web/lib/work-items/read-model.ts`
+- `apps/web/lib/work-items/work-items.test.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/communications-and-ai-intake.md`
+- `docs/chat-handoff.md`
+
+Implemented behavior:
+
+- Dashboard now shows a compact internal work-items queue.
+- Dashboard prefers open work items assigned to the current user's linked active `people` record when that mapping exists and has work; otherwise it falls back to open company work items with assignee context.
+- Dashboard work items can be completed or dismissed through the existing work-item server actions.
+- Lead workspaces now show opportunity-linked internal work items near the communication/follow-up area.
+- Lead workspaces can explicitly create manual or lead-follow-up work items linked to the current opportunity with title, description, due date, priority, kind, and optional assignable person.
+- Lead-linked work items can be completed or dismissed from the lead workspace.
+- Completing or dismissing a work item does not mutate `opportunities.next_follow_up_at`, lead status, communication visibility, appointment state, notifications, automation runs, or workflow error events.
+
+Boundaries:
+
+- No `/work-items` manager route was added.
+- No work items are auto-created from lead follow-up queues, appointment cues, notifications, automation runs, workflow errors, AI, or provider events.
+- Work items remain internal-only and are not exposed through portal/customer loaders.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/work-items/work-items.test.ts` passed: 6 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with line-ending normalization warnings only.
+
+Recommended next prompt:
+
+- "Implement appointment-detail work item integration. Show work items linked to `source_type = appointment`, allow explicit manual appointment-prep/follow-up work item creation from appointment detail, and allow complete/dismiss. Do not add auto-generation, reminders, provider delivery, AI, external calendar sync, portal visibility, or a generic workflow engine."
+
+## Contractor Groups Phase 6H Audit Write Live QA
+
+Phase 6H applied and verified the Phase 6G contractor group audit-write RPC migration against the linked Supabase project `jcnoraopbwdhshcmplgb`. This was a verification pass with no entitlement enforcement, module gating, pricing/package behavior, starter-pack auto-provisioning, assignment automation, runtime behavior, contractor-side permission behavior, tenant-owned template/catalog writes, tax/payroll/financial behavior, invoice/contract generation changes, user preference changes, duplicate tenant-role behavior, or background jobs.
+
+Migration verification:
+
+- Applied `supabase/migrations/20260507192746_contractor_group_audit_write_rpcs.sql` to the linked Supabase project with `pnpm exec supabase db query --linked -f supabase/migrations/20260507192746_contractor_group_audit_write_rpcs.sql`.
+- Marked only `20260507192746` applied with `pnpm exec supabase migration repair 20260507192746 --status applied --linked` because a later unrelated local migration `20260507193923_work_items_foundation.sql` is also pending and was intentionally not applied in this pass.
+- Confirmed `supabase_migrations.schema_migrations` contains `20260507192746`; `20260507193923` remains unapplied remotely.
+
+RPC/security verification:
+
+- Private functions exist for group create/update, archive, assign/update membership, remove membership, and status-transition event selection.
+- Public wrapper RPCs exist only for server-side Supabase RPC calls.
+- All public and private Phase 6G functions have `search_path = ''`.
+- Mutation functions are `security definer`; the private status-mapping helper is not security definer.
+- `anon` and `authenticated` do not have execute privilege on the public or private Phase 6G functions.
+- `service_role` has execute privilege on the public and private Phase 6G functions.
+- `anon` and `authenticated` do not have `USAGE` on the `private` schema; `service_role` does.
+- `rg` over `apps` and `packages` found service-role usage confined to server-side config/db utilities, with no `NEXT_PUBLIC_*` service-role exposure.
+
+Table security verification:
+
+- `contractor_group_audit_events`, `contractor_groups`, and `contractor_group_memberships` have RLS enabled and forced.
+- `contractor_group_audit_events` has no direct `anon`, `authenticated`, or `public` table grants.
+
+QA records and actions:
+
+- QA group: `Phase 6H Audit QA 1778183306708`
+- QA group key: `phase-6h-audit-qa-1778183306708`
+- QA group id: `26df42fa-ab6b-4ec1-942f-8e14235d4609`
+- QA organization: `QA Early Access`
+- QA organization id: `b434be1d-2340-4fd9-95e4-43b2a3c5e9c1`
+- Browser UI created the QA group and confirmed the `group_created` event.
+- Browser UI assigned `QA Early Access` to the QA group and confirmed the `organization_assigned` event.
+- Browser UI removed the assignment and the database confirmed `organization_removed` plus `removedMembershipId` metadata.
+- The in-app browser visibly rendered `/super-admin/groups`, the Audit History panel, segmentation-only safety copy, and no entitlement/provisioning controls.
+- Direct linked-database RPC checks verified `group_updated`, `group_deactivated`, `group_activated`, `assignment_source_changed`, a second `organization_removed`, and `group_archived` because the browser automation surface did not reliably submit the lower group update/archive controls even though they rendered correctly.
+- Final browser reload at `/super-admin/groups?groupStatus=archived&groupType=custom` confirmed the Audit History panel rendered `Group updated`, `Group deactivated`, `Group activated`, `Assignment source changed`, `Organization removed`, and `Group archived` for the QA event timeline.
+
+Before/after counts:
+
+- `contractor_groups`: `2` -> `3` because the QA group remains archived as audit evidence.
+- `contractor_group_memberships`: `0` -> `0`; QA assignments were removed.
+- `contractor_group_audit_events`: `0` -> `10` from the QA lifecycle and assignment evidence rows.
+- `document_templates`: `4` -> `4`.
+- `catalog_items`: `9` -> `9`.
+- `platform_starter_pack_provisioning_runs`: `4` -> `4`.
+- `platform_starter_pack_provisioning_run_items`: `5` -> `5`.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-group-audit-events.test.ts apps/web/lib/platform-admin/contractor-groups.test.ts apps/web/lib/platform-admin/contractor-group-observability.test.ts apps/web/lib/platform-admin/starter-pack-targeting.test.ts` passed: 24 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with line-ending normalization warnings only.
+
+Recommended next prompt:
+
+- "Implement Phase 6I as contractor group audit-write post-QA cleanup/hardening only. Review the Phase 6H QA caveat around lower group update/archive browser automation versus RPC verification, run validation, and fix only confirmed defects. Do not add entitlements, automation, provisioning, runtime behavior, or contractor permissions."
+
+## Contractor Groups Phase 6I Audit Write UI Hardening
+
+Phase 6I investigated the Phase 6H caveat around lower `/super-admin/groups` update/archive controls. The root cause was repeated generic form/button names making browser automation brittle, not a transaction/RPC defect or entitlement/runtime behavior issue. The server actions and RPCs remained scoped to platform-admin server paths.
+
+Files changed:
+
+- `apps/web/components/contractor-group-manager.tsx`
+- `docs/chat-handoff.md`
+
+Hardening made:
+
+- Group create/update forms now have stable `data-testid` values and group-specific accessible labels.
+- Group assignment, membership removal, and archive forms now have stable `data-testid` values plus `data-contractor-group-key` attributes.
+- Repeated buttons keep their visible copy, but now have group-specific accessible names for reliable operator/browser QA targeting.
+- No server action, RPC, migration, schema, RLS, grant, entitlement, runtime, provisioning, assignment automation, contractor permission, template/catalog, tax/payroll/financial, invoice/contract, or user-preference behavior changed.
+
+QA records:
+
+- In-app browser rendered `/super-admin/groups?groupStatus=archived&groupType=custom`, the group-specific controls, and the durable Audit History timeline.
+- In-app browser automation still showed click/submit brittleness on repeated controls, but rendered the final Phase 6I audit events after reload.
+- Playwright with the existing platform-admin storage state successfully submitted the actual UI forms for:
+  - group create
+  - metadata update / inactive transition
+  - active transition
+  - organization assignment
+  - organization removal
+  - group archive
+- Main QA group: `Phase 6I Playwright QA 1778185844360 Updated`
+- Main QA group key: `phase-6i-playwright-qa-1778185844360`
+- QA organization: `QA Early Access` / `b434be1d-2340-4fd9-95e4-43b2a3c5e9c1`
+- Confirmed durable events for the main QA group: `group_created`, `group_deactivated`, `group_activated`, `organization_assigned`, `organization_removed`, and `group_archived`.
+- A preliminary in-app QA group `phase-6i-audit-qa-1778185236513` was also archived as audit evidence after creating update/archive evidence.
+
+Before/after counts:
+
+- `contractor_groups`: `3` -> `5`; two Phase 6I QA groups remain archived as audit evidence.
+- `contractor_group_memberships`: `0` -> `0`; QA memberships were removed.
+- `contractor_group_audit_events`: `10` -> `20` from Phase 6I lifecycle and assignment evidence rows.
+- `document_templates`: `4` -> `4`.
+- `catalog_items`: `9` -> `9`.
+- `platform_starter_pack_provisioning_runs`: `4` -> `4`.
+- `platform_starter_pack_provisioning_run_items`: `5` -> `5`.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-group-audit-events.test.ts apps/web/lib/platform-admin/contractor-groups.test.ts apps/web/lib/platform-admin/contractor-group-observability.test.ts apps/web/lib/platform-admin/starter-pack-targeting.test.ts` passed.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Implement Phase 6J as contractor group audit observability/operator review hardening only. Summarize audit event health, expose recent lifecycle/assignment event filters if low-risk, and fix only read-only UI defects. Do not add entitlements, automation, runtime behavior, starter-pack auto-provisioning, or contractor permissions."
+
+## Contractor Groups Phase 6J Audit RPC Security And Operator Verification
+
+Phase 6J re-verified the Phase 6G/6I contractor group audit-write path after the UI accessibility/test-hook hardening. This was verification-only; no app code, migration, schema, RLS/grant, entitlement, pricing, provisioning, runtime, contractor permission, tenant template/catalog, tax/payroll/financial, invoice/contract, user-preference, assignment automation, background job, or service-role exposure behavior was added.
+
+Migration verification:
+
+- `pnpm exec supabase migration list --linked` confirmed `20260507173254`, `20260507191344`, and `20260507192746` are applied remotely.
+- Direct `supabase_migrations.schema_migrations` query returned all three requested versions.
+- The later unrelated local migration `20260507193923` still shows as local-only in `migration list`; it was not applied in this pass.
+
+RPC/function security verification:
+
+- Private transaction-aware functions and public wrapper RPCs exist for create/update, archive, assign/update membership, and remove membership.
+- Function owner is `postgres`; mutation functions are `security definer`; the private status-mapping helper is not security definer.
+- All Phase 6G public/private functions have `search_path = ''`.
+- `public`, `anon`, and `authenticated` have no execute privilege on the Phase 6G public or private functions.
+- `service_role` has execute privilege on the Phase 6G public and private functions.
+- `public`, `anon`, and `authenticated` have no `USAGE` on the `private` schema; `service_role` does.
+- `rg` over `apps` and `packages` found service-role references only in server-side config/db utilities and a migration test assertion; no `NEXT_PUBLIC_*` service-role exposure was found.
+
+Table security verification:
+
+- `contractor_groups`, `contractor_group_memberships`, and `contractor_group_audit_events` exist.
+- All three have RLS enabled and forced.
+- `information_schema.role_table_grants` returned no direct `public`, `anon`, or `authenticated` grants for the three contractor group tables.
+
+QA records and actions:
+
+- QA group: `Phase 6J Audit QA 1778192662589 Updated`
+- QA group key: `phase-6j-debug-1778192662589`
+- QA group id: `b55b9969-5733-4310-a11b-1c10a2efe29b`
+- QA organization: `QA Early Access`
+- QA organization id: `b434be1d-2340-4fd9-95e4-43b2a3c5e9c1`
+- In-app browser rendered `/super-admin/groups?groupStatus=archived&groupType=custom`, the Audit History panel, the archived QA group, segmentation-only safety copy, and no forbidden runtime/enforcement buttons.
+- In-app browser click dispatch still failed on the long scrolled create form before submission (`No element found at point ...`), so actual submissions were completed with Playwright against the same localhost UI using the Phase 6I `data-testid` and group-specific accessible labels.
+- Playwright successfully submitted the UI forms for group create, metadata update, status inactive, status active, organization assignment, organization removal, and group archive.
+- Durable audit events confirmed for the QA group: `group_created`, `group_updated`, `group_deactivated`, `group_activated`, `organization_assigned`, `organization_removed`, and `group_archived`.
+- `assignment_source_changed` was not exercised because the current UI does not expose assignment source/notes update for an existing membership; the assignment source remains a hidden `manual` field and already-assigned organizations are filtered out of the assignment selector.
+- Audit metadata showed safe scalar fields only: old/new key/name/status/type, organization label/status, notes presence, assignment source, and removed membership id. No raw DB errors or secrets were present.
+
+Before/after counts:
+
+- `contractor_groups`: `5` -> `6`; the Phase 6J QA group remains archived as audit evidence.
+- `contractor_group_memberships`: `0` -> `0`; the QA assignment was removed.
+- `contractor_group_audit_events`: `20` -> `27` from Phase 6J lifecycle and assignment evidence rows.
+- `document_templates`: `4` -> `4`.
+- `catalog_items`: `9` -> `9`.
+- `platform_starter_pack_provisioning_runs`: `4` -> `4`.
+- `platform_starter_pack_provisioning_run_items`: `5` -> `5`.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-group-audit-events.test.ts apps/web/lib/platform-admin/contractor-groups.test.ts apps/web/lib/platform-admin/contractor-group-observability.test.ts apps/web/lib/platform-admin/starter-pack-targeting.test.ts` passed: 24 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Implement Phase 6K as contractor group audit observability/read-model hardening only. Add filters or summaries for recent durable audit events if useful, keep it read-only, and do not add entitlements, runtime behavior, assignment automation, starter-pack auto-provisioning, or contractor permissions."
+
+## Internal Work Items Schema/Data Foundation
+
+The V1 internal work-item foundation is implemented as schema/data only. It adds `work_items` as an organization-scoped, RLS-protected contractor action layer for ownership, due dates, assignment, completion, and dismissal. It does not add UI, auto-generation, provider delivery, AI, Google/Outlook sync, customer reminders, portal task visibility, or a generic workflow engine.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260507193923_work_items_foundation.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/work-items/constants.ts`
+- `apps/web/lib/work-items/schemas.ts`
+- `apps/web/lib/work-items/read-model.ts`
+- `apps/web/lib/work-items/data.ts`
+- `apps/web/lib/work-items/actions.ts`
+- `apps/web/lib/work-items/work-items.test.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/communications-and-ai-intake.md`
+- `docs/calendar-and-scheduling-intelligence.md`
+- `docs/chat-handoff.md`
+
+Implemented behavior:
+
+- Added constrained `work_item_*` enums and the `work_items` table with `company_id`, title, description, status, priority, kind, due date, optional assigned person, optional source type/id, optional customer/project context, internal-only visibility, optional dedupe key, safe metadata, creator/updater/completion fields, and timestamps.
+- Added same-company constraints for assigned people, customers, and projects, indexes for open/due/dashboard/source lookup, a partial unique dedupe-key index, and `set_updated_at`.
+- Enabled and forced RLS. Active organization members can select, insert, and update internal work items for their company. No portal/customer policies or delete policy were added.
+- Added typed work-item constants, shared types, validation schemas, queue sorting helpers, server-side data utilities, and server actions for create, update, complete, and dismiss.
+- Server utilities validate assigned people as active and assignable in the active organization and validate supported polymorphic source records before source-linked creation.
+
+Boundaries:
+
+- Work items do not replace `opportunities.next_follow_up_at`, `next_follow_up_note`, appointment scheduling/status fields, notifications, notification events, notification deliveries, automation runs, workflow error events, or canonical workflow state.
+- No work items are auto-created from lead follow-up queues, appointment no-show/canceled cues, notification events, automation runs, or workflow errors.
+- Completed/dismissed work items are not reopened in V1.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/work-items/work-items.test.ts` passed: 4 tests.
+- `pnpm typecheck` passed after relation-shape tightening in `apps/web/lib/work-items/data.ts`.
+- `pnpm lint` passed.
+- `git diff --check` passed with line-ending normalization warnings only.
+- `supabase db push --local --dry-run` could not run because the local Supabase database was not listening on `127.0.0.1:54322`.
+- `supabase db push --dry-run` connected to the linked remote project and reported `20260507193923_work_items_foundation.sql` as the only pending migration. It was not applied.
+
+Recommended next prompt:
+
+- "Implement the dashboard/list UI for internal work items. Show my assigned open work items when the current user maps to an active `people` row, fall back to company open work items when needed, and add links back to source records. Do not add auto-generation, external reminders, AI, portal task visibility, or provider delivery."
+
+## Contractor Groups Phase 6G Audit Write Wiring
+
+Phase 6G wires contractor group create/update/archive/assign/remove operations to durable audit events through transaction-aware server-side RPCs. This adds audit evidence only. It does not add entitlement enforcement, module gating, pricing/package behavior, starter-pack auto-provisioning, assignment automation, runtime behavior, contractor-side permission behavior, tenant-owned template/catalog writes, tax/payroll/financial behavior, invoice/contract generation changes, user preference changes, duplicate tenant-role behavior, or background jobs.
+
+Files changed:
+
+- `supabase/migrations/20260507192746_contractor_group_audit_write_rpcs.sql`
+- `apps/web/lib/platform-admin/contractor-group-audit-events-core.ts`
+- `apps/web/lib/platform-admin/contractor-group-audit-events.test.ts`
+- `apps/web/lib/platform-admin/contractor-group-assignment-audit-readiness-core.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/lib/platform-admin/actions.ts`
+- `apps/web/components/contractor-group-manager.tsx`
+- `docs/current-state.md`
+- `docs/contractor-groups-plan.md`
+- `docs/chat-handoff.md`
+
+Implemented behavior:
+
+- Added private Postgres functions plus service-role-only public wrappers for contractor group create/update, archive, assign/update membership, and remove membership.
+- Each RPC locks the affected group or membership rows, performs the mutation, and inserts the matching `contractor_group_audit_events` row in the same database transaction.
+- Group create/update emits `group_created`, `group_updated`, `group_activated`, `group_deactivated`, or `group_archived` based on the status transition.
+- Membership assign/update emits `organization_assigned` or `assignment_source_changed` when an existing membership's source changes.
+- Membership removal emits `organization_removed` before deleting the membership row; because `membership_id` references the removed row with `on delete set null`, the durable event stores `removedMembershipId` in safe metadata.
+- Audit metadata stores safe before/after group fields, assignment source, organization label/status, notes-present flag, and removed membership id where relevant. It does not store secrets or raw database errors.
+- `/super-admin/groups` Audit History copy now explains that new group management actions append events once the audit-write migration is applied.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-group-audit-events.test.ts apps/web/lib/platform-admin/contractor-group-assignment-audit-readiness.test.ts apps/web/lib/platform-admin/contractor-group-observability.test.ts apps/web/lib/platform-admin/contractor-groups.test.ts apps/web/lib/platform-admin/starter-pack-targeting.test.ts` passed: 29 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with line-ending normalization warnings only.
+
+Recommended next prompt:
+
+- "Implement Phase 6H as operator/browser QA and live verification for contractor group audit writes. Apply/verify `20260507192746_contractor_group_audit_write_rpcs.sql`, create/update/archive/assign/remove a QA group, confirm audit events appear, verify RLS/grants and before/after tenant-owned counts, and fix only defects found."
+
+## Internal Lead Follow-Up Queue
+
+The V1 internal follow-up/reminder visibility slice is implemented. It adds contractor-side dashboard and lead-manager visibility over existing canonical opportunity follow-up fields and appointment records only; it does not add external reminder delivery, AI, Google/Outlook sync, provider messaging, portal reminders, schema, migrations, or a generic task engine.
+
+Files changed in this pass:
+
+- `apps/web/lib/opportunities/follow-up-read-model.ts`
+- `apps/web/lib/opportunities/follow-up-data.ts`
+- `apps/web/lib/opportunities/follow-up-read-model.test.ts`
+- `apps/web/app/(app)/dashboard/page.tsx`
+- `apps/web/app/(app)/leads/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/communications-and-ai-intake.md`
+- `docs/calendar-and-scheduling-intelligence.md`
+- `docs/chat-handoff.md`
+
+Implemented behavior:
+
+- Added a tenant-scoped lead follow-up data utility that reads canonical opportunities and opportunity communication thread recency.
+- Added a pure read model that classifies active leads as overdue, due today, upcoming, or no follow-up using `opportunities.next_follow_up_at`; won/lost/converted leads are excluded from the queue.
+- Dashboard now shows a compact internal lead follow-up queue prioritizing overdue and due-today items, including follow-up note and last communication timestamp when available.
+- Lead manager now has lightweight follow-up filters and badges for due, overdue, no-follow-up, and all follow-up states.
+- Dashboard appointment visibility now labels today/tomorrow appointment items and can include recent canceled/no-show appointments as internal follow-up cues.
+
+Important caveats:
+
+- No customer reminder delivery, self-scheduling, SMS/email/voice/chat provider behavior, AI, Google Calendar, Outlook/Microsoft 365 sync, portal follow-up display, task/reminder persistence, or workflow engine was added.
+- Internal follow-up notes remain contractor-side only and must not be exposed through portal/customer loaders.
+
+Validation:
+
+- `pnpm exec tsx apps/web/lib/opportunities/follow-up-read-model.test.ts` passed: 4 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with line-ending normalization warnings only.
+
+Recommended next prompt:
+
+- "Implement the next narrow appointment/customer communication slice as either customer appointment confirmation/reminder planning or a first lightweight notification/task foundation. Do not add provider delivery, AI, Google/Outlook sync, or a duplicate reminder/task model without an approved plan."
+
+## Contractor Groups Phase 6F Audit Schema Foundation
+
+Phase 6F added contractor group audit/history storage and read-only operator visibility only. This is an audit foundation for future group lifecycle and assignment history; it does not add entitlement enforcement, module gating, pricing behavior, starter-pack auto-provisioning, assignment automation, runtime behavior, contractor-side permission behavior, tenant-owned template/catalog writes, or background jobs.
+
+Files changed:
+
+- `supabase/migrations/20260507191344_contractor_group_audit_events.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/platform-admin/contractor-group-audit-events-core.ts`
+- `apps/web/lib/platform-admin/contractor-group-audit-events.test.ts`
+- `apps/web/lib/platform-admin/contractor-group-assignment-audit-readiness-core.ts`
+- `apps/web/lib/platform-admin/contractor-group-assignment-audit-readiness.test.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/components/contractor-group-manager.tsx`
+- `apps/web/app/(super-admin)/super-admin/groups/page.tsx`
+- `docs/current-state.md`
+- `docs/contractor-groups-plan.md`
+- `docs/starter-pack-provisioning-plan.md`
+- `docs/chat-handoff.md`
+
+Implemented behavior:
+
+- Added `contractor_group_audit_events` with constrained event types, optional group/organization/membership references, actor id, assignment source, reason, safe JSON-object metadata, and `occurred_at`.
+- Enabled and forced RLS on the audit table and revoked direct `anon` / `authenticated` grants.
+- Added shared contractor group audit event types, a pure read-model/timeline formatter, and read-only platform-admin data helpers.
+- `/super-admin/groups` now loads recent audit rows and shows a read-only `Audit history` panel. If no durable events exist, the panel explains that the table is ready and write wiring is a follow-up.
+- The existing inferred `Assignment history readiness` panel now reflects that durable audit storage exists, while current-row inference still cannot reconstruct historical removals that were not written as audit events.
+
+Important caveat:
+
+- Existing group create/update/archive/assign/remove actions were not wired to append audit events in this pass. That was intentional: the current actions are separate Supabase calls, and durable audit writes should be added in a follow-up with transaction-aware server-side behavior so group mutations do not become partially audited or brittle.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-group-audit-events.test.ts apps/web/lib/platform-admin/contractor-group-assignment-audit-readiness.test.ts apps/web/lib/platform-admin/contractor-group-observability.test.ts apps/web/lib/platform-admin/contractor-groups.test.ts apps/web/lib/platform-admin/starter-pack-targeting.test.ts` passed: 25 tests.
+- `pnpm typecheck` passed.
+- Scoped ESLint over the Phase 6F touched web files passed.
+- Full `pnpm lint` is currently blocked by unrelated `@typescript-eslint/no-floating-promises` errors in `apps/web/lib/opportunities/follow-up-read-model.test.ts`.
+- Scoped `git diff --check` over the Phase 6F files passed. Full `git diff --check` is currently blocked by unrelated trailing whitespace in `docs/Architecture.md`.
+
+Recommended next prompt:
+
+- "Implement Phase 6G as contractor group audit write wiring and QA only. Use the existing `contractor_group_audit_events` table, add transaction-aware/server-side audit writes for create/update/archive/assign/remove actions, keep contractor groups segmentation-only, and verify no entitlement/runtime/provisioning behavior changes."
+
+## Customer-Visible Portal Appointment Display
+
+The V1 customer-visible appointment display slice is implemented. Portal home and portal project workspaces now show read-only appointments from the canonical `appointments` table only when the appointment is project-linked and `customer_visible = true`.
+
+Files changed in this pass:
+
+- `apps/web/lib/portal/appointment-visibility.ts`
+- `apps/web/lib/portal/appointment-visibility.test.ts`
+- `apps/web/lib/portal/data.ts`
+- `apps/web/app/(portal)/portal/page.tsx`
+- `apps/web/app/(portal)/portal/projects/[projectId]/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/calendar-and-scheduling-intelligence.md`
+- `docs/chat-handoff.md`
+
+Implemented behavior:
+
+- Added portal-safe appointment mapping that returns only title, appointment type, date/time, status, location, `customer_notes`, project context, and timestamps.
+- Added project-scoped portal appointment loading through existing authenticated portal scope and `portal_project_access`; inaccessible projects return no appointments.
+- Added portal home upcoming appointment visibility across accessible projects.
+- Added portal project workspace appointment visibility for that project.
+- Appointment display is customer-safe and read-only. It does not expose `appointments.notes`, `internal_notes`, assignment internals, internal communication, or contractor scheduling comments.
+
+Boundaries:
+
+- No schema, migration, RLS policy, appointment persistence, contractor appointment workflow, self-scheduling, reminders, AI, SMS/email/voice/chat provider, Google Calendar, or Outlook/Microsoft 365 sync changes were made.
+- Opportunity-only appointments are not shown in the portal in this V1; portal appointment display is project-scoped.
+
+Validation:
+
+- `pnpm exec tsx apps/web/lib/portal/appointment-visibility.test.ts` passed: 3 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+
+## Dashboard Appointment Lint Reconciliation
+
+Investigated the reported `pnpm lint` blocker in `apps/web/app/(app)/dashboard/page.tsx`. The blocker was tied to intentional lead-linked appointment dashboard work, not unrelated dead code.
+
+Exact lint blocker from the prior Phase 6D handoff:
+
+- `apps/web/app/(app)/dashboard/page.tsx:211:9` - `dashboardAppointments` assigned but never used.
+- `apps/web/app/(app)/dashboard/page.tsx:217:9` - `appointmentDashboardTitle` assigned but never used.
+- `apps/web/app/(app)/dashboard/page.tsx:220:9` - `appointmentDashboardDescription` assigned but never used.
+- `apps/web/app/(app)/dashboard/page.tsx:225:9` - `appointmentDashboardEyebrow` assigned but never used.
+- `apps/web/app/(app)/dashboard/page.tsx:228:9` - `appointmentDashboardEmptyTitle` assigned but never used.
+- `apps/web/app/(app)/dashboard/page.tsx:231:9` - `appointmentDashboardEmptyDescription` assigned but never used.
+
+Root cause classification:
+
+- Stale render-layer drift during intentional appointment/dashboard work.
+- The appointment read-model variables were intended to support the implemented dashboard behavior: show `My upcoming appointments` when the authenticated user maps to an active `people.membership_user_id` record, otherwise fall back to company upcoming appointments.
+- Current `apps/web/app/(app)/dashboard/page.tsx` now consumes those values in the appointments operations widget, so no dashboard code change was needed in this pass.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Validation:
+
+- `pnpm --filter @floorconnector/web lint` passed.
+- `pnpm lint` passed from Turbo cache replay.
+- `pnpm typecheck` passed from Turbo cache replay.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+
+Boundaries preserved:
+
+- Intentional dashboard appointment visibility was preserved.
+- No new dashboard, communication, appointment, AI, provider, portal, scheduling, contractor group, starter-pack/provisioning, financial, tax, payroll, entitlement, or contractor navigation behavior was added.
+
+## Contractor Groups Phase 6E
+
+Phase 6E added contractor group assignment-audit planning/read-model only. It does not add migrations, tables, RLS/grant changes, entitlement enforcement, module gating, pricing/package behavior, starter-pack auto-provisioning, runtime behavior, contractor-side permissions, tenant-owned template/catalog writes, tax/payroll/financial behavior, invoice/contract generation changes, user preference behavior, assignment automation, or background jobs.
+
+Files changed in this pass:
+
+- `apps/web/lib/platform-admin/contractor-group-assignment-audit-readiness-core.ts`
+- `apps/web/lib/platform-admin/contractor-group-assignment-audit-readiness.test.ts`
+- `apps/web/components/contractor-group-manager.tsx`
+- `apps/web/app/(super-admin)/super-admin/groups/page.tsx`
+- `docs/contractor-groups-plan.md`
+- `docs/README.md`
+- `docs/current-state.md`
+- `docs/starter-pack-provisioning-plan.md`
+- `docs/chat-handoff.md`
+
+Implemented read-only behavior:
+
+- Added a pure assignment audit-readiness model that infers group-created, organization-assigned, and archived-group events from current `contractor_groups` and `contractor_group_memberships` rows.
+- The model explicitly reports that removed membership history is not durable yet because current removal deletes the membership row.
+- The model reports archive history as inferred from current archived status and `updated_at`, not a durable archive event with actor/reason.
+- `/super-admin/groups` now shows a read-only `Assignment history readiness` panel with inferred recent events, caveats, and no-runtime-effect copy.
+- `docs/contractor-groups-plan.md` defines future immutable assignment audit/history requirements before groups power enforcement, automation, entitlements, onboarding assignment, or starter-pack recommendation/provisioning workflows.
+
+Browser QA:
+
+- Reloaded `http://localhost:3000/super-admin/groups?groupStatus=archived&groupType=custom` in the in-app browser with the authenticated platform-admin session.
+- Confirmed `Assignment history readiness` renders.
+- Confirmed copy explains membership removal is not durable history yet.
+- Confirmed `No runtime effect` and `Platform segmentation only` safety copy renders.
+- Confirmed no forbidden entitlement/provisioning controls appeared (`Enable entitlement`, `Auto-provision`, `Run provisioning`, or `Provision group`).
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-group-assignment-audit-readiness.test.ts apps/web/lib/platform-admin/contractor-group-observability.test.ts apps/web/lib/platform-admin/contractor-groups.test.ts apps/web/lib/platform-admin/starter-pack-targeting.test.ts` passed: 21 tests.
+- `pnpm --filter @floorconnector/web typecheck` passed.
+- `pnpm --filter @floorconnector/web lint` passed.
+- `pnpm typecheck` passed from Turbo cache replay.
+- `pnpm lint` passed from Turbo cache replay.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Implement Phase 6F as contractor group assignment-audit schema design only. Do not add migrations unless explicitly approved; define the immutable event table shape, actor metadata, retention expectations, and future read model before any enforcement, automation, entitlement, or provisioning behavior."
+
+## Lead-Linked Appointment Schedule And Dashboard Visibility
+
+The V1 internal company schedule/dashboard visibility slice for lead-linked appointments is implemented. Existing canonical `appointments` now surface beside scheduled jobs in contractor-only schedule/dashboard views without adding external calendar sync, AI, provider messaging, portal appointment display, a generic calendar table, or a dispatch redesign.
+
+Files changed in this pass:
+
+- `apps/web/lib/schedule/read-model.ts`
+- `apps/web/lib/schedule/read-model.test.ts`
+- `apps/web/lib/schedule/links.ts`
+- `apps/web/app/(app)/schedule/page.tsx`
+- `apps/web/app/(app)/dashboard/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/calendar-and-scheduling-intelligence.md`
+- `docs/chat-handoff.md`
+
+Implemented behavior:
+
+- `/schedule` now loads canonical jobs and canonical appointments and projects them into a discriminated internal read model with `type: "job"` and `type: "appointment"`.
+- The schedule manager keeps job scheduling persistence separate from appointment persistence; it does not merge jobs and appointments into a new source of truth.
+- Schedule filters now include all items, jobs, and appointments.
+- Day/week schedule views show appointment blocks alongside scheduled jobs, clearly labeled as appointments.
+- Appointment schedule/list entries link to appointment detail and, where known, lead/opportunity, customer, or project context.
+- Appointment entries show assigned person, appointment type/status, location, and a customer-visible badge when `customer_visible` is true.
+- Dashboard now shows `My upcoming appointments` when the authenticated user can be safely mapped to an active `people` row through `people.membership_user_id`.
+- If there is no safe current-user-to-person mapping or no assigned upcoming appointment for that person, the dashboard falls back to company upcoming appointments with assignee/context labels instead of inventing a user/person mapping.
+
+Boundaries:
+
+- Google Calendar, Outlook/Microsoft 365, external busy blocks, two-way sync, AI scheduling, SMS/email/voice/chat providers, route optimization, portal appointment display, and customer-facing appointment notifications remain not implemented.
+- Existing jobs and `job_assignments` remain the canonical production scheduling foundation.
+- Existing `appointments` remain the canonical appointment foundation.
+- Contractor/internal schedule views may show internal appointment context, but portal/customer surfaces must still use only explicitly customer-visible appointment data when portal appointment display is built later.
+
+Validation:
+
+- `pnpm exec tsx apps/web/lib/schedule/read-model.test.ts` passed: 3 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Implement the next narrow appointment slice: either customer-facing portal appointment display using only `customer_visible` and `customer_notes`, or internal manual reminder/follow-up task queues. Do not add Google/Outlook sync, AI, SMS/email/voice/chat providers, or a generic calendar/event source of truth."
+
+## Super Admin Platform Console Phase 6D
+
+Phase 6D completed operator/browser QA and live verification for contractor group observability. No Phase 6C defects were found, and no app code, migrations, schema, RLS, grants, entitlement behavior, runtime behavior, starter-pack auto-provisioning, contractor permission behavior, tenant-owned template/catalog writes, tax/payroll/financial logic, invoice/contract generation, user preference behavior, or duplicate tenant-role system was added.
+
+Migration and live schema verification:
+
+- `pnpm exec supabase migration list --linked` confirmed `20260507173254 | 20260507173254 | 2026-05-07 17:32:54`.
+- Local Supabase migration introspection was not available because the local database was not running on `127.0.0.1:54322`.
+- Linked SQL verification confirmed `contractor_groups` and `contractor_group_memberships` exist, RLS is enabled, RLS is forced, and both `anon` and `authenticated` have no direct table privileges.
+
+QA records:
+
+- QA group name: `Phase 6D QA Observability 1778179074785`
+- QA group key: `phase-6d-qa-1778179074785`
+- QA group id: `74e3616a-67eb-46f0-aa5e-41e50840a738`
+- Temporary membership id: `22ea65de-3caf-405a-80cb-4f2c77b3c764`
+- Member organization: `platform` / `e19c182b-923b-402d-996b-c4c20728a79f`
+- Non-member organization: `QA Early Access` / `b434be1d-2340-4fd9-95e4-43b2a3c5e9c1`
+- Temporary starter-pack targeting assignment id: `a27464be-3538-4fcc-a953-df99cc76ed10`
+- Starter pack used for targeting preview: `Phase 5G QA Execution Pack` / `2a92b429-69bf-4b62-9574-345462e0dbe4`
+
+Browser QA results:
+
+- `/super-admin/groups` loaded with the authenticated platform-admin session.
+- Confirmed summary tiles, status/type filters, safety copy, organization-centric inspection, starter-pack assignment references, and no provisioning/entitlement/runtime controls.
+- Created the QA group through the browser UI.
+- Assigned `platform (trialing)` through the browser UI and confirmed the member count, recently assigned membership observability, and organization-centric membership panel updated.
+- Verified status/type filters by filtering to active/custom and confirming the QA group remained visible while the archived Phase 6B group was hidden.
+- Verified a no-group organization by selecting `QA Early Access`; the organization-centric panel showed `No groups assigned`.
+- Created a temporary `future_contractor_group` starter-pack assignment intent for the QA group key, verified the member organization matched by explicit group membership in `/super-admin/templates`, and verified the non-member organization did not match.
+- Removed the temporary starter-pack assignment, removed the temporary membership, and archived the QA group as evidence with zero memberships.
+- Multi-group organization display was covered by the focused pure test; live browser QA did not create a second persistent group membership just to force that state.
+
+Count checks:
+
+| Table | Before | After | Result |
+| --- | ---: | ---: | --- |
+| `contractor_groups` | 1 | 2 | QA group remains archived as evidence |
+| `contractor_group_memberships` | 0 | 0 | Temporary membership removed |
+| `document_templates` | 4 | 4 | Unchanged |
+| `catalog_items` | 9 | 9 | Unchanged |
+| `platform_starter_pack_provisioning_runs` | 4 | 4 | Unchanged |
+| `platform_starter_pack_provisioning_run_items` | 5 | 5 | Unchanged |
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-group-observability.test.ts apps/web/lib/platform-admin/contractor-groups.test.ts apps/web/lib/platform-admin/starter-pack-targeting.test.ts` passed.
+- `pnpm typecheck` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+- `pnpm lint` was previously blocked by unrelated unused appointment-dashboard variables in `apps/web/app/(app)/dashboard/page.tsx`; the Dashboard Appointment Lint Reconciliation note above records that the current branch now consumes those variables and lint passes.
+
+Recommended next prompt:
+
+- "Fix the unrelated dashboard lint blocker by reconciling the current appointment dashboard variables in `apps/web/app/(app)/dashboard/page.tsx` with the intended dashboard/scheduling work. Do not change contractor groups, provisioning, entitlements, tax/payroll/financial logic, or navigation."
+
+## Super Admin Platform Console Phase 6C
+
+Phase 6C added contractor group read-model hardening and observability only. `/super-admin/groups` now builds a pure platform-admin observability model over existing contractor groups, manual memberships, tenant records, and starter-pack assignment intent. It adds summary counts, status/type filters, multi-group/no-group organization visibility, recently assigned memberships, organization-centric group inspection, and read-only starter-pack assignment references for `future_contractor_group` keys.
+
+Files changed in this pass:
+
+- `apps/web/lib/platform-admin/contractor-group-observability-core.ts`
+- `apps/web/lib/platform-admin/contractor-group-observability.test.ts`
+- `apps/web/app/(super-admin)/super-admin/groups/page.tsx`
+- `apps/web/components/contractor-group-manager.tsx`
+- `docs/current-state.md`
+- `docs/chat-handoff.md`
+
+Behavior boundaries:
+
+- Contractor groups remain platform segmentation metadata only.
+- The observability model does not enforce entitlements, module access, pricing/packages, starter-pack auto-provisioning, contractor permissions, tenant defaults, runtime behavior, or tenant-owned template/catalog writes.
+- `future_contractor_group` starter-pack references are displayed as read-only planning context; they do not auto-match beyond explicit membership and do not provision anything.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-group-observability.test.ts apps/web/lib/platform-admin/contractor-groups.test.ts apps/web/lib/platform-admin/starter-pack-targeting.test.ts` passed.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed after removing one unused local variable from the new pure read model.
+- `git diff --check` passed with existing LF/CRLF normalization warnings only.
+
+Browser QA:
+
+- Opened `http://localhost:3000/super-admin/groups` in the in-app browser with an authenticated platform-admin session.
+- Confirmed the page renders the platform-managed segmentation heading, summary tiles including memberships/no-group organizations, safety copy, status/type filters, organization-centric inspection, and starter-pack assignment reference sections.
+- No entitlement, runtime, provisioning, default, permission, or tenant-owned record mutation behavior was exercised or added.
+
+Recommended next prompt:
+
+- "Run Phase 6D as contractor group operator/browser QA and live verification for the new read-only observability panels. Fix only defects found; do not add entitlement enforcement, auto-provisioning, pricing/package behavior, contractor permission behavior, or runtime behavior."
+
 ## Communications Typecheck Reconciliation
 
 This narrow repair/reconciliation pass investigated the reported `pnpm typecheck` blocker in `apps/web/app/(app)/communications/page.tsx`.
@@ -198,29 +1653,23 @@ Updated planning/source docs now point to those files: `docs/developer-source-of
 
 Future Codex sessions must treat these AI, communications, intake, calendar, scheduling, voice, onboarding, and support assistant docs as target planning only unless [docs/current-state.md](C:/FloorConnector/docs/current-state.md) says a capability is implemented. Preserve the guardrails that AI is an operating layer, not a parallel system; communications attach to canonical records; FloorConnector owns the canonical schedule; external providers are adapters; and risky AI actions require human confirmation through approved workflows.
 
-## Lead Communication And Customer-Visible Appointment Foundation
+## Lead Communication And Customer-Visible Appointment UI
 
-Schema/data foundation implemented for the first lead communication plus appointment scheduling slice.
+Lead detail UI and server-action wiring are implemented on top of the existing schema/data foundation from `20260507180043_lead_communication_appointment_visibility.sql`.
 
 Files changed in this pass:
 
-- `supabase/migrations/20260507180043_lead_communication_appointment_visibility.sql`
-- `packages/types/src/index.ts`
-- `apps/web/lib/opportunities/data.ts`
-- `apps/web/lib/opportunities/actions.ts`
-- `apps/web/lib/opportunities/schemas.ts`
-- `apps/web/lib/communications/data.ts`
-- `apps/web/lib/communications/actions.ts`
-- `apps/web/lib/communications/contractor-data.ts`
-- `apps/web/lib/notifications/system.ts`
-- `apps/web/lib/appointments/data.ts`
-- `apps/web/lib/appointments/actions.ts`
-- `apps/web/lib/appointments/schemas.ts`
+- `apps/web/app/(app)/leads/[leadId]/page.tsx`
+- `apps/web/app/(app)/appointments/[appointmentId]/page.tsx`
+- `apps/web/components/opportunity-communication-log-form.tsx`
+- `apps/web/components/opportunity-follow-up-form.tsx`
 - `apps/web/components/appointment-form.tsx`
 - `apps/web/components/appointment-quick-create-form.tsx`
-- `apps/web/components/communication-reply-form.tsx`
-- `apps/web/components/communication-notification-triage-form.tsx`
-- `apps/web/app/(app)/communications/page.tsx`
+- `apps/web/lib/communications/actions.ts`
+- `apps/web/lib/communications/schemas.ts`
+- `apps/web/lib/appointments/actions.ts`
+- `apps/web/lib/appointments/schemas.ts`
+- `apps/web/lib/lead-communication-foundation.test.ts`
 - `docs/current-state.md`
 - `docs/workflows.md`
 - `docs/communications-and-ai-intake.md`
@@ -229,29 +1678,28 @@ Files changed in this pass:
 
 Implemented:
 
-- `opportunities` now has nullable `next_follow_up_at` and `next_follow_up_note`.
-- `communication_threads` can attach to `opportunity` subjects with `opportunity_id` before customer/project conversion.
-- `communication_messages` now have `message_kind`, `visibility`, and `delivery_status`; manual opportunity log utilities default to internal/logged and suppress notification fan-out.
-- `appointments` now has explicit `customer_visible`, `customer_notes`, and `internal_notes`; legacy `notes` remains internal.
-- RLS was tightened so portal users cannot read internal communication messages, cannot reach opportunity-only communication threads, and only see customer/project thread previews when the latest preview is customer-visible.
+- Lead Workspace now includes a Communication & Follow-Up section.
+- Contractors can log manual opportunity communication as call, email note, text note, voicemail, internal note, or appointment note.
+- Manual lead communication defaults internal; customer-visible must be selected explicitly.
+- Lead Workspace shows recent opportunity communication activity with kind, visibility, timestamp, actor type, and body.
+- Lead Workspace can set, update, or clear `next_follow_up_at` and `next_follow_up_note`.
+- Appointment Quick-Create and Appointment Workspace now expose customer-visible appointment controls plus separate internal appointment notes and customer-visible appointment notes.
+- Focused schema coverage validates manual communication visibility/body rules, follow-up set/clear behavior, and appointment note/visibility parsing.
 
 Still not implemented:
 
-- visible lead communication UI
-- visible follow-up editor UI
-- visible customer-visible appointment controls
 - portal appointment display
+- portal message display
 - provider-backed SMS/email/chat/voice
 - Google/Outlook calendar sync
 - AI drafting, summaries, scheduling, or receptionist behavior
 
 Validation:
 
-- `pnpm typecheck` passed after adding the new communication source type to existing form props.
+- `pnpm exec tsx --test apps/web/lib/lead-communication-foundation.test.ts` passed.
+- `pnpm typecheck` passed.
 - `pnpm lint` passed.
 - `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
-- `pnpm exec supabase migration list` succeeded and showed `20260507180043` as a local pending migration, not yet applied remotely.
-- No generated Supabase database type file was found in the repo during this pass, so no generated database type file was updated.
 
 ## Login Entry Points And Post-Login Routing
 
@@ -4827,6 +6275,78 @@ Known remaining doc risks:
 - several detailed implementation plans remain active because they still provide useful guardrails; they should be archived only after the next validation pass confirms they no longer prevent drift.
 - no broad link rewrite was done; active source-of-truth docs still use absolute `C:/FloorConnector/...` links by convention.
 - the next build phase should remain validation-first: run and record seed-free Phase B validation before adding feature breadth.
+
+## Manual Cue-To-Work-Item Bridge
+
+Manual bridge actions from existing follow-up and appointment cues into internal `work_items` are now implemented. This remains a contractor-side, human-confirmed workflow only.
+
+Files changed in this slice:
+
+- `apps/web/lib/work-items/prefill.ts`
+- `apps/web/lib/work-items/prefill.test.ts`
+- `apps/web/components/work-items/work-item-create-form.tsx`
+- `apps/web/components/dashboard/contractor-dashboard-surface.tsx`
+- `apps/web/app/(app)/dashboard/page.tsx`
+- `apps/web/app/(app)/leads/page.tsx`
+- `apps/web/app/(app)/leads/[leadId]/page.tsx`
+- `apps/web/app/(app)/appointments/[appointmentId]/page.tsx`
+- `apps/web/lib/work-items/data.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/communications-and-ai-intake.md`
+- `docs/calendar-and-scheduling-intelligence.md`
+- `docs/chat-handoff.md`
+
+Implemented behavior:
+
+- dashboard lead follow-up cues now include a `Create work item` bridge link into the lead workspace with `workItemCue=follow_up`
+- lead-manager follow-up rows now include a `Create work item` bridge link into the same lead workspace flow
+- lead workspace work-item creation accepts prefilled title, description, due date, priority, dedupe key, and metadata while keeping `source_type = opportunity` and the source id locked by hidden form fields
+- dashboard appointment cues now include bridge links into appointment detail with `workItemCue=confirmation_prep` for scheduled appointments or `workItemCue=appointment_follow_up` for canceled/no-show follow-up cues
+- appointment workspace work-item creation accepts prefilled appointment prep or follow-up defaults while keeping `source_type = appointment` and the source id locked
+- duplicate cue creation uses the existing `work_items.dedupe_key` unique constraint and now returns the friendlier error `A work item already exists for this cue.`
+
+Boundary preserved:
+
+- no work items are auto-created
+- no provider reminders, SMS/email/voice/chat, AI, Google/Outlook sync, customer reminders, or portal task visibility were added
+- creating, completing, or dismissing work items does not mutate `opportunities.next_follow_up_at`, lead status, appointment status, schedule state, customer-visible appointment notes, or portal visibility
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/work-items/work-items.test.ts apps/web/lib/work-items/prefill.test.ts` passed: 10 tests
+- `pnpm typecheck` passed
+- `pnpm lint` passed
+
+## Phase 6K Contractor Group Audit Observability
+
+Phase 6K added read-only contractor group audit observability over the existing durable `contractor_group_audit_events` rows. No migration, RPC, server action, entitlement behavior, runtime behavior, assignment automation, starter-pack auto-provisioning, contractor permission behavior, or tenant-owned template/catalog write path was added.
+
+Files changed in this slice:
+
+- `apps/web/lib/platform-admin/contractor-group-audit-events-core.ts`
+- `apps/web/lib/platform-admin/contractor-group-audit-events.test.ts`
+- `apps/web/app/(super-admin)/super-admin/groups/page.tsx`
+- `apps/web/components/contractor-group-manager.tsx`
+- `docs/current-state.md`
+- `docs/contractor-groups-plan.md`
+- `docs/chat-handoff.md`
+
+Implemented read-only behavior:
+
+- pure audit observability model summarizes total audit events, events by type, group, organization, assignment source, actor id when available, recent events, recent group activity, recent organization assignment/removal activity, metadata-present versus metadata-absent counts, and missing expected group/organization context warnings
+- group detail now shows a read-only audit summary with total events, assignment/removal counts, current membership count, recent timeline rows, and caveats when removed membership rows are historical audit evidence rather than current membership rows
+- organization-centric inspection now shows current group memberships beside durable assignment/removal audit history for the selected contractor organization
+- `/super-admin/groups` now loads a larger recent audit-event window for observability, adds an audit event type filter, and keeps the existing safety copy that contractor groups are segmentation/audit only
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-group-audit-events.test.ts apps/web/lib/platform-admin/contractor-group-observability.test.ts apps/web/lib/platform-admin/contractor-groups.test.ts apps/web/lib/platform-admin/starter-pack-targeting.test.ts` passed: 28 tests
+- Browser QA in the in-app browser on `http://localhost:3000/super-admin/groups?groupStatus=archived&groupType=custom` confirmed the page DOM included `Audit observability`, `Audit history`, the `All event types` filter, and no-entitlement safety copy after reload; one event-filter click attempt was not completed because the in-app browser click landed off viewport, and subsequent direct navigation temporarily showed the app loading shell, so deeper browser interaction QA should be repeated after the current local dev/browser state is refreshed
+- `pnpm typecheck` now passes after the communications appointment subject filter drift was repaired in the appointment confirmation logging foundation pass
+- `pnpm lint` now passes after the appointment confirmation preview type cleanup was repaired in the appointment confirmation logging foundation pass
+- Focused ESLint on `apps/web/components/contractor-group-manager.tsx`, `apps/web/lib/platform-admin/contractor-group-audit-events-core.ts`, `apps/web/lib/platform-admin/contractor-group-audit-events.test.ts`, and `apps/web/app/(super-admin)/super-admin/groups/page.tsx` passed
+- `git diff --check` passed with exit code 0; it reported only LF-to-CRLF working-copy warnings
 
 ## System Rules
 

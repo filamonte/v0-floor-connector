@@ -26,6 +26,12 @@ All roadmap phases extend and refine the same canonical lifecycle:
 
 No phase introduces a parallel workflow or replaces this chain. Later phases deepen, connect, and improve clarity within the same system.
 
+Public acquisition extends the front of the same graph rather than creating a separate marketing product:
+
+`public acquisition -> opportunity -> customer -> project -> estimate -> contract -> payment -> scheduling -> execution -> follow-up`
+
+Contractor websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, attribution, AI intake, reviews, galleries, portals, communications, and operational workflows should all reinforce that graph.
+
 ## Phase 1
 
 **Current implemented foundation**
@@ -90,7 +96,7 @@ Planned focus:
 
 - Progress Billing / AIA System: Extend ScheduleOfValues, invoices for % complete, G702/G703, retainage.
 
-- Website + Lead Ingestion + Marketing Layer: Add public ingestion layer for leads into opportunities.
+- Website + Lead Ingestion + Marketing Layer: Add the public acquisition layer for contractor-owned websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, campaign/source attribution, and website-generated opportunities. This layer feeds canonical opportunities and must not create a second CRM or marketing-contact database.
 
 - Purchasing + Inventory System: Extend catalog_items, inventory_items for purchase orders, stock tracking.
 
@@ -151,8 +157,9 @@ Recommended sequence:
    - Add low-risk drafting, summarization, classification, and next-action recommendations over canonical records.
    - Require human approval before customer-facing sends, schedule changes, pricing, contract, invoice, payment, permission, or compliance actions.
 
-6. Website chat and onboarding assistant.
-   - Support public Q&A, sales/demo qualification, signup/setup guidance, and first-workflow activation without overclaiming target-only capabilities.
+6. Website chat, public intake, and onboarding assistant.
+   - Support public Q&A, sales/demo qualification, website-generated opportunity intake, signup/setup guidance, and first-workflow activation without overclaiming target-only capabilities.
+   - Keep public AI intake tied to canonical opportunities, communications, appointments, and human-approved workflow actions.
 
 7. AI voice/receptionist.
    - Capture call intake, missed-call follow-up, voicemail summaries, and human handoff after consent, recording, quiet-hours, and escalation rules are designed.
@@ -267,7 +274,10 @@ This is planned direction only. It does not mean contractor network collaboratio
 
 Planned focus:
 
-- growth and marketing engine
+- growth and marketing engine through contractor-owned websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, campaign/source attribution, and website-to-revenue continuity
+- AI-assisted site/content generation, generated marketing copy, and public intake summaries where accepted outputs remain tied to tenant-owned public surfaces and canonical workflow records
+- generated websites and public forms feeding canonical opportunities/leads instead of a separate marketing database
+- review/reputation, testimonials, before/after galleries, and project-proof loops tied back to canonical customer/project/job/closeout evidence where appropriate
 - FloorConnector-facing AI for public marketing Q&A, sales/demo support, onboarding/setup assistance, support triage, first-project/first-estimate guidance, and migration/import help
 - AI Capture and AI-assisted Takeoff & Scope Intelligence suggestions on top of project-scoped plans, photos, site data, measurements, System Templates, catalog mapping, and human-reviewed estimate generation
 - contractor-facing AI copilot, communication drafting/summaries, scheduling suggestions, AI receptionist/voice, and operational intelligence on top of canonical records
@@ -279,3 +289,4 @@ Planned focus:
 Open marketplace behavior is a later-phase platform direction, not a current implementation target.
 AI-assisted takeoff is also a later platform direction, not a current implementation target.
 AI Capture may eventually suggest measurements, areas, systems, cost-item mappings, and estimate drafts, but customer-facing estimate content should remain reviewable, manually approved, and auditable.
+Contractor website generation, SEO infrastructure, landing-page generation, marketing attribution, public AI intake, and AI-generated website/content workflows are also later platform direction unless [docs/current-state.md](C:/FloorConnector/docs/current-state.md) says a specific slice is implemented.

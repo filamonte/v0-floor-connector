@@ -29,10 +29,22 @@ Important boundary:
 - jobs remain the canonical production execution records
 - appointments remain canonical visits, meetings, and planning blocks tied to opportunity/customer/project context
 - appointments now have explicit customer-visible storage fields: `customer_visible`, `customer_notes`, and `internal_notes`
-- customer-visible appointment storage is implemented for future portal display, but portal appointment UI/RLS is not implemented yet
-- future customer-facing appointment views must use `customer_notes` only when `customer_visible` is true and must not expose legacy/internal appointment notes
+- contractor appointment create/edit surfaces expose those customer-visible controls and keep internal appointment notes separate from customer-visible appointment notes
+- customer-visible appointment storage and first portal display are implemented for project-linked appointments where `customer_visible = true`
+- portal appointment views use customer-safe fields only: title/type, date/time, status, location, and `customer_notes`
+- portal appointment loaders must not expose legacy `notes`, `internal_notes`, internal communication, assignment internals, or contractor-only scheduling comments
+- customer self-scheduling, rescheduling, reminder scheduling/delivery, SMS confirmation delivery, portal confirmation actions, and customer-facing external calendar invites are not implemented; contractor-side manual email confirmation send UI is implemented on appointment workspaces
 - scheduling fields on jobs are the starting point for production schedule state
-- `/schedule` is the contractor scheduling surface
+- `/schedule` is the contractor scheduling surface and now shows canonical appointments, including opportunity-linked appointments, alongside scheduled jobs through an internal read model with all/jobs/appointments filtering
+- dashboard appointment visibility now shows assigned upcoming appointments when the current user can be safely mapped to an active `people` row, and otherwise falls back to company upcoming appointments with assignee context
+- the internal dashboard can label today/tomorrow appointments and include recent canceled/no-show appointment records as contractor follow-up cues; this is visibility only, not reminder delivery or customer-facing confirmation
+- appointment workspaces can now explicitly create, list, complete, and dismiss internal `work_items` linked to canonical appointments for contractor-owned prep or follow-up, but no appointment work items are auto-created and no customer reminders are sent
+- dashboard appointment cues can now open prefilled appointment-linked work-item creation for manual confirmation, using appointment prep or follow-up defaults; this bridge does not auto-create work items, mutate appointment status, send reminders, or expose anything to the portal
+- appointment workspaces can now preview editable customer-safe confirmation copy, manually log customer-visible appointment confirmation messages linked to appointments using `delivery_status = logged`, and manually send email confirmations through the existing notification email path after explicit contractor confirmation
+- provider-backed email attempts are linked to canonical communication messages; successful sends mark the message `sent`, while failed attempts remain delivery audit records and do not mutate appointment status, notes, reminders, portal confirmation actions, or external calendar sync
+- appointment reminder utilities now support manual email reminder sending: they use customer-safe appointment fields, filter eligible email recipients through contractor-admin managed customer/customer-contact communication preferences, suppress hidden, canceled, no-show, completed, missing-context, missing-time, no-recipient, opted-out/suppressed-recipient, and duplicate-success cases, and record provider attempts through the existing notification delivery audit path
+- appointment workspaces now include a contractor-only Customer Reminder panel for explicit one-off email reminder sends, preference-management cueing when filtering leaves no eligible recipient, and recent reminder delivery history
+- reminder schedule rows, automated reminder jobs, SMS reminders, and portal reminder actions are not implemented
 - do not create disconnected dispatch-only records or AI-only calendar records
 
 ## Target Calendar Scope
@@ -178,5 +190,8 @@ Unless [docs/current-state.md](C:/FloorConnector/docs/current-state.md) says oth
 - dispatch optimization
 - equipment reservation scheduling
 - PTO-aware capacity planning
+- automated appointment reminder work-item creation or customer-facing reminder delivery
+- automated appointment reminder schedules
+- SMS appointment reminders
 
 The existing `/schedule`, jobs, appointments, and job assignment foundations are the base to extend.

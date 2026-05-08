@@ -33,6 +33,7 @@ type CommunicationsPageProps = {
 const communicationSourceFilters = [
   { key: "all", label: "All sources" },
   { key: "opportunity", label: "Lead" },
+  { key: "appointment", label: "Appointment" },
   { key: "customer", label: "Customer" },
   { key: "project", label: "Project" },
   { key: "estimate", label: "Estimate" },

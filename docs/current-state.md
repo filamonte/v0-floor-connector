@@ -99,6 +99,8 @@ Current shared canonical model includes:
 - notification deliveries
 - communication threads
 - communication messages
+- communication preferences
+- work items
 - workflow error events
 - payments
 
@@ -206,6 +208,13 @@ Current shell behavior:
 - the first major contractor workspace UI normalization and polish pass is now complete enough to stop and move on from
 - dashboard, projects, leads, invoices, contracts, customers, estimates, appointments, daily logs, time, people, vendors, and jobs now follow the shared contractor manager rhythm closely enough that it should be treated as the active UI baseline
 - a first shared universal-create launcher now exists in the shell and dashboard, routing into the existing module Quick-Create managers so new canonical records can be started broadly without creating a second creation system
+- `/schedule` now surfaces canonical appointments beside scheduled jobs in internal contractor schedule views through a discriminated read model; jobs still read from canonical job/job-assignment scheduling data and appointments still read from canonical `appointments`
+- schedule views can filter between all items, jobs, and appointments, and appointment entries link to appointment detail plus lead/customer/project context where present
+- dashboard appointment visibility now uses the existing `people.membership_user_id` linkage to show `My upcoming appointments` when the current user has an active person record, with a safe company-upcoming fallback when that mapping is unavailable or has no assigned upcoming appointments
+- dashboard now includes an internal lead follow-up queue derived from canonical `opportunities.next_follow_up_at`, recent opportunity communication thread timestamps, and existing lead status; it prioritizes overdue and due-today follow-ups without sending reminders or creating a task/reminder table
+- the lead manager now surfaces follow-up filters and badges for due, overdue, upcoming, and no-follow-up opportunity states using the same internal read model
+- dashboard lead follow-up cues and lead-manager follow-up rows now include explicit manual bridge links into the lead workspace work-item form; those links prefill an internal opportunity-linked work item for human confirmation but do not auto-create work, mutate follow-up fields, or change lead status
+- dashboard appointment cues now link into appointment work-item creation with appointment prep or follow-up defaults for human confirmation; completing or dismissing those work items does not change appointment status or schedule state
 - a first real contractor-side global search now exists at the shared shell level:
   - one shared search entry point for contractor users
   - rendered in the shared contractor shell footer instead of the top header
@@ -239,7 +248,7 @@ Implemented contractor UI direction now includes:
 - one flattened shell/header system with breadcrumb and page context folded into the same top header instead of a permanent left-nav-plus-header stack
 - thinner command/search strips beneath page identity on Manager Page surfaces
 - dashboard as a denser and more curated operational command-center surface with modular queue widgets, stronger Quick-Create entry, and continuity back into shared records instead of a loose summary page
-- dashboard validation polish now promotes canonical attention items, open estimates, unpaid invoices, upcoming appointments, leads, active projects, and today/live jobs near the top of the home board without introducing fake dashboard data
+- dashboard validation polish now promotes canonical attention items, open estimates, unpaid invoices, upcoming appointments, leads, active projects, internal work items, and today/live jobs near the top of the home board without introducing fake dashboard data
 - dashboard now has smoke-tested PriorityStrip coverage for the decision-first attention area
 - early module-dashboard direction on top of the same shared Manager Page system, with estimates and invoices now reading more like operational entry surfaces than plain lists
 - Manager Pages built around:
@@ -369,8 +378,8 @@ Implemented:
 - lead detail page
 - site assessment scheduled/completed date capture on the canonical opportunity record
 - requirements-summary capture on the canonical opportunity record
-- next follow-up timestamp and optional internal follow-up note fields on the canonical opportunity record
-- schema/data foundation for manual opportunity communication before customer/project conversion through canonical communication threads/messages
+- next follow-up timestamp and optional internal follow-up note fields on the canonical opportunity record, with contractor-side lead workspace controls to set, update, or clear them
+- manual opportunity communication logging from the lead workspace before customer/project conversion through canonical communication threads/messages, including explicit internal versus customer-visible visibility
 - lightweight lead workspace Scope Intake capture for manual measurements and structured observations
 - canonical lead-to-estimate conversion flow that creates or links the downstream customer and project records as needed
 
@@ -483,7 +492,7 @@ Implemented:
 - organization-scoped canonical `portal_project_access` foundation beneath the customer-level grant
 - tenant-safe data access foundation for contractor-side portal access management
 - authenticated-user portal access lookup foundation for customer-facing record loaders
-- tenant-safe portal record loaders for canonical project, estimate, contract, and invoice review data
+- tenant-safe portal record loaders for canonical project, estimate, contract, invoice, change-order, and customer-visible appointment review data
 - lightweight `portal_record_views` audit foundation for customer-facing record visibility events
 - contractor-side portal access management is intended to live in People for granting, linking, reviewing, revoking, and project-scoping customer portal access, while customer detail keeps a contextual access snapshot and handoff
 - contractor-side portal invite creation from customer detail now supports pending project-scoped invites for customer/contact emails that do not yet belong to an authenticated FloorConnector user
@@ -512,13 +521,14 @@ Current portal access design notes:
 - linked-contact grants now also show stored permission readiness in People and contextual customer surfaces
 - linked-contact grants now also persist stored permission flags for estimate visibility/approval, contract signing, change-order approval, invoice view/pay, and quote-request readiness
 - project visibility is explicitly granted beneath that customer access instead of exposing all tenant projects automatically
-- portal read access now flows through the same canonical project, estimate, contract, and invoice records instead of portal-specific copies
+- portal read access now flows through the same canonical project, appointment, estimate, contract, change-order, and invoice records instead of portal-specific copies
 - contractor admins now manage portal access from People on top of canonical customer, customer-contact, portal-grant, and project-access records rather than a disconnected portal-contact subsystem
 - contact-specific permission gating is now active for linked-contact estimate approval/rejection, change-order approval/rejection, and contract sign/decline actions only
 - estimate send lookup can now select an existing portal-ready related contact when project access already exists; contract send labels the signer selection as contact selection; contract viewing, contractor countersign, invoice/payment behavior, and null-contact customer-level grants remain unchanged
 - a future Directory customer-account workspace may expose dedicated tabs such as `Overview`, `Contacts`, `Projects`, `Portal Access`, and optional `Billing` / `Financial`, but that is a wording and UX direction rather than a current route or schema change
 - the customer-facing portal now has a real protected shell, portal home workspace, and project-detail workspace built on that same scoped read layer
 - customer-facing estimate, contract, and invoice review pages now exist inside the portal on top of the same tenant-safe canonical record loaders
+- portal home and project workspaces now show customer-visible project appointments from canonical `appointments` when `customer_visible = true`, using only customer-safe appointment fields: title/type, date/time, status, location, and `customer_notes`
 - portal review remains customer-safe and canonical-record-based in this pass, with contract signing now live on the shared contract record and portal invoice review now able to start customer payment activity on the same canonical invoice and payment chain without introducing a duplicate portal billing model
 - portal home and Project Workspaces now reflect payment-requested, payment-in-progress, partially-paid, and paid outcomes as part of the same shared project workflow guidance
 
@@ -1059,8 +1069,10 @@ Appointments currently link to:
 
 Current appointment design notes:
 - appointments are canonical visit, meeting, and planning-block records, not a second execution scheduler
-- customer-visible appointment storage is implemented, but customer portal appointment display is not yet implemented
-- internal appointment notes and legacy notes must not be exposed through future portal/customer loaders; future customer-facing views should use `customer_notes` only when `customer_visible` is true
+- customer-visible appointment storage and first customer portal display are implemented for project-linked appointments where `customer_visible = true`
+- portal appointment display is read-only and project-scoped through existing portal access; it does not support customer self-scheduling, rescheduling, confirmation actions, reminders, or provider-backed calendar sync
+- portal appointment loaders expose only customer-safe fields and must not return `internal_notes`, legacy `notes`, assignment internals, or internal communication messages
+- internal appointment notes and legacy notes must not be exposed through portal/customer loaders; customer-facing views should use `customer_notes` only when `customer_visible` is true
 - jobs remain the execution source of truth for crew scheduling, field delivery, and work-state progression
 - appointments may support the same project/customer/opportunity chain, but they should not replace jobs or create schedule-only records
 
@@ -1177,7 +1189,7 @@ Current design notes:
 Implemented:
 - immutable `notification_events` stream for cross-module workflow activity
 - per-user `notifications` records for in-app unread and read state
-- channel-aware `notification_deliveries` ledger for in-app and email delivery tracking, with future SMS support reserved in the same model
+- channel-aware `notification_deliveries` ledger for in-app and email delivery tracking, with future SMS support reserved in the same model; delivery rows can now optionally link back to the canonical `communication_messages` row they attempted to deliver
 - canonical `communication_threads` attached to shared customer, project, and subject records
 - immutable `communication_messages` inside canonical threads
 - first contractor-side communication review surface at `/communications`
@@ -1198,9 +1210,30 @@ Current design notes:
 - notification deliveries track sent, delivered, opened, clicked, and failed channel outcomes without creating duplicate estimate, invoice, or change-order records
 - communication threads stay attached to the same canonical customer/project chain instead of creating module-specific inboxes
 - communication threads can now attach directly to canonical opportunities for pre-conversion lead communication without creating a duplicate lead-activity table
-- communication messages now include durable message kind, explicit visibility (`internal` or `customer_visible`), and logging/delivery status fields; manual opportunity logs are intended to default internal unless deliberately marked customer-visible
+- communication messages now include durable message kind, explicit visibility (`internal` or `customer_visible`), and logging/delivery status fields; the lead workspace can log manual calls, email notes, text notes, voicemails, appointment notes, and internal notes, and manual opportunity logs default internal unless deliberately marked customer-visible
+- communication threads/messages can now attach to canonical appointments for contractor-side appointment confirmation history; appointment confirmation logs use `message_kind = 'appointment_confirmation'`, `visibility = 'customer_visible'`, and `delivery_status = 'logged'` only after explicit server-side logging, while `appointment_reminder` exists as a future classification and does not schedule or send reminders
+- a server-side appointment confirmation preview utility builds customer-safe confirmation copy from canonical appointment fields only: title/type, date/time, status, safe location, `customer_notes`, safe customer/project context, and company name; it must not include `internal_notes`, legacy `notes`, internal communication, work items, or assignment internals
+- appointment workspaces now include a contractor-only Customer Confirmation panel that shows eligibility blockers, renders editable customer-safe confirmation copy, lists eligible email recipients, lets the contractor manually log the confirmation, and can manually send an email confirmation after explicit human confirmation
+- server-side appointment confirmation email utilities can resolve eligible email recipients from active project-scoped portal access, customer contacts, and canonical customer email fallback, then send customer-safe confirmation content through the existing Postmark-backed notification email path after an explicit server call
+- appointment confirmation email delivery uses the canonical `communication_messages` row as communication history and `notification_deliveries.communication_message_id` as provider-attempt audit linkage; `communication_messages.delivery_status` is marked `sent` only after the provider send succeeds, and failed provider attempts leave the message unsent while recording a failed delivery
+- `communication_preferences` now provide an organization-scoped, RLS-protected foundation for customer/contact communication preferences across email and future SMS categories; V1 utilities support customer and customer-contact preference validation for appointment reminder readiness and manual email reminder sends, and customer detail exposes contractor-admin email appointment-reminder preference management with no portal preference UI
+- server-side appointment reminder utilities can build customer-safe reminder previews, resolve email reminder recipients from the existing appointment confirmation recipient path, and filter recipients through explicit `allowed`, `opted_out`, or `suppressed` appointment-reminder preferences; missing email appointment-reminder preferences default to allowed
+- manual server-side appointment reminder email sending can create or reuse an appointment-linked `communication_messages` row with `message_kind = 'appointment_reminder'`, send customer-safe reminder content through the existing Postmark-backed notification email path, link the provider attempt through `notification_deliveries.communication_message_id`, and mark the message `sent` only after provider success
+- appointment reminder sending suppresses non-customer-visible appointments, missing customer/project context, canceled/no-show/completed appointments, missing start times, missing eligible email recipients, opted-out/suppressed recipients, and duplicate successful reminder emails to the same recipient for the same appointment; failed provider attempts are recorded without marking the message sent
+- appointment workspaces now include a contractor-only Customer Reminder panel that shows reminder readiness blockers, renders editable customer-safe reminder copy, lists preference-filtered eligible email recipients, links to customer preference management when filtering leaves no eligible recipient, manually sends one reminder email after explicit human confirmation, and shows recent reminder communication/delivery history
+- appointment reminder utilities and UI do not create reminder schedules, automate sends, use SMS, mutate appointment status/notes, or expose anything to customers
 - communication messages are immutable and extend shared workflow continuity rather than replacing estimate, contract, invoice, or change-order records
 - portal/customer access to opportunity communication is not implemented; the new customer-visible flag is stored for future safe display and RLS blocks internal message reads from portal users
+- internal lead follow-up visibility is implemented as a contractor-side read model over canonical opportunities and opportunity communication recency; it does not send customer reminders, auto-create work items, or expose internal follow-up notes to portal users
+- appointment create/edit surfaces now expose explicit customer-visible appointment controls plus separate internal appointment notes and customer-visible appointment notes; portal home and project workspaces can now display project-linked customer-visible appointments using only customer-safe fields
+- the current appointment workspace UI can manually send email appointment confirmations through the existing Postmark-backed notification path when the appointment is eligible, an email recipient is selected, and the organization is allowed to send externally; it still does not send SMS/voice/chat, schedule reminders, expose portal confirmation actions, or trigger automation
+- appointment confirmation logging and email delivery do not mutate appointment status, `customer_visible`, `customer_notes`, `internal_notes`, legacy `notes`, portal visibility, automation runs, work items, or external calendar state
+- internal `/schedule` and dashboard views now display canonical appointments, including opportunity-linked appointments, alongside job scheduling context without creating a separate calendar/event table; contractor users may see internal appointment notes on contractor-only surfaces, while customer-visible appointment notes remain explicitly labeled for future portal use
+- dashboard appointment visibility now labels today/tomorrow appointments and can include recent canceled/no-show appointments as internal follow-up cues only; it does not send reminders or expose contractor-only appointment context externally
+- internal `work_items` now provide a small organization-scoped action layer for contractor work ownership, due dates, assignment, completion, and dismissal; they are internal-only, RLS-protected, manually created through server utilities and contractor UI, and source-linked back to canonical records without replacing opportunity follow-up fields, appointment statuses, notifications, automation runs, workflow error events, or canonical workflow state
+- dashboard now shows a compact internal work-item card. It prefers open work items assigned to the current user's linked active `people` record when that mapping exists and has work, and safely falls back to open company work items with assignee context when no linked-person queue is available.
+- lead workspaces now show opportunity-linked internal work items, allow explicit manual or lead-follow-up work-item creation against the current opportunity, and allow open linked work items to be completed or dismissed. Completing or dismissing a work item does not mutate `opportunities.next_follow_up_at`, lead status, communication visibility, or appointment state.
+- appointment workspaces now show appointment-linked internal work items, allow explicit manual appointment prep/follow-up work-item creation against the current appointment, and allow open linked work items to be completed or dismissed. Completing or dismissing a work item does not mutate appointment status, schedule fields, customer-visible appointment notes, reminders, portal visibility, or external calendar sync.
 - the contractor communication surface still stays on the same canonical review queue, but selected existing threads can now accept safe contractor replies without introducing a second inbox, portal-specific copy, or new message model
 - communication triage on the contractor surface updates only the user's canonical `notifications.is_read` and `read_at` fields for communication-category records; it does not mutate `notification_events`, messages, or add message-local read state
 - communication baseline hardening is limited to queue clarity, selected-thread handling, unsupported-source copy, reply validation, and read-state feedback; provider sends and automation execution remain intentionally off
@@ -1497,6 +1530,12 @@ Implemented:
   - contract generation from approved estimates records failures such as missing approved snapshots without weakening the approved-snapshot guard
   - approved estimate snapshot rebuild attempts log to `workflow_error_events` only when the recovery action fails
   - `/settings/admin` shows recent workflow error events to organization owners/admins
+- first lightweight internal work-item foundation:
+  - `work_items` stores tenant-scoped internal contractor action items with title, description, due date, priority, kind, optional assigned person, optional canonical source link, optional customer/project context, internal visibility, safe metadata, and completion/dismissal timestamps
+  - active organization members can read, create, and update internal work items through RLS; no portal/customer access policies exist
+  - server utilities validate assigned people as active and assignable within the active organization, validate source records before source-linked creation, and keep completed/dismissed items closed in V1
+  - dashboard, lead workspace, and appointment workspace UI can now create, list, complete, and dismiss manually created internal work items without adding a dedicated work-items manager route
+  - work items do not auto-generate from lead follow-up queues, appointment cues, notifications, automation runs, or workflow errors in this pass
 
 Current design notes:
 - this is a contractor organization settings surface, separate from platform super-admin controls
@@ -1525,7 +1564,7 @@ Implemented:
   - `platform_starter_packs` stores platform-managed bundle metadata and draft/published/archived status
   - `platform_starter_pack_items` groups existing `platform_template_seeds` and `platform_catalog_item_seeds`
   - `platform_starter_pack_assignments` stores planning-only assignment intent for all organizations, a specific organization, onboarding profile, region/state, trade segment, plan tier, or a contractor group key
-  - `contractor_groups` and `contractor_group_memberships` store platform-managed contractor segmentation metadata and manual organization assignments for onboarding targeting, starter-pack targeting previews, rollout cohorts, beta programs, regional/trade segmentation, and future platform packaging; these are not tenant roles and do not enforce contractor permissions
+  - `contractor_groups` and `contractor_group_memberships` store platform-managed contractor segmentation metadata and manual organization assignments for onboarding targeting, starter-pack targeting previews, rollout cohorts, beta programs, regional/trade segmentation, and future platform packaging; `contractor_group_audit_events` provides durable platform-admin-only audit/history storage for group lifecycle and assignment events written through transaction-aware server-side RPCs; these are not tenant roles and do not enforce contractor permissions
   - `platform_starter_pack_provisioning_runs` and `platform_starter_pack_provisioning_run_items` provide the audit/run schema for approved dry-run snapshots, idempotency keys, actor references, target organization, item-level source lineage, destination references, and void/failure state
   - `/super-admin/templates` includes a `Starter Packs` tab/section for creating packs, editing metadata/status, adding existing template/catalog seeds, removing pack items, and managing assignment intent
   - `/super-admin/templates` also includes a read-only Targeting Preview that explains why assignment intent would match, not match, or remain unavailable for a selected organization using existing organization metadata and explicit contractor group memberships only
@@ -1545,7 +1584,7 @@ Implemented:
   - `docs/starter-pack-provisioning-review.md` records the Phase 5T consolidated architecture/operator readiness review for starter-pack provisioning before any real void action; it is documentation-only and does not add void, rollback, archive/delete/detach, assignment enforcement, or new provisioning behavior
   - starter packs, starter-pack assignments, targeting previews, provisioning dry runs, approval drafts, audit approvals, and provisioning execution remain operator-controlled governance/audit workflows only; they do not auto-provision contractor organizations, affect estimate creation, alter defaults, enforce entitlements, or provide assignment-based runtime enforcement
 - platform-level feature policy management
-- `/super-admin/groups` manages platform-owned contractor groups and manual organization assignments with explicit copy that groups are segmentation metadata only; creating, editing, archiving, assigning, or removing group membership does not change entitlements, modules, pricing, starter-pack provisioning, contractor permissions, tenant defaults, or runtime workflows
+- `/super-admin/groups` manages platform-owned contractor groups and manual organization assignments with explicit copy that groups are segmentation metadata only; create/update/archive/assign/remove actions append durable audit events through server-side RPCs, and the page includes read-only observability for group counts, status/type filters, multi-group/no-group organizations, recent membership assignments, organization-centric group inspection, conservative assignment proposals from current organization metadata, proposal filters by organization/status/confidence/group type, selected-organization proposal summaries, proposal manual-review readiness fields (`manualReviewReadiness`, stable `reasonCode`, evidence items, caveat items, `futureApplyPreview`, `starterPackImpactPreview`, `runtimeEffect: "none"`, and `actionAvailable: false`), proposal manual-review checklists with future-action-not-implemented copy, future starter-pack assignment references labeled as read-only/non-provisioning impact context, assignment audit-readiness inferred from current group/membership timestamps, durable audit-history rows, audit event type/source summaries, group/organization activity summaries, metadata coverage, missing context warnings when present, and operator copy that audit export/retention tooling is planned while audit events should be treated as platform evidence; creating, editing, archiving, assigning, removing, filtering, inspecting, or reviewing proposed group membership does not change entitlements, modules, pricing, starter-pack provisioning, contractor permissions, tenant defaults, or runtime workflows
 - platform module controls now include the inventory default policy used by the Cost Items Database module
 - `/super-admin` now presents the platform console with left-side super-admin navigation plus target-area top tabs, explicit platform-default / contractor-owned-copy / future-override / future-preference labels, save-state feedback on platform settings forms, grouped starter-template and starter-catalog administration, and a module policy matrix over the existing feature policy records
 - `/super-admin/platform` now includes a read-only Resolution Preview backed by a typed server-side configuration resolution read model for existing platform financial/workflow defaults, selected contractor-owned financial/workflow settings, organization-owned default document templates, adopted platform template seeds, adopted platform catalog items, and inspectable platform starter packs with planning-only assignment counts
@@ -1577,7 +1616,7 @@ Current design notes:
 - platform workflow defaults now include signature-readiness and financing-readiness baselines that tenant workflow settings can inherit
 - the super-admin surface is now implemented as a real configuration foundation with an inspectable read model for current platform default, contractor-owned, platform starter packs, and the one active user-preference layer for preferred estimate templates; deeper enforcement, entitlements, other user preferences, organization override registries, and broader platform governance workflows are still future work
 - starter packs are implemented as platform-governed grouping records with planning-only assignment intent, a read-only targeting explainer, a read-only provisioning dry-run report, draft audit/run capture, stale-draft review, audit approval, the first guarded approved-run execution slice for creating missing contractor-owned template/catalog copies, and safe rejected-attempt/no-op operation logging; automatic starter-pack rollout, entitlement targeting, runtime enforcement, and rollback/void workflows remain future capabilities
-- contractor groups are implemented only as platform-owned segmentation/read-model metadata with manual organization membership; they are not tenant roles, entitlements, pricing packages, module gates, starter-pack auto-provisioning triggers, or contractor-side permission groups
+- contractor groups are implemented only as platform-owned segmentation/read-model metadata with manual organization membership, durable audit-history storage/read-only visibility, and platform-admin observability; they are not tenant roles, entitlements, pricing packages, module gates, starter-pack auto-provisioning triggers, or contractor-side permission groups
 - visible placeholders for template assignments, entitlements, tax profiles, and platform operations/errors are labeled as future capabilities only; they do not add enforcement, billing behavior, or duplicate configuration models
 - visible Resolution Preview placeholders for organization override registry, other user preferences, and record snapshots remain non-functional; the only implemented user preference is preferred estimate template selection for new estimate Quick-Create preselection/storage, with no entitlement enforcement, tax logic, payroll logic, invoice/contract behavior changes, or runtime configuration enforcement
 
@@ -1587,6 +1626,8 @@ Not implemented yet:
 - full scheduling/dispatch system
 - drag-and-drop rescheduling, dispatch optimization, and deeper crew-calendar coordination
 - automated dispatching and external notifications
+- automated work-item generation, customer-facing reminders, provider-backed reminder delivery, and portal task visibility
+- contractor website generation, tenant-owned domain hosting, public acquisition pages, SEO/service/location-page infrastructure, landing-page generation, marketing attribution, public AI intake, AI-generated website/content workflows, review/reputation flows, testimonials, and before/after gallery generation
 - a full dedicated Templates & Systems settings/admin area that unifies document templates, System Templates, add-ons/options, sharing/review settings, platform promotion, and downstream generation workflows
 - full document-template coverage for proposal/SOW and future work order templates
 - full per-record display-template switching across estimates, invoices, contracts, SOW output, and custom document layouts beyond the currently implemented shared template references
@@ -1624,6 +1665,7 @@ Not implemented yet:
 - broader alignment from [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md), including stronger module-page UI consistency, directory/contact unification, Estimate Editoror navigation/review improvements, line taxable-toggle planning, structured project/service address display, configurable tax-rate direction, and fuller workflow-guidance states
 
 Future-looking note:
+- the public homepage and early-access intake are implemented for FloorConnector onboarding, but contractor-owned websites, tenant-owned domains, SEO/service/location pages, landing pages, marketing attribution, generated marketing content, public AI intake, reviews/reputation, testimonials, and before/after galleries are target platform direction only; they should eventually feed the same canonical opportunity/customer/project workflow rather than becoming a separate website, CRM, marketing-contact, or AI knowledge system.
 - the current vendors, people, compliance, jobs, daily logs, time, communication, notification, and portal access foundations could support future scoped collaboration, but no contractor network, marketplace, open contractor chat, or external subcontractor/vendor collaboration surface is implemented today.
 - the current projects, estimates, estimate line items, reusable catalog item foundations, platform starter catalog foundations, organization-owned catalog items, document-template/settings foundations, selected-system schema foundation, files/attachments foundations, site-assessment fields, communication/notification foundations, and customer/project workflow could support future visual/product/finish selection, selected-system/spec workflows, shared file/evidence linking, delivery proof, activity timelines, measurement-driven estimating, System Template generation, add-ons/options, Templates & Systems administration, Takeoff & Scope Intelligence, and AI Capture.
 - the current lead Scope Intake fields can support future reviewed estimate planning, but they do not currently generate estimate lines, SOW, labor plans, material plans, takeoff records, AI suggestions, invoices, or customer-facing commercial scope automatically.

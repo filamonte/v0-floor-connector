@@ -8,6 +8,7 @@ export type ScheduleViewKey =
 export type CrewViewKey = "all" | "assigned" | "unassigned";
 export type ScheduleLayoutKey = "week" | "day" | "board";
 export type ScheduleActionKey = "schedule" | "assign";
+export type ScheduleItemViewKey = "all" | "jobs" | "appointments";
 
 export type ScheduleHrefInput = {
   q?: string;
@@ -15,6 +16,7 @@ export type ScheduleHrefInput = {
   view?: ScheduleViewKey;
   crew?: CrewViewKey;
   layout?: ScheduleLayoutKey;
+  item?: ScheduleItemViewKey;
   date?: string;
   action?: ScheduleActionKey;
   jobId?: string;
@@ -41,6 +43,10 @@ export function buildScheduleSearchParams(input: ScheduleHrefInput) {
 
   if (input.layout && input.layout !== "week") {
     searchParams.set("layout", input.layout);
+  }
+
+  if (input.item && input.item !== "all") {
+    searchParams.set("item", input.item);
   }
 
   if (input.date) {

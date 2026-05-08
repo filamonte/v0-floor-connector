@@ -13,7 +13,10 @@ import {
   portalStatePanelClassName
 } from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
-import { listPortalAccessibleProjects } from "@/lib/portal/data";
+import {
+  listPortalAccessibleProjects,
+  listPortalUpcomingAppointments
+} from "@/lib/portal/data";
 
 function formatStatusLabel(status: string | null) {
   if (!status) {
@@ -25,6 +28,16 @@ function formatStatusLabel(status: string | null) {
 
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString();
+}
+
+function formatAppointmentTime(startAt: string, endAt: string | null) {
+  const start = new Date(startAt).toLocaleString();
+
+  if (!endAt) {
+    return start;
+  }
+
+  return `${start} to ${new Date(endAt).toLocaleTimeString()}`;
 }
 
 function formatMoney(value: string) {
@@ -199,7 +212,10 @@ function getPortalHomeNextAction(
 }
 
 export default async function PortalHomePage() {
-  const projects = await listPortalAccessibleProjects("/portal");
+  const [projects, upcomingAppointments] = await Promise.all([
+    listPortalAccessibleProjects("/portal"),
+    listPortalUpcomingAppointments("/portal", 5)
+  ]);
   const nextAction = getPortalHomeNextAction(projects);
   const primaryProject =
     (nextAction
@@ -297,6 +313,52 @@ export default async function PortalHomePage() {
             </div>
           </div>
         </div>
+
+        <DetailPanel
+          title="Upcoming Appointments"
+          description="Customer-visible appointments shared across your accessible projects."
+        >
+          {upcomingAppointments.length > 0 ? (
+            <div className="grid gap-4">
+              {upcomingAppointments.map((appointment) => (
+                <Link
+                  key={appointment.id}
+                  href={`/portal/projects/${appointment.projectId}`}
+                  className={`block ${portalReviewCardClassName}`}
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        {appointment.projectName ?? "Shared project"}
+                      </p>
+                      <h2 className="mt-2 text-base font-semibold text-slate-950">
+                        {appointment.title || formatStatusLabel(appointment.appointmentType)}
+                      </h2>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {appointment.customerNotes?.trim() ||
+                          "Your contractor shared this appointment time."}
+                      </p>
+                    </div>
+                    <PortalStatusBadge status={appointment.status ?? "neutral"}>
+                      {formatStatusLabel(appointment.status)}
+                    </PortalStatusBadge>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-slate-500">
+                    {formatStatusLabel(appointment.appointmentType)} |{" "}
+                    {formatAppointmentTime(appointment.startsAt, appointment.endsAt)}
+                    {appointment.location ? ` | ${appointment.location}` : ""}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <AppEmptyState
+              eyebrow="No appointments"
+              title="No customer-visible appointments yet"
+              description="Appointments shared by your contractor will appear here when they are marked customer-visible."
+            />
+          )}
+        </DetailPanel>
 
         <DetailPanel
           title="Projects"

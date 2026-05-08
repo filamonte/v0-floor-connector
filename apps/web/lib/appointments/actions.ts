@@ -87,7 +87,8 @@ function parseAppointmentQuickCreateInput(formData: FormData) {
     appointmentType: getFieldValue(formData, "appointmentType"),
     startsAt: getFieldValue(formData, "startsAt"),
     customerVisible: getFieldValue(formData, "customerVisible"),
-    customerNotes: getFieldValue(formData, "customerNotes")
+    customerNotes: getFieldValue(formData, "customerNotes"),
+    internalNotes: getFieldValue(formData, "internalNotes")
   });
 }
 
@@ -149,8 +150,7 @@ export async function quickCreateAppointmentAction(formData: FormData) {
       ...result.data,
       endsAt: null,
       location: null,
-      notes: null,
-      internalNotes: null,
+      notes: result.data.internalNotes,
       status: "scheduled"
     });
   } catch (error) {

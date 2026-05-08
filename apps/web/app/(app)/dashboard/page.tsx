@@ -22,15 +22,25 @@ import { getBillingSetupState } from "@/lib/onboarding/billing-setup";
 import { isOrganizationActivatedForProductionAction } from "@/lib/organizations/activation-guard";
 import { quickCreateOpportunityAction } from "@/lib/opportunities/actions";
 import { listOpportunities } from "@/lib/opportunities/data";
+import { listLeadFollowUpQueue } from "@/lib/opportunities/follow-up-data";
+import { labelLeadFollowUpBucket } from "@/lib/opportunities/follow-up-read-model";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 import { hasCompanyProfileFields } from "@/lib/organizations/setup-status";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { listPayments } from "@/lib/payments/data";
+import { listPeople } from "@/lib/people/data";
 import { listPunchlistItems } from "@/lib/punchlists/data";
 import { listProgressBillingWorkspaces } from "@/lib/progress-billing/data";
 import { quickCreateProjectAction } from "@/lib/projects/actions";
 import { listProjects } from "@/lib/projects/data";
+import { filterUpcomingAssignedAppointments } from "@/lib/schedule/read-model";
+import {
+  completeWorkItemAction,
+  dismissWorkItemAction
+} from "@/lib/work-items/actions";
+import { listDashboardWorkItems } from "@/lib/work-items/data";
+import { selectDashboardWorkItemQueue } from "@/lib/work-items/read-model";
 
 function formatCurrency(value: number | string, maximumFractionDigits = 0) {
   return Number(value).toLocaleString("en-US", {
@@ -72,6 +82,12 @@ function isOverdueInvoice(dueDate: string | null, today: string) {
   return Boolean(dueDate && dueDate < today);
 }
 
+function addDaysDateKey(dateKey: string, days: number) {
+  const date = new Date(`${dateKey}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 function buildSearchText(...parts: Array<string | null | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
@@ -102,6 +118,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     contracts,
     jobs,
     appointments,
+    leadFollowUpQueue,
+    people,
     punchlistItems,
     invoices,
     payments,
@@ -119,6 +137,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     listContracts(),
     listJobs(),
     listAppointments(),
+    listLeadFollowUpQueue({ upcomingDays: 7 }),
+    listPeople(),
     listPunchlistItems(),
     listInvoices(),
     listPayments(),
@@ -130,15 +150,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   ]);
 
   const today = new Date().toISOString().slice(0, 10);
-  const activeLeadStatuses = new Set([
-    "new",
-    "contacted",
-    "qualified",
-    "site_assessment_scheduled",
-    "site_assessment_complete",
-    "estimating",
-    "proposal_sent"
-  ]);
+  const tomorrow = addDaysDateKey(today, 1);
   const activeProjects = projects.filter((project) => project.status !== "completed");
   const openInvoices = invoices.filter(
     (invoice) => invoice.status !== "paid" && invoice.status !== "void"
@@ -148,9 +160,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     .sort((left, right) =>
       (left.dueDate ?? "9999-12-31").localeCompare(right.dueDate ?? "9999-12-31")
     );
-  const leadsNeedingFollowUp = opportunities
-    .filter((opportunity) => activeLeadStatuses.has(opportunity.status))
-    .slice(0, 5);
+  const dueLeadFollowUps = leadFollowUpQueue.filter(
+    (item) => item.bucket === "overdue" || item.bucket === "due_today"
+  );
+  const leadFollowUpsForDashboard = leadFollowUpQueue.slice(0, 5);
   const estimatesAwaitingAction = estimates
     .filter((estimate) => ["draft", "sent", "rejected"].includes(estimate.status))
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
@@ -184,16 +197,67 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const scheduledAppointments = appointments.filter(
     (appointment) => appointment.status === "scheduled"
   );
+  const currentUserPerson =
+    people.find((person) => person.membershipUserId === user.id && person.isActive) ??
+    null;
+  const companyWorkItems = await listDashboardWorkItems({ limit: 5 });
+  const assignedWorkItems = currentUserPerson
+    ? await listDashboardWorkItems({
+        assignedPersonId: currentUserPerson.id,
+        limit: 5
+      })
+    : [];
+  const dashboardWorkItemQueue = selectDashboardWorkItemQueue({
+    assignedPersonId: currentUserPerson?.id ?? null,
+    assignedItems: assignedWorkItems,
+    companyItems: companyWorkItems
+  });
+  const showingCompanyWorkItems = dashboardWorkItemQueue.mode === "company_fallback";
   const appointmentsToday = scheduledAppointments
     .filter((appointment) => {
       const appointmentDate = new Date(appointment.startsAt);
       return appointmentDate.toISOString().slice(0, 10) === today;
     })
     .slice(0, 5);
-  const upcomingAppointments = scheduledAppointments
-    .filter((appointment) => appointment.startsAt >= new Date().toISOString())
-    .sort((left, right) => left.startsAt.localeCompare(right.startsAt))
-    .slice(0, 5);
+  const upcomingAppointments = filterUpcomingAssignedAppointments({
+    appointments: scheduledAppointments,
+    nowIso: new Date().toISOString(),
+    assignedPersonId: currentUserPerson?.id ?? null,
+    limit: 5
+  });
+  const companyUpcomingAppointments = filterUpcomingAssignedAppointments({
+    appointments: scheduledAppointments,
+    nowIso: new Date().toISOString(),
+    limit: 5
+  });
+  const dashboardAppointments =
+    currentUserPerson && upcomingAppointments.length > 0
+      ? upcomingAppointments
+      : companyUpcomingAppointments;
+  const appointmentFollowUpActions = appointments
+    .filter((appointment) => appointment.status === "canceled" || appointment.status === "no_show")
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+    .slice(0, Math.max(0, 5 - dashboardAppointments.length));
+  const appointmentDashboardItems = [...dashboardAppointments, ...appointmentFollowUpActions];
+  const showingCompanyAppointments =
+    !currentUserPerson || upcomingAppointments.length === 0;
+  const appointmentDashboardTitle = showingCompanyAppointments
+    ? "Company upcoming appointments"
+    : "My upcoming appointments";
+  const appointmentDashboardDescription = showingCompanyAppointments
+    ? currentUserPerson
+      ? "No appointments are assigned to your linked people record right now, so this falls back to the company appointment queue."
+      : "No active people record is linked to your user yet, so this shows the company appointment queue with assignee labels."
+    : "Assigned lead, customer, and project appointment blocks stay visible from the home board.";
+  const appointmentDashboardEyebrow = showingCompanyAppointments
+    ? "Company schedule"
+    : "My schedule";
+  const appointmentDashboardEmptyTitle = showingCompanyAppointments
+    ? "No upcoming company appointments are scheduled right now."
+    : "No assigned appointments are scheduled right now.";
+  const appointmentDashboardEmptyDescription = showingCompanyAppointments
+    ? "Lead visits and follow-up appointments will surface here once scheduled from the canonical appointment flow."
+    : "When appointments are assigned to your linked people record, they will surface here.";
   const openPunchlistCount = punchlistItems.filter(
     (item) => item.status === "open" || item.status === "in_progress"
   ).length;
@@ -443,11 +507,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       metrics={[
         {
           key: "leads-follow-up",
-          label: "Leads needing follow-up",
-          value: String(leadsNeedingFollowUp.length),
+          label: "Lead follow-ups due",
+          value: String(dueLeadFollowUps.length),
           detail:
-            "Upstream opportunity work still waiting on qualification, assessment, or commercial follow-through.",
-          href: "/leads"
+            "Overdue and due-today opportunity follow-up from the internal queue.",
+          href: "/leads?followUp=due"
         },
         {
           key: "estimates-awaiting-action",
@@ -483,36 +547,91 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         }
       ]}
       attentionWidget={attentionWidget}
+      workItemsWidget={{
+        key: "work-items",
+        eyebrow: showingCompanyWorkItems ? "Company work" : "My work",
+        title: showingCompanyWorkItems ? "Open work items" : "My work items",
+        description: showingCompanyWorkItems
+          ? currentUserPerson
+            ? "No assigned work items are open for your linked people record right now, so this falls back to the company queue."
+            : "No active people record is linked to your user yet, so this shows open company work items with assignee labels."
+          : "Manual internal work items assigned to your linked people record.",
+        href: "/dashboard",
+        actionLabel: "Dashboard",
+        emptyTitle: "No open work items yet.",
+        emptyDescription:
+          "Create manual work items from a lead workspace when a contractor-owned action needs an owner or due date.",
+        items: dashboardWorkItemQueue.items.map((workItem) => ({
+          id: workItem.id,
+          workItemId: workItem.id,
+          title: workItem.title,
+          subtitle:
+            workItem.customer?.name ??
+            workItem.project?.name ??
+            workItem.assignedPerson?.displayName ??
+            "Internal contractor action",
+          meta: `${labelize(workItem.kind)} - ${workItem.dueAt ? formatDateTime(workItem.dueAt) : "no due date"}${
+            workItem.assignedPerson ? ` - ${workItem.assignedPerson.displayName}` : ""
+          }`,
+          href: workItem.linkPath ?? "/dashboard",
+          actionLabel: "Open",
+          badge: labelize(workItem.priority),
+          contextHref: workItem.linkPath,
+          contextLabel: workItem.linkPath ? "Open source" : null,
+          searchText: buildSearchText(
+            workItem.title,
+            workItem.description,
+            workItem.kind,
+            workItem.priority,
+            workItem.assignedPerson?.displayName,
+            workItem.customer?.name,
+            workItem.project?.name
+          )
+        }))
+      }}
+      workItemActions={{
+        complete: completeWorkItemAction,
+        dismiss: dismissWorkItemAction
+      }}
       commercialWidgets={[
         {
           key: "leads",
           eyebrow: "Commercial follow-up",
-          title: "Leads / opportunities needing follow-up",
+          title: "Lead follow-ups due",
           description:
-            "Keep the early revenue queue visible so qualification and estimating work move before projects stall.",
-          href: "/leads",
+            "Overdue, due-today, and near-term opportunity follow-up stays visible without creating a separate reminder system.",
+          href: "/leads?followUp=due",
           actionLabel: "Open leads",
-          emptyTitle: "No leads are waiting on follow-up.",
+          emptyTitle: "No lead follow-ups are due right now.",
           emptyDescription:
-            "Start here by creating your first lead, or create a customer directly when the account is already known.",
-          items: leadsNeedingFollowUp.map((lead) => ({
-            id: lead.id,
-            title: lead.title || lead.prospectName,
+            "Set the next follow-up date from lead detail and due items will surface here.",
+          items: leadFollowUpsForDashboard.map((lead) => ({
+            id: lead.opportunityId,
+            title: lead.title || lead.contactName || "Untitled lead",
             subtitle:
-              lead.customer?.name ??
-              lead.prospectCompanyName ??
+              lead.customerName ??
+              lead.companyName ??
+              lead.contactName ??
               "Prospect not linked to a customer yet",
-            meta: `${labelize(lead.status)} - upstream opportunity record`,
-            href: `/leads/${lead.id}`,
+            meta: `${labelLeadFollowUpBucket(lead.bucket)} - ${formatDateTime(
+              lead.nextFollowUpAt
+            )}${
+              lead.lastCommunicationAt
+                ? ` - Last touch ${formatDateTime(lead.lastCommunicationAt)}`
+                : ""
+            }${lead.nextFollowUpNote ? ` - ${lead.nextFollowUpNote}` : ""}`,
+            href: `/leads/${lead.opportunityId}`,
             actionLabel: "Open lead",
-            badge: labelize(lead.status),
-            contextHref: lead.project?.id ? `/projects/${lead.project.id}` : null,
-            contextLabel: lead.project?.id ? "Open project" : null,
+            badge: labelLeadFollowUpBucket(lead.bucket),
+            contextHref: lead.projectId ? `/projects/${lead.projectId}` : null,
+            contextLabel: lead.projectId ? "Open project" : null,
+            bridgeHref: `/leads/${lead.opportunityId}?workItemCue=follow_up#work-items`,
+            bridgeLabel: "Create work item",
             searchText: buildSearchText(
               lead.title,
-              lead.prospectName,
-              lead.customer?.name,
-              lead.prospectCompanyName,
+              lead.contactName,
+              lead.customerName,
+              lead.companyName,
               lead.status
             )
           }))
@@ -681,32 +800,79 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         },
         {
           key: "appointments",
-          eyebrow: "Appointments",
-          title: "Upcoming appointments",
-          description:
-            "Commercial visits and customer-facing appointment blocks stay visible from the same operational board.",
-          href: "/appointments",
+          eyebrow: appointmentDashboardEyebrow,
+          title: appointmentDashboardTitle,
+          description: appointmentDashboardDescription,
+          href: "/schedule?item=appointments",
           actionLabel: "Open appointments",
-          emptyTitle: "No upcoming appointments are scheduled right now.",
-          emptyDescription:
-            "Site visits and follow-up appointments will surface here once scheduled from the canonical appointment flow.",
-          items: upcomingAppointments.map((appointment) => ({
+          emptyTitle: appointmentDashboardEmptyTitle,
+          emptyDescription: appointmentDashboardEmptyDescription,
+          items: appointmentDashboardItems.map((appointment) => {
+            const appointmentDateKey = new Date(appointment.startsAt)
+              .toISOString()
+              .slice(0, 10);
+            const needsFollowUp =
+              appointment.status === "canceled" || appointment.status === "no_show";
+            const timingBadge =
+              appointmentDateKey === today
+                ? "Today"
+                : appointmentDateKey === tomorrow
+                  ? "Tomorrow"
+                  : appointment.customerVisible
+                    ? "Customer-visible"
+                    : labelize(appointment.status);
+
+            return {
             id: appointment.id,
             title: appointment.title,
-            subtitle: appointment.customer?.name ?? "Customer not linked",
-            meta: `${formatDateTime(appointment.startsAt)} - ${appointment.location ?? "Location pending"}`,
-            href: "/appointments",
-            actionLabel: "Open appointments",
-            badge: labelize(appointment.status),
-            contextHref: appointment.projectId ? `/projects/${appointment.projectId}` : null,
-            contextLabel: appointment.projectId ? "Open project" : null,
+            subtitle:
+              appointment.customer?.name ??
+              appointment.opportunity?.title ??
+              "Lead appointment",
+            meta: `${formatDateTime(appointment.startsAt)} - ${
+              appointment.assignedPerson?.displayName ?? "Unassigned"
+            }${
+              needsFollowUp
+                ? ` - ${labelize(appointment.status)} appointment may need follow-up`
+                : ""
+            }`,
+            href: `/appointments/${appointment.id}`,
+            actionLabel: "Open appointment",
+            badge: needsFollowUp ? "Needs follow-up" : timingBadge,
+            contextHref: appointment.projectId
+              ? `/projects/${appointment.projectId}`
+              : appointment.opportunityId
+                ? `/leads/${appointment.opportunityId}`
+                : appointment.customerId
+                  ? `/customers/${appointment.customerId}`
+                  : null,
+            contextLabel: appointment.projectId
+              ? "Open project"
+              : appointment.opportunityId
+                ? "Open lead"
+                : appointment.customerId
+                  ? "Open customer"
+                  : null,
+            bridgeHref: needsFollowUp
+              ? `/appointments/${appointment.id}?workItemCue=appointment_follow_up#work-items`
+              : appointment.status === "scheduled"
+                ? `/appointments/${appointment.id}?workItemCue=confirmation_prep#work-items`
+                : null,
+            bridgeLabel: needsFollowUp
+              ? "Create follow-up item"
+              : appointment.status === "scheduled"
+                ? "Create prep item"
+                : null,
             searchText: buildSearchText(
               appointment.title,
               appointment.customer?.name,
+              appointment.opportunity?.title,
+              appointment.assignedPerson?.displayName,
               appointment.location,
               appointment.status
             )
-          }))
+          };
+          })
         }
       ]}
       financeWidgets={[

@@ -8,6 +8,7 @@ type CommunicationReplyFormProps = {
   source:
     | "all"
     | "opportunity"
+    | "appointment"
     | "customer"
     | "project"
     | "estimate"

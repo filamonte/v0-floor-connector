@@ -16,6 +16,7 @@ import {
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import {
   getPortalProjectDetailSummary,
+  listPortalProjectAppointments,
   listPortalProjectChangeOrders,
   listPortalProjectContracts,
   listPortalProjectEstimates,
@@ -49,6 +50,16 @@ function formatDate(value: string | null) {
 
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString();
+}
+
+function formatAppointmentTime(startAt: string, endAt: string | null) {
+  const start = new Date(startAt).toLocaleString();
+
+  if (!endAt) {
+    return start;
+  }
+
+  return `${start} to ${new Date(endAt).toLocaleTimeString()}`;
 }
 
 function formatLocation(parts: Array<string | null | undefined>) {
@@ -306,8 +317,9 @@ export default async function PortalProjectDetailPage({
   params
 }: PortalProjectDetailPageProps) {
   const { projectId } = await params;
-  const [project, estimates, contracts, invoices, changeOrders] = await Promise.all([
+  const [project, appointments, estimates, contracts, invoices, changeOrders] = await Promise.all([
     getPortalProjectDetailSummary(projectId, `/portal/projects/${projectId}`),
+    listPortalProjectAppointments(projectId, `/portal/projects/${projectId}`),
     listPortalProjectEstimates(projectId, `/portal/projects/${projectId}`),
     listPortalProjectContracts(projectId, `/portal/projects/${projectId}`),
     listPortalProjectInvoices(projectId, `/portal/projects/${projectId}`),
@@ -427,6 +439,38 @@ export default async function PortalProjectDetailPage({
             </div>
           </div>
         </div>
+
+        <DetailPanel
+          title="Appointments"
+          description="Customer-visible appointment times shared by your contractor for this project."
+        >
+          {appointments.length > 0 ? (
+            <div className="grid gap-4">
+              {appointments.map((appointment) => (
+                <RecordSummaryCard
+                  key={appointment.id}
+                  eyebrow="Appointment"
+                  title={appointment.title || formatStatusLabel(appointment.appointmentType)}
+                  description={
+                    appointment.customerNotes?.trim() ||
+                    "Your contractor shared this appointment time for the project."
+                  }
+                  meta={`${formatStatusLabel(appointment.appointmentType)} | ${formatAppointmentTime(
+                    appointment.startsAt,
+                    appointment.endsAt
+                  )}${appointment.location ? ` | ${appointment.location}` : ""}`}
+                  badge={formatStatusLabel(appointment.status)}
+                />
+              ))}
+            </div>
+          ) : (
+            <AppEmptyState
+              eyebrow="No appointments"
+              title="No customer-visible appointments yet"
+              description="When your contractor shares an appointment for this project, it will appear here."
+            />
+          )}
+        </DetailPanel>
 
         <DetailPanel
           title="Commercial Records"

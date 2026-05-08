@@ -29,12 +29,17 @@ Data should move forward through the same canonical chain:
 
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
+Public acquisition extends the front of this chain. Contractor-owned websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, AI intake, campaign attribution, reviews, galleries, portals, communications, and operational workflows should all reinforce one shared workflow graph:
+
+`public acquisition -> opportunity -> customer -> project -> estimate -> contract -> payment -> scheduling -> execution -> follow-up`
+
 Financial readiness, scheduling readiness, production readiness, and similar checkpoints are supporting workflow stages operating on the same canonical record chain. They do not introduce new record types, replace the lifecycle, become replacement records, or create a separate module-owned lifecycle.
 
 That flow may tighten over time into a more project-centered UX, but the key rule is unchanged:
 
 - no duplicate re-entry of core business data at later stages
 - no disconnected contract, billing, or production records
+- no duplicate marketing/contact database, website lead store, or disconnected public website system
 - no visualizer-only, file-only, communication-only, or module-local records presented as business truth when the same context belongs on the shared chain
 
 Future pre-lead visual/product/finish selection may happen before a formal opportunity exists. That should extend the lifecycle concept, not replace it: selected finish/spec context can begin early, then attach to `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment` when the contractor accepts it into the operational workflow.
@@ -73,7 +78,12 @@ The point is not simply whether an invoice exists. The point is whether sold wor
 
 Possible sources:
 
-- website contact form
+- contractor-owned website contact form
+- tenant-owned domain pages
+- SEO/service/location pages
+- landing pages
+- campaign/ad/referral links with source attribution
+- public forms
 - website AI chat
 - AI receptionist / phone intake
 - human-assisted intake
@@ -92,7 +102,14 @@ Core intake data:
 - service type
 - notes
 - source
+- campaign/source attribution where known
 - selected finish/system/spec context when a future pre-lead visual or product selection exists
+
+Target acquisition continuity:
+
+`SEO/ad/campaign -> visit -> lead form or AI intake -> opportunity -> estimate -> contract -> revenue`
+
+Website-generated opportunities should enter the canonical workflow. They should not create a second CRM, separate marketing-contact database, disconnected website lead table, or portal-only customer copy.
 
 Future visual/product/finish selection:
 
@@ -103,9 +120,10 @@ Future visual/product/finish selection:
 
 Future AI intake direction:
 
-- website AI chat, AI receptionist/voice, missed-call text-back, website forms, email, SMS, and human-assisted intake should all resolve into canonical opportunity workflows
+- website AI chat, AI receptionist/voice, missed-call text-back, website forms, email, SMS, and human-assisted intake should all resolve into canonical opportunity workflows with source context where available
 - AI may classify the source, summarize the inquiry, identify missing qualification fields, and prepare follow-up or appointment suggestions
-- AI should not create AI-only lead/customer/project records or make customer-facing commitments without human confirmation and validated workflows
+- AI may help generate or maintain contractor-owned service/location/landing-page content later, but accepted intake and customer commitments must still flow through canonical records
+- AI should not create AI-only lead/customer/project records, separate marketing knowledge stores, disconnected website content truth, or customer-facing commitments without human confirmation and validated workflows
 
 ### 2. Qualification And Customer Creation
 
@@ -378,6 +396,7 @@ Templates & Systems direction:
 FloorConnector should avoid:
 
 - duplicate data between modules
+- duplicate marketing/contact databases, public website lead stores, or disconnected contractor website systems
 - disconnected contract and invoice systems
 - module-specific template silos
 - module-specific file, attachment, product-selection, delivery-proof, or communication silos
@@ -391,6 +410,7 @@ FloorConnector should avoid:
 - pricing directly inside raw takeoff measurements
 - AI-generated customer-facing estimates without contractor approval
 - AI-only leads, customers, estimates, projects, calendars, or communication logs
+- AI-only website knowledge silos that diverge from canonical services, project proof, customer communication, or workflow history
 - AI-generated customer commitments, scheduling commitments, contract actions, invoices, payment requests, or permission changes without approved workflow confirmation
 - duplicate project, estimate, catalog, invoice, or template models for takeoff or estimating
 - takeoff behavior that weakens tenant isolation or breaks canonical workflow continuity
@@ -405,6 +425,8 @@ FloorConnector should avoid:
 Future workflow expansion may include:
 
 - richer estimator tooling
+- contractor-owned websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, campaign/source attribution, generated marketing content, and website-to-revenue continuity
+- review/reputation, testimonials, before/after galleries, and project-proof surfaces tied back to canonical project/job/closeout evidence where appropriate
 - pre-lead visualizer handoff into canonical opportunity/customer/project workflows
 - product/finish/spec management for decorative flake, metallic epoxy, decorative quartz, solid color, and future surface systems
 - shared file/evidence layer with multi-record links

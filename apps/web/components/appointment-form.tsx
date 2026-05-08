@@ -119,12 +119,6 @@ export function AppointmentForm({
   return (
     <SaveStateForm action={action} pendingLabel="Saving..." className="space-y-5">
       <input type="hidden" name="appointmentId" value={appointment.id} />
-      <input
-        type="hidden"
-        name="customerVisible"
-        value={appointment.customerVisible ? "true" : "false"}
-      />
-      <input type="hidden" name="customerNotes" value={appointment.customerNotes ?? ""} />
       {redirectTo ? <input type="hidden" name="redirectTo" value={redirectTo} /> : null}
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -265,14 +259,48 @@ export function AppointmentForm({
         </label>
       </div>
 
+      <div className="rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-4 py-4">
+        <label className="flex items-start gap-3">
+          <input
+            type="checkbox"
+            name="customerVisible"
+            defaultChecked={appointment.customerVisible ?? false}
+            className="mt-1 h-4 w-4 rounded border-[#d6d6d6] text-[#d8731f] focus:ring-[#d8731f]"
+          />
+          <span>
+            <span className="block text-sm font-semibold text-slate-900">
+              Mark appointment customer-visible
+            </span>
+            <span className="mt-1 block text-xs leading-5 text-slate-500">
+              Customer-visible storage is explicit. Portal appointment display is still not enabled in this pass.
+            </span>
+          </span>
+        </label>
+      </div>
+
       <label className="block">
-        <span className="mb-2 block text-sm font-medium text-slate-800">Notes</span>
+        <span className="mb-2 block text-sm font-medium text-slate-800">
+          Internal appointment notes
+        </span>
         <textarea
           name="notes"
-          defaultValue={appointment.notes ?? ""}
+          defaultValue={appointment.internalNotes ?? appointment.notes ?? ""}
           rows={8}
           className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
-          placeholder="Capture meeting context, prep notes, site observations, or follow-up items that should stay with the appointment."
+          placeholder="Capture prep notes, internal context, or follow-up items that should not be exposed to customers."
+        />
+      </label>
+
+      <label className="block">
+        <span className="mb-2 block text-sm font-medium text-slate-800">
+          Customer-visible appointment notes
+        </span>
+        <textarea
+          name="customerNotes"
+          defaultValue={appointment.customerNotes ?? ""}
+          rows={5}
+          className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
+          placeholder="Use only notes that are safe to show to the customer later, such as arrival instructions or meeting purpose."
         />
       </label>
 

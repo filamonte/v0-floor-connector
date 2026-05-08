@@ -92,8 +92,6 @@ export function AppointmentQuickCreateForm({
 
   return (
     <form action={action} className="space-y-5">
-      <input type="hidden" name="customerVisible" value="false" />
-      <input type="hidden" name="customerNotes" value="" />
       <QuickCreateFormShell
         eyebrow="Quick create"
         title="Create appointment"
@@ -209,6 +207,48 @@ export function AppointmentQuickCreateForm({
                 </option>
               ))}
             </select>
+          </label>
+
+          <div className="rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-4 py-4">
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                name="customerVisible"
+                className="mt-1 h-4 w-4 rounded border-[#d6d6d6] text-[#d8731f] focus:ring-[#d8731f]"
+              />
+              <span>
+                <span className="block text-sm font-semibold text-slate-900">
+                  Mark appointment customer-visible
+                </span>
+                <span className="mt-1 block text-xs leading-5 text-slate-500">
+                  Defaults off. Portal appointment display remains future work.
+                </span>
+              </span>
+            </label>
+          </div>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-800">
+              Internal appointment notes
+            </span>
+            <textarea
+              name="internalNotes"
+              rows={4}
+              className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
+              placeholder="Internal prep notes, access details, or team follow-up context."
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-800">
+              Customer-visible appointment notes
+            </span>
+            <textarea
+              name="customerNotes"
+              rows={4}
+              className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
+              placeholder="Only include notes that would be safe to show the customer later."
+            />
           </label>
         </div>
       </QuickCreateFormShell>

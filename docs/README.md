@@ -52,6 +52,7 @@ Document roles:
 - `docs/starter-pack-provisioning-plan.md`: planning-only safety spec for future starter-pack provisioning approval, audit, conflict handling, idempotency, and void strategy
 - `docs/starter-pack-provisioning-execution-readiness.md`: readiness review for starter-pack provisioning execution field mappings, lineage, transaction/RPC feasibility, and void-readiness foundations
 - `docs/starter-pack-provisioning-review.md`: consolidated architecture/operator readiness review for the implemented starter-pack provisioning lifecycle before any real void action
+- `docs/contractor-groups-plan.md`: planning/read-model guardrails for platform-owned contractor groups, assignment audit/history, and future non-enforcing segmentation use
 - `docs/ui-data-model-alignment-backlog.md`: planning backlog for contractor UI consistency, module-page patterns, directory/contact direction, Estimate Editoror polish, tax model alignment, workflow guidance, project address display, and later configurable module/dashboard views
 - `docs/estimate-builder-build-plan.md`: long-lived Estimate Builder master blueprint
 - `docs/estimate-builder-v1-scope.md`: constrained Estimate Builder V1 execution scope

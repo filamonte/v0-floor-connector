@@ -32,7 +32,10 @@ type DashboardQueueItem = {
   trailing?: string | null;
   contextHref?: string | null;
   contextLabel?: string | null;
+  bridgeHref?: string | null;
+  bridgeLabel?: string | null;
   searchText: string;
+  workItemId?: string | null;
 };
 
 type DashboardWidget = {
@@ -129,9 +132,14 @@ export type ContractorDashboardSurfaceProps = {
   priorityItems: DashboardPriorityItem[];
   metrics: DashboardMetric[];
   attentionWidget?: DashboardWidget | null;
+  workItemsWidget?: DashboardWidget | null;
   commercialWidgets: DashboardWidget[];
   operationsWidgets: DashboardWidget[];
   financeWidgets: DashboardWidget[];
+  workItemActions?: {
+    complete: QuickCreateAction;
+    dismiss: QuickCreateAction;
+  };
   onboardingSteps?: DashboardOnboardingStep[];
   startHereForceVisible?: boolean;
   shortcuts: DashboardShortcut[];
@@ -292,10 +300,12 @@ function PriorityGrid({ metrics }: { metrics: DashboardMetric[] }) {
 
 function QueueRows({
   widget,
-  items
+  items,
+  workItemActions
 }: {
   widget: DashboardWidget;
   items: DashboardQueueItem[];
+  workItemActions?: ContractorDashboardSurfaceProps["workItemActions"];
 }) {
   return (
     <BoardPanel
@@ -346,6 +356,50 @@ function QueueRows({
                   </p>
                 ) : null}
               </div>
+              {(item.contextHref && item.contextLabel) || item.bridgeHref ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {item.contextHref && item.contextLabel ? (
+                    <Link
+                      href={item.contextHref}
+                      className="inline-flex h-8 items-center border border-[#d6d6d6] bg-white px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f] transition hover:bg-[#f8f8f8]"
+                    >
+                      {item.contextLabel}
+                    </Link>
+                  ) : null}
+                  {item.bridgeHref ? (
+                    <Link
+                      href={item.bridgeHref}
+                      className="inline-flex h-8 items-center border border-[#d6d6d6] bg-[#f7f8fa] px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f] transition hover:bg-white"
+                    >
+                      {item.bridgeLabel ?? "Create work item"}
+                    </Link>
+                  ) : null}
+                </div>
+              ) : null}
+              {item.workItemId && workItemActions ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <form action={workItemActions.complete}>
+                    <input type="hidden" name="workItemId" value={item.workItemId} />
+                    <input type="hidden" name="returnTo" value="/dashboard" />
+                    <button
+                      type="submit"
+                      className="inline-flex h-8 items-center border border-emerald-200 bg-emerald-50 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-900 transition hover:bg-white"
+                    >
+                      Complete
+                    </button>
+                  </form>
+                  <form action={workItemActions.dismiss}>
+                    <input type="hidden" name="workItemId" value={item.workItemId} />
+                    <input type="hidden" name="returnTo" value="/dashboard" />
+                    <button
+                      type="submit"
+                      className="inline-flex h-8 items-center border border-[#d6d6d6] bg-white px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f] transition hover:bg-[#f8f8f8]"
+                    >
+                      Dismiss
+                    </button>
+                  </form>
+                </div>
+              ) : null}
             </article>
           ))
         ) : (
@@ -432,9 +486,11 @@ export function ContractorDashboardSurface({
   priorityItems,
   metrics,
   attentionWidget,
+  workItemsWidget,
   commercialWidgets,
   operationsWidgets,
   financeWidgets,
+  workItemActions,
   onboardingSteps,
   startHereForceVisible,
   shortcuts
@@ -467,6 +523,16 @@ export function ContractorDashboardSurface({
         items: filterItems(widget.items, deferredQuery)
       })),
     [financeWidgets, deferredQuery]
+  );
+  const filteredWorkItemsWidget = useMemo(
+    () =>
+      workItemsWidget
+        ? {
+            ...workItemsWidget,
+            items: filterItems(workItemsWidget.items, deferredQuery)
+          }
+        : null,
+    [workItemsWidget, deferredQuery]
   );
 
   const topLinks = [
@@ -630,6 +696,14 @@ export function ContractorDashboardSurface({
         <PriorityStrip items={priorityItems} />
 
         <PriorityGrid metrics={metrics} />
+
+        {filteredWorkItemsWidget ? (
+          <QueueRows
+            widget={filteredWorkItemsWidget}
+            items={filteredWorkItemsWidget.items}
+            workItemActions={workItemActions}
+          />
+        ) : null}
 
         {onboardingSteps &&
         (startHereForceVisible || onboardingSteps.some((step) => !step.complete)) ? (

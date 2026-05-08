@@ -5,15 +5,30 @@ import { AppEmptyState } from "@/components/app-empty-state";
 import { DirectoryContextCard } from "@/components/directory-context-card";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NextActionCard } from "@/components/next-action-card";
+import { OpportunityCommunicationLogForm } from "@/components/opportunity-communication-log-form";
 import { OpportunityForm } from "@/components/opportunity-form";
+import { OpportunityFollowUpForm } from "@/components/opportunity-follow-up-form";
+import { WorkItemCreateForm } from "@/components/work-items/work-item-create-form";
+import { WorkItemList } from "@/components/work-items/work-item-list";
 import { StandardWorkspaceLayout } from "@/components/workspace/standard-workspace-layout";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { listAppointmentsByOpportunity } from "@/lib/appointments/data";
+import { createOpportunityManualCommunicationMessageAction } from "@/lib/communications/actions";
+import { listOpportunityCommunicationMessages } from "@/lib/communications/data";
 import {
   startEstimateFromOpportunityAction,
-  updateOpportunityAction
+  updateOpportunityAction,
+  updateOpportunityFollowUpAction
 } from "@/lib/opportunities/actions";
 import { getOpportunityById } from "@/lib/opportunities/data";
+import { listPeople } from "@/lib/people/data";
+import {
+  completeWorkItemAction,
+  createWorkItemAction,
+  dismissWorkItemAction
+} from "@/lib/work-items/actions";
+import { listWorkItemsForSource } from "@/lib/work-items/data";
+import { buildOpportunityFollowUpWorkItemPrefill } from "@/lib/work-items/prefill";
 
 type LeadDetailPageProps = {
   params: Promise<{
@@ -22,6 +37,7 @@ type LeadDetailPageProps = {
   searchParams?: Promise<{
     error?: string;
     message?: string;
+    workItemCue?: string;
   }>;
 };
 
@@ -39,9 +55,57 @@ function formatDate(value: string | null) {
   return value ? new Date(value).toLocaleDateString() : "Not scheduled";
 }
 
+function formatDateTime(value: string | null) {
+  return value ? new Date(value).toLocaleString() : "Not set";
+}
+
 function formatMeasurementValue(value: string, unit: string, quantity: number | null) {
   const quantityLabel = quantity ? ` x ${quantity}` : "";
   return `${value} ${unit}${quantityLabel}`.trim();
+}
+
+function formatCommunicationKind(value: string) {
+  switch (value) {
+    case "manual_call":
+      return "Call";
+    case "manual_email_note":
+      return "Email note";
+    case "manual_text_note":
+      return "Text note";
+    case "voicemail":
+      return "Voicemail";
+    case "internal_note":
+      return "Internal note";
+    case "appointment_note":
+      return "Appointment note";
+    case "customer_message":
+      return "Customer message";
+    default:
+      return value.replaceAll("_", " ");
+  }
+}
+
+function getVisibilityClasses(value: string) {
+  return value === "customer_visible"
+    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+    : "border-slate-200 bg-white text-slate-700";
+}
+
+function formatVisibility(value: string) {
+  return value === "customer_visible" ? "Customer-visible" : "Internal";
+}
+
+function formatCommunicationActor(senderType: string) {
+  switch (senderType) {
+    case "organization_user":
+      return "Team member";
+    case "portal_user":
+      return "Customer";
+    case "system":
+      return "System";
+    default:
+      return "Unknown";
+  }
 }
 
 function getStatusClasses(status: string) {
@@ -134,20 +198,52 @@ export default async function LeadDetailPage({
 }: LeadDetailPageProps) {
   const { leadId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
-  const [opportunity, leadAppointments] = await Promise.all([
-    getOpportunityById(leadId, `/leads/${leadId}`),
-    listAppointmentsByOpportunity(leadId, `/leads/${leadId}`)
-  ]);
+  const opportunity = await getOpportunityById(leadId, `/leads/${leadId}`);
 
   if (!opportunity) {
     notFound();
   }
+
+  const [leadAppointments, communicationMessages, linkedWorkItems, people] =
+    await Promise.all([
+      listAppointmentsByOpportunity(leadId, `/leads/${leadId}`),
+      listOpportunityCommunicationMessages(leadId, `/leads/${leadId}`),
+      listWorkItemsForSource({
+        sourceType: "opportunity",
+        sourceId: leadId
+      }),
+      listPeople()
+    ]);
 
   const primaryEstimateHref = opportunity.projectId
     ? `/estimates?projectId=${opportunity.projectId}&opportunityId=${opportunity.id}`
     : null;
   const canStartEstimate = opportunity.status !== "lost";
   const leadAppointmentHref = `/appointments?compose=1&opportunityId=${opportunity.id}${opportunity.customerId ? `&customerId=${opportunity.customerId}` : ""}${opportunity.projectId ? `&projectId=${opportunity.projectId}` : ""}#appointment-create`;
+  const leadWorkspaceHref = `/leads/${opportunity.id}`;
+  const leadWorkItemPrefill =
+    resolvedSearchParams.workItemCue === "follow_up"
+      ? buildOpportunityFollowUpWorkItemPrefill({
+          opportunityId: opportunity.id,
+          title: opportunity.title,
+          status: opportunity.status,
+          contactName:
+            opportunity.primaryContact?.displayName ?? opportunity.prospectName,
+          companyName:
+            opportunity.primaryContact?.companyName ??
+            opportunity.prospectCompanyName,
+          customerName: opportunity.customer?.name ?? null,
+          nextFollowUpAt: opportunity.nextFollowUpAt,
+          nextFollowUpNote: opportunity.nextFollowUpNote,
+          lastCommunicationAt: communicationMessages.at(-1)?.createdAt ?? null
+        })
+      : null;
+  const assignablePeople = people
+    .filter((person) => person.isActive && person.isAssignable)
+    .map((person) => ({
+      id: person.id,
+      displayName: person.displayName
+    }));
   const nextAction = getLeadNextAction({
     opportunity,
     appointmentHref: leadAppointmentHref,
@@ -191,6 +287,8 @@ export default async function LeadDetailPage({
         { id: "summary", label: "Overview", iconName: "home", href: "#summary" },
         { id: "qualification", label: "Qualification", iconName: "clipboard-list", href: "#qualification" },
         { id: "contact", label: "Contact / Address", iconName: "notebook-pen", href: "#contact" },
+        { id: "communication", label: "Communication", iconName: "send", href: "#communication" },
+        { id: "work-items", label: "Work Items", iconName: "clipboard-list", href: "#work-items" },
         { id: "site-visit", label: "Site Visit", iconName: "check-square", href: "#site-visit" },
         { id: "scope-intake", label: "Scope Intake", iconName: "layers-3", href: "#scope-intake" },
         { id: "project-handoff", label: "Estimate Plan", iconName: "folder-open", href: "#project-handoff" },
@@ -497,6 +595,196 @@ export default async function LeadDetailPage({
             />
           </div>
         </div>
+
+        <section
+          id="communication"
+          className="mt-8 rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-8"
+        >
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+                Communication & Follow-Up
+              </p>
+              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
+                Lead communication context
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                Log manual lead contact and keep the next contractor follow-up visible. Provider-backed SMS, email, chat, voice, and AI remain future work.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 md:w-72">
+              <p className="font-semibold text-slate-950">Next follow-up</p>
+              {opportunity.nextFollowUpAt ? (
+                <>
+                  <p className="mt-1 text-slate-700">
+                    {formatDateTime(opportunity.nextFollowUpAt)}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-slate-500">
+                    {opportunity.nextFollowUpNote ?? "No follow-up note added."}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  No follow-up is set yet.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+            <div className="space-y-6">
+              <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Log activity
+                </p>
+                <div className="mt-4">
+                  <OpportunityCommunicationLogForm
+                    action={createOpportunityManualCommunicationMessageAction}
+                    opportunityId={opportunity.id}
+                  />
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Follow-up reminder
+                </p>
+                <div className="mt-4">
+                  <OpportunityFollowUpForm
+                    action={updateOpportunityFollowUpAction}
+                    opportunityId={opportunity.id}
+                    nextFollowUpAt={opportunity.nextFollowUpAt}
+                    nextFollowUpNote={opportunity.nextFollowUpNote}
+                  />
+                </div>
+              </section>
+            </div>
+
+            <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Recent activity
+                </p>
+                <Link
+                  href={`/communications?source=opportunity&q=${encodeURIComponent(opportunity.title)}`}
+                  className="text-sm font-medium text-brand-700 transition hover:text-brand-900"
+                >
+                  Open communications
+                </Link>
+              </div>
+              <div className="mt-4 space-y-3">
+                {communicationMessages.length > 0 ? (
+                  communicationMessages
+                    .slice(-6)
+                    .reverse()
+                    .map((message) => (
+                      <article
+                        key={message.id}
+                        className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                      >
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-semibold text-slate-950">
+                            {formatCommunicationKind(message.messageKind)}
+                          </span>
+                          <span
+                            className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] ${getVisibilityClasses(
+                              message.visibility
+                            )}`}
+                          >
+                            {formatVisibility(message.visibility)}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                          {message.body}
+                        </p>
+                        <p className="mt-3 text-xs leading-5 text-slate-500">
+                          {formatDateTime(message.createdAt)} by{" "}
+                          {formatCommunicationActor(message.senderType)}
+                        </p>
+                      </article>
+                    ))
+                ) : (
+                  <AppEmptyState
+                    eyebrow="No communication yet"
+                    title="Manual logging is ready"
+                    description="Log calls, email notes, text notes, voicemails, appointment notes, or internal notes here. Provider-backed SMS, email, chat, voice, and AI summaries come later."
+                  />
+                )}
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section
+          id="work-items"
+          className="mt-8 rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-8"
+        >
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+                Work Items
+              </p>
+              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
+                Internal lead actions
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                Manually assign follow-up work tied to this opportunity. These items are internal-only and do not change the lead follow-up date or customer-visible communication.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 md:w-72">
+              <p className="font-semibold text-slate-950">Open linked items</p>
+              <p className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
+                {linkedWorkItems.filter((workItem) => workItem.status === "open").length}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                Completion or dismissal stays on the work item and does not mutate opportunity status.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+            <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Create internal work item
+              </p>
+              <div className="mt-4">
+                <WorkItemCreateForm
+                  action={createWorkItemAction}
+                  returnTo={leadWorkspaceHref}
+                  sourceType="opportunity"
+                  sourceId={opportunity.id}
+                  linkPath={leadWorkspaceHref}
+                  customerId={opportunity.customerId}
+                  projectId={opportunity.projectId}
+                  defaultKind={leadWorkItemPrefill?.kind ?? "lead_follow_up"}
+                  defaultTitle={leadWorkItemPrefill?.title}
+                  defaultDescription={leadWorkItemPrefill?.description}
+                  defaultDueAt={leadWorkItemPrefill?.dueAt}
+                  defaultPriority={leadWorkItemPrefill?.priority}
+                  dedupeKey={leadWorkItemPrefill?.dedupeKey}
+                  metadata={leadWorkItemPrefill?.metadata}
+                  assignablePeople={assignablePeople}
+                />
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Linked work items
+              </p>
+              <div className="mt-4">
+                <WorkItemList
+                  workItems={linkedWorkItems}
+                  returnTo={leadWorkspaceHref}
+                  completeAction={completeWorkItemAction}
+                  dismissAction={dismissWorkItemAction}
+                  emptyTitle="No work items are linked to this lead yet."
+                  emptyDescription="Create a manual internal work item when a lead action needs an owner, due date, or explicit completion state."
+                />
+              </div>
+            </section>
+          </div>
+        </section>
 
         <div id="activity" className="mt-8 grid gap-6 lg:grid-cols-3">
           <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">

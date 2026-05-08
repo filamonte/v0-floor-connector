@@ -8,13 +8,15 @@ type AuthSubmitButtonProps = {
   children: ReactNode;
   variant?: "primary" | "secondary";
   className?: string;
+  disabled?: boolean;
 };
 
 export function AuthSubmitButton({
   pendingLabel,
   children,
   variant = "primary",
-  className
+  className,
+  disabled = false
 }: AuthSubmitButtonProps) {
   const { pending } = useFormStatus();
 
@@ -27,8 +29,8 @@ export function AuthSubmitButton({
     <button
       type="submit"
       className={`${buttonClassName} ${className ?? ""}`.trim()}
-      disabled={pending}
-      aria-disabled={pending}
+      disabled={pending || disabled}
+      aria-disabled={pending || disabled}
     >
       {pending ? (
         <>

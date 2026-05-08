@@ -12,6 +12,7 @@ type CommunicationNotificationTriageFormProps = {
   source:
     | "all"
     | "opportunity"
+    | "appointment"
     | "customer"
     | "project"
     | "estimate"

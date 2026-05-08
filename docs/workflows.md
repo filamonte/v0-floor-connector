@@ -23,9 +23,11 @@ This workflow document assumes the supporting configuration model now has two la
 - records flow forward rather than being recreated
 - status progression should guide next actions
 - shared files, selected finishes/specs, communication history, and delivery proof should attach to canonical records instead of creating module silos
+- public acquisition, contractor websites, forms, attribution, portals, communications, and future AI intake should feed the same canonical workflow graph instead of creating marketing, website, portal, or AI silos
 
 In practical terms:
 - a lead should not become a second disconnected customer-like record later
+- a website form, public AI chat, landing page conversion, campaign source, review/reputation signal, or gallery/project-proof interaction should not become a disconnected marketing record later
 - an approved estimate should feed downstream contract, job, and invoice workflows instead of being re-entered
 - downstream financial records should always inherit from immutable approved snapshots rather than live Estimate Editoror rows
 - canonical records should stay linked so teams can follow the same job from intake through payment
@@ -45,6 +47,12 @@ This chain is already real in the current system, even though the user experienc
 
 Future pre-lead visual/product/finish selection can extend the front of this lifecycle, but it does not replace the canonical implemented chain. The intended future path is visual/product/finish selection context -> opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment, with the selected finish/spec context flowing forward once it becomes operational truth.
 
+Future public acquisition can also extend the front of this lifecycle. The intended broader direction is:
+
+`public acquisition -> opportunity -> customer -> project -> estimate -> contract -> payment -> scheduling -> execution -> follow-up`
+
+Contractor-owned websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, website AI intake, campaign/source attribution, reviews/testimonials, before/after galleries, portals, communications, and operational workflows should all reinforce that same graph. They are not separate systems and should not introduce duplicate lead, customer, contact, project, website, portal, marketing, or AI knowledge models.
+
 ## Canonical Records Vs Supporting Workflow Stages
 
 Canonical system records:
@@ -63,6 +71,7 @@ Canonical system records:
 - incident
 
 Supporting workflow stages:
+- future public acquisition through contractor-owned websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, campaign attribution, and website AI intake
 - contact and qualification work
 - future pre-lead visual/product/finish selection
 - site assessment or inspection
@@ -125,6 +134,7 @@ Future Shared Files / Evidence:
 
 Future Communication / Delivery Proof:
 - communication history should cover email, SMS, portal, app, and manual logs where supported
+- public website forms, website AI chat, campaign inquiries, reviews/reputation follow-up, and public intake should resolve into canonical communication and opportunity workflows where communication history is needed
 - sending estimates, invoices, contracts, change orders, portal invites, and payment requests should create canonical communication/delivery records
 - delivery events should include queued, sent, delivered, opened, clicked, deferred, bounced, blocked, dropped, and failed when provider data supports those states
 - provider data is delivery telemetry, not the business source of truth
@@ -259,6 +269,7 @@ Implemented flow:
 - non-production QA can use `/dashboard?fresh=true` to force the existing Start Here onboarding prompts visible without creating fake records or changing tenant data
 - non-production platform admins can reset a selected early-access tenant from `/super-admin/early-access`; this is a development-only utility over existing company and workflow records, not a sandbox/demo mode
 - `/super-admin` access is not inherited from contractor organization ownership or administration. It requires an explicit platform role assignment in `platform_user_roles`; contractor owner/admin/member test accounts remain contractor-scoped unless separately granted a platform role.
+- `/super-admin/groups` includes read-only contractor group assignment proposal readiness for platform operators. Proposal readiness explains evidence, caveats, future manual-apply impact, and starter-pack targeting context without creating memberships, writing audit events, provisioning starter packs, changing entitlements, or affecting contractor runtime behavior.
 
 Current canonical records involved:
 - profile
@@ -272,8 +283,22 @@ Current canonical records involved:
 Implemented flow:
 - contractor creates an opportunity in `/leads`
 - opportunity can be reviewed and updated
-- opportunity can store a next follow-up timestamp and optional internal follow-up note for later lead follow-through UI
-- manual opportunity communication can be stored on canonical `communication_threads` / `communication_messages` before customer/project conversion, with explicit internal versus customer-visible message visibility
+- opportunity can store a next follow-up timestamp and optional internal follow-up note, and the lead workspace can set, update, or clear that internal follow-up context
+- manual opportunity communication can be logged from the lead workspace on canonical `communication_threads` / `communication_messages` before customer/project conversion, with explicit internal versus customer-visible message visibility
+- dashboard and the lead manager now use an internal follow-up queue/read model over `opportunities.next_follow_up_at` and opportunity communication recency, surfacing overdue, due-today, upcoming, and no-follow-up lead states without sending reminders or auto-generating work items
+- lead-linked sales appointments, site assessments, and callbacks use canonical `appointments`; they can appear on internal `/schedule` and dashboard appointment views without becoming jobs or creating a second schedule model
+- appointment workspaces now show a contractor-only Customer Confirmation panel that previews editable customer-safe confirmation copy, explains eligibility blockers, lists eligible email recipients, can manually log a customer-visible `appointment_confirmation` communication message, and can manually send an email confirmation after explicit contractor confirmation; this does not schedule reminders, mutate appointment status, or expose portal confirmation actions
+- provider-backed appointment confirmation email is wired to that explicit contractor action: the send path reuses the customer-safe preview, creates or reuses the canonical appointment confirmation message, sends through the existing Postmark-backed notification email path, links the provider attempt through `notification_deliveries.communication_message_id`, and marks the message `sent` only after provider success
+- failed appointment confirmation email attempts should remain delivery audit records and must not mark the communication message sent or mutate appointment status/notes
+- communication preferences now provide an organization-scoped foundation for customer-facing communication eligibility; appointment reminder readiness and manual email reminder sends evaluate customer and customer-contact email preferences, and customer detail lets contractor admins manage email appointment-reminder preferences while still exposing no portal preference controls or SMS controls
+- manual appointment reminder email sending uses customer-safe appointment fields only, creates or reuses canonical appointment reminder communication messages, sends through the existing Postmark-backed notification email path, records provider attempts through `notification_deliveries.communication_message_id`, and marks the communication message `sent` only after provider success
+- appointment reminder sending suppresses hidden, canceled, no-show, completed, missing-context, missing-time, no-recipient, opted-out/suppressed-recipient, and same-recipient duplicate-success cases; it does not schedule reminders, automate sends, mutate appointment status/notes, or expose portal reminder actions
+- appointment workspaces now expose the manual reminder path in a separate contractor-only Customer Reminder panel with readiness blockers, editable customer-safe reminder copy, preference-filtered recipient selection, a customer preference-management link when no eligible recipient remains, explicit send action, and recent reminder delivery history
+- internal appointment dashboard visibility can highlight today/tomorrow appointments and recent canceled/no-show appointment records that may need contractor follow-up; dashboard reminder-send UI is not implemented
+- lead workspaces can now show opportunity-linked internal `work_items`, explicitly create manual or lead-follow-up work items tied to the current opportunity, and complete or dismiss those linked items without changing the opportunity follow-up fields automatically
+- appointment workspaces can now show appointment-linked internal `work_items`, explicitly create manual appointment prep or appointment follow-up work items tied to the current appointment, and complete or dismiss those linked items without changing appointment status, schedule fields, customer-visible appointment notes, or portal visibility
+- dashboard lead follow-up cues and lead-manager follow-up rows can now bridge into prefilled opportunity-linked work-item creation, but the contractor must still confirm the form; no work item is auto-generated from follow-up state
+- dashboard appointment cues can now bridge into prefilled appointment-linked prep or follow-up work-item creation, but the contractor must still confirm the form; no work item is auto-generated from appointment status
 - the lead workspace includes lightweight site visit Scope Intake capture for manual measurements and structured observations
 - starting the estimate path creates or links the downstream customer and project records as needed
 
@@ -282,6 +307,9 @@ Current canonical records involved:
 - optional linked customer
 - optional linked project
 - communication threads/messages for manual lead communication
+- communication threads/messages for manually logged appointment confirmations where explicitly created
+- appointments for lead-linked visits, meetings, and callbacks
+- optional internal work items for contractor-owned follow-through, when explicitly created through work-item utilities or contractor-side work-item UI
 
 ### Customer To Project
 
@@ -292,10 +320,14 @@ Implemented flow:
 - contractor admins manage customer contact identity, portal invite state, and project-scoped portal visibility from People after a customer and project exist
 - estimate, contract, and invoice workflows may trigger or verify portal access contextually, but they do not own portal identity or permissions management
 - invited customers use `/portal/invite?token=...` to sign up or log in, and the invite activates only when the authenticated email matches the contractor-created invite
+- portal customers can see read-only, project-linked appointments only when a contractor explicitly marks the canonical appointment `customer_visible = true`
+- customer-facing appointment display uses customer-safe fields only: appointment title/type, date/time, status, location, and `customer_notes`; it does not expose internal notes, legacy appointment notes, assignment internals, or internal communication
+- portal appointment display does not include appointment confirmation actions, email-send actions, or communication-message display yet, even when a contractor logs or later sends a customer-visible appointment confirmation internally
 
 Current canonical records involved:
 - customer
 - project
+- appointments for customer-visible project appointments
 - portal access grant
 - portal project access
 - optional related customer contact
@@ -503,6 +535,7 @@ Implemented flow:
 - opportunity-linked communication threads/messages now support pre-conversion lead communication without a separate lead-activity model
 - manual communication logs must default internal unless a contractor deliberately marks the message customer-visible in a future UI
 - provider-backed notification email delivery is blocked by the activation guard while the organization is pending/trial; internal in-app notifications and communication review remain available
+- internal work items now provide a small contractor-only action layer for ownership, due date, assignment, completion, and dismissal; dashboard, lead workspace, and appointment workspace UI can list and act on manually created work items, and linked work items can point back to canonical records without replacing notification events, per-user notifications, automation runs, workflow error events, opportunity follow-up fields, or appointment statuses
 
 Current canonical records involved:
 - notification events
@@ -510,6 +543,7 @@ Current canonical records involved:
 - notification deliveries
 - communication threads
 - communication messages
+- work items
 
 Future communication direction:
 - communication and delivery proof should extend across estimates, contracts, invoices, change orders, payment requests, portal invites, customer/contractor messages, app interactions, SMS, email, and manual logs
@@ -561,26 +595,28 @@ Directory direction note:
 
 The best current product direction for the contractor revenue workflow is:
 
-1. Future pre-lead visual/product/finish selection where applicable
-2. Lead / Opportunity
-3. Contact / customer qualification
-4. Site assessment / inspection or customer-provided measurements and requirements
-5. Customer
-6. Project
-7. Future takeoff / scope intelligence where plans, photos, and site data become reviewed quantities
-8. Estimate
-9. Portal estimate approval and approved snapshot creation
-10. Contract
-11. Change order when scope changes
-12. Job execution / scheduling
-13. Invoice
-14. Payment and closeout
+1. Future public acquisition through contractor-owned websites, SEO/service/location pages, landing pages, public forms, AI intake, attribution, reviews, galleries, or project proof where applicable
+2. Future pre-lead visual/product/finish selection where applicable
+3. Lead / Opportunity
+4. Contact / customer qualification
+5. Site assessment / inspection or customer-provided measurements and requirements
+6. Customer
+7. Project
+8. Future takeoff / scope intelligence where plans, photos, and site data become reviewed quantities
+9. Estimate
+10. Portal estimate approval and approved snapshot creation
+11. Contract
+12. Change order when scope changes
+13. Job execution / scheduling
+14. Invoice
+15. Payment and closeout
 
 How this should be interpreted today:
 - some of these steps already map cleanly to canonical records in the app
 - some are operational stages that still need stronger UX guidance or status handling around the implemented readiness gate
 - the system should preserve one continuous path rather than forcing users to decide between disconnected modules
 - pre-lead visual/product/finish selection is future direction only and does not change the implemented canonical chain
+- contractor-owned websites, public acquisition pages, SEO infrastructure, marketing attribution, public AI intake, generated website/content workflows, reviews, and galleries are future direction only unless [docs/current-state.md](C:/FloorConnector/docs/current-state.md) says a specific slice is implemented
 
 ### Employee Lifecycle Workflow
 
@@ -608,11 +644,16 @@ How this should be interpreted today:
 
 ### Task Lifecycle Workflow
 
-- Create: Attach to any record, assign, due date.
+- Create: Internal contractor work items can be manually created and optionally linked to a canonical source record. The current contractor UI supports explicit creation from a lead workspace against the current opportunity and from an appointment workspace against the current appointment.
 
-- Track: Status, audit.
+- Track: Work items store internal ownership, due date, priority, status, assigned person, source link, and safe metadata on `work_items`. Dashboard work-item visibility prefers the current user's linked active `people` record when available and falls back to open company work items when needed.
 
-- Complete: Close.
+- Complete: Open work items can be completed or dismissed from the dashboard, lead workspace, or appointment workspace. Completed/dismissed work items are not reopened in V1.
+
+Boundary:
+- Work items do not replace canonical opportunity follow-up fields, appointment statuses, notification events, automation runs, workflow error events, or the main lifecycle.
+- Work items are internal-only and are not exposed to portal/customer users.
+- No automated work-item generation, reminder delivery, provider send, AI action, or generic workflow engine is implemented.
 
 ### Progress Billing Workflow
 
@@ -633,6 +674,7 @@ The preferred contractor journey is:
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
 With supporting readiness stages between those records:
+- future public acquisition
 - future pre-lead visual/product/finish selection
 - qualification
 - site assessment or requirements gathering

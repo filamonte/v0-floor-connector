@@ -54,6 +54,7 @@ This target IA should remain compatible with future organization-level module en
 The target top-level contractor app navigation should be:
 
 - Dashboard
+- Growth, when the public acquisition layer becomes a durable contractor surface
 - Customers
 - Projects
 - Financials
@@ -85,6 +86,35 @@ It should eventually include:
 - role-aware task prioritization
 
 Dashboard is not the operational root. It is the summary and prioritization surface.
+
+## Growth
+
+Growth is a future target surface, not a current route claim.
+
+This area should eventually manage the public acquisition layer for a contractor organization:
+
+- contractor-owned websites
+- tenant-owned domains
+- landing pages
+- SEO/service/location pages
+- campaign and source attribution
+- public forms and intake routing
+- reviews, reputation, testimonials, and project proof later
+- before/after galleries and closeout evidence reuse later
+- generated marketing content and AI-assisted page/content drafting later
+
+Growth should answer:
+
+- how the contractor attracts and captures demand
+- which pages, campaigns, forms, and channels produced opportunities
+- how website-generated opportunities move into the canonical sales-to-production chain
+
+Boundary:
+
+- Growth is target direction only until implemented.
+- Contractor websites and public acquisition pages are public workflow surfaces on the same tenant-owned platform graph.
+- Growth must not create duplicate leads, customers, contacts, projects, galleries, reviews, marketing contacts, or AI knowledge silos.
+- Public acquisition should feed `public acquisition -> opportunity -> customer -> project -> estimate -> contract -> payment -> scheduling -> execution -> follow-up`.
 
 ## Customers
 
@@ -226,6 +256,8 @@ This area should eventually include:
 
 Communications should group conversation flows rather than scattering them across modules. Future communication should be record-based over free-floating chat, with threads attached to projects, jobs, change orders, invoices, daily logs, field notes, or other canonical records.
 
+Website forms, public AI chat, campaign inquiries, and review/reputation follow-up should land in this same communication/intake model where communication history is needed. They should not become a separate website inbox or marketing-contact system.
+
 Target delivery-proof behavior:
 
 - sending estimates, invoices, contracts, change orders, portal invites, and payment requests should create canonical communication/delivery records
@@ -237,7 +269,7 @@ Target AI intake behavior:
 
 - AI may summarize, classify, draft, and prepare intake or reply actions
 - accepted intake should resolve into canonical opportunity/customer/project workflows
-- AI should not own separate lead, customer, project, estimate, calendar, or communication records
+- AI should not own separate lead, customer, project, estimate, calendar, website-content truth, marketing-contact, or communication records
 
 ## Calendar / Schedule
 
