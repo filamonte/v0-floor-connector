@@ -3,10 +3,19 @@ import type {
   AppointmentType,
   OpportunityStatus,
   WorkItemKind,
-  WorkItemPriority
+  WorkItemPriority,
+  WorkItemSourceType
 } from "@floorconnector/types";
 
 import { classifyLeadFollowUp } from "../opportunities/follow-up-read-model";
+import type { ProjectCueWorkItemBridge } from "../projects/cues";
+
+export type ProjectGuidanceWorkItemCue =
+  | "approved_estimate_missing_contract"
+  | "deposit_invoice_unpaid"
+  | "open_blocker_field_notes"
+  | "signed_contract_no_job"
+  | "ready_unscheduled_jobs";
 
 export type CueWorkItemPrefill = {
   title: string;
@@ -15,7 +24,13 @@ export type CueWorkItemPrefill = {
   priority: WorkItemPriority;
   kind: Extract<
     WorkItemKind,
-    "lead_follow_up" | "appointment_confirmation_prep" | "appointment_follow_up" | "manual"
+    | "lead_follow_up"
+    | "appointment_confirmation_prep"
+    | "appointment_follow_up"
+    | "estimate_follow_up"
+    | "invoice_follow_up"
+    | "human_handoff"
+    | "manual"
   >;
   assignedPersonId?: string | null;
   dedupeKey: string | null;
@@ -142,6 +157,105 @@ export function buildAppointmentCueWorkItemPrefill(input: {
       appointmentType: input.appointmentType,
       appointmentStatus: input.status,
       startsAt: input.startsAt
+    }
+  };
+}
+
+function getProjectGuidanceKind(
+  cue: ProjectGuidanceWorkItemCue
+): CueWorkItemPrefill["kind"] {
+  switch (cue) {
+    case "approved_estimate_missing_contract":
+      return "estimate_follow_up";
+    case "deposit_invoice_unpaid":
+      return "invoice_follow_up";
+    case "open_blocker_field_notes":
+      return "human_handoff";
+    case "signed_contract_no_job":
+    case "ready_unscheduled_jobs":
+      return "manual";
+  }
+}
+
+function getProjectGuidanceTitle(input: {
+  cue: ProjectGuidanceWorkItemCue;
+  projectName: string;
+}) {
+  switch (input.cue) {
+    case "approved_estimate_missing_contract":
+      return `Create contract follow-through for ${input.projectName}`;
+    case "deposit_invoice_unpaid":
+      return `Follow up on deposit invoice for ${input.projectName}`;
+    case "open_blocker_field_notes":
+      return `Resolve project blocker for ${input.projectName}`;
+    case "signed_contract_no_job":
+      return `Create job follow-through for ${input.projectName}`;
+    case "ready_unscheduled_jobs":
+      return `Schedule ready project work for ${input.projectName}`;
+  }
+}
+
+function getProjectGuidancePriority(
+  cue: ProjectGuidanceWorkItemCue
+): WorkItemPriority {
+  switch (cue) {
+    case "approved_estimate_missing_contract":
+    case "deposit_invoice_unpaid":
+      return "high";
+    case "open_blocker_field_notes":
+      return "high";
+    case "signed_contract_no_job":
+    case "ready_unscheduled_jobs":
+      return "normal";
+  }
+}
+
+export function buildProjectGuidanceWorkItemPrefill(input: {
+  projectId: string;
+  projectName: string;
+  customerName?: string | null;
+  cueTitle: string;
+  cueDescription: string;
+  cueReason: string;
+  workflowHref: string;
+  bridge: ProjectCueWorkItemBridge;
+}): CueWorkItemPrefill & {
+  sourceType: WorkItemSourceType;
+  sourceId: string;
+  linkPath: string;
+} {
+  const { bridge } = input;
+
+  return {
+    title: getProjectGuidanceTitle({
+      cue: bridge.cue,
+      projectName: input.projectName
+    }),
+    description: compactDescription([
+      "Prefilled from project guidance. Review the owner, due date, and context before submitting this internal work item.",
+      `Cue: ${input.cueTitle}`,
+      input.cueDescription,
+      `Reason: ${input.cueReason}`,
+      input.customerName ? `Customer: ${input.customerName}` : null,
+      `Project: ${input.projectName}`,
+      `Source context: ${bridge.sourceLabel}`,
+      `Workflow handoff: ${input.workflowHref}`
+    ]),
+    dueAt: null,
+    priority: getProjectGuidancePriority(bridge.cue),
+    kind: getProjectGuidanceKind(bridge.cue),
+    dedupeKey: `project-guidance:${input.projectId}:${bridge.cue}:${bridge.sourceType}:${bridge.sourceId}`,
+    sourceType: bridge.sourceType,
+    sourceId: bridge.sourceId,
+    linkPath: input.workflowHref,
+    metadata: {
+      cue: "project_guidance",
+      projectCue: bridge.cue,
+      projectId: input.projectId,
+      projectName: input.projectName,
+      sourceLabel: bridge.sourceLabel,
+      workflowHref: input.workflowHref,
+      ...bridge.context
     }
   };
 }

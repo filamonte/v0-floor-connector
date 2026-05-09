@@ -107,9 +107,19 @@ export const platformAdminNavItems: readonly SettingsNavItem[] = [
     description: "Platform feature policy and module availability rules."
   },
   {
+    href: "/super-admin/packages",
+    label: "Packages",
+    description: "Read-only package, plan, billing, and activation readiness."
+  },
+  {
     href: "/super-admin/groups",
     label: "Contractor Groups",
     description: "Platform segmentation for cohorts and future targeting."
+  },
+  {
+    href: "/super-admin/operations",
+    label: "Operations",
+    description: "Read-only system health, audit activity, and support readiness."
   },
   {
     href: "/super-admin/early-access",

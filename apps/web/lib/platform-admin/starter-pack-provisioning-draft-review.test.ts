@@ -214,6 +214,39 @@ void test("reports stale when an action changed from would-create to already-exi
   assert.equal(review.itemSummary.changedCount, 1);
 });
 
+void test("reports stale when an already-existing destination match changes", () => {
+  const review = reviewWith(
+    [
+      makeRunItem({
+        action: "skipped_existing",
+        status: "skipped",
+        destinationSnapshot: {
+          matchingExistingRecordId: "document-template-1",
+          dryRunAction: "already_exists"
+        }
+      })
+    ],
+    [
+      makeDryRunRow({
+        action: "already_exists",
+        matchingExistingRecordId: "document-template-2",
+        matchType: "source_linkage"
+      })
+    ]
+  );
+
+  assert.equal(review.freshnessStatus, "stale");
+  assert.equal(review.itemSummary.changedCount, 1);
+  assert.equal(
+    review.itemComparisons[0]?.draftMatchingExistingRecordId,
+    "document-template-1"
+  );
+  assert.equal(
+    review.itemComparisons[0]?.currentMatchingExistingRecordId,
+    "document-template-2"
+  );
+});
+
 void test("reports invalid when a source seed is no longer available", () => {
   const review = reviewWith(
     [makeRunItem()],
@@ -228,6 +261,10 @@ void test("reports invalid when a source seed is no longer available", () => {
 
   assert.equal(review.freshnessStatus, "invalid");
   assert.equal(review.itemSummary.invalidNowCount, 1);
+  assert.equal(
+    review.issues.some((issue) => issue.severity === "blocking"),
+    true
+  );
 });
 
 void test("allows approval eligibility for a fresh draft with exact confirmation", () => {

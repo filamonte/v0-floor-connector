@@ -534,6 +534,34 @@ export async function listWorkItemsForSource(input: {
   return ((response.data ?? []) as WorkItemRow[]).map(mapWorkItem);
 }
 
+export async function listWorkItemsForProject(projectId: string, next = "/dashboard") {
+  const scope = await requireWorkItemScope(next);
+
+  await assertRecordBelongsToCompany({
+    table: "projects",
+    organizationColumn: "company_id",
+    recordId: projectId,
+    organizationId: scope.organizationId,
+    label: "Project"
+  });
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("work_items")
+    .select(workItemSelect)
+    .eq("company_id", scope.organizationId)
+    .eq("project_id", projectId)
+    .order("status", { ascending: true })
+    .order("due_at", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: true });
+
+  if (response.error) {
+    throw new Error(`Unable to load project work items: ${response.error.message}`);
+  }
+
+  return ((response.data ?? []) as WorkItemRow[]).map(mapWorkItem);
+}
+
 export async function createWorkItem(input: WorkItemCreateInput) {
   const scope = await requireWorkItemScope("/dashboard");
   const source = await validateSourceLink({

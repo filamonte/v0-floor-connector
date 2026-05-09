@@ -45,6 +45,7 @@ function revalidateWorkItemSurfaces(returnTo: string) {
   revalidatePath("/dashboard");
   revalidatePath("/leads");
   revalidatePath("/appointments");
+  revalidatePath("/projects");
   revalidatePath(returnTo);
 }
 

@@ -1,5 +1,6 @@
 import type {
   ContractorGroup,
+  ContractorGroupAuditEvent,
   ContractorGroupStatus,
   ContractorGroupType,
   PlatformStarterPack,
@@ -182,6 +183,113 @@ export type ContractorGroupAssignmentProposalManualReviewChecklist = {
   manualAssignmentPathLabel: string;
   actionAvailable: false;
   note: string;
+};
+
+export type ContractorGroupProposalAssignmentReadinessStatus =
+  | "eligible_for_manual_review"
+  | "already_assigned"
+  | "blocked"
+  | "unavailable"
+  | "stale_recompute_required";
+
+export type ContractorGroupProposalAssignmentReadinessIssueSeverity =
+  | "warning"
+  | "blocking";
+
+export type ContractorGroupProposalAssignmentReadinessIssue = {
+  code: string;
+  severity: ContractorGroupProposalAssignmentReadinessIssueSeverity;
+  message: string;
+};
+
+export type ContractorGroupProposalAssignmentReadinessContext = {
+  organization?: {
+    id: string;
+    name?: string | null;
+  } | null;
+  contractorGroup?: {
+    id: string;
+    key: string;
+    name: string;
+    groupType: ContractorGroupType;
+    status: ContractorGroupStatus;
+  } | null;
+  existingMembership?: {
+    id?: string | null;
+    organizationId: string;
+    contractorGroupId: string;
+  } | null;
+  recentAuditEventCount?: number;
+};
+
+export type ContractorGroupProposalAssignmentReadiness = {
+  proposalId: string;
+  organizationId: string;
+  contractorGroupId: string;
+  eligible: boolean;
+  status: ContractorGroupProposalAssignmentReadinessStatus;
+  requiredFutureInputs: {
+    reasonNotesRequired: true;
+    confirmationRequired: true;
+    confirmationPhrase: "ASSIGN GROUP MANUALLY";
+  };
+  serverSideRecomputationRequirements: string[];
+  auditMetadataPreview: {
+    proposalSource: ContractorGroupAssignmentProposalSource;
+    confidence: ContractorGroupAssignmentProposalConfidence;
+    proposalReason: string;
+    proposalCaveats: string[];
+    groupKey: string;
+    groupType: ContractorGroupType;
+    groupStatus: ContractorGroupStatus;
+    organizationId: string;
+    organizationName: string;
+    recentAuditEventCount: number | null;
+  };
+  blockingIssues: ContractorGroupProposalAssignmentReadinessIssue[];
+  warningIssues: ContractorGroupProposalAssignmentReadinessIssue[];
+  safeOperatorSummary: string;
+  actionAvailable: false;
+};
+
+export type ContractorGroupProposalSubmittedAssignmentFingerprint = {
+  proposalId?: string | null;
+  organizationId?: string | null;
+  contractorGroupId?: string | null;
+  contractorGroupKey?: string | null;
+  contractorGroupType?: ContractorGroupType | null;
+  contractorGroupStatus?: ContractorGroupStatus | null;
+  status?: ContractorGroupAssignmentProposalStatus | null;
+  confidence?: ContractorGroupAssignmentProposalConfidence | null;
+  source?: ContractorGroupAssignmentProposalSource | null;
+  reasonCode?: ContractorGroupAssignmentProposalReasonCode | null;
+  manualReviewReadiness?: ContractorGroupAssignmentProposalManualReviewReadiness | null;
+};
+
+export type ContractorGroupProposalManualApplyServerReadiness = {
+  organizationId: string;
+  contractorGroupId: string;
+  proposal: ContractorGroupAssignmentProposal | null;
+  eligible: boolean;
+  status: ContractorGroupProposalAssignmentReadinessStatus;
+  reasonCode: ContractorGroupAssignmentProposalReasonCode | null;
+  readinessLabel: string;
+  readinessExplanation: string;
+  requiredConfirmationPhrase: "ASSIGN GROUP MANUALLY";
+  futureWritePreview: ContractorGroupAssignmentProposalFutureApplyPreview;
+  runtimeEffect: "none";
+  provisioningEffect: "none";
+  starterPackImpactPreview: ContractorGroupAssignmentProposalStarterPackImpactReference[];
+  auditPreviewMetadata:
+    | (ContractorGroupProposalAssignmentReadiness["auditMetadataPreview"] & {
+        reasonCode: ContractorGroupAssignmentProposalReasonCode;
+        manualReviewReadiness: ContractorGroupAssignmentProposalManualReviewReadiness;
+      })
+    | null;
+  blockingIssues: ContractorGroupProposalAssignmentReadinessIssue[];
+  warningIssues: ContractorGroupProposalAssignmentReadinessIssue[];
+  noWriteStatement: string;
+  actionAvailable: false;
 };
 
 function normalizeToken(value: string | null | undefined) {
@@ -934,6 +1042,519 @@ export function buildContractorGroupAssignmentProposalManualReviewChecklist(
     actionAvailable: false,
     note:
       "Manual review readiness is read-only. It explains evidence and future checks, but it does not approve, dismiss, or apply a contractor group assignment."
+  };
+}
+
+function readinessIssue(
+  code: string,
+  severity: ContractorGroupProposalAssignmentReadinessIssueSeverity,
+  message: string
+): ContractorGroupProposalAssignmentReadinessIssue {
+  return { code, severity, message };
+}
+
+function noWriteFutureApplyPreview(
+  summary: string
+): ContractorGroupAssignmentProposalFutureApplyPreview {
+  return {
+    currentActionAvailable: false,
+    assignmentApplied: false,
+    wouldCreateMembership: false,
+    wouldWriteAuditEvent: false,
+    affectedRecordTypes: [],
+    runtimeEffect: "none",
+    summary
+  };
+}
+
+function submittedFingerprintIssues(
+  proposal: ContractorGroupAssignmentProposal,
+  submitted?: ContractorGroupProposalSubmittedAssignmentFingerprint | null
+) {
+  if (!submitted) {
+    return [];
+  }
+
+  const comparisons: Array<{
+    label: string;
+    submittedValue: unknown;
+    currentValue: unknown;
+  }> = [
+    {
+      label: "proposalId",
+      submittedValue: submitted.proposalId,
+      currentValue: proposal.id
+    },
+    {
+      label: "organizationId",
+      submittedValue: submitted.organizationId,
+      currentValue: proposal.organizationId
+    },
+    {
+      label: "contractorGroupId",
+      submittedValue: submitted.contractorGroupId,
+      currentValue: proposal.contractorGroupId
+    },
+    {
+      label: "contractorGroupKey",
+      submittedValue: submitted.contractorGroupKey,
+      currentValue: proposal.contractorGroupKey
+    },
+    {
+      label: "contractorGroupType",
+      submittedValue: submitted.contractorGroupType,
+      currentValue: proposal.contractorGroupType
+    },
+    {
+      label: "contractorGroupStatus",
+      submittedValue: submitted.contractorGroupStatus,
+      currentValue: proposal.contractorGroupStatus
+    },
+    {
+      label: "status",
+      submittedValue: submitted.status,
+      currentValue: proposal.status
+    },
+    {
+      label: "confidence",
+      submittedValue: submitted.confidence,
+      currentValue: proposal.confidence
+    },
+    {
+      label: "source",
+      submittedValue: submitted.source,
+      currentValue: proposal.source
+    },
+    {
+      label: "reasonCode",
+      submittedValue: submitted.reasonCode,
+      currentValue: proposal.reasonCode
+    },
+    {
+      label: "manualReviewReadiness",
+      submittedValue: submitted.manualReviewReadiness,
+      currentValue: proposal.manualReviewReadiness
+    }
+  ];
+
+  return comparisons
+    .filter(
+      (comparison) =>
+        comparison.submittedValue !== undefined &&
+        comparison.submittedValue !== null &&
+        comparison.submittedValue !== comparison.currentValue
+    )
+    .map((comparison) =>
+      readinessIssue(
+        "stale_submitted_proposal_context",
+        "blocking",
+        `Submitted ${comparison.label} does not match the recomputed proposal.`
+      )
+    );
+}
+
+function isReviewableTenantStatus(status: string | null | undefined) {
+  return status === "active" || status === "trialing";
+}
+
+function defaultRecomputationRequirements() {
+  return [
+    "Reload the organization, contractor group, current memberships, and related starter-pack assignment references on the server.",
+    "Rebuild the proposal read model server-side for the requested organization/group pair.",
+    "Compare submitted proposal context with the recomputed proposal and block stale mismatches.",
+    "Check current membership again immediately before any future write.",
+    "Check contractor group status and organization status again immediately before any future write.",
+    "Use the existing audited manual assignment RPC/action path if a future action is approved."
+  ];
+}
+
+export function buildContractorGroupProposalManualApplyServerReadiness(input: {
+  organizationId: string;
+  contractorGroupId: string;
+  organizations: ContractorGroupProposalOrganization[];
+  groups: ContractorGroup[];
+  starterPacks?: PlatformStarterPack[];
+  recentAuditEvents?: ContractorGroupAuditEvent[];
+  submittedProposal?: ContractorGroupProposalSubmittedAssignmentFingerprint | null;
+}): ContractorGroupProposalManualApplyServerReadiness {
+  const organization =
+    input.organizations.find(
+      (candidate) => candidate.id === input.organizationId
+    ) ?? null;
+  const contractorGroup =
+    input.groups.find((candidate) => candidate.id === input.contractorGroupId) ??
+    null;
+  const baseBlockingIssues: ContractorGroupProposalAssignmentReadinessIssue[] = [];
+
+  if (!organization) {
+    baseBlockingIssues.push(
+      readinessIssue(
+        "organization_not_found",
+        "blocking",
+        "The target organization could not be loaded for server-side proposal recomputation."
+      )
+    );
+  } else if (!isReviewableTenantStatus(organization.tenantStatus)) {
+    baseBlockingIssues.push(
+      readinessIssue(
+        "organization_not_reviewable",
+        "blocking",
+        "Only active or trialing contractor organizations are eligible for future manual proposal assignment."
+      )
+    );
+  }
+
+  if (!contractorGroup) {
+    baseBlockingIssues.push(
+      readinessIssue(
+        "contractor_group_not_found",
+        "blocking",
+        "The target contractor group could not be loaded for server-side proposal recomputation."
+      )
+    );
+  }
+
+  if (!organization || !contractorGroup) {
+    return {
+      organizationId: input.organizationId,
+      contractorGroupId: input.contractorGroupId,
+      proposal: null,
+      eligible: false,
+      status: "unavailable",
+      reasonCode: null,
+      readinessLabel: "Unavailable",
+      readinessExplanation:
+        "Server-side proposal recomputation requires both organization and contractor group context.",
+      requiredConfirmationPhrase: "ASSIGN GROUP MANUALLY",
+      futureWritePreview: noWriteFutureApplyPreview(
+        "No future membership write is available because the proposal could not be recomputed from current server data."
+      ),
+      runtimeEffect: "none",
+      provisioningEffect: "none",
+      starterPackImpactPreview: [],
+      auditPreviewMetadata: null,
+      blockingIssues: baseBlockingIssues,
+      warningIssues: [],
+      noWriteStatement:
+        "Readiness only. No contractor group membership, audit event, starter-pack provisioning, entitlement, or runtime behavior is written.",
+      actionAvailable: false
+    };
+  }
+
+  const model = buildContractorGroupAssignmentProposals({
+    groups: input.groups,
+    organizations: input.organizations,
+    starterPacks: input.starterPacks ?? [],
+    filters: {
+      organizationId: input.organizationId,
+      status: "all",
+      confidence: "all",
+      groupType: "all"
+    }
+  });
+  const proposal =
+    model.proposals.find(
+      (candidate) =>
+        candidate.organizationId === input.organizationId &&
+        candidate.contractorGroupId === input.contractorGroupId
+    ) ?? null;
+
+  if (!proposal) {
+    return {
+      organizationId: input.organizationId,
+      contractorGroupId: input.contractorGroupId,
+      proposal: null,
+      eligible: false,
+      status: "unavailable",
+      reasonCode: null,
+      readinessLabel: "Unavailable",
+      readinessExplanation:
+        "No recomputed proposal row matched the requested organization and contractor group.",
+      requiredConfirmationPhrase: "ASSIGN GROUP MANUALLY",
+      futureWritePreview: noWriteFutureApplyPreview(
+        "No future membership write is available because the proposal row was not found after server-side recomputation."
+      ),
+      runtimeEffect: "none",
+      provisioningEffect: "none",
+      starterPackImpactPreview: [],
+      auditPreviewMetadata: null,
+      blockingIssues: [
+        ...baseBlockingIssues,
+        readinessIssue(
+          "proposal_not_found",
+          "blocking",
+          "The proposal must be recomputed from current server data before any future manual assignment."
+        )
+      ],
+      warningIssues: [],
+      noWriteStatement:
+        "Readiness only. No contractor group membership, audit event, starter-pack provisioning, entitlement, or runtime behavior is written.",
+      actionAvailable: false
+    };
+  }
+
+  const existingMembership =
+    contractorGroup.memberships.find(
+      (membership) => membership.organizationId === input.organizationId
+    ) ?? null;
+  const recentAuditEventCount =
+    input.recentAuditEvents?.filter(
+      (event) =>
+        event.contractorGroupId === input.contractorGroupId &&
+        event.organizationId === input.organizationId
+    ).length ?? null;
+  const readiness = buildContractorGroupProposalAssignmentReadiness(proposal, {
+    organization: {
+      id: organization.id,
+      name: organization.name
+    },
+    contractorGroup: {
+      id: contractorGroup.id,
+      key: contractorGroup.key,
+      name: contractorGroup.name,
+      groupType: contractorGroup.groupType,
+      status: contractorGroup.status
+    },
+    existingMembership,
+    recentAuditEventCount: recentAuditEventCount ?? undefined
+  });
+  const staleIssues = submittedFingerprintIssues(
+    proposal,
+    input.submittedProposal
+  );
+  const blockingIssues = [
+    ...baseBlockingIssues,
+    ...readiness.blockingIssues,
+    ...staleIssues
+  ];
+  const hasStaleSubmittedContext = staleIssues.length > 0;
+  const eligible =
+    readiness.eligible &&
+    proposal.manualReviewReadiness === "ready_for_review" &&
+    proposal.status === "proposed" &&
+    (proposal.confidence === "high" || proposal.confidence === "medium") &&
+    blockingIssues.length === 0;
+  const status: ContractorGroupProposalAssignmentReadinessStatus =
+    hasStaleSubmittedContext
+      ? "stale_recompute_required"
+      : readiness.status;
+  const futureWritePreview = eligible
+    ? proposal.futureApplyPreview
+    : noWriteFutureApplyPreview(
+        "No future membership write is recommended from this server-readiness state, and no current action is available."
+      );
+
+  return {
+    organizationId: input.organizationId,
+    contractorGroupId: input.contractorGroupId,
+    proposal,
+    eligible,
+    status,
+    reasonCode: proposal.reasonCode,
+    readinessLabel: proposal.readinessLabel,
+    readinessExplanation: proposal.readinessExplanation,
+    requiredConfirmationPhrase: "ASSIGN GROUP MANUALLY",
+    futureWritePreview,
+    runtimeEffect: "none",
+    provisioningEffect: "none",
+    starterPackImpactPreview: proposal.starterPackImpactPreview,
+    auditPreviewMetadata: {
+      ...readiness.auditMetadataPreview,
+      reasonCode: proposal.reasonCode,
+      manualReviewReadiness: proposal.manualReviewReadiness
+    },
+    blockingIssues,
+    warningIssues: readiness.warningIssues,
+    noWriteStatement:
+      "Readiness only. No contractor group membership, audit event, starter-pack provisioning, entitlement, or runtime behavior is written.",
+    actionAvailable: false
+  };
+}
+
+export function buildContractorGroupProposalAssignmentReadiness(
+  proposal: ContractorGroupAssignmentProposalCore,
+  context: ContractorGroupProposalAssignmentReadinessContext = {}
+): ContractorGroupProposalAssignmentReadiness {
+  const blockingIssues: ContractorGroupProposalAssignmentReadinessIssue[] = [];
+  const warningIssues: ContractorGroupProposalAssignmentReadinessIssue[] = [];
+  const organization = context.organization ?? null;
+  const contractorGroup = context.contractorGroup ?? null;
+  const existingMembership = context.existingMembership ?? null;
+
+  if (!organization) {
+    blockingIssues.push(
+      readinessIssue(
+        "missing_organization_context",
+        "blocking",
+        "Organization context must be loaded before a future proposal assignment can be considered."
+      )
+    );
+  } else if (organization.id !== proposal.organizationId) {
+    blockingIssues.push(
+      readinessIssue(
+        "stale_organization_context",
+        "blocking",
+        "Loaded organization context does not match the proposal and must be recomputed."
+      )
+    );
+  }
+
+  if (!contractorGroup) {
+    blockingIssues.push(
+      readinessIssue(
+        "missing_group_context",
+        "blocking",
+        "Contractor group context must be loaded before a future proposal assignment can be considered."
+      )
+    );
+  } else {
+    if (contractorGroup.id !== proposal.contractorGroupId) {
+      blockingIssues.push(
+        readinessIssue(
+          "stale_group_context",
+          "blocking",
+          "Loaded contractor group context does not match the proposal and must be recomputed."
+        )
+      );
+    }
+
+    if (
+      contractorGroup.status !== proposal.contractorGroupStatus ||
+      contractorGroup.groupType !== proposal.contractorGroupType ||
+      contractorGroup.key !== proposal.contractorGroupKey
+    ) {
+      blockingIssues.push(
+        readinessIssue(
+          "stale_group_metadata",
+          "blocking",
+          "Loaded contractor group metadata differs from the proposal and must be recomputed."
+        )
+      );
+    }
+  }
+
+  if (
+    existingMembership &&
+    existingMembership.organizationId === proposal.organizationId &&
+    existingMembership.contractorGroupId === proposal.contractorGroupId
+  ) {
+    warningIssues.push(
+      readinessIssue(
+        "membership_already_exists",
+        "warning",
+        "A current membership already exists; a future action should return already-assigned readback instead of writing."
+      )
+    );
+  }
+
+  if (proposal.contractorGroupStatus === "archived") {
+    blockingIssues.push(
+      readinessIssue(
+        "archived_group_blocked",
+        "blocking",
+        "Archived contractor groups are retained for history and must not receive new proposal-driven assignments."
+      )
+    );
+  }
+
+  if (proposal.contractorGroupStatus === "inactive") {
+    blockingIssues.push(
+      readinessIssue(
+        "inactive_group_blocked",
+        "blocking",
+        "Inactive contractor groups must be reactivated through the group status workflow before assignment."
+      )
+    );
+  }
+
+  if (
+    proposal.contractorGroupType === "future_entitlement" ||
+    proposal.contractorGroupType === "future_plan"
+  ) {
+    blockingIssues.push(
+      readinessIssue(
+        "future_group_type_blocked",
+        "blocking",
+        "Future plan and future entitlement groups are planning metadata only and are blocked for proposal assignment."
+      )
+    );
+  }
+
+  if (proposal.status === "unavailable" || proposal.status === "not_applicable") {
+    blockingIssues.push(
+      readinessIssue(
+        `${proposal.status}_proposal_blocked`,
+        "blocking",
+        "Only proposed high/medium confidence rows may be considered for a future manual assignment."
+      )
+    );
+  }
+
+  if (proposal.status === "proposed" && proposal.confidence === "low") {
+    blockingIssues.push(
+      readinessIssue(
+        "low_confidence_blocked",
+        "blocking",
+        "Low-confidence proposals are not eligible for a future proposal-to-assignment action."
+      )
+    );
+  }
+
+  for (const caveat of proposal.caveats) {
+    warningIssues.push(
+      readinessIssue("proposal_caveat", "warning", caveat)
+    );
+  }
+
+  const hasStaleContext = blockingIssues.some((issue) =>
+    issue.code.startsWith("stale_")
+  );
+  const status: ContractorGroupProposalAssignmentReadinessStatus =
+    existingMembership || proposal.status === "already_assigned"
+      ? "already_assigned"
+      : hasStaleContext
+        ? "stale_recompute_required"
+        : !organization || !contractorGroup
+          ? "unavailable"
+          : blockingIssues.length > 0
+            ? "blocked"
+            : proposal.status === "proposed" &&
+                (proposal.confidence === "high" || proposal.confidence === "medium") &&
+                proposal.contractorGroupStatus === "active"
+              ? "eligible_for_manual_review"
+              : "blocked";
+  const eligible = status === "eligible_for_manual_review";
+
+  return {
+    proposalId: proposal.id,
+    organizationId: proposal.organizationId,
+    contractorGroupId: proposal.contractorGroupId,
+    eligible,
+    status,
+    requiredFutureInputs: {
+      reasonNotesRequired: true,
+      confirmationRequired: true,
+      confirmationPhrase: "ASSIGN GROUP MANUALLY"
+    },
+    serverSideRecomputationRequirements: defaultRecomputationRequirements(),
+    auditMetadataPreview: {
+      proposalSource: proposal.source,
+      confidence: proposal.confidence,
+      proposalReason: proposal.reason,
+      proposalCaveats: proposal.caveats,
+      groupKey: proposal.contractorGroupKey,
+      groupType: proposal.contractorGroupType,
+      groupStatus: proposal.contractorGroupStatus,
+      organizationId: proposal.organizationId,
+      organizationName: proposal.organizationName,
+      recentAuditEventCount: context.recentAuditEventCount ?? null
+    },
+    blockingIssues,
+    warningIssues,
+    safeOperatorSummary: eligible
+      ? "Eligible for future manual review only. A future server action would still require reason/notes, confirmation, server-side recomputation, and the existing audited manual assignment path."
+      : "Not eligible for a future proposal assignment write in this state. Review the issues and recompute server-side before any future action.",
+    actionAvailable: false
   };
 }
 

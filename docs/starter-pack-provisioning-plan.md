@@ -25,7 +25,7 @@ Implemented today:
 - Approval drafts write only `platform_starter_pack_provisioning_runs` with status `draft` and corresponding `platform_starter_pack_provisioning_run_items`; they do not approve, run, void, roll back, copy, or provision anything.
 - The dry-run area shows a read-only provisioning audit observability panel for recent draft/run rows, summary counts, status filters, health chips, item outcome totals, destination-link counts, safe failed-run messages, and selected-run freshness blockers.
 - Rejected, blocked, failed-before-execution, and already-completed no-op execution attempts are persisted in `platform_starter_pack_provisioning_attempts` with safe operator messages and small metadata only.
-- Recent draft runs can be reviewed against a freshly recomputed server-side dry run to identify fresh, stale, invalid, or unavailable approval preparation state.
+- Recent draft runs can be reviewed against a freshly recomputed server-side dry run to identify fresh, stale, invalid, or unavailable approval preparation state; current source availability blockers surface as blocking review issues.
 - Fresh, non-blocking draft reviews can be marked `approved` after exact typed confirmation; this writes only the run header audit fields and does not execute provisioning.
 - Approved, fresh, non-blocking runs can be executed after typing `EXECUTE STARTER PACK`; execution calls a server-only service-role path backed by `private.execute_platform_starter_pack_provisioning_run(p_run_id uuid, p_actor_id uuid)` and its locked-down public wrapper, creates only missing tenant-owned template/catalog copies, updates audit item destinations, and completes the run.
 - Completed runs expose a read-only void-readiness usage check in `/super-admin/templates`; it counts known destination references and reports whether future audit-only void or archive-unused review can be considered, but it does not mutate audit rows or tenant-owned records.
@@ -67,7 +67,7 @@ Current approval draft capture is preparation only:
 - `already_exists` dry-run rows become `skipped_existing` / `skipped` draft items
 - draft items never set `destination_record_id`
 - idempotency keys prevent repeated submission from creating duplicate drafts for the same operator, organization, starter pack, and dry-run fingerprint
-- draft review is read-only and compares the stored run/items against current live dry-run output, including pack status, item count, source ids/types, actions, already-existing destination matches, and blocked/unavailable source state
+- draft review is read-only and compares the stored run/items against current live dry-run output, including pack status, item count, source ids/types, actions, already-existing destination matches, and blocked/unavailable source state; changed already-existing destination matches are stale, and current source availability blockers are blocking issues for any future approval path
 
 Current approval draft capture does not create or mutate contractor-owned `document_templates`, contractor-owned `catalog_items`, organization defaults, estimates, invoices, contracts, taxes, entitlements, modules, or workflow settings.
 

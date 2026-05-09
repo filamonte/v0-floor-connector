@@ -151,6 +151,17 @@ function rowSourceStatus(row: StarterPackProvisioningDryRunRow | null) {
   return row?.sourceStatus ?? null;
 }
 
+function isCurrentDryRunRowApprovalBlocking(
+  row: StarterPackProvisioningDryRunRow
+) {
+  return (
+    row.action === "blocked" ||
+    row.action === "unavailable" ||
+    row.sourceStatus === "inactive" ||
+    row.sourceStatus === "missing"
+  );
+}
+
 function organizationLabel(run: PlatformStarterPackProvisioningRunDetail) {
   return run.organizationName ?? run.organizationSlug ?? run.organizationId;
 }
@@ -284,6 +295,17 @@ export function buildStarterPackProvisioningDraftReview(input: {
     });
   }
 
+  const approvalBlockingCurrentRows = currentDryRun.rows.filter(
+    isCurrentDryRunRowApprovalBlocking
+  );
+
+  if (approvalBlockingCurrentRows.length > 0) {
+    issues.push({
+      severity: "blocking",
+      message: `The current dry run has ${approvalBlockingCurrentRows.length} source availability blocker(s); future approval must require a new clean draft after the source state is resolved.`
+    });
+  }
+
   for (const row of currentDryRun.rows) {
     currentRowsByKey.set(
       comparisonKey({
@@ -403,7 +425,7 @@ export function buildStarterPackProvisioningDraftReview(input: {
 
     itemComparisons.push({
       comparisonStatus:
-        row.action === "blocked" || row.action === "unavailable"
+        isCurrentDryRunRowApprovalBlocking(row)
           ? "invalid_now"
           : "added_in_current",
       starterPackItemId: row.starterPackItemId,
@@ -416,7 +438,7 @@ export function buildStarterPackProvisioningDraftReview(input: {
       currentMatchingExistingRecordId: row.matchingExistingRecordId,
       sourceStatus: row.sourceStatus,
       issue:
-        row.action === "blocked" || row.action === "unavailable"
+        isCurrentDryRunRowApprovalBlocking(row)
           ? "A current dry-run item was added and is blocked or unavailable."
           : "This current dry-run item was not captured in the stored draft."
     });

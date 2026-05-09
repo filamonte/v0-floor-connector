@@ -145,6 +145,37 @@ function mapSamples(records: SampleRecord[]) {
   );
 }
 
+function deriveJobDisplayLabel(record: {
+  id: string;
+  dispatch_status: string;
+  scheduled_date: string | null;
+  customers?: { name: string; company_name: string | null } | null;
+  projects?: { name: string } | null;
+  estimates?: { reference_number: string | null } | null;
+}) {
+  if (record.projects?.name) {
+    return record.projects.name;
+  }
+
+  if (record.customers?.name) {
+    return `${record.customers.name} job`;
+  }
+
+  if (record.customers?.company_name) {
+    return `${record.customers.company_name} job`;
+  }
+
+  if (record.estimates?.reference_number) {
+    return `Job from estimate ${record.estimates.reference_number}`;
+  }
+
+  if (record.scheduled_date) {
+    return `Scheduled job ${formatDate(record.scheduled_date)}`;
+  }
+
+  return `${record.dispatch_status.replaceAll("_", " ")} job ${record.id.slice(0, 8)}`;
+}
+
 function buildEligibilityPreview<
   TCategory extends AutomationNotificationPreferenceCategory
 >(input: {
@@ -325,7 +356,9 @@ export async function getAutomationPlanningData(
       .limit(3),
     supabase
       .from("jobs")
-      .select("id, title, scheduled_date, crew_vendor_id")
+      .select(
+        "id, dispatch_status, scheduled_date, crew_vendor_id, customers(name, company_name), projects(name), estimates(reference_number)"
+      )
       .eq("company_id", organizationId)
       .not("scheduled_date", "is", null)
       .order("scheduled_date", { ascending: true })
@@ -449,9 +482,19 @@ export async function getAutomationPlanningData(
   const scheduledJobRecords =
     ((recentScheduledJobsResponse.data as Array<{
       id: string;
-      title: string;
+      dispatch_status: string;
       scheduled_date: string | null;
       crew_vendor_id: string | null;
+      customers?: {
+        name: string;
+        company_name: string | null;
+      } | null;
+      projects?: {
+        name: string;
+      } | null;
+      estimates?: {
+        reference_number: string | null;
+      } | null;
     }> | null) ?? []);
   const communicationThreadRecords =
     ((recentCommunicationThreadsResponse.data as Array<{
@@ -519,7 +562,7 @@ export async function getAutomationPlanningData(
   const recentScheduledJobs = mapSamples(
     scheduledJobRecords.map((record) => ({
       id: record.id,
-      label: record.title,
+      label: deriveJobDisplayLabel(record),
       href: `/jobs/${record.id}`,
       meta: [
         record.scheduled_date ? `scheduled ${formatDate(record.scheduled_date)}` : null,
@@ -719,7 +762,7 @@ export async function getAutomationPlanningData(
       workflowSettings,
       category: "schedule_reminder",
       sampleLabel: latestScheduledJob
-        ? latestScheduledJob.title
+        ? deriveJobDisplayLabel(latestScheduledJob)
         : "No scheduled job sample",
       context: latestScheduledJob
         ? {
@@ -735,7 +778,7 @@ export async function getAutomationPlanningData(
       workflowSettings,
       category: "crew_assignment_reminder",
       sampleLabel: latestScheduledJob
-        ? latestScheduledJob.title
+        ? deriveJobDisplayLabel(latestScheduledJob)
         : "No scheduled job sample",
       context: latestScheduledJob
         ? {

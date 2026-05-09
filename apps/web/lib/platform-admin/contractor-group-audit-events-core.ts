@@ -94,6 +94,39 @@ export type ContractorGroupAuditObservability = {
   caveats: string[];
 };
 
+export type ContractorGroupAssignmentAuditMetadataInput = {
+  [key: string]: unknown;
+  assignmentContext?: unknown;
+  proposalSource?: unknown;
+  proposalConfidence?: unknown;
+  proposalStatus?: unknown;
+  proposalReasonCode?: unknown;
+  proposalFingerprint?: unknown;
+  recomputationStatus?: unknown;
+  operatorReasonPresent?: unknown;
+  organizationLabel?: unknown;
+  groupKey?: unknown;
+  groupType?: unknown;
+  groupStatus?: unknown;
+  blockedStateChecked?: unknown;
+};
+
+export type ContractorGroupAssignmentAuditMetadata = {
+  assignmentContext?: "manual" | "proposal_manual_review";
+  proposalSource?: string;
+  proposalConfidence?: "high" | "medium" | "low" | "unavailable";
+  proposalStatus?: "proposed" | "already_assigned" | "not_applicable" | "unavailable";
+  proposalReasonCode?: string;
+  proposalFingerprint?: string;
+  recomputationStatus?: string;
+  operatorReasonPresent?: boolean;
+  organizationLabel?: string;
+  groupKey?: string;
+  groupType?: ContractorGroupType;
+  groupStatus?: ContractorGroupStatus;
+  blockedStateChecked?: boolean;
+};
+
 const assignmentEventTypes: ContractorGroupAuditEventType[] = [
   "organization_assigned",
   "organization_removed",
@@ -116,6 +149,78 @@ const assignmentSources: ContractorGroupAssignmentSource[] = [
   "targeting_preview",
   "future_auto_assignment"
 ];
+
+const proposalAssignmentContexts = ["manual", "proposal_manual_review"] as const;
+const proposalConfidences = ["high", "medium", "low", "unavailable"] as const;
+const proposalStatuses = [
+  "proposed",
+  "already_assigned",
+  "not_applicable",
+  "unavailable"
+] as const;
+const contractorGroupStatuses: ContractorGroupStatus[] = [
+  "active",
+  "inactive",
+  "archived"
+];
+const contractorGroupTypes: ContractorGroupType[] = [
+  "trade_segment",
+  "onboarding",
+  "beta",
+  "internal",
+  "future_plan",
+  "future_entitlement",
+  "regional",
+  "custom"
+];
+
+function safeString(value: unknown, maxLength: number) {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim().slice(0, maxLength)
+    : undefined;
+}
+
+function safeEnum<T extends string>(
+  value: unknown,
+  allowedValues: readonly T[]
+): T | undefined {
+  return typeof value === "string" && allowedValues.includes(value as T)
+    ? (value as T)
+    : undefined;
+}
+
+function safeBoolean(value: unknown) {
+  return typeof value === "boolean" ? value : undefined;
+}
+
+export function sanitizeContractorGroupAssignmentAuditMetadata(
+  input: ContractorGroupAssignmentAuditMetadataInput | null | undefined
+): ContractorGroupAssignmentAuditMetadata {
+  if (!input || typeof input !== "object") {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries({
+      assignmentContext: safeEnum(
+        input.assignmentContext,
+        proposalAssignmentContexts
+      ),
+      proposalSource: safeString(input.proposalSource, 80),
+      proposalConfidence: safeEnum(input.proposalConfidence, proposalConfidences),
+      proposalStatus: safeEnum(input.proposalStatus, proposalStatuses),
+      proposalReasonCode: safeString(input.proposalReasonCode, 120),
+      proposalFingerprint: safeString(input.proposalFingerprint, 500),
+      recomputationStatus: safeString(input.recomputationStatus, 80),
+      operatorReasonPresent: safeBoolean(input.operatorReasonPresent),
+      organizationLabel: safeString(input.organizationLabel, 160),
+      groupKey: safeString(input.groupKey, 120),
+      groupType: safeEnum(input.groupType, contractorGroupTypes),
+      groupStatus: safeEnum(input.groupStatus, contractorGroupStatuses),
+      blockedStateChecked: safeBoolean(input.blockedStateChecked)
+    }).filter(([, value]) => value !== undefined)
+  ) as ContractorGroupAssignmentAuditMetadata;
+}
 
 export function contractorGroupAuditEventTypeForStatusTransition(input: {
   oldStatus: ContractorGroupStatus | null;

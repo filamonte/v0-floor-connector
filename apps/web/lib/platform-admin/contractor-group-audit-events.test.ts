@@ -13,6 +13,7 @@ import {
   buildContractorGroupAuditTimeline,
   contractorGroupAuditEventLabel,
   contractorGroupAuditEventTypeForStatusTransition,
+  sanitizeContractorGroupAssignmentAuditMetadata,
   summarizeSafeMetadata
 } from "./contractor-group-audit-events-core";
 
@@ -163,6 +164,68 @@ void test("contractor group assignment and removal metadata captures safe contex
       newAssignmentSource: "targeting_preview",
       removedMembershipId: "membership-1",
       notesPresent: true
+    }
+  );
+});
+
+void test("proposal assignment audit metadata sanitizer keeps expected safe fields", () => {
+  assert.deepEqual(
+    sanitizeContractorGroupAssignmentAuditMetadata({
+      assignmentContext: "proposal_manual_review",
+      proposalSource: "exact_region_match",
+      proposalConfidence: "high",
+      proposalStatus: "proposed",
+      proposalReasonCode: "region_match",
+      recomputationStatus: "eligible_for_manual_review",
+      operatorReasonPresent: true,
+      organizationLabel: "Acme Floors",
+      groupKey: "ca-regional",
+      groupType: "regional",
+      groupStatus: "active",
+      blockedStateChecked: true
+    }),
+    {
+      assignmentContext: "proposal_manual_review",
+      proposalSource: "exact_region_match",
+      proposalConfidence: "high",
+      proposalStatus: "proposed",
+      proposalReasonCode: "region_match",
+      recomputationStatus: "eligible_for_manual_review",
+      operatorReasonPresent: true,
+      organizationLabel: "Acme Floors",
+      groupKey: "ca-regional",
+      groupType: "regional",
+      groupStatus: "active",
+      blockedStateChecked: true
+    }
+  );
+});
+
+void test("manual assignment audit metadata default remains empty", () => {
+  assert.deepEqual(sanitizeContractorGroupAssignmentAuditMetadata(null), {});
+  assert.deepEqual(sanitizeContractorGroupAssignmentAuditMetadata({}), {});
+});
+
+void test("proposal assignment audit metadata sanitizer drops unsafe fields", () => {
+  assert.deepEqual(
+    sanitizeContractorGroupAssignmentAuditMetadata({
+      assignmentContext: "admin_override",
+      proposalConfidence: "certain",
+      proposalStatus: "approved",
+      groupType: "permission_group",
+      groupStatus: "deleted",
+      operatorReasonPresent: "yes",
+      blockedStateChecked: true,
+      proposalSource: " ".repeat(4),
+      proposalReasonCode: "x".repeat(130),
+      serviceRoleKey: "secret",
+      rawDatabaseError: { message: "boom" },
+      organizationLabel: "  Acme Floors  "
+    }),
+    {
+      blockedStateChecked: true,
+      proposalReasonCode: "x".repeat(120),
+      organizationLabel: "Acme Floors"
     }
   );
 });
@@ -366,6 +429,42 @@ void test("contractor group audit write migration uses private RPCs and locked-d
   assert.match(
     migration,
     /grant execute on function public\.remove_contractor_group_membership_with_audit[\s\S]+to service_role/
+  );
+  assert.doesNotMatch(migration, /grant execute[\s\S]+to authenticated/);
+});
+
+void test("contractor group assignment audit metadata migration keeps RPC locked down", () => {
+  const migration = readFileSync(
+    join(
+      process.cwd(),
+      "supabase",
+      "migrations",
+      "20260508041324_contractor_group_assignment_audit_metadata_rpc.sql"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    migration,
+    /create or replace function private\.sanitize_contractor_group_assignment_audit_metadata/
+  );
+  assert.match(
+    migration,
+    /create or replace function private\.assign_contractor_group_membership_with_audit_metadata/
+  );
+  assert.match(
+    migration,
+    /create or replace function public\.assign_contractor_group_membership_with_audit_metadata/
+  );
+  assert.match(migration, /p_audit_metadata jsonb default '\{\}'::jsonb/);
+  assert.match(migration, /v_safe_audit_metadata \|\|/);
+  assert.match(
+    migration,
+    /revoke all on function public\.assign_contractor_group_membership_with_audit_metadata[\s\S]+from authenticated/
+  );
+  assert.match(
+    migration,
+    /grant execute on function public\.assign_contractor_group_membership_with_audit_metadata[\s\S]+to service_role/
   );
   assert.doesNotMatch(migration, /grant execute[\s\S]+to authenticated/);
 });

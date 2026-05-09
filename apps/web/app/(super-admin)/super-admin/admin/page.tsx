@@ -319,10 +319,10 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
 
       <div id="platform-operations" className="grid gap-4 lg:grid-cols-2">
         <FutureCapabilityPanel title="Platform operations and errors">
-          A future platform operations console can centralize provider errors,
-          delivery failures, and workflow-error triage. This placeholder does
-          not read new queues, create operational logs, or change existing error
-          capture behavior.
+          The dedicated Operations page now centralizes read-only workflow-error,
+          provisioning audit, provisioning attempt, contractor group audit, and
+          tenant-status health signals. It does not create remediation controls,
+          operational logs, retry paths, or tenant-owned record changes.
         </FutureCapabilityPanel>
         <FutureCapabilityPanel title="Contractor groups">
           Contractor grouping for template assignment, starter-pack rollout, and

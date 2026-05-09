@@ -4,7 +4,7 @@ import type {
   ContractorGroupAssignmentAuditReadiness
 } from "@/lib/platform-admin/contractor-group-assignment-audit-readiness-core";
 import {
-  buildContractorGroupAssignmentProposalManualReviewChecklist,
+  type ContractorGroupAssignmentProposal,
   type ContractorGroupAssignmentProposalManualReviewChecklist,
   ContractorGroupAssignmentProposalConfidence,
   ContractorGroupAssignmentProposalReadModel,
@@ -19,6 +19,7 @@ import type {
   ContractorGroupObservabilityOrganizationSummary
 } from "@/lib/platform-admin/contractor-group-observability-core";
 import {
+  applyContractorGroupProposalManualAssignmentAction,
   archiveContractorGroupAction,
   assignContractorGroupMembershipAction,
   removeContractorGroupMembershipAction,
@@ -675,6 +676,66 @@ function proposalStatusClassName(status: string) {
   }
 }
 
+function readinessChipClassName(readiness: string) {
+  switch (readiness) {
+    case "ready_for_review":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    case "already_assigned":
+      return "border-sky-200 bg-sky-50 text-sky-700";
+    case "blocked":
+    case "future_only":
+      return "border-amber-200 bg-amber-50 text-amber-800";
+    case "needs_metadata":
+      return "border-violet-200 bg-violet-50 text-violet-700";
+    default:
+      return "border-slate-200 bg-slate-50 text-slate-600";
+  }
+}
+
+function caveatSeverityClassName(severity: string) {
+  switch (severity) {
+    case "blocking":
+      return "border-amber-200 bg-amber-50 text-amber-800";
+    case "warning":
+      return "border-yellow-200 bg-yellow-50 text-yellow-800";
+    default:
+      return "border-slate-200 bg-slate-50 text-slate-600";
+  }
+}
+
+function isProposalEligibleForManualAssignment(
+  proposal: ContractorGroupAssignmentProposal
+) {
+  return (
+    proposal.status === "proposed" &&
+    proposal.manualReviewReadiness === "ready_for_review" &&
+    (proposal.confidence === "high" || proposal.confidence === "medium") &&
+    proposal.assignmentApplied === false &&
+    proposal.runtimeEffect === "none" &&
+    proposal.contractorGroupStatus === "active" &&
+    proposal.contractorGroupType !== "future_plan" &&
+    proposal.contractorGroupType !== "future_entitlement"
+  );
+}
+
+function buildSubmittedProposalFingerprint(
+  proposal: ContractorGroupAssignmentProposal
+) {
+  return JSON.stringify({
+    proposalId: proposal.id,
+    organizationId: proposal.organizationId,
+    contractorGroupId: proposal.contractorGroupId,
+    contractorGroupKey: proposal.contractorGroupKey,
+    contractorGroupType: proposal.contractorGroupType,
+    contractorGroupStatus: proposal.contractorGroupStatus,
+    status: proposal.status,
+    confidence: proposal.confidence,
+    source: proposal.source,
+    reasonCode: proposal.reasonCode,
+    manualReviewReadiness: proposal.manualReviewReadiness
+  });
+}
+
 function ManualReviewChecklist({
   checklist
 }: {
@@ -690,7 +751,8 @@ function ManualReviewChecklist({
       </p>
       <p className="mt-2 text-sm leading-6 text-slate-600">{checklist.note}</p>
       <p className="mt-2 text-xs leading-5 text-slate-500">
-        Future action will require manual reason and audited assignment. Not implemented yet.
+        Manual assignment requires an operator reason, server-side proposal
+        recomputation, and audited assignment.
       </p>
       <div className="mt-3 grid gap-2 md:grid-cols-2">
         {visibleEvidence.map((item) => (
@@ -724,6 +786,216 @@ function ManualReviewChecklist({
       </div>
       <p className="mt-3 text-xs leading-5 text-slate-500">
         {checklist.manualAssignmentPathLabel} Action available: no.
+      </p>
+    </div>
+  );
+}
+
+function ProposalManualAssignmentForm({
+  proposal
+}: {
+  proposal: ContractorGroupAssignmentProposal;
+}) {
+  if (!isProposalEligibleForManualAssignment(proposal)) {
+    return null;
+  }
+
+  return (
+    <details
+      className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3"
+      data-testid="contractor-group-proposal-manual-assignment-details"
+    >
+      <summary className="cursor-pointer text-sm font-semibold text-amber-950">
+        Open manual assignment confirmation
+      </summary>
+      <form
+        action={applyContractorGroupProposalManualAssignmentAction}
+        aria-label={`Manually assign ${proposal.organizationName} to ${proposal.contractorGroupName}`}
+        className="mt-4 space-y-4"
+        data-testid="contractor-group-proposal-manual-assignment-form"
+        data-proposal-id={proposal.id}
+      >
+        <input type="hidden" name="organizationId" value={proposal.organizationId} />
+        <input
+          type="hidden"
+          name="contractorGroupId"
+          value={proposal.contractorGroupId}
+        />
+        <input
+          type="hidden"
+          name="submittedProposal"
+          value={buildSubmittedProposalFingerprint(proposal)}
+        />
+
+        <div className="rounded-xl border border-amber-300 bg-white px-3 py-2">
+          <p className="text-xs leading-5 text-amber-900">
+            This writes one contractor group membership and one audit event only.
+          </p>
+          <p className="mt-1 text-xs leading-5 text-amber-900">
+            No entitlement effect, provisioning effect, pricing/package effect,
+            contractor permission effect, starter-pack behavior, or runtime
+            behavior changes.
+          </p>
+          <p className="mt-1 text-xs leading-5 text-amber-900">
+            The server recomputes readiness before writing and may reject stale
+            proposals.
+          </p>
+          <p className="mt-1 text-xs leading-5 text-amber-900">
+            Starter-pack impact remains read-only targeting context.
+          </p>
+        </div>
+
+        <label className="block">
+          <span className="mb-2 block text-sm font-medium text-slate-800">
+            Operator reason
+          </span>
+          <textarea
+            name="operatorReason"
+            rows={3}
+            required
+            maxLength={1000}
+            placeholder="Record why this one proposal is being assigned manually."
+            className={inputClassName()}
+          />
+        </label>
+        <label className="block">
+          <span className="mb-2 block text-sm font-medium text-slate-800">
+            Type ASSIGN GROUP MANUALLY
+          </span>
+          <input
+            name="confirmationPhrase"
+            required
+            pattern="ASSIGN GROUP MANUALLY"
+            autoComplete="off"
+            className={inputClassName()}
+          />
+        </label>
+        <button
+          type="submit"
+          aria-label={`Assign ${proposal.organizationName} to ${proposal.contractorGroupName} manually`}
+          className="inline-flex h-9 items-center rounded-full border border-amber-300 bg-white px-4 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
+        >
+          Assign group manually
+        </button>
+      </form>
+    </details>
+  );
+}
+
+function ProposalReadinessDetails({
+  proposal
+}: {
+  proposal: ContractorGroupAssignmentProposal;
+}) {
+  const visibleEvidence = proposal.evidenceItems.slice(0, 4);
+  const visibleCaveats = proposal.caveatItems.slice(0, 4);
+  const visibleStarterPackImpacts = proposal.starterPackImpactPreview.slice(0, 3);
+  const affectedRecords =
+    proposal.futureApplyPreview.affectedRecordTypes.length > 0
+      ? proposal.futureApplyPreview.affectedRecordTypes.join(", ")
+      : "none";
+
+  return (
+    <div className="mt-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span
+          className={`rounded-full border px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${readinessChipClassName(
+            proposal.manualReviewReadiness
+          )}`}
+        >
+          {proposal.readinessLabel}
+        </span>
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600">
+          Reason: {proposal.reasonCode.replace(/_/g, " ")}
+        </span>
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600">
+          No runtime effect
+        </span>
+      </div>
+
+      <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+        Read-only review context
+      </p>
+      <p className="mt-1 text-sm leading-6 text-slate-600">
+        {proposal.readinessExplanation}
+      </p>
+
+      <div className="mt-3 grid gap-2 md:grid-cols-2">
+        {visibleEvidence.map((item) => (
+          <div
+            key={`${item.label}:${item.value}`}
+            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+              {item.label}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-slate-700">{item.value}</p>
+            <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+              {item.severity}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+          Caveats
+        </p>
+        {visibleCaveats.map((caveat) => (
+          <p
+            key={`${caveat.severity}:${caveat.label}`}
+            className={`rounded-xl border px-3 py-2 text-xs leading-5 ${caveatSeverityClassName(
+              caveat.severity
+            )}`}
+          >
+            {caveat.label} Severity: {caveat.severity}.
+          </p>
+        ))}
+      </div>
+
+      <div className="mt-3 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-800">
+          Future apply preview
+        </p>
+        <p className="mt-1 text-xs leading-5 text-sky-800">
+          {proposal.futureApplyPreview.summary}
+        </p>
+        <p className="mt-1 text-xs leading-5 text-sky-800">
+          Current action available: no. Assignment applied: no. Future affected
+          records: {affectedRecords}. Runtime effect:{" "}
+          {proposal.futureApplyPreview.runtimeEffect}.
+        </p>
+      </div>
+
+      {visibleStarterPackImpacts.length > 0 ? (
+        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+            Read-only starter-pack impact preview
+          </p>
+          <p className="mt-1 text-xs leading-5 text-slate-600">
+            These references are targeting context only. They do not provision
+            templates, catalog items, defaults, entitlements, or runtime behavior.
+          </p>
+          <div className="mt-2 space-y-2">
+            {visibleStarterPackImpacts.map((impact) => (
+              <p
+                key={`${impact.starterPackId}:${impact.assignmentId}`}
+                className="text-xs leading-5 text-slate-700"
+              >
+                {impact.starterPackName} ({impact.starterPackKey}) ·{" "}
+                {impact.starterPackStatus} · assignment{" "}
+                {impact.assignmentLabel ?? impact.assignmentKey ?? impact.assignmentId} ·{" "}
+                {impact.assignmentStatus} · provisioning effect:{" "}
+                {impact.provisioningEffect}
+              </p>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <p className="mt-3 text-xs leading-5 text-slate-500">
+        No assignment is applied from this display. No apply, bulk, provisioning,
+        entitlement, or runtime control exists here.
       </p>
     </div>
   );
@@ -909,11 +1181,6 @@ function AssignmentProposalsPanel({
             </div>
           ) : null}
           {visibleProposals.map((proposal) => {
-            const checklist =
-              buildContractorGroupAssignmentProposalManualReviewChecklist(
-                proposal
-              );
-
             return (
               <div
                 key={proposal.id}
@@ -956,7 +1223,9 @@ function AssignmentProposalsPanel({
                     ))}
                   </div>
                 ) : null}
-                <ManualReviewChecklist checklist={checklist} />
+                <ProposalReadinessDetails proposal={proposal} />
+                <ManualReviewChecklist checklist={proposal.manualReviewChecklist} />
+                <ProposalManualAssignmentForm proposal={proposal} />
               </div>
             );
           })}

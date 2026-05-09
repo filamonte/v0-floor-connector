@@ -18,23 +18,14 @@ type AssignablePersonOption = {
 type WorkItemCreateFormProps = {
   action: (formData: FormData) => void | Promise<void>;
   returnTo: string;
-  sourceType: Extract<WorkItemSourceType, "opportunity" | "appointment">;
+  sourceType: WorkItemSourceType;
   sourceId: string;
   linkPath: string;
   customerId?: string | null;
   projectId?: string | null;
-  defaultKind?: Extract<
-    WorkItemKind,
-    "manual" | "lead_follow_up" | "appointment_confirmation_prep" | "appointment_follow_up"
-  >;
+  defaultKind?: WorkItemKind;
   kindOptions?: Array<{
-    value: Extract<
-      WorkItemKind,
-      | "manual"
-      | "lead_follow_up"
-      | "appointment_confirmation_prep"
-      | "appointment_follow_up"
-    >;
+    value: WorkItemKind;
     label: string;
   }>;
   defaultAssignedPersonId?: string | null;
@@ -52,6 +43,9 @@ const defaultKindOptions: NonNullable<WorkItemCreateFormProps["kindOptions"]> = 
   { value: "lead_follow_up", label: "Lead follow-up" },
   { value: "appointment_confirmation_prep", label: "Appointment confirmation prep" },
   { value: "appointment_follow_up", label: "Appointment follow-up" },
+  { value: "estimate_follow_up", label: "Estimate follow-up" },
+  { value: "invoice_follow_up", label: "Invoice follow-up" },
+  { value: "human_handoff", label: "Human handoff" },
   { value: "manual", label: "Manual" }
 ];
 

@@ -205,3 +205,97 @@ $env:FLOORCONNECTOR_E2E_MANUAL_APPROVAL_ESTIMATE_PATH="/estimates/estimate-uuid"
 $env:PLAYWRIGHT_SKIP_WEB_SERVER="1"
 pnpm exec playwright test e2e/estimate-manual-approval-action.spec.js
 ```
+
+## Project AI Cue Bridge QA
+
+The project AI cue bridge spec uses the same protected project and shared authenticated storage state. It verifies that project guidance cues can open the existing internal work-item form with source-locked defaults without submitting the form. The same spec also covers the dashboard preview contract and a small accessibility/readability guard for cue priority text and contextual action names.
+
+The protected regression command is:
+
+```bash
+pnpm exec playwright test e2e/project-ai-cue-work-item-bridge.spec.js --project=chromium-protected
+```
+
+The approved-estimate-missing-contract regression first accepts an explicit project path:
+
+```bash
+$env:FLOORCONNECTOR_E2E_ESTIMATE_CUE_BRIDGE_PATH="/projects/project-uuid"
+pnpm exec playwright test e2e/project-ai-cue-work-item-bridge.spec.js --project=chromium-protected
+```
+
+The signed-ready-no-job regression also accepts an explicit project path:
+
+```bash
+$env:FLOORCONNECTOR_E2E_SIGNED_READY_NO_JOB_CUE_BRIDGE_PATH="/projects/project-uuid"
+pnpm exec playwright test e2e/project-ai-cue-work-item-bridge.spec.js --project=chromium-protected
+```
+
+The ready-project-with-unscheduled-job regression also accepts an explicit project path:
+
+```bash
+$env:FLOORCONNECTOR_E2E_UNSCHEDULED_JOB_CUE_BRIDGE_PATH="/projects/project-uuid"
+pnpm exec playwright test e2e/project-ai-cue-work-item-bridge.spec.js --project=chromium-protected
+```
+
+The ready-to-schedule already-scheduled-job handoff regression also accepts an explicit project path:
+
+```bash
+$env:FLOORCONNECTOR_E2E_SCHEDULED_JOB_HANDOFF_PATH="/projects/project-uuid"
+pnpm exec playwright test e2e/project-ai-cue-work-item-bridge.spec.js --project=chromium-protected
+```
+
+The open-blocker-field-note regression also accepts an explicit project path:
+
+```bash
+$env:FLOORCONNECTOR_E2E_FIELD_NOTE_CUE_BRIDGE_PATH="/projects/project-uuid"
+pnpm exec playwright test e2e/project-ai-cue-work-item-bridge.spec.js --project=chromium-protected
+```
+
+If no path is provided, the fixture-backed cue and handoff regressions create or reuse small canonical E2E fixtures for the contractor test organization:
+- approved-estimate cue: one customer, one project, one opportunity, and one approved estimate with no generated contract
+- signed-ready-no-job cue: one customer, one project, one opportunity, one approved estimate, and one signed contract with no linked jobs
+- ready-project-with-unscheduled-job cue: one customer, one project, one opportunity, one approved estimate, one signed contract, and exactly one unscheduled job
+- ready-to-schedule already-scheduled-job handoff: one customer, one project, one opportunity, one approved estimate, one signed contract, and one scheduled job with no unscheduled jobs
+- open-blocker-field-note cue: one customer, one ready project, one opportunity, one approved estimate, one signed contract, one daily log, and one open blocker field note
+
+The project cue bridge spec verifies:
+- unpaid deposit invoice, approved-estimate-missing-contract, signed-ready-no-job, ready-unscheduled-job, and open blocker/issue field-note bridge behavior
+- ready-to-schedule Project Detail handoff copy and routes for no-job, one-unscheduled-job, and already-scheduled-job states
+- dashboard project guidance preview routes back to Project Detail / `#project-guidance-cues`
+- dashboard preview does not expose cue-level `Create work item`
+- contextual dashboard actions preserve canonical workflow links
+- Project Detail cue actions expose readable priority text and contextual accessible names
+- opening a cue bridge does not create a work item until the existing form is submitted
+
+This requires the local-only service role key already used for E2E fixture setup:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL
+SUPABASE_SERVICE_ROLE_KEY
+FLOORCONNECTOR_E2E_EMAIL
+```
+
+The fixture does not add schema, migrations, duplicate task models, external AI calls, or autonomous work-item creation.
+
+## Schedule Ready Handoff QA
+
+The schedule ready handoff spec uses the same protected project and shared authenticated storage state. It verifies that Project Detail ready-to-schedule handoff URLs land on `/schedule` with the expected project/job context and do not save or mutate schedule data merely from loading the URL.
+
+The protected regression command is:
+
+```bash
+pnpm exec playwright test e2e/schedule-ready-handoff.spec.js --project=chromium-protected
+```
+
+The spec reuses the same local fixture shapes and optional project-path overrides documented above:
+
+```text
+FLOORCONNECTOR_E2E_UNSCHEDULED_JOB_CUE_BRIDGE_PATH
+FLOORCONNECTOR_E2E_SCHEDULED_JOB_HANDOFF_PATH
+```
+
+It verifies:
+- `/schedule?projectId={projectId}&jobId={jobId}&view=unscheduled&action=schedule` opens the existing schedule composer for that exact unscheduled job
+- `/schedule?projectId={projectId}&view=unscheduled&action=schedule` still uses the exact-one unscheduled job fallback when the project has exactly one unscheduled job
+- `/schedule?projectId={projectId}` stays project-scoped for already scheduled jobs without opening job creation, work-item creation, or schedule mutation surfaces
+- the intentional submit-path regression uses a disposable `[E2E] Schedule Submit Path ...` fixture, schedules that one canonical job through the existing `/schedule` composer, verifies the saved schedule persists after reload, confirms no duplicate jobs or work items were created, and resets that fixture job back to unscheduled after the assertions

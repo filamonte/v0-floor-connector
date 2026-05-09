@@ -11,8 +11,10 @@ import {
   archiveContractorGroup,
   assignPlatformAdminByEmail,
   assignOrganizationToContractorGroup,
+  assignOrganizationToContractorGroupWithAuditMetadata,
   createStarterPackProvisioningDraft,
   executeApprovedStarterPackProvisioningRun,
+  getContractorGroupProposalManualApplyServerReadiness,
   getStarterPackProvisioningRunDetail,
   recordStarterPackProvisioningExecutionAttempt,
   removeStarterPackAssignment,
@@ -36,6 +38,7 @@ import {
   contractorGroupInputSchema,
   contractorGroupMembershipInputSchema,
   contractorGroupMembershipRemoveInputSchema,
+  contractorGroupProposalManualApplyInputSchema,
   platformAdminAssignmentInputSchema,
   platformCatalogSeedInputSchema,
   platformFeaturePolicyInputSchema,
@@ -56,6 +59,10 @@ import {
   platformTenantResetInputSchema,
   platformWorkflowDefaultsInputSchema
 } from "./schemas";
+import {
+  applyContractorGroupProposalManualAssignment,
+  getContractorGroupProposalManualAssignmentErrorMessage
+} from "./contractor-group-proposal-apply-core";
 import { describeProvisioningExecutionAttemptForSchemaFailure } from "./starter-pack-provisioning-attempts-core";
 
 function getFieldValue(formData: FormData, key: string) {
@@ -88,6 +95,22 @@ function validUuidOrNull(value: string) {
   )
     ? value
     : null;
+}
+
+function parseSubmittedProposalFingerprint(value: string): Record<string, unknown> | null {
+  if (!value.trim()) {
+    return null;
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 function revalidatePlatformAdminSlice() {
@@ -448,6 +471,64 @@ export async function assignContractorGroupMembershipAction(formData: FormData) 
   redirect(
     buildRedirect("/super-admin/groups", {
       message: "Organization assignment was saved."
+    })
+  );
+}
+
+export async function applyContractorGroupProposalManualAssignmentAction(
+  formData: FormData
+) {
+  const scope = await requirePlatformAdminUser("/super-admin/groups");
+  const result = contractorGroupProposalManualApplyInputSchema.safeParse({
+    contractorGroupId: getFieldValue(formData, "contractorGroupId"),
+    organizationId: getFieldValue(formData, "organizationId"),
+    submittedProposal: parseSubmittedProposalFingerprint(
+      getFieldValue(formData, "submittedProposal")
+    ),
+    operatorReason: getFieldValue(formData, "operatorReason"),
+    confirmationPhrase: getFieldValue(formData, "confirmationPhrase")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/super-admin/groups", {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to apply contractor group proposal."
+      })
+    );
+  }
+
+  let successMessage =
+    "Contractor group proposal was manually assigned with audit metadata.";
+
+  try {
+    const assignmentResult = await applyContractorGroupProposalManualAssignment(
+      {
+        ...result.data,
+        userId: scope.userId
+      },
+      {
+        getReadiness: getContractorGroupProposalManualApplyServerReadiness,
+        assign: assignOrganizationToContractorGroupWithAuditMetadata
+      }
+    );
+    successMessage = assignmentResult.assignmentApplied
+      ? "Contractor group proposal was manually assigned with audit metadata."
+      : "Organization is already assigned to this contractor group; no duplicate membership was written.";
+  } catch (error) {
+    redirect(
+      buildRedirect("/super-admin/groups", {
+        error: getContractorGroupProposalManualAssignmentErrorMessage(error)
+      })
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    buildRedirect("/super-admin/groups", {
+      message: successMessage
     })
   );
 }

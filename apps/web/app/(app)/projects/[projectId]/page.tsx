@@ -28,17 +28,22 @@ import {
   ScheduleContextMetrics,
   ScheduleContextNotice
 } from "@/components/schedule-context-card";
+import { WorkItemCreateForm } from "@/components/work-items/work-item-create-form";
+import { WorkItemList } from "@/components/work-items/work-item-list";
 import { listContracts } from "@/lib/contracts/data";
 import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
 import { listDailyLogsByProject } from "@/lib/daily-logs/data";
 import { listCustomers } from "@/lib/customers/data";
 import { listEstimates, listProjectEstimateAttachments } from "@/lib/estimates/data";
+import { listFieldNotes } from "@/lib/field-notes/data";
 import { getInvoiceById, listInvoices } from "@/lib/invoices/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getOpportunityByProjectId } from "@/lib/opportunities/data";
+import { listPeople } from "@/lib/people/data";
 import { listPunchlistItemsByProject } from "@/lib/punchlists/data";
 import { listProgressBillingByProject } from "@/lib/progress-billing/data";
 import { updateProjectAction } from "@/lib/projects/actions";
+import { buildProjectCues, type ProjectCue } from "@/lib/projects/cues";
 import { getProjectById } from "@/lib/projects/data";
 import type { ProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
@@ -50,6 +55,13 @@ import {
   getScheduleSummarySortValue
 } from "@/lib/schedule/summary";
 import { listOpenTimeCardStates, listTimeCardsByProject } from "@/lib/time/data";
+import {
+  completeWorkItemAction,
+  createWorkItemAction,
+  dismissWorkItemAction
+} from "@/lib/work-items/actions";
+import { listWorkItemsForProject } from "@/lib/work-items/data";
+import { buildProjectGuidanceWorkItemPrefill } from "@/lib/work-items/prefill";
 
 type ProjectDetailPageProps = {
   params: Promise<{
@@ -58,6 +70,7 @@ type ProjectDetailPageProps = {
   searchParams?: Promise<{
     error?: string;
     message?: string;
+    workItemCue?: string;
   }>;
 };
 
@@ -100,6 +113,17 @@ type SectionOverviewProps = {
   linkLabel: string;
   stat: string;
 };
+
+function getProjectCuePriorityClassName(priority: ProjectCue["priority"]) {
+  switch (priority) {
+    case "critical":
+      return "border-rose-200 bg-rose-50 text-rose-900";
+    case "high":
+      return "border-amber-200 bg-amber-50 text-amber-950";
+    case "medium":
+      return "border-slate-200 bg-slate-50 text-slate-800";
+  }
+}
 
 function mapReadinessStageToWorkflowState(
   state: ReadinessStageView["state"]
@@ -242,6 +266,117 @@ function SectionOverview({
         </Link>
       </div>
     </div>
+  );
+}
+
+function ProjectCuePanel({ cues }: { cues: ProjectCue[] }) {
+  return (
+    <section
+      id="project-guidance-cues"
+      aria-labelledby="project-guidance-cues-title"
+      aria-describedby="project-guidance-cues-description"
+      className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+            Project guidance
+          </p>
+          <h3
+            id="project-guidance-cues-title"
+            className="mt-1 text-base font-semibold text-slate-950"
+          >
+            Suggested project actions
+          </h3>
+          <p
+            id="project-guidance-cues-description"
+            className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600"
+          >
+            Suggestions from current project records only. Review an existing workflow or
+            open a prefilled work item draft; nothing is created or changed until you submit.
+          </p>
+        </div>
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+          Review suggestion
+        </span>
+      </div>
+
+      {cues.length > 0 ? (
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          {cues.slice(0, 4).map((cue) => {
+            const cueDomId = cue.id.replace(/[^a-zA-Z0-9_-]/g, "-");
+            const cueTitleId = `${cueDomId}-title`;
+            const cueDescriptionId = `${cueDomId}-description`;
+            const cueReasonId = `${cueDomId}-reason`;
+
+            return (
+              <article
+                key={cue.id}
+                aria-labelledby={cueTitleId}
+                aria-describedby={`${cueDescriptionId} ${cueReasonId}`}
+                className={[
+                  "rounded-lg border px-4 py-3 text-sm leading-6",
+                  getProjectCuePriorityClassName(cue.priority)
+                ].join(" ")}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h4 id={cueTitleId} className="text-sm font-semibold text-slate-950">
+                      {cue.title}
+                    </h4>
+                    <p id={cueDescriptionId} className="mt-1 text-sm text-slate-700">
+                      {cue.description}
+                    </p>
+                    <p
+                      id={cueReasonId}
+                      className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-slate-500"
+                    >
+                      {cue.reason}
+                    </p>
+                  </div>
+                  <span className="rounded-full border border-white/70 bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                    Priority: {cue.priority}
+                  </span>
+                </div>
+                <div
+                  role="group"
+                  aria-label={`Actions for ${cue.title}`}
+                  className="mt-3 flex flex-wrap gap-2"
+                >
+                  <Link
+                    href={cue.href}
+                    aria-label={`${cue.actionLabel} for suggested project action: ${cue.title}`}
+                    title={`${cue.actionLabel}: ${cue.title}`}
+                    aria-describedby={`${cueDescriptionId} ${cueReasonId}`}
+                    className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:text-brand-700"
+                  >
+                    {cue.actionLabel}
+                  </Link>
+                  {cue.workItemBridge ? (
+                    <a
+                      href={cue.workItemBridge.href}
+                      aria-label={`${cue.workItemBridge.label} from suggested project action: ${cue.title}`}
+                      title={`${cue.workItemBridge.label}: ${cue.title}`}
+                      aria-describedby={`${cueDescriptionId} ${cueReasonId}`}
+                      className="inline-flex items-center rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-brand-700"
+                    >
+                      {cue.workItemBridge.label}
+                    </a>
+                  ) : null}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <div
+          role="status"
+          className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900"
+        >
+          No suggested project actions need review right now.
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -1191,12 +1326,23 @@ export default async function ProjectDetailPage({
     organizationId: project.organizationId,
     projectId: project.id
   });
-  const [projectTimeCards, openTimeStates, projectEstimateAttachments] = await Promise.all([
+  const [
+    projectTimeCards,
+    openTimeStates,
+    projectEstimateAttachments,
+    fieldNotes,
+    linkedWorkItems,
+    people
+  ] = await Promise.all([
     listTimeCardsByProject(project.id, `/projects/${projectId}`),
     listOpenTimeCardStates(),
-    listProjectEstimateAttachments(project.id, `/projects/${projectId}`)
+    listProjectEstimateAttachments(project.id, `/projects/${projectId}`),
+    listFieldNotes(),
+    listWorkItemsForProject(project.id, `/projects/${projectId}`),
+    listPeople()
   ]);
   const projectDailyLogs = await listDailyLogsByProject(project.id, `/projects/${projectId}`);
+  const projectFieldNotes = fieldNotes.filter((fieldNote) => fieldNote.projectId === project.id);
 
   const projectEstimates = estimates.filter((estimate) => estimate.projectId === project.id);
   const approvedEstimate = projectEstimates.find((estimate) => estimate.status === "approved");
@@ -1468,6 +1614,42 @@ export default async function ProjectDetailPage({
     isReadyToSchedule: Boolean(readinessSnapshot?.isReadyToSchedule),
     hasProgressBillingInvoiceGap
   });
+  const projectCues = buildProjectCues({
+    project,
+    readinessSnapshot,
+    estimates: projectEstimates,
+    contracts: projectContracts,
+    invoices: projectInvoices,
+    jobs: projectJobs,
+    fieldNotes: projectFieldNotes
+  });
+  const selectedWorkItemCue =
+    projectCues.find(
+      (cue) => cue.workItemBridge?.cue === resolvedSearchParams.workItemCue
+    ) ?? null;
+  const projectGuidanceWorkItemPrefill = selectedWorkItemCue?.workItemBridge
+    ? buildProjectGuidanceWorkItemPrefill({
+        projectId: project.id,
+        projectName: project.name,
+        customerName: project.customer?.name ?? null,
+        cueTitle: selectedWorkItemCue.title,
+        cueDescription: selectedWorkItemCue.description,
+        cueReason: selectedWorkItemCue.reason,
+        workflowHref: selectedWorkItemCue.href,
+        bridge: selectedWorkItemCue.workItemBridge
+      })
+    : null;
+  const defaultProjectWorkItemSource = projectGuidanceWorkItemPrefill ?? {
+    sourceType: "project" as const,
+    sourceId: project.id,
+    linkPath: `/projects/${project.id}`
+  };
+  const assignablePeople = people
+    .filter((person) => person.isActive && person.isAssignable)
+    .map((person) => ({
+      id: person.id,
+      displayName: person.displayName
+    }));
   const hasSignedContract = projectContracts.some((contract) => contract.status === "signed");
   const hasPaymentActivity = Boolean(
     latestPaidInvoice ||
@@ -1656,6 +1838,101 @@ export default async function ProjectDetailPage({
             <WorkflowBar title="Project workflow" steps={workflowSteps} />
 
             <ProjectStateSummary title="Project state summary" items={projectStateItems} />
+
+            <ProjectCuePanel cues={projectCues} />
+
+            <section
+              id="work-items"
+              className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5"
+            >
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                    Internal work items
+                  </p>
+                  <h3 className="mt-1 text-base font-semibold text-slate-950">
+                    Project follow-through
+                  </h3>
+                  <p className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600">
+                    Create internal contractor work tied to this project or a selected
+                    guidance source. Nothing is created until you submit, and submission stays
+                    separate from readiness, scheduling, invoices, contracts, jobs, and field notes.
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 md:w-56">
+                  <p className="font-semibold text-slate-950">Open linked items</p>
+                  <p className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
+                    {linkedWorkItems.filter((workItem) => workItem.status === "open").length}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                <section className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-4">
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      Create internal work item
+                    </p>
+                    {projectGuidanceWorkItemPrefill ? (
+                      <p className="text-sm leading-6 text-slate-600">
+                        Prefilled from project guidance. Review the owner, due date, and
+                        context; nothing is created until you submit.
+                      </p>
+                    ) : (
+                      <p className="text-sm leading-6 text-slate-600">
+                        Use this form for explicit contractor-owned follow-through on the
+                        project.
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-4">
+                    <WorkItemCreateForm
+                      action={createWorkItemAction}
+                      returnTo={`/projects/${project.id}`}
+                      sourceType={defaultProjectWorkItemSource.sourceType}
+                      sourceId={defaultProjectWorkItemSource.sourceId}
+                      linkPath={defaultProjectWorkItemSource.linkPath}
+                      customerId={project.customerId}
+                      projectId={project.id}
+                      defaultKind={projectGuidanceWorkItemPrefill?.kind ?? "manual"}
+                      defaultTitle={projectGuidanceWorkItemPrefill?.title}
+                      defaultDescription={projectGuidanceWorkItemPrefill?.description}
+                      defaultDueAt={projectGuidanceWorkItemPrefill?.dueAt}
+                      defaultPriority={projectGuidanceWorkItemPrefill?.priority}
+                      dedupeKey={projectGuidanceWorkItemPrefill?.dedupeKey}
+                      metadata={projectGuidanceWorkItemPrefill?.metadata}
+                      kindOptions={[
+                        { value: "estimate_follow_up", label: "Estimate follow-up" },
+                        { value: "invoice_follow_up", label: "Invoice follow-up" },
+                        { value: "human_handoff", label: "Human handoff" },
+                        { value: "manual", label: "Manual" }
+                      ]}
+                      assignablePeople={assignablePeople}
+                      boundaryCopy="Work items are internal-only and human-submitted. Creating, completing, or dismissing one does not change project readiness, schedule commitments, invoice/payment state, contract signature state, job state, or field-note status."
+                    />
+                  </div>
+                </section>
+
+                <section className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-4">
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    Linked work items
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Internal project actions tied through the canonical project relationship.
+                  </p>
+                  <div className="mt-4">
+                    <WorkItemList
+                      workItems={linkedWorkItems}
+                      returnTo={`/projects/${project.id}`}
+                      completeAction={completeWorkItemAction}
+                      dismissAction={dismissWorkItemAction}
+                      emptyTitle="No work items are linked to this project yet."
+                      emptyDescription="Create a manual internal work item when project follow-through needs an owner, due date, and completion state."
+                    />
+                  </div>
+                </section>
+              </div>
+            </section>
 
             {readinessSnapshot?.isReadyToSchedule ? (
               <ReadyToScheduleActionPanel

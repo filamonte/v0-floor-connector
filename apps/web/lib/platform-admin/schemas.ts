@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { STARTER_PACK_PROVISIONING_APPROVAL_CONFIRMATION } from "./starter-pack-provisioning-draft-review-core";
 import { STARTER_PACK_PROVISIONING_EXECUTION_CONFIRMATION } from "./starter-pack-provisioning-execution-core";
+import { CONTRACTOR_GROUP_PROPOSAL_MANUAL_ASSIGNMENT_CONFIRMATION } from "./contractor-group-proposal-apply-core";
 
 function trimmedNullableString(maxLength: number) {
   return z
@@ -235,6 +236,104 @@ export const contractorGroupMembershipInputSchema = z.object({
 
 export const contractorGroupMembershipRemoveInputSchema = z.object({
   membershipId: z.string().uuid("Contractor group membership id is required.")
+});
+
+const contractorGroupProposalSubmittedFingerprintSchema = z
+  .object({
+    proposalId: z.string().trim().nullable().optional(),
+    organizationId: z.string().uuid().nullable().optional(),
+    contractorGroupId: z.string().uuid().nullable().optional(),
+    contractorGroupKey: z.string().trim().nullable().optional(),
+    contractorGroupType: z
+      .enum(
+        [
+          "trade_segment",
+          "onboarding",
+          "beta",
+          "internal",
+          "future_plan",
+          "future_entitlement",
+          "regional",
+          "custom"
+        ] as const
+      )
+      .nullable()
+      .optional(),
+    contractorGroupStatus: z.enum(["active", "inactive", "archived"] as const).nullable().optional(),
+    status: z
+      .enum(["proposed", "already_assigned", "not_applicable", "unavailable"] as const)
+      .nullable()
+      .optional(),
+    confidence: z
+      .enum(["high", "medium", "low", "unavailable"] as const)
+      .nullable()
+      .optional(),
+    source: z
+      .enum(
+        [
+          "exact_region_match",
+          "exact_trade_match",
+          "onboarding_label_match",
+          "beta_label_match",
+          "existing_membership",
+          "insufficient_data",
+          "future_only"
+        ] as const
+      )
+      .nullable()
+      .optional(),
+    reasonCode: z
+      .enum(
+        [
+          "exact_region_match",
+          "exact_trade_match",
+          "onboarding_label_match",
+          "beta_label_match",
+          "missing_region_metadata",
+          "missing_trade_metadata",
+          "future_entitlement_blocked",
+          "future_plan_blocked",
+          "archived_group_blocked",
+          "inactive_group_not_recommended",
+          "existing_membership",
+          "not_applicable"
+        ] as const
+      )
+      .nullable()
+      .optional(),
+    manualReviewReadiness: z
+      .enum(
+        [
+          "ready_for_review",
+          "already_assigned",
+          "blocked",
+          "needs_metadata",
+          "future_only",
+          "not_recommended"
+        ] as const
+      )
+      .nullable()
+      .optional()
+  })
+  .strict();
+
+export const contractorGroupProposalManualApplyInputSchema = z.object({
+  contractorGroupId: z.string().uuid("Contractor group id is required."),
+  organizationId: z.string().uuid("Select a valid contractor organization."),
+  submittedProposal: contractorGroupProposalSubmittedFingerprintSchema,
+  operatorReason: z
+    .string()
+    .trim()
+    .min(1, "Enter an operator reason before assigning this proposal.")
+    .max(1000, "Operator reason must be 1000 characters or fewer."),
+  confirmationPhrase: z.literal(
+    CONTRACTOR_GROUP_PROPOSAL_MANUAL_ASSIGNMENT_CONFIRMATION,
+    {
+      errorMap: () => ({
+        message: `Type ${CONTRACTOR_GROUP_PROPOSAL_MANUAL_ASSIGNMENT_CONFIRMATION} to assign this proposal.`
+      })
+    }
+  )
 });
 
 export const platformStarterPackTemplateItemInputSchema = z.object({

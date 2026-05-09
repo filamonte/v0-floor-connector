@@ -25,6 +25,7 @@ Implemented today:
 - `contractor_groups` stores platform-owned group metadata.
 - `contractor_group_memberships` stores current explicit organization membership.
 - `contractor_group_audit_events` stores durable platform-admin-only audit/history rows for group lifecycle and assignment events. The table is hardened with RLS/grant posture, read-only in the UI, and written by transaction-aware server-side RPC wrappers for current group management actions.
+- A metadata-capable service-role-only assignment RPC/helper supports optional sanitized proposal-review audit metadata for the implemented proposal-to-manual-assignment action while preserving the existing direct manual assignment RPC behavior.
 - `/super-admin/groups` lets platform admins create, edit, archive, assign, remove, filter, and inspect groups.
 - `/super-admin/groups` includes read-only group observability, assignment proposals, an inferred assignment-history readiness panel, durable audit-history rows, and audit observability summaries for event counts, event type/source breakdowns, group and organization activity, metadata coverage, and missing context warnings.
 - Starter-pack targeting previews can match `future_contractor_group` assignment intent only through explicit current membership.
@@ -150,13 +151,13 @@ Current matching is intentionally conservative:
 - future-plan and future-entitlement groups are always unavailable/future-only
 - existing memberships always show as already assigned
 
-Assignment proposals do not write `contractor_group_memberships`, do not write audit events, do not provision starter packs, do not enable modules, do not change pricing/packages, do not grant contractor permissions, do not mutate tenant defaults, and do not affect runtime workflows. A human platform admin must still use the existing audited manual assignment flow to apply any membership.
+Assignment proposals remain read-model decision support until a platform admin explicitly applies one eligible row through the proposal manual-assignment action. The read model itself does not write `contractor_group_memberships`, does not write audit events, does not provision starter packs, does not enable modules, does not change pricing/packages, does not grant contractor permissions, does not mutate tenant defaults, and does not affect runtime workflows. The implemented action is a narrow server-side bridge into the existing audited manual assignment path.
 
 The current proposal inspection UI supports read-only filtering by organization, proposal status, confidence, and group type. For a selected organization it also summarizes total proposals, proposed rows, existing assignments, unavailable rows, and the most common reasons/caveats. These filters only narrow the read model; they do not apply memberships or create audit events.
 
 ## Assignment Proposal Manual Review Readiness
 
-Assignment proposals are suggestions, not actions. A future proposal-to-assignment workflow should move through an explicit human review lifecycle:
+Assignment proposals are suggestions until a platform admin explicitly accepts one eligible row. The implemented proposal-to-manual-assignment flow is intentionally narrow and keeps the broader proposal decision lifecycle future-only:
 
 - `suggested`: the read model has produced a proposal from current organization metadata, group definition, and membership state
 - `reviewed`: a platform admin has inspected the evidence, caveats, group status, current memberships, and audit history
@@ -174,12 +175,13 @@ Before any manual assignment is made from a proposal, the operator review surfac
 - durable contractor group audit history involving the group or organization
 - related starter-pack assignment references that use the group key, when applicable
 
-Future manual-review requirements:
+Implemented manual-review requirements:
 
 - platform-admin only
 - explicit reason/notes required before assignment
-- no bulk apply by default
-- no auto-assign by default
+- exact `ASSIGN GROUP MANUALLY` confirmation required before assignment
+- no bulk apply
+- no auto-assign
 - assignment must use the existing audited manual assignment RPC/action so membership and audit evidence are written together
 - proposal review must not bypass RLS/grant posture or expose service-role credentials to the browser
 
@@ -193,18 +195,18 @@ Future stale proposal rules should force recomputation or warning when:
 - the referenced starter-pack assignment intent changes
 - audit history shows a recent assignment/removal that may supersede the suggestion
 
-Before implementing any proposal action, FloorConnector should add a durable proposal decision/audit model, QA stale proposal detection against live data, require operator reason/confirmation, and verify that the only mutation path is the already-audited manual assignment flow. Proposals must never trigger entitlements, starter-pack provisioning, pricing/package behavior, contractor permissions, tenant defaults, or runtime workflows directly.
+The first proposal action is now implemented as a narrow server-side bridge into the existing audited manual assignment flow. It does not add a durable proposal decision/dismissal state machine, bulk actions, automation, entitlement behavior, starter-pack provisioning, pricing/package behavior, contractor permissions, tenant defaults, or runtime workflows. Future proposal-decision history or dismissal behavior still requires a separate design.
 
-The current `/super-admin/groups` proposal panel includes a read-only manual review checklist for visible proposal rows. It shows evidence items, future operator checks, caveats, suggested future reason text, and the manual assignment path label. `actionAvailable` is always false.
+The current `/super-admin/groups` proposal panel includes a manual review checklist for visible proposal rows. Eligible proposed high/medium-confidence rows also expose one expandable manual assignment form that requires operator reason plus exact `ASSIGN GROUP MANUALLY` confirmation. The proposal read model still keeps `actionAvailable` false because the write path is the separate platform-admin server action, not a read-model mutation.
 
-## Proposal-To-Manual-Assignment Implementation Plan
+## Proposal-To-Manual-Assignment Implemented Behavior
 
-The first future proposal action should be a human-confirmed server-side bridge into the existing audited manual assignment flow. A suggested action name is `createContractorGroupAssignmentFromProposal(...)`. This action is not implemented today.
+The first proposal action is implemented as a human-confirmed server-side bridge into the existing audited manual assignment flow. The current action name is `applyContractorGroupProposalManualAssignmentAction(...)`.
 
-Future action shape:
+Current action shape:
 
-- server action: `createContractorGroupAssignmentFromProposalAction(formData)` or an equivalent typed server boundary
-- core server helper: `createContractorGroupAssignmentFromProposal(input)`
+- server action: `applyContractorGroupProposalManualAssignmentAction(formData)`
+- core server helper: `applyContractorGroupProposalManualAssignment(input, dependencies)`
 - no client-side service-role access
 - no browser-side write path
 - no direct insert into `contractor_group_memberships` from UI code
@@ -216,7 +218,7 @@ Required inputs:
 - `contractor_group_id`
 - proposal fingerprint or recomputable proposal source tuple, such as proposal source, confidence, organization metadata fields used, group key/type/status, and generated reason text
 - operator reason/notes
-- optional confirmation phrase such as `ASSIGN GROUP MANUALLY`
+- exact confirmation phrase `ASSIGN GROUP MANUALLY`
 - current filtered UI context only for redirect/revalidation, not for authorization
 
 Required server-side recomputation:
@@ -233,26 +235,26 @@ Allowed proposal states:
 
 - `proposed` with `high` confidence may be eligible for manual review when the group is active and the organization is active enough for platform segmentation
 - `proposed` with `medium` confidence may be eligible only with stronger operator reason/notes and explicit caveat review
-- `already_assigned` should return an idempotent no-op/readback result and must not create a duplicate membership
+- `already_assigned` returns an idempotent no-op/readback result and does not create a duplicate membership
 - `unavailable` must be blocked
 - `not_applicable` must be blocked
 - archived groups must be blocked for new assignment
 - inactive groups must be blocked until reactivated or require a separate explicit status-management action first
-- `future_entitlement` and `future_plan` groups must be blocked in the first version
+- `future_entitlement` and `future_plan` groups are blocked
 
 Audit behavior:
 
-- the future proposal action must call the existing audited manual assignment RPC/action path, currently represented by `assignContractorGroupMembershipAction`, `assignOrganizationToContractorGroup`, and `assign_contractor_group_membership_with_audit`
+- the proposal action calls the existing audited manual assignment RPC/helper path, currently represented by `assignOrganizationToContractorGroupWithAuditMetadata` and `assign_contractor_group_membership_with_audit_metadata`, which preserves the same transaction-aware membership/audit boundary with proposal metadata
 - the resulting audit event must be `organization_assigned`
-- assignment source should remain `manual` unless a later migration safely adds a specific proposal-reviewed source
+- assignment source is `targeting_preview` so proposal-reviewed assignments are distinguishable from direct manual assignments
 - operator reason/notes should be required and passed through the audited assignment path
-- safe audit metadata should include proposal source, confidence, original proposal reason, recomputed proposal reason, group key/type/status, organization label/id, and whether starter-pack assignment references were present
+- safe audit metadata includes proposal source, confidence, status, reason code, recomputation status, operator-reason-present flag, group key/type/status, blocked-state-checked flag, organization label, and scalar proposal fingerprint
 - metadata must not include raw database errors, service-role keys, provider payloads, stack traces, or secret values
 
 Idempotency and concurrency expectations:
 
 - existing membership should never duplicate
-- repeated submit after the first successful assignment should return already-assigned/readback behavior
+- repeated review after the first successful assignment shows already-assigned/no eligible form; server-side already-assigned recomputation returns no-write/readback behavior
 - the final membership check and audit write should remain inside the transaction-aware RPC path
 - stale proposal detection should happen before the write, but the write path must still rely on database uniqueness/transaction guards
 - errors should be safe operator messages, not raw database details
@@ -260,11 +262,10 @@ Idempotency and concurrency expectations:
 Operator UI workflow:
 
 - show the read-only manual review checklist first
-- require explicit reason/notes before any future submit
-- require confirmation phrase for the first implementation
-- no bulk apply for the first version
+- require explicit reason/notes before submit
+- require confirmation phrase
+- no bulk apply
 - no auto-assign
-- no disabled fake button before the action is implemented
 - copy must say assignment is platform segmentation only and does not trigger entitlement, starter-pack provisioning, pricing/package behavior, contractor permission changes, tenant defaults, or runtime workflow behavior
 
 Security requirements:
@@ -276,7 +277,7 @@ Security requirements:
 - preserve current contractor group RLS/grant posture
 - do not grant contractor users direct visibility or mutation access to group proposal/action internals
 
-QA gates before implementation:
+Implemented QA/security gates:
 
 - unit coverage for proposal recomputation, fingerprint mismatch/stale behavior, allowed/blocked states, and idempotent already-assigned readback
 - focused tests for safe metadata shaping
@@ -285,6 +286,280 @@ QA gates before implementation:
 - live operator QA proving unavailable/not-applicable/archived/future-plan/future-entitlement states are blocked
 - before/after count checks proving only contractor group membership/audit counts change when the action succeeds
 - verification that document templates, catalog items, starter-pack provisioning runs/items, entitlements, pricing, permissions, tax, payroll, invoice, contract, and runtime workflow records do not change
+
+### Proposal Assignment Readiness Model
+
+Phase 6V added a pure readiness model before the proposal apply action existed. It remains a guardrail and read-model helper: it does not itself create a membership, write audit events, create a proposal decision record, or add runtime behavior. The later proposal apply action must still recompute server-side before any write.
+
+The readiness model returns:
+
+- whether the proposal could be eligible for manual review
+- readiness status: `eligible_for_manual_review`, `already_assigned`, `blocked`, `unavailable`, or `stale_recompute_required`
+- required inputs: reason/notes plus the confirmation phrase `ASSIGN GROUP MANUALLY`
+- server-side recomputation requirements
+- safe audit metadata preview for proposal source, confidence, caveats, group key/type/status, organization id/name, and recent audit context
+- blocking and warning issues
+- safe operator summary text
+- `actionAvailable: false`
+
+Current readiness rules are intentionally conservative:
+
+- `proposed` high-confidence and medium-confidence rows may be eligible for manual review only when the group is active and current loaded context matches the proposal
+- `already_assigned` returns readback/no-op guidance and must not duplicate membership
+- `unavailable` and `not_applicable` rows are blocked
+- low-confidence rows are blocked
+- archived and inactive groups are blocked
+- `future_plan` and `future_entitlement` groups are blocked
+- missing organization or group context is unavailable
+- mismatched loaded organization/group context returns `stale_recompute_required`
+- a current membership discovered at readiness time overrides the proposal row and returns `already_assigned`
+- every output keeps `actionAvailable: false`
+
+The apply action must still recompute the proposal server-side before any write. The readiness model is a guardrail and test target, not authority to mutate membership.
+
+## Proposal-To-Manual-Assignment Final Readiness Review
+
+Readiness verdict: the narrow human-confirmed proposal-to-manual-assignment implementation is complete and remains intentionally limited. The current foundation is still not ready for bulk apply, auto-assignment, proposal dismissal/history, entitlements, starter-pack auto-provisioning, pricing/package behavior, contractor permission changes, or any runtime workflow effect.
+
+Existing helpers and paths available:
+
+- proposal read model: `buildContractorGroupAssignmentProposals`
+- manual-review checklist builder: `buildContractorGroupAssignmentProposalManualReviewChecklist`
+- readiness model: `buildContractorGroupProposalAssignmentReadiness`
+- server recomputation readiness model: `buildContractorGroupProposalManualApplyServerReadiness`
+- audited direct manual assignment action path: `assignContractorGroupMembershipAction` -> `assignOrganizationToContractorGroup` -> `assign_contractor_group_membership_with_audit`
+- proposal manual assignment action path: `applyContractorGroupProposalManualAssignmentAction` -> `applyContractorGroupProposalManualAssignment` -> `assignOrganizationToContractorGroupWithAuditMetadata` -> `assign_contractor_group_membership_with_audit_metadata`
+- audit observability helpers for event labels, safe metadata summaries, timelines, group summaries, and organization summaries
+
+The implemented proposal action reuses the existing audited assignment boundary for the final membership write and `organization_assigned` audit event. It is a server-side wrapper that recomputes and validates proposal eligibility first, then calls the Phase 6Z service-role-only metadata-capable assignment RPC/helper for structured proposal-review audit evidence. Do not add separate Supabase calls around the membership RPC because that would weaken atomicity.
+
+Implemented action input contract includes:
+
+- `organization_id`
+- `contractor_group_id`
+- submitted proposal fingerprint or source tuple, including proposal id, status, confidence, source, reason code, group key/type/status, and organization id
+- operator reason/notes
+- confirmation phrase `ASSIGN GROUP MANUALLY`
+- redirect/filter context for returning the operator to the same read-only review, never for authorization
+
+Implemented server-side validation sequence:
+
+1. Require platform-admin access through the same server boundary used by current group management actions.
+2. Load organization, contractor group, current memberships, recent relevant audit context, and starter-pack assignment references on the server.
+3. Rebuild the proposal model server-side for the requested organization/group pair.
+4. Compare submitted proposal context with the recomputed row and block stale mismatches.
+5. Re-run readiness rules with current organization, group, and membership context.
+6. Require operator reason/notes and confirmation phrase.
+7. If eligible, call the existing audited manual assignment path exactly once.
+8. Revalidate `/super-admin/groups` and return a user-safe success or readback message.
+
+Implemented audit metadata is safe, bounded, and non-secret. It includes proposal source, confidence, status, reason code, recomputation status, operator-reason-present flag, group key/type/status, blocked-state-checked flag, organization label, and a bounded scalar proposal fingerprint. It excludes raw database errors, provider payloads, stack traces, service-role credentials, private user data beyond needed actor id/label, nested unsafe blobs, arrays, and unbounded metadata dumps.
+
+Implemented idempotency behavior:
+
+- if membership already exists before submit, return already-assigned/readback and do not write another membership
+- if membership is created by a concurrent submit, rely on the existing transaction/uniqueness guard and return already-assigned/readback after reload
+- repeated submit after success must not duplicate membership
+- audit evidence should reflect the actual manual assignment write; avoid adding separate proposal-accepted audit rows until durable proposal decision history exists
+
+Implemented user-safe error handling:
+
+- archived or inactive group: block and tell the operator to reactivate or choose an active group first
+- future-plan or future-entitlement group: block because those groups are planning metadata only
+- unavailable, not-applicable, or low-confidence proposal: block and explain that the first implementation only accepts high/medium confidence proposed rows
+- missing organization/group context: block as unavailable and ask the operator to refresh
+- changed organization metadata: block as stale recompute required when the proposal no longer matches
+- recomputed proposal no longer matches submitted context: block, ask the operator to refresh, and do not write
+- raw database errors must stay behind safe platform-admin messages
+
+Explicit final design answers:
+
+- Existing audited manual assignment RPC/action reuse: yes, for the final membership write and audit event, after server-side proposal recomputation.
+- New RPC needed: not for the first narrow version unless proposal-specific audit metadata cannot be passed through the existing audited assignment path atomically.
+- Confirmation phrase: yes, require `ASSIGN GROUP MANUALLY` for the first implementation.
+- Reason/notes: yes, require explicit operator reason/notes.
+- Low-confidence proposals: remain blocked for the first implementation.
+- Unavailable/not-applicable proposals: remain blocked.
+- Existing membership: return already-assigned/readback and do not duplicate membership.
+- Group archived/inactive between render and submit: block after recomputation; no assignment write.
+- Organization metadata changed between render and submit: recompute; block if the proposal no longer qualifies or the submitted fingerprint is stale.
+- Recomputed proposal mismatch: return `stale_recompute_required`, ask the operator to refresh, and do not write.
+
+Implemented security posture:
+
+- platform-admin only, checked server-side
+- no client/browser service-role exposure
+- preserve existing contractor group RLS/grant posture
+- do not grant `anon`, `authenticated`, or `public` execute access to sensitive mutation RPCs
+- do not expose contractor users to proposal/action internals
+- keep metadata sanitized and bounded
+- keep all membership writes inside the transaction-aware audited assignment path
+
+Implemented QA coverage:
+
+- unit tests for server-side recomputation, stale fingerprint mismatch, and readiness status mapping
+- unit tests for audit metadata shaping and secret/raw-error exclusion
+- action tests or focused integration tests for already-assigned idempotency and blocked states
+- live platform-admin QA for one high-confidence and one medium-confidence proposal
+- repeated-submit QA proving no duplicate membership
+- count checks proving only contractor group membership/audit counts change on success
+- negative QA for archived, inactive, future-plan, future-entitlement, unavailable, not-applicable, and low-confidence rows
+- verification that document templates, catalog items, starter-pack provisioning runs/items, entitlements, pricing, permissions, tax, payroll, invoice, contract, and runtime workflow records do not change
+
+UI/operator copy requirements for the implemented action:
+
+- show the manual-review checklist before any submit
+- state that assignment is platform segmentation only
+- state that the action writes current membership and audit evidence only
+- state that no entitlement, provisioning, pricing/package, contractor permission, tenant default, or runtime behavior is triggered
+- no bulk apply in the first version
+- no auto-assign
+- no disabled fake button or alternate write control
+
+## Proposal-To-Manual-Assignment Implementation Checklist
+
+Phase 6Y verified the existing audited manual assignment contract. The later proposal manual-assignment implementation reused that server-side assignment path for the final membership mutation and added a proposal-specific server action wrapper.
+
+Audited assignment contract verified:
+
+- `assignContractorGroupMembershipAction` requires platform-admin access through `requirePlatformAdminUser("/super-admin/groups")`.
+- `contractorGroupMembershipInputSchema` validates `contractorGroupId`, `organizationId`, `assignmentSource`, and `notes`.
+- `assignOrganizationToContractorGroup` uses the server-only Supabase admin client and calls `assign_contractor_group_membership_with_audit`.
+- `assign_contractor_group_membership_with_audit` locks the target group, blocks archived groups, validates the organization, locks the current membership row, upserts membership, and writes the audit row in the same database transaction.
+- RPC execute grants are revoked from `public`, `anon`, and `authenticated`, then granted to `service_role`.
+
+Implemented verdict:
+
+- The proposal action is a server-action wrapper around the existing audited assignment path for the membership write.
+- The metadata-capable RPC stores proposal source, confidence, status, reason code, recomputation status, blocked-state check evidence, group key/type/status, operator-reason-present evidence, organization label, and a bounded scalar proposal fingerprint.
+- The proposal action does not create a second membership-writing system and does not write proposal metadata through a separate non-transactional Supabase call around the membership RPC.
+
+Implementation anchors:
+
+- `apps/web/lib/platform-admin/schemas.ts`: proposal manual-assignment input schema.
+- `apps/web/lib/platform-admin/actions.ts`: `applyContractorGroupProposalManualAssignmentAction`.
+- `apps/web/lib/platform-admin/data.ts`: server-side readiness and metadata assignment helper calls.
+- `apps/web/lib/platform-admin/contractor-group-proposal-apply-core.ts`: pure action core, stale checks, blocked-state checks, metadata shaping, and safe error behavior.
+- `apps/web/lib/platform-admin/contractor-group-proposal-apply.test.ts`: focused action/security/idempotency tests.
+- `apps/web/components/contractor-group-manager.tsx`: eligible-only single-row manual assignment form; no bulk action.
+- `supabase/migrations/20260508041324_contractor_group_assignment_audit_metadata_rpc.sql`: metadata-capable assignment RPC.
+- `supabase/migrations/20260508174905_contractor_group_assignment_proposal_fingerprint_metadata.sql`: bounded scalar proposal fingerprint metadata support.
+
+Implemented server action shape:
+
+- action name: `applyContractorGroupProposalManualAssignmentAction(formData)`
+- core helper name: `applyContractorGroupProposalManualAssignment(input, dependencies)`
+- required input fields:
+  - `organizationId`
+  - `contractorGroupId`
+  - submitted proposal fingerprint fields
+  - `operatorReason`
+  - `confirmationPhrase`
+  - optional redirect/filter context
+- required confirmation phrase: `ASSIGN GROUP MANUALLY`
+- assignment source for proposal-reviewed assignments: `targeting_preview`
+
+Implemented input schema:
+
+- UUID validation for organization and contractor group ids.
+- non-empty reason/notes, capped to the current safe note length unless a migration changes it.
+- exact confirmation phrase match.
+- submitted proposal fingerprint fields for proposal id, status, confidence, source, reason code, group key/type/status, organization id, and manual-review readiness.
+- redirect/filter context should be validated as UI state only and never used for authorization.
+
+Implemented server-side recomputation sequence:
+
+1. Require platform-admin access.
+2. Load groups, tenants, starter-pack assignment references, and relevant contractor group audit events with server-side helpers.
+3. Recompute `buildContractorGroupProposalManualApplyServerReadiness` for the requested organization/group pair.
+4. Compare the submitted fingerprint to the recomputed proposal.
+5. Block stale, unavailable, not-applicable, low-confidence, archived, inactive, future-plan, future-entitlement, missing-context, and non-reviewable-organization states.
+6. Check current membership before calling the RPC. If membership already exists, return already-assigned/readback and do not call the assignment RPC.
+7. Require reason/notes and confirmation phrase.
+8. Shape safe audit context.
+9. Call the existing audited assignment path exactly once, using the Phase 6Z metadata-capable helper when structured proposal-review metadata should be recorded.
+10. Revalidate `/super-admin/groups` and redirect with a safe success/readback message.
+
+Implemented blocked states:
+
+- `already_assigned`: no-op/readback; do not call the RPC.
+- `unavailable`: blocked.
+- `not_applicable`: blocked.
+- `proposed` with `low` confidence: blocked.
+- archived groups: blocked by wrapper and RPC.
+- inactive groups: blocked by wrapper before the RPC because the current RPC blocks archived groups only.
+- `future_plan` and `future_entitlement` groups: blocked.
+- non-active/non-trialing organizations: blocked by server readiness.
+- stale submitted fingerprint: blocked.
+- recomputed proposal missing or no longer matching: blocked.
+
+Implemented audit metadata shape:
+
+- proposal source
+- confidence
+- proposal status
+- reason code
+- server recomputation status
+- operator-reason-present flag
+- group key/type/status
+- blocked-state-checked flag
+- safe organization label
+- bounded scalar proposal fingerprint
+- raw operator notes remain in the audited reason/notes field rather than duplicated as an unbounded metadata value
+- no raw database errors, provider payloads, stack traces, service-role secrets, nested unsafe blobs, arrays, or unbounded JSON dumps
+
+Current metadata support:
+
+- the original `assign_contractor_group_membership_with_audit` RPC still writes fixed metadata generated inside the RPC and remains the unchanged manual-assignment path
+- Phase 6Z adds `assign_contractor_group_membership_with_audit_metadata`, which accepts optional sanitized proposal-review metadata and writes it atomically with the membership/audit event
+- Phase 7A adds a follow-up sanitizer migration so proposal-review metadata may include a bounded scalar `proposalFingerprint`
+- exact proposal decision history, dismissal history, or bulk automation evidence still requires a separate future design
+- do not write proposal metadata through a separate non-transactional Supabase call around the membership RPC
+
+Implemented focused tests:
+
+- schema rejects missing reason/notes and wrong confirmation phrase
+- server readiness allows high/medium proposed active group only
+- low-confidence, unavailable, not-applicable, archived, inactive, future-plan, and future-entitlement rows are blocked
+- stale submitted fingerprint is blocked
+- existing membership returns already-assigned without calling the assignment helper
+- audit metadata shaping excludes raw errors and secrets
+- successful path calls the audited assignment helper exactly once
+- no starter-pack, entitlement, pricing, permission, template, catalog, tax, payroll, invoice, contract, or runtime helper is called
+
+Implemented browser/live QA:
+
+- opened `/super-admin/groups` with platform-admin auth on localhost
+- created a deliberate active QA trade-segment group through the existing audited group-management RPC so one high-confidence proposal existed
+- selected one eligible high-confidence proposal for the `jfilamonte` trialing QA organization
+- submitted the single-row form with operator reason and exact `ASSIGN GROUP MANUALLY` confirmation
+- confirmed exactly one current membership row and one `organization_assigned` audit event were created for the proposal apply
+- confirmed audit metadata persisted `assignmentContext = proposal_manual_review`, proposal source/confidence/status/reason code, recomputation status, group key/type/status, blocked-state flag, operator-reason-present flag, organization label, and proposal fingerprint
+- reloaded the same filtered proposal view and confirmed no eligible form remained because the organization was already assigned
+- cleaned up the deliberate membership through the audited removal RPC and archived the deliberate QA group through the audited archive RPC
+- verified template, catalog, and starter-pack provisioning counts did not change
+
+Future browser QA for later changes:
+
+- verify blocked states produce safe errors through the UI when deliberate blocked QA rows are available
+- confirm no bulk apply or auto-assign control appears after future proposal UI changes
+- confirm no entitlement, provisioning, pricing/package, contractor permission, or runtime control appears after future proposal UI changes
+
+Security/RPC posture verified:
+
+- no service-role key in browser/client code
+- mutation path remains server-side only
+- sensitive RPC execute remains unavailable to `public`, `anon`, and `authenticated`
+- `contractor_groups`, `contractor_group_memberships`, and `contractor_group_audit_events` keep RLS enabled and forced
+- any future RPC extension must be transaction-aware and granted to `service_role` only
+
+No-entitlement/provisioning/runtime guardrails:
+
+- the implemented action may create or read back one current group membership and matching audit evidence only
+- it must not provision starter packs
+- it must not mutate document templates or catalog items
+- it must not enable modules, pricing, packages, entitlements, contractor permissions, tenant defaults, workflows, invoices, contracts, tax, payroll, or notifications
+- group assignment remains platform segmentation evidence until a separate explicitly approved enforcement system exists
 
 ## Starter-Pack Assignment Interaction
 

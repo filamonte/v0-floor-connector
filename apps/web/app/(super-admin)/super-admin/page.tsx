@@ -125,6 +125,38 @@ export default async function SuperAdminHomePage() {
             <p className="mt-1">{tenants.length} tenant organizations on the shared platform model</p>
           </div>
         </SettingsOverviewCard>
+
+        <SettingsOverviewCard
+          title="Packages"
+          description="Read-only package, subscription-plan, billing setup, and activation readiness from existing records."
+          href="/super-admin/packages"
+          ctaLabel="Review package readiness"
+          tone="neutral"
+        >
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+            <p className="font-medium text-slate-950">
+              Package governance foundation
+            </p>
+            <p className="mt-1">
+              No Stripe calls, subscriptions, entitlement enforcement, module gating, or contractor permission changes.
+            </p>
+          </div>
+        </SettingsOverviewCard>
+
+        <SettingsOverviewCard
+          title="Operations"
+          description="Read-only platform health signals, audit activity, and support-readiness cues from existing records."
+          href="/super-admin/operations"
+          ctaLabel="Review system health"
+          tone="neutral"
+        >
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+            <p className="font-medium text-slate-950">Read-only operations foundation</p>
+            <p className="mt-1">
+              No retry, provisioning, entitlement, pricing, assignment, or runtime controls.
+            </p>
+          </div>
+        </SettingsOverviewCard>
       </div>
     </div>
   );

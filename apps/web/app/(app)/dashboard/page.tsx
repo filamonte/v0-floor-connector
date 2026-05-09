@@ -13,6 +13,7 @@ import { quickCreateCustomerAction } from "@/lib/customers/actions";
 import { listCustomers } from "@/lib/customers/data";
 import { quickCreateEstimateAction } from "@/lib/estimates/actions";
 import { listEstimates } from "@/lib/estimates/data";
+import { listFieldNotes } from "@/lib/field-notes/data";
 import { quickCreateInvoiceAction } from "@/lib/invoices/actions";
 import { listInvoices } from "@/lib/invoices/data";
 import { quickCreateJobAction } from "@/lib/jobs/actions";
@@ -32,8 +33,11 @@ import { listPayments } from "@/lib/payments/data";
 import { listPeople } from "@/lib/people/data";
 import { listPunchlistItems } from "@/lib/punchlists/data";
 import { listProgressBillingWorkspaces } from "@/lib/progress-billing/data";
+import { mapProjectCuesToDashboardPreviewItems } from "@/lib/dashboard/project-cue-preview";
 import { quickCreateProjectAction } from "@/lib/projects/actions";
+import { buildProjectCues, selectHighestPriorityProjectCues } from "@/lib/projects/cues";
 import { listProjects } from "@/lib/projects/data";
+import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
 import { filterUpcomingAssignedAppointments } from "@/lib/schedule/read-model";
 import {
   completeWorkItemAction,
@@ -127,7 +131,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     progressBillingWorkspaces,
     financialSettings,
     workflowSettings,
-    billingSetupState
+    billingSetupState,
+    fieldNotes
   ] = await Promise.all([
     listCustomers(),
     listOpportunities(),
@@ -146,12 +151,38 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     listProgressBillingWorkspaces(),
     getOrganizationFinancialSettings(organizationContext.organization.id),
     getOrganizationWorkflowSettings(organizationContext.organization.id),
-    getBillingSetupState(organizationContext.organization.id)
+    getBillingSetupState(organizationContext.organization.id),
+    listFieldNotes()
   ]);
 
   const today = new Date().toISOString().slice(0, 10);
   const tomorrow = addDaysDateKey(today, 1);
   const activeProjects = projects.filter((project) => project.status !== "completed");
+  const projectReadinessSnapshots = new Map(
+    await Promise.all(
+      activeProjects.map(async (project) => [
+        project.id,
+        await getProjectFinancialReadinessSnapshot({
+          organizationId: project.organizationId,
+          projectId: project.id
+        })
+      ] as const)
+    )
+  );
+  const projectCues = selectHighestPriorityProjectCues(
+    activeProjects.flatMap((project) =>
+      buildProjectCues({
+        project,
+        readinessSnapshot: projectReadinessSnapshots.get(project.id) ?? null,
+        estimates: estimates.filter((estimate) => estimate.projectId === project.id),
+        contracts: contracts.filter((contract) => contract.projectId === project.id),
+        invoices: invoices.filter((invoice) => invoice.projectId === project.id),
+        jobs: jobs.filter((job) => job.projectId === project.id),
+        fieldNotes: fieldNotes.filter((fieldNote) => fieldNote.projectId === project.id)
+      })
+    ),
+    5
+  );
   const openInvoices = invoices.filter(
     (invoice) => invoice.status !== "paid" && invoice.status !== "void"
   );
@@ -547,6 +578,19 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         }
       ]}
       attentionWidget={attentionWidget}
+      projectCueWidget={{
+        key: "project-cues",
+        eyebrow: "Project guidance",
+        title: "Suggested project actions",
+        description:
+          "Suggested actions from current project records only. Open the project cue panel or an existing workflow to review before creating anything.",
+        href: "/projects",
+        actionLabel: "Open projects",
+        emptyTitle: "No project cues need attention right now.",
+        emptyDescription:
+          "When readiness, deposit, field, contract, or schedule context needs review, project cues will surface here.",
+        items: mapProjectCuesToDashboardPreviewItems(projectCues)
+      }}
       workItemsWidget={{
         key: "work-items",
         eyebrow: showingCompanyWorkItems ? "Company work" : "My work",

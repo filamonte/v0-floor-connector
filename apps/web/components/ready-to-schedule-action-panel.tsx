@@ -76,6 +76,18 @@ export function ReadyToScheduleActionPanel({
     unscheduledJobCount,
     unscheduledJobId
   );
+  const primaryActionHref = hasJobs || hasUnscheduledJobs ? scheduleHref : createJobHref;
+  const primaryActionLabel = hasUnscheduledJobs
+    ? "Schedule job"
+    : hasJobs
+      ? "Open schedule"
+      : "Create job";
+  const secondaryActionHref = hasJobs || hasUnscheduledJobs ? createJobHref : scheduleHref;
+  const secondaryActionLabel = hasUnscheduledJobs
+    ? "Create another job"
+    : hasJobs
+      ? "Create another job"
+      : "Open schedule";
 
   return (
     <section className="rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-950">
@@ -116,7 +128,9 @@ export function ReadyToScheduleActionPanel({
             {hasJobs ? `${jobCount} job${jobCount === 1 ? "" : "s"} created` : "No job yet"}
           </p>
           <p className="mt-1 text-xs leading-5 text-slate-600">
-            Jobs remain the canonical execution record for this project.
+            {hasJobs
+              ? "Use the schedule workspace for timing and crew follow-through."
+              : "Jobs remain the canonical execution record for this project."}
           </p>
         </div>
         <div className="rounded-md border border-emerald-200 bg-white px-4 py-3">
@@ -127,33 +141,41 @@ export function ReadyToScheduleActionPanel({
             {hasUnscheduledJobs
               ? `${unscheduledJobCount} waiting on schedule`
               : hasJobs
-                ? "Schedule follow-through open"
+                ? "Job schedule already set"
                 : "Create the job first"}
           </p>
           <p className="mt-1 text-xs leading-5 text-slate-600">
-            Scheduling stays on the existing job schedule fields.
+            {hasUnscheduledJobs
+              ? "Scheduling stays on the existing job schedule fields."
+              : hasJobs
+                ? "Review calendar timing or crew details on the shared schedule."
+                : "Scheduling starts after the first canonical job exists."}
           </p>
         </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2.5">
         <Link
-          href={hasUnscheduledJobs ? scheduleHref : createJobHref}
+          href={primaryActionHref}
           className="inline-flex items-center gap-2 rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
         >
-          {hasUnscheduledJobs ? <CalendarDays className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-          {hasUnscheduledJobs ? "Schedule job" : "Create job"}
+          {hasJobs || hasUnscheduledJobs ? (
+            <CalendarDays className="h-4 w-4" />
+          ) : (
+            <Plus className="h-4 w-4" />
+          )}
+          {primaryActionLabel}
         </Link>
         <Link
-          href={hasUnscheduledJobs ? createJobHref : scheduleHref}
+          href={secondaryActionHref}
           className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-900 transition hover:border-emerald-300 hover:bg-emerald-50"
         >
-          {hasUnscheduledJobs ? (
+          {hasJobs || hasUnscheduledJobs ? (
             <Plus className="h-4 w-4" />
           ) : (
             <CalendarDays className="h-4 w-4" />
           )}
-          {hasUnscheduledJobs ? "Create another job" : "Open schedule"}
+          {secondaryActionLabel}
         </Link>
       </div>
     </section>

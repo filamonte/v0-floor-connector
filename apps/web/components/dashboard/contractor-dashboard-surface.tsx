@@ -132,6 +132,7 @@ export type ContractorDashboardSurfaceProps = {
   priorityItems: DashboardPriorityItem[];
   metrics: DashboardMetric[];
   attentionWidget?: DashboardWidget | null;
+  projectCueWidget?: DashboardWidget | null;
   workItemsWidget?: DashboardWidget | null;
   commercialWidgets: DashboardWidget[];
   operationsWidgets: DashboardWidget[];
@@ -341,6 +342,7 @@ function QueueRows({
                           getStatusBadgeClassName(item.badge)
                         ].join(" ")}
                       >
+                        <span className="sr-only">Status or priority: </span>
                         {item.badge}
                       </span>
                     ) : null}
@@ -361,6 +363,7 @@ function QueueRows({
                   {item.contextHref && item.contextLabel ? (
                     <Link
                       href={item.contextHref}
+                      title={`${item.contextLabel}: ${item.title}`}
                       className="inline-flex h-8 items-center border border-[#d6d6d6] bg-white px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f] transition hover:bg-[#f8f8f8]"
                     >
                       {item.contextLabel}
@@ -369,6 +372,7 @@ function QueueRows({
                   {item.bridgeHref ? (
                     <Link
                       href={item.bridgeHref}
+                      title={`${item.bridgeLabel ?? "Create work item"}: ${item.title}`}
                       className="inline-flex h-8 items-center border border-[#d6d6d6] bg-[#f7f8fa] px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f] transition hover:bg-white"
                     >
                       {item.bridgeLabel ?? "Create work item"}
@@ -486,6 +490,7 @@ export function ContractorDashboardSurface({
   priorityItems,
   metrics,
   attentionWidget,
+  projectCueWidget,
   workItemsWidget,
   commercialWidgets,
   operationsWidgets,
@@ -533,6 +538,16 @@ export function ContractorDashboardSurface({
           }
         : null,
     [workItemsWidget, deferredQuery]
+  );
+  const filteredProjectCueWidget = useMemo(
+    () =>
+      projectCueWidget
+        ? {
+            ...projectCueWidget,
+            items: filterItems(projectCueWidget.items, deferredQuery)
+          }
+        : null,
+    [projectCueWidget, deferredQuery]
   );
 
   const topLinks = [
@@ -696,6 +711,10 @@ export function ContractorDashboardSurface({
         <PriorityStrip items={priorityItems} />
 
         <PriorityGrid metrics={metrics} />
+
+        {filteredProjectCueWidget ? (
+          <QueueRows widget={filteredProjectCueWidget} items={filteredProjectCueWidget.items} />
+        ) : null}
 
         {filteredWorkItemsWidget ? (
           <QueueRows

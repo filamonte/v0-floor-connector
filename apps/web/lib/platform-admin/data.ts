@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 
+import { getServerEnv } from "@floorconnector/config";
 import type {
   CatalogItem,
   ContractorGroup,
@@ -38,6 +39,28 @@ import type {
 
 import { INVENTORY_ENABLED_FEATURE_POLICY } from "@/lib/organizations/module-settings";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import {
+  buildContractorGroupProposalManualApplyServerReadiness,
+  type ContractorGroupProposalSubmittedAssignmentFingerprint,
+  type ContractorGroupProposalManualApplyServerReadiness,
+  type ContractorGroupProposalOrganization
+} from "@/lib/platform-admin/contractor-group-assignment-proposals-core";
+import {
+  buildPlatformOperationsObservability,
+  type PlatformOperationsObservabilityInput,
+  type PlatformOperationsObservabilityModel,
+  type PlatformOperationsSourceKey
+} from "@/lib/platform-admin/operations-observability-core";
+import {
+  buildPlatformPackageGovernance,
+  type PlatformPackageGovernanceModel,
+  type PlatformPackageGovernanceStripeMode,
+  type PlatformPackageGovernanceTenant
+} from "@/lib/platform-admin/package-governance-core";
+import {
+  sanitizeContractorGroupAssignmentAuditMetadata,
+  type ContractorGroupAssignmentAuditMetadataInput
+} from "@/lib/platform-admin/contractor-group-audit-events-core";
 import {
   buildProvisioningDraftFingerprintPayload,
   buildProvisioningDraftSnapshot,
@@ -508,6 +531,8 @@ type TenantRow = {
   primary_trade: string | null;
   tenant_status: string;
   lifecycle_state: string;
+  stripe_customer_id: string | null;
+  stripe_payment_method_id: string | null;
   created_at: string;
   active_location:
     | Array<{
@@ -565,6 +590,29 @@ type EarlyAccessFeedbackRow = {
   message: string;
   metadata: Record<string, unknown> | null;
   created_at: string;
+};
+
+type PlatformOperationsWorkflowErrorRow = {
+  id: string;
+  organization_id: string | null;
+  action: string;
+  subject_type: string | null;
+  message: string;
+  created_at: string;
+  organization:
+    | {
+        id: string;
+        slug: string;
+        legal_name: string;
+        display_name: string;
+      }
+    | Array<{
+        id: string;
+        slug: string;
+        legal_name: string;
+        display_name: string;
+      }>
+    | null;
 };
 
 type MembershipActivityRow = {
@@ -1800,6 +1848,53 @@ export async function listContractorGroupsForOrganization(
     .filter((group) => group.memberships.length > 0);
 }
 
+function firstTenantLocation(
+  location: TenantRow["active_location"]
+): { state_region: string | null } | null {
+  return Array.isArray(location) ? (location[0] ?? null) : (location ?? null);
+}
+
+function tenantToContractorGroupProposalOrganization(
+  tenant: TenantRow
+): ContractorGroupProposalOrganization {
+  return {
+    id: tenant.id,
+    name: tenant.display_name || tenant.legal_name,
+    slug: tenant.slug,
+    tenantStatus: tenant.tenant_status,
+    stateRegion: firstTenantLocation(tenant.active_location)?.state_region ?? null,
+    primaryTrade: tenant.primary_trade,
+    labels: []
+  };
+}
+
+export async function getContractorGroupProposalManualApplyServerReadiness(input: {
+  organizationId: string;
+  contractorGroupId: string;
+  submittedProposal?: ContractorGroupProposalSubmittedAssignmentFingerprint | null;
+}): Promise<ContractorGroupProposalManualApplyServerReadiness> {
+  const [groups, tenants, starterPacks, auditEvents] = await Promise.all([
+    listContractorGroups(),
+    listTenantsForPlatformAdmin(),
+    listPlatformStarterPacks(),
+    listContractorGroupAuditEvents({
+      contractorGroupId: input.contractorGroupId,
+      organizationId: input.organizationId,
+      limit: 100
+    })
+  ]);
+
+  return buildContractorGroupProposalManualApplyServerReadiness({
+    organizationId: input.organizationId,
+    contractorGroupId: input.contractorGroupId,
+    organizations: tenants.map(tenantToContractorGroupProposalOrganization),
+    groups,
+    starterPacks,
+    recentAuditEvents: auditEvents,
+    submittedProposal: input.submittedProposal ?? null
+  });
+}
+
 export async function listContractorGroupAuditEvents(input: {
   contractorGroupId?: string | null;
   organizationId?: string | null;
@@ -2013,6 +2108,246 @@ export async function listRecentStarterPackProvisioningAttempts(
     : [];
 
   return rows.map(mapStarterPackProvisioningAttempt);
+}
+
+function tenantLabel(row: {
+  display_name?: string | null;
+  legal_name?: string | null;
+  slug?: string | null;
+}) {
+  return row.display_name || row.legal_name || row.slug || null;
+}
+
+function platformOperationsSourceCaveat(source: string) {
+  return `${source} could not be loaded for this read-only operations view. No tenant records were changed.`;
+}
+
+async function getPlatformOperationsTableCount(tableName: string) {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from(tableName)
+    .select("id", { count: "exact", head: true });
+
+  if (response.error) {
+    return null;
+  }
+
+  return getExactCount(response.count);
+}
+
+async function listRecentWorkflowErrorsForPlatformOperations(limit = 8) {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("workflow_error_events")
+    .select(
+      `
+        id,
+        organization_id,
+        action,
+        subject_type,
+        message,
+        created_at,
+        organization:companies (
+          id,
+          slug,
+          legal_name,
+          display_name
+        )
+      `
+    )
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (response.error) {
+    throw new Error(platformOperationsSourceCaveat("Workflow errors"));
+  }
+
+  const rows = Array.isArray(response.data)
+    ? (response.data as PlatformOperationsWorkflowErrorRow[])
+    : [];
+
+  return rows.map((row) => {
+    const organization = firstRelation(row.organization);
+
+    return {
+      id: row.id,
+      organizationId: row.organization_id,
+      organizationLabel: organization ? tenantLabel(organization) : null,
+      workflowName: row.action,
+      subjectType: row.subject_type,
+      safeMessage: row.message,
+      createdAt: row.created_at
+    };
+  });
+}
+
+export async function getPlatformOperationsObservability(): Promise<PlatformOperationsObservabilityModel> {
+  const unavailableSources: Partial<Record<PlatformOperationsSourceKey, string>> = {};
+  const [tenants, workflowErrors, starterPackRuns, starterPackAttempts, auditEvents] =
+    await Promise.all([
+      listTenantsForPlatformAdmin(),
+      listRecentWorkflowErrorsForPlatformOperations(8).catch(() => {
+        unavailableSources.workflow_errors = platformOperationsSourceCaveat(
+          "Workflow errors"
+        );
+        return null;
+      }),
+      listRecentStarterPackProvisioningRuns(8).catch(() => {
+        unavailableSources.starter_pack_runs = platformOperationsSourceCaveat(
+          "Starter-pack provisioning runs"
+        );
+        return null;
+      }),
+      listRecentStarterPackProvisioningAttempts(8).catch(() => {
+        unavailableSources.starter_pack_attempts = platformOperationsSourceCaveat(
+          "Starter-pack provisioning attempts"
+        );
+        return null;
+      }),
+      listContractorGroupAuditEvents({ limit: 8 }).catch(() => {
+        unavailableSources.contractor_group_audit_events = platformOperationsSourceCaveat(
+          "Contractor group audit events"
+        );
+        return null;
+      })
+    ]);
+
+  const [
+    contractorGroupMembershipCount,
+    starterPackAssignmentIntentCount
+  ] = await Promise.all([
+    getPlatformOperationsTableCount("contractor_group_memberships"),
+    getPlatformOperationsTableCount("platform_starter_pack_assignments")
+  ]);
+
+  if (contractorGroupMembershipCount === null) {
+    unavailableSources.contractor_group_memberships = platformOperationsSourceCaveat(
+      "Contractor group memberships"
+    );
+  }
+
+  if (starterPackAssignmentIntentCount === null) {
+    unavailableSources.starter_pack_assignment_intents = platformOperationsSourceCaveat(
+      "Starter-pack assignment intent"
+    );
+  }
+
+  const tenantStatusCounts = [...tenants.reduce((counts, tenant) => {
+    counts.set(tenant.tenant_status, (counts.get(tenant.tenant_status) ?? 0) + 1);
+    return counts;
+  }, new Map<string, number>()).entries()]
+    .map(([status, count]) => ({ status, count }))
+    .sort((left, right) => right.count - left.count || left.status.localeCompare(right.status));
+
+  const input: PlatformOperationsObservabilityInput = {
+    generatedAt: new Date().toISOString(),
+    counts: {
+      tenantCount: tenants.length,
+      contractorGroupMembershipCount,
+      starterPackAssignmentIntentCount
+    },
+    tenantStatusCounts,
+    workflowErrors,
+    starterPackRuns: starterPackRuns?.map((run) => ({
+      id: run.id,
+      starterPackLabel: run.starterPackName ?? run.starterPackKey,
+      organizationLabel: run.organizationName ?? run.organizationSlug,
+      status: run.status,
+      errorMessage: run.errorMessage,
+      itemCount: run.itemCount,
+      destinationRecordCount: run.destinationRecordCount ?? 0,
+      createdAt: run.createdAt,
+      updatedAt: run.updatedAt
+    })) ?? null,
+    starterPackAttempts: starterPackAttempts?.map((attempt) => ({
+      id: attempt.id,
+      starterPackLabel: attempt.starterPackName ?? attempt.starterPackKey,
+      organizationLabel: attempt.organizationName ?? attempt.organizationSlug,
+      outcome: attempt.outcome,
+      reasonCode: attempt.reasonCode,
+      safeMessage: attempt.safeMessage,
+      attemptedAt: attempt.attemptedAt
+    })) ?? null,
+    contractorGroupAuditEvents: auditEvents?.map((event) => ({
+      id: event.id,
+      eventType: event.eventType,
+      contractorGroupLabel: event.contractorGroupName ?? event.contractorGroupKey,
+      organizationLabel: event.organizationName ?? event.organizationSlug,
+      occurredAt: event.occurredAt
+    })) ?? null,
+    unavailableSources
+  };
+
+  return buildPlatformOperationsObservability(input);
+}
+
+function getStripeModeForPackageGovernance(input: {
+  publishableKey?: string | null;
+  secretKey?: string | null;
+}): PlatformPackageGovernanceStripeMode {
+  if (!input.publishableKey || !input.secretKey) {
+    return "not_configured";
+  }
+
+  const publishableIsTest = input.publishableKey.startsWith("pk_test_");
+  const secretIsTest = input.secretKey.startsWith("sk_test_");
+
+  if (publishableIsTest && secretIsTest) {
+    return "test";
+  }
+
+  if (
+    input.publishableKey.startsWith("pk_live_") &&
+    input.secretKey.startsWith("sk_live_")
+  ) {
+    return "live";
+  }
+
+  return "mixed";
+}
+
+function tenantToPackageGovernanceTenant(
+  tenant: TenantRow
+): PlatformPackageGovernanceTenant {
+  const currentSubscription = tenant.company_subscriptions?.[0] ?? null;
+  const currentPlan = currentSubscription?.subscription_plans ?? null;
+
+  return {
+    id: tenant.id,
+    slug: tenant.slug,
+    name: tenant.display_name || tenant.legal_name || tenant.slug,
+    tenantStatus: tenant.tenant_status,
+    lifecycleState: tenant.lifecycle_state,
+    planKey: currentPlan?.key ?? null,
+    planName: currentPlan?.name ?? null,
+    subscriptionStatus: currentSubscription?.status ?? null,
+    subscriptionLifecycleState: currentSubscription?.lifecycle_state ?? null,
+    hasStripeCustomerRef: Boolean(
+      tenant.stripe_customer_id || false
+    ),
+    hasStripePaymentMethod: Boolean(tenant.stripe_payment_method_id),
+    createdAt: tenant.created_at
+  };
+}
+
+export async function getPlatformPackageGovernance(): Promise<PlatformPackageGovernanceModel> {
+  const env = getServerEnv();
+  const tenants = await listTenantsForPlatformAdmin();
+  const publishableKeyConfigured = Boolean(env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+  const secretKeyConfigured = Boolean(env.STRIPE_SECRET_KEY);
+
+  return buildPlatformPackageGovernance({
+    generatedAt: new Date().toISOString(),
+    tenants: tenants.map(tenantToPackageGovernanceTenant),
+    stripeReadiness: {
+      publishableKeyConfigured,
+      secretKeyConfigured,
+      stripeMode: getStripeModeForPackageGovernance({
+        publishableKey: env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+        secretKey: env.STRIPE_SECRET_KEY
+      })
+    }
+  });
 }
 
 export async function recordStarterPackProvisioningExecutionAttempt(input: {
@@ -3092,6 +3427,42 @@ export async function assignOrganizationToContractorGroup(input: {
   }
 }
 
+export async function assignOrganizationToContractorGroupWithAuditMetadata(input: {
+  contractorGroupId: string;
+  organizationId: string;
+  assignmentSource: ContractorGroupAssignmentSource;
+  notes: string | null;
+  userId: string;
+  auditMetadata?: ContractorGroupAssignmentAuditMetadataInput | null;
+}): Promise<void> {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase.rpc(
+    "assign_contractor_group_membership_with_audit_metadata",
+    {
+      p_contractor_group_id: input.contractorGroupId,
+      p_organization_id: input.organizationId,
+      p_assignment_source: input.assignmentSource,
+      p_notes: input.notes,
+      p_actor_id: input.userId,
+      p_audit_metadata: sanitizeContractorGroupAssignmentAuditMetadata(
+        input.auditMetadata
+      )
+    }
+  );
+
+  if (response.error) {
+    throw new Error(
+      response.error.message.includes("Archived contractor groups")
+        ? "Archived contractor groups cannot receive new organization assignments."
+        : response.error.message.includes("valid contractor organization")
+          ? "Select a valid contractor organization."
+          : response.error.message.includes("valid contractor group")
+            ? "Select a valid contractor group."
+            : "Unable to assign organization to contractor group."
+    );
+  }
+}
+
 export async function removeOrganizationFromContractorGroup(input: {
   membershipId: string;
   userId: string;
@@ -3553,6 +3924,8 @@ export async function listTenantsForPlatformAdmin() {
         primary_trade,
         tenant_status,
         lifecycle_state,
+        stripe_customer_id,
+        stripe_payment_method_id,
         created_at,
         active_location:locations!companies_active_location_id_fkey (
           state_region
@@ -3590,6 +3963,8 @@ export async function listTenantsForPlatformAdmin() {
       primary_trade: string | null;
       tenant_status: string;
       lifecycle_state: string;
+      stripe_customer_id: string | null;
+      stripe_payment_method_id: string | null;
       created_at: string;
       active_location:
         | Array<{
@@ -3618,6 +3993,11 @@ export async function listTenantsForPlatformAdmin() {
                   key: string;
                   name: string;
                 }>
+              | {
+                  id: string;
+                  key: string;
+                  name: string;
+                }
               | null;
           }>
         | null;
@@ -3631,6 +4011,8 @@ export async function listTenantsForPlatformAdmin() {
       primary_trade: record.primary_trade,
       tenant_status: record.tenant_status,
       lifecycle_state: record.lifecycle_state,
+      stripe_customer_id: record.stripe_customer_id,
+      stripe_payment_method_id: record.stripe_payment_method_id,
       created_at: record.created_at,
       active_location: record.active_location,
       organization_workflow_settings: Array.isArray(record.organization_workflow_settings)
@@ -3641,9 +4023,7 @@ export async function listTenantsForPlatformAdmin() {
             id: subscription.id,
             status: subscription.status,
             lifecycle_state: subscription.lifecycle_state,
-            subscription_plans: Array.isArray(subscription.subscription_plans)
-              ? (subscription.subscription_plans[0] ?? null)
-              : null
+            subscription_plans: firstRelation(subscription.subscription_plans)
           }))
         : null
     } satisfies TenantRow;
