@@ -51,6 +51,19 @@ type DashboardWidget = {
   items: DashboardQueueItem[];
 };
 
+type MyWorkQueueMode = "company" | "mine" | "unresolved";
+
+type MyWorkQueueModeConfig = {
+  mode: MyWorkQueueMode;
+  label: string;
+  href: string;
+  description: string;
+  emptyTitle: string;
+  emptyDescription: string;
+  count: number;
+  widgets: DashboardWidget[];
+};
+
 type DashboardShortcut = {
   key: string;
   label: string;
@@ -136,6 +149,16 @@ export type ContractorDashboardSurfaceProps = {
   projectCueWidget?: DashboardWidget | null;
   workItemsWidget?: DashboardWidget | null;
   myWorkWidgets?: DashboardWidget[];
+  myWorkQueueModes?: {
+    defaultMode: MyWorkQueueMode;
+    selectedMode: MyWorkQueueMode;
+    caveats: {
+      noLinkedPerson: boolean;
+      noMineItems: boolean;
+      unresolvedItemsPresent: boolean;
+    };
+    modes: MyWorkQueueModeConfig[];
+  };
   commercialWidgets: DashboardWidget[];
   operationsWidgets: DashboardWidget[];
   financeWidgets: DashboardWidget[];
@@ -501,6 +524,7 @@ export function ContractorDashboardSurface({
   projectCueWidget,
   workItemsWidget,
   myWorkWidgets = [],
+  myWorkQueueModes,
   commercialWidgets,
   operationsWidgets,
   financeWidgets,
@@ -538,14 +562,30 @@ export function ContractorDashboardSurface({
       })),
     [financeWidgets, deferredQuery]
   );
-  const filteredMyWorkWidgets = useMemo(
-    () =>
-      myWorkWidgets.map((widget) => ({
-        ...widget,
-        items: filterItems(widget.items, deferredQuery)
-      })),
-    [myWorkWidgets, deferredQuery]
-  );
+  const selectedMyWorkQueueMode = useMemo(() => {
+    if (!myWorkQueueModes) {
+      return null;
+    }
+
+    return (
+      myWorkQueueModes.modes.find(
+        (mode) => mode.mode === myWorkQueueModes.selectedMode
+      ) ??
+      myWorkQueueModes.modes.find(
+        (mode) => mode.mode === myWorkQueueModes.defaultMode
+      ) ??
+      myWorkQueueModes.modes[0] ??
+      null
+    );
+  }, [myWorkQueueModes]);
+  const filteredMyWorkWidgets = useMemo(() => {
+    const widgets = selectedMyWorkQueueMode?.widgets ?? myWorkWidgets;
+
+    return widgets.map((widget) => ({
+      ...widget,
+      items: filterItems(widget.items, deferredQuery)
+    }));
+  }, [myWorkWidgets, selectedMyWorkQueueMode, deferredQuery]);
   const filteredWorkItemsWidget = useMemo(
     () =>
       workItemsWidget
@@ -743,22 +783,92 @@ export function ContractorDashboardSurface({
 
         {filteredMyWorkWidgets.length > 0 ? (
           <section aria-labelledby="dashboard-my-work-title" className="space-y-3">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6b7280]">
-                Operational intelligence
-              </p>
-              <h2
-                id="dashboard-my-work-title"
-                className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]"
-              >
-                My Work
-              </h2>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6b7280]">
+                  Operational intelligence
+                </p>
+                <h2
+                  id="dashboard-my-work-title"
+                  className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]"
+                >
+                  My Work
+                </h2>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  {selectedMyWorkQueueMode?.description ??
+                    "Derived attention items from canonical records."}
+                </p>
+              </div>
+              {myWorkQueueModes ? (
+                <div
+                  aria-label="My Work queue mode"
+                  className="inline-flex w-full flex-col gap-1 border border-[#d6d6d6] bg-white p-1 sm:w-auto sm:flex-row"
+                  role="tablist"
+                >
+                  {myWorkQueueModes.modes.map((mode) => {
+                    const selected = mode.mode === selectedMyWorkQueueMode?.mode;
+
+                    return (
+                      <a
+                        key={mode.mode}
+                        href={mode.href}
+                        role="tab"
+                        aria-selected={selected}
+                        aria-controls="dashboard-my-work-queues"
+                        className={[
+                          "flex h-9 items-center justify-between gap-3 px-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] transition sm:justify-center",
+                          selected
+                            ? "bg-[#171717] text-white"
+                            : "bg-white text-[#4f4f4f] hover:bg-[#f8f8f8]"
+                        ].join(" ")}
+                      >
+                        <span>{mode.label}</span>
+                        <span
+                          className={[
+                            "rounded-sm px-1.5 py-0.5 text-[10px]",
+                            selected ? "bg-white/15 text-white" : "bg-[#f1f1f1] text-[#555555]"
+                          ].join(" ")}
+                        >
+                          {mode.count}
+                        </span>
+                      </a>
+                    );
+                  })}
+                </div>
+              ) : null}
             </div>
-            <div className="grid gap-3 xl:grid-cols-4">
-              {filteredMyWorkWidgets.map((widget) => (
-                <QueueRows key={widget.key} widget={widget} items={widget.items} />
-              ))}
-            </div>
+            {myWorkQueueModes?.caveats.noLinkedPerson &&
+            selectedMyWorkQueueMode?.mode === "mine" ? (
+              <div className="border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-5 text-amber-950">
+                No active People record is linked to your app user yet. Mine can
+                still include cues resolved directly to your app user, but linking a
+                Person improves responsibility matching.
+              </div>
+            ) : null}
+            {myWorkQueueModes?.caveats.unresolvedItemsPresent &&
+            selectedMyWorkQueueMode?.mode === "unresolved" ? (
+              <div className="border border-[#d6d6d6] bg-white px-4 py-3 text-sm leading-5 text-slate-600">
+                These attention items need a responsible person/default. They also
+                remain visible in Company.
+              </div>
+            ) : null}
+            {selectedMyWorkQueueMode?.count === 0 ? (
+              <div className="border border-[#d6d6d6] bg-white px-4 py-5">
+                <p className="text-sm font-semibold text-[#171717]">
+                  {selectedMyWorkQueueMode.emptyTitle}
+                </p>
+                <p className="mt-2 text-sm leading-5 text-slate-500">
+                  {selectedMyWorkQueueMode.emptyDescription}
+                </p>
+              </div>
+            ) : null}
+            {selectedMyWorkQueueMode?.count === 0 ? null : (
+              <div id="dashboard-my-work-queues" className="grid gap-3 xl:grid-cols-4">
+                {filteredMyWorkWidgets.map((widget) => (
+                  <QueueRows key={widget.key} widget={widget} items={widget.items} />
+                ))}
+              </div>
+            )}
           </section>
         ) : null}
 

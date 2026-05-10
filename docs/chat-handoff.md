@@ -19,6 +19,278 @@ Status: compact operational handoff for the current branch.
 
 Use this file for fast orientation after reading [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md). For exact implemented truth, defer to [docs/current-state.md](C:/FloorConnector/docs/current-state.md).
 
+## My Work Queue Mode Browser Hardening
+
+This pass added a narrow browser hardening spec for dashboard My Work queue modes. It did not add migrations, schema, fields, an `operational_cues` table, task records, persisted cue lifecycle state, assignment actions, project-level overrides, record-level overrides, AI, notifications, snooze/dismiss, escalation routing, or new permissions.
+
+Files changed in this pass:
+
+- `e2e/dashboard-ui-my-work-queue-modes.spec.js`
+- `playwright.config.js`
+- `docs/chat-handoff.md`
+
+Fixture strategy:
+
+- The spec uses the active E2E tenant through the existing guarded service-role fixture pattern.
+- It temporarily forces only the cue rules needed for the queue-mode check: estimator estimate follow-up, billing-owner invoice follow-up, and record-owner ready-unscheduled-job follow-up.
+- It preserves and restores pre-existing cue rules and organization responsibility defaults.
+- It creates identifiable temporary customer, project, opportunity, estimate, invoice, job, and People rows, then deletes the temporary records after the test.
+- Cleanup verification after the passing run showed zero rows remaining for the temporary customer email, project name, opportunity source detail, estimate reference, invoice reference, and job notes.
+
+Browser coverage:
+
+- `/dashboard?myWork=company` renders Company selected and includes the user-resolved estimate cue, a person-resolved responsibility snippet, and the unresolved job cue.
+- `/dashboard?myWork=mine` renders Mine selected, includes the user-resolved estimate cue for the current E2E app user, excludes the person-only billing-owner cue, and excludes the unresolved job cue.
+- The Mine estimate cue link opens the canonical estimate workspace and the record-level Needs Attention panel renders.
+- `/dashboard?myWork=unresolved` renders Unresolved selected, includes the unresolved ready-unscheduled-job cue, and excludes the resolved user/person cues.
+- The same unresolved cue remains visible in Company.
+- The spec reported no console errors, page errors, 500s, or framework overlay.
+
+Person-resolved limitation:
+
+- A true `person_resolved` cue has no linked app user id. The dashboard derives the current Person from `people.membership_user_id = current user`, so a live browser cue cannot honestly be both true `person_resolved` and resolved to the current dashboard user without creating inconsistent data.
+- The browser spec therefore verifies that person-resolved responsibility remains visible in Company and does not leak into Mine. The pure helper test continues to cover the synthetic case where a cue has `person_resolved` plus a matching current Person id.
+
+Validation evidence:
+
+- `pnpm exec tsx --test apps/web/lib/operational-cues/my-work-queues.test.ts` passed 9 tests.
+- `pnpm exec tsx --test apps/web/lib/operational-cues/derive.test.ts` passed 11 tests.
+- `pnpm exec tsx --test apps/web/lib/operational-cues/responsibility.test.ts` passed 8 tests.
+- `pnpm exec tsx --test apps/web/lib/operational-cues/rule-settings-permissions.test.ts` passed 4 tests.
+- `pnpm exec playwright test e2e/dashboard-ui-my-work-queue-modes.spec.js --project=chromium-protected --no-deps --reporter=list` passed 1 test.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with Windows LF-to-CRLF warnings.
+
+Recommended next prompt:
+
+- "Run a small My Work queue UI polish pass. Review only the dashboard queue-mode control, counts, empty/caveat copy, and mobile wrapping. Fix confusing copy or layout issues only; do not add schema, cue instances, task records, assignments, persisted queue state, AI, notifications, snooze/dismiss, project/record overrides, or permission changes."
+
+## Billing / Provider Support Review Detail Docs Source-Of-Truth Review
+
+This docs-only source-of-truth review verified the implemented Billing / Provider Support Review Detail / Read-Only Evidence Inspection slice across `docs/current-state.md`, `docs/workflows.md`, `docs/Roadmap.md`, `docs/chat-handoff.md`, and `docs/README.md`. It did not change app code, tests, migrations, schema, RLS/grants, routes, UI behavior, server actions, RPCs, runtime behavior, billing/provider behavior, Stripe behavior, subscription behavior, entitlement/module behavior, package-assignment behavior, support-review mutation behavior, contractor permissions, reporting/export behavior, automation, AI behavior, operational-cues behavior, responsibility-role behavior, tenant-owned template/catalog records, or starter-pack provisioning.
+
+Files changed in this docs-only review:
+
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Source-of-truth verification:
+
+- `docs/current-state.md` correctly describes `/super-admin/packages/support-reviews/[supportReviewId]` as implemented platform-admin-only read-only support-review evidence inspection with safe unavailable state, safe evidence summaries, event evidence, and list/detail link integration from `/super-admin/packages` and provider mapping detail when rows exist.
+- `docs/current-state.md` now explicitly records that no support-review records are seeded by this surface and that populated support-review detail browser QA remains blocked in empty environments until real support-review rows exist.
+- `docs/workflows.md` keeps implemented read-only package/billing inspection, provider mapping readiness/detail inspection, and support review readiness/detail inspection separate from future-only corrective actions, provider operations, subscription operations, reconciliation auto-fix, reporting/export behavior, and entitlement/module/runtime enforcement.
+- `docs/workflows.md` now also records that support-review rows link to the detail route only when rows exist and that empty environments block populated detail QA without seeding records.
+- `docs/Roadmap.md` sequencing remains accurate: the implemented package/billing governance surface includes support-review evidence readiness/detail inspection, while package mutation, assignment activation, billing management, subscription operations, Stripe-backed billing, provider corrective actions, entitlement enforcement, module gating, pricing enforcement, contractor permissions, reporting/export, automation/AI, starter-pack provisioning, and runtime mutation remain future work.
+- `docs/README.md` needs no update because no new document was created.
+- `docs/chat-handoff.md` contains latest completion evidence, browser QA, counts, validation, the empty-data populated-detail QA caveat, and the prior lint-fix note. The stale next prompt pointing back to this docs-only review was replaced.
+
+Validation evidence:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with Windows LF-to-CRLF warnings on existing dirty working-tree files and edited docs.
+
+Recommended next prompt:
+
+- "Run a narrow source-of-truth and working-tree isolation review for the Super Admin Platform Evolution package/billing governance branch. Verify the current dirty working tree separates the completed support-review detail docs/test changes from unrelated My Work queue-mode changes, summarize file ownership by slice, and recommend the safest commit/PR split. Do not change app behavior, schema, migrations, RLS/grants, routes, UI behavior, billing/Stripe/subscription behavior, entitlement/module/runtime behavior, support-review mutation behavior, operational-cues behavior, responsibility-role behavior, or starter-pack provisioning."
+
+## Billing / Provider Support Review Detail Completion Verification
+
+This completion pass verified the Super Admin Billing / Provider Support Review Detail / Read-Only Evidence Inspection slice after the lint fix. It did not add migrations, schema changes, RLS/grant changes, server actions, RPCs, routes, UI behavior changes, corrective-action execution, support-review mutation controls, Stripe/provider calls, subscription operations, billing execution, provider mutation behavior, package assignment mutation, package lifecycle mutation, entitlement enforcement, module gating, runtime behavior, contractor permission changes, reporting/export behavior, automation, AI behavior, operational-cues product changes, responsibility-role product changes, tenant template/catalog writes, background jobs, or starter-pack provisioning changes.
+
+Files changed in this completion pass:
+
+- `apps/web/lib/platform-admin/contractor-package-billing-support-review-detail.test.ts`
+- `docs/chat-handoff.md`
+
+Slice completeness verified:
+
+- The support review detail read model exists in `apps/web/lib/platform-admin/contractor-package-billing-support-review-detail-core.ts`.
+- Server-only read helpers exist for one support review, support-review events for one review, and the combined detail read model in `apps/web/lib/platform-admin/data.ts`.
+- `/super-admin/packages/support-reviews/[supportReviewId]` exists as a platform-admin-only, read-only detail route with a safe unavailable state for unknown ids.
+- `/super-admin/packages` support-review rows link to `/super-admin/packages/support-reviews/{supportReviewId}` when support-review rows exist.
+- `/super-admin/packages/provider-mappings/[mappingId]` linked support-review rows also link to the support-review detail route when records exist.
+- No missing read-only slice part was found, so no additional app implementation was added.
+
+Read-model and UI verification:
+
+- The detail read model exposes support review id, review status, resolution category, provider environment, linked provider mapping / assignment / company / package / version labels when safely available, safe provider-reference / reconciliation / webhook / operator / rollback evidence summaries, support summary, blocked/escalation caveats, event timeline rows, explicit no-behavior flags, and safe unavailable state.
+- The detail read model exposes no mutation/action/form descriptor keys and keeps `actionAvailable`, `mutationAvailable`, `correctiveExecutionAvailable`, `stripeCallAvailable`, `providerCallAvailable`, `subscriptionOperationAvailable`, `billingMutationAvailable`, `billingExecutionAvailable`, `entitlementEffect`, `moduleEffect`, `runtimeEffect`, `packageAssignmentEffect`, and `contractorPermissionEffect` false.
+- The detail UI clearly states that support review is read-only evidence/review only and that no corrective-action execution, Stripe/provider calls, subscription operations, billing execution, package assignment mutation, entitlement/module/runtime behavior, or contractor permission changes are available.
+
+Browser QA:
+
+- Initial Playwright check against the existing `http://127.0.0.1:3004` dev server showed the saved platform-admin storage state was stale and redirected to `/login`; the existing platform-admin auth setup also hit a generic page error on that stale server.
+- A fresh isolated dev server was started on `http://127.0.0.1:3012`, the existing platform-admin auth setup was rerun successfully, and the dev server was stopped after QA.
+- `/super-admin/packages` rendered Package Definition Catalog, Contractor Package Assignments, Billing / Provider Mapping Readiness, and Billing / Provider Support Review Readiness.
+- `/super-admin/packages/support-reviews/not-a-real-support-review` rendered the support-review detail page, safe `Support review unavailable` state, safe unavailable copy, and read-only boundary copy.
+- The invalid support-review detail scope had `forms=0`, `inputs=0`, `hiddenInputs=0`, `buttons=0`, `selects=0`, `textareas=0`, and no mutation-looking links.
+- Browser QA reported no raw database/provider errors, no framework overlay, no console errors, and no failed requests.
+- Populated support-review detail QA remains blocked by empty support-review data. No support-review records were seeded.
+
+Counts before and after matched exactly:
+
+- `contractor_package_billing_support_reviews=0`
+- `contractor_package_billing_support_review_events=0`
+- `contractor_package_billing_mappings=0`
+- `contractor_package_billing_mapping_audit_events=0`
+- `contractor_package_assignments=0`
+- `contractor_package_assignment_audit_events=0`
+- `platform_package_definitions=0`
+- `platform_package_definition_versions=0`
+- `platform_package_definition_audit_events=0`
+- `companies=10`
+- `company_subscriptions=0`
+- `subscription_plans=0`
+- `document_templates=4`
+- `catalog_items=9`
+- `contractor_group_audit_events=52`
+- `contractor_group_memberships=0`
+- `platform_starter_pack_provisioning_runs=4`
+- `platform_starter_pack_provisioning_run_items=5`
+
+Validation evidence:
+
+- Focused package/provider/support tests passed 101 tests, including support-review detail, support-review read model, provider mapping read/detail, package governance, package definition catalog/detail/audit/lifecycle/planning, contractor assignment read/detail, and contractor assignment activation readiness.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with Windows LF-to-CRLF warnings on existing dirty working-tree files and `docs/chat-handoff.md`.
+
+Recommended next prompt:
+
+- "Run a narrow source-of-truth and working-tree isolation review for the Super Admin Platform Evolution package/billing governance branch. Verify the current dirty working tree separates the completed support-review detail docs/test changes from unrelated My Work queue-mode changes, summarize file ownership by slice, and recommend the safest commit/PR split. Do not change app behavior, schema, migrations, RLS/grants, routes, UI behavior, billing/Stripe/subscription behavior, entitlement/module/runtime behavior, support-review mutation behavior, operational-cues behavior, responsibility-role behavior, or starter-pack provisioning."
+
+## My Work Queue Modes Foundation
+
+This pass added dashboard-only My Work queue modes for Operational Intelligence without adding migrations, schema fields, an `operational_cues` table, task records, persisted cue lifecycle state, project-level overrides, record-level overrides, AI, notifications, snooze/dismiss, assignment actions, or new permission behavior.
+
+Files changed in this pass:
+
+- `apps/web/lib/operational-cues/my-work-queues.ts`
+- `apps/web/lib/operational-cues/my-work-queues.test.ts`
+- `apps/web/app/(app)/dashboard/page.tsx`
+- `apps/web/components/dashboard/contractor-dashboard-surface.tsx`
+- `e2e/operational-cues-record-panels.spec.js`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- Added `buildMyWorkQueueModes(...)`, a pure helper that filters already-derived cues into Company, Mine, and Unresolved modes.
+- Company includes all derived cues visible to the organization and remains the safety net.
+- Mine includes cues whose responsibility resolves to the current app user id or current linked active Person id. It is intentionally labeled "Items resolved to you," not "Assigned to me."
+- Unresolved includes cues with `strategy_only`, `organization_queue`, or `record_owner_unavailable` responsibility resolution. Those cues also remain visible in Company.
+- Default selected mode is Company for owner/admin/manager and Mine for member. All roles can access all three modes in this first pass because existing dashboard cue visibility is organization-wide.
+- Dashboard My Work now renders a segmented queue-mode control with counts, mode descriptions, and clear empty states. Selection is route-local via `/dashboard?myWork=company|mine|unresolved`; it is not persisted. Record-level Needs Attention panels were not changed.
+- The protected operational-cues browser spec now asserts the dashboard queue mode controls and preserves the existing record-panel checks.
+
+Validation evidence:
+
+- Focused operational cue tests passed:
+  - `pnpm exec tsx --test apps/web/lib/operational-cues/derive.test.ts`
+  - `pnpm exec tsx --test apps/web/lib/operational-cues/rule-definitions.test.ts`
+  - `pnpm exec tsx --test apps/web/lib/operational-cues/rule-settings-permissions.test.ts`
+  - `pnpm exec tsx --test apps/web/lib/operational-cues/responsibility.test.ts`
+  - `pnpm exec tsx --test apps/web/lib/operational-cues/my-work-queues.test.ts`
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with only existing Windows LF-to-CRLF warnings.
+
+Browser QA:
+
+- Safe dev-server cleanup stopped the stale `localhost:3001` listener, removed only generated `apps/web/.next`, and started a fresh dev server on `http://localhost:3000`.
+- `pnpm exec playwright test e2e/operational-cues-record-panels.spec.js --project=chromium-protected --no-deps -g "dashboard My Work"` passed. It verified `/dashboard` renders Company, Mine, and Unresolved controls with counts, Company preserves all fixture cue groups and canonical links, Unresolved renders the cleanup copy and fixture cues, and Mine renders cleanly.
+- A Playwright smoke check for `/settings/operational-intelligence` returned HTTP 200 with no console/page errors.
+- A Playwright smoke check opened an estimate cue link from `/dashboard?myWork=company`; the estimate detail `Needs Attention` panel rendered with no console/page errors.
+- Running the full `e2e/operational-cues-record-panels.spec.js` file still hit an existing protected-detail/auth fixture instability on contract detail routes during the broader record-panel test. The focused dashboard queue-mode test passed, and the separate estimate detail smoke verified a record-level panel remained available.
+
+Recommended next prompt:
+
+- "Run a narrow browser/live QA pass for My Work queue modes. Verify `/dashboard` Company/Mine/Unresolved rendering, counts, canonical cue links, record-level Needs Attention panels, and `/settings/operational-intelligence` remain safe. Fix only confirmed dashboard queue-mode defects; do not add schema, persisted cue state, assignments, notifications, AI, project/record overrides, or permission changes."
+
+## Billing / Provider Support Review Detail / Read-Only Evidence Inspection
+
+This Super Admin Platform Evolution slice added read-only billing/provider support-review detail inspection. It did not add migrations, schema changes, RLS/grant changes, corrective-action execution, support-review mutation controls, Stripe/provider calls, subscription operations, billing execution, provider mutation behavior, package assignment mutation, package lifecycle mutation, entitlement enforcement, module gating, runtime behavior, contractor permission changes, reporting/export behavior, automation, AI behavior, operational-cues product changes, responsibility-role product changes, tenant template/catalog writes, or starter-pack provisioning changes.
+
+Implementation files present for this detail slice:
+
+- `apps/web/lib/platform-admin/contractor-package-billing-support-review-detail-core.ts`
+- `apps/web/lib/platform-admin/contractor-package-billing-support-review-detail.test.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/app/(super-admin)/super-admin/packages/support-reviews/[supportReviewId]/page.tsx`
+- `apps/web/app/(super-admin)/super-admin/packages/page.tsx`
+- `apps/web/app/(super-admin)/super-admin/packages/provider-mappings/[mappingId]/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/Roadmap.md`
+- `docs/chat-handoff.md`
+
+Final working-tree changes from this pass:
+
+- `apps/web/lib/platform-admin/contractor-package-billing-support-review-detail.test.ts`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- Added `buildContractorPackageBillingSupportReviewDetail(...)`, a pure read-only detail model for one `contractor_package_billing_support_reviews` row and matching `contractor_package_billing_support_review_events`.
+- The detail model exposes review status/category/environment, linked provider mapping / assignment / company / package definition / package version labels when available, safe provider-reference/reconciliation/webhook/operator/rollback evidence summaries, blocked/escalation caveats, event timeline rows, safe unavailable state, operator guidance, and explicit no-behavior flags.
+- Added server-only platform-admin read helpers `getContractorPackageBillingSupportReviewById(...)`, `listContractorPackageBillingSupportReviewEventsForReview(...)`, and `getContractorPackageBillingSupportReviewDetail(...)`.
+- Added `/super-admin/packages/support-reviews/[supportReviewId]` as a read-only detail route with a safe unavailable state for unknown ids.
+- Added read-only support-review detail links from `/super-admin/packages` support-review rows and provider-mapping detail support-review rows when records exist.
+
+Read-only posture:
+
+- The detail read model returns `actionAvailable=false`, `mutationAvailable=false`, `correctiveExecutionAvailable=false`, `stripeCallAvailable=false`, `providerCallAvailable=false`, `subscriptionOperationAvailable=false`, `billingMutationAvailable=false`, `billingExecutionAvailable=false`, `entitlementEffect=false`, `moduleEffect=false`, `runtimeEffect=false`, `packageAssignmentEffect=false`, and `contractorPermissionEffect=false`.
+- The detail read model exposes no mutation/action/form descriptor keys.
+- Evidence and event snapshots are summarized by top-level keys only; raw provider payloads, payment data, secret-like values, and unbounded metadata are not dumped.
+
+Browser QA:
+
+- A fresh dev server was started on `http://localhost:3004`.
+- The in-app Browser plugin could not open the localhost route because the browser reported `net::ERR_BLOCKED_BY_CLIENT`; authenticated Playwright QA used the existing `playwright/.auth/platform-admin.json` platform-admin storage state.
+- `/super-admin/packages` returned HTTP 200 and rendered Package Definition Catalog, Contractor Package Assignments, Billing / Provider Mapping Readiness, Billing / Provider Support Review Readiness, and the support-review empty state.
+- The `#provider-support-review-readiness` scope had `forms=0`, `inputs=0`, `hiddenInputs=0`, `buttons=0`, `selects=0`, and `textareas=0`.
+- `/super-admin/packages/support-reviews/not-a-real-support-review` returned HTTP 200, rendered the support-review detail page, safe "Support review unavailable" state, and safe empty event state.
+- The support-review detail scope had `forms=0`, `inputs=0`, `hiddenInputs=0`, `buttons=0`, `selects=0`, and `textareas=0`.
+- The invalid detail route showed no raw database/provider error, no framework overlay, no console errors, no page errors, and no failed resources.
+- Populated support-review detail QA remains blocked by zero support review records. No records were seeded.
+
+Counts before and after matched exactly:
+
+- `contractor_package_billing_support_reviews=0`
+- `contractor_package_billing_support_review_events=0`
+- `contractor_package_billing_mappings=0`
+- `contractor_package_billing_mapping_audit_events=0`
+- `contractor_package_assignments=0`
+- `contractor_package_assignment_audit_events=0`
+- `platform_package_definitions=0`
+- `platform_package_definition_versions=0`
+- `platform_package_definition_audit_events=0`
+- `companies=10`
+- `company_subscriptions=0`
+- `subscription_plans=0`
+- `document_templates=4`
+- `catalog_items=9`
+- `contractor_group_audit_events=52`
+- `contractor_group_memberships=0`
+- `platform_starter_pack_provisioning_runs=4`
+- `platform_starter_pack_provisioning_run_items=5`
+
+Validation evidence:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-package-billing-support-review-read-model.test.ts apps/web/lib/platform-admin/contractor-package-billing-support-review-detail.test.ts apps/web/lib/platform-admin/contractor-package-billing-mapping-read-model.test.ts apps/web/lib/platform-admin/contractor-package-billing-mapping-detail.test.ts apps/web/lib/platform-admin/package-governance.test.ts apps/web/lib/platform-admin/package-definition-planning.test.ts apps/web/lib/platform-admin/package-definition-catalog.test.ts apps/web/lib/platform-admin/package-definition-detail.test.ts apps/web/lib/platform-admin/package-definition-audit-timeline.test.ts apps/web/lib/platform-admin/package-definition-lifecycle-readiness.test.ts apps/web/lib/platform-admin/contractor-package-assignment-read-model.test.ts apps/web/lib/platform-admin/contractor-package-assignment-detail.test.ts apps/web/lib/platform-admin/contractor-package-assignment-activation-readiness.test.ts` passed 101 tests.
+- A scoped web TypeScript check, `pnpm exec tsc --noEmit --pretty false --project apps/web/tsconfig.json`, passed before the final validation sweep.
+- `pnpm typecheck` passed.
+- `pnpm lint` initially caught missing `void` markers on the new Node test calls; after fixing that slice-local test lint issue, `pnpm lint` passed.
+- `git diff --check` passed with only the existing Windows LF-to-CRLF warning for `docs/chat-handoff.md`.
+
+Recommended next prompt:
+
+- "Run a narrow live verification pass for the Billing / Provider Support Review Detail / Read-Only Evidence Inspection slice. Verify `/super-admin/packages/support-reviews/not-a-real-support-review`, support-review detail read model posture, read-only link integration, mutation-control absence, counts, and validation. Fix only confirmed read-only defects; do not add corrective-action execution, Stripe/provider calls, subscription operations, billing execution, package assignment mutation, entitlement/module/runtime behavior, contractor permission changes, operational-cues changes, responsibility-role product work, or starter-pack provisioning."
+
 ## Billing / Provider Support Review Evidence Live Verification
 
 This narrow verification pass rechecked the Billing / Provider Support Review Evidence Readiness slice. It did not add migrations, schema changes, RLS/grant changes, Stripe/provider calls, subscription operations, billing execution, corrective-action execution, provider mutation behavior, package assignment mutation, package lifecycle mutation, entitlement enforcement, module gating, runtime behavior, contractor permission changes, reporting/export behavior, automation, AI behavior, operational-cues product changes, responsibility-role product changes, tenant template/catalog writes, or starter-pack provisioning changes.
@@ -218,6 +490,37 @@ Validation status:
 Recommended next prompt:
 
 - "Run a narrow live verification pass for organization responsibility defaults after the Supabase pooler circuit breaker clears. Confirm migration history/dry-run, verify owner/admin can set and clear one safe responsibility default, verify My Work and one Needs Attention panel show the resolved responsible person, then restore the mapping. Do not add project overrides, record overrides, My Work user filtering, assignments, lifecycle state, AI, notifications, snooze/dismiss, or new owner strategies."
+
+## Responsibility Defaults Live Verification
+
+This verification pass confirmed the organization responsibility defaults foundation works in the live dev app and restores cleanly. No schema, migration, product behavior, cue keys, project overrides, record overrides, assignment actions, user-specific My Work filtering, cue instances, task records, AI, notifications, snooze/dismiss, or lifecycle state were added.
+
+Live QA:
+
+- `SUPABASE_DB_PASSWORD` was not present in the process or `.env.local`, so `supabase db push --dry-run` was skipped to avoid repeating the known pooler/auth `ECIRCUITBREAKER` failure.
+- Service-role application access confirmed the active E2E tenant could read `organization_responsibility_role_defaults`.
+- The active E2E tenant had no active assignable People and no existing responsibility defaults, so a temporary tenant-scoped active assignable People record named `E2E Responsibility Defaults QA` was created for verification and linked to the E2E app user to exercise the `user_resolved` path.
+- Through `/settings/operational-intelligence`, the `Estimator` responsibility default was set to the temporary People record using the real settings UI.
+- `/dashboard` My Work showed `Responsible: E2E Responsibility Defaults QA` and `Role: Estimator` for matching estimate cues.
+- The estimate workspace for `/estimates/70030bb6-5666-4296-b12c-53ed6e7b300c` showed the same resolved responsible person in the Needs Attention panel.
+- Unmapped `Billing owner` cues continued to show the role-level fallback.
+- The Estimator mapping was cleared afterward because no prior mapping existed, and the temporary People record was deleted. A follow-up service-role check showed no remaining responsibility defaults.
+- Browser plugin access to `localhost:3001` was blocked by `ERR_BLOCKED_BY_CLIENT`, so authenticated UI verification used the repo's Playwright storage state.
+- The running `3001` dev server initially served stale Next chunks and later an authenticated `/dashboard` 404. Only generated `apps/web/.next` was removed, then `3001` was restarted cleanly with `node apps/web/scripts/run-next.mjs dev -p 3001`.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/operational-cues/derive.test.ts` passed 11 tests.
+- `pnpm exec tsx --test apps/web/lib/operational-cues/responsibility.test.ts` passed 8 tests.
+- `pnpm exec tsx --test apps/web/lib/operational-cues/rule-settings-permissions.test.ts` passed 4 tests.
+- `pnpm typecheck` passed.
+- `pnpm exec playwright test e2e/operational-cues-record-panels.spec.js --project=chromium-protected --no-deps` passed 4 tests on `http://localhost:3001` after the `.next` cleanup.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+- Full `pnpm lint` is currently blocked by unrelated `@typescript-eslint/no-floating-promises` errors in `apps/web/lib/platform-admin/contractor-package-billing-support-review-detail.test.ts`; this pass did not modify that platform-admin test.
+
+Recommended next prompt:
+
+- "Plan My Work queue modes for Operational Intelligence. Define how to introduce Company / Mine / Unresolved views using resolved responsibility metadata without hiding company-wide cues, creating tasks, adding assignment actions, or implementing user-specific filtering before the UX and fallback rules are agreed."
 
 ## Provider Mapping Detail Live Verification
 

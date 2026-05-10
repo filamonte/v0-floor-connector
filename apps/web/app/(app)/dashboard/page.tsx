@@ -30,6 +30,12 @@ import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-
 import { hasCompanyProfileFields } from "@/lib/organizations/setup-status";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { getOperationalCueDashboard } from "@/lib/operational-cues/data";
+import { groupOperationalCuesBySubject } from "@/lib/operational-cues/derive";
+import {
+  buildMyWorkQueueModes,
+  isMyWorkQueueMode,
+  type MyWorkQueueMode
+} from "@/lib/operational-cues/my-work-queues";
 import type { OperationalCue } from "@/lib/operational-cues/types";
 import { listPayments } from "@/lib/payments/data";
 import { listPeople } from "@/lib/people/data";
@@ -151,9 +157,69 @@ function mapOperationalCueToDashboardItem(cue: OperationalCue) {
   };
 }
 
+function buildMyWorkDashboardWidgets(cues: OperationalCue[]) {
+  const groups = groupOperationalCuesBySubject(cues);
+
+  return [
+    {
+      key: "my-estimates",
+      eyebrow: "My Estimates",
+      title: "Estimate follow-up",
+      description:
+        "Sent estimates that crossed the tenant cue threshold. These are derived from canonical estimate records.",
+      href: "/estimates",
+      actionLabel: "Open estimates",
+      emptyTitle: "No estimate cues need attention.",
+      emptyDescription:
+        "Sent estimates will appear here when they pass the configured follow-up threshold.",
+      items: groups.estimates.slice(0, 5).map(mapOperationalCueToDashboardItem)
+    },
+    {
+      key: "my-contracts",
+      eyebrow: "My Contracts",
+      title: "Signature follow-up",
+      description:
+        "Sent or viewed contracts that remain unsigned under the tenant cue rules.",
+      href: "/contracts",
+      actionLabel: "Open contracts",
+      emptyTitle: "No contract cues need attention.",
+      emptyDescription:
+        "Unsigned sent or viewed contracts will appear here when follow-up is due.",
+      items: groups.contracts.slice(0, 5).map(mapOperationalCueToDashboardItem)
+    },
+    {
+      key: "my-invoices",
+      eyebrow: "My Invoices",
+      title: "Collections follow-up",
+      description:
+        "Overdue invoices and unpaid deposit invoices derived from the canonical billing chain.",
+      href: "/invoices",
+      actionLabel: "Open invoices",
+      emptyTitle: "No invoice cues need attention.",
+      emptyDescription:
+        "Overdue balances and unpaid deposits will appear here when configured thresholds are crossed.",
+      items: groups.invoices.slice(0, 5).map(mapOperationalCueToDashboardItem)
+    },
+    {
+      key: "my-jobs",
+      eyebrow: "My Jobs",
+      title: "Schedule and crew follow-up",
+      description:
+        "Ready unscheduled jobs and scheduled jobs missing crew from canonical job records.",
+      href: "/jobs",
+      actionLabel: "Open jobs",
+      emptyTitle: "No job cues need attention.",
+      emptyDescription:
+        "Ready unscheduled jobs and near-term scheduled jobs missing crew will appear here.",
+      items: groups.jobs.slice(0, 5).map(mapOperationalCueToDashboardItem)
+    }
+  ];
+}
+
 type DashboardPageProps = {
   searchParams?: Promise<{
     fresh?: string;
+    myWork?: string;
   }>;
 };
 
@@ -290,6 +356,26 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const currentUserPerson =
     people.find((person) => person.membershipUserId === user.id && person.isActive) ??
     null;
+  const myWorkQueueModes = buildMyWorkQueueModes({
+    cues: operationalCueDashboard.cues,
+    currentUserId: user.id,
+    currentPersonId: currentUserPerson?.id ?? null,
+    membershipRole: organizationContext.membership.role
+  });
+  const selectedMyWorkMode = isMyWorkQueueMode(resolvedSearchParams.myWork)
+    ? resolvedSearchParams.myWork
+    : myWorkQueueModes.selectedDefaultMode;
+  const buildMyWorkModeHref = (mode: MyWorkQueueMode) => {
+    const params = new URLSearchParams();
+
+    if (forceFreshOnboarding) {
+      params.set("fresh", "true");
+    }
+
+    params.set("myWork", mode);
+
+    return `/dashboard?${params.toString()}`;
+  };
   const companyWorkItems = await listDashboardWorkItems({ limit: 5 });
   const assignedWorkItems = currentUserPerson
     ? await listDashboardWorkItems({
@@ -696,68 +782,50 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         complete: completeWorkItemAction,
         dismiss: dismissWorkItemAction
       }}
-      myWorkWidgets={[
-        {
-          key: "my-estimates",
-          eyebrow: "My Estimates",
-          title: "Estimate follow-up",
-          description:
-            "Sent estimates that crossed the tenant cue threshold. These are derived from canonical estimate records.",
-          href: "/estimates",
-          actionLabel: "Open estimates",
-          emptyTitle: "No estimate cues need attention.",
-          emptyDescription:
-            "Sent estimates will appear here when they pass the configured follow-up threshold.",
-          items: operationalCueDashboard.groups.estimates
-            .slice(0, 5)
-            .map(mapOperationalCueToDashboardItem)
-        },
-        {
-          key: "my-contracts",
-          eyebrow: "My Contracts",
-          title: "Signature follow-up",
-          description:
-            "Sent or viewed contracts that remain unsigned under the tenant cue rules.",
-          href: "/contracts",
-          actionLabel: "Open contracts",
-          emptyTitle: "No contract cues need attention.",
-          emptyDescription:
-            "Unsigned sent or viewed contracts will appear here when follow-up is due.",
-          items: operationalCueDashboard.groups.contracts
-            .slice(0, 5)
-            .map(mapOperationalCueToDashboardItem)
-        },
-        {
-          key: "my-invoices",
-          eyebrow: "My Invoices",
-          title: "Collections follow-up",
-          description:
-            "Overdue invoices and unpaid deposit invoices derived from the canonical billing chain.",
-          href: "/invoices",
-          actionLabel: "Open invoices",
-          emptyTitle: "No invoice cues need attention.",
-          emptyDescription:
-            "Overdue balances and unpaid deposits will appear here when configured thresholds are crossed.",
-          items: operationalCueDashboard.groups.invoices
-            .slice(0, 5)
-            .map(mapOperationalCueToDashboardItem)
-        },
-        {
-          key: "my-jobs",
-          eyebrow: "My Jobs",
-          title: "Schedule and crew follow-up",
-          description:
-            "Ready unscheduled jobs and scheduled jobs missing crew from canonical job records.",
-          href: "/jobs",
-          actionLabel: "Open jobs",
-          emptyTitle: "No job cues need attention.",
-          emptyDescription:
-            "Ready unscheduled jobs and near-term scheduled jobs missing crew will appear here.",
-          items: operationalCueDashboard.groups.jobs
-            .slice(0, 5)
-            .map(mapOperationalCueToDashboardItem)
-        }
-      ]}
+      myWorkQueueModes={{
+        defaultMode: myWorkQueueModes.selectedDefaultMode,
+        selectedMode: selectedMyWorkMode,
+        caveats: myWorkQueueModes.caveats,
+        modes: [
+          {
+            mode: "company",
+            label: "Company",
+            href: buildMyWorkModeHref("company"),
+            description: "All attention items",
+            emptyTitle: "No company attention items right now.",
+            emptyDescription:
+              "Company remains the full organization safety net for derived My Work cues.",
+            count: myWorkQueueModes.counts.company,
+            widgets: buildMyWorkDashboardWidgets(
+              myWorkQueueModes.queues.company.cues
+            )
+          },
+          {
+            mode: "mine",
+            label: "Mine",
+            href: buildMyWorkModeHref("mine"),
+            description: "Items resolved to you",
+            emptyTitle: "No attention items are currently resolved to you.",
+            emptyDescription:
+              "Mine is a convenience filter over responsibility metadata, not task assignment.",
+            count: myWorkQueueModes.counts.mine,
+            widgets: buildMyWorkDashboardWidgets(myWorkQueueModes.queues.mine.cues)
+          },
+          {
+            mode: "unresolved",
+            label: "Unresolved",
+            href: buildMyWorkModeHref("unresolved"),
+            description: "Needs responsible person",
+            emptyTitle: "All current attention items have a responsible role/person.",
+            emptyDescription:
+              "Unresolved shows strategy-only, organization queue, and unavailable record-owner fallbacks.",
+            count: myWorkQueueModes.counts.unresolved,
+            widgets: buildMyWorkDashboardWidgets(
+              myWorkQueueModes.queues.unresolved.cues
+            )
+          }
+        ]
+      }}
       commercialWidgets={[
         {
           key: "leads",

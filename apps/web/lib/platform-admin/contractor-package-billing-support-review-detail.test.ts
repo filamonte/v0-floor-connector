@@ -61,7 +61,7 @@ function supportReviewEvent(
   };
 }
 
-test("builds support review detail with linked provider mapping assignment company package and version labels", () => {
+void test("builds support review detail with linked provider mapping assignment company package and version labels", () => {
   const model = buildContractorPackageBillingSupportReviewDetail({
     generatedAt: now,
     supportReviewId: "support-review-1",
@@ -106,7 +106,7 @@ test("builds support review detail with linked provider mapping assignment compa
   assert.equal(model.packageDefinitionVersionReference.label, "Version 2");
 });
 
-test("surfaces missing linked references", () => {
+void test("surfaces missing linked references", () => {
   const model = buildContractorPackageBillingSupportReviewDetail({
     generatedAt: now,
     supportReviewId: "support-review-1",
@@ -127,7 +127,7 @@ test("surfaces missing linked references", () => {
   assert.match(model.caveats.join(" "), /missing a package definition version/);
 });
 
-test("summarizes evidence snapshots without dumping values", () => {
+void test("summarizes evidence snapshots without dumping values", () => {
   const model = buildContractorPackageBillingSupportReviewDetail({
     generatedAt: now,
     supportReviewId: "support-review-1",
@@ -143,7 +143,7 @@ test("summarizes evidence snapshots without dumping values", () => {
   assert.equal(serialized.includes("sensitive-token-value"), false);
 });
 
-test("surfaces blocked escalation caveats and no events caveat", () => {
+void test("surfaces blocked escalation caveats and no events caveat", () => {
   const model = buildContractorPackageBillingSupportReviewDetail({
     generatedAt: now,
     supportReviewId: "support-review-1",
@@ -161,7 +161,7 @@ test("surfaces blocked escalation caveats and no events caveat", () => {
   assert.match(model.caveats.join(" "), /No support review event evidence/);
 });
 
-test("orders support review events by occurrence", () => {
+void test("orders support review events by occurrence", () => {
   const model = buildContractorPackageBillingSupportReviewDetail({
     generatedAt: now,
     supportReviewId: "support-review-1",
@@ -184,7 +184,7 @@ test("orders support review events by occurrence", () => {
   assert.equal(model.eventTimelineRows[1]?.id, "event-old");
 });
 
-test("models review status and resolution category caveats safely", () => {
+void test("models review status and resolution category caveats safely", () => {
   const awaiting = buildContractorPackageBillingSupportReviewDetail({
     generatedAt: now,
     supportReviewId: "support-review-1",
@@ -208,7 +208,7 @@ test("models review status and resolution category caveats safely", () => {
   assert.match(approved.caveats.join(" "), /no corrective action is executable/);
 });
 
-test("models unavailable state safely", () => {
+void test("models unavailable state safely", () => {
   const model = buildContractorPackageBillingSupportReviewDetail({
     generatedAt: now,
     supportReviewId: "not-a-real-support-review",
@@ -222,7 +222,7 @@ test("models unavailable state safely", () => {
   assert.match(model.caveats.join(" "), /Support review unavailable/);
 });
 
-test("output exposes no mutation action or form descriptor keys", () => {
+void test("output exposes no mutation action or form descriptor keys", () => {
   const model = buildContractorPackageBillingSupportReviewDetail({
     generatedAt: now,
     supportReviewId: "support-review-1",

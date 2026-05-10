@@ -637,6 +637,12 @@ test.describe.serial("operational cue record-level panels", () => {
 
     const myWork = page.locator('section[aria-labelledby="dashboard-my-work-title"]');
     await expect(myWork).toBeVisible();
+    await expect(myWork.getByRole("tab", { name: /Company\s+\d+/ })).toBeVisible();
+    await expect(myWork.getByRole("tab", { name: /Mine\s+\d+/ })).toBeVisible();
+    await expect(myWork.getByRole("tab", { name: /Unresolved\s+\d+/ })).toBeVisible();
+
+    await page.goto("/dashboard?myWork=company", { waitUntil: "domcontentloaded" });
+    await expectAuthenticatedPage(page);
     await expect(myWork).toContainText("My Estimates");
     await expect(myWork).toContainText("My Contracts");
     await expect(myWork).toContainText("My Invoices");
@@ -650,6 +656,18 @@ test.describe.serial("operational cue record-level panels", () => {
     await expect(myWork).toContainText(fixture.titles.jobMissingCrew);
     await expect(myWork).toContainText("This rule triggers after");
     await expect(myWork).toContainText("Threshold:");
+
+    await page.goto("/dashboard?myWork=unresolved", {
+      waitUntil: "domcontentloaded"
+    });
+    await expectAuthenticatedPage(page);
+    await expect(myWork).toContainText("These attention items need a responsible person/default");
+    await expect(myWork).toContainText(fixture.titles.estimate);
+    await expect(myWork).toContainText(fixture.titles.jobMissingCrew);
+
+    await page.goto("/dashboard?myWork=mine", { waitUntil: "domcontentloaded" });
+    await expectAuthenticatedPage(page);
+    await expect(myWork).toContainText("Items resolved to you");
 
     expect(issues).toEqual([]);
   });
@@ -705,6 +723,8 @@ test.describe.serial("operational cue record-level panels", () => {
     await expectAuthenticatedPage(page);
 
     const myWork = page.locator('section[aria-labelledby="dashboard-my-work-title"]');
+    await page.goto("/dashboard?myWork=company", { waitUntil: "domcontentloaded" });
+    await expectAuthenticatedPage(page);
     const dashboardCueAction = myWork.getByRole("link", {
       name: `Open estimate: ${fixture.titles.estimate}`,
       exact: true
