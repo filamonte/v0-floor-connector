@@ -263,6 +263,24 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
         </SettingsOverviewCard>
 
         <SettingsOverviewCard
+          title="Operational Intelligence"
+          description="Tune the built-in My Work cue rules without creating task records or custom automation logic."
+          href="/settings/operational-intelligence"
+          ctaLabel="Configure My Work cues"
+        >
+          <div className="space-y-2 border border-[#d9cdc2] bg-[#fbf7f2] px-4 py-4 text-sm leading-6 text-[#6f6256]">
+            <p>
+              Seven organization-owned rule templates control derived cues for estimates,
+              contracts, invoices, and jobs.
+            </p>
+            <p>
+              Editable fields are enablement, threshold days, and urgency. Cue instances
+              are still calculated from canonical records at query time.
+            </p>
+          </div>
+        </SettingsOverviewCard>
+
+        <SettingsOverviewCard
           title="Automation readiness"
           description="Review canonical automation foundations and store future notification-only preferences without enabling execution."
           href="/settings/automation"

@@ -19,6 +19,7 @@ import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
+import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
 import { ProjectForm } from "@/components/project-form";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
 import { ReadyToScheduleActionPanel } from "@/components/ready-to-schedule-action-panel";
@@ -38,6 +39,7 @@ import { listEstimates, listProjectEstimateAttachments } from "@/lib/estimates/d
 import { listFieldNotes } from "@/lib/field-notes/data";
 import { getInvoiceById, listInvoices } from "@/lib/invoices/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
+import { getOperationalCuesForProject } from "@/lib/operational-cues/data";
 import { getOpportunityByProjectId } from "@/lib/opportunities/data";
 import { listPeople } from "@/lib/people/data";
 import { listPunchlistItemsByProject } from "@/lib/punchlists/data";
@@ -1332,6 +1334,7 @@ export default async function ProjectDetailPage({
     projectEstimateAttachments,
     fieldNotes,
     linkedWorkItems,
+    projectAttentionCues,
     people
   ] = await Promise.all([
     listTimeCardsByProject(project.id, `/projects/${projectId}`),
@@ -1339,6 +1342,10 @@ export default async function ProjectDetailPage({
     listProjectEstimateAttachments(project.id, `/projects/${projectId}`),
     listFieldNotes(),
     listWorkItemsForProject(project.id, `/projects/${projectId}`),
+    getOperationalCuesForProject({
+      organizationId: project.organizationId,
+      projectId: project.id
+    }),
     listPeople()
   ]);
   const projectDailyLogs = await listDailyLogsByProject(project.id, `/projects/${projectId}`);
@@ -1838,6 +1845,11 @@ export default async function ProjectDetailPage({
             <WorkflowBar title="Project workflow" steps={workflowSteps} />
 
             <ProjectStateSummary title="Project state summary" items={projectStateItems} />
+
+            <NeedsAttentionPanel
+              cues={projectAttentionCues}
+              description="Linked estimate, contract, invoice, and job cues for this project. These are derived at view time and do not create tasks or mutate workflow state."
+            />
 
             <ProjectCuePanel cues={projectCues} />
 

@@ -178,6 +178,7 @@ export function SaveStateForm({
 type SaveStateSubmitButtonProps = {
   submitLabel: string;
   pendingLabel: string;
+  ariaLabel?: string;
   className?: string;
   variant?: "primary" | "secondary";
 };
@@ -185,6 +186,7 @@ type SaveStateSubmitButtonProps = {
 export function SaveStateSubmitButton({
   submitLabel,
   pendingLabel,
+  ariaLabel,
   className,
   variant = "primary"
 }: SaveStateSubmitButtonProps) {
@@ -198,6 +200,7 @@ export function SaveStateSubmitButton({
     return (
       <SaveStatusButton
         type="submit"
+        aria-label={ariaLabel ?? submitLabel}
         status={context.status}
         isDirty={context.isDirty}
         statusMessage={context.message}
@@ -218,6 +221,7 @@ export function SaveStateSubmitButton({
       className={cn(buttonClassName, className)}
       disabled={isSaving}
       aria-disabled={isSaving}
+      aria-label={ariaLabel ?? submitLabel}
     >
       {isSaving ? pendingLabel : submitLabel}
     </button>

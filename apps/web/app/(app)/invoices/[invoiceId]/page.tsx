@@ -15,6 +15,7 @@ import { DetailPanel } from "@/components/detail-panel";
 import { InvoiceForm } from "@/components/invoice-form";
 import { InvoicePaymentForm } from "@/components/invoice-payment-form";
 import { LinkedRecordCard } from "@/components/linked-record-card";
+import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
 import {
   ScheduleContextActions,
@@ -33,6 +34,7 @@ import { getInvoiceById, listInvoiceSourceOptions } from "@/lib/invoices/data";
 import { listEstimates } from "@/lib/estimates/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
+import { getOperationalCuesForSubject } from "@/lib/operational-cues/data";
 import { getProgressBillingByEstimateId } from "@/lib/progress-billing/data";
 import { listProjects } from "@/lib/projects/data";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
@@ -283,6 +285,11 @@ export default async function InvoiceDetailPage({
   const readinessSnapshot = await getProjectFinancialReadinessSnapshot({
     organizationId: invoice.organizationId,
     projectId: invoice.projectId
+  });
+  const invoiceAttentionCues = await getOperationalCuesForSubject({
+    organizationId: invoice.organizationId,
+    subjectType: "invoice",
+    subjectId: invoice.id
   });
   const onlinePaymentGate = computeInvoicePaymentWorkflowGate({
     invoiceStatus: invoice.status,
@@ -682,6 +689,11 @@ export default async function InvoiceDetailPage({
             <WorkflowBar title="Billing workflow" steps={invoiceWorkflowSteps} />
 
             <ProjectStateSummary title="Invoice state summary" items={invoiceStateItems} />
+
+            <NeedsAttentionPanel
+              cues={invoiceAttentionCues}
+              description="Invoice-specific collection cues derived from this canonical invoice and enabled organization rules."
+            />
           </div>
         </div>
 

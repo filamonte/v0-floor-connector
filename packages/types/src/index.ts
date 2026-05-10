@@ -28,6 +28,15 @@ export type PlatformStarterPackAssignmentId = string;
 export type PlatformStarterPackProvisioningRunId = string;
 export type PlatformStarterPackProvisioningRunItemId = string;
 export type PlatformStarterPackProvisioningAttemptId = string;
+export type PlatformPackageDefinitionId = string;
+export type PlatformPackageDefinitionVersionId = string;
+export type PlatformPackageDefinitionAuditEventId = string;
+export type ContractorPackageAssignmentId = string;
+export type ContractorPackageAssignmentAuditEventId = string;
+export type ContractorPackageBillingMappingId = string;
+export type ContractorPackageBillingMappingAuditEventId = string;
+export type ContractorPackageBillingSupportReviewId = string;
+export type ContractorPackageBillingSupportReviewEventId = string;
 export type ContractorGroupId = string;
 export type ContractorGroupMembershipId = string;
 export type ContractorGroupAuditEventId = string;
@@ -552,6 +561,55 @@ export type AutomationNotificationPreferenceRole =
   | "admin"
   | "manager"
   | "member";
+
+export type OperationalCueKey =
+  | "estimate_sent_followup"
+  | "contract_sent_unsigned"
+  | "contract_viewed_unsigned"
+  | "invoice_overdue"
+  | "deposit_invoice_unpaid"
+  | "job_ready_unscheduled"
+  | "job_scheduled_missing_crew";
+
+export type OperationalCueSubjectType = "estimate" | "contract" | "invoice" | "job";
+export type OperationalCueUrgency = "normal" | "high" | "critical";
+export type OperationalCueOwnerStrategy =
+  | "record_owner"
+  | "organization"
+  | "estimator"
+  | "project_manager"
+  | "billing_owner"
+  | "scheduler";
+export type OrganizationResponsibilityRoleKey =
+  | "estimator"
+  | "project_manager"
+  | "billing_owner"
+  | "scheduler";
+
+export interface OrganizationOperationalCueRule {
+  id: string;
+  organizationId: OrganizationId;
+  cueKey: OperationalCueKey;
+  subjectType: OperationalCueSubjectType;
+  enabled: boolean;
+  thresholdDays: number | null;
+  urgency: OperationalCueUrgency;
+  ownerStrategy: OperationalCueOwnerStrategy;
+  escalationDays: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OrganizationResponsibilityRoleDefault {
+  id: string;
+  organizationId: OrganizationId;
+  roleKey: OrganizationResponsibilityRoleKey;
+  personId: PersonId;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface AutomationNotificationPreference {
   category: AutomationNotificationPreferenceCategory;
@@ -1458,6 +1516,126 @@ export type PlatformStarterPackProvisioningAttemptOutcome =
   | "blocked"
   | "failed_before_execution"
   | "already_completed";
+export type PlatformPackageDefinitionStatus =
+  | "draft"
+  | "review"
+  | "published"
+  | "deprecated"
+  | "archived";
+export type PlatformPackageDefinitionAuditEventType =
+  | "package_definition_created"
+  | "package_definition_updated"
+  | "package_definition_reviewed"
+  | "package_definition_approved"
+  | "package_definition_published"
+  | "package_definition_deprecated"
+  | "package_definition_archived"
+  | "package_version_created"
+  | "package_version_updated"
+  | "package_version_reviewed"
+  | "package_version_approved"
+  | "package_version_published"
+  | "package_version_deprecated"
+  | "package_version_archived";
+export type ContractorPackageAssignmentStatus =
+  | "draft"
+  | "pending_review"
+  | "approved"
+  | "scheduled"
+  | "active"
+  | "superseded"
+  | "canceled"
+  | "archived";
+export type ContractorPackageAssignmentAuditEventType =
+  | "package_assignment_drafted"
+  | "package_assignment_updated"
+  | "package_assignment_reviewed"
+  | "package_assignment_approved"
+  | "package_assignment_scheduled"
+  | "package_assignment_activated"
+  | "package_assignment_superseded"
+  | "package_assignment_canceled"
+  | "package_assignment_archived";
+export type ContractorPackageBillingProvider =
+  | "stripe"
+  | "manual_review"
+  | "unknown";
+export type ContractorPackageBillingProviderEnvironment =
+  | "sandbox"
+  | "test"
+  | "production"
+  | "unknown";
+export type ContractorPackageBillingState =
+  | "not_started"
+  | "mapped"
+  | "verified"
+  | "active"
+  | "mismatch_detected"
+  | "suspended"
+  | "deprecated"
+  | "archived";
+export type ContractorPackageBillingReconciliationState =
+  | "not_started"
+  | "pending_provider"
+  | "pending_verification"
+  | "verified"
+  | "mismatch_detected"
+  | "support_review_required"
+  | "suspended"
+  | "archived";
+export type ContractorPackageBillingTrialOrEarlyAccessState =
+  | "none"
+  | "trial"
+  | "early_access"
+  | "trial_and_early_access"
+  | "unknown";
+export type ContractorPackageBillingTermsMarker =
+  | "none"
+  | "custom"
+  | "grandfathered"
+  | "custom_and_grandfathered"
+  | "unknown";
+export type ContractorPackageBillingMappingAuditEventType =
+  | "billing_mapping_created"
+  | "billing_mapping_updated"
+  | "billing_mapping_reviewed"
+  | "billing_mapping_verified"
+  | "billing_mapping_mismatch_detected"
+  | "billing_mapping_support_review_requested"
+  | "billing_mapping_suspended"
+  | "billing_mapping_deprecated"
+  | "billing_mapping_archived"
+  | "provider_reference_observed"
+  | "provider_reference_reconciled";
+export type ContractorPackageBillingSupportReviewStatus =
+  | "pending_review"
+  | "awaiting_evidence"
+  | "awaiting_provider_confirmation"
+  | "approved_for_resolution"
+  | "resolution_blocked"
+  | "resolved"
+  | "archived";
+export type ContractorPackageBillingSupportReviewResolutionCategory =
+  | "provider_state_mismatch"
+  | "duplicate_provider_subscription"
+  | "orphaned_provider_subscription"
+  | "stale_provider_mapping"
+  | "invalid_environment_mix"
+  | "unsupported_custom_contract"
+  | "webhook_replay_issue"
+  | "missing_provider_customer"
+  | "missing_provider_subscription"
+  | "manual_support_override_required";
+export type ContractorPackageBillingSupportReviewEventType =
+  | "support_review_created"
+  | "support_review_updated"
+  | "support_review_evidence_added"
+  | "support_review_provider_confirmation_requested"
+  | "support_review_provider_confirmation_received"
+  | "support_review_approved_for_resolution"
+  | "support_review_resolution_blocked"
+  | "support_review_resolved"
+  | "support_review_archived";
 export type ContractorGroupStatus = "active" | "inactive" | "archived";
 export type ContractorGroupType =
   | "trade_segment"
@@ -1650,6 +1828,201 @@ export interface PlatformStarterPackProvisioningAttempt {
   runStatus: PlatformStarterPackProvisioningRunStatus | null;
   metadata: Record<string, unknown>;
   attemptedAt: string;
+}
+
+export interface PlatformPackageDefinition {
+  id: PlatformPackageDefinitionId;
+  packageKey: string;
+  displayName: string;
+  description: string | null;
+  status: PlatformPackageDefinitionStatus;
+  intendedAudience: string | null;
+  segmentSummary: string | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt: string | null;
+}
+
+export interface PlatformPackageDefinitionVersion {
+  id: PlatformPackageDefinitionVersionId;
+  packageDefinitionId: PlatformPackageDefinitionId;
+  packageKey: string | null;
+  packageDisplayName: string | null;
+  versionNumber: number;
+  versionLabel: string | null;
+  status: PlatformPackageDefinitionStatus;
+  commercialSummary: string | null;
+  moduleVisibilityIntent: Record<string, unknown> | null;
+  usageLimitIntent: Record<string, unknown> | null;
+  entitlementIntent: Record<string, unknown> | null;
+  billingProviderIntent: Record<string, unknown> | null;
+  starterPackDefaultIntent: Record<string, unknown> | null;
+  contractorGroupTargetingIntent: Record<string, unknown> | null;
+  publishedSnapshot: Record<string, unknown> | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string | null;
+  deprecatedAt: string | null;
+  archivedAt: string | null;
+}
+
+export interface PlatformPackageDefinitionAuditEvent {
+  id: PlatformPackageDefinitionAuditEventId;
+  packageDefinitionId: PlatformPackageDefinitionId;
+  packageDefinitionVersionId: PlatformPackageDefinitionVersionId | null;
+  eventType: PlatformPackageDefinitionAuditEventType;
+  actorUserId: ProfileId | null;
+  reason: string | null;
+  confirmationText: string | null;
+  beforeSnapshot: Record<string, unknown> | null;
+  afterSnapshot: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
+  occurredAt: string;
+  createdAt: string;
+}
+
+export interface ContractorPackageAssignment {
+  id: ContractorPackageAssignmentId;
+  companyId: OrganizationId;
+  companyName: string | null;
+  companySlug: string | null;
+  packageDefinitionId: PlatformPackageDefinitionId | null;
+  packageDefinitionKey: string | null;
+  packageDefinitionName: string | null;
+  packageDefinitionVersionId: PlatformPackageDefinitionVersionId | null;
+  packageDefinitionVersionLabel: string | null;
+  packageDefinitionVersionNumber: number | null;
+  packageDefinitionVersionStatus: PlatformPackageDefinitionStatus | null;
+  status: ContractorPackageAssignmentStatus;
+  lifecycleState: ContractorPackageAssignmentStatus;
+  effectiveAt: string | null;
+  scheduledFor: string | null;
+  activatedAt: string | null;
+  supersededAt: string | null;
+  canceledAt: string | null;
+  supersedesAssignmentId: ContractorPackageAssignmentId | null;
+  supersededByAssignmentId: ContractorPackageAssignmentId | null;
+  assignmentSnapshot: Record<string, unknown> | null;
+  billingImpactSnapshot: Record<string, unknown> | null;
+  entitlementModuleImpactSnapshot: Record<string, unknown> | null;
+  starterPackImplicationSnapshot: Record<string, unknown> | null;
+  cancellationReason: string | null;
+  supersessionReason: string | null;
+  grandfatheredContract: boolean;
+  customContractLabel: string | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt: string | null;
+}
+
+export interface ContractorPackageAssignmentAuditEvent {
+  id: ContractorPackageAssignmentAuditEventId;
+  contractorPackageAssignmentId: ContractorPackageAssignmentId;
+  companyId: OrganizationId;
+  packageDefinitionId: PlatformPackageDefinitionId | null;
+  packageDefinitionVersionId: PlatformPackageDefinitionVersionId | null;
+  eventType: ContractorPackageAssignmentAuditEventType;
+  actorUserId: ProfileId | null;
+  reason: string | null;
+  confirmationText: string | null;
+  beforeSnapshot: Record<string, unknown> | null;
+  afterSnapshot: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
+  occurredAt: string;
+  createdAt: string;
+}
+
+export interface ContractorPackageBillingMapping {
+  id: ContractorPackageBillingMappingId;
+  contractorPackageAssignmentId: ContractorPackageAssignmentId | null;
+  companyId: OrganizationId | null;
+  packageDefinitionId: PlatformPackageDefinitionId | null;
+  packageDefinitionVersionId: PlatformPackageDefinitionVersionId | null;
+  billingProvider: ContractorPackageBillingProvider;
+  providerEnvironment: ContractorPackageBillingProviderEnvironment;
+  providerCustomerReference: string | null;
+  providerProductReference: string | null;
+  providerPriceReference: string | null;
+  providerSubscriptionReference: string | null;
+  providerSubscriptionItemReference: string | null;
+  billingState: ContractorPackageBillingState;
+  reconciliationState: ContractorPackageBillingReconciliationState;
+  trialOrEarlyAccessState: ContractorPackageBillingTrialOrEarlyAccessState | null;
+  customOrGrandfatheredTermsMarker: ContractorPackageBillingTermsMarker | null;
+  expectedProviderStateSnapshot: Record<string, unknown> | null;
+  observedProviderStateSnapshot: Record<string, unknown> | null;
+  mappingSnapshot: Record<string, unknown> | null;
+  mismatchSummary: string | null;
+  lastVerifiedAt: string | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt: string | null;
+}
+
+export interface ContractorPackageBillingMappingAuditEvent {
+  id: ContractorPackageBillingMappingAuditEventId;
+  contractorPackageBillingMappingId: ContractorPackageBillingMappingId | null;
+  contractorPackageAssignmentId: ContractorPackageAssignmentId | null;
+  companyId: OrganizationId | null;
+  packageDefinitionId: PlatformPackageDefinitionId | null;
+  packageDefinitionVersionId: PlatformPackageDefinitionVersionId | null;
+  eventType: ContractorPackageBillingMappingAuditEventType;
+  actorUserId: ProfileId | null;
+  reason: string | null;
+  beforeSnapshot: Record<string, unknown> | null;
+  afterSnapshot: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
+  occurredAt: string;
+  createdAt: string;
+}
+
+export interface ContractorPackageBillingSupportReview {
+  id: ContractorPackageBillingSupportReviewId;
+  contractorPackageBillingMappingId: ContractorPackageBillingMappingId | null;
+  contractorPackageAssignmentId: ContractorPackageAssignmentId | null;
+  companyId: OrganizationId | null;
+  packageDefinitionId: PlatformPackageDefinitionId | null;
+  packageDefinitionVersionId: PlatformPackageDefinitionVersionId | null;
+  reviewStatus: ContractorPackageBillingSupportReviewStatus;
+  resolutionCategory: ContractorPackageBillingSupportReviewResolutionCategory;
+  providerEnvironment: ContractorPackageBillingProviderEnvironment;
+  providerReferenceSummary: Record<string, unknown> | null;
+  reconciliationEvidenceSnapshot: Record<string, unknown> | null;
+  webhookEvidenceSnapshot: Record<string, unknown> | null;
+  operatorEvidenceSnapshot: Record<string, unknown> | null;
+  rollbackRecoverySnapshot: Record<string, unknown> | null;
+  supportSummary: string | null;
+  blockedReason: string | null;
+  escalationReason: string | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt: string | null;
+}
+
+export interface ContractorPackageBillingSupportReviewEvent {
+  id: ContractorPackageBillingSupportReviewEventId;
+  supportReviewId: ContractorPackageBillingSupportReviewId;
+  contractorPackageBillingMappingId: ContractorPackageBillingMappingId | null;
+  contractorPackageAssignmentId: ContractorPackageAssignmentId | null;
+  companyId: OrganizationId | null;
+  eventType: ContractorPackageBillingSupportReviewEventType;
+  actorUserId: ProfileId | null;
+  reason: string | null;
+  beforeSnapshot: Record<string, unknown> | null;
+  afterSnapshot: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
+  occurredAt: string;
+  createdAt: string;
 }
 
 export interface Vendor {

@@ -20,6 +20,11 @@ import {
 } from "@/lib/catalogs/data";
 import { automationNotificationPreferenceCategories } from "@/lib/automation/preferences";
 import { executeManualNotificationAutomation } from "@/lib/automation/execution";
+import { updateOperationalCueRule } from "@/lib/operational-cues/rules";
+import {
+  clearOrganizationResponsibilityDefault,
+  upsertOrganizationResponsibilityDefault
+} from "@/lib/operational-cues/responsibility-defaults";
 import {
   upsertOrganizationFeatureOverride
 } from "@/lib/organizations/module-settings";
@@ -57,6 +62,9 @@ import {
   organizationProfileInputSchema,
   taxCodeSettingsInputSchema,
   automationNotificationPreferencesInputSchema,
+  clearOrganizationResponsibilityDefaultInputSchema,
+  organizationResponsibilityDefaultInputSchema,
+  operationalCueRuleSettingsInputSchema,
   organizationWorkflowSettingsInputSchema
 } from "./schemas";
 
@@ -131,6 +139,7 @@ function revalidateSettingsSlice() {
   revalidatePath("/settings/financial");
   revalidatePath("/settings/workflows");
   revalidatePath("/settings/automation");
+  revalidatePath("/settings/operational-intelligence");
   revalidatePath("/settings/admin");
   revalidatePath("/settings/modules");
   revalidatePath("/contracts");
@@ -138,6 +147,7 @@ function revalidateSettingsSlice() {
   revalidatePath("/invoices");
   revalidatePath("/customers");
   revalidatePath("/leads");
+  revalidatePath("/dashboard");
 }
 
 export async function updatePreferredEstimateTemplateAction(formData: FormData) {
@@ -485,6 +495,134 @@ export async function updateAutomationNotificationPreferencesAction(formData: Fo
     buildRedirect(returnTo, {
       message:
         "Future notification preferences were updated. Automation execution remains off."
+    })
+  );
+}
+
+export async function updateOperationalCueRuleSettingsAction(formData: FormData) {
+  const scope = await requireSettingsScope();
+  const result = operationalCueRuleSettingsInputSchema.safeParse({
+    cueKey: getFieldValue(formData, "cueKey"),
+    enabled: getCheckboxValue(formData, "enabled"),
+    thresholdDays: getFieldValue(formData, "thresholdDays"),
+    urgency: getFieldValue(formData, "urgency")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/settings/operational-intelligence", {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to update operational cue rule."
+      })
+    );
+  }
+
+  try {
+    await updateOperationalCueRule({
+      organizationId: scope.organizationId,
+      cueKey: result.data.cueKey,
+      enabled: result.data.enabled,
+      thresholdDays: result.data.thresholdDays,
+      urgency: result.data.urgency
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/settings/operational-intelligence", {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to update operational cue rule."
+      })
+    );
+  }
+
+  revalidateSettingsSlice();
+
+  redirect(
+    buildRedirect("/settings/operational-intelligence", {
+      message: "Operational cue rule was updated. My Work will use the saved rule immediately."
+    })
+  );
+}
+
+export async function updateOrganizationResponsibilityDefaultAction(
+  formData: FormData
+) {
+  const result = organizationResponsibilityDefaultInputSchema.safeParse({
+    roleKey: getFieldValue(formData, "roleKey"),
+    personId: getFieldValue(formData, "personId")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/settings/operational-intelligence", {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to update responsibility default."
+      })
+    );
+  }
+
+  try {
+    await upsertOrganizationResponsibilityDefault(result.data);
+  } catch (error) {
+    redirect(
+      buildRedirect("/settings/operational-intelligence", {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to update responsibility default."
+      })
+    );
+  }
+
+  revalidateSettingsSlice();
+
+  redirect(
+    buildRedirect("/settings/operational-intelligence", {
+      message:
+        "Responsibility default was updated. My Work will use the saved responsible person immediately."
+    })
+  );
+}
+
+export async function clearOrganizationResponsibilityDefaultAction(
+  formData: FormData
+) {
+  const result = clearOrganizationResponsibilityDefaultInputSchema.safeParse({
+    roleKey: getFieldValue(formData, "roleKey")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/settings/operational-intelligence", {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to clear responsibility default."
+      })
+    );
+  }
+
+  try {
+    await clearOrganizationResponsibilityDefault(result.data);
+  } catch (error) {
+    redirect(
+      buildRedirect("/settings/operational-intelligence", {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to clear responsibility default."
+      })
+    );
+  }
+
+  revalidateSettingsSlice();
+
+  redirect(
+    buildRedirect("/settings/operational-intelligence", {
+      message:
+        "Responsibility default was cleared. My Work will fall back to the role label."
     })
   );
 }

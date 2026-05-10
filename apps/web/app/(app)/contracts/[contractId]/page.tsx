@@ -18,6 +18,7 @@ import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
+import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
 import { ReadyToScheduleActionPanel } from "@/components/ready-to-schedule-action-panel";
 import {
@@ -34,6 +35,7 @@ import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { isOrganizationActivatedForProductionAction } from "@/lib/organizations/activation-guard";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
+import { getOperationalCuesForSubject } from "@/lib/operational-cues/data";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
 import { buildScheduleHref } from "@/lib/schedule/links";
 import {
@@ -456,6 +458,11 @@ export default async function ContractDetailPage({
     organizationId: contract.organizationId,
     projectId: contract.projectId
   });
+  const contractAttentionCues = await getOperationalCuesForSubject({
+    organizationId: contract.organizationId,
+    subjectType: "contract",
+    subjectId: contract.id
+  });
   const contractGate = computeContractWorkflowGate({
     status: contract.status,
     internalApprovalStatus: contract.internalApprovalStatus,
@@ -785,6 +792,11 @@ export default async function ContractDetailPage({
           <WorkflowBar title="Contract workflow" steps={contractWorkflowSteps} />
 
           <ProjectStateSummary title="Signature state" items={contractStateItems} />
+
+          <NeedsAttentionPanel
+            cues={contractAttentionCues}
+            description="Contract-specific signature cues derived from this canonical contract and enabled organization rules."
+          />
 
           {showReadyToSchedulePanel ? (
             <ReadyToScheduleActionPanel

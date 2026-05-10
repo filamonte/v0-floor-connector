@@ -19,6 +19,2016 @@ Status: compact operational handoff for the current branch.
 
 Use this file for fast orientation after reading [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md). For exact implemented truth, defer to [docs/current-state.md](C:/FloorConnector/docs/current-state.md).
 
+## Billing / Provider Support Review Evidence Live Verification
+
+This narrow verification pass rechecked the Billing / Provider Support Review Evidence Readiness slice. It did not add migrations, schema changes, RLS/grant changes, Stripe/provider calls, subscription operations, billing execution, corrective-action execution, provider mutation behavior, package assignment mutation, package lifecycle mutation, entitlement enforcement, module gating, runtime behavior, contractor permission changes, reporting/export behavior, automation, AI behavior, operational-cues product changes, responsibility-role product changes, tenant template/catalog writes, or starter-pack provisioning changes.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Migration / live schema evidence:
+
+- `pnpm exec supabase migration list --linked` showed `20260510031202_contractor_package_billing_support_reviews` applied locally and remotely.
+- The unrelated `20260510031444_organization_responsibility_role_defaults` migration is also applied locally and remotely. This pass inspected and documented that posture only; it did not apply, revert, modify, or exercise responsibility-role product behavior.
+- Live RLS query confirmed `contractor_package_billing_support_reviews` and `contractor_package_billing_support_review_events` have RLS enabled and forced.
+- Live constraint/index/grant query confirmed support-review status/category/environment checks, event-type checks, JSON-object checks, evidence-preserving state checks, FKs to mapping/assignment/company/package/version/user tables, and indexes for mapping, assignment, company, package, status/category/environment, attention states, and event timelines.
+- Live grant query returned only `service_role` grants for the support-review tables in the checked role set; no `public`, `anon`, or `authenticated` grants were present.
+- `pg_policies` returned no policies for either support-review table, so no table policy exposes support-review evidence to contractor/client/browser roles.
+- A server-admin count/read check using `.env.local` confirmed both support-review tables are reachable through the intended server-admin path with zero rows, while anonymous API access to both support-review tables is denied.
+- A source scan found service-role env var names only in server config/server-only utilities and tests; no service-role key value was printed or exposed in browser/client code.
+- Supabase CLI briefly hit the known pooler `ECIRCUITBREAKER` path during parallel temp-role checks. Retried narrower/sequential queries completed successfully.
+
+Read-model verification:
+
+- Focused package/provider/support tests passed 93 tests, including support-review empty state, status/category/environment buckets, blocked/attention caveats, bounded evidence snapshot summaries, missing linked references, event ordering, explicit no-behavior flags, and no mutation/action/form descriptor keys.
+- The support-review read model remains pure read-only inspection. `actionAvailable`, `mutationAvailable`, `correctiveExecutionAvailable`, `stripeCallAvailable`, `providerCallAvailable`, `subscriptionOperationAvailable`, `billingMutationAvailable`, `entitlementEffect`, `moduleEffect`, `runtimeEffect`, and `packageAssignmentEffect` are all false.
+
+Browser QA:
+
+- The Browser plugin smoke check reached `/super-admin/packages` in the in-app browser and redirected to login because that browser does not share the Playwright platform-admin storage state; it produced no console errors.
+- Authenticated Playwright QA used the existing `playwright/.auth/platform-admin.json` storage state.
+- Initial authenticated QA found stale `.next` chunk 404s for the super-admin package page. Allowed dev-server cleanup stopped the stale `localhost:3004` listener, removed only generated `apps/web/.next`, and restarted a fresh Next dev server on `http://localhost:3004`.
+- After cleanup, `/super-admin/packages` returned HTTP 200, rendered Package Definition Catalog, Contractor Package Assignments, Billing / Provider Mapping Readiness, Billing / Provider Support Review Readiness, and the support-review empty state.
+- The `#provider-support-review-readiness` scope had `forms=0`, `inputs=0`, `hiddenInputs=0`, `buttons=0`, `selects=0`, `textareas=0`, and `links=0`.
+- `/super-admin/packages/provider-mappings/not-a-real-mapping` returned HTTP 200, rendered the safe unavailable state, linked support-review empty state, and no raw database/provider error.
+- The `#provider-mapping-support-review-readiness` scope had `forms=0`, `inputs=0`, `hiddenInputs=0`, `buttons=0`, `selects=0`, `textareas=0`, and `links=0`.
+- Final browser checks showed no framework overlay, no console errors, no page errors, and no failed resources on either route.
+- Populated support-review QA remains blocked by zero support review/provider mapping records. No records were seeded.
+
+Counts before and after matched exactly:
+
+- `contractor_package_billing_support_reviews=0`
+- `contractor_package_billing_support_review_events=0`
+- `contractor_package_billing_mappings=0`
+- `contractor_package_billing_mapping_audit_events=0`
+- `contractor_package_assignments=0`
+- `contractor_package_assignment_audit_events=0`
+- `platform_package_definitions=0`
+- `platform_package_definition_versions=0`
+- `platform_package_definition_audit_events=0`
+- `companies=10`
+- `company_subscriptions=0`
+- `subscription_plans=0`
+- `document_templates=4`
+- `catalog_items=9`
+- `contractor_group_audit_events=52`
+- `contractor_group_memberships=0`
+- `platform_starter_pack_provisioning_runs=4`
+- `platform_starter_pack_provisioning_run_items=5`
+
+Validation evidence:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-package-billing-support-review-read-model.test.ts apps/web/lib/platform-admin/contractor-package-billing-mapping-read-model.test.ts apps/web/lib/platform-admin/contractor-package-billing-mapping-detail.test.ts apps/web/lib/platform-admin/package-governance.test.ts apps/web/lib/platform-admin/package-definition-planning.test.ts apps/web/lib/platform-admin/package-definition-catalog.test.ts apps/web/lib/platform-admin/package-definition-detail.test.ts apps/web/lib/platform-admin/package-definition-audit-timeline.test.ts apps/web/lib/platform-admin/package-definition-lifecycle-readiness.test.ts apps/web/lib/platform-admin/contractor-package-assignment-read-model.test.ts apps/web/lib/platform-admin/contractor-package-assignment-detail.test.ts apps/web/lib/platform-admin/contractor-package-assignment-activation-readiness.test.ts` passed 93 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` should be rerun after this handoff update before final response.
+
+Recommended next prompt:
+
+- "Implement the next low-risk package governance build slice: Billing / Provider Support Review Detail / Read-Only Evidence Inspection. Add read-only inspection for one support review and its events only, linked from provider mapping detail if records exist. Do not add corrective-action execution, Stripe/provider calls, subscription operations, billing execution, provider mutation, package assignment mutation, entitlement/module/runtime behavior, contractor permission changes, reporting/export, automation, AI behavior, operational-cues changes, responsibility-role product changes, or starter-pack provisioning."
+
+## Billing / Provider Support Review Evidence Readiness
+
+This Super Admin Platform Evolution slice added the first read-only billing/provider support-review evidence foundation for future provider reconciliation review. It did not add Stripe/provider calls, subscription operations, billing execution, corrective-action execution, provider mutation behavior, package assignment mutation, package lifecycle mutation, entitlement enforcement, module gating, runtime behavior, contractor permission changes, reporting/export behavior, automation, AI behavior, operational-cues product changes, tenant template/catalog writes, or starter-pack provisioning changes.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260510031202_contractor_package_billing_support_reviews.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/platform-admin/contractor-package-billing-support-review-read-model-core.ts`
+- `apps/web/lib/platform-admin/contractor-package-billing-support-review-read-model.test.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/app/(super-admin)/super-admin/packages/page.tsx`
+- `apps/web/app/(super-admin)/super-admin/packages/provider-mappings/[mappingId]/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/Roadmap.md`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- Added `contractor_package_billing_support_reviews` and `contractor_package_billing_support_review_events` as evidence-only public tables with constrained review statuses, resolution categories, support-review event types, provider environments, JSON-object evidence/snapshot fields, blocked/resolved/archive coherence checks, FKs to provider mappings, assignments, companies, package definitions/versions, and users where applicable.
+- Enabled and forced RLS on both tables, revoked broad `public`, `anon`, and `authenticated` grants, granted the server-admin read posture to `service_role`, and added no table policies or security-definer RPCs.
+- Added typed support-review IDs, statuses, resolution categories, event types, and row shapes in `packages/types`.
+- Added `buildContractorPackageBillingSupportReviewReadModel(...)`, a pure read-only model with summary cards, review-status buckets, resolution-category buckets, provider-environment buckets, event-type buckets, support review rows, support review event rows, blocked/attention caveats, safe bounded evidence snapshot summaries, operator guidance, and explicit no-behavior flags.
+- Added server-only platform-admin read helpers to list support reviews/events globally and per provider mapping, plus read-model helpers for `/super-admin/packages` and provider mapping detail.
+- Added a read-only `Billing / Provider Support Review Readiness` section to `/super-admin/packages` with support-review evidence, manual-resolution readiness, event evidence, and an empty state.
+- Added linked read-only support-review evidence to `/super-admin/packages/provider-mappings/[mappingId]`.
+
+Migration / live schema evidence:
+
+- `20260510031202_contractor_package_billing_support_reviews` was applied to the linked Supabase target.
+- During the same `supabase db push`, unrelated migration `20260510031444_organization_responsibility_role_defaults` was also applied because it was pending locally. This was not part of the package support-review slice; no operational-cues product code was changed in this pass.
+- Live checks confirmed both support-review tables exist with the expected columns, constraints, FKs, and indexes for mapping, assignment, company, package, status/category/environment, attention states, and event timelines.
+- Live RLS checks confirmed RLS enabled and forced on both support-review tables.
+- Live grants showed no `public`, `anon`, or `authenticated` table grants. `service_role` privileges are visible, including `SELECT`, matching the server-admin read posture.
+- `pg_policies` returned no policies for either support-review table, so no table policy exposes support-review/provider evidence to contractor/client/browser roles.
+
+Browser QA:
+
+- Initial local QA hit a stale `.next` vendor chunk error. Dev-server cleanup stopped local listeners on ports 3000/3004, removed only generated `apps/web/.next`, and restarted a fresh dev server on `http://localhost:3004`.
+- Authenticated Playwright QA using existing `playwright/.auth/platform-admin.json` loaded `/super-admin/packages` with HTTP 200 and no login redirect.
+- `/super-admin/packages` rendered Package Definition Catalog, Contractor Package Assignments, Billing / Provider Mapping Readiness, and Billing / Provider Support Review Readiness.
+- The support-review empty state rendered safely, with no framework overlay, browser console errors, or page errors.
+- Scoped checks inside `#provider-support-review-readiness` found zero forms, inputs, selects, textareas, buttons, and hidden inputs.
+- Authenticated Playwright loaded `/super-admin/packages/provider-mappings/not-a-real-mapping` with HTTP 200, safe provider mapping unavailable state, and visible linked support-review empty state. The detail support-review scope also had zero mutation controls and no console/page errors.
+- Populated support-review browser QA remains blocked by zero support review/provider mapping records. No records were seeded.
+
+Counts before and after matched exactly:
+
+- `contractor_package_billing_support_reviews=0`
+- `contractor_package_billing_support_review_events=0`
+- `contractor_package_billing_mappings=0`
+- `contractor_package_billing_mapping_audit_events=0`
+- `contractor_package_assignments=0`
+- `contractor_package_assignment_audit_events=0`
+- `platform_package_definitions=0`
+- `platform_package_definition_versions=0`
+- `platform_package_definition_audit_events=0`
+- `companies=10`
+- `company_subscriptions=0`
+- `subscription_plans=0`
+- `document_templates=4`
+- `catalog_items=9`
+- `contractor_group_audit_events=52`
+- `contractor_group_memberships=0`
+- `platform_starter_pack_provisioning_runs=4`
+- `platform_starter_pack_provisioning_run_items=5`
+
+Validation evidence:
+
+- Focused package/provider/support tests passed 93 tests with `pnpm exec tsx --test` across package governance, package definition planning/catalog/detail/audit/lifecycle, contractor package assignment read/detail/activation readiness, provider mapping read/detail, and support-review readiness tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Run a narrow live verification pass for the Billing / Provider Support Review Evidence Readiness / Read-Only Support Review Inspection slice. Verify linked Supabase migration/history/schema/RLS/grants, `/super-admin/packages` support review section, provider mapping detail support-review summary, zero mutation controls, unchanged counts, focused tests, typecheck, lint, and `git diff --check`. Fix only confirmed read-only defects; do not add corrective-action execution, Stripe/provider calls, subscription operations, billing execution, package assignment mutation, entitlement/module/runtime behavior, contractor permission changes, reporting/export, automation, AI, operational-cues changes, or starter-pack provisioning."
+
+## Organization Responsibility Defaults Foundation
+
+This pass added the first People-first organization responsibility defaults foundation for Operational Intelligence. It maps the starter responsible role strategies to active, assignable People records and lets derived cues display the responsible person when configured. It did not add project-level overrides, record-level overrides, assignment actions, user-specific My Work filtering, cue instances, task records, persisted cue lifecycle state, AI, notifications, snooze/dismiss, escalation routing, `sales_owner`, or `field_lead`.
+
+Files changed:
+
+- `supabase/migrations/20260510031444_organization_responsibility_role_defaults.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/operational-cues/responsibility-defaults.ts`
+- `apps/web/lib/operational-cues/responsibility.ts`
+- `apps/web/lib/operational-cues/derive.ts`
+- `apps/web/lib/operational-cues/data.ts`
+- `apps/web/lib/operational-cues/owner-strategies.ts`
+- `apps/web/app/(app)/settings/operational-intelligence/page.tsx`
+- `apps/web/app/(app)/dashboard/page.tsx`
+- `apps/web/components/operational-cues/needs-attention-panel.tsx`
+- `apps/web/lib/settings/actions.ts`
+- `apps/web/lib/settings/schemas.ts`
+- `apps/web/lib/operational-cues/responsibility.test.ts`
+- `apps/web/lib/operational-cues/derive.test.ts`
+- `apps/web/lib/operational-cues/rule-settings-permissions.test.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- Added `organization_responsibility_role_defaults` with forced RLS, active-member read policy, owner/admin insert/update/delete policies, unique `(organization_id, role_key)`, starter role-key check, tenant/person composite FK to `people(company_id, id)`, timestamps, and created/updated by fields.
+- Added server helpers to list responsibility defaults, list active/assignable responsibility people, upsert a role default, and clear a role default. Mutation helpers derive organization scope from the existing owner/admin settings scope and validate that mapped people belong to the active organization and are active/assignable.
+- Extended cue responsibility resolution so `estimator`, `project_manager`, `billing_owner`, and `scheduler` can resolve to a mapped person. If that person has `people.membership_user_id`, the derived responsibility includes the linked app user id with `user_resolved`; otherwise it returns `person_resolved`.
+- Loaded responsibility defaults once per organization during cue loading and passed them into query-time cue derivation.
+- Added a `Responsibility defaults` section to `/settings/operational-intelligence` below cue-rule settings. It lets owner/admin users choose or clear responsible people for Estimator, Project manager, Billing owner, and Scheduler using active assignable People records.
+- Dashboard My Work and record-level Needs Attention panels continue to show quiet responsibility metadata. When a person is resolved they show the responsible person plus the role label; otherwise they keep the role fallback.
+
+Boundary preserved:
+
+- Mappings are People-first and do not point directly to users. Linked app users are derived only from `people.membership_user_id`.
+- No operational cue instances, tasks, assignment records/actions, project/record overrides, user-specific filtering, notification routing, AI, snooze/dismiss, or lifecycle state were added.
+
+Validation status:
+
+- Focused Operational Cue tests passed for derivation, rule definitions, rule settings/RLS migration checks, and responsibility resolution.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+- The linked Supabase table is queryable and `supabase/migrations/20260510031444_organization_responsibility_role_defaults.sql` is listed as applied in the earlier live schema evidence. A later `supabase db push --dry-run` retry was blocked by the Supabase pooler with `ECIRCUITBREAKER` after too many authentication failures; do not keep retrying the CLI until that cools down or the DB password is confirmed.
+- Browser QA on `http://localhost:3001` passed after refreshing `playwright/.auth/local-user.json` with the setup project. `/dashboard` rendered My Work, `/settings/operational-intelligence` rendered Responsibility defaults, both fixture job detail pages rendered Needs Attention panels, and `pnpm exec playwright test e2e/operational-cues-record-panels.spec.js --project=chromium-protected --no-deps` passed 4 tests.
+
+Recommended next prompt:
+
+- "Run a narrow live verification pass for organization responsibility defaults after the Supabase pooler circuit breaker clears. Confirm migration history/dry-run, verify owner/admin can set and clear one safe responsibility default, verify My Work and one Needs Attention panel show the resolved responsible person, then restore the mapping. Do not add project overrides, record overrides, My Work user filtering, assignments, lifecycle state, AI, notifications, snooze/dismiss, or new owner strategies."
+
+## Provider Mapping Detail Live Verification
+
+This narrow verification pass rechecked the Package / Assignment Provider Mapping Detail / Read-Only Reconciliation Inspection slice. It did not add migrations, schema changes, RLS/grant changes, Stripe calls, provider API calls, subscription operations, billing execution, payment collection, package assignment mutation, package lifecycle mutation controls, entitlement enforcement, module gating, pricing enforcement, runtime behavior, contractor permission changes, reporting/export behavior, automation, AI behavior, operational-cues product work, tenant template/catalog writes, or starter-pack provisioning changes.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Route / read-only UI verification:
+
+- Code inspection confirmed `/super-admin/packages/provider-mappings/[mappingId]` renders a read-only provider mapping detail surface with summary, linked references, provider reference labels, safe expected/observed/mapping snapshot summaries, mismatch caveats, audit evidence, safe unavailable state, and operator guidance.
+- The detail copy states that the view is read-only, provider references are not business truth, and the surface has no Stripe/provider calls, subscription operations, billing execution, package assignment mutation, entitlement/module/runtime behavior, or contractor permission changes.
+- The read-only provider mapping section on `/super-admin/packages` still renders the provider mapping empty state when there are zero mapping rows.
+- Populated provider mapping detail QA remains blocked by empty provider mapping data; no provider mapping records were seeded.
+
+Schema / RLS posture:
+
+- `pnpm exec supabase migration list --linked` showed `20260509183549_contractor_package_billing_mappings` applied locally and remotely. Related package-governance migrations `20260509132622`, `20260509143550`, and `20260509150945` remain applied. Unrelated local-only `20260509202341` is visible as not applied remotely; this pass did not apply or revert it.
+- Live RLS check confirmed `contractor_package_billing_mappings` and `contractor_package_billing_mapping_audit_events` exist with RLS enabled and forced.
+- Live grant check showed no `public`, `anon`, or `authenticated` grants on the provider mapping tables. `service_role` privileges are visible, including `SELECT`, matching the server-admin read posture.
+- `pg_policies` returned no policies for either provider mapping table, so no table policy exposes provider mapping data to contractor/client/browser roles.
+- Source scan found service-role env var names only in server config/server-only utilities and tests; no service-role key value was printed or exposed in browser/client code. `apps/web/lib/platform-admin/data.ts` remains `server-only`.
+- Supabase CLI emitted transient pooler `ECIRCUITBREAKER` retry messages during one policy query retry, but the narrow policy query completed successfully with zero rows.
+
+Read-model verification:
+
+- Focused package/provider/assignment tests passed 85 tests, including provider mapping detail unavailable state, no audit event caveat, audit ordering, mismatch caveats, bounded snapshot summaries, no mutation/action/form descriptor keys, and explicit no-behavior flags.
+- The provider mapping detail model continues to return `readOnly: true` with action, mutation, billing mutation, Stripe call, provider call, subscription operation, billing execution, entitlement, module, runtime, package assignment, and contractor permission effects all unavailable/false.
+
+Browser QA:
+
+- Local dev server responded at `http://localhost:3000/login` with HTTP 200; no dev-server cleanup was needed.
+- Browser plugin unauthenticated smoke check for `/super-admin/packages` redirected to `/login?next=%2Fsuper-admin%2Fpackages` with no console errors.
+- Authenticated Playwright QA using existing `playwright/.auth/platform-admin.json` loaded `/super-admin/packages` without login redirect after route warmup. The page rendered Package Definition Catalog, Contractor Package Assignments, Billing / Provider Mapping Readiness, and the provider mapping empty state with no framework overlay, no console errors, and no page errors.
+- Authenticated Playwright loaded `/super-admin/packages/provider-mappings/not-a-real-mapping`; the safe provider mapping unavailable state rendered with no raw database/provider error, no framework overlay, no console errors, and no page errors.
+- Scoped checks inside `#provider-mapping-readiness` and `[data-testid="contractor-package-billing-mapping-detail-page"]` found `forms=0`, `inputs=0`, `selects=0`, `textareas=0`, `buttons=0`, `hiddenInputs=0`, and `mutationHrefCandidates=0`.
+- No Stripe/provider call controls, subscription/billing execution controls, assignment mutation controls, entitlement/module/runtime controls, contractor permission controls, or reporting/export controls were found in the checked provider mapping scopes.
+
+Counts before and after matched exactly:
+
+- `contractor_package_billing_mappings=0`
+- `contractor_package_billing_mapping_audit_events=0`
+- `contractor_package_assignments=0`
+- `contractor_package_assignment_audit_events=0`
+- `platform_package_definitions=0`
+- `platform_package_definition_versions=0`
+- `platform_package_definition_audit_events=0`
+- `companies=10`
+- `company_subscriptions=0`
+- `subscription_plans=0`
+- `document_templates=4`
+- `catalog_items=9`
+- `contractor_group_audit_events=52`
+- `contractor_group_memberships=0`
+- `platform_starter_pack_provisioning_runs=4`
+- `platform_starter_pack_provisioning_run_items=5`
+
+Validation evidence:
+
+- `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-package-billing-mapping-detail.test.ts apps/web/lib/platform-admin/contractor-package-billing-mapping-read-model.test.ts apps/web/lib/platform-admin/package-governance.test.ts apps/web/lib/platform-admin/package-definition-planning.test.ts apps/web/lib/platform-admin/package-definition-catalog.test.ts apps/web/lib/platform-admin/package-definition-detail.test.ts apps/web/lib/platform-admin/package-definition-audit-timeline.test.ts apps/web/lib/platform-admin/package-definition-lifecycle-readiness.test.ts apps/web/lib/platform-admin/contractor-package-assignment-read-model.test.ts apps/web/lib/platform-admin/contractor-package-assignment-detail.test.ts apps/web/lib/platform-admin/contractor-package-assignment-activation-readiness.test.ts` passed 85 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Implement the next low-risk package governance build slice: Billing / Provider Support Review Evidence Readiness / Read-Only Support Review Inspection. Add only a pure read-only model and/or schema foundation for future support-review evidence over provider mapping mismatches after confirming scope. Do not add Stripe/provider calls, subscription operations, billing execution, corrective actions, package assignment mutation, entitlement/module/runtime behavior, contractor permission changes, reporting/export, automation, AI behavior, operational-cues changes, or starter-pack provisioning."
+
+## Provider Mapping Readiness Live Verification
+
+This narrow verification pass rechecked the Package / Assignment Provider Mapping Readiness Schema + Read-Only Reconciliation Inspection slice. It did not add migrations, schema changes, RLS/grant changes, Stripe calls, provider API calls, subscription operations, billing execution, payment collection, package assignment mutation, package lifecycle mutation controls, entitlement enforcement, module gating, pricing enforcement, runtime behavior, contractor permission changes, reporting/export behavior, automation, AI behavior, operational-cues product work, tenant template/catalog writes, or starter-pack provisioning changes.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Migration / live schema evidence:
+
+- `supabase migration list` shows `20260509183549_contractor_package_billing_mappings` applied locally and remotely.
+- Related package governance migrations `20260509132622`, `20260509143550`, and `20260509150945` remain applied. Unrelated `20260509142241` and `20260509151036` operational-cues migrations are visible as applied; this pass did not apply, revert, or modify unrelated migrations.
+- Live table checks confirmed `contractor_package_billing_mappings` and `contractor_package_billing_mapping_audit_events` exist.
+- Live constraint checks confirmed provider, environment, billing-state, reconciliation-state, trial/custom marker, provider-reference, JSON-object snapshot/metadata, mismatch-state, verified-timestamp, archived-state, audit event type, primary key, and FK constraints on the provider mapping tables.
+- Live index checks confirmed assignment, company, package/version, provider/environment, subscription reference, attention-needed, mapping timeline, audit assignment, audit company, audit package, and audit event-type read indexes.
+- Supabase CLI intermittently reported temporary pooler `ECIRCUITBREAKER` retries during remote checks, but the verification queries completed successfully.
+
+RLS / grants:
+
+- RLS is enabled and forced on both provider mapping tables.
+- `pg_policies` returned no policies for either provider mapping table, so no policy exposes provider mapping data to contractor/client/browser roles.
+- Grant verification showed no `public`, `anon`, or `authenticated` table grants.
+- `service_role` privileges are visible on both tables, with `SELECT` included. This matches the current server-admin read posture for these platform-admin-only helpers; no browser/client write path was added.
+- Source scan found the package/provider read model is pure and `apps/web/lib/platform-admin/data.ts` is `server-only`. No service-role key value is exposed in browser/client code.
+
+Read-model verification:
+
+- Focused provider/package/assignment tests passed 79 tests, including empty provider mapping state, provider/environment grouping, billing/reconciliation grouping, mismatch caveats, safe snapshot summaries, no mutation/action/form descriptor keys, and explicit no-behavior flags.
+- The provider mapping read model still returns `readOnly: true` and all no-behavior flags as false for action, mutation, billing mutation, Stripe call, subscription operation, entitlement, module, runtime, and package assignment effects.
+
+Browser QA:
+
+- Local dev server responded at `http://localhost:3000/login` with HTTP 200; no dev-server cleanup was needed.
+- Browser plugin unauthenticated smoke check for `/super-admin/packages` redirected to `/login?next=%2Fsuper-admin%2Fpackages` with no console errors.
+- Authenticated Playwright QA using existing `playwright/.auth/platform-admin.json` loaded `/super-admin/packages` without login redirect, console errors, page errors, or failed requests.
+- The page rendered Package Definition Catalog, Package Versions, Catalog Readiness, Contractor Package Assignments, Assignment Readiness, Assignment Audit Evidence, Billing / Provider Mapping Readiness, Provider Reconciliation Inspection, Provider Mapping Audit Evidence, and the provider mapping empty state.
+- Scoped checks inside `platform-package-governance-page` found `forms=0`, `inputs=0`, `selects=0`, `textareas=0`, `buttons=0`, and `hiddenInputs=0`.
+- Scoped checks inside `#provider-mapping-readiness` found `forms=0`, `inputs=0`, `selects=0`, `textareas=0`, `buttons=0`, and `hiddenInputs=0`.
+- No Stripe/subscription/billing execution controls, package assignment mutation controls, entitlement/module/runtime controls, contractor permission controls, or reporting/export controls were found in the checked scope.
+- The browser smoke check saw a benign empty `NEXTJS-PORTAL` dev-tools node, not a framework error overlay.
+- Text checks that matched `provider payload` were intentional safe-boundary copy saying snapshots are not raw provider payloads, not raw database/provider errors.
+
+Counts before and after matched exactly:
+
+- `contractor_package_billing_mappings=0`
+- `contractor_package_billing_mapping_audit_events=0`
+- `contractor_package_assignments=0`
+- `contractor_package_assignment_audit_events=0`
+- `platform_package_definitions=0`
+- `platform_package_definition_versions=0`
+- `platform_package_definition_audit_events=0`
+- `companies=10`
+- `company_subscriptions=0`
+- `subscription_plans=0`
+- `document_templates=4`
+- `catalog_items=9`
+- `contractor_group_audit_events=52`
+- `contractor_group_memberships=0`
+- `platform_starter_pack_provisioning_runs=4`
+- `platform_starter_pack_provisioning_run_items=5`
+
+Validation evidence:
+
+- Focused package/provider tests passed: `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-package-billing-mapping-read-model.test.ts apps/web/lib/platform-admin/package-governance.test.ts apps/web/lib/platform-admin/package-definition-planning.test.ts apps/web/lib/platform-admin/package-definition-catalog.test.ts apps/web/lib/platform-admin/package-definition-detail.test.ts apps/web/lib/platform-admin/package-definition-audit-timeline.test.ts apps/web/lib/platform-admin/package-definition-lifecycle-readiness.test.ts apps/web/lib/platform-admin/contractor-package-assignment-read-model.test.ts apps/web/lib/platform-admin/contractor-package-assignment-detail.test.ts apps/web/lib/platform-admin/contractor-package-assignment-activation-readiness.test.ts` passed 79 tests.
+
+Recommended next prompt:
+
+- "Implement the next low-risk package governance build slice: Package / Assignment Provider Mapping Detail / Read-Only Reconciliation Inspection. Add read-only inspection for one contractor package billing/provider mapping and its audit evidence only, linked from `/super-admin/packages` or assignment detail if records exist. Do not add Stripe calls, provider API calls, subscription operations, billing execution, payment collection, package assignment mutation, entitlement/module/runtime behavior, contractor permission changes, reporting/export, automation, AI behavior, operational-cues changes, or starter-pack provisioning."
+
+## Package / Assignment Provider Mapping Readiness
+
+This Super Admin Platform Evolution slice added the read-only provider mapping readiness foundation for future package/assignment billing reconciliation. It did not add Stripe calls, provider API calls, subscription operations, billing execution, package assignment mutation, package lifecycle mutation, entitlement enforcement, module gating, runtime behavior, contractor permission changes, reporting/export behavior, automation, AI behavior, operational-cues changes, or starter-pack provisioning changes.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260509183549_contractor_package_billing_mappings.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/platform-admin/contractor-package-billing-mapping-read-model-core.ts`
+- `apps/web/lib/platform-admin/contractor-package-billing-mapping-read-model.test.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/app/(super-admin)/super-admin/packages/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/Roadmap.md`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- Added `contractor_package_billing_mappings` and `contractor_package_billing_mapping_audit_events` as public schema tables with forced RLS, broad `public`/`anon`/`authenticated` grant revokes, server-side service-role read posture, constrained provider/environment/state/event enums, JSON-object snapshot constraints, provider/reference indexes, attention-needed indexes, and comments warning against secrets, raw provider payloads, payment data, and service-role keys.
+- Added shared provider mapping and audit event types.
+- Added platform-admin-only server read helpers: `listContractorPackageBillingMappings(...)`, `listContractorPackageBillingMappingAuditEvents(...)`, and `getContractorPackageBillingMappingReadModel(...)`.
+- Added pure `buildContractorPackageBillingMappingReadModel(...)` with provider/environment buckets, billing/reconciliation state buckets, audit event buckets, safe expected/observed/mapping snapshot summaries, mismatch/missing-reference caveats, operator guidance, and explicit no-behavior flags.
+- Added a read-only `Billing / Provider Mapping Readiness` section to `/super-admin/packages` with Provider Reconciliation Inspection, Provider Mapping Rows, and Provider Mapping Audit Evidence empty states.
+
+Migration / live schema evidence:
+
+- `supabase migration list` showed only `20260509183549` pending before push; `supabase db push` applied only `20260509183549_contractor_package_billing_mappings.sql`.
+- Prior package governance migrations `20260509132622`, `20260509143550`, and `20260509150945` remained applied.
+- Unrelated `20260509151036` is also applied remotely; this pass did not create, revert, or modify operational-cues behavior.
+- Live schema verification confirmed RLS enabled and forced on both provider mapping tables, no RLS policies on those tables, JSON/object/state/FK/check constraints present, and indexes for assignment, company, package, provider/environment, subscription reference, attention-needed state, audit timelines, and event type.
+- Grant verification showed no `public`, `anon`, or `authenticated` table grants. `service_role` privileges are visible for the tables, with explicit select grants in the migration.
+
+Counts:
+
+- Before: `contractor_package_billing_mappings` and `contractor_package_billing_mapping_audit_events` did not exist. Existing counts were `contractor_package_assignments=0`, `contractor_package_assignment_audit_events=0`, `platform_package_definitions=0`, `platform_package_definition_versions=0`, `platform_package_definition_audit_events=0`, `companies=10`, `company_subscriptions=0`, `subscription_plans=0`, `document_templates=4`, `catalog_items=9`, `contractor_group_audit_events=52`, `contractor_group_memberships=0`, `platform_starter_pack_provisioning_runs=4`, `platform_starter_pack_provisioning_run_items=5`.
+- After: `contractor_package_billing_mappings=0`, `contractor_package_billing_mapping_audit_events=0`, and every existing business/tenant/template/catalog/provisioning/package/assignment count above remained unchanged.
+
+Validation:
+
+- Focused package tests passed: `node --import tsx --test apps/web/lib/platform-admin/package-governance.test.ts apps/web/lib/platform-admin/package-definition-planning.test.ts apps/web/lib/platform-admin/package-definition-catalog.test.ts apps/web/lib/platform-admin/package-definition-detail.test.ts apps/web/lib/platform-admin/package-definition-audit-timeline.test.ts apps/web/lib/platform-admin/package-definition-lifecycle-readiness.test.ts apps/web/lib/platform-admin/contractor-package-assignment-read-model.test.ts apps/web/lib/platform-admin/contractor-package-assignment-detail.test.ts apps/web/lib/platform-admin/contractor-package-assignment-activation-readiness.test.ts apps/web/lib/platform-admin/contractor-package-billing-mapping-read-model.test.ts` passed 79 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- Browser QA passed after stale generated Next output was cleared and one local dev server was restarted.
+- `git diff --check` passed with LF-to-CRLF warnings only.
+
+Browser QA caveat:
+
+- Browser plugin unauthenticated smoke confirmed `/super-admin/packages` redirects to `/login?next=%2Fsuper-admin%2Fpackages` with no console errors.
+- Authenticated Playwright QA using existing `playwright/.auth/platform-admin.json` loaded `/super-admin/packages` without login redirect, framework overlay, raw DB/provider error, failed requests, or console errors.
+- The page rendered Package Definition Catalog, Package Versions, Catalog Readiness, Contractor Package Assignments, Assignment Readiness, Assignment Audit Evidence, Billing / Provider Mapping Readiness, Provider Reconciliation Inspection, and Provider Mapping Audit Evidence.
+- Scoped checks inside `platform-package-governance-page` found `forms=0`, `inputs=0`, `selects=0`, `textareas=0`, `buttons=0`, `hiddenInputs=0`, and `mutationHrefCandidates=0`.
+- Scoped checks inside `#provider-mapping-readiness` found `forms=0`, `inputs=0`, `selects=0`, `textareas=0`, `buttons=0`, and `hiddenInputs=0`.
+- No provider mapping records were seeded. Populated provider mapping row QA remains blocked by empty data unless a later approved slice creates records through a safe operator flow.
+
+Recommended next prompt:
+
+- "Run a narrow operator/live verification pass for the Package / Assignment Provider Mapping Readiness Schema + Read-Only Reconciliation Inspection slice. Verify the linked Supabase migration, live constraints/indexes/RLS/grants, `/super-admin/packages` provider mapping empty state, mutation-control absence, no browser console errors, unchanged counts, focused tests, typecheck, lint, and `git diff --check`. Fix only confirmed defects in the read-only provider mapping foundation; do not add Stripe calls, provider operations, subscription operations, billing execution, package assignment mutation, entitlement/module/runtime behavior, reporting/export, automation, AI behavior, operational-cues changes, or starter-pack provisioning."
+
+## Operational Cue Owner Strategy Migration Applied
+
+Applied the pending Operational Cue owner-strategy migration to the linked dev Supabase target and reverified the role-strategy/responsibility resolver surfaces. No new features, owner strategies, cue instances, task records, assignment actions, user-specific filtering, AI, notifications, snooze/dismiss behavior, project/person/user mapping, or schema beyond the existing migration were added.
+
+Target confirmed:
+
+- Project name: `FloorConnector`
+- Project ref: `jcnoraopbwdhshcmplgb`
+- Pooler host: `aws-1-us-east-1.pooler.supabase.com`
+
+Migration result:
+
+- `supabase db push --dry-run` showed exactly one pending migration before apply: `20260509202341_operational_cue_owner_strategy_foundation.sql`.
+- `supabase db push --yes` applied `20260509202341_operational_cue_owner_strategy_foundation.sql`.
+- Post-apply `supabase db push --dry-run` reported the remote database is up to date.
+- `supabase migration list` showed `20260509202341` present locally and remotely.
+- Live constraint verification confirmed `organization_operational_cue_rules_owner_strategy_check` now allows exactly `record_owner`, `organization`, `estimator`, `project_manager`, `billing_owner`, and `scheduler`.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/operational-cues/derive.test.ts` passed.
+- `pnpm exec tsx --test apps/web/lib/operational-cues/rule-definitions.test.ts` passed.
+- `pnpm exec tsx --test apps/web/lib/operational-cues/rule-settings-permissions.test.ts` passed.
+- `pnpm exec tsx --test apps/web/lib/operational-cues/responsibility.test.ts` passed.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF warnings only.
+
+Browser / Playwright QA:
+
+- Initial protected Playwright run against the reused `localhost:3001` server failed during auth setup because that server returned the app's generic `Page error`/HTTP 500 state.
+- A fresh dev server was started on `localhost:3003`; `/login` returned HTTP 200.
+- `PLAYWRIGHT_BASE_URL=http://localhost:3003 PLAYWRIGHT_SKIP_WEB_SERVER=1 pnpm exec playwright test e2e/operational-cues-record-panels.spec.js --project=chromium-protected` passed 5 tests.
+- Additional smoke checks on `localhost:3003` confirmed `/dashboard` shows `Responsible:` metadata, `/settings/operational-intelligence` renders all seven rule labels and `RESPONSIBLE ROLE STRATEGY`, and an estimate workspace shows `Needs Attention` with `Responsible: Estimator`.
+- No console errors, page errors, or 500 responses were observed during the extra smoke checks on the fresh server.
+
+Recommended next prompt:
+
+- "Plan the first project or organization responsibility mapping slice for Operational Intelligence. Planning only: decide how starter strategies resolve to People records, preserve current derived cue behavior, and do not add assignment actions, user-specific My Work filtering, AI, notifications, snooze/dismiss, persisted cue lifecycle state, or new owner strategies yet."
+
+## Project Responsibility Resolver Foundation
+
+This pass added a schema-free responsibility resolver/read-model foundation for Operational Intelligence cues. It converts each cue's owner strategy into a stable derived responsibility result for display and future My Work filtering, without adding cue instances, task records, migrations, assignment actions, user-specific filtering, AI, notifications, snooze/dismiss behavior, or a generic rule builder.
+
+Files changed:
+
+- `apps/web/lib/operational-cues/responsibility.ts`
+- `apps/web/lib/operational-cues/responsibility.test.ts`
+- `apps/web/lib/operational-cues/types.ts`
+- `apps/web/lib/operational-cues/derive.ts`
+- `apps/web/lib/operational-cues/derive.test.ts`
+- `apps/web/components/operational-cues/needs-attention-panel.tsx`
+- `apps/web/app/(app)/dashboard/page.tsx`
+- `apps/web/app/(app)/settings/operational-intelligence/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Implemented behavior:
+
+- Added `OperationalCueResponsibility` with strategy, label, resolution status, display label, nullable `personId`, nullable `userId`, and source.
+- Added `resolveOperationalCueResponsibility` as a pure helper with no database reads or mutations.
+- Starter strategies resolve to role-level `strategy_only` responsibility: estimator, project manager, billing owner, and scheduler.
+- `organization` resolves to `organization_queue`.
+- legacy `record_owner` resolves to `record_owner_unavailable`.
+- Unknown or missing strategies fall back safely to the organization queue.
+- Derived cues now include `responsibility` while retaining existing owner-strategy fields for compatibility.
+- Dashboard My Work and record-level Needs Attention panels now show quiet `Responsible:` metadata from the responsibility display label.
+- `/settings/operational-intelligence` labels the read-only strategy field as `Responsible role strategy`.
+
+Boundary preserved:
+
+- No database queries, migrations, schema changes, `operational_cues` table, task subsystem, person/user assignment resolution, My Work user filtering, assignment actions, AI, notifications, snooze/dismiss, or expression builder was added.
+- `sales_owner` and `field_lead` remain intentionally unsupported.
+
+Validation to run:
+
+- `pnpm exec tsx --test apps/web/lib/operational-cues/derive.test.ts`
+- `pnpm exec tsx --test apps/web/lib/operational-cues/rule-definitions.test.ts`
+- `pnpm exec tsx --test apps/web/lib/operational-cues/rule-settings-permissions.test.ts`
+- `pnpm exec tsx --test apps/web/lib/operational-cues/responsibility.test.ts`
+- `pnpm typecheck`
+- `pnpm lint`
+- `git diff --check`
+
+Recommended next prompt:
+
+- "Apply/verify the pending role-strategy migration in the intended dev Supabase target, then add a project or organization responsibility mapping plan for resolving starter role strategies to People records. Planning first; do not add assignment actions, user-specific My Work filtering, AI, notifications, snooze/dismiss, or persisted cue lifecycle state."
+
+## Operational Intelligence Role Strategy Foundation
+
+This pass added the first responsible-role strategy foundation for derived Operational Intelligence cues without adding cue instances, task records, assignment actions, user-specific filtering, AI, notifications, snooze/dismiss behavior, or a generic rule builder.
+
+Files changed:
+
+- `supabase/migrations/20260509202341_operational_cue_owner_strategy_foundation.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/operational-cues/owner-strategies.ts`
+- `apps/web/lib/operational-cues/rule-definitions.ts`
+- `apps/web/lib/operational-cues/rules.ts`
+- `apps/web/lib/operational-cues/types.ts`
+- `apps/web/lib/operational-cues/derive.ts`
+- `apps/web/components/operational-cues/needs-attention-panel.tsx`
+- `apps/web/app/(app)/dashboard/page.tsx`
+- `apps/web/app/(app)/settings/operational-intelligence/page.tsx`
+- `apps/web/lib/operational-cues/derive.test.ts`
+- `apps/web/lib/operational-cues/rule-definitions.test.ts`
+- `apps/web/lib/operational-cues/rule-settings-permissions.test.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Implemented behavior:
+
+- Added starter owner strategy definitions for `estimator`, `project_manager`, `billing_owner`, and `scheduler`.
+- Left `record_owner` as a legacy fallback strategy and `organization` as an organization queue strategy.
+- Mapped cue defaults to the starter role strategies: estimate follow-up -> estimator, contract follow-up -> project manager, invoice/deposit follow-up -> billing owner, and job schedule/crew follow-up -> scheduler.
+- Expanded the `organization_operational_cue_rules.owner_strategy` check constraint to allow the starter strategy keys and updates existing default `record_owner` cue-rule rows to the starter mapping while leaving other configured strategies untouched.
+- Derived cue results now include `ownerStrategy`, `ownerStrategyLabel`, and `ownerResolutionStatus`.
+- Dashboard My Work and record-level Needs Attention panels show quiet `Responsible role` metadata.
+- `/settings/operational-intelligence` keeps owner strategy read-only; editable fields remain enabled state, threshold days, and urgency.
+
+Boundary preserved:
+
+- No `operational_cues` table, persisted cue lifecycle, task subsystem, actual person/user ownership resolution, My Work user filtering, assignment actions, AI, notifications, snooze/dismiss, or expression builder was added.
+- `sales_owner` and `field_lead` remain intentionally deferred until lead ownership and field execution responsibility are consistently wired.
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/operational-cues/derive.test.ts` passed.
+- `pnpm exec tsx --test apps/web/lib/operational-cues/rule-definitions.test.ts` passed.
+- `pnpm exec tsx --test apps/web/lib/operational-cues/rule-settings-permissions.test.ts` passed.
+- focused platform-admin regression tests for the unrelated package-billing reference typecheck repair passed.
+- `pnpm typecheck` passed after normalizing the unrelated package-definition reference shape in `apps/web/lib/platform-admin/data.ts`.
+- `pnpm lint` passed.
+- `git diff --check` passed with only existing LF-to-CRLF working-copy warnings.
+- `pnpm exec playwright test e2e/operational-cues-record-panels.spec.js --project=chromium-protected` was blocked in auth setup because the linked remote database has not applied `20260509202341_operational_cue_owner_strategy_foundation.sql`; `supabase db push --dry-run` showed that migration as the only pending remote migration.
+
+## Operational Cue Keyboard + Accessibility QA
+
+This focused QA pass verified keyboard/focus behavior for Operational Intelligence cue surfaces without changing cue derivation, cue keys, schema, migrations, task records, lifecycle state, AI, notifications, snooze/dismiss behavior, ownership, or dashboard/settings/detail page structure.
+
+Files changed in this pass:
+
+- `e2e/operational-cues-record-panels.spec.js`
+- `docs/chat-handoff.md`
+
+QA coverage added:
+
+- Protected Playwright coverage now verifies a dashboard `My Work` cue action link has a record-specific accessible name, can receive keyboard focus, and opens the canonical estimate workspace with `Enter`.
+- Record-level `Needs Attention` coverage now verifies the same cue action is focusable with its record-specific accessible name on the canonical detail workspace.
+- `/settings/operational-intelligence` coverage now verifies the first built-in cue rule card exposes keyboard-reachable enabled toggle, threshold input, urgency select, and save button in a sensible tab order.
+- The settings check also verifies tabbing past the save button does not trap focus inside the rule card.
+
+Accessibility tooling note:
+
+- No existing axe-style automated accessibility helper was found in the repo, so this pass stayed with focused keyboard/focus and semantic Playwright assertions instead of adding a new dependency.
+
+Boundary preserved:
+
+- Cues remain query-time derived from canonical records and tenant-owned cue rules.
+- No `operational_cues` table, task subsystem, persisted cue lifecycle, notifications, AI behavior, snooze/dismiss state, ownership filtering, generic rule builder, or page redesign was added.
+
+## Contractor Package Assignment Activation Readiness Re-Verification
+
+This pass received the Contractor Package Assignment Activation Readiness implementation prompt again. The requested slice was already present on the branch, so this pass did not duplicate code, schema, migrations, roles, product behavior, billing, entitlement, runtime, contractor permission, package assignment mutation, operational-cues product work, or starter-pack provisioning behavior.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Verification result:
+
+- Confirmed `apps/web/lib/platform-admin/contractor-package-assignment-activation-readiness-core.ts` and `contractor-package-assignment-activation-readiness.test.ts` already implement the pure read-only model for `draft`, `pending_review`, `approved`, `scheduled`, `active`, `canceled`, `superseded`, and `archived` cases.
+- Confirmed `buildContractorPackageAssignmentActivationReadiness(...)` is integrated into `buildContractorPackageAssignmentDetail(...)` and `/super-admin/packages/assignments/[assignmentId]`.
+- Confirmed the assignment detail UI contains the read-only `Assignment Activation Readiness` section and no mutation controls were added.
+
+Browser QA:
+
+- Browser plugin smoke check for `/super-admin/packages/assignments/not-a-real-assignment` without injected storage still redirects to `/login?next=%2Fsuper-admin%2Fpackages%2Fassignments%2Fnot-a-real-assignment` with no console errors, preserving the unauthenticated boundary.
+- The local dev server initially served stale generated output (`missing required error components` with asset 404s). Recovery stopped only the local Node listener on port 3000, removed generated `apps/web/.next`, restarted `pnpm dev`, and refreshed the existing platform-admin storage state through `setup-platform-admin`.
+- Authenticated Playwright QA with `playwright/.auth/platform-admin.json` loaded `/super-admin/packages` and `/super-admin/packages/assignments/not-a-real-assignment` without login redirect, framework overlay, raw DB/provider error, or console errors.
+- `/super-admin/packages` rendered the package catalog and contractor assignment sections.
+- `/super-admin/packages/assignments/not-a-real-assignment` rendered the safe unavailable state and `Assignment Activation Readiness` section.
+- Scoped checks inside the assignment activation readiness section found `forms=0`, `inputs=0`, `selects=0`, `textareas=0`, `buttons=0`, `hiddenInputs=0`, and `mutationHrefCandidates=0`.
+- Populated assignment readiness browser QA remains blocked because `contractor_package_assignments=0`; no assignment records were seeded.
+
+Counts before and after matched exactly:
+
+- `contractor_package_assignments=0`
+- `contractor_package_assignment_audit_events=0`
+- `platform_package_definitions=0`
+- `platform_package_definition_versions=0`
+- `platform_package_definition_audit_events=0`
+- `companies=10`
+- `company_subscriptions=0`
+- `subscription_plans=0`
+- `document_templates=4`
+- `catalog_items=9`
+- `contractor_group_audit_events=52`
+- `contractor_group_memberships=0`
+- `platform_starter_pack_provisioning_runs=4`
+- `platform_starter_pack_provisioning_run_items=5`
+
+Validation evidence:
+
+- Focused package tests passed: `pnpm exec tsx --test apps/web/lib/platform-admin/package-governance.test.ts apps/web/lib/platform-admin/package-definition-planning.test.ts apps/web/lib/platform-admin/package-definition-catalog.test.ts apps/web/lib/platform-admin/package-definition-detail.test.ts apps/web/lib/platform-admin/package-definition-audit-timeline.test.ts apps/web/lib/platform-admin/package-definition-lifecycle-readiness.test.ts apps/web/lib/platform-admin/contractor-package-assignment-read-model.test.ts apps/web/lib/platform-admin/contractor-package-assignment-detail.test.ts apps/web/lib/platform-admin/contractor-package-assignment-activation-readiness.test.ts` passed 71 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with LF-to-CRLF warnings only.
+
+Recommended next prompt:
+
+- "Implement the next low-risk package governance build slice: Package / Assignment Provider Mapping Readiness Schema + Read-Only Reconciliation Inspection. Add only platform-admin read-only schema/read-model/UI for future internal package-to-provider mapping references and mismatch caveats. Do not add Stripe calls, subscription operations, billing execution, entitlement/module/runtime enforcement, package assignment mutation, package lifecycle mutation, contractor permission changes, automation, AI behavior, operational-cues changes, or starter-pack provisioning changes."
+
+## Operational Cue Panel Accessibility + Content Polish
+
+This focused polish pass improved the readability and accessibility of Operational Intelligence cue surfaces without changing cue behavior, schema, rules, lifecycle state, AI, notifications, ownership, or task-system boundaries.
+
+Files changed in this pass:
+
+- `apps/web/components/operational-cues/needs-attention-panel.tsx`
+- `apps/web/components/dashboard/contractor-dashboard-surface.tsx`
+- `apps/web/app/(app)/dashboard/page.tsx`
+- `e2e/operational-cues-record-panels.spec.js`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- Record-level `Needs Attention` cards now keep title, urgency, explanation, and action prominent while moving source, threshold, and timing details into quieter secondary metadata.
+- Dashboard `My Work` rows now separate cue context/reason from source/threshold/timing metadata so operational cues stay scannable in compact queue groups.
+- Urgency and cue age are exposed as text for screen readers instead of relying on color alone.
+- Cue action links now include record-specific accessible names such as `Open invoice: E2E-OPC-OVERDUE is overdue`.
+- Threshold metadata remains visible, but the displayed label is shortened from `Rule threshold` to `Threshold` to reduce repeated wording.
+
+Boundary preserved:
+
+- Cues remain query-time derived from canonical records and tenant-owned cue rules.
+- No `operational_cues` table, task records, persisted cue lifecycle, AI behavior, notifications, snooze/dismiss state, ownership migration, rule-builder behavior, or page redesign was added.
+
+## Super Admin Package Governance Auth / Browser QA Recovery
+
+This narrow QA recovery pass verified the read-only Super Admin package governance surfaces with a refreshed existing platform-admin browser state. No product behavior, roles, schema, migrations, billing, entitlement, runtime, contractor permission, package assignment mutation, operational-cues product work, or starter-pack provisioning behavior was changed.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Auth/session recovery:
+
+- `FLOORCONNECTOR_PLATFORM_E2E_EMAIL` / `FLOORCONNECTOR_PLATFORM_E2E_PASSWORD` are present in local `.env.local`; no secret values were printed.
+- `pnpm platform-admin status platform@floorconnector.com` confirmed the existing approved platform account has `platform_admin`.
+- `pnpm platform-admin status jfilamonte@gmail.com` confirmed the contractor E2E account still has no platform role.
+- `playwright/.auth/platform-admin.json` was refreshed through the existing `setup-platform-admin` Playwright project and normal `/login` email/password flow. No user was created, no role was granted, and no platform role record was changed.
+
+Dev-server recovery:
+
+- The existing local Next listener on `http://localhost:3000` authenticated the platform user but rendered the generic page-error boundary on `/super-admin`.
+- Recovery stopped only the stale local Node listener on port 3000, removed only generated `apps/web/.next`, and restarted one `pnpm dev` server.
+- After restart, `http://localhost:3000/login` returned 200 and platform-admin auth setup passed.
+
+Browser QA evidence:
+
+- Browser plugin smoke check without injected storage state still redirects `/super-admin/packages` to `/login?next=%2Fsuper-admin%2Fpackages`, confirming the unauthenticated boundary remains intact and produced no console errors.
+- Authenticated Playwright QA with refreshed `playwright/.auth/platform-admin.json` loaded `/super-admin/packages` without login redirect, framework overlay, raw DB/provider error, or browser console errors.
+- `/super-admin/packages` rendered `Package Definition Catalog`, `Package Versions`, `Catalog Readiness`, `Contractor Package Assignments`, `Assignment Readiness`, and `Assignment Audit Evidence`.
+- `/super-admin/packages/not-a-real-package-definition` rendered a safe `Package definition unavailable` state with package versions, lifecycle readiness, audit timeline, caveats, and no raw database/provider error.
+- `/super-admin/packages/assignments/not-a-real-assignment` rendered a safe `Assignment unavailable` state with snapshot summaries, audit timeline, activation readiness, caveats, and no raw database/provider error.
+- Populated package definition detail QA remains blocked because `platform_package_definitions=0` and `platform_package_definition_versions=0`; no package records were seeded.
+- Populated assignment detail QA remains blocked because `contractor_package_assignments=0` and `contractor_package_assignment_audit_events=0`; no assignment records were seeded.
+
+Mutation-control verification:
+
+- Scoped checks inside `platform-package-governance-page`, `platform-package-definition-detail-page`, and `contractor-package-assignment-detail-page` found `forms=0`, `inputs=0`, `selects=0`, `textareas=0`, `buttons=0`, `hiddenInputs=0`, and `mutationHrefCandidates=0`.
+- No package create/edit/publish/approve/deprecate/archive controls, assignment create/approve/schedule/activate/cancel controls, billing/Stripe/subscription controls, entitlement/module/runtime controls, contractor permission controls, or reporting/export controls were present in the checked scopes.
+
+Counts before and after matched exactly:
+
+- `contractor_package_assignments=0`
+- `contractor_package_assignment_audit_events=0`
+- `platform_package_definitions=0`
+- `platform_package_definition_versions=0`
+- `platform_package_definition_audit_events=0`
+- `companies=10`
+- `company_subscriptions=0`
+- `subscription_plans=0`
+- `document_templates=4`
+- `catalog_items=9`
+- `contractor_group_audit_events=52`
+- `contractor_group_memberships=0`
+- `platform_starter_pack_provisioning_runs=4`
+- `platform_starter_pack_provisioning_run_items=5`
+
+Migration posture:
+
+- `supabase migration list` shows package governance migrations `20260509132622`, `20260509143550`, and `20260509150945` applied on the linked remote database.
+- Unrelated operational-cues migration `20260509151036` is also applied remotely. This pass did not apply, revert, or modify migrations.
+
+Validation evidence:
+
+- Focused package tests passed: `pnpm exec tsx --test apps/web/lib/platform-admin/package-governance.test.ts apps/web/lib/platform-admin/package-definition-planning.test.ts apps/web/lib/platform-admin/package-definition-catalog.test.ts apps/web/lib/platform-admin/package-definition-detail.test.ts apps/web/lib/platform-admin/package-definition-audit-timeline.test.ts apps/web/lib/platform-admin/package-definition-lifecycle-readiness.test.ts apps/web/lib/platform-admin/contractor-package-assignment-read-model.test.ts apps/web/lib/platform-admin/contractor-package-assignment-detail.test.ts apps/web/lib/platform-admin/contractor-package-assignment-activation-readiness.test.ts` passed 71 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+
+Recommended next prompt:
+
+- "Implement the next low-risk package governance build slice: Package / Assignment Provider Mapping Readiness Schema + Read-Only Reconciliation Inspection. Add only platform-admin read-only schema/read-model/UI for future internal package-to-provider mapping references and mismatch caveats. Do not add Stripe calls, subscription operations, billing execution, entitlement/module/runtime enforcement, package assignment mutation, package lifecycle mutation, contractor permission changes, automation, AI behavior, operational-cues changes, or starter-pack provisioning changes."
+
+## Operational Cue Explanation Transparency
+
+This pass added user-facing explanation/source transparency to derived Operational Intelligence cues without adding schema, persisted cue instances, task records, AI, notifications, snooze/dismiss behavior, ownership migrations, expression builders, or page redesigns.
+
+Files changed in this pass:
+
+- `apps/web/lib/operational-cues/types.ts`
+- `apps/web/lib/operational-cues/derive.ts`
+- `apps/web/app/(app)/dashboard/page.tsx`
+- `apps/web/components/operational-cues/needs-attention-panel.tsx`
+- `apps/web/lib/operational-cues/derive.test.ts`
+- `e2e/operational-cues-record-panels.spec.js`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- `OperationalCue` now carries `explanation`, `sourceLabel`, `sourceValue`, `thresholdLabel`, and `triggeredAtLabel` in addition to the compact `reason`.
+- All seven built-in cue keys generate user-facing explanation/source copy from canonical record state plus the enabled organization rule threshold.
+- Fallback timestamp use is explicitly described in cue explanation text when a sent/viewed/issue/ready timestamp is missing and derivation uses the conservative updated date.
+- Dashboard `My Work` now shows explanation text and source/threshold metadata in compact queue rows.
+- Record-level `Needs Attention` panels now show explanation text plus source, threshold, and trigger timing metadata.
+- Utility tests assert explanation/source coverage for all seven cue keys, threshold labels, fallback copy, invoice due-date explanation, job source explanations, and unchanged canonical action links.
+- The protected Playwright fixture spec now asserts visible explanation/threshold snippets in `/dashboard` My Work and record-level panels without relying on long exact copy for every cue.
+
+Boundary preserved:
+
+- Cues remain query-time derived from canonical estimates, contracts, invoices, jobs, projects, job assignments, and tenant-owned cue rules.
+- No `operational_cues` table, cue instance lifecycle, task subsystem, notifications, AI behavior, snooze/dismiss state, ownership filtering, generic rule builder, or page redesign was added.
+
+## Operational Cue Record-Level Fixture QA
+
+This QA pass added focused utility and browser coverage for all seven implemented Operational Intelligence cue keys without adding schema, cue instances, task records, persisted lifecycle state, AI, notifications, snooze/dismiss behavior, ownership migrations, expression builders, or page redesigns.
+
+Files changed in this pass:
+
+- `apps/web/lib/operational-cues/derive.test.ts`
+- `e2e/operational-cues-record-panels.spec.js`
+- `playwright.config.js`
+- `docs/chat-handoff.md`
+
+Coverage added:
+
+- Utility coverage now verifies every supported cue key derives when canonical state matches, does not derive when disabled, links to the canonical record or schedule action, and carries `projectId` for project aggregation.
+- Browser coverage uses a guarded Playwright spec under the existing protected contractor project. It creates or updates stable `[E2E]` tenant-scoped canonical records for one project, one sent estimate, one sent unsigned contract, one viewed unsigned contract, one overdue invoice with line item balance, one unpaid deposit invoice with line item balance, one ready unscheduled job, and one scheduled job with no crew.
+- The browser fixture temporarily enables the seven built-in organization cue rules with deterministic thresholds/urgency for the E2E organization, then restores the original rule settings after the run.
+- The spec verifies `/dashboard` My Work includes the fixture cue groups, canonical estimate/contract/invoice/job detail Needs Attention panels show their matching cues, and linked project detail aggregates all child-record cues.
+
+Fixture routes verified in the passing run:
+
+- project: `/projects/4fe19882-aeb1-4e2d-ac14-200531c8426a`
+- estimate: `/estimates/4d883fd1-c245-4f83-8d93-84245ca4fb28`
+- sent contract: `/contracts/8ce50920-1124-4fcb-95e3-3dd8b17ae895`
+- viewed contract: `/contracts/74a1fd33-8cf7-42bf-b633-a63eb43942e6`
+- overdue invoice: `/invoices/a6c30047-5307-43d7-8b7a-aeb1c4d14604`
+- deposit invoice: `/invoices/b459e84d-7116-4cbf-ac53-371e2d1da0d0`
+- ready unscheduled job: `/jobs/178b1fdc-f33e-4101-a4ee-56d22a096edc`
+- scheduled missing-crew job: `/jobs/eb4907e9-2869-4f62-89c8-fcf9a3fbf60f`
+
+## Contractor Package Assignment Activation Readiness / Read-Only Transition Inspection
+
+This Super Admin Platform Evolution slice added pure read-only future transition readiness for contractor package assignments. It did not add assignment mutation behavior.
+
+Files changed in this pass:
+
+- `apps/web/lib/platform-admin/contractor-package-assignment-activation-readiness-core.ts`
+- `apps/web/lib/platform-admin/contractor-package-assignment-activation-readiness.test.ts`
+- `apps/web/lib/platform-admin/contractor-package-assignment-detail-core.ts`
+- `apps/web/lib/platform-admin/contractor-package-assignment-detail.test.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/app/(super-admin)/super-admin/packages/assignments/[assignmentId]/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/Roadmap.md`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- Added `buildContractorPackageAssignmentActivationReadiness(...)`, a pure read-only model for future assignment transition inspection.
+- The model evaluates future readiness for `draft -> pending_review`, `pending_review -> draft`, `pending_review -> approved`, `approved -> scheduled`, `approved -> active`, `scheduled -> active`, `active -> superseded`, `active -> canceled`, `canceled -> archived`, and `superseded -> archived`.
+- Added statuses `eligible`, `blocked`, `unavailable`, `already_in_state`, and `advisory`.
+- Added safe blocker/caveat coverage for missing assignment, missing company/package/version references, unpublished package versions, missing effective/scheduled dates, missing audit evidence, active assignment conflicts, canceled/archived non-activation states, billing/provider not implemented, entitlement/module not implemented, runtime enforcement not implemented, and assignment activation no-op boundaries.
+- Added explicit no-behavior flags on the model and every transition row: no action, mutation, runtime, billing, entitlement, contractor-permission, or package-assignment-write effect.
+- Integrated the model into the assignment detail read model and `/super-admin/packages/assignments/[assignmentId]` as a read-only `Assignment Activation Readiness` section.
+- Updated implemented-truth docs so assignment activation readiness is no longer described as entirely future-only while all mutation/billing/entitlement/runtime behavior remains deferred.
+
+Boundary preserved:
+
+- No migrations, schema changes, RLS/grant changes, package assignment create/approve/schedule/activate/cancel/supersede/archive server actions, package assignment mutation UI, lifecycle mutation controls, package create/edit/publish controls, billing behavior, Stripe calls, subscription operations, payment collection, entitlement enforcement, module gating, pricing/package enforcement, activation mutation, contractor permission changes, contractor navigation changes, runtime behavior, reporting/export behavior, automation, AI behavior, background jobs, tenant-owned template/catalog writes, operational-cues changes, or starter-pack provisioning changes were made.
+
+Validation evidence:
+
+- Focused package tests passed: `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-package-assignment-activation-readiness.test.ts apps/web/lib/platform-admin/contractor-package-assignment-detail.test.ts apps/web/lib/platform-admin/contractor-package-assignment-read-model.test.ts apps/web/lib/platform-admin/package-governance.test.ts apps/web/lib/platform-admin/package-definition-planning.test.ts apps/web/lib/platform-admin/package-definition-catalog.test.ts apps/web/lib/platform-admin/package-definition-detail.test.ts apps/web/lib/platform-admin/package-definition-audit-timeline.test.ts apps/web/lib/platform-admin/package-definition-lifecycle-readiness.test.ts` passed 71 tests.
+- `pnpm lint` passed.
+- `git diff --check` passed with only existing LF-to-CRLF warnings, not whitespace errors.
+- `pnpm typecheck` is blocked by unrelated pre-existing `apps/web/lib/operational-cues/derive.test.ts` readonly-array typing errors at lines 629-632 and 647-650. This pass did not modify operational-cues work.
+- Live count checks before and after this slice matched exactly: `contractor_package_assignments=0`, `contractor_package_assignment_audit_events=0`, `platform_package_definitions=0`, `platform_package_definition_versions=0`, `platform_package_definition_audit_events=0`, `companies=10`, `company_subscriptions=0`, `subscription_plans=0`, `document_templates=4`, `catalog_items=9`, `contractor_group_audit_events=52`, `contractor_group_memberships=0`, `platform_starter_pack_provisioning_runs=4`, and `platform_starter_pack_provisioning_run_items=5`.
+
+Browser QA:
+
+- The local Next server was listening on `http://localhost:3000`.
+- In-app browser QA for `/super-admin/packages` redirected to `/login?next=%2Fsuper-admin%2Fpackages`; no valid platform-admin browser session was available.
+- In-app browser QA for `/super-admin/packages/assignments/not-a-real-assignment` also redirected to login because of the same platform-admin auth boundary.
+- No browser console errors were observed in the auth-blocked checks.
+- Populated assignment activation-readiness browser QA remains blocked by empty assignment data and missing valid platform-admin browser auth state. No assignment records were seeded.
+
+Recommended next prompt:
+
+- "Run a narrow platform-admin auth/browser QA recovery pass for `/super-admin/packages` and `/super-admin/packages/assignments/[assignmentId]`: refresh or recreate a valid platform-admin browser storage state using an existing approved platform-admin account only, then verify the read-only package catalog, package definition detail, lifecycle readiness, audit timeline, contractor package assignment sections, assignment detail route, and Assignment Activation Readiness section render without mutation controls. Do not change product behavior, roles, schema, migrations, operational-cues work, billing/Stripe/subscription behavior, entitlement/module/runtime behavior, package assignment writes, contractor permissions, automation, AI behavior, or starter-pack provisioning."
+
+## Assignment Detail / Read-Only Contractor Package Assignment Inspection
+
+This Super Admin Platform Evolution slice added read-only inspection for one contractor package assignment and its audit evidence. It did not add assignment mutation behavior.
+
+Files changed in this pass:
+
+- `apps/web/lib/platform-admin/contractor-package-assignment-detail-core.ts`
+- `apps/web/lib/platform-admin/contractor-package-assignment-detail.test.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/app/(super-admin)/super-admin/packages/page.tsx`
+- `apps/web/app/(super-admin)/super-admin/packages/assignments/[assignmentId]/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/Roadmap.md`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- Added `buildContractorPackageAssignmentDetail(...)`, a pure read-only detail model for one contractor package assignment.
+- Added safe linked company/package/version labels, assignment lifecycle/status metadata, effective/scheduled/activation/supersession/cancellation/archive metadata, bounded snapshot summaries, assignment audit timeline rows, caveats, and explicit no-behavior flags.
+- Added server-only platform-admin read helpers: `getContractorPackageAssignmentById(...)`, `listContractorPackageAssignmentAuditEventsForAssignment(...)`, and `getContractorPackageAssignmentDetail(...)`.
+- Added `/super-admin/packages/assignments/[assignmentId]` as a read-only assignment detail route with summary, linked contractor/package/version context, lifecycle/timing cards, snapshot summaries, audit timeline, caveats, and back navigation.
+- Added read-only assignment detail links from the `/super-admin/packages` assignment list rows.
+- Updated package governance docs so implemented-truth sections include the assignment detail inspection route and do not present the implemented assignment schema/read-model as merely future-only planning.
+
+Boundary preserved:
+
+- No migrations, schema changes, RLS/grant changes, package assignment create/approve/schedule/activate/cancel server actions, package assignment mutation UI, lifecycle mutation controls, package create/edit/publish controls, billing behavior, Stripe calls, subscription operations, payment collection, entitlement enforcement, module gating, pricing/package enforcement, activation mutation, contractor permission changes, contractor navigation changes, runtime behavior, reporting/export behavior, automation, AI behavior, background jobs, tenant-owned template/catalog writes, operational-cues changes, or starter-pack provisioning changes were made.
+
+Validation evidence:
+
+- Focused package tests passed: `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-package-assignment-detail.test.ts apps/web/lib/platform-admin/contractor-package-assignment-read-model.test.ts apps/web/lib/platform-admin/package-governance.test.ts apps/web/lib/platform-admin/package-definition-planning.test.ts apps/web/lib/platform-admin/package-definition-catalog.test.ts apps/web/lib/platform-admin/package-definition-detail.test.ts apps/web/lib/platform-admin/package-definition-audit-timeline.test.ts apps/web/lib/platform-admin/package-definition-lifecycle-readiness.test.ts` passed 57 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- Live count checks before and after this slice matched exactly: `contractor_package_assignments=0`, `contractor_package_assignment_audit_events=0`, `platform_package_definitions=0`, `platform_package_definition_versions=0`, `platform_package_definition_audit_events=0`, `companies=10`, `company_subscriptions=0`, `subscription_plans=0`, `document_templates=4`, `catalog_items=9`, `contractor_group_audit_events=52`, `contractor_group_memberships=0`, `platform_starter_pack_provisioning_runs=4`, and `platform_starter_pack_provisioning_run_items=5`.
+
+Browser QA:
+
+- The local Next server was listening on `http://localhost:3000`.
+- In-app browser QA for `/super-admin/packages` redirected to `/login?next=%2Fsuper-admin%2Fpackages`; no valid platform-admin browser session was available.
+- In-app browser QA for `/super-admin/packages/assignments/not-a-real-assignment` also redirected to login because of the same platform-admin auth boundary.
+- No browser console errors were observed in the auth-blocked checks.
+- Populated assignment detail browser QA remains blocked by empty assignment data and missing valid platform-admin browser auth state. No assignment records were seeded.
+
+Recommended next prompt:
+
+- "Run a narrow platform-admin auth/browser QA recovery pass for `/super-admin/packages` and `/super-admin/packages/assignments/[assignmentId]`: refresh or recreate a valid platform-admin browser storage state using an existing approved platform-admin account only, then verify the read-only package catalog, package definition detail, lifecycle readiness, audit timeline, contractor package assignment sections, and assignment detail route render without mutation controls. Do not change product behavior, roles, schema, migrations, operational-cues work, billing/Stripe/subscription behavior, entitlement/module/runtime behavior, package assignment writes, contractor permissions, automation, AI behavior, or starter-pack provisioning."
+
+## Record-Level Needs Attention Panels
+
+This pass added compact record-level Operational Intelligence panels to the main canonical workspaces without creating cue instances, tasks, lifecycle state, ownership migrations, AI, notifications, snooze/dismiss behavior, or a generic rule builder.
+
+Files changed in this pass:
+
+- `apps/web/lib/operational-cues/types.ts`
+- `apps/web/lib/operational-cues/derive.ts`
+- `apps/web/lib/operational-cues/data.ts`
+- `apps/web/lib/operational-cues/derive.test.ts`
+- `apps/web/components/operational-cues/needs-attention-panel.tsx`
+- `apps/web/app/(app)/projects/[projectId]/page.tsx`
+- `apps/web/app/(app)/estimates/[estimateId]/page.tsx`
+- `apps/web/app/(app)/contracts/[contractId]/page.tsx`
+- `apps/web/app/(app)/invoices/[invoiceId]/page.tsx`
+- `apps/web/app/(app)/jobs/[jobId]/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- Added `projectId` to derived operational cue results so project detail can aggregate linked estimate, contract, invoice, and job attention cues.
+- Added explicit subject and project filtering helpers for derived operational cues.
+- Added focused subject/project scoped operational cue loaders that keep canonical record reads tenant-scoped and avoid dashboard-wide derivation on detail pages.
+- Added a shared compact `Needs Attention` panel component for record workspaces.
+- Added contextual panels to project, estimate, contract, invoice, and job detail pages. Record detail panels filter to the current canonical record; project detail aggregates linked child-record cues by project id.
+- Added focused derivation coverage for subject filtering, project aggregation, unrelated record exclusion, and existing disabled-rule suppression.
+
+Boundary preserved:
+
+- No migrations, schema changes, `operational_cues` table, persisted cue instances, task records, employee-owned copies, ownership migrations, notification behavior, AI behavior, snooze/dismiss/acknowledge lifecycle, generic expression builder, broad redesign, or new top-level navigation were added.
+- Project detail remains the workflow/readiness hub; the Needs Attention panel complements the existing readiness and next-action guidance.
+
+## Contractor Package Assignment Live Verification / Read-Only Foundation Hardening
+
+This verification pass checked the Contractor Package Assignment Schema + Read-Only Assignment Read Model slice against the linked Supabase database and local browser/dev-server state. No product behavior was added.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Verification evidence:
+
+- `supabase migration list` confirmed `20260509150945_contractor_package_assignments` is applied on the linked database.
+- Live migration history now also shows `20260509151036_harden_operational_cue_rule_admin_policies` applied remotely. This pass did not apply it; the observation differs from the previous handoff note that it was pending.
+- Live count checks before and after verification matched exactly: `contractor_package_assignments=0`, `contractor_package_assignment_audit_events=0`, `platform_package_definitions=0`, `platform_package_definition_versions=0`, `platform_package_definition_audit_events=0`, `companies=10`, `company_subscriptions=0`, `subscription_plans=0`, `document_templates=4`, `catalog_items=9`, `contractor_group_audit_events=52`, `contractor_group_memberships=0`, `platform_starter_pack_provisioning_runs=4`, and `platform_starter_pack_provisioning_run_items=5`.
+- Live schema checks confirmed both assignment tables exist, RLS is enabled and forced, assignment/audit status constraints are present, JSON snapshot/metadata object constraints are present, timestamp/reason coherence constraints are present, foreign keys are present, timeline/package/status indexes are present, and the partial unique index prevents more than one active assignment per company.
+- Live grant checks confirmed no `public`, `anon`, or `authenticated` table grants on the assignment tables and no RLS policies exposing assignment data to contractor users. `information_schema.role_table_grants` reports `postgres` and `service_role` privileges; the migration text still revokes broad roles and grants service-role access for server-side reads.
+- Static search found no client component importing `getSupabaseAdminClient` or service-role env access. Service-role env names remain confined to server env/config surfaces and server-side data helpers.
+- Focused package tests passed: `pnpm exec tsx --test apps/web/lib/platform-admin/contractor-package-assignment-read-model.test.ts apps/web/lib/platform-admin/package-governance.test.ts apps/web/lib/platform-admin/package-definition-planning.test.ts apps/web/lib/platform-admin/package-definition-catalog.test.ts apps/web/lib/platform-admin/package-definition-detail.test.ts apps/web/lib/platform-admin/package-definition-audit-timeline.test.ts apps/web/lib/platform-admin/package-definition-lifecycle-readiness.test.ts` passed 49 tests.
+- `pnpm typecheck`, `pnpm lint`, and `git diff --check` passed. `git diff --check` emitted only LF-to-CRLF warnings on existing touched files, not whitespace errors.
+
+Browser QA:
+
+- Existing dev servers on ports 3000-3003 were stale; direct `/super-admin/packages` QA produced a 500 with `playwright/.auth/local-user.json`.
+- The local QA environment was repaired by stopping the stale FloorConnector Next listeners, removing only `apps/web/.next`, and restarting `pnpm dev` on `http://localhost:3000`.
+- After restart, `/super-admin/packages` no longer 500s. `playwright/.auth/platform-admin.json` redirects to `/login?next=%2Fsuper-admin%2Fpackages`, and the `.env.local` E2E email/password account logs in successfully but is contractor-only and redirects to `/dashboard?error=Platform+admin+access+is+required.` when attempting `/super-admin/packages`.
+- Populated platform-admin browser QA remains blocked by missing valid platform-admin browser auth state. No browser console errors were observed in the post-restart blocked auth checks.
+
+Boundary preserved:
+
+- No migrations, schema changes, RLS/grant changes, server actions, package assignment create/approve/schedule/activate/cancel controls, package assignment mutation UI, lifecycle mutation controls, package create/edit/publish controls, billing behavior, Stripe calls, subscription operations, payment collection, entitlement enforcement, module gating, pricing/package enforcement, activation mutation, contractor permission changes, contractor navigation changes, runtime behavior, reporting/export behavior, automation, AI behavior, background jobs, tenant-owned template/catalog writes, operational-cues product changes, or starter-pack provisioning changes were made.
+
+Recommended next prompt:
+
+- "Run a narrow platform-admin auth/browser QA recovery pass for `/super-admin/packages`: refresh or recreate a valid platform-admin browser storage state using an existing approved platform-admin account only, then verify the read-only Package Definition Catalog, Package Detail, Lifecycle Readiness, Audit Timeline, and Contractor Package Assignment sections render without mutation controls. Do not change product behavior, roles, schema, migrations, operational-cues work, billing/Stripe/subscription behavior, entitlement/module/runtime behavior, package assignment writes, contractor permissions, automation, AI behavior, or starter-pack provisioning."
+
+## Contractor Package Assignment Schema / Read-Only Assignment Read Model
+
+This Super Admin Platform Evolution slice implemented the contractor package assignment schema foundation and read-only assignment inspection model.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260509150945_contractor_package_assignments.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/platform-admin/contractor-package-assignment-read-model-core.ts`
+- `apps/web/lib/platform-admin/contractor-package-assignment-read-model.test.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/app/(super-admin)/super-admin/packages/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/Roadmap.md`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- Added `contractor_package_assignments` and `contractor_package_assignment_audit_events` as platform-owned read-only inspection foundations.
+- Added constrained assignment lifecycle states, constrained assignment audit event types, object-only JSON snapshot checks, scheduling/active/canceled/superseded/archive coherence checks, and a partial unique index limiting active assignments to one per company.
+- Enabled and forced RLS on both tables, revoked broad `public`/`anon`/`authenticated` grants, and granted service-role select only.
+- Added shared assignment/audit types and server-only platform-admin read helpers for assignment rows, assignment audit events, and the assignment read model.
+- Added `buildContractorPackageAssignmentReadModel(...)` with summary cards, assignment status buckets, audit event buckets, safe snapshot summaries, assignment readiness, caveats, and explicit no-behavior flags.
+- Added a read-only Contractor Package Assignments section to `/super-admin/packages` with empty states, Assignment Readiness, Assignment Audit Evidence, and no package-assignment mutation controls.
+
+Boundary preserved:
+
+- No package assignment create/approve/schedule/activate/cancel server actions, package assignment mutation UI, lifecycle mutation controls, package create/edit/publish controls, billing behavior, Stripe calls, subscription operations, payment collection, entitlement enforcement, module gating, pricing/package enforcement, activation mutation, contractor permission changes, contractor navigation changes, runtime behavior, reporting/export behavior, automation, AI behavior, background jobs, tenant-owned template/catalog writes, operational-cues changes, or starter-pack provisioning changes.
+
+Validation notes:
+
+- Focused package governance/package definition/assignment tests passed, including `contractor-package-assignment-read-model.test.ts`.
+- The migration was applied to the linked Supabase database by executing only `20260509150945_contractor_package_assignments.sql` and repairing migration history for that version. `supabase migration list` confirms unrelated pending operational-cues migration `20260509151036` remains unapplied.
+- Remote count checks after migration: `contractor_package_assignments=0`, `contractor_package_assignment_audit_events=0`, `platform_package_definitions=0`, `platform_package_definition_versions=0`, `platform_package_definition_audit_events=0`, `companies=10`, `company_subscriptions=0`, `subscription_plans=0`, `document_templates=4`, `catalog_items=9`, `contractor_group_audit_events=52`, `contractor_group_memberships=0`, `platform_starter_pack_provisioning_runs=4`, and `platform_starter_pack_provisioning_run_items=5`.
+
+Recommended next prompt:
+
+- "Implement the next low-risk package governance slice: Assignment Detail / Read-Only Contractor Package Assignment Inspection. Add read-only inspection for one contractor package assignment and its audit evidence only; do not add assignment create/approve/schedule/activate/cancel controls, billing/Stripe/subscription behavior, entitlement/module/runtime behavior, package assignment activation, contractor permission changes, reporting/export behavior, automation, AI behavior, operational-cues changes, or starter-pack provisioning changes."
+
+## Package Definition Lifecycle Readiness / Read-Only Transition Inspection
+
+This Super Admin Platform Evolution slice implemented the pure read-only lifecycle readiness model and detail-page transition inspection panel for package definitions.
+
+Files changed in this pass:
+
+- `apps/web/lib/platform-admin/package-definition-lifecycle-readiness-core.ts`
+- `apps/web/lib/platform-admin/package-definition-lifecycle-readiness.test.ts`
+- `apps/web/lib/platform-admin/package-definition-detail-core.ts`
+- `apps/web/lib/platform-admin/package-definition-detail.test.ts`
+- `apps/web/app/(super-admin)/super-admin/packages/[packageDefinitionId]/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/Roadmap.md`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- Added `buildPlatformPackageDefinitionLifecycleReadiness(...)` as a pure read-only helper.
+- Evaluated future lifecycle readiness for draft, internal-review, approved-evidence, published, deprecated, archived, and supersession-style transitions without adding schema status values or mutation paths.
+- Added safe transition statuses: `eligible`, `blocked`, `unavailable`, `already_in_state`, and `advisory`.
+- Added missing definition/version, no active/current version, missing audit evidence, missing package dimensions, published destructive-edit, archived not-publishable, intent-only billing/provider, intent-only entitlement/module, no runtime enforcement, and no package-assignment caveats.
+- Added explicit no-behavior flags on the model and every transition row: no action, mutation, runtime, billing, entitlement, or package-assignment effect.
+- Integrated the read-only Lifecycle Readiness section into `/super-admin/packages/[packageDefinitionId]`.
+
+Boundary preserved:
+
+- No migrations, schema changes, RLS/grant changes, server actions, RPCs, package create/edit/approve/publish/deprecate/archive controls, lifecycle mutation controls, package mutation UI, package assignment writes, billing behavior, Stripe calls, subscription operations, payment collection, entitlement enforcement, module gating, pricing/package enforcement, activation mutation, contractor permission changes, contractor navigation changes, runtime behavior, reporting/export behavior, automation, AI behavior, background jobs, tenant-owned template/catalog writes, operational-cues changes, or starter-pack provisioning changes.
+
+Validation notes:
+
+- Focused package governance/package definition tests passed, including the new lifecycle readiness test.
+- `pnpm typecheck`, `pnpm lint`, and `git diff --check` passed. `git diff --check` emitted only existing LF-to-CRLF warnings, not whitespace errors.
+- Remote count checks before and after matched exactly: `platform_package_definitions=0`, `platform_package_definition_versions=0`, `platform_package_definition_audit_events=0`, `companies=10`, `company_subscriptions=0`, `subscription_plans=0`, `document_templates=4`, `catalog_items=9`, `contractor_group_audit_events=52`, `contractor_group_memberships=0`, `platform_starter_pack_provisioning_runs=4`, and `platform_starter_pack_provisioning_run_items=5`.
+- Browser QA was blocked by auth state: `platform-admin.json` redirected to `/login`, and `local-user.json` was denied platform-admin access or remained on loading before denial. No browser console errors were observed in those blocked attempts.
+
+Recommended next prompt:
+
+- "Implement the next low-risk package governance slice: Contractor Package Assignment Schema / Read-Only Assignment Read Model Design. Add schema/read-model planning or implementation only if explicitly approved, keep it read-only first, and do not add package assignment writes, activation controls, billing/Stripe/subscription behavior, entitlement/module/runtime behavior, contractor permission changes, reporting/export behavior, automation, AI behavior, operational-cues changes, or starter-pack provisioning changes."
+
+## Operational Cue Rule Settings UI
+
+This pass added the contractor-admin settings surface for built-in Operational Intelligence cue rules without expanding into a task app or generic automation builder.
+
+Files changed in this pass:
+
+- `apps/web/app/(app)/settings/operational-intelligence/page.tsx`
+- `apps/web/app/(app)/settings/page.tsx`
+- `apps/web/lib/operational-cues/rule-definitions.ts`
+- `apps/web/lib/operational-cues/rule-definitions.test.ts`
+- `apps/web/lib/operational-cues/rules.ts`
+- `apps/web/lib/operational-cues/derive.test.ts`
+- `apps/web/lib/settings/actions.ts`
+- `apps/web/lib/settings/navigation.ts`
+- `apps/web/lib/settings/schemas.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- Added `/settings/operational-intelligence` as an admin-only contractor settings route for the seven built-in My Work cue rules.
+- The page ensures default rules exist before display and renders rule name, description, subject type, cue key, owner strategy, escalation display, enabled toggle, threshold-days input, and urgency selector.
+- Added a scoped server action for updating only enabled state, threshold days, and urgency.
+- Added rule-definition metadata and validation for supported cue keys, urgency values, and bounded threshold days.
+- Revalidated `/settings/operational-intelligence`, `/settings`, and `/dashboard` after cue-rule updates so My Work picks up saved changes.
+
+Boundary preserved:
+
+- No `operational_cues` table or persisted cue instances.
+- No task records, employee-owned record copies, portal-only/module-local copies, generic if/then builder, AI, notifications, snooze/dismiss/acknowledge lifecycle, ownership migration, or automation execution.
+- Cue results remain query-time derived from canonical estimates, contracts, invoices, jobs, projects, job assignments, and enabled organization cue rules.
+
+Validation notes:
+
+- Focused derivation coverage now confirms rule urgency flows into derived cues.
+- Focused rule-definition tests cover the seven supported keys plus invalid cue key, invalid urgency, and threshold bounds.
+
+## Operational Cue Settings Permission QA + Hardening
+
+This pass hardened the `/settings/operational-intelligence` permission path without adding new Operational Intelligence features.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260509151036_harden_operational_cue_rule_admin_policies.sql`
+- `apps/web/lib/operational-cues/rules.ts`
+- `apps/web/lib/operational-cues/rule-settings-permissions.test.ts`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- Added a forward migration that replaces active-member insert/update policies on `organization_operational_cue_rules` with owner/admin-only insert/update policies.
+- Kept active-member read access so dashboard `My Work` can derive cues for contractor users without exposing rule mutation.
+- Changed default cue-rule ensure logic to run through the server-only Supabase admin client so fresh organizations can still receive default rules when non-admin dashboard users load My Work after write policies are tightened.
+- Added focused schema/policy tests for unsupported cue keys, invalid urgency/threshold values, and owner/admin RLS write policy shape.
+
+Boundary preserved:
+
+- No `operational_cues` table, persisted cue instances, task records, ownership migration, AI, notifications, snooze/dismiss lifecycle, generic expression builder, or dashboard redesign.
+- Cue results remain query-time derived from canonical records plus organization cue rules.
+
+## Package Definition Audit Evidence / Read-Only Timeline
+
+This Super Admin Platform Evolution slice implemented the package definition audit evidence foundation and read-only audit timeline.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260509143550_package_definition_audit_events.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/platform-admin/package-definition-audit-timeline-core.ts`
+- `apps/web/lib/platform-admin/package-definition-audit-timeline.test.ts`
+- `apps/web/lib/platform-admin/package-definition-detail-core.ts`
+- `apps/web/lib/platform-admin/package-definition-detail.test.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/app/(super-admin)/super-admin/packages/[packageDefinitionId]/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/Roadmap.md`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- Added `platform_package_definition_audit_events` as the conservative package-definition/version audit evidence table.
+- Constrained event types to package definition and package version lifecycle/review/publish/deprecate/archive event names.
+- Required JSON snapshots/metadata to be objects when present.
+- Enabled and forced RLS, revoked broad `public`/`anon`/`authenticated` grants, and granted service-role select only.
+- Added platform-admin server read helpers for package definition audit events.
+- Added `buildPlatformPackageDefinitionAuditTimeline(...)` with event ordering, event-type counts, safe snapshot/metadata key summaries, missing-evidence caveats, read-only operator guidance, and explicit no-behavior flags.
+- Integrated the read-only audit timeline into `/super-admin/packages/[packageDefinitionId]`.
+
+Boundary preserved:
+
+- No package create/edit/publish server actions.
+- No lifecycle or approval controls.
+- No package mutation UI.
+- No package assignment writes.
+- No billing behavior, Stripe calls, subscription operations, or payment collection.
+- No entitlement enforcement, module gating, pricing/package enforcement, activation mutation, contractor permission change, runtime behavior, reporting/export behavior, automation, AI behavior, background jobs, tenant-owned template/catalog writes, operational-cues changes, or starter-pack provisioning changes.
+
+Validation notes:
+
+- Focused package governance/package definition tests passed, including the new audit timeline test.
+- Remote count checks showed the new audit table at `0` rows and existing business/tenant/template/catalog/provisioning counts unchanged.
+- Full `pnpm typecheck` and `pnpm lint` passed in this run; operational-cues work remained outside this package governance slice.
+
+## Operational Intelligence Foundation QA + Hardening
+
+This pass reviewed and hardened the first Operational Intelligence foundation without expanding the feature surface.
+
+Files changed in this pass:
+
+- `apps/web/lib/operational-cues/derive.ts`
+- `apps/web/lib/operational-cues/derive.test.ts`
+- `docs/chat-handoff.md`
+
+QA findings:
+
+- The `organization_operational_cue_rules` migration remains organization-scoped, has uniqueness on `(organization_id, cue_key)`, enables and forces RLS, grants only `select`, `insert`, and `update` to `authenticated`, and uses the existing active-company-membership policy pattern. No follow-up migration was needed.
+- Default cue rule ensure logic remains idempotent through `onConflict: "organization_id,cue_key"` plus `ignoreDuplicates: true`, so existing tenant customizations and disabled rules are not overwritten.
+- The operational cue data loader scopes estimate, contract, invoice, job, and job-assignment reads by the active organization before derivation.
+- The pure derivation helper now also defensively ignores rules and source records whose `organizationId` does not match the requested organization.
+- Docs still describe operational cue rules and derived dashboard results as implemented, while persisted cue instances, snooze/dismiss/acknowledge state, notifications, AI, custom expression rules, and user-specific ownership filtering remain future work.
+
+Tests added/expanded:
+
+- threshold boundary and fallback timestamp reason coverage
+- no overdue invoice cue without `due_date`
+- deposit cue scoped to `workflow_role = 'deposit'`
+- cross-tenant defensive derivation coverage
+- distinct ready-unscheduled versus scheduled-missing-crew job cue coverage
+- canonical action-href checks for job cue links
+
+Validation:
+
+- `pnpm exec tsx --test apps/web/lib/operational-cues/derive.test.ts` passed.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+
+## Operational Intelligence + My Work Foundation
+
+This pass implemented the first Operational Intelligence foundation for the contractor dashboard without creating a standalone task-management subsystem.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260509142241_organization_operational_cue_rules.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/operational-cues/types.ts`
+- `apps/web/lib/operational-cues/rules.ts`
+- `apps/web/lib/operational-cues/data.ts`
+- `apps/web/lib/operational-cues/derive.ts`
+- `apps/web/lib/operational-cues/derive.test.ts`
+- `apps/web/app/(app)/dashboard/page.tsx`
+- `apps/web/components/dashboard/contractor-dashboard-surface.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Implemented:
+
+- Added tenant-scoped `organization_operational_cue_rules` with cue key, subject type, enabled state, threshold days, urgency, owner strategy, escalation days, timestamps, uniqueness by organization/cue key, RLS, and authenticated grants for active company members.
+- Added default rule ensure logic for `estimate_sent_followup`, `contract_sent_unsigned`, `contract_viewed_unsigned`, `invoice_overdue`, `deposit_invoice_unpaid`, `job_ready_unscheduled`, and `job_scheduled_missing_crew`.
+- Added explicit server-side derivation over canonical estimates, contracts, invoices, jobs, projects, and job assignments.
+- Added a lightweight dashboard `My Work` section grouped as `My Estimates`, `My Contracts`, `My Invoices`, and `My Jobs`, using existing dashboard queue patterns and linking back to canonical records or schedule actions.
+- Added focused pure derivation coverage for enabled, disabled, and below-threshold cue behavior.
+
+Boundary preserved:
+
+- No persisted cue instances or `operational_cues` table.
+- No employee-owned copies of canonical estimates, contracts, invoices, jobs, projects, or customers.
+- No portal-only or module-local copies.
+- No notification engine, AI behavior, snooze/dismiss/acknowledge lifecycle, custom expression builder, or broad dashboard redesign.
+- Current dashboard cue visibility is organization-wide until canonical ownership signals are consistent enough for user-specific filtering.
+
+Validation notes:
+
+- Focused tests passed: `pnpm exec tsx --test apps/web/lib/operational-cues/derive.test.ts`.
+- Full validation passed: `pnpm typecheck` and `pnpm lint`.
+
+Known limitations:
+
+- Estimate and contract sent/viewed cues use existing sent/viewed timestamps where available and fall back to `updated_at` with a visible reason when a specific timestamp is missing.
+- Invoice overdue cues require `due_date`; no additional due-date or aging fields were added.
+- Deposit unpaid cues use `issue_date` when available and otherwise fall back to `updated_at`.
+- Scheduled-missing-crew cues currently check canonical job crew/vendor and job-assignment presence; richer crew-capacity or assignment-readiness logic is future work.
+
+## Package Definition Detail / Read-Only Inspection
+
+This Super Admin Platform Evolution slice implemented read-only detail inspection for one persisted platform package definition and its versions.
+
+Files changed in this pass:
+
+- `apps/web/lib/platform-admin/package-definition-detail-core.ts`
+- `apps/web/lib/platform-admin/package-definition-detail.test.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/app/(super-admin)/super-admin/packages/page.tsx`
+- `apps/web/app/(super-admin)/super-admin/packages/[packageDefinitionId]/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/Roadmap.md`
+- `docs/chat-handoff.md`
+
+Implemented detail inspection:
+
+- Added `buildPlatformPackageDefinitionDetail(...)` as a pure read model for one package definition, its matching versions, version lifecycle/status buckets, no-version and no-published-version caveats, safe operator guidance, and explicit no-behavior flags.
+- Added platform-admin-only server read helpers for one package definition and that definition's version rows, plus `getPlatformPackageDefinitionDetail(...)`.
+- Added `/super-admin/packages/[packageDefinitionId]` as a read-only detail route with package definition summary, version summary, version rows, intent/snapshot summary sections, caveats, and a back link to `/super-admin/packages`.
+- Added read-only catalog links from the package definition rows to the detail route.
+- Unknown package definition ids render a safe unavailable state. Package definitions with zero versions render a safe empty-version state.
+- JSON intent/snapshot fields are summarized by top-level field presence only; raw values, provider payloads, secrets, and runtime resolver data are not dumped.
+
+Boundary preserved:
+
+- No package create/edit/publish/archive server actions.
+- No lifecycle mutation controls.
+- No package mutation UI.
+- No package assignment writes.
+- No billing behavior, Stripe calls, subscription creation/update/cancel, payment collection, invoice creation, or provider operation.
+- No entitlement enforcement, module gating, pricing/package enforcement, activation mutation, contractor permission changes, contractor navigation changes, reporting/export behavior, automation, AI behavior, background jobs, tenant-owned template/catalog writes, or starter-pack provisioning changes.
+
+Validation notes:
+
+- Focused tests passed: `pnpm exec tsx --test apps/web/lib/platform-admin/package-governance.test.ts apps/web/lib/platform-admin/package-definition-planning.test.ts apps/web/lib/platform-admin/package-definition-catalog.test.ts apps/web/lib/platform-admin/package-definition-detail.test.ts`.
+- Before counts and after counts matched for existing business/template/catalog/group/provisioning tables. Package definition/version counts remained `0` and no seed package records were inserted.
+- Browser QA verified `/super-admin/packages` still renders with the empty catalog state and `/super-admin/packages/not-a-real-package-definition` renders the safe unavailable detail state. The detail scope has no forms, buttons, inputs, selects, or textareas, and browser console errors were not present.
+
+Recommended next prompt:
+
+- "Implement the next low-risk package governance slice: Package Definition Audit Evidence Schema + Read-Only Audit Timeline. Add an append-only/read-only package definition audit evidence foundation only, with no package mutation actions, no publish/approval controls, no package assignment writes, no billing/Stripe/subscription behavior, no entitlement/module/runtime behavior, no contractor permission changes, no reporting/export behavior, no automation, no AI behavior, and no starter-pack provisioning changes."
+
+## Package Definition Persistence Schema + Read-Only Catalog
+
+This Super Admin Platform Evolution slice implemented the first low-risk package governance build slice: platform package definition persistence plus read-only catalog visibility on `/super-admin/packages`.
+
+Files changed in this pass:
+
+- `supabase/migrations/20260509132622_platform_package_definitions.sql`
+- `packages/types/src/index.ts`
+- `apps/web/lib/platform-admin/package-definition-catalog-core.ts`
+- `apps/web/lib/platform-admin/package-definition-catalog.test.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/app/(super-admin)/super-admin/packages/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/Roadmap.md`
+- `docs/chat-handoff.md`
+
+Implemented package-definition persistence:
+
+- Added `platform_package_definitions` for platform-owned package family/key/catalog identity: `package_key`, `display_name`, `description`, `status`, `intended_audience`, `segment_summary`, actor fields, timestamps, and archive timestamp.
+- Added `platform_package_definition_versions` for platform-owned version rows: definition FK, version number/label, status, commercial summary, safe JSON intent snapshots, published snapshot, actor fields, and publication/deprecation/archive timestamps.
+- Constraints cover normalized package keys, unique package keys, per-definition version number/label uniqueness, constrained lifecycle/status values, JSON-object snapshot fields, and publication/deprecation/archive timestamp coherence.
+- RLS is enabled and forced on both public tables. Broad `public`, `anon`, and `authenticated` grants are revoked. The slice added no policies, no security-definer RPCs, and no browser/client write access.
+- The migration was applied to the linked Supabase project with `supabase db push --yes`; no seed package records were inserted.
+
+Implemented read-only catalog:
+
+- Added shared package definition/version types.
+- Added `buildPlatformPackageDefinitionCatalog(...)` as a pure read model for summary cards, lifecycle buckets, package definition rows, package version rows, missing/no-version caveats, empty states, JSON intent snapshot summaries, and operator guidance.
+- Added server-only platform-admin read helpers: `listPlatformPackageDefinitions(...)`, `listPlatformPackageDefinitionVersions(...)`, and `getPlatformPackageDefinitionCatalog(...)`.
+- Updated `/super-admin/packages` with a read-only Package Definition Catalog section showing Package Definitions, Package Versions, and Catalog Readiness.
+- The UI explicitly states no package create/edit/publish controls, no package assignment behavior, no billing/Stripe/subscription behavior, no entitlement/module/runtime behavior, and no contractor permission changes.
+
+Validation notes:
+
+- Focused tests passed: `pnpm exec tsx --test apps/web/lib/platform-admin/package-governance.test.ts apps/web/lib/platform-admin/package-definition-planning.test.ts apps/web/lib/platform-admin/package-definition-catalog.test.ts`.
+- Before counts: new package definition/version tables were absent; existing counts were `companies=10`, `company_subscriptions=0`, `subscription_plans=0`, `document_templates=4`, `catalog_items=9`, `contractor_group_audit_events=52`, `contractor_group_memberships=0`, `platform_starter_pack_provisioning_runs=4`, and `platform_starter_pack_provisioning_run_items=5`.
+- After migration counts: `platform_package_definitions=0`, `platform_package_definition_versions=0`, and all existing business/template/catalog/group/provisioning counts stayed unchanged.
+
+Boundary preserved:
+
+- No package create/edit/publish server actions.
+- No package mutation UI.
+- No package assignment writes.
+- No billing behavior, Stripe calls, subscription creation/update/cancel, payment collection, or invoice creation.
+- No entitlement enforcement, module gating, pricing/package enforcement, activation mutation, contractor permission changes, contractor navigation changes, reporting/export behavior, automation, AI behavior, background jobs, tenant-owned template/catalog writes, or starter-pack provisioning changes.
+
+Recommended next prompt:
+
+- "Implement the next low-risk package governance slice: Package Definition Audit Evidence Schema + Read-Only Audit Timeline. Add an append-only/read-only package definition audit evidence foundation only, with no package mutation actions, no publish/approval controls, no package assignment writes, no billing/Stripe/subscription behavior, no entitlement/module/runtime behavior, no contractor permission changes, no reporting/export behavior, no automation, no AI behavior, and no starter-pack provisioning changes."
+
+## Billing / Provider Support Operations Release Gate and Production Readiness Checklist Design Planning
+
+This docs-only Super Admin Platform Evolution pass planned the future Billing / Provider Support Operations Release Gate and Production Readiness Checklist slice. It did not change application code, tests, migrations, schema, RLS/grants, server actions, RPCs, routes, UI behavior, runtime behavior, reporting/export behavior, billing/provider writes, Stripe behavior, subscription behavior, entitlement behavior, module-gating behavior, package enforcement, package assignment writes, contractor permissions, contractor navigation, automation, AI behavior, background jobs, tenant-owned template/catalog writes, starter-pack provisioning behavior, production approval behavior, release-gate behavior, support queue behavior, manual resolution behavior, corrective-action behavior, operator runbook behavior, QA behavior, or product behavior.
+
+Files changed in this pass:
+
+- `docs/Roadmap.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Billing/provider release-gate planning summary:
+
+- `docs/Roadmap.md` now includes a dedicated future Billing / Provider Support Operations Release Gate and Production Readiness Checklist section after the support-operations runbook/operator QA planning section.
+- The section defines future release-gate concepts: support-review evidence release gate, runbook checklist completeness, operator QA signoff, sandbox-to-production promotion checklist, escalation/approval separation, rollback/recovery readiness, security/RLS verification, provider secret/redaction verification, no-secret/no-raw-payload validation, no-mutation/no-auto-fix verification, production readiness signoff, release blocker, release exception, and post-release monitoring requirement.
+- The planning text states that no release-gate table, release-gate event table, release exception table, checklist item table, production readiness read model, production approval action, support-resolution RPC, provider corrective action, subscription mutation, entitlement/module enforcement, package assignment release workflow, or package-governance production release workflow exists today.
+
+Production readiness checklist summary:
+
+- Future checklist items cover support-review evidence completeness, runbook checklist completion, operator QA signoff, sandbox scenario testing, sandbox/production separation, rollback/recovery plan, sanitized provider evidence, safely displayed provider IDs, no exposed secrets/raw provider payloads, RLS/forced RLS/grant posture, security-definer execute grants if RPCs exist, idempotency/replay handling, no unintended package assignment mutation, no unintended billing/provider mutation, no unintended entitlement/module/runtime mutation, and approval handoff to a separate future execution path.
+- Release gate review alone must not execute corrective actions, mutate provider state, mutate package assignments, mutate entitlements/modules/runtime, call Stripe/provider APIs, replay webhooks, run reconciliation auto-fix, create/update/cancel subscriptions, create invoices, collect payments, enforce entitlements, gate modules, change contractor permissions, trigger reporting/export behavior, run automation, run AI behavior, or start background jobs.
+- Production approval is documented as non-executing readiness signoff only; it must not imply execution authority.
+
+Future blocker/status/read-model summary:
+
+- Future release-gate statuses are `not_started`, `checklist_incomplete`, `qa_in_progress`, `blocked`, `ready_for_sandbox`, `sandbox_verified`, `ready_for_production_review`, `production_approved`, `production_deferred`, and `archived`.
+- Future release blockers are `missing_support_review_evidence`, `missing_runbook_checklist`, `missing_operator_signoff`, `missing_sandbox_validation`, `missing_rollback_plan`, `missing_security_verification`, `missing_rerun_idempotency_proof`, `raw_provider_payload_exposure`, `secret_exposure_risk`, `unresolved_reconciliation_mismatch`, `unresolved_webhook_replay_risk`, `entitlement_runtime_side_effect_risk`, `package_assignment_side_effect_risk`, and `billing_provider_mutation_risk`.
+- Future schema/read-model concepts are `contractor_package_billing_release_gates` and `contractor_package_billing_release_gate_events`, with optional future `contractor_package_billing_release_exceptions` and `contractor_package_billing_release_checklist_items` deferred unless separate exception or checklist lifecycles are justified.
+- Future helpers such as `buildBillingProviderReleaseGateReadModel(...)` or `getBillingProviderProductionReadiness(...)` should expose readiness status, blocker list, checklist completion, sandbox/production separation state, security verification state, rollback/recovery readiness, approval handoff readiness, safe operator summaries, and attention-needed rows without granting provider mutation authority, subscription mutation authority, package assignment truth, entitlement/module/runtime truth, reporting/export authority, automation authority, AI execution authority, or background job authority.
+
+Future QA/security gate summary:
+
+- Future release-gate security posture should keep platform-admin/support access server-side only; if future release-gate tables live in `public`, RLS must be enabled and forced, and broad `anon`/`authenticated` grants must be revoked unless intentionally exposed through safe policies.
+- Future RPCs must lock `search_path`, perform platform-admin/support authorization, recompute readiness server-side, verify evidence server-side, require approval before execution, and revoke execute from `anon`, `authenticated`, and `public` unless explicitly designed.
+- Future QA/security gates should include docs/readiness tests, schema/RLS tests when tables exist, platform-admin/support authorization tests, no client service-role exposure tests, no raw provider payload tests, no secret exposure tests, idempotency/replay tests, webhook signature tests, sandbox-to-production separation tests, no unintended billing mutation tests, no unintended package assignment mutation tests, no unintended entitlement/module/runtime mutation tests, browser QA, and a production-readiness regression checklist.
+
+First implementation slice recommendation:
+
+1. Add a pure release-readiness helper only after support-review/runbook evidence foundations exist.
+2. Add release-gate checklist/readiness tests for statuses, blockers, checklist completion, sandbox/production separation, security verification, rollback/recovery readiness, approval handoff readiness, safe summaries, and no unintended billing/provider/assignment/entitlement/runtime mutation.
+3. Add a read-only Super Admin release-gate panel only after the read model is stable.
+4. Keep corrective execution controls, Stripe/provider mutation controls, package-assignment mutation controls, production approval actions, release-gate tables, release exception tables, release checklist item tables, subscription creation/update/cancel, reconciliation auto-fix, entitlement/module enforcement, runtime gates, contractor-facing billing/package visibility, reporting/export actions, automation/AI support execution behavior, background jobs, starter-pack provisioning changes, package assignment writes, and contractor permission changes deferred.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Run a docs-only source-of-truth consistency review for the Billing / Provider Support Operations Release Gate and Production Readiness Checklist planning section. Confirm `docs/Roadmap.md`, `docs/workflows.md`, `docs/chat-handoff.md`, and `docs/current-state.md` consistently describe release-gate/production readiness as future-only planning with no implemented release-gate table, release-gate event table, release exception table, checklist item table, production readiness read model, production approval action, support-resolution RPC, migration, schema/RLS/grant change, server action, route, UI behavior, billing/provider mutation, Stripe call, subscription operation, package assignment write, entitlement/module/runtime enforcement, reporting/export behavior, contractor permission change, starter-pack provisioning change, automation, AI behavior, background job, or product behavior."
+
+## Billing / Provider Support Operations Runbook and Operator QA Readiness Source-of-Truth Review
+
+This docs-only Super Admin Platform Evolution pass verified the future Billing / Provider Support Operations Runbook and Operator QA Readiness planning section across the source-of-truth docs. It did not change application code, tests, migrations, schema, RLS/grants, UI behavior, runtime behavior, reporting/export behavior, billing behavior, Stripe behavior, subscription behavior, entitlement behavior, module-gating behavior, package enforcement, package assignment writes, contractor permissions, contractor navigation, automation, AI behavior, background jobs, tenant-owned template/catalog writes, starter-pack provisioning behavior, support queue behavior, manual resolution behavior, corrective-action behavior, operator runbook behavior, QA behavior, or product behavior.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Documentation/source-of-truth verification summary:
+
+- `docs/Roadmap.md` consistently describes Billing / Provider Support Operations Runbook and Operator QA Readiness as future-only planning. It covers future support operations runbook, evidence review checklist, provider/reconciliation evidence validation, sandbox-vs-production checklist, escalation handoff, blocked-resolution handling, operator decision logging, approval handoff, rollback/recovery preparation, support QA readiness, and support review audit trail without claiming implemented support-operations tables, QA readiness tables, runbook read models, support-resolution RPCs, migrations, or schema/RLS/grant changes.
+- Future operator review stages remain described as planned only: `evidence_collected`, `evidence_validated`, `escalation_required`, `escalation_resolved`, `corrective_action_proposed`, `approval_pending`, `approved_for_execution`, `execution_deferred`, and `archived`.
+- Future support-operations constraints remain described as planned only: runbook review alone must not mutate provider state, package assignments, entitlements/modules/runtime, billing status, subscriptions, contractor permissions, contractor navigation, starter-pack provisioning, reporting/export behavior, automation, AI behavior, or product behavior; support review alone must not trigger Stripe/provider operations; corrective execution requires a separate future execution path; sandbox/test-mode investigations stay isolated from production investigations; operator decision evidence remains append-only; blocked resolutions remain retained; destructive auto-fix is disallowed without explicit approved corrective execution; and AI/automation-generated corrective execution is out of scope.
+- Future evidence-review checklist expectations remain described as planned only: package assignment state verified, provider mapping state verified, reconciliation evidence reviewed, webhook evidence reviewed, duplicate/replay checks reviewed, environment isolation verified, expected-vs-observed provider state compared, rollback/recovery path documented, operator reason captured, and approval requirement identified.
+- `docs/workflows.md` consistently separates implemented read-only package/billing inspection and the implemented static Future Package Definition Model planning panel from the future-only support-operations runbook workflow, operator QA readiness workflow, escalation/approval handoff workflow, and separate execution path.
+- `docs/workflows.md` does not describe any current support-operations mutation workflow, current support-resolution RPC, current Stripe/provider operations, current subscription operations, current entitlement/module runtime workflow, or current contractor-facing behavior for this support-operations layer.
+- `docs/current-state.md` remains implemented truth: it describes `/super-admin/packages` and the Future Package Definition Model as implemented read-only observability/planning only, and it does not claim support-operations tables, QA readiness tables, runbook read models, support-resolution RPCs, corrective-action execution, Stripe/provider operations, subscription operations, entitlement/module enforcement, contractor permission changes, starter-pack provisioning changes, automation, AI behavior, background jobs, or runtime package behavior exist.
+- `docs/README.md` did not need changes because no new document was created and the existing doc index remains accurate.
+
+Stale wording corrected:
+
+- No source-of-truth overclaim was found in `docs/Roadmap.md`, `docs/workflows.md`, `docs/current-state.md`, or `docs/README.md`.
+- `docs/chat-handoff.md` now records this completed source-of-truth review and advances the recommended next step so the current handoff no longer points back at the review that is complete.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Plan the next Super Admin Platform Evolution package/billing governance slice as docs-first design only: Billing / Provider Support Operations Release Gate and Production Readiness Checklist. Define future release criteria for support-review evidence, runbook checklist completeness, operator QA signoff, sandbox-to-production promotion, escalation/approval separation, rollback/recovery readiness, security/RLS verification, no-secret/no-raw-payload validation, and no-mutation/no-Stripe/no-subscription/no-entitlement/no-package-assignment boundaries without adding app code, tests, migrations, schema/RLS/grants, server actions, RPCs, routes, UI behavior, reporting/export behavior, billing/provider writes, Stripe calls, subscription operations, entitlement/module/runtime enforcement, package assignment writes, contractor permission changes, starter-pack provisioning changes, automation, AI behavior, background jobs, or product behavior."
+
+## Billing / Provider Support Operations Runbook and Operator QA Readiness Design Planning
+
+This docs-only Super Admin Platform Evolution pass planned the future Billing / Provider Support Operations Runbook and Operator QA Readiness slice. It did not change application code, tests, migrations, schema, RLS/grants, UI behavior, runtime behavior, reporting/export behavior, billing behavior, Stripe behavior, subscription behavior, entitlement behavior, module-gating behavior, package enforcement, package assignment writes, contractor permissions, contractor navigation, automation, AI behavior, background jobs, tenant-owned template/catalog writes, starter-pack provisioning behavior, support queue behavior, manual resolution behavior, corrective-action behavior, operator runbook behavior, QA behavior, or product behavior.
+
+Files changed in this pass:
+
+- `docs/Roadmap.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Billing/provider support-operations/runbook planning summary:
+
+- `docs/Roadmap.md` now includes a dedicated future Billing / Provider Support Operations Runbook and Operator QA Readiness section after the support-review/manual-resolution planning section.
+- The section defines future support-operations concepts: support operations runbook, evidence review checklist, provider/reconciliation evidence validation, sandbox-vs-production checklist, escalation handoff, blocked-resolution handling, operator decision logging, approval handoff, rollback/recovery preparation, environment isolation, support QA readiness, and support review audit trail.
+- The section clearly states that this is future-only planning and does not create support-operations tables, QA harnesses, migrations, schema/RLS/grant changes, server actions, RPCs, routes, billing/provider writes, Stripe calls, subscription operations, package assignment writes, entitlement enforcement, module gates, contractor permission changes, reporting/export behavior, automation, AI behavior, background jobs, or runtime behavior.
+
+Support-review workflow/checklist summary:
+
+- Future operator review stages are `evidence_collected`, `evidence_validated`, `escalation_required`, `escalation_resolved`, `corrective_action_proposed`, `approval_pending`, `approved_for_execution`, `execution_deferred`, and `archived`.
+- Future checklist expectations cover package assignment state, provider mapping state, reconciliation evidence, webhook evidence, duplicate/replay checks, environment isolation, expected-vs-observed provider state, rollback/recovery path, operator reason, and approval requirement.
+- Future escalation workflow opens a support review, validates evidence, triggers escalation when needed, attaches escalation evidence, reviews any non-executing corrective-action proposal, prepares approval handoff, keeps any execution path separate, and retains archive/history for blocked, rejected, escalated, deferred, approved, resolved, and archived outcomes.
+- Runbook review alone must not mutate provider state, package assignments, entitlements/modules/runtime, billing status, subscriptions, contractor permissions, contractor navigation, starter-pack provisioning, reporting/export behavior, automation, AI behavior, or product behavior.
+
+Operator QA readiness summary:
+
+- Future operator QA readiness should cover sandbox-only QA before production, replay/deduplication QA, reconciliation mismatch QA, rollback/recovery QA, invalid signature QA, provider correlation QA, safe payload-summary QA, no-secret/no-raw-provider-payload QA, no unintended entitlement/runtime mutation QA, and no unintended package-assignment mutation QA.
+- Future read-model helpers such as `buildBillingSupportOperationsRunbookReadModel(...)` or `getBillingSupportOperatorQAReadiness(...)` should expose support-review queue, checklist readiness, escalation state, rollback/recovery readiness, environment warnings, approval handoff readiness, safe operator summaries, and attention-needed rows.
+- Future read models must not treat checklist readiness, escalation state, approval handoff readiness, approved-for-execution stage, or operator decision notes as provider mutation authority, subscription mutation authority, package assignment activation truth, entitlement/module/runtime truth, contractor permission truth, reporting/export authority, automation authority, or AI execution authority.
+
+Future RLS/security gate summary:
+
+- Future support-review evidence tables should remain server-only with platform-admin/support-only access.
+- If future support-review or support-operations evidence tables live in `public`, RLS must be enabled and forced, and broad `anon`/`authenticated` grants must be revoked unless intentionally exposed through safe policies.
+- Future RPCs must lock `search_path`, perform platform-admin/support authorization, recompute readiness server-side, verify evidence server-side, require approval before execution, and revoke execute from `anon`, `authenticated`, and `public` unless explicitly designed.
+- Support evidence must not store or expose provider secrets, provider tokens, webhook signing secrets, raw provider credentials, raw provider payload dumps, raw provider errors, raw card data, bank data, service-role keys, stack traces, or unbounded operator metadata blobs.
+- Client-submitted evidence, operator metadata, provider confirmation, reconciliation result, webhook linkage, and rollback/readback claims must not be authoritative without server verification.
+
+First implementation slice recommendation:
+
+1. Add a pure runbook/readiness helper only after the support-review evidence foundation exists.
+2. Add support-review QA/readiness tests for checklist completeness, escalation states, environment isolation, safe summaries, replay/deduplication warnings, invalid-signature handling, rollback/recovery readiness, approval handoff readiness, and no unintended billing/provider/assignment/entitlement/runtime mutation.
+3. Add a read-only Super Admin support-operations panel only after the read model is stable.
+4. Keep corrective-action execution controls, Stripe/provider calls, subscription creation/update/cancel, reconciliation auto-fix, entitlement/module enforcement, runtime gates, contractor-facing billing/package visibility, reporting/export actions, automation/AI support execution behavior, starter-pack provisioning changes, package assignment writes, and contractor permission changes deferred.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Run a docs-only source-of-truth consistency review for the Billing / Provider Support Operations Runbook and Operator QA Readiness planning section. Confirm `docs/Roadmap.md`, `docs/workflows.md`, `docs/chat-handoff.md`, and `docs/current-state.md` consistently describe support-operations runbook and operator QA readiness as future-only planning with no implemented support-operations table, QA readiness table, runbook read model, support-resolution RPC, migration, schema/RLS/grant change, billing/provider mutation, Stripe call, subscription operation, package assignment write, entitlement/module/runtime enforcement, reporting/export behavior, contractor permission change, starter-pack provisioning change, automation, AI behavior, background job, or product behavior."
+
+## Billing / Provider Support Review and Manual Resolution Readiness Source-of-Truth Review
+
+This docs-only Super Admin Platform Evolution pass verified the future Billing / Provider Support Review and Manual Resolution Readiness Design planning section across the source-of-truth docs. It did not change application code, tests, migrations, schema, RLS/grants, UI behavior, runtime behavior, reporting/export behavior, billing behavior, Stripe behavior, subscription behavior, entitlement behavior, module-gating behavior, package enforcement, package assignment writes, contractor permissions, contractor navigation, automation, AI behavior, background jobs, tenant-owned template/catalog writes, starter-pack provisioning behavior, support queue behavior, manual resolution behavior, corrective-action behavior, or product behavior.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Documentation/source-of-truth verification summary:
+
+- `docs/Roadmap.md` consistently describes Billing / Provider Support Review and Manual Resolution Readiness Design as future-only planning. It covers future support review queue, manual resolution request, operator review state, escalation, resolution evidence, corrective-action proposal, approval requirement, rollback/recovery evidence, reconciliation dependency, webhook/provider linkage, assignment impact review, entitlement/runtime impact caveat, environment isolation, and proposed future support-review/event tables without claiming implemented support-review tables, support-review event tables, resolution proposal tables, support-review assignment tables, migrations, schema/RLS/grant changes, support-review read models, or support-resolution RPCs.
+- Future support-review statuses remain described as planned only: `pending_review`, `awaiting_evidence`, `awaiting_provider_confirmation`, `approved_for_resolution`, `resolution_blocked`, `resolved`, and `archived`.
+- Future resolution categories remain described as planned only: `provider_state_mismatch`, `duplicate_provider_subscription`, `orphaned_provider_subscription`, `stale_provider_mapping`, `invalid_environment_mix`, `unsupported_custom_contract`, `webhook_replay_issue`, `missing_provider_customer`, `missing_provider_subscription`, and `manual_support_override_required`.
+- Future support-review constraints remain described as planned only: review queues alone must not mutate provider state, package assignments, entitlements/modules/runtime, billing status, subscriptions, contractor permissions, contractor navigation, starter-pack provisioning, reporting/export behavior, automation, AI behavior, or product behavior; support review alone must not trigger Stripe/provider operations; corrective actions require explicit approval and a separate future execution path; sandbox/test-mode reviews stay isolated from production reviews; resolution evidence remains append-only; rejected/manual-review outcomes are retained; and destructive auto-fix is disallowed without explicit approved corrective action.
+- `docs/workflows.md` consistently separates implemented read-only package/billing inspection and the implemented static Future Package Definition Model planning panel from the future-only support-review/manual-resolution readiness workflow, future support-review queue/read-model workflow, future corrective-action proposal workflow, and future separate execution path.
+- `docs/workflows.md` does not describe any current support-review mutation workflow, current Stripe/provider operations, current subscription operations, current entitlement/module runtime workflow, or current contractor-facing behavior for this support-review/manual-resolution layer.
+- `docs/current-state.md` remains implemented truth: it describes `/super-admin/packages` and the Future Package Definition Model as implemented read-only observability/planning only, and it does not claim support-review tables, support-review read models, support-resolution RPCs, corrective-action proposals, Stripe/provider operations, subscription operations, entitlement/module enforcement, contractor permission changes, starter-pack provisioning changes, automation, AI behavior, background jobs, or runtime package behavior exist.
+- `docs/README.md` did not need changes because no new document was created and the existing doc index remains accurate.
+
+Stale wording corrected:
+
+- No source-of-truth overclaim was found in `docs/Roadmap.md`, `docs/workflows.md`, `docs/current-state.md`, or `docs/README.md`.
+- `docs/chat-handoff.md` now records this completed source-of-truth review and advances the recommended next step so the current handoff no longer points back at the review that is complete.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Plan the next Super Admin Platform Evolution package/billing governance slice as docs-first design only: Billing / Provider Support Operations Runbook and Operator QA Readiness. Define future operator runbook expectations, evidence-check sequence, safe escalation handoff, sandbox-vs-production review checklist, manual support decision logging, blocked-resolution handling, approval handoff to a separate future execution path, no-auto-fix/no-Stripe/no-subscription boundaries, and QA/security gates without adding app code, tests, migrations, schema/RLS/grants, server actions, RPCs, routes, UI behavior, reporting/export behavior, billing/provider writes, Stripe calls, subscription operations, entitlement/module/runtime enforcement, package assignment writes, contractor permission changes, starter-pack provisioning changes, automation, AI behavior, background jobs, or product behavior."
+
+## Billing / Provider Support Review and Manual Resolution Readiness Design Planning
+
+This docs-only Super Admin Platform Evolution pass planned the future Billing / Provider Support Review and Manual Resolution Readiness Design slice. It did not change application code, tests, migrations, schema, RLS/grants, UI behavior, runtime behavior, reporting/export behavior, billing behavior, Stripe behavior, subscription behavior, entitlement behavior, module-gating behavior, package enforcement, package assignment writes, contractor permissions, contractor navigation, automation, AI behavior, background jobs, tenant-owned template/catalog writes, starter-pack provisioning behavior, support queue behavior, manual resolution behavior, corrective-action behavior, or product behavior.
+
+Files changed in this pass:
+
+- `docs/Roadmap.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Billing/provider support-review/manual-resolution planning summary:
+
+- `docs/Roadmap.md` now includes a dedicated future Billing / Provider Support Review and Manual Resolution Readiness Design section after the provider webhook evidence/correlation planning section.
+- The section defines future support-review concepts: support review queue, manual resolution request, operator review state, support escalation, resolution evidence, corrective-action proposal, approval requirement, rollback/recovery evidence, reconciliation dependency, webhook/provider linkage, assignment impact review, entitlement/runtime impact caveat, and environment isolation.
+- The section clearly states that this is future-only planning and does not create support queues, support-review tables, resolution actions, migrations, schema/RLS/grant changes, server actions, RPCs, billing/provider writes, Stripe calls, subscription operations, package assignment writes, entitlement enforcement, module gates, contractor permission changes, reporting/export behavior, automation, AI behavior, background jobs, or runtime behavior.
+
+Proposed future support-review table/read-model summary:
+
+- Future first-slice tables are `contractor_package_billing_support_reviews` and `contractor_package_billing_support_review_events`.
+- `contractor_package_billing_support_reviews` would store the future current support-review/readiness row for package-billing provider mismatches, reconciliation blockers, webhook conflicts, provider operation ambiguity, or manual resolution candidates.
+- `contractor_package_billing_support_review_events` would store future append-only support-review event history for evidence attachment, status changes, escalation, provider-confirmation notes, corrective-action proposal review, approval readiness, blocked resolution, resolution, rollback/recovery evidence, rejection, and archive history.
+- Optional future tables such as `contractor_package_billing_resolution_proposals` and `contractor_package_billing_support_review_assignments` remain deferred unless corrective-action proposal lifecycles, support ownership, escalation teams, SLA clocks, or multi-operator queues justify them.
+- Future read-model helpers such as `buildContractorPackageBillingSupportReviewReadModel(...)` or `getContractorPackageBillingManualResolutionReadiness(...)` should expose support-review queue, review status, blocking issues, reconciliation linkage, webhook/provider linkage, rollback/recovery readiness, approval readiness, environment warnings, safe operator summaries, and attention-needed rows.
+
+Support-review workflow/readiness summary:
+
+- Future support-review statuses are `pending_review`, `awaiting_evidence`, `awaiting_provider_confirmation`, `approved_for_resolution`, `resolution_blocked`, `resolved`, and `archived`.
+- Future resolution categories are `provider_state_mismatch`, `duplicate_provider_subscription`, `orphaned_provider_subscription`, `stale_provider_mapping`, `invalid_environment_mix`, `unsupported_custom_contract`, `webhook_replay_issue`, `missing_provider_customer`, `missing_provider_subscription`, and `manual_support_override_required`.
+- Future workflow should detect mismatch/reconciliation evidence, open a support review, attach server-verified evidence, review provider/webhook/reconciliation correlation, optionally create a non-executing corrective-action proposal, grant approval only in a future explicit step, use a separate future execution path only after approval, and retain archive/history for rejected, blocked, resolved, escalated, and manually reviewed outcomes.
+- Support review alone must not mutate provider state, package assignments, entitlements/modules/runtime, billing status, subscriptions, contractor permissions, contractor navigation, starter-pack provisioning, reporting/export behavior, automation, AI behavior, or product behavior.
+
+Future RLS/security gate summary:
+
+- Future support-review tables should use RLS enabled and forced when exposed through `public`, revoked broad `anon`/`authenticated` grants unless intentionally exposed, platform-admin/support server-only access, and no browser service-role exposure.
+- Future support-resolution RPCs, if later needed, must lock `search_path`, perform platform-admin/support authorization, recompute review readiness server-side, verify evidence server-side, require explicit approval before execution, and revoke execute from `anon`, `authenticated`, and `public` unless explicitly designed.
+- Provider ids are references, not secrets, but should still be displayed carefully.
+- Support-review records, event records, snapshots, and metadata must not store provider secret keys/tokens, webhook signing secrets, raw provider credentials, raw provider payload dumps, raw provider errors, raw card data, bank data, sensitive payment method details, service-role keys, stack traces, or unbounded payloads.
+- Client-submitted resolution evidence, provider confirmation, reconciliation evidence, webhook evidence, operation evidence, and rollback/readback evidence must not be accepted as authoritative without server verification.
+
+First implementation slice recommendation:
+
+1. Add migrations for `contractor_package_billing_support_reviews` and `contractor_package_billing_support_review_events` only after package definition/version, assignment, assignment audit, billing mapping, billing mapping audit, reconciliation, provider-operation, and webhook evidence foundations exist.
+2. Add RLS/grant posture for platform-admin/support server-only access and no client service-role exposure.
+3. Add generated/shared types if the repo pattern requires it.
+4. Add platform-admin/support read helpers and a pure support-review/manual-resolution readiness read-model builder.
+5. Add focused pure read-model tests for support-review queue rows, statuses, resolution categories, blocking issues, reconciliation linkage, webhook/provider linkage, rollback/recovery readiness, approval readiness, environment warnings, safe summaries, attention-needed rows, append-only event interpretation, and no unintended billing/provider/assignment/entitlement/runtime mutation.
+6. Add a read-only Super Admin support-review panel only.
+7. Keep actual Stripe/provider corrective actions, subscription creation/update/cancel, reconciliation auto-fix, entitlement/module enforcement, runtime gates, contractor-facing billing/package visibility, reporting/export actions, automation/AI support resolution behavior, starter-pack provisioning changes, and any package assignment writes deferred.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Run a docs-only source-of-truth consistency review for the Billing / Provider Support Review and Manual Resolution Readiness Design planning section. Confirm `docs/Roadmap.md`, `docs/workflows.md`, `docs/chat-handoff.md`, and `docs/current-state.md` consistently describe support review/manual resolution readiness as future-only planning with no implemented support-review table, support-review event table, resolution proposal table, support-review assignment table, migration, schema/RLS/grant change, support-review read model, support-resolution RPC, billing/provider mutation, Stripe call, subscription operation, package assignment write, entitlement/module/runtime enforcement, reporting/export behavior, contractor permission change, starter-pack provisioning change, automation, AI behavior, background job, or product behavior."
+
+## Billing / Provider Webhook Evidence and Correlation Readiness Source-of-Truth Review
+
+This docs-only Super Admin Platform Evolution pass verified the future Billing / Provider Webhook Evidence and Correlation Readiness Design planning section across the source-of-truth docs. It did not change application code, tests, migrations, schema, RLS/grants, UI behavior, runtime behavior, reporting/export behavior, billing behavior, Stripe behavior, subscription behavior, entitlement behavior, module-gating behavior, package enforcement, package assignment writes, contractor permissions, contractor navigation, automation, AI behavior, background jobs, tenant-owned template/catalog writes, starter-pack provisioning behavior, or product behavior.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Documentation/source-of-truth verification summary:
+
+- `docs/Roadmap.md` consistently describes Billing / Provider Webhook Evidence and Correlation Readiness Design as future-only planning. It covers future provider webhook evidence concepts, future payload evidence concepts, future signature verification concepts, future replay/deduplication concepts, future correlation/reconciliation linkage concepts, future support review/archive concepts, future sandbox/test-mode isolation, and proposed future webhook/correlation tables without claiming implemented provider webhook evidence tables, a provider webhook read model, migrations, schema/RLS/grant changes, or webhook-triggered mutation behavior.
+- Future webhook event categories remain described as planned only: `customer_created`, `customer_updated`, `subscription_created`, `subscription_updated`, `subscription_deleted`, `invoice_paid`, `invoice_failed`, `checkout_completed`, `payment_method_updated`, `product_updated`, `price_updated`, `webhook_signature_invalid`, `webhook_duplicate_detected`, and `reconciliation_triggered`.
+- Future webhook processing statuses remain described as planned only: `received`, `signature_pending`, `signature_verified`, `signature_failed`, `correlated`, `duplicate_detected`, `reconciliation_pending`, `support_review_required`, and `archived`.
+- Future webhook constraints remain described as planned only: webhook ingestion alone must not mutate package assignments, entitlements/modules/runtime, contractor permissions, duplicate provider operations, sandbox/production boundaries, or raw provider payload exposure; replay must be detectable, webhook evidence should remain append-only, and invalid signatures should remain retained only as safe evidence.
+- `docs/workflows.md` consistently separates implemented read-only package/billing inspection and the implemented static Future Package Definition Model planning panel from the future-only provider webhook evidence/correlation workflow, replay/deduplication workflow, reconciliation linkage workflow, and support-review webhook workflow.
+- `docs/workflows.md` does not describe any current webhook-triggered mutation workflow, package-governance Stripe/provider webhook ingestion, entitlement/module runtime workflow, reporting/export workflow, contractor-facing behavior, automation, AI behavior, background job, or starter-pack provisioning change.
+- `docs/current-state.md` remains implemented truth: it may describe existing canonical Stripe invoice/payment webhook handling separately, but it does not claim package-governance webhook evidence tables, replay detection, correlation workflows, Stripe/provider package-governance webhook ingestion, entitlement/module enforcement, contractor permission changes, starter-pack provisioning changes, or runtime package behavior exist.
+- `docs/README.md` did not need changes because no new document was created and the existing doc index remains accurate.
+
+Stale wording corrected:
+
+- No source-of-truth overclaim was found in `docs/Roadmap.md`, `docs/workflows.md`, `docs/current-state.md`, or `docs/README.md`.
+- `docs/chat-handoff.md` now records this completed source-of-truth review and advances the recommended next step so the current handoff no longer points back at the review that is complete.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Plan the next Super Admin Platform Evolution package/billing governance slice as docs-first design only: Billing / Provider Support Review and Manual Resolution Readiness Design. Define future support review queues, manual resolution evidence, operator reason/confirmation requirements, approved corrective-action boundaries, no-auto-fix/no-webhook-triggered-mutation limits, RLS/security gates, and no-mutation/no-Stripe/no-subscription boundaries before adding migrations, schema/RLS/grants, server actions, RPCs, billing/provider writes, Stripe calls, subscription operations, entitlement/module/runtime enforcement, reporting/export behavior, contractor permission changes, starter-pack provisioning changes, automation, AI behavior, background jobs, or product behavior."
+
+## Billing / Provider Webhook Evidence and Correlation Readiness Design Planning
+
+This docs-only Super Admin Platform Evolution pass planned the future Billing / Provider Webhook Evidence and Correlation Readiness Design slice. It did not change application code, tests, migrations, schema, RLS/grants, UI behavior, runtime behavior, reporting/export behavior, billing behavior, Stripe behavior, subscription behavior, entitlement behavior, module-gating behavior, package enforcement, package assignment writes, contractor permissions, contractor navigation, automation, AI behavior, background jobs, tenant-owned template/catalog writes, starter-pack provisioning behavior, or product behavior.
+
+Files changed in this pass:
+
+- `docs/Roadmap.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Billing/provider webhook evidence and correlation planning summary:
+
+- `docs/Roadmap.md` now includes a dedicated future Billing / Provider Webhook Evidence and Correlation Readiness Design section after the provider operation evidence/idempotency planning section.
+- The section defines future provider webhook concepts: provider webhook event, provider webhook payload evidence, provider webhook signature verification, provider webhook correlation id, provider webhook replay detection, provider webhook deduplication, provider webhook reconciliation linkage, provider webhook operation linkage, provider webhook support review state, provider webhook archive/history retention, and provider webhook environment isolation.
+- The section clearly states that this is future-only package-governance webhook evidence/correlation readiness planning and does not create migrations, tables, RLS policies, grants, server actions, RPCs, routes, UI controls, reporting/export behavior, billing/provider calls, Stripe subscription operations, package assignment writes, entitlement enforcement, module gates, contractor permission changes, starter-pack provisioning changes, automation, AI behavior, background jobs, webhook ingestion, retries, or runtime behavior.
+- The planning distinguishes this future package-governance webhook evidence layer from the existing canonical invoice/payment Stripe webhook foundation; it does not change current payment webhook handling or payment-event behavior.
+
+Proposed future webhook table/read-model summary:
+
+- Future first-slice tables are `contractor_package_billing_provider_webhook_events` and `contractor_package_billing_provider_webhook_correlations`.
+- `contractor_package_billing_provider_webhook_events` would store future append-only provider webhook evidence for package-governance billing/provider mapping, provider operation correlation, replay detection, support review, and reconciliation linkage.
+- `contractor_package_billing_provider_webhook_correlations` would store future linkage evidence between verified webhooks, provider operations, billing mappings, reconciliation events, package assignments, duplicate/replay findings, and support review.
+- Optional future tables such as `contractor_package_billing_provider_webhook_failures` or `contractor_package_billing_provider_webhook_replays` remain deferred unless invalid-signature review, malformed payloads, replay evidence, repeated delivery windows, or support ownership needs justify them.
+- Future read-model helpers such as `buildContractorPackageProviderWebhookReadModel(...)` or `getContractorPackageProviderWebhookEvidence(...)` should expose webhook timeline, signature verification state, replay/duplicate warnings, operation/reconciliation linkage, support-review-needed rows, environment warnings, safe operator summaries, and attention-needed rows.
+
+Webhook workflow/replay/correlation summary:
+
+- Future webhook event categories are `customer_created`, `customer_updated`, `subscription_created`, `subscription_updated`, `subscription_deleted`, `invoice_paid`, `invoice_failed`, `checkout_completed`, `payment_method_updated`, `product_updated`, `price_updated`, `webhook_signature_invalid`, `webhook_duplicate_detected`, and `reconciliation_triggered`.
+- Future webhook processing statuses are `received`, `signature_pending`, `signature_verified`, `signature_failed`, `correlated`, `duplicate_detected`, `reconciliation_pending`, `support_review_required`, and `archived`.
+- Future webhook workflow should receive provider events, verify signatures server-side, check replay/deduplication, correlate provider references, link to future provider operations, link to future reconciliation evidence, surface support-review-needed rows, and preserve append-only archive/history evidence without auto-fix behavior.
+- Future webhook constraints prohibit automatic package assignment mutation, entitlement/module/runtime mutation, contractor permission mutation, duplicate provider operations from duplicate events, sandbox/production event mixing, and raw provider payload exposure. Invalid signatures should be retained as safe evidence but must not be trusted for provider state.
+
+Future RLS/security gate summary:
+
+- Future webhook/correlation tables should use RLS enabled and forced when exposed through `public`, revoked broad `anon`/`authenticated` grants unless intentionally exposed, platform-admin/support server-only access, and no browser service-role exposure.
+- Future webhook verification RPCs, if later needed, must lock `search_path`, perform platform-admin/support or trusted server-only authorization as appropriate, verify signatures server-side, enforce replay protection server-side, and revoke execute from `anon`, `authenticated`, and `public` unless explicitly designed.
+- Provider ids are references, not secrets, but should still be displayed carefully.
+- Webhook records, correlation records, snapshots, and metadata must not store provider secret keys/tokens, webhook signing secrets, raw provider credentials, raw provider payload dumps, raw provider errors, raw card data, bank data, sensitive payment method details, service-role keys, stack traces, or unbounded payloads.
+- Signature verification is required before trusted operation/reconciliation linkage, and replay protection is required before any webhook-triggered workflow, reconciliation trigger, support queue classification, or future corrective action.
+
+First implementation slice recommendation:
+
+1. Add migrations for `contractor_package_billing_provider_webhook_events` and `contractor_package_billing_provider_webhook_correlations` only after package definition/version, assignment, assignment audit, billing mapping, billing mapping audit, reconciliation, and provider-operation foundations exist.
+2. Add RLS/grant posture for platform-admin/support server-only access and no client service-role exposure.
+3. Add generated/shared types if the repo pattern requires it.
+4. Add platform-admin/support read helpers and a pure webhook evidence/correlation read-model builder.
+5. Add focused pure read-model tests for webhook timelines, signature verification state, processing statuses, webhook categories, duplicate/replay warnings, operation linkage, reconciliation linkage, environment isolation, safe payload summaries, provider reference sanitization, support-review-needed rows, and no unintended billing/assignment/entitlement/runtime mutation.
+6. Add a read-only Super Admin webhook evidence panel only.
+7. Keep actual Stripe/provider webhook ingestion, subscription creation/update/cancel, webhook-triggered reconciliation auto-fix, entitlement/module enforcement, runtime gates, contractor-facing billing/package visibility, reporting/export actions, automation/AI webhook handling, and starter-pack provisioning changes deferred.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+
+Completed follow-up:
+
+- This source-of-truth review is now recorded above. The current recommended next prompt is the support-review/manual-resolution docs-first design slice at the top of this handoff.
+
+## Billing / Provider Operation Evidence and Idempotency Readiness Source-of-Truth Review
+
+This docs-only Super Admin Platform Evolution pass verified the future Billing / Provider Operation Evidence and Idempotency Readiness Design planning section across the source-of-truth docs. It did not change application code, tests, migrations, schema, RLS/grants, UI behavior, runtime behavior, reporting/export behavior, billing behavior, Stripe behavior, subscription behavior, entitlement behavior, module-gating behavior, package enforcement, package assignment writes, contractor permissions, contractor navigation, automation, AI behavior, background jobs, tenant-owned template/catalog writes, starter-pack provisioning behavior, or product behavior.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Documentation/source-of-truth verification summary:
+
+- `docs/Roadmap.md` consistently describes Billing / Provider Operation Evidence and Idempotency Readiness Design as future-only planning. It covers future provider operation request/attempt/evidence concepts, future idempotency key concepts, future operation correlation, future webhook correlation, future retry/review, future rollback/recovery evidence, future sandbox/production isolation, and proposed future operation/attempt tables without claiming implemented provider operation evidence tables, idempotency/retry workflow, migrations, schema/RLS/grant changes, or provider operation mutation behavior.
+- Future provider operation types remain described as planned only: `provider_customer_create`, `provider_subscription_create`, `provider_subscription_update`, `provider_subscription_cancel`, `provider_subscription_suspend`, `provider_subscription_resume`, `provider_price_lookup`, `provider_product_lookup`, `provider_webhook_ingest`, and `provider_reconciliation_check`.
+- Future provider operation statuses remain described as planned only: `pending`, `submitted`, `provider_acknowledged`, `provider_completed`, `provider_failed`, `retry_pending`, `retry_suppressed`, `support_review_required`, and `archived`.
+- Future idempotency/retry constraints remain described as planned only: repeated provider mutation requests must not create duplicate provider artifacts, retries should preserve the same idempotency identity where appropriate, provider operation evidence remains append-only, retries do not erase prior failures, webhook replay should be detectable, sandbox/test-mode operations remain isolated from production, destructive retry loops are disallowed, and retry suppression may require support review.
+- `docs/workflows.md` consistently separates implemented read-only package/billing inspection and the implemented static Future Package Definition Model planning panel from the future-only provider operation evidence/idempotency workflow, future operation timeline/read-model workflow, future retry/review workflow, and future webhook correlation workflow.
+- `docs/workflows.md` does not describe any current provider mutation workflow, Stripe/provider operation, retry automation, entitlement/module runtime workflow, reporting/export workflow, contractor-facing behavior, automation, AI behavior, background job, or starter-pack provisioning change.
+- `docs/current-state.md` remains implemented truth: it describes `/super-admin/packages` and the Future Package Definition Model as implemented read-only observability/planning only, and it does not claim provider operation tables, provider retries, webhook ingestion, Stripe/provider operations, subscription mutations, entitlement/module enforcement, contractor permission changes, starter-pack provisioning changes, or runtime package behavior exist.
+- `docs/README.md` did not need changes because no new document was created and the existing doc index remains accurate.
+
+Stale wording corrected:
+
+- No source-of-truth overclaim was found in `docs/Roadmap.md`, `docs/workflows.md`, `docs/current-state.md`, or `docs/README.md`.
+- `docs/chat-handoff.md` now records this completed source-of-truth review and advances the recommended next step so the handoff no longer points back at the review that is complete.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Plan the next Super Admin Platform Evolution package/billing governance slice as docs-first design only: Billing / Provider Webhook Evidence and Correlation Readiness Design. Define future signed webhook evidence, replay detection, operation-correlation linkage, reconciliation linkage, safe provider payload normalization, webhook signature verification gates, environment isolation, RLS/security posture, and no-mutation/no-Stripe/no-subscription boundaries before adding migrations, schema/RLS/grants, server actions, RPCs, billing/provider writes, Stripe calls, subscription operations, entitlement/module/runtime enforcement, reporting/export behavior, contractor permission changes, starter-pack provisioning changes, automation, AI behavior, background jobs, or product behavior."
+
+## Billing / Provider Operation Evidence and Idempotency Readiness Design Planning
+
+This docs-only Super Admin Platform Evolution pass planned the future Billing / Provider Operation Evidence and Idempotency Readiness Design slice. It did not change application code, tests, migrations, schema, RLS/grants, UI behavior, runtime behavior, reporting/export behavior, billing behavior, Stripe behavior, subscription behavior, entitlement behavior, module-gating behavior, package enforcement, package assignment writes, contractor permissions, contractor navigation, automation, AI behavior, background jobs, tenant-owned template/catalog writes, starter-pack provisioning behavior, or product behavior.
+
+Files changed in this pass:
+
+- `docs/Roadmap.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Billing/provider operation evidence and idempotency planning summary:
+
+- `docs/Roadmap.md` now includes a dedicated future Billing / Provider Operation Evidence and Idempotency Readiness Design section after the billing/provider reconciliation readiness planning section.
+- The section defines future provider operation concepts: provider operation request, provider operation attempt, provider operation evidence, provider response evidence, idempotency key, operation correlation id, reconciliation linkage, retry eligibility, retry suppression, safe provider error summary, provider webhook correlation, operator review state, rollback/recovery evidence, and sandbox/production environment isolation.
+- The section clearly states that this is future-only evidence/idempotency readiness planning and does not create migrations, tables, RLS policies, grants, server actions, RPCs, routes, UI controls, reporting/export behavior, billing/provider calls, Stripe subscription operations, package assignment writes, entitlement enforcement, module gates, contractor permission changes, starter-pack provisioning changes, automation, AI behavior, background jobs, retries, or runtime behavior.
+
+Proposed future operation/evidence table summary:
+
+- Future first-slice tables are `contractor_package_billing_provider_operations` and `contractor_package_billing_provider_operation_attempts`.
+- `contractor_package_billing_provider_operations` would store future operation intent/evidence for provider actions tied to package assignments, billing mappings, reconciliation, idempotency, and operator/support review.
+- `contractor_package_billing_provider_operation_attempts` would store future append-only attempt history for submissions, lookups, webhook ingest, reconciliation checks, retries, provider acknowledgements, failures, and support readbacks.
+- Optional future tables such as `contractor_package_billing_provider_webhook_events` or `contractor_package_billing_provider_retry_queue` remain deferred unless signed webhook retention, replay detection, retry scheduling, idempotency state, or support ownership needs justify them.
+- Future read-model helpers such as `buildContractorPackageProviderOperationReadModel(...)` or `getContractorPackageProviderOperationEvidence(...)` should expose provider operation timeline, attempt history, idempotency grouping, retry status, webhook correlation, reconciliation linkage, safe operator summaries, support-review-needed rows, and attention-needed rows.
+
+Future idempotency/retry/reconciliation summary:
+
+- Future provider operation types are `provider_customer_create`, `provider_subscription_create`, `provider_subscription_update`, `provider_subscription_cancel`, `provider_subscription_suspend`, `provider_subscription_resume`, `provider_price_lookup`, `provider_product_lookup`, `provider_webhook_ingest`, and `provider_reconciliation_check`.
+- Future provider operation statuses are `pending`, `submitted`, `provider_acknowledged`, `provider_completed`, `provider_failed`, `retry_pending`, `retry_suppressed`, `support_review_required`, and `archived`.
+- Future idempotency should prevent duplicate provider artifacts from repeated mutation requests, preserve the same idempotency identity for true retries, retain append-only evidence, preserve prior failures, detect webhook replay, isolate sandbox/test-mode from production, prevent destructive retry loops, and require support review when retry suppression is ambiguous.
+- Future provider-operation workflow should generate operation requests server-side, assign idempotency keys server-side, submit to providers only in a later explicit implementation, capture safe provider responses, classify retry/review state, correlate signed webhooks, link to reconciliation, require support review for ambiguous/destructive cases, and retain operation history.
+
+Future RLS/security gate summary:
+
+- Future provider operation/attempt tables should use RLS enabled and forced when exposed through `public`, revoked broad `anon`/`authenticated` grants unless intentionally exposed, platform-admin/support server-only access, and no browser service-role exposure.
+- Future provider-operation RPCs, if later needed, must lock `search_path`, perform platform-admin/support authorization, recompute operation readiness server-side, verify idempotency server-side, and revoke execute from `anon`, `authenticated`, and `public` unless explicitly designed.
+- Provider ids are references, not secrets, but should still be displayed carefully.
+- Provider operation records, attempt records, snapshots, and metadata must not store provider secret keys/tokens, webhook signing secrets, raw provider payloads, raw provider errors, raw card data, bank data, sensitive payment method details, service-role keys, stack traces, or unbounded payloads.
+- Client-submitted provider evidence must not be accepted as authoritative; request evidence, provider responses, webhook correlation, and reconciliation linkage must be server-generated or server-verified.
+
+First implementation slice recommendation:
+
+1. Add migrations for `contractor_package_billing_provider_operations` and `contractor_package_billing_provider_operation_attempts` only after package definition/version, assignment, assignment audit, billing mapping, billing mapping audit, and reconciliation foundations exist.
+2. Add RLS/grant posture for platform-admin/support server-only access and no client service-role exposure.
+3. Add generated/shared types if the repo pattern requires it.
+4. Add platform-admin/support read helpers and a pure provider-operation evidence/idempotency read-model builder.
+5. Add focused pure read-model/idempotency tests for operation timelines, attempt history, operation statuses, operation types, idempotency grouping, retry eligibility/suppression, webhook correlation, reconciliation linkage, safe error summaries, sandbox/production isolation, provider reference sanitization, and no unintended billing/assignment/entitlement/runtime mutation.
+6. Add a read-only Super Admin provider operation evidence panel only.
+7. Keep actual Stripe/provider calls, subscription creation/update/cancel, automated retries, reconciliation auto-fix, entitlement/module enforcement, runtime gates, contractor-facing billing/package visibility, reporting/export actions, automation/AI retry behavior, and starter-pack provisioning changes deferred.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Run a docs-only source-of-truth consistency review for the Billing / Provider Operation Evidence and Idempotency Readiness Design planning section. Confirm `docs/Roadmap.md`, `docs/workflows.md`, `docs/chat-handoff.md`, and `docs/current-state.md` consistently describe provider operation evidence/idempotency readiness as future-only planning with no implemented provider operation table, operation attempt table, webhook event table, retry queue, migration, schema/RLS/grant change, provider operation read model, provider operation RPC, idempotency layer, billing mutation, Stripe call, subscription operation, package assignment write, entitlement/module/runtime enforcement, reporting/export behavior, contractor permission change, starter-pack provisioning change, automation, AI behavior, background job, or product behavior."
+
+## Billing / Provider Mapping Reconciliation Readiness Source-of-Truth Review
+
+This docs-only Super Admin Platform Evolution pass verified the future Billing / Provider Mapping Reconciliation Readiness Design planning section across the source-of-truth docs. It did not change application code, tests, migrations, schema, RLS/grants, UI behavior, runtime behavior, reporting/export behavior, billing behavior, Stripe behavior, subscription behavior, entitlement behavior, module-gating behavior, package enforcement, package assignment writes, contractor permissions, contractor navigation, automation, AI behavior, background jobs, tenant-owned template/catalog writes, starter-pack provisioning behavior, or product behavior.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Documentation/source-of-truth verification summary:
+
+- `docs/Roadmap.md` consistently describes Billing / Provider Mapping Reconciliation Readiness Design as future-only planning. It covers future expected provider state, observed provider state, reconciliation status, mismatch categories, stale provider state, pending verification, webhook dependency, provider sync attempt, support review required, recovery/rollback readiness, sandbox/test-mode isolation, reconciliation evidence snapshots, and proposed future reconciliation/provider snapshot tables without claiming implemented reconciliation tables, read models, migrations, schema/RLS/grant changes, or reconciliation mutation behavior.
+- Future reconciliation statuses remain described as planned only: `not_started`, `pending_provider`, `pending_verification`, `verified`, `mismatch_detected`, `support_review_required`, `suspended`, and `archived`.
+- Future mismatch categories remain described as planned only: `missing_provider_customer`, `missing_provider_subscription`, `mismatched_price`, `mismatched_product`, `stale_provider_state`, `duplicate_active_subscription`, `orphaned_provider_subscription`, `unexpected_provider_status`, `invalid_environment_mix`, and `unsupported_custom_contract`.
+- `docs/workflows.md` consistently separates implemented read-only package/billing inspection and the implemented static Future Package Definition Model planning panel from the future-only reconciliation/readiness workflow, future provider snapshot/reconciliation tables, future support-review reconciliation workflow, and future reconciliation read-model helper.
+- `docs/workflows.md` does not describe any current reconciliation mutation workflow, Stripe/provider operation, billing/provider auto-fix behavior, entitlement/module runtime workflow, reporting/export workflow, contractor-facing behavior, automation, AI behavior, or starter-pack provisioning change.
+- `docs/current-state.md` remains implemented truth: it describes `/super-admin/packages` and the Future Package Definition Model as implemented read-only observability/planning only, and it does not claim reconciliation tables, reconciliation read models, provider snapshot ingestion, mismatch workflows, Stripe/provider operations, subscription mutations, entitlement/module enforcement, contractor permission changes, starter-pack provisioning changes, or runtime package behavior exist.
+- `docs/README.md` did not need changes because no new document was created and the existing doc index remains accurate.
+
+Stale wording corrected:
+
+- No source-of-truth overclaim was found in `docs/Roadmap.md`, `docs/workflows.md`, `docs/current-state.md`, or `docs/README.md`.
+- `docs/chat-handoff.md` now records this completed source-of-truth review and advances the recommended next step so the handoff no longer points back at the review that is complete.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Plan the next Super Admin Platform Evolution package/billing governance slice as docs-first design only: Billing / Provider Operation Evidence and Idempotency Readiness Design. Define future provider operation attempts, idempotency keys, safe provider request/response evidence, signed webhook linkage, support retry/readback boundaries, operation audit snapshots, RLS/security gates, and no-mutation/no-Stripe/no-subscription boundaries before adding migrations, schema/RLS/grants, server actions, RPCs, billing/provider writes, Stripe calls, subscription operations, entitlement/module/runtime enforcement, reporting/export behavior, contractor permission changes, starter-pack provisioning changes, automation, AI behavior, or product behavior."
+
+## Billing / Provider Mapping Reconciliation Readiness Design Planning
+
+This docs-only Super Admin Platform Evolution pass planned the future Billing / Provider Mapping Reconciliation Readiness Design slice. It did not change application code, tests, migrations, schema, RLS/grants, UI behavior, runtime behavior, reporting/export behavior, billing behavior, Stripe behavior, subscription behavior, entitlement behavior, module-gating behavior, package enforcement, package assignment writes, contractor permissions, contractor navigation, automation, AI behavior, background jobs, tenant-owned template/catalog writes, starter-pack provisioning behavior, or product behavior.
+
+Files changed in this pass:
+
+- `docs/Roadmap.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Billing/provider reconciliation readiness planning summary:
+
+- `docs/Roadmap.md` now includes a dedicated future Billing / Provider Mapping Reconciliation Readiness Design section after the billing/provider mapping schema-readiness planning section.
+- The section defines future reconciliation concepts: expected provider state, observed provider state, reconciliation status, mismatch category, stale provider state, pending verification, webhook dependency, provider sync attempt, support review required, recovery readiness, rollback readiness, sandbox/test-mode isolation, and reconciliation evidence snapshot.
+- The section clearly states that this is future-only reconciliation/readiness planning and does not create migrations, tables, RLS policies, grants, server actions, RPCs, routes, UI controls, reporting/export behavior, billing/provider calls, Stripe subscription operations, package assignment writes, entitlement enforcement, module gates, contractor permission changes, starter-pack provisioning changes, automation, AI behavior, or runtime behavior.
+
+Proposed future reconciliation table/read-model summary:
+
+- Future first-slice tables are `contractor_package_billing_reconciliation_events` and `contractor_package_billing_provider_snapshots`.
+- `contractor_package_billing_reconciliation_events` would store future append-only reconciliation evidence for expected-vs-observed provider comparisons, mismatch classification, support review, recovery readiness, rollback readiness, and archive decisions.
+- `contractor_package_billing_provider_snapshots` would store future sanitized provider observations used by reconciliation, with expected/observed state kept safe, bounded, and environment-scoped.
+- Optional future tables such as `contractor_package_billing_sync_attempts` or `contractor_package_billing_reconciliation_reviews` remain deferred unless provider-operation evidence, retry/idempotency state, support review queues, or retention needs justify them.
+- Future read-model helpers such as `buildContractorPackageBillingReconciliationReadModel(...)` or `getContractorPackageProviderReconciliationStatus(...)` should expose current reconciliation state, mismatch summaries, stale verification warnings, provider environment warnings, support-review-needed rows, recovery readiness, rollback readiness, assignment linkage, safe operator summary, and attention-needed rows.
+
+Reconciliation workflow/readiness summary:
+
+- Future reconciliation statuses are `not_started`, `pending_provider`, `pending_verification`, `verified`, `mismatch_detected`, `support_review_required`, `suspended`, and `archived`.
+- Future mismatch categories are `missing_provider_customer`, `missing_provider_subscription`, `mismatched_price`, `mismatched_product`, `stale_provider_state`, `duplicate_active_subscription`, `orphaned_provider_subscription`, `unexpected_provider_status`, `invalid_environment_mix`, and `unsupported_custom_contract`.
+- Future reconciliation should ingest sanitized provider snapshots from signed webhooks or server-side provider reads, recompute expected provider state server-side, compare expected and observed state, classify mismatch, surface support-review-needed rows, keep approved corrective action future-only, and retain append-only audit evidence/history.
+- Reconciliation must not silently mutate provider state, package assignment state, entitlement/module/runtime state, contractor permissions, contractor navigation, starter-pack provisioning, reporting/export, automation, or AI behavior. Mismatch detection alone must not suspend contractors or create runtime consequences.
+
+Future RLS/security gate summary:
+
+- Future reconciliation/provider-snapshot tables should use RLS enabled and forced when exposed through `public`, revoked broad `anon`/`authenticated` grants unless intentionally exposed, platform-admin/support server-only access, and no browser service-role exposure.
+- Future reconciliation RPCs, if later needed, must lock `search_path`, perform platform-admin/support authorization, recompute expected state server-side, verify provider snapshots server-side, and revoke execute from `anon`, `authenticated`, and `public` unless explicitly designed.
+- Provider ids are references, not secrets, but should still be displayed carefully.
+- Reconciliation records, snapshots, and metadata must not store provider secret keys/tokens, webhook signing secrets, raw provider payloads, raw provider errors, raw card data, bank data, sensitive payment method details, service-role keys, stack traces, or unbounded payloads.
+- Client-submitted provider snapshots must not be accepted as authoritative; observed provider state must come from signed webhook processing or verified server-side provider reads.
+
+First implementation slice recommendation:
+
+1. Add migrations for `contractor_package_billing_reconciliation_events` and `contractor_package_billing_provider_snapshots` only after package definition/version, assignment, assignment audit, billing mapping, and billing mapping audit foundations exist.
+2. Add RLS/grant posture for platform-admin/support server-only access and no client service-role exposure.
+3. Add generated/shared types if the repo pattern requires it.
+4. Add platform-admin-only read helpers and a pure reconciliation read-model builder.
+5. Add focused pure read-model tests for expected-vs-observed comparison, reconciliation statuses, mismatch categories, stale verification warnings, sandbox/production isolation, provider reference sanitization, support-review-needed rows, recovery readiness, rollback readiness, and no unintended billing/assignment/entitlement/runtime mutation.
+6. Add a read-only Super Admin reconciliation panel only.
+7. Keep actual Stripe/provider calls, subscription creation/update/cancel, provider mutation controls, reconciliation auto-fix, entitlement/module enforcement, runtime gates, contractor-facing billing/package visibility, reporting/export actions, automation/AI reconciliation behavior, and starter-pack provisioning changes deferred.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Run a docs-only source-of-truth consistency review for the Billing / Provider Mapping Reconciliation Readiness Design planning section. Confirm `docs/Roadmap.md`, `docs/workflows.md`, `docs/chat-handoff.md`, and `docs/current-state.md` consistently describe reconciliation readiness as future-only planning with no implemented reconciliation table, provider snapshot table, provider sync attempt table, reconciliation review table, migration, schema/RLS/grant change, reconciliation read model, provider operation, billing mutation, Stripe call, subscription operation, package assignment write, entitlement/module/runtime enforcement, reporting/export behavior, contractor permission change, starter-pack provisioning change, automation, AI behavior, or product behavior."
+
+## Billing / Provider Mapping Schema Readiness Source-of-Truth Review
+
+This docs-only Super Admin Platform Evolution pass verified the future Billing / Provider Mapping Schema Readiness for Package Assignments planning section across the source-of-truth docs. It did not change application code, tests, migrations, schema, RLS/grants, UI behavior, runtime behavior, reporting/export behavior, billing behavior, Stripe behavior, subscription behavior, entitlement behavior, module-gating behavior, package enforcement, package assignment writes, contractor permissions, contractor navigation, automation, AI behavior, background jobs, tenant-owned template/catalog writes, starter-pack provisioning behavior, or product behavior.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Documentation/source-of-truth verification summary:
+
+- `docs/Roadmap.md` consistently describes Billing / Provider Mapping Schema Readiness for Package Assignments as future-only planning. It covers future `contractor_package_billing_mappings`, future `contractor_package_billing_mapping_audit_events`, optional future reconciliation/provider snapshot tables only if later justified, provider customer/product/price/subscription/subscription-item reference concepts, reconciliation concepts, lifecycle states, and future read-model helper concepts without claiming implemented provider mapping tables, audit tables, migrations, schema/RLS/grant changes, provider read models, or provider mapping write behavior.
+- Future lifecycle states remain described as planned only: `draft`, `provider_pending`, `mapped`, `verified`, `active`, `mismatch_detected`, `suspended`, `deprecated`, and `archived`.
+- Future reconciliation/readiness constraints remain planned only: provider references are references rather than source-of-truth business objects; mapping creation does not mutate billing/provider state; billing state does not automatically change entitlements, modules, runtime access, package assignment activation, contractor permissions, or starter-pack provisioning; reconciliation mismatch does not silently mutate records; sandbox/test-mode mappings stay separated from production; deprecated/archived mappings preserve evidence; mapping is not payment-method storage; and mappings must not store raw secrets or sensitive payment data.
+- `docs/workflows.md` consistently separates implemented read-only package/billing inspection and the implemented static Future Package Definition Model planning panel from the future-only billing/provider mapping schema/read-model workflow, future reconciliation/readiness workflow, future provider mapping inspection panel, and future provider operations.
+- `docs/workflows.md` does not describe any current provider mapping mutation workflow, provider mapping table/read model, Stripe/provider operation, billing/provider reconciliation workflow, entitlement/module runtime workflow, reporting/export workflow, contractor-facing behavior, automation, AI behavior, or starter-pack provisioning change.
+- `docs/current-state.md` remains implemented truth: it describes `/super-admin/packages` and the Future Package Definition Model as implemented read-only observability/planning only, and it does not claim `contractor_package_billing_mappings`, provider mapping persistence, reconciliation read models, provider operations, Stripe calls, subscription writes, package assignment activation, entitlement/module enforcement, contractor permission changes, starter-pack provisioning changes, or runtime package behavior exist.
+- `docs/README.md` did not need changes because no new document was created and the existing doc index remains accurate.
+
+Stale wording corrected:
+
+- No source-of-truth overclaim was found in `docs/Roadmap.md`, `docs/workflows.md`, `docs/current-state.md`, or `docs/README.md`.
+- `docs/chat-handoff.md` now records this completed source-of-truth review and advances the recommended next step so the handoff no longer points back at the review that is complete.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Plan the next Super Admin Platform Evolution package/billing governance slice as docs-first design only: Billing / Provider Mapping Reconciliation Readiness Design. Define future expected-vs-observed provider state checks, webhook dependency boundaries, idempotency and operation evidence requirements, mismatch review states, safe provider-error normalization, support review paths, read-model output, RLS/security gates, and no-mutation/no-Stripe/no-subscription boundaries before adding migrations, schema/RLS/grants, server actions, RPCs, billing/provider writes, Stripe calls, subscription operations, entitlement/module/runtime enforcement, reporting/export behavior, contractor permission changes, starter-pack provisioning changes, automation, AI behavior, or product behavior."
+
+## Billing / Provider Mapping Schema Readiness for Package Assignments Planning
+
+This docs-only Super Admin Platform Evolution pass planned the future Billing / Provider Mapping Schema Readiness for Package Assignments slice. It did not change application code, tests, migrations, schema, RLS/grants, UI behavior, runtime behavior, reporting/export behavior, billing behavior, Stripe behavior, subscription behavior, entitlement behavior, module-gating behavior, package enforcement, package assignment writes, contractor permissions, contractor navigation, automation, AI behavior, background jobs, tenant-owned template/catalog writes, starter-pack provisioning behavior, or product behavior.
+
+Files changed in this pass:
+
+- `docs/Roadmap.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Billing/provider mapping schema-readiness planning summary:
+
+- `docs/Roadmap.md` now includes a dedicated future Billing / Provider Mapping Schema Readiness for Package Assignments section after the contractor package assignment approval/activation readiness planning section.
+- The section defines future package-assignment billing/provider mapping concepts: package assignment billing mapping, billing provider, provider customer/product/price/subscription/subscription-item references, billing state, reconciliation state, sandbox/test-mode marker, trial/early-access state, grandfathered/custom commercial terms, expected provider state, observed provider state, and reconciliation mismatch.
+- The section clearly states that this is future-only schema/read-model readiness planning and does not create migrations, tables, RLS policies, grants, server actions, RPCs, routes, UI controls, reporting/export behavior, billing/provider calls, Stripe subscription operations, package assignment writes, entitlement enforcement, module gates, contractor permission changes, starter-pack provisioning changes, automation, AI behavior, or runtime behavior.
+
+Proposed future table/read-model summary:
+
+- Future first-slice tables are `contractor_package_billing_mappings` and `contractor_package_billing_mapping_audit_events`.
+- `contractor_package_billing_mappings` would store the future internal mapping between a contractor package assignment and billing/provider references, expected provider state, reconciliation state, lifecycle state, trial/early-access context, custom/grandfathered commercial terms, and safe billing impact snapshots.
+- `contractor_package_billing_mapping_audit_events` would store future mapping evidence for creation, verification, activation, mismatch review, suspension, deprecation, archive, and support-review decisions.
+- Optional split tables such as `contractor_package_billing_reconciliation_events` or `contractor_package_billing_provider_snapshots` remain deferred unless future volume, retention, reconciliation, support, or export shape justifies them.
+- Future read-model helpers such as `buildContractorPackageBillingMappingReadModel(...)` or `getContractorPackageBillingProviderReadiness(...)` should expose current provider mapping, provider state summary, reconciliation status, mismatch warnings, billing impact caveats, package assignment linkage, trial/early-access state, sandbox/production separation, safe operator summary, and attention-needed rows.
+
+Reconciliation/readiness concept summary:
+
+- Future lifecycle states are `draft`, `provider_pending`, `mapped`, `verified`, `active`, `mismatch_detected`, `suspended`, `deprecated`, and `archived`.
+- Future reconciliation should distinguish expected provider state from observed provider state, stale provider mappings, pending verification, mismatch detected, support review required, webhook dependency, idempotency requirement, rollback/recovery readiness, and no destructive auto-correction.
+- Provider references should be treated as references, not source-of-truth business objects. Internal package definitions, package assignments, commercial terms, and audit evidence remain the governance source of truth.
+- Mapping creation alone must not mutate Stripe/provider state, create/update/cancel subscriptions, create invoices, collect payment, activate package assignments, enforce entitlements, gate modules, change contractor permissions, provision starter packs, run reporting/export, trigger automation, run AI behavior, or change runtime behavior.
+
+Future RLS/security gate summary:
+
+- Future mapping/audit tables should use RLS enabled and forced when exposed through `public`, revoked broad `anon`/`authenticated` grants unless intentionally exposed, platform-admin-only server access, and no browser service-role exposure.
+- Future provider RPCs, if later needed, must lock `search_path`, perform platform-admin authorization and server-side provider/readiness verification, and revoke execute from `anon`, `authenticated`, and `public` unless explicitly designed.
+- Provider ids are references, not secrets, but should still be displayed carefully.
+- Mapping records, snapshots, and metadata must not store provider secret keys/tokens, raw provider errors, raw card data, bank data, sensitive payment method details, service-role keys, stack traces, or unbounded payloads.
+- Client-submitted provider snapshots must not be accepted as authoritative; observed provider state must come from verified server-side provider reads or signed webhook processing in a later implementation.
+
+First implementation slice recommendation:
+
+1. Add migrations for `contractor_package_billing_mappings` and `contractor_package_billing_mapping_audit_events` only after package definition/version, contractor package assignment, and assignment audit foundations exist.
+2. Add RLS/grant posture for platform-admin-only server access and no client service-role exposure.
+3. Add generated/shared types if the repo pattern requires it.
+4. Add platform-admin-only read helpers and a pure provider mapping/reconciliation read-model builder.
+5. Add focused pure read-model tests for current mapping, provider reference summaries, sandbox/production separation, reconciliation states, mismatch warnings, billing impact caveats, package assignment linkage, trial/early-access caveats, and attention-needed rows.
+6. Add a read-only Super Admin provider readiness panel only.
+7. Keep actual Stripe/provider calls, subscription creation/update/cancel, provider mutation controls, reconciliation auto-fix, entitlement/module enforcement, runtime gates, contractor-facing billing/package visibility, reporting/export actions, automation/AI reconciliation behavior, and starter-pack provisioning changes deferred.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Run a docs-only source-of-truth consistency review for the Billing / Provider Mapping Schema Readiness for Package Assignments planning section. Confirm `docs/Roadmap.md`, `docs/workflows.md`, `docs/chat-handoff.md`, and `docs/current-state.md` consistently describe provider mapping schema/read-model readiness as future-only planning with no implemented provider mapping table, mapping audit table, migration, schema/RLS/grant change, provider read model, billing mutation, Stripe call, subscription operation, package assignment write, entitlement/module/runtime enforcement, reporting/export behavior, contractor permission change, starter-pack provisioning change, automation, AI behavior, or product behavior."
+
+## Contractor Package Assignment Approval / Activation Readiness Source-of-Truth Review
+
+This docs-only Super Admin Platform Evolution pass verified the Contractor Package Assignment Approval / Activation Readiness Design planning section across the source-of-truth docs. It did not change application code, tests, migrations, schema, RLS/grants, UI behavior, runtime behavior, reporting/export behavior, billing behavior, Stripe behavior, subscription behavior, entitlement behavior, module-gating behavior, package enforcement, package assignment writes, contractor permissions, contractor navigation, automation, AI behavior, background jobs, tenant-owned template/catalog writes, starter-pack provisioning behavior, or product behavior.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Documentation/source-of-truth verification summary:
+
+- `docs/Roadmap.md` consistently describes Contractor Package Assignment Approval / Activation Readiness Design as future-only planning. It covers future approval readiness, activation readiness, effective-date readiness, billing impact readiness, entitlement/module impact readiness, package version validity, previous assignment/supersession/cancellation readiness, rollback/readback readiness, audit evidence readiness, provider mapping readiness, and support review state without claiming implemented approval/activation controls, write behavior, migrations, schema/RLS/grant changes, server actions, RPCs, or UI controls.
+- Future allowed transitions are described as planned only: `draft -> pending_review`, `pending_review -> draft`, `pending_review -> approved`, `approved -> scheduled`, `approved -> active`, `scheduled -> active`, `active -> superseded`, `active -> canceled`, and superseded/canceled assignments moving to `archived` only after appropriate evidence exists.
+- Future blocked transitions are described as planned only: `draft -> active`, `pending_review -> active`, `canceled -> active`, `archived -> active`, `active -> draft`, `active -> approved`, `scheduled -> active` without a valid effective date, `approved -> active` when the selected package version is deprecated/archived/missing/invalid, activation that would create a second active assignment without explicit multi-package design, any transition implying billing/Stripe/subscription mutation, and any transition implying entitlement/module/runtime enforcement.
+- `docs/workflows.md` consistently separates implemented read-only package/billing inspection and the implemented static Future Package Definition Model planning panel from the future-only contractor package assignment approval/activation readiness workflow, future assignment readiness helper, and future approval/activation controls.
+- `docs/workflows.md` does not describe any current assignment mutation workflow, current assignment approval/activation controls, billing/provider workflow, Stripe/provider call workflow, subscription operation workflow, entitlement/module runtime workflow, reporting/export workflow, contractor-facing behavior, automation, AI behavior, or starter-pack provisioning change.
+- `docs/current-state.md` remains implemented truth: it describes `/super-admin/packages` and the Future Package Definition Model as implemented read-only observability/planning only, and it does not claim assignment approval controls, assignment activation controls, assignment readiness helpers, lifecycle mutations, billing/provider mapping, Stripe/subscription operations, entitlements, module gates, contractor permission changes, starter-pack provisioning changes, or runtime package behavior exist.
+- `docs/README.md` did not need changes because no new document was created and the existing doc index remains accurate.
+
+Stale wording corrected:
+
+- No source-of-truth overclaim was found in `docs/Roadmap.md`, `docs/workflows.md`, `docs/current-state.md`, or `docs/README.md`.
+- `docs/chat-handoff.md` now records this completed source-of-truth review and advances the recommended next step so the handoff no longer points back at the review that is complete.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Plan the next Super Admin Platform Evolution package/billing governance slice as docs-first design only: Billing / Provider Mapping Schema Readiness for Package Assignments. Define the future schema/read-model boundaries for linking approved contractor package assignments to provider mapping readiness, expected provider state, billing impact snapshots, reconciliation caveats, audit evidence, RLS/security gates, and no-mutation/no-Stripe/no-subscription boundaries before adding migrations, schema/RLS/grants, server actions, RPCs, billing/provider writes, Stripe calls, subscription operations, entitlement/module/runtime enforcement, reporting/export behavior, contractor permission changes, starter-pack provisioning changes, automation, AI behavior, or product behavior."
+
+## Contractor Package Assignment Approval / Activation Readiness Design Planning
+
+This docs-only Super Admin Platform Evolution pass planned the future Contractor Package Assignment Approval / Activation Readiness Design slice. It did not change application code, tests, migrations, schema, RLS/grants, UI behavior, runtime behavior, reporting/export behavior, billing behavior, Stripe behavior, subscription behavior, entitlement behavior, module-gating behavior, package enforcement, package assignment writes, contractor permissions, contractor navigation, automation, AI behavior, background jobs, tenant-owned template/catalog writes, starter-pack provisioning behavior, or product behavior.
+
+Files changed in this pass:
+
+- `docs/Roadmap.md`
+- `docs/workflows.md`
+- `docs/chat-handoff.md`
+
+Contractor package assignment approval/activation readiness planning summary:
+
+- `docs/Roadmap.md` now includes a dedicated future Contractor Package Assignment Approval / Activation Readiness Design section after the contractor package assignment schema/read-model planning section.
+- The section defines future assignment readiness concepts: assignment approval readiness, activation readiness, effective date readiness, billing impact readiness, entitlement/module impact readiness, package version validity, previous assignment status, supersession readiness, cancellation readiness, rollback/readback readiness, audit evidence readiness, provider mapping readiness, and support review state.
+- The section clearly states that this is future-only readiness planning and does not create migrations, tables, RLS policies, grants, server actions, RPCs, routes, UI controls, reporting/export behavior, billing/provider calls, Stripe subscription operations, package assignment writes, approval/schedule/activate/cancel/supersede/archive actions, entitlement enforcement, module gates, contractor permission changes, starter-pack provisioning changes, automation, AI behavior, or runtime behavior.
+
+Future allowed/blocked transition summary:
+
+- Future allowed transitions are `draft -> pending_review`, `pending_review -> draft`, `pending_review -> approved`, `approved -> scheduled`, `approved -> active`, `scheduled -> active`, `active -> superseded`, `active -> canceled`, `active -> archived` only after supersession or cancellation evidence exists as appropriate, `canceled -> archived`, and `superseded -> archived`.
+- Future blocked transitions are `draft -> active`, `pending_review -> active`, `canceled -> active`, `archived -> active`, `active -> draft`, `active -> approved`, `scheduled -> active` without a valid effective date, `approved -> active` if the selected package version is deprecated/archived/missing/invalid, any activation that would create a second active assignment without explicit multi-package support, any transition implying billing/Stripe/subscription mutation, and any transition implying entitlement/module/runtime enforcement.
+- `docs/workflows.md` now mirrors these future-only assignment approval and activation readiness boundaries inside the Super Admin package governance workflow section.
+
+Future approval/activation/security gate summary:
+
+- Future assignment approval should be platform-admin-only and should capture explicit operator reason, confirmation phrase, approval actor, approval timestamp, company/contractor snapshot, selected package definition/version snapshot, previous assignment snapshot, impact summary, billing impact caveat, entitlement/module impact caveat, starter-pack implication caveat, provider mapping caveat, and an audit event written in the same transaction as approval.
+- Future activation should require an approved assignment, valid effective date, selected package version still published/active, previous active assignment supersession plan where applicable, and an activation audit event.
+- Future activation must not silently mutate billing/provider state, create/update/cancel Stripe subscriptions, collect payment, create invoices, enforce entitlements, gate modules, change contractor permissions, provision starter packs, run reporting/export, trigger automation, run AI behavior, or change runtime behavior.
+- Future assignment readiness helpers such as `buildContractorPackageAssignmentReadiness(...)` or `getContractorPackageAssignmentApprovalReadModel(...)` should expose assignment state, transition eligibility, blocking issues, warning issues, required approval inputs, required activation inputs, impact caveats, missing evidence, safe operator summary, and `actionAvailable` only when implementation exists.
+- Future security gates should require forced RLS where public assignment/audit tables are used, revoked broad `anon`/`authenticated` grants unless intentionally exposed, platform-admin-only server access, no browser service-role exposure, locked `search_path` and revoked execute grants for future transition RPCs, safe error messages, server-side readiness recomputation, no authoritative client-submitted snapshots, and no provider/billing secrets in snapshots.
+
+First implementation slice recommendation:
+
+1. Add a pure assignment readiness helper after assignment schema/read-model foundations exist or are mocked in a pure test harness.
+2. Add tests for allowed transitions, blocked transitions, missing approval evidence, invalid package version, effective-date blockers, supersession conflicts, billing/provider caveats, entitlement/module caveats, starter-pack caveats, and `actionAvailable` staying false until controls exist.
+3. Add a read-only Super Admin assignment readiness panel or assignment inspection section.
+4. Keep actual approval/schedule/activate/cancel/supersede/archive actions, billing/provider writes, Stripe calls, subscription operations, entitlement/module enforcement, runtime gates, contractor-facing package visibility, reporting/export actions, automation/AI assignment suggestions, and starter-pack provisioning changes deferred.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Run a docs-only source-of-truth consistency review for the Contractor Package Assignment Approval / Activation Readiness Design planning section. Confirm `docs/Roadmap.md`, `docs/workflows.md`, `docs/chat-handoff.md`, and `docs/current-state.md` consistently describe assignment approval/activation readiness as future-only planning with no implemented assignment readiness helper, approval/schedule/activate/cancel/supersede/archive actions, package assignment writes, migrations, schema/RLS/grants, server actions, RPCs, billing/Stripe/subscription behavior, entitlement/module/runtime enforcement, reporting/export behavior, contractor permission change, starter-pack provisioning change, automation, AI behavior, or product behavior."
+
+## Package Definition Lifecycle Controls / Approval Readiness Source-of-Truth Recheck
+
+This docs-only Super Admin Platform Evolution pass re-verified the future Package Definition Lifecycle Controls / Approval Readiness Design planning section across the source-of-truth docs. It did not change application code, tests, migrations, schema, RLS/grants, UI behavior, runtime behavior, reporting/export behavior, billing behavior, Stripe behavior, subscription behavior, entitlement behavior, module-gating behavior, package enforcement, package assignment writes, contractor permissions, contractor navigation, automation, AI behavior, background jobs, tenant-owned template/catalog writes, starter-pack provisioning behavior, or product behavior.
+
+Files changed in this pass:
+
+- `docs/chat-handoff.md`
+
+Documentation/source-of-truth verification summary:
+
+- `docs/Roadmap.md` consistently describes Package Definition Lifecycle Controls / Approval Readiness Design as future-only planning. It covers future create draft, edit draft, submit for internal review, request changes, approve package definition, publish package version, deprecate package version, archive package definition/version, and supersede package version controls without claiming implemented lifecycle controls, approval/publish/deprecate/archive controls, migrations, schema/RLS/grant changes, server actions, RPCs, UI controls, or lifecycle mutation behavior.
+- Future allowed transitions remain described as planned only: `draft -> internal_review`, `internal_review -> draft`, `internal_review -> approved`, `approved -> published`, `published -> deprecated`, `deprecated -> archived`, `published -> superseded` by a newer published version, `draft -> archived`, and `internal_review -> archived`.
+- Future blocked transitions remain described as planned only: destructive `published -> draft`, `archived -> published`, `deprecated -> active/published` without a new reviewed version, `approved -> published` without audit evidence, publish without required package dimensions, publish without approval actor/reason/confirmation, publish while billing/provider mapping is claimed active without a future verified provider model, and publish while entitlement/module mapping is claimed enforced without a future entitlement/module model.
+- `docs/workflows.md` consistently separates implemented read-only package/billing inspection and the implemented static Future Package Definition Model planning panel from the future-only package definition lifecycle/readiness workflow, future approval/publish/deprecate/archive controls, and future lifecycle readiness helper.
+- `docs/workflows.md` does not describe any current package definition mutation workflow, approval/publish workflow, package audit write workflow, package assignment workflow, billing/provider workflow, Stripe/provider call workflow, subscription operation workflow, entitlement/module runtime workflow, reporting/export workflow, contractor-facing behavior, automation, AI behavior, or starter-pack provisioning change.
+- `docs/current-state.md` remains implemented truth: it describes `/super-admin/packages` and the Future Package Definition Model as implemented read-only observability/planning only, and it does not claim package lifecycle controls, approval controls, publish controls, deprecation/archive controls, lifecycle mutations, lifecycle readiness helper, approval evidence writes, migrations, schema/RLS/grant changes, package definition mutations, assignment writes, billing/provider mapping, entitlements, module gates, contractor permission changes, starter-pack provisioning changes, or runtime package behavior exist.
+- `docs/README.md` did not need changes because no new document was created and the existing doc index remains accurate.
+
+Stale wording corrected:
+
+- No source-of-truth overclaim was found in `docs/Roadmap.md`, `docs/workflows.md`, `docs/current-state.md`, or `docs/README.md`.
+- `docs/chat-handoff.md` now records this completed recheck and preserves the current next step so the handoff does not imply lifecycle controls are implemented app behavior.
+
+Validation:
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with existing LF-to-CRLF working-copy warnings only.
+
+Recommended next prompt:
+
+- "Plan the next Super Admin Platform Evolution package/billing governance slice as docs-first design only: Contractor Package Assignment Approval / Activation Readiness Design. Define the future approval, scheduling, activation, cancellation, supersession, audit evidence, operator confirmation, stale-context, read-model, and no-mutation boundaries for contractor package assignment controls before adding package assignment writes, migrations, schema/RLS/grants, server actions, RPCs, billing/Stripe/subscription behavior, entitlement/module/runtime enforcement, reporting/export behavior, contractor permission changes, starter-pack provisioning changes, automation, AI behavior, or product behavior."
+
 ## Contractor Package Assignment Schema / Read-Model Source-of-Truth Review
 
 This docs-only Super Admin Platform Evolution pass verified the Contractor Package Assignment Schema / Read-Model Design planning section across the source-of-truth docs. It did not change application code, tests, migrations, schema, RLS/grants, UI behavior, runtime behavior, reporting/export behavior, billing behavior, Stripe behavior, subscription behavior, entitlement behavior, module-gating behavior, package enforcement, package assignment writes, contractor permissions, contractor navigation, automation, AI behavior, background jobs, tenant-owned template/catalog writes, starter-pack provisioning behavior, or product behavior.
@@ -372,9 +2382,9 @@ Documentation/source-of-truth verification summary:
 - Each matrix row records current status/risk, prerequisites/blockers, schema/RLS and server-action/RPC considerations, audit evidence requirements, QA/security gates, explicit non-goals, and a recommended first implementation slice.
 - Sequencing remains conservative: package definition schema/read model first, audit/evidence second, lifecycle/approval controls third, contractor assignment schema/read model fourth, assignment audit/approval fifth, billing/provider mapping read model before Stripe mutation, entitlement/module mapping read model before runtime enforcement, runtime enforcement last, and reporting/export only after audit evidence exists.
 - Risk classes remain explicit: docs/read-model work is low risk, schema/RLS/audit/read-model foundations are medium risk, mutation actions are high risk, and billing/provider/runtime enforcement is critical risk.
-- Explicit blockers remain present: no package definition persistence, package assignment table, entitlement runtime model, module gate mapping, billing provider mapping table, package governance audit table, Stripe subscription mutation workflow, reconciliation workflow, or contractor-facing package visibility/export exists yet.
+- Explicit blockers remain present: no package definition mutation/lifecycle approval workflow, package assignment table, entitlement runtime model, module gate mapping, billing provider mapping table, package governance audit table, Stripe subscription mutation workflow, reconciliation workflow, or contractor-facing package visibility/export exists yet.
 - `docs/workflows.md` mirrors the planning-only sequencing boundary and does not imply package-governance schema, mutation, billing/provider, entitlement/module, reporting/export, or runtime systems are implemented.
-- `docs/current-state.md` remains implemented truth: it describes `/super-admin/packages` and the Future Package Definition Model as implemented read-only planning/observability, and it does not claim package definition persistence, lifecycle approval controls, assignment writes, billing/provider mapping, reconciliation, entitlement/module runtime enforcement, package governance audit events, reporting/export, contractor-facing package visibility, or support bundles exist.
+- `docs/current-state.md` remains implemented truth: it describes `/super-admin/packages` and the Future Package Definition Model as implemented read-only planning/observability, and now records the implemented package definition persistence/read-only catalog foundation without claiming lifecycle approval controls, assignment writes, billing/provider mapping, reconciliation, entitlement/module runtime enforcement, package governance audit events, reporting/export, contractor-facing package visibility, or support bundles exist.
 - `docs/README.md` did not need changes because no new document was added and the existing doc index remains accurate.
 
 Stale wording corrected:
@@ -406,7 +2416,7 @@ Readiness matrix summary:
 
 - `docs/Roadmap.md` now includes a dedicated Package Governance Implementation Readiness Matrix covering package definition persistence, package definition lifecycle/approval, contractor package assignment, billing/provider mapping, billing reconciliation, entitlement/module boundary model, runtime enforcement, package governance audit/evidence, package governance reporting/export, contractor-facing package visibility, support/operator review bundle, and migration from early-access/read-only state.
 - Each matrix row records current status, risk, prerequisites, blockers, schema/RLS considerations, server-action/RPC considerations, required audit evidence, QA/security gates, explicit non-goals, and the recommended first implementation slice.
-- The matrix keeps current implemented truth narrow: `/super-admin/packages` is still read-only package/billing observability plus the static Future Package Definition Model planning panel. No package definition persistence, package assignment model, billing provider mapping table, entitlement runtime model, module gate mapping, package governance audit table, reporting/export route/action/file generation, or runtime package behavior exists.
+- The matrix keeps current implemented truth narrow: `/super-admin/packages` is still read-only package/billing observability plus the persisted Package Definition Catalog and static Future Package Definition Model planning panel. No package mutation/lifecycle approval workflow, package assignment model, billing provider mapping table, entitlement runtime model, module gate mapping, package governance audit table, reporting/export route/action/file generation, or runtime package behavior exists.
 
 Recommended implementation sequence:
 
@@ -423,7 +2433,7 @@ Recommended implementation sequence:
 
 Key blockers and risks:
 
-- Blockers: no package definition persistence, package assignment table, entitlement runtime model, module gate mapping, billing provider mapping table, package governance audit table, Stripe subscription mutation workflow, reconciliation workflow, or contractor-facing package export/visibility model exists yet.
+- Blockers: no package definition mutation/lifecycle approval workflow, package assignment table, entitlement runtime model, module gate mapping, billing provider mapping table, package governance audit table, Stripe subscription mutation workflow, reconciliation workflow, or contractor-facing package export/visibility model exists yet.
 - Risk levels: docs and read-only read models are low risk; schema/RLS/audit/read models are medium risk; mutation actions are high risk; billing/provider mutation, Stripe subscription operations, runtime enforcement, module gating, pricing/package enforcement, contractor permission changes, and automated correction workflows are critical risk.
 
 Future QA/security gate summary:
@@ -969,9 +2979,9 @@ Files changed in this pass:
 Docs/source-of-truth verification:
 
 - `docs/current-state.md` now explicitly describes the Future Package Definition Model posture flags: `readOnly: true`, `planningOnly: true`, `runtimeEnforcement: false`, and `mutationControlsAvailable: false`.
-- `docs/current-state.md` also clarifies that package-definition persistence and package-assignment models do not exist yet.
+- `docs/current-state.md` now supersedes the older note from this pass: package-definition persistence/read-only catalog infrastructure exists, while package assignment models still do not exist.
 - `docs/workflows.md` keeps `/super-admin/packages` as inspection-only and expands the planning-model separation across package definitions, billing plans, plan tiers, module visibility, usage limits, entitlements, feature flags, provider mapping, trial/early-access status, grandfathered/custom contracts, contractor groups, and starter-pack assignments.
-- `docs/Roadmap.md` now distinguishes the implemented read-only planning panel from future package-definition persistence, billing management, subscription operations, Stripe-backed billing, entitlement enforcement, module gating, pricing enforcement, contractor permissions, and runtime mutation.
+- `docs/Roadmap.md` now distinguishes the implemented read-only planning panel and package-definition persistence/read-only catalog foundation from future lifecycle controls, billing management, subscription operations, Stripe-backed billing, entitlement enforcement, module gating, pricing enforcement, contractor permissions, and runtime mutation.
 - `docs/chat-handoff.md` retains the prior posture/browser regression result, before/after counts, validation, known caveats, and recommended next prompt below.
 
 Validation:
@@ -8809,7 +10819,7 @@ Files changed in this slice:
 
 Implemented behavior:
 
-- Project Workspace now shows an `AI guidance cues` panel.
+- Project Workspace now shows a `Project guidance cues` panel.
 - Cues are deterministic and derived from existing project, estimate, contract, invoice, job, readiness, and field-note context.
 - Implemented cue cases include approved estimate missing contract, unpaid deposit invoice, open blocker/issue field notes, signed ready project with no job, and ready project with unscheduled jobs.
 - Cue actions link into existing canonical workflows: contract generation, invoice review, daily-log review, job Quick-Create, schedule action panel, or the project workspace.
@@ -8915,3 +10925,55 @@ Keep these short rules in mind:
 - dashboards must point back into the shared chain
 - Quick-Create must hand off into full workspaces
 - project / shared record continuity stays more important than module completeness
+
+## Package / Assignment Provider Mapping Detail
+
+Implemented the read-only Package / Assignment Provider Mapping Detail / Read-Only Reconciliation Inspection slice for the Super Admin Platform Evolution workstream.
+
+Files changed in this slice:
+
+- `apps/web/lib/platform-admin/contractor-package-billing-mapping-detail-core.ts`
+- `apps/web/lib/platform-admin/contractor-package-billing-mapping-detail.test.ts`
+- `apps/web/lib/platform-admin/data.ts`
+- `apps/web/app/(super-admin)/super-admin/packages/page.tsx`
+- `apps/web/app/(super-admin)/super-admin/packages/provider-mappings/[mappingId]/page.tsx`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/Roadmap.md`
+- `docs/chat-handoff.md`
+
+Implemented behavior:
+
+- Added `buildContractorPackageBillingMappingDetail(...)`, a pure read-only provider mapping detail model for one `contractor_package_billing_mappings` row and matching audit evidence.
+- Added platform-admin server read helpers for one provider mapping, mapping audit events, and linked assignment/company/package/version labels when safely available.
+- Added `/super-admin/packages/provider-mappings/[mappingId]` with read-only summary, linked references, provider reference labels, expected/observed/mapping snapshot summaries, mismatch caveats, audit timeline, safe unavailable state, and operator guidance.
+- Added read-only provider mapping detail links from provider mapping rows on `/super-admin/packages`.
+
+Boundary preserved:
+
+- No migration, schema change, RLS/grant change, Stripe/provider call, subscription operation, billing execution, provider mutation behavior, package assignment mutation, package lifecycle mutation, entitlement enforcement, module gate, runtime behavior, contractor permission change, reporting/export behavior, automation, AI behavior, operational-cues change, or starter-pack provisioning change was added.
+- Provider references are labeled as inspection references only; they are not business truth, payment method storage, raw provider payloads, secrets, or billing execution instructions.
+- Snapshot and audit metadata summaries remain bounded to top-level-key summaries and do not dump raw values.
+
+Counts:
+
+- Before and after matched exactly: `contractor_package_billing_mappings=0`, `contractor_package_billing_mapping_audit_events=0`, `contractor_package_assignments=0`, `contractor_package_assignment_audit_events=0`, `platform_package_definitions=0`, `platform_package_definition_versions=0`, `platform_package_definition_audit_events=0`, `companies=10`, `company_subscriptions=0`, `subscription_plans=0`, `document_templates=4`, `catalog_items=9`, `contractor_group_audit_events=52`, `contractor_group_memberships=0`, `platform_starter_pack_provisioning_runs=4`, `platform_starter_pack_provisioning_run_items=5`.
+
+Validation:
+
+- Focused package/provider tests passed: 85 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed.
+- `git diff --check` passed with only LF-to-CRLF working-copy warnings.
+
+Browser QA:
+
+- In-app browser unauthenticated smoke check for `/super-admin/packages` redirected to `/login?next=%2Fsuper-admin%2Fpackages` with no console errors.
+- Authenticated Playwright using existing `playwright/.auth/platform-admin.json` opened `/super-admin/packages`; Package Definition Catalog, Contractor Package Assignments, and Billing / Provider Mapping Readiness rendered with no console/page errors and no framework overlay.
+- Authenticated Playwright opened `/super-admin/packages/provider-mappings/not-a-real-mapping`; the safe provider mapping unavailable state rendered with no raw database/provider error, no console/page errors, and no framework overlay.
+- Scoped mutation-control checks passed for the provider mapping section and provider mapping detail scope: `forms=0`, `inputs=0`, `hiddenInputs=0`, `selects=0`, `textareas=0`, `buttons=0`, and no mutation-looking links or forbidden control copy.
+- Populated provider mapping detail browser QA remains blocked by empty provider mapping data; no provider mapping records were seeded.
+
+Recommended next prompt:
+
+Run a narrow live verification pass for Package / Assignment Provider Mapping Detail / Read-Only Reconciliation Inspection, verifying the invalid detail route, empty provider mapping state, scoped no-mutation controls, read-model safety, counts, and validation without adding migrations, provider calls, subscription operations, billing execution, package assignment mutation, lifecycle mutation, entitlement/module/runtime behavior, contractor permission changes, operational-cues changes, or starter-pack provisioning changes.

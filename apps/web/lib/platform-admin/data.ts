@@ -5,6 +5,13 @@ import { createHash } from "node:crypto";
 import { getServerEnv } from "@floorconnector/config";
 import type {
   CatalogItem,
+  ContractorPackageAssignment,
+  ContractorPackageAssignmentAuditEvent,
+  ContractorPackageAssignmentAuditEventType,
+  ContractorPackageBillingMapping,
+  ContractorPackageBillingMappingAuditEvent,
+  ContractorPackageBillingSupportReview,
+  ContractorPackageBillingSupportReviewEvent,
   ContractorGroup,
   ContractorGroupAuditEvent,
   ContractorGroupAuditEventType,
@@ -15,6 +22,9 @@ import type {
   DocumentTemplate,
   PlatformCatalogItemSeed,
   PlatformFinancialDefaults,
+  PlatformPackageDefinition,
+  PlatformPackageDefinitionAuditEvent,
+  PlatformPackageDefinitionVersion,
   PlatformStarterPack,
   PlatformStarterPackAssignment,
   PlatformStarterPackAssignmentStatus,
@@ -57,6 +67,42 @@ import {
   type PlatformPackageGovernanceStripeMode,
   type PlatformPackageGovernanceTenant
 } from "@/lib/platform-admin/package-governance-core";
+import {
+  buildPlatformPackageDefinitionCatalog,
+  type PlatformPackageDefinitionCatalogModel
+} from "@/lib/platform-admin/package-definition-catalog-core";
+import {
+  buildPlatformPackageDefinitionDetail,
+  type PlatformPackageDefinitionDetailModel
+} from "@/lib/platform-admin/package-definition-detail-core";
+import {
+  buildContractorPackageAssignmentReadModel,
+  type ContractorPackageAssignmentReadModel
+} from "@/lib/platform-admin/contractor-package-assignment-read-model-core";
+import {
+  buildContractorPackageAssignmentDetail,
+  type ContractorPackageAssignmentDetailModel
+} from "@/lib/platform-admin/contractor-package-assignment-detail-core";
+import {
+  buildContractorPackageBillingMappingReadModel,
+  type ContractorPackageBillingMappingReadModel
+} from "@/lib/platform-admin/contractor-package-billing-mapping-read-model-core";
+import {
+  buildContractorPackageBillingMappingDetail,
+  type ContractorPackageBillingMappingDetailLinkedReferences,
+  type ContractorPackageBillingMappingDetailModel,
+  type ContractorPackageBillingMappingDetailReference
+} from "@/lib/platform-admin/contractor-package-billing-mapping-detail-core";
+import {
+  buildContractorPackageBillingSupportReviewReadModel,
+  type ContractorPackageBillingSupportReviewReadModel
+} from "@/lib/platform-admin/contractor-package-billing-support-review-read-model-core";
+import {
+  buildContractorPackageBillingSupportReviewDetail,
+  type ContractorPackageBillingSupportReviewDetailLinkedReferences,
+  type ContractorPackageBillingSupportReviewDetailModel,
+  type ContractorPackageBillingSupportReviewDetailReference
+} from "@/lib/platform-admin/contractor-package-billing-support-review-detail-core";
 import {
   sanitizeContractorGroupAssignmentAuditMetadata,
   type ContractorGroupAssignmentAuditMetadataInput
@@ -564,6 +610,244 @@ type TenantRow = {
           | null;
       }>
     | null;
+};
+
+type PlatformPackageDefinitionRow = {
+  id: string;
+  package_key: string;
+  display_name: string;
+  description: string | null;
+  status: PlatformPackageDefinition["status"];
+  intended_audience: string | null;
+  segment_summary: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+  archived_at: string | null;
+};
+
+type PlatformPackageDefinitionVersionRow = {
+  id: string;
+  package_definition_id: string;
+  version_number: number;
+  version_label: string | null;
+  status: PlatformPackageDefinitionVersion["status"];
+  commercial_summary: string | null;
+  module_visibility_intent: Record<string, unknown> | null;
+  usage_limit_intent: Record<string, unknown> | null;
+  entitlement_intent: Record<string, unknown> | null;
+  billing_provider_intent: Record<string, unknown> | null;
+  starter_pack_default_intent: Record<string, unknown> | null;
+  contractor_group_targeting_intent: Record<string, unknown> | null;
+  published_snapshot: Record<string, unknown> | null;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+  published_at: string | null;
+  deprecated_at: string | null;
+  archived_at: string | null;
+  package_definition:
+    | {
+        id: string;
+        package_key: string;
+        display_name: string;
+      }
+    | Array<{
+        id: string;
+        package_key: string;
+        display_name: string;
+      }>
+    | null;
+};
+
+type PlatformPackageDefinitionAuditEventRow = {
+  id: string;
+  package_definition_id: string;
+  package_definition_version_id: string | null;
+  event_type: PlatformPackageDefinitionAuditEvent["eventType"];
+  actor_id: string | null;
+  reason: string | null;
+  confirmation_text: string | null;
+  before_snapshot: Record<string, unknown> | null;
+  after_snapshot: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
+  occurred_at: string;
+  created_at: string;
+};
+
+type ContractorPackageAssignmentRow = {
+  id: string;
+  company_id: string;
+  package_definition_id: string | null;
+  package_definition_version_id: string | null;
+  status: ContractorPackageAssignment["status"];
+  lifecycle_state: ContractorPackageAssignment["lifecycleState"];
+  effective_at: string | null;
+  scheduled_for: string | null;
+  activated_at: string | null;
+  superseded_at: string | null;
+  canceled_at: string | null;
+  supersedes_assignment_id: string | null;
+  superseded_by_assignment_id: string | null;
+  assignment_snapshot: Record<string, unknown> | null;
+  billing_impact_snapshot: Record<string, unknown> | null;
+  entitlement_module_impact_snapshot: Record<string, unknown> | null;
+  starter_pack_implication_snapshot: Record<string, unknown> | null;
+  cancellation_reason: string | null;
+  supersession_reason: string | null;
+  grandfathered_contract: boolean;
+  custom_contract_label: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+  archived_at: string | null;
+  company:
+    | {
+        id: string;
+        slug: string;
+        legal_name: string;
+        display_name: string;
+      }
+    | Array<{
+        id: string;
+        slug: string;
+        legal_name: string;
+        display_name: string;
+      }>
+    | null;
+  package_definition:
+    | {
+        id: string;
+        package_key: string;
+        display_name: string;
+      }
+    | Array<{
+        id: string;
+        package_key: string;
+        display_name: string;
+      }>
+    | null;
+  package_definition_version:
+    | {
+        id: string;
+        version_number: number;
+        version_label: string | null;
+        status: PlatformPackageDefinitionVersion["status"];
+      }
+    | Array<{
+        id: string;
+        version_number: number;
+        version_label: string | null;
+        status: PlatformPackageDefinitionVersion["status"];
+      }>
+    | null;
+};
+
+type ContractorPackageAssignmentAuditEventRow = {
+  id: string;
+  contractor_package_assignment_id: string;
+  company_id: string;
+  package_definition_id: string | null;
+  package_definition_version_id: string | null;
+  event_type: ContractorPackageAssignmentAuditEventType;
+  actor_id: string | null;
+  reason: string | null;
+  confirmation_text: string | null;
+  before_snapshot: Record<string, unknown> | null;
+  after_snapshot: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
+  occurred_at: string;
+  created_at: string;
+};
+
+type ContractorPackageBillingMappingRow = {
+  id: string;
+  contractor_package_assignment_id: string | null;
+  company_id: string | null;
+  package_definition_id: string | null;
+  package_definition_version_id: string | null;
+  billing_provider: ContractorPackageBillingMapping["billingProvider"];
+  provider_environment: ContractorPackageBillingMapping["providerEnvironment"];
+  provider_customer_reference: string | null;
+  provider_product_reference: string | null;
+  provider_price_reference: string | null;
+  provider_subscription_reference: string | null;
+  provider_subscription_item_reference: string | null;
+  billing_state: ContractorPackageBillingMapping["billingState"];
+  reconciliation_state: ContractorPackageBillingMapping["reconciliationState"];
+  trial_or_early_access_state: ContractorPackageBillingMapping["trialOrEarlyAccessState"];
+  custom_or_grandfathered_terms_marker: ContractorPackageBillingMapping["customOrGrandfatheredTermsMarker"];
+  expected_provider_state_snapshot: Record<string, unknown> | null;
+  observed_provider_state_snapshot: Record<string, unknown> | null;
+  mapping_snapshot: Record<string, unknown> | null;
+  mismatch_summary: string | null;
+  last_verified_at: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+  archived_at: string | null;
+};
+
+type ContractorPackageBillingMappingAuditEventRow = {
+  id: string;
+  contractor_package_billing_mapping_id: string | null;
+  contractor_package_assignment_id: string | null;
+  company_id: string | null;
+  package_definition_id: string | null;
+  package_definition_version_id: string | null;
+  event_type: ContractorPackageBillingMappingAuditEvent["eventType"];
+  actor_id: string | null;
+  reason: string | null;
+  before_snapshot: Record<string, unknown> | null;
+  after_snapshot: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
+  occurred_at: string;
+  created_at: string;
+};
+
+type ContractorPackageBillingSupportReviewRow = {
+  id: string;
+  contractor_package_billing_mapping_id: string | null;
+  contractor_package_assignment_id: string | null;
+  company_id: string | null;
+  package_definition_id: string | null;
+  package_definition_version_id: string | null;
+  review_status: ContractorPackageBillingSupportReview["reviewStatus"];
+  resolution_category: ContractorPackageBillingSupportReview["resolutionCategory"];
+  provider_environment: ContractorPackageBillingSupportReview["providerEnvironment"];
+  provider_reference_summary: Record<string, unknown> | null;
+  reconciliation_evidence_snapshot: Record<string, unknown> | null;
+  webhook_evidence_snapshot: Record<string, unknown> | null;
+  operator_evidence_snapshot: Record<string, unknown> | null;
+  rollback_recovery_snapshot: Record<string, unknown> | null;
+  support_summary: string | null;
+  blocked_reason: string | null;
+  escalation_reason: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+  archived_at: string | null;
+};
+
+type ContractorPackageBillingSupportReviewEventRow = {
+  id: string;
+  support_review_id: string;
+  contractor_package_billing_mapping_id: string | null;
+  contractor_package_assignment_id: string | null;
+  company_id: string | null;
+  event_type: ContractorPackageBillingSupportReviewEvent["eventType"];
+  actor_id: string | null;
+  reason: string | null;
+  before_snapshot: Record<string, unknown> | null;
+  after_snapshot: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
+  occurred_at: string;
+  created_at: string;
 };
 
 type EarlyAccessTenantRow = {
@@ -2347,6 +2631,1639 @@ export async function getPlatformPackageGovernance(): Promise<PlatformPackageGov
         secretKey: env.STRIPE_SECRET_KEY
       })
     }
+  });
+}
+
+function isMissingPackageDefinitionTableError(error: { code?: string; message?: string }) {
+  return (
+    error.code === "42P01" ||
+    error.code === "PGRST205" ||
+    /platform_package_definition/i.test(error.message ?? "")
+  );
+}
+
+function isMissingContractorPackageAssignmentTableError(error: {
+  code?: string;
+  message?: string;
+}) {
+  return (
+    error.code === "42P01" ||
+    error.code === "PGRST205" ||
+    /contractor_package_assignment/i.test(error.message ?? "")
+  );
+}
+
+function isMissingContractorPackageBillingMappingTableError(error: {
+  code?: string;
+  message?: string;
+}) {
+  return (
+    error.code === "42P01" ||
+    error.code === "PGRST205" ||
+    /contractor_package_billing_mapping/i.test(error.message ?? "")
+  );
+}
+
+function isMissingContractorPackageBillingSupportReviewTableError(error: {
+  code?: string;
+  message?: string;
+}) {
+  return (
+    error.code === "42P01" ||
+    error.code === "PGRST205" ||
+    /contractor_package_billing_support_review/i.test(error.message ?? "")
+  );
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value
+  );
+}
+
+function mapPlatformPackageDefinition(
+  row: PlatformPackageDefinitionRow
+): PlatformPackageDefinition {
+  return {
+    id: row.id,
+    packageKey: row.package_key,
+    displayName: row.display_name,
+    description: row.description,
+    status: row.status,
+    intendedAudience: row.intended_audience,
+    segmentSummary: row.segment_summary,
+    createdByUserId: row.created_by,
+    updatedByUserId: row.updated_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    archivedAt: row.archived_at
+  };
+}
+
+function mapPlatformPackageDefinitionVersion(
+  row: PlatformPackageDefinitionVersionRow
+): PlatformPackageDefinitionVersion {
+  const definition = firstRelation(row.package_definition);
+
+  return {
+    id: row.id,
+    packageDefinitionId: row.package_definition_id,
+    packageKey: definition?.package_key ?? null,
+    packageDisplayName: definition?.display_name ?? null,
+    versionNumber: row.version_number,
+    versionLabel: row.version_label,
+    status: row.status,
+    commercialSummary: row.commercial_summary,
+    moduleVisibilityIntent: row.module_visibility_intent,
+    usageLimitIntent: row.usage_limit_intent,
+    entitlementIntent: row.entitlement_intent,
+    billingProviderIntent: row.billing_provider_intent,
+    starterPackDefaultIntent: row.starter_pack_default_intent,
+    contractorGroupTargetingIntent: row.contractor_group_targeting_intent,
+    publishedSnapshot: row.published_snapshot,
+    createdByUserId: row.created_by,
+    updatedByUserId: row.updated_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    publishedAt: row.published_at,
+    deprecatedAt: row.deprecated_at,
+    archivedAt: row.archived_at
+  };
+}
+
+function mapPlatformPackageDefinitionAuditEvent(
+  row: PlatformPackageDefinitionAuditEventRow
+): PlatformPackageDefinitionAuditEvent {
+  return {
+    id: row.id,
+    packageDefinitionId: row.package_definition_id,
+    packageDefinitionVersionId: row.package_definition_version_id,
+    eventType: row.event_type,
+    actorUserId: row.actor_id,
+    reason: row.reason,
+    confirmationText: row.confirmation_text,
+    beforeSnapshot: row.before_snapshot,
+    afterSnapshot: row.after_snapshot,
+    metadata: row.metadata,
+    occurredAt: row.occurred_at,
+    createdAt: row.created_at
+  };
+}
+
+function mapContractorPackageAssignment(
+  row: ContractorPackageAssignmentRow
+): ContractorPackageAssignment {
+  const company = firstRelation(row.company);
+  const packageDefinition = firstRelation(row.package_definition);
+  const packageDefinitionVersion = firstRelation(row.package_definition_version);
+
+  return {
+    id: row.id,
+    companyId: row.company_id,
+    companyName: company
+      ? company.display_name || company.legal_name || company.slug
+      : null,
+    companySlug: company?.slug ?? null,
+    packageDefinitionId: row.package_definition_id,
+    packageDefinitionKey: packageDefinition?.package_key ?? null,
+    packageDefinitionName: packageDefinition?.display_name ?? null,
+    packageDefinitionVersionId: row.package_definition_version_id,
+    packageDefinitionVersionLabel:
+      packageDefinitionVersion?.version_label ?? null,
+    packageDefinitionVersionNumber:
+      packageDefinitionVersion?.version_number ?? null,
+    packageDefinitionVersionStatus: packageDefinitionVersion?.status ?? null,
+    status: row.status,
+    lifecycleState: row.lifecycle_state,
+    effectiveAt: row.effective_at,
+    scheduledFor: row.scheduled_for,
+    activatedAt: row.activated_at,
+    supersededAt: row.superseded_at,
+    canceledAt: row.canceled_at,
+    supersedesAssignmentId: row.supersedes_assignment_id,
+    supersededByAssignmentId: row.superseded_by_assignment_id,
+    assignmentSnapshot: row.assignment_snapshot,
+    billingImpactSnapshot: row.billing_impact_snapshot,
+    entitlementModuleImpactSnapshot: row.entitlement_module_impact_snapshot,
+    starterPackImplicationSnapshot: row.starter_pack_implication_snapshot,
+    cancellationReason: row.cancellation_reason,
+    supersessionReason: row.supersession_reason,
+    grandfatheredContract: row.grandfathered_contract,
+    customContractLabel: row.custom_contract_label,
+    createdByUserId: row.created_by,
+    updatedByUserId: row.updated_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    archivedAt: row.archived_at
+  };
+}
+
+function mapContractorPackageAssignmentAuditEvent(
+  row: ContractorPackageAssignmentAuditEventRow
+): ContractorPackageAssignmentAuditEvent {
+  return {
+    id: row.id,
+    contractorPackageAssignmentId: row.contractor_package_assignment_id,
+    companyId: row.company_id,
+    packageDefinitionId: row.package_definition_id,
+    packageDefinitionVersionId: row.package_definition_version_id,
+    eventType: row.event_type,
+    actorUserId: row.actor_id,
+    reason: row.reason,
+    confirmationText: row.confirmation_text,
+    beforeSnapshot: row.before_snapshot,
+    afterSnapshot: row.after_snapshot,
+    metadata: row.metadata,
+    occurredAt: row.occurred_at,
+    createdAt: row.created_at
+  };
+}
+
+function mapContractorPackageBillingMapping(
+  row: ContractorPackageBillingMappingRow
+): ContractorPackageBillingMapping {
+  return {
+    id: row.id,
+    contractorPackageAssignmentId: row.contractor_package_assignment_id,
+    companyId: row.company_id,
+    packageDefinitionId: row.package_definition_id,
+    packageDefinitionVersionId: row.package_definition_version_id,
+    billingProvider: row.billing_provider,
+    providerEnvironment: row.provider_environment,
+    providerCustomerReference: row.provider_customer_reference,
+    providerProductReference: row.provider_product_reference,
+    providerPriceReference: row.provider_price_reference,
+    providerSubscriptionReference: row.provider_subscription_reference,
+    providerSubscriptionItemReference: row.provider_subscription_item_reference,
+    billingState: row.billing_state,
+    reconciliationState: row.reconciliation_state,
+    trialOrEarlyAccessState: row.trial_or_early_access_state,
+    customOrGrandfatheredTermsMarker: row.custom_or_grandfathered_terms_marker,
+    expectedProviderStateSnapshot: row.expected_provider_state_snapshot,
+    observedProviderStateSnapshot: row.observed_provider_state_snapshot,
+    mappingSnapshot: row.mapping_snapshot,
+    mismatchSummary: row.mismatch_summary,
+    lastVerifiedAt: row.last_verified_at,
+    createdByUserId: row.created_by,
+    updatedByUserId: row.updated_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    archivedAt: row.archived_at
+  };
+}
+
+function mapContractorPackageBillingMappingAuditEvent(
+  row: ContractorPackageBillingMappingAuditEventRow
+): ContractorPackageBillingMappingAuditEvent {
+  return {
+    id: row.id,
+    contractorPackageBillingMappingId: row.contractor_package_billing_mapping_id,
+    contractorPackageAssignmentId: row.contractor_package_assignment_id,
+    companyId: row.company_id,
+    packageDefinitionId: row.package_definition_id,
+    packageDefinitionVersionId: row.package_definition_version_id,
+    eventType: row.event_type,
+    actorUserId: row.actor_id,
+    reason: row.reason,
+    beforeSnapshot: row.before_snapshot,
+    afterSnapshot: row.after_snapshot,
+    metadata: row.metadata,
+    occurredAt: row.occurred_at,
+    createdAt: row.created_at
+  };
+}
+
+function mapContractorPackageBillingSupportReview(
+  row: ContractorPackageBillingSupportReviewRow
+): ContractorPackageBillingSupportReview {
+  return {
+    id: row.id,
+    contractorPackageBillingMappingId: row.contractor_package_billing_mapping_id,
+    contractorPackageAssignmentId: row.contractor_package_assignment_id,
+    companyId: row.company_id,
+    packageDefinitionId: row.package_definition_id,
+    packageDefinitionVersionId: row.package_definition_version_id,
+    reviewStatus: row.review_status,
+    resolutionCategory: row.resolution_category,
+    providerEnvironment: row.provider_environment,
+    providerReferenceSummary: row.provider_reference_summary,
+    reconciliationEvidenceSnapshot: row.reconciliation_evidence_snapshot,
+    webhookEvidenceSnapshot: row.webhook_evidence_snapshot,
+    operatorEvidenceSnapshot: row.operator_evidence_snapshot,
+    rollbackRecoverySnapshot: row.rollback_recovery_snapshot,
+    supportSummary: row.support_summary,
+    blockedReason: row.blocked_reason,
+    escalationReason: row.escalation_reason,
+    createdByUserId: row.created_by,
+    updatedByUserId: row.updated_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    archivedAt: row.archived_at
+  };
+}
+
+function mapContractorPackageBillingSupportReviewEvent(
+  row: ContractorPackageBillingSupportReviewEventRow
+): ContractorPackageBillingSupportReviewEvent {
+  return {
+    id: row.id,
+    supportReviewId: row.support_review_id,
+    contractorPackageBillingMappingId: row.contractor_package_billing_mapping_id,
+    contractorPackageAssignmentId: row.contractor_package_assignment_id,
+    companyId: row.company_id,
+    eventType: row.event_type,
+    actorUserId: row.actor_id,
+    reason: row.reason,
+    beforeSnapshot: row.before_snapshot,
+    afterSnapshot: row.after_snapshot,
+    metadata: row.metadata,
+    occurredAt: row.occurred_at,
+    createdAt: row.created_at
+  };
+}
+
+export async function listPlatformPackageDefinitions(): Promise<PlatformPackageDefinition[]> {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("platform_package_definitions")
+    .select(
+      "id, package_key, display_name, description, status, intended_audience, segment_summary, created_by, updated_by, created_at, updated_at, archived_at"
+    )
+    .order("package_key", { ascending: true });
+
+  if (response.error) {
+    if (isMissingPackageDefinitionTableError(response.error)) {
+      return [];
+    }
+
+    throw new Error(
+      `Unable to load package definitions: ${response.error.message}`
+    );
+  }
+
+  return ((Array.isArray(response.data) ? response.data : []) as PlatformPackageDefinitionRow[]).map(
+    mapPlatformPackageDefinition
+  );
+}
+
+export async function getPlatformPackageDefinitionById(
+  packageDefinitionId: string
+): Promise<PlatformPackageDefinition | null> {
+  if (!isUuid(packageDefinitionId)) {
+    return null;
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("platform_package_definitions")
+    .select(
+      "id, package_key, display_name, description, status, intended_audience, segment_summary, created_by, updated_by, created_at, updated_at, archived_at"
+    )
+    .eq("id", packageDefinitionId)
+    .maybeSingle();
+
+  if (response.error) {
+    if (isMissingPackageDefinitionTableError(response.error)) {
+      return null;
+    }
+
+    throw new Error(
+      `Unable to load package definition detail: ${response.error.message}`
+    );
+  }
+
+  return response.data
+    ? mapPlatformPackageDefinition(response.data as PlatformPackageDefinitionRow)
+    : null;
+}
+
+export async function listPlatformPackageDefinitionVersions(): Promise<
+  PlatformPackageDefinitionVersion[]
+> {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("platform_package_definition_versions")
+    .select(
+      `
+        id,
+        package_definition_id,
+        version_number,
+        version_label,
+        status,
+        commercial_summary,
+        module_visibility_intent,
+        usage_limit_intent,
+        entitlement_intent,
+        billing_provider_intent,
+        starter_pack_default_intent,
+        contractor_group_targeting_intent,
+        published_snapshot,
+        created_by,
+        updated_by,
+        created_at,
+        updated_at,
+        published_at,
+        deprecated_at,
+        archived_at,
+        package_definition:platform_package_definitions (
+          id,
+          package_key,
+          display_name
+        )
+      `
+    )
+    .order("package_definition_id", { ascending: true })
+    .order("version_number", { ascending: false });
+
+  if (response.error) {
+    if (isMissingPackageDefinitionTableError(response.error)) {
+      return [];
+    }
+
+    throw new Error(
+      `Unable to load package definition versions: ${response.error.message}`
+    );
+  }
+
+  return ((Array.isArray(response.data)
+    ? response.data
+    : []) as PlatformPackageDefinitionVersionRow[]).map(
+    mapPlatformPackageDefinitionVersion
+  );
+}
+
+export async function listPlatformPackageDefinitionVersionsForDefinition(
+  packageDefinitionId: string
+): Promise<PlatformPackageDefinitionVersion[]> {
+  if (!isUuid(packageDefinitionId)) {
+    return [];
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("platform_package_definition_versions")
+    .select(
+      `
+        id,
+        package_definition_id,
+        version_number,
+        version_label,
+        status,
+        commercial_summary,
+        module_visibility_intent,
+        usage_limit_intent,
+        entitlement_intent,
+        billing_provider_intent,
+        starter_pack_default_intent,
+        contractor_group_targeting_intent,
+        published_snapshot,
+        created_by,
+        updated_by,
+        created_at,
+        updated_at,
+        published_at,
+        deprecated_at,
+        archived_at,
+        package_definition:platform_package_definitions (
+          id,
+          package_key,
+          display_name
+        )
+      `
+    )
+    .eq("package_definition_id", packageDefinitionId)
+    .order("version_number", { ascending: false });
+
+  if (response.error) {
+    if (isMissingPackageDefinitionTableError(response.error)) {
+      return [];
+    }
+
+    throw new Error(
+      `Unable to load package definition detail versions: ${response.error.message}`
+    );
+  }
+
+  return ((Array.isArray(response.data)
+    ? response.data
+    : []) as PlatformPackageDefinitionVersionRow[]).map(
+    mapPlatformPackageDefinitionVersion
+  );
+}
+
+export async function listPlatformPackageDefinitionAuditEvents(
+  packageDefinitionId: string
+): Promise<PlatformPackageDefinitionAuditEvent[]> {
+  if (!isUuid(packageDefinitionId)) {
+    return [];
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("platform_package_definition_audit_events")
+    .select(
+      `
+        id,
+        package_definition_id,
+        package_definition_version_id,
+        event_type,
+        actor_id,
+        reason,
+        confirmation_text,
+        before_snapshot,
+        after_snapshot,
+        metadata,
+        occurred_at,
+        created_at
+      `
+    )
+    .eq("package_definition_id", packageDefinitionId)
+    .order("occurred_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (response.error) {
+    if (isMissingPackageDefinitionTableError(response.error)) {
+      return [];
+    }
+
+    throw new Error(
+      `Unable to load package definition audit events: ${response.error.message}`
+    );
+  }
+
+  return ((Array.isArray(response.data)
+    ? response.data
+    : []) as PlatformPackageDefinitionAuditEventRow[]).map(
+    mapPlatformPackageDefinitionAuditEvent
+  );
+}
+
+export async function getPlatformPackageDefinitionCatalog(): Promise<PlatformPackageDefinitionCatalogModel> {
+  const [definitions, versions] = await Promise.all([
+    listPlatformPackageDefinitions(),
+    listPlatformPackageDefinitionVersions()
+  ]);
+
+  return buildPlatformPackageDefinitionCatalog({
+    generatedAt: new Date().toISOString(),
+    definitions,
+    versions
+  });
+}
+
+export async function getPlatformPackageDefinitionDetail(
+  packageDefinitionId: string
+): Promise<PlatformPackageDefinitionDetailModel> {
+  const [definition, versions, auditEvents] = await Promise.all([
+    getPlatformPackageDefinitionById(packageDefinitionId),
+    listPlatformPackageDefinitionVersionsForDefinition(packageDefinitionId),
+    listPlatformPackageDefinitionAuditEvents(packageDefinitionId)
+  ]);
+
+  return buildPlatformPackageDefinitionDetail({
+    generatedAt: new Date().toISOString(),
+    packageDefinitionId,
+    definition,
+    versions,
+    auditEvents
+  });
+}
+
+export async function listContractorPackageAssignments(): Promise<
+  ContractorPackageAssignment[]
+> {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("contractor_package_assignments")
+    .select(
+      `
+        id,
+        company_id,
+        package_definition_id,
+        package_definition_version_id,
+        status,
+        lifecycle_state,
+        effective_at,
+        scheduled_for,
+        activated_at,
+        superseded_at,
+        canceled_at,
+        supersedes_assignment_id,
+        superseded_by_assignment_id,
+        assignment_snapshot,
+        billing_impact_snapshot,
+        entitlement_module_impact_snapshot,
+        starter_pack_implication_snapshot,
+        cancellation_reason,
+        supersession_reason,
+        grandfathered_contract,
+        custom_contract_label,
+        created_by,
+        updated_by,
+        created_at,
+        updated_at,
+        archived_at,
+        company:companies (
+          id,
+          slug,
+          legal_name,
+          display_name
+        ),
+        package_definition:platform_package_definitions (
+          id,
+          package_key,
+          display_name
+        ),
+        package_definition_version:platform_package_definition_versions (
+          id,
+          version_number,
+          version_label,
+          status
+        )
+      `
+    )
+    .order("company_id", { ascending: true })
+    .order("status", { ascending: true })
+    .order("effective_at", { ascending: false });
+
+  if (response.error) {
+    if (isMissingContractorPackageAssignmentTableError(response.error)) {
+      return [];
+    }
+
+    throw new Error(
+      `Unable to load contractor package assignments: ${response.error.message}`
+    );
+  }
+
+  return ((Array.isArray(response.data)
+    ? response.data
+    : []) as ContractorPackageAssignmentRow[]).map(
+    mapContractorPackageAssignment
+  );
+}
+
+export async function getContractorPackageAssignmentById(
+  assignmentId: string
+): Promise<ContractorPackageAssignment | null> {
+  if (!isUuid(assignmentId)) {
+    return null;
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("contractor_package_assignments")
+    .select(
+      `
+        id,
+        company_id,
+        package_definition_id,
+        package_definition_version_id,
+        status,
+        lifecycle_state,
+        effective_at,
+        scheduled_for,
+        activated_at,
+        superseded_at,
+        canceled_at,
+        supersedes_assignment_id,
+        superseded_by_assignment_id,
+        assignment_snapshot,
+        billing_impact_snapshot,
+        entitlement_module_impact_snapshot,
+        starter_pack_implication_snapshot,
+        cancellation_reason,
+        supersession_reason,
+        grandfathered_contract,
+        custom_contract_label,
+        created_by,
+        updated_by,
+        created_at,
+        updated_at,
+        archived_at,
+        company:companies (
+          id,
+          slug,
+          legal_name,
+          display_name
+        ),
+        package_definition:platform_package_definitions (
+          id,
+          package_key,
+          display_name
+        ),
+        package_definition_version:platform_package_definition_versions (
+          id,
+          version_number,
+          version_label,
+          status
+        )
+      `
+    )
+    .eq("id", assignmentId)
+    .maybeSingle();
+
+  if (response.error) {
+    if (isMissingContractorPackageAssignmentTableError(response.error)) {
+      return null;
+    }
+
+    throw new Error(
+      `Unable to load contractor package assignment detail: ${response.error.message}`
+    );
+  }
+
+  return response.data
+    ? mapContractorPackageAssignment(response.data as ContractorPackageAssignmentRow)
+    : null;
+}
+
+export async function listContractorPackageAssignmentAuditEvents(): Promise<
+  ContractorPackageAssignmentAuditEvent[]
+> {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("contractor_package_assignment_audit_events")
+    .select(
+      `
+        id,
+        contractor_package_assignment_id,
+        company_id,
+        package_definition_id,
+        package_definition_version_id,
+        event_type,
+        actor_id,
+        reason,
+        confirmation_text,
+        before_snapshot,
+        after_snapshot,
+        metadata,
+        occurred_at,
+        created_at
+      `
+    )
+    .order("occurred_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (response.error) {
+    if (isMissingContractorPackageAssignmentTableError(response.error)) {
+      return [];
+    }
+
+    throw new Error(
+      `Unable to load contractor package assignment audit events: ${response.error.message}`
+    );
+  }
+
+  return ((Array.isArray(response.data)
+    ? response.data
+    : []) as ContractorPackageAssignmentAuditEventRow[]).map(
+    mapContractorPackageAssignmentAuditEvent
+  );
+}
+
+export async function listContractorPackageAssignmentAuditEventsForAssignment(
+  assignmentId: string
+): Promise<ContractorPackageAssignmentAuditEvent[]> {
+  if (!isUuid(assignmentId)) {
+    return [];
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("contractor_package_assignment_audit_events")
+    .select(
+      `
+        id,
+        contractor_package_assignment_id,
+        company_id,
+        package_definition_id,
+        package_definition_version_id,
+        event_type,
+        actor_id,
+        reason,
+        confirmation_text,
+        before_snapshot,
+        after_snapshot,
+        metadata,
+        occurred_at,
+        created_at
+      `
+    )
+    .eq("contractor_package_assignment_id", assignmentId)
+    .order("occurred_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (response.error) {
+    if (isMissingContractorPackageAssignmentTableError(response.error)) {
+      return [];
+    }
+
+    throw new Error(
+      `Unable to load contractor package assignment audit events: ${response.error.message}`
+    );
+  }
+
+  return ((Array.isArray(response.data)
+    ? response.data
+    : []) as ContractorPackageAssignmentAuditEventRow[]).map(
+    mapContractorPackageAssignmentAuditEvent
+  );
+}
+
+export async function getContractorPackageAssignmentReadModel(): Promise<
+  ContractorPackageAssignmentReadModel
+> {
+  const [assignments, auditEvents] = await Promise.all([
+    listContractorPackageAssignments(),
+    listContractorPackageAssignmentAuditEvents()
+  ]);
+
+  return buildContractorPackageAssignmentReadModel({
+    generatedAt: new Date().toISOString(),
+    assignments,
+    auditEvents
+  });
+}
+
+export async function getContractorPackageAssignmentDetail(
+  assignmentId: string
+): Promise<ContractorPackageAssignmentDetailModel> {
+  const [assignment, auditEvents] = await Promise.all([
+    getContractorPackageAssignmentById(assignmentId),
+    listContractorPackageAssignmentAuditEventsForAssignment(assignmentId)
+  ]);
+  const relatedAssignments = assignment
+    ? (await listContractorPackageAssignments()).filter(
+        (candidate) => candidate.companyId === assignment.companyId
+      )
+    : [];
+
+  return buildContractorPackageAssignmentDetail({
+    generatedAt: new Date().toISOString(),
+    assignmentId,
+    assignment,
+    auditEvents,
+    relatedAssignments
+  });
+}
+
+export async function listContractorPackageBillingMappings(): Promise<
+  ContractorPackageBillingMapping[]
+> {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("contractor_package_billing_mappings")
+    .select(
+      `
+        id,
+        contractor_package_assignment_id,
+        company_id,
+        package_definition_id,
+        package_definition_version_id,
+        billing_provider,
+        provider_environment,
+        provider_customer_reference,
+        provider_product_reference,
+        provider_price_reference,
+        provider_subscription_reference,
+        provider_subscription_item_reference,
+        billing_state,
+        reconciliation_state,
+        trial_or_early_access_state,
+        custom_or_grandfathered_terms_marker,
+        expected_provider_state_snapshot,
+        observed_provider_state_snapshot,
+        mapping_snapshot,
+        mismatch_summary,
+        last_verified_at,
+        created_by,
+        updated_by,
+        created_at,
+        updated_at,
+        archived_at
+      `
+    )
+    .order("reconciliation_state", { ascending: true })
+    .order("last_verified_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false });
+
+  if (response.error) {
+    if (isMissingContractorPackageBillingMappingTableError(response.error)) {
+      return [];
+    }
+
+    throw new Error(
+      `Unable to load contractor package billing mappings: ${response.error.message}`
+    );
+  }
+
+  return ((Array.isArray(response.data)
+    ? response.data
+    : []) as ContractorPackageBillingMappingRow[]).map(
+    mapContractorPackageBillingMapping
+  );
+}
+
+export async function getContractorPackageBillingMappingById(
+  mappingId: string
+): Promise<ContractorPackageBillingMapping | null> {
+  if (!isUuid(mappingId)) {
+    return null;
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("contractor_package_billing_mappings")
+    .select(
+      `
+        id,
+        contractor_package_assignment_id,
+        company_id,
+        package_definition_id,
+        package_definition_version_id,
+        billing_provider,
+        provider_environment,
+        provider_customer_reference,
+        provider_product_reference,
+        provider_price_reference,
+        provider_subscription_reference,
+        provider_subscription_item_reference,
+        billing_state,
+        reconciliation_state,
+        trial_or_early_access_state,
+        custom_or_grandfathered_terms_marker,
+        expected_provider_state_snapshot,
+        observed_provider_state_snapshot,
+        mapping_snapshot,
+        mismatch_summary,
+        last_verified_at,
+        created_by,
+        updated_by,
+        created_at,
+        updated_at,
+        archived_at
+      `
+    )
+    .eq("id", mappingId)
+    .maybeSingle();
+
+  if (response.error) {
+    if (isMissingContractorPackageBillingMappingTableError(response.error)) {
+      return null;
+    }
+
+    throw new Error(
+      `Unable to load contractor package billing mapping detail: ${response.error.message}`
+    );
+  }
+
+  return response.data
+    ? mapContractorPackageBillingMapping(
+        response.data as ContractorPackageBillingMappingRow
+      )
+    : null;
+}
+
+export async function listContractorPackageBillingMappingAuditEvents(): Promise<
+  ContractorPackageBillingMappingAuditEvent[]
+> {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("contractor_package_billing_mapping_audit_events")
+    .select(
+      `
+        id,
+        contractor_package_billing_mapping_id,
+        contractor_package_assignment_id,
+        company_id,
+        package_definition_id,
+        package_definition_version_id,
+        event_type,
+        actor_id,
+        reason,
+        before_snapshot,
+        after_snapshot,
+        metadata,
+        occurred_at,
+        created_at
+      `
+    )
+    .order("occurred_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (response.error) {
+    if (isMissingContractorPackageBillingMappingTableError(response.error)) {
+      return [];
+    }
+
+    throw new Error(
+      `Unable to load contractor package billing mapping audit events: ${response.error.message}`
+    );
+  }
+
+  return ((Array.isArray(response.data)
+    ? response.data
+    : []) as ContractorPackageBillingMappingAuditEventRow[]).map(
+    mapContractorPackageBillingMappingAuditEvent
+  );
+}
+
+export async function listContractorPackageBillingMappingAuditEventsForMapping(
+  mappingId: string
+): Promise<ContractorPackageBillingMappingAuditEvent[]> {
+  if (!isUuid(mappingId)) {
+    return [];
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("contractor_package_billing_mapping_audit_events")
+    .select(
+      `
+        id,
+        contractor_package_billing_mapping_id,
+        contractor_package_assignment_id,
+        company_id,
+        package_definition_id,
+        package_definition_version_id,
+        event_type,
+        actor_id,
+        reason,
+        before_snapshot,
+        after_snapshot,
+        metadata,
+        occurred_at,
+        created_at
+      `
+    )
+    .eq("contractor_package_billing_mapping_id", mappingId)
+    .order("occurred_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (response.error) {
+    if (isMissingContractorPackageBillingMappingTableError(response.error)) {
+      return [];
+    }
+
+    throw new Error(
+      `Unable to load contractor package billing mapping audit events: ${response.error.message}`
+    );
+  }
+
+  return ((Array.isArray(response.data)
+    ? response.data
+    : []) as ContractorPackageBillingMappingAuditEventRow[]).map(
+    mapContractorPackageBillingMappingAuditEvent
+  );
+}
+
+async function getCompanyReferenceForProviderMapping(
+  companyId: string | null
+): Promise<ContractorPackageBillingMappingDetailReference | undefined> {
+  if (!companyId || !isUuid(companyId)) {
+    return undefined;
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("companies")
+    .select("id, slug, legal_name, display_name")
+    .eq("id", companyId)
+    .maybeSingle();
+
+  if (response.error || !response.data) {
+    return undefined;
+  }
+
+  const company = response.data as {
+    id: string;
+    slug: string | null;
+    legal_name: string | null;
+    display_name: string | null;
+  };
+
+  return {
+    id: company.id,
+    label: company.display_name ?? company.legal_name ?? company.slug ?? "Unknown contractor",
+    secondaryLabel: company.slug ?? company.id
+  };
+}
+
+function mapPackageDefinitionReference(
+  packageDefinition: PlatformPackageDefinition | null
+): ContractorPackageBillingMappingDetailReference | undefined {
+  if (!packageDefinition) {
+    return undefined;
+  }
+
+  return {
+    id: packageDefinition.id,
+    label: packageDefinition.displayName,
+    secondaryLabel: packageDefinition.packageKey
+  };
+}
+
+async function buildContractorPackageBillingMappingDetailReferences(
+  mapping: ContractorPackageBillingMapping | null
+): Promise<ContractorPackageBillingMappingDetailLinkedReferences> {
+  if (!mapping) {
+    return {};
+  }
+
+  const [assignment, company, packageDefinition, versions] = await Promise.all([
+    mapping.contractorPackageAssignmentId
+      ? getContractorPackageAssignmentById(mapping.contractorPackageAssignmentId)
+      : Promise.resolve(null),
+    getCompanyReferenceForProviderMapping(mapping.companyId),
+    mapping.packageDefinitionId
+      ? getPlatformPackageDefinitionById(mapping.packageDefinitionId)
+      : Promise.resolve(null),
+    mapping.packageDefinitionId
+      ? listPlatformPackageDefinitionVersionsForDefinition(mapping.packageDefinitionId)
+      : Promise.resolve([])
+  ]);
+  const packageDefinitionVersion =
+    versions.find((version) => version.id === mapping.packageDefinitionVersionId) ??
+    null;
+
+  return {
+    assignment: assignment
+      ? {
+          id: assignment.id,
+          label: `${assignment.companyName ?? assignment.companySlug ?? "Unknown contractor"} assignment`,
+          secondaryLabel: `${assignment.status} / ${assignment.lifecycleState}`
+        }
+      : undefined,
+    company:
+      company ??
+      (assignment
+        ? {
+            id: assignment.companyId,
+            label: assignment.companyName ?? assignment.companySlug ?? "Unknown contractor",
+            secondaryLabel: assignment.companySlug ?? assignment.companyId
+          }
+        : undefined),
+    packageDefinition:
+      mapPackageDefinitionReference(packageDefinition) ??
+      (assignment?.packageDefinitionId
+        ? {
+            id: assignment.packageDefinitionId,
+            label:
+              assignment.packageDefinitionName ??
+              assignment.packageDefinitionKey ??
+              "Unknown package definition",
+            secondaryLabel: assignment.packageDefinitionKey ?? assignment.packageDefinitionId
+          }
+        : undefined),
+    packageDefinitionVersion:
+      packageDefinitionVersion
+        ? {
+            id: packageDefinitionVersion.id,
+            label:
+              packageDefinitionVersion.versionLabel ??
+              `Version ${packageDefinitionVersion.versionNumber}`,
+            secondaryLabel: packageDefinitionVersion.status
+          }
+        : assignment?.packageDefinitionVersionId
+          ? {
+              id: assignment.packageDefinitionVersionId,
+              label:
+                assignment.packageDefinitionVersionLabel ??
+                (assignment.packageDefinitionVersionNumber
+                  ? `Version ${assignment.packageDefinitionVersionNumber}`
+                  : "Unknown package version"),
+              secondaryLabel:
+                assignment.packageDefinitionVersionStatus ??
+                assignment.packageDefinitionVersionId
+            }
+          : undefined
+  };
+}
+
+export async function getContractorPackageBillingMappingReadModel(): Promise<
+  ContractorPackageBillingMappingReadModel
+> {
+  const [mappings, auditEvents] = await Promise.all([
+    listContractorPackageBillingMappings(),
+    listContractorPackageBillingMappingAuditEvents()
+  ]);
+
+  return buildContractorPackageBillingMappingReadModel({
+    generatedAt: new Date().toISOString(),
+    mappings,
+    auditEvents
+  });
+}
+
+export async function getContractorPackageBillingMappingDetail(
+  mappingId: string
+): Promise<ContractorPackageBillingMappingDetailModel> {
+  const [mapping, auditEvents] = await Promise.all([
+    getContractorPackageBillingMappingById(mappingId),
+    listContractorPackageBillingMappingAuditEventsForMapping(mappingId)
+  ]);
+  const linkedReferences =
+    await buildContractorPackageBillingMappingDetailReferences(mapping);
+
+  return buildContractorPackageBillingMappingDetail({
+    generatedAt: new Date().toISOString(),
+    mappingId,
+    mapping,
+    auditEvents,
+    linkedReferences,
+    unavailableReason: mapping ? undefined : "Provider mapping unavailable."
+  });
+}
+
+export async function listContractorPackageBillingSupportReviews(): Promise<
+  ContractorPackageBillingSupportReview[]
+> {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("contractor_package_billing_support_reviews")
+    .select(
+      `
+        id,
+        contractor_package_billing_mapping_id,
+        contractor_package_assignment_id,
+        company_id,
+        package_definition_id,
+        package_definition_version_id,
+        review_status,
+        resolution_category,
+        provider_environment,
+        provider_reference_summary,
+        reconciliation_evidence_snapshot,
+        webhook_evidence_snapshot,
+        operator_evidence_snapshot,
+        rollback_recovery_snapshot,
+        support_summary,
+        blocked_reason,
+        escalation_reason,
+        created_by,
+        updated_by,
+        created_at,
+        updated_at,
+        archived_at
+      `
+    )
+    .order("review_status", { ascending: true })
+    .order("updated_at", { ascending: false });
+
+  if (response.error) {
+    if (isMissingContractorPackageBillingSupportReviewTableError(response.error)) {
+      return [];
+    }
+
+    throw new Error(
+      `Unable to load contractor package billing support reviews: ${response.error.message}`
+    );
+  }
+
+  return ((Array.isArray(response.data)
+    ? response.data
+    : []) as ContractorPackageBillingSupportReviewRow[]).map(
+    mapContractorPackageBillingSupportReview
+  );
+}
+
+export async function listContractorPackageBillingSupportReviewsForMapping(
+  mappingId: string
+): Promise<ContractorPackageBillingSupportReview[]> {
+  if (!isUuid(mappingId)) {
+    return [];
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("contractor_package_billing_support_reviews")
+    .select(
+      `
+        id,
+        contractor_package_billing_mapping_id,
+        contractor_package_assignment_id,
+        company_id,
+        package_definition_id,
+        package_definition_version_id,
+        review_status,
+        resolution_category,
+        provider_environment,
+        provider_reference_summary,
+        reconciliation_evidence_snapshot,
+        webhook_evidence_snapshot,
+        operator_evidence_snapshot,
+        rollback_recovery_snapshot,
+        support_summary,
+        blocked_reason,
+        escalation_reason,
+        created_by,
+        updated_by,
+        created_at,
+        updated_at,
+        archived_at
+      `
+    )
+    .eq("contractor_package_billing_mapping_id", mappingId)
+    .order("review_status", { ascending: true })
+    .order("updated_at", { ascending: false });
+
+  if (response.error) {
+    if (isMissingContractorPackageBillingSupportReviewTableError(response.error)) {
+      return [];
+    }
+
+    throw new Error(
+      `Unable to load contractor package billing support reviews: ${response.error.message}`
+    );
+  }
+
+  return ((Array.isArray(response.data)
+    ? response.data
+    : []) as ContractorPackageBillingSupportReviewRow[]).map(
+    mapContractorPackageBillingSupportReview
+  );
+}
+
+export async function getContractorPackageBillingSupportReviewById(
+  supportReviewId: string
+): Promise<ContractorPackageBillingSupportReview | null> {
+  if (!isUuid(supportReviewId)) {
+    return null;
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("contractor_package_billing_support_reviews")
+    .select(
+      `
+        id,
+        contractor_package_billing_mapping_id,
+        contractor_package_assignment_id,
+        company_id,
+        package_definition_id,
+        package_definition_version_id,
+        review_status,
+        resolution_category,
+        provider_environment,
+        provider_reference_summary,
+        reconciliation_evidence_snapshot,
+        webhook_evidence_snapshot,
+        operator_evidence_snapshot,
+        rollback_recovery_snapshot,
+        support_summary,
+        blocked_reason,
+        escalation_reason,
+        created_by,
+        updated_by,
+        created_at,
+        updated_at,
+        archived_at
+      `
+    )
+    .eq("id", supportReviewId)
+    .maybeSingle();
+
+  if (response.error) {
+    if (isMissingContractorPackageBillingSupportReviewTableError(response.error)) {
+      return null;
+    }
+
+    throw new Error(
+      `Unable to load contractor package billing support review detail: ${response.error.message}`
+    );
+  }
+
+  return response.data
+    ? mapContractorPackageBillingSupportReview(
+        response.data as ContractorPackageBillingSupportReviewRow
+      )
+    : null;
+}
+
+export async function listContractorPackageBillingSupportReviewEvents(): Promise<
+  ContractorPackageBillingSupportReviewEvent[]
+> {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("contractor_package_billing_support_review_events")
+    .select(
+      `
+        id,
+        support_review_id,
+        contractor_package_billing_mapping_id,
+        contractor_package_assignment_id,
+        company_id,
+        event_type,
+        actor_id,
+        reason,
+        before_snapshot,
+        after_snapshot,
+        metadata,
+        occurred_at,
+        created_at
+      `
+    )
+    .order("occurred_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (response.error) {
+    if (isMissingContractorPackageBillingSupportReviewTableError(response.error)) {
+      return [];
+    }
+
+    throw new Error(
+      `Unable to load contractor package billing support review events: ${response.error.message}`
+    );
+  }
+
+  return ((Array.isArray(response.data)
+    ? response.data
+    : []) as ContractorPackageBillingSupportReviewEventRow[]).map(
+    mapContractorPackageBillingSupportReviewEvent
+  );
+}
+
+export async function listContractorPackageBillingSupportReviewEventsForReview(
+  supportReviewId: string
+): Promise<ContractorPackageBillingSupportReviewEvent[]> {
+  if (!isUuid(supportReviewId)) {
+    return [];
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("contractor_package_billing_support_review_events")
+    .select(
+      `
+        id,
+        support_review_id,
+        contractor_package_billing_mapping_id,
+        contractor_package_assignment_id,
+        company_id,
+        event_type,
+        actor_id,
+        reason,
+        before_snapshot,
+        after_snapshot,
+        metadata,
+        occurred_at,
+        created_at
+      `
+    )
+    .eq("support_review_id", supportReviewId)
+    .order("occurred_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (response.error) {
+    if (isMissingContractorPackageBillingSupportReviewTableError(response.error)) {
+      return [];
+    }
+
+    throw new Error(
+      `Unable to load contractor package billing support review events: ${response.error.message}`
+    );
+  }
+
+  return ((Array.isArray(response.data)
+    ? response.data
+    : []) as ContractorPackageBillingSupportReviewEventRow[]).map(
+    mapContractorPackageBillingSupportReviewEvent
+  );
+}
+
+export async function listContractorPackageBillingSupportReviewEventsForMapping(
+  mappingId: string
+): Promise<ContractorPackageBillingSupportReviewEvent[]> {
+  if (!isUuid(mappingId)) {
+    return [];
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("contractor_package_billing_support_review_events")
+    .select(
+      `
+        id,
+        support_review_id,
+        contractor_package_billing_mapping_id,
+        contractor_package_assignment_id,
+        company_id,
+        event_type,
+        actor_id,
+        reason,
+        before_snapshot,
+        after_snapshot,
+        metadata,
+        occurred_at,
+        created_at
+      `
+    )
+    .eq("contractor_package_billing_mapping_id", mappingId)
+    .order("occurred_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (response.error) {
+    if (isMissingContractorPackageBillingSupportReviewTableError(response.error)) {
+      return [];
+    }
+
+    throw new Error(
+      `Unable to load contractor package billing support review events: ${response.error.message}`
+    );
+  }
+
+  return ((Array.isArray(response.data)
+    ? response.data
+    : []) as ContractorPackageBillingSupportReviewEventRow[]).map(
+    mapContractorPackageBillingSupportReviewEvent
+  );
+}
+
+export async function getContractorPackageBillingSupportReviewReadModel(): Promise<
+  ContractorPackageBillingSupportReviewReadModel
+> {
+  const [supportReviews, supportReviewEvents] = await Promise.all([
+    listContractorPackageBillingSupportReviews(),
+    listContractorPackageBillingSupportReviewEvents()
+  ]);
+
+  return buildContractorPackageBillingSupportReviewReadModel({
+    generatedAt: new Date().toISOString(),
+    supportReviews,
+    supportReviewEvents
+  });
+}
+
+async function buildContractorPackageBillingSupportReviewDetailReferences(
+  supportReview: ContractorPackageBillingSupportReview | null
+): Promise<ContractorPackageBillingSupportReviewDetailLinkedReferences> {
+  if (!supportReview) {
+    return {};
+  }
+
+  const [mapping, assignment, company, packageDefinition, versions] =
+    await Promise.all([
+      supportReview.contractorPackageBillingMappingId
+        ? getContractorPackageBillingMappingById(
+            supportReview.contractorPackageBillingMappingId
+          )
+        : Promise.resolve(null),
+      supportReview.contractorPackageAssignmentId
+        ? getContractorPackageAssignmentById(
+            supportReview.contractorPackageAssignmentId
+          )
+        : Promise.resolve(null),
+      getCompanyReferenceForProviderMapping(supportReview.companyId),
+      supportReview.packageDefinitionId
+        ? getPlatformPackageDefinitionById(supportReview.packageDefinitionId)
+        : Promise.resolve(null),
+      supportReview.packageDefinitionId
+        ? listPlatformPackageDefinitionVersionsForDefinition(
+            supportReview.packageDefinitionId
+          )
+        : Promise.resolve([])
+    ]);
+  const packageDefinitionVersion =
+    versions.find(
+      (version) => version.id === supportReview.packageDefinitionVersionId
+    ) ?? null;
+  const providerMapping: ContractorPackageBillingSupportReviewDetailReference | undefined =
+    mapping
+      ? {
+          id: mapping.id,
+          label: `${mapping.billingProvider} / ${mapping.providerEnvironment}`,
+          secondaryLabel: `${mapping.billingState} / ${mapping.reconciliationState}`
+        }
+      : undefined;
+
+  return {
+    providerMapping,
+    assignment: assignment
+      ? {
+          id: assignment.id,
+          label: `${assignment.companyName ?? assignment.companySlug ?? "Unknown contractor"} assignment`,
+          secondaryLabel: `${assignment.status} / ${assignment.lifecycleState}`
+        }
+      : undefined,
+    company:
+      company ??
+      (assignment
+        ? {
+            id: assignment.companyId,
+            label: assignment.companyName ?? assignment.companySlug ?? "Unknown contractor",
+            secondaryLabel: assignment.companySlug ?? assignment.companyId
+          }
+        : undefined),
+    packageDefinition:
+      mapPackageDefinitionReference(packageDefinition) ??
+      (assignment?.packageDefinitionId
+        ? {
+            id: assignment.packageDefinitionId,
+            label:
+              assignment.packageDefinitionName ??
+              assignment.packageDefinitionKey ??
+              "Unknown package definition",
+            secondaryLabel: assignment.packageDefinitionKey ?? assignment.packageDefinitionId
+          }
+        : undefined),
+    packageDefinitionVersion:
+      packageDefinitionVersion
+        ? {
+            id: packageDefinitionVersion.id,
+            label:
+              packageDefinitionVersion.versionLabel ??
+              `Version ${packageDefinitionVersion.versionNumber}`,
+            secondaryLabel: packageDefinitionVersion.status
+          }
+        : assignment?.packageDefinitionVersionId
+          ? {
+              id: assignment.packageDefinitionVersionId,
+              label:
+                assignment.packageDefinitionVersionLabel ??
+                (assignment.packageDefinitionVersionNumber
+                  ? `Version ${assignment.packageDefinitionVersionNumber}`
+                  : "Unknown package version"),
+              secondaryLabel:
+                assignment.packageDefinitionVersionStatus ??
+                assignment.packageDefinitionVersionId
+            }
+          : undefined
+  };
+}
+
+export async function getContractorPackageBillingSupportReviewDetail(
+  supportReviewId: string
+): Promise<ContractorPackageBillingSupportReviewDetailModel> {
+  const [supportReview, events] = await Promise.all([
+    getContractorPackageBillingSupportReviewById(supportReviewId),
+    listContractorPackageBillingSupportReviewEventsForReview(supportReviewId)
+  ]);
+  const linkedReferences =
+    await buildContractorPackageBillingSupportReviewDetailReferences(supportReview);
+
+  return buildContractorPackageBillingSupportReviewDetail({
+    generatedAt: new Date().toISOString(),
+    supportReviewId,
+    supportReview,
+    events,
+    linkedReferences,
+    unavailableReason: supportReview ? undefined : "Support review unavailable."
+  });
+}
+
+export async function getContractorPackageBillingSupportReviewReadModelForMapping(
+  mappingId: string
+): Promise<ContractorPackageBillingSupportReviewReadModel> {
+  const [supportReviews, supportReviewEvents] = await Promise.all([
+    listContractorPackageBillingSupportReviewsForMapping(mappingId),
+    listContractorPackageBillingSupportReviewEventsForMapping(mappingId)
+  ]);
+
+  return buildContractorPackageBillingSupportReviewReadModel({
+    generatedAt: new Date().toISOString(),
+    supportReviews,
+    supportReviewEvents
   });
 }
 

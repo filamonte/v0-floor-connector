@@ -60,6 +60,12 @@ export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
     adminOnly: true
   },
   {
+    href: "/settings/operational-intelligence",
+    label: "Operational Intelligence",
+    description: "Built-in My Work cue rule thresholds and urgency.",
+    adminOnly: true
+  },
+  {
     href: "/settings/automation",
     label: "Automation",
     description:

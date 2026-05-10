@@ -12,6 +12,7 @@ import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
+import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
 import {
   SaveStateForm,
   SaveStateSubmitButton
@@ -30,6 +31,7 @@ import { getJobById, listJobAssignments } from "@/lib/jobs/data";
 import { listPeople } from "@/lib/people/data";
 import { listPunchlistItemsByJob } from "@/lib/punchlists/data";
 import { listOpenTimeCardStates, listTimeCardsByJob } from "@/lib/time/data";
+import { getOperationalCuesForSubject } from "@/lib/operational-cues/data";
 import { listVendors } from "@/lib/vendors/data";
 import {
   ActionBar,
@@ -300,6 +302,11 @@ export default async function JobDetailPage({
     listVendors(),
     listPunchlistItemsByJob(job.id, `/jobs/${jobId}`)
   ]);
+  const jobAttentionCues = await getOperationalCuesForSubject({
+    organizationId: job.organizationId,
+    subjectType: "job",
+    subjectId: job.id
+  });
   const [jobTimeCards, openTimeStates] = await Promise.all([
     listTimeCardsByJob(job.id, `/jobs/${jobId}`),
     listOpenTimeCardStates()
@@ -472,6 +479,11 @@ export default async function JobDetailPage({
             <WorkflowBar title="Job execution workflow" steps={workflowSteps} />
 
             <ProjectStateSummary title="Job execution state" items={jobStateItems} />
+
+            <NeedsAttentionPanel
+              cues={jobAttentionCues}
+              description="Job-specific scheduling and crew cues derived from this canonical job and enabled organization rules."
+            />
           </div>
         </div>
 

@@ -15,6 +15,7 @@ import { EstimateApprovalNextStepsPanel } from "@/components/estimates/approval-
 import { EstimateCustomerTimeline } from "@/components/estimates/estimate-customer-timeline";
 import { EarlyAccessLockNotice } from "@/components/early-access-lock-notice";
 import { LinkedRecordCard } from "@/components/linked-record-card";
+import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
 import {
   ScheduleContextActions,
@@ -40,6 +41,7 @@ import {
 } from "@/lib/estimates/data";
 import { listInvoices } from "@/lib/invoices/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
+import { getOperationalCuesForSubject } from "@/lib/operational-cues/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { isOrganizationActivatedForProductionAction } from "@/lib/organizations/activation-guard";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
@@ -332,6 +334,11 @@ export default async function EstimateDetailPage({
     organizationId: estimate.organizationId,
     projectId: estimate.projectId
   });
+  const estimateAttentionCues = await getOperationalCuesForSubject({
+    organizationId: estimate.organizationId,
+    subjectType: "estimate",
+    subjectId: estimate.id
+  });
   const nextAction = getEstimateNextAction({
     estimateStatus: estimate.status,
     projectId: estimate.projectId,
@@ -566,6 +573,11 @@ export default async function EstimateDetailPage({
           <WorkflowBar title="Estimate workflow" steps={workflowSteps} />
 
           <ProjectStateSummary title="Estimate state summary" items={estimateStateItems} />
+
+          <NeedsAttentionPanel
+            cues={estimateAttentionCues}
+            description="Estimate-specific My Work cues derived from this canonical estimate and enabled organization rules."
+          />
         </div>
 
         {estimate.status === "approved" && approvalOrchestration ? (

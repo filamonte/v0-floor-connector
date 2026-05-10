@@ -4,6 +4,12 @@ import {
   automationNotificationPreferenceCategories,
   automationNotificationPreferenceRoles
 } from "@/lib/automation/preferences";
+import {
+  operationalCueRuleDefinitions,
+  operationalCueThresholdDayMaximum,
+  operationalCueUrgencies
+} from "@/lib/operational-cues/rule-definitions";
+import { starterOperationalCueOwnerStrategies } from "@/lib/operational-cues/owner-strategies";
 
 const templateStatuses = ["active", "archived"] as const;
 const taxBehaviors = ["exclusive", "inclusive", "none"] as const;
@@ -16,6 +22,21 @@ const automationNotificationPreferenceRoleOptions =
   automationNotificationPreferenceRoles as unknown as [
     (typeof automationNotificationPreferenceRoles)[number],
     ...(typeof automationNotificationPreferenceRoles)[number][]
+  ];
+const operationalCueKeyOptions = operationalCueRuleDefinitions.map(
+  (definition) => definition.cueKey
+) as [
+  (typeof operationalCueRuleDefinitions)[number]["cueKey"],
+  ...(typeof operationalCueRuleDefinitions)[number]["cueKey"][]
+];
+const operationalCueUrgencyOptions = operationalCueUrgencies as unknown as [
+  (typeof operationalCueUrgencies)[number],
+  ...(typeof operationalCueUrgencies)[number][]
+];
+const organizationResponsibilityRoleOptions =
+  starterOperationalCueOwnerStrategies as unknown as [
+    (typeof starterOperationalCueOwnerStrategies)[number],
+    ...(typeof starterOperationalCueOwnerStrategies)[number][]
   ];
 
 function trimmedNullableString(maxLength: number) {
@@ -216,6 +237,40 @@ export const automationNotificationPreferencesInputSchema = z.object({
         seen.add(preference.category);
       }
     })
+});
+
+export const operationalCueRuleSettingsInputSchema = z.object({
+  cueKey: z.enum(operationalCueKeyOptions),
+  enabled: z.boolean(),
+  thresholdDays: z
+    .string()
+    .trim()
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .refine((value) => value === null || !Number.isNaN(Number(value)), {
+      message: "Threshold days must be a valid whole number."
+    })
+    .transform((value) => (value === null ? null : Number(value)))
+    .refine(
+      (value) =>
+        value === null ||
+        (Number.isInteger(value) &&
+          value >= 0 &&
+          value <= operationalCueThresholdDayMaximum),
+      {
+        message: `Threshold days must be blank or a whole number from 0 to ${operationalCueThresholdDayMaximum}.`
+      }
+    ),
+  urgency: z.enum(operationalCueUrgencyOptions)
+});
+
+export const organizationResponsibilityDefaultInputSchema = z.object({
+  roleKey: z.enum(organizationResponsibilityRoleOptions),
+  personId: z.string().uuid("Select an active assignable person.")
+});
+
+export const clearOrganizationResponsibilityDefaultInputSchema = z.object({
+  roleKey: z.enum(organizationResponsibilityRoleOptions)
 });
 
 export const organizationProfileInputSchema = z.object({
@@ -420,6 +475,12 @@ export type OrganizationWorkflowSettingsInput = z.infer<
 >;
 export type AutomationNotificationPreferencesInput = z.infer<
   typeof automationNotificationPreferencesInputSchema
+>;
+export type OperationalCueRuleSettingsInput = z.infer<
+  typeof operationalCueRuleSettingsInputSchema
+>;
+export type OrganizationResponsibilityDefaultInput = z.infer<
+  typeof organizationResponsibilityDefaultInputSchema
 >;
 export type OrganizationProfileInput = z.infer<
   typeof organizationProfileInputSchema

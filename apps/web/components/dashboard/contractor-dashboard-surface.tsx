@@ -26,6 +26,7 @@ type DashboardQueueItem = {
   title: string;
   subtitle: string;
   meta: string;
+  supportingMeta?: string | null;
   href: string;
   actionLabel: string;
   badge?: string | null;
@@ -134,6 +135,7 @@ export type ContractorDashboardSurfaceProps = {
   attentionWidget?: DashboardWidget | null;
   projectCueWidget?: DashboardWidget | null;
   workItemsWidget?: DashboardWidget | null;
+  myWorkWidgets?: DashboardWidget[];
   commercialWidgets: DashboardWidget[];
   operationsWidgets: DashboardWidget[];
   financeWidgets: DashboardWidget[];
@@ -331,6 +333,7 @@ function QueueRows({
                   <div className="flex flex-wrap items-center gap-2">
                     <Link
                       href={item.href}
+                      aria-label={`${item.actionLabel}: ${item.title}`}
                       className="truncate text-sm font-semibold text-[#171717] transition hover:text-brand-700"
                     >
                       {item.title}
@@ -351,6 +354,11 @@ function QueueRows({
                   <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-[#666666]">
                     {item.meta}
                   </p>
+                  {item.supportingMeta ? (
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      {item.supportingMeta}
+                    </p>
+                  ) : null}
                 </div>
                 {item.trailing ? (
                   <p className="shrink-0 text-sm font-semibold text-slate-900">
@@ -492,6 +500,7 @@ export function ContractorDashboardSurface({
   attentionWidget,
   projectCueWidget,
   workItemsWidget,
+  myWorkWidgets = [],
   commercialWidgets,
   operationsWidgets,
   financeWidgets,
@@ -528,6 +537,14 @@ export function ContractorDashboardSurface({
         items: filterItems(widget.items, deferredQuery)
       })),
     [financeWidgets, deferredQuery]
+  );
+  const filteredMyWorkWidgets = useMemo(
+    () =>
+      myWorkWidgets.map((widget) => ({
+        ...widget,
+        items: filterItems(widget.items, deferredQuery)
+      })),
+    [myWorkWidgets, deferredQuery]
   );
   const filteredWorkItemsWidget = useMemo(
     () =>
@@ -722,6 +739,27 @@ export function ContractorDashboardSurface({
             items={filteredWorkItemsWidget.items}
             workItemActions={workItemActions}
           />
+        ) : null}
+
+        {filteredMyWorkWidgets.length > 0 ? (
+          <section aria-labelledby="dashboard-my-work-title" className="space-y-3">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6b7280]">
+                Operational intelligence
+              </p>
+              <h2
+                id="dashboard-my-work-title"
+                className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]"
+              >
+                My Work
+              </h2>
+            </div>
+            <div className="grid gap-3 xl:grid-cols-4">
+              {filteredMyWorkWidgets.map((widget) => (
+                <QueueRows key={widget.key} widget={widget} items={widget.items} />
+              ))}
+            </div>
+          </section>
         ) : null}
 
         {onboardingSteps &&

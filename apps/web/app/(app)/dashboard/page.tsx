@@ -29,6 +29,8 @@ import { getActiveOrganizationContext } from "@/lib/organizations/active-context
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 import { hasCompanyProfileFields } from "@/lib/organizations/setup-status";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
+import { getOperationalCueDashboard } from "@/lib/operational-cues/data";
+import type { OperationalCue } from "@/lib/operational-cues/types";
 import { listPayments } from "@/lib/payments/data";
 import { listPeople } from "@/lib/people/data";
 import { listPunchlistItems } from "@/lib/punchlists/data";
@@ -96,6 +98,59 @@ function buildSearchText(...parts: Array<string | null | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
 
+function formatCueThresholdLabel(label: string | null) {
+  return label?.replace(/^Rule threshold:/, "Threshold:") ?? null;
+}
+
+function mapOperationalCueToDashboardItem(cue: OperationalCue) {
+  const responsibilityMeta =
+    cue.responsibility.resolutionStatus === "person_resolved" ||
+    cue.responsibility.resolutionStatus === "user_resolved"
+      ? [
+          `Responsible: ${cue.responsibility.displayLabel}`,
+          `Role: ${cue.responsibility.strategyLabel}`
+        ]
+      : [`Responsible: ${cue.responsibility.displayLabel}`];
+  const sourceMeta = [
+    ...responsibilityMeta,
+    cue.sourceValue ? `${cue.sourceLabel}: ${cue.sourceValue}` : cue.sourceLabel,
+    formatCueThresholdLabel(cue.thresholdLabel),
+    cue.triggeredAtLabel
+  ].filter(Boolean);
+  const contextMeta = [cue.customerName, cue.projectName].filter(Boolean).join(" - ");
+
+  return {
+    id: `${cue.cueKey}:${cue.subjectId}`,
+    title: cue.title,
+    subtitle: cue.explanation,
+    meta: [contextMeta || "Organization-wide cue", cue.reason].join(" - "),
+    supportingMeta: sourceMeta.join(" - "),
+    href: cue.actionHref,
+    actionLabel: cue.actionLabel,
+    badge: cue.urgency,
+    contextHref: null,
+    contextLabel: null,
+    searchText: buildSearchText(
+      cue.title,
+      cue.message,
+      cue.reason,
+      cue.explanation,
+      cue.sourceLabel,
+      cue.sourceValue,
+      cue.thresholdLabel,
+      cue.triggeredAtLabel,
+      cue.ownerStrategyLabel,
+      cue.ownerResolutionStatus,
+      cue.responsibility.displayLabel,
+      cue.responsibility.resolutionStatus,
+      cue.customerName,
+      cue.projectName,
+      cue.urgency,
+      cue.cueKey
+    )
+  };
+}
+
 type DashboardPageProps = {
   searchParams?: Promise<{
     fresh?: string;
@@ -132,7 +187,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     financialSettings,
     workflowSettings,
     billingSetupState,
-    fieldNotes
+    fieldNotes,
+    operationalCueDashboard
   ] = await Promise.all([
     listCustomers(),
     listOpportunities(),
@@ -152,7 +208,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     getOrganizationFinancialSettings(organizationContext.organization.id),
     getOrganizationWorkflowSettings(organizationContext.organization.id),
     getBillingSetupState(organizationContext.organization.id),
-    listFieldNotes()
+    listFieldNotes(),
+    getOperationalCueDashboard({
+      organizationId: organizationContext.organization.id
+    })
   ]);
 
   const today = new Date().toISOString().slice(0, 10);
@@ -637,6 +696,68 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         complete: completeWorkItemAction,
         dismiss: dismissWorkItemAction
       }}
+      myWorkWidgets={[
+        {
+          key: "my-estimates",
+          eyebrow: "My Estimates",
+          title: "Estimate follow-up",
+          description:
+            "Sent estimates that crossed the tenant cue threshold. These are derived from canonical estimate records.",
+          href: "/estimates",
+          actionLabel: "Open estimates",
+          emptyTitle: "No estimate cues need attention.",
+          emptyDescription:
+            "Sent estimates will appear here when they pass the configured follow-up threshold.",
+          items: operationalCueDashboard.groups.estimates
+            .slice(0, 5)
+            .map(mapOperationalCueToDashboardItem)
+        },
+        {
+          key: "my-contracts",
+          eyebrow: "My Contracts",
+          title: "Signature follow-up",
+          description:
+            "Sent or viewed contracts that remain unsigned under the tenant cue rules.",
+          href: "/contracts",
+          actionLabel: "Open contracts",
+          emptyTitle: "No contract cues need attention.",
+          emptyDescription:
+            "Unsigned sent or viewed contracts will appear here when follow-up is due.",
+          items: operationalCueDashboard.groups.contracts
+            .slice(0, 5)
+            .map(mapOperationalCueToDashboardItem)
+        },
+        {
+          key: "my-invoices",
+          eyebrow: "My Invoices",
+          title: "Collections follow-up",
+          description:
+            "Overdue invoices and unpaid deposit invoices derived from the canonical billing chain.",
+          href: "/invoices",
+          actionLabel: "Open invoices",
+          emptyTitle: "No invoice cues need attention.",
+          emptyDescription:
+            "Overdue balances and unpaid deposits will appear here when configured thresholds are crossed.",
+          items: operationalCueDashboard.groups.invoices
+            .slice(0, 5)
+            .map(mapOperationalCueToDashboardItem)
+        },
+        {
+          key: "my-jobs",
+          eyebrow: "My Jobs",
+          title: "Schedule and crew follow-up",
+          description:
+            "Ready unscheduled jobs and scheduled jobs missing crew from canonical job records.",
+          href: "/jobs",
+          actionLabel: "Open jobs",
+          emptyTitle: "No job cues need attention.",
+          emptyDescription:
+            "Ready unscheduled jobs and near-term scheduled jobs missing crew will appear here.",
+          items: operationalCueDashboard.groups.jobs
+            .slice(0, 5)
+            .map(mapOperationalCueToDashboardItem)
+        }
+      ]}
       commercialWidgets={[
         {
           key: "leads",
