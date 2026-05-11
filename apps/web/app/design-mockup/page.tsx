@@ -52,8 +52,8 @@ const colors = {
   textMuted: "#9CA3AF",
   
   // Borders
-  borderLight: "#E5E7EB",
-  borderMedium: "#D1D5DB",
+  borderLight: "#E8E6E1",
+  borderMedium: "#D9D5CD",
   
   // Semantic
   success: "#059669",
@@ -178,14 +178,10 @@ function ActionButton({
 export default function DesignMockupPage() {
   const [activeSection, setActiveSection] = useState("items");
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
-  const [selectedHighlight, setSelectedHighlight] = useState<keyof typeof highlightOptions>("softGraphite");
-  const [selectedHeaderStyle, setSelectedHeaderStyle] = useState<"A" | "B" | "C" | "D">("A");
-  
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
-  };
-  
-  const currentHighlight = highlightOptions[selectedHighlight];
+  // Locked selections based on user preferences
+  const selectedHighlight = "softGraphite";
+  const selectedHeaderStyle = "A";
+  const selectedIconStyle = "B"; // Circular backgrounds
 
   // Header style configurations
   const headerStyles = {
@@ -195,102 +191,54 @@ export default function DesignMockupPage() {
     D: { name: "Two-Tone Split", description: "Dark logo area, light navigation" },
   };
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+  };
+  
+  const currentHighlight = highlightOptions[selectedHighlight];
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: colors.cream }}>
       
       {/* ============================================ */}
-      {/* DESIGN EXPLORATION PANEL - STICKY TOP */}
+      {/* DESIGN SELECTIONS - SUMMARY */}
       {/* ============================================ */}
       <div 
         className="sticky top-0 z-50 border-b shadow-sm"
         style={{ backgroundColor: colors.white, borderColor: colors.borderMedium }}
       >
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between mb-4">
+        <div className="px-6 py-3">
+          <div className="flex items-center justify-between">
             <div>
               <h1 className="text-lg font-bold" style={{ color: colors.textPrimary }}>
-                FloorConnector Design System Mockup
+                FloorConnector Design System
               </h1>
               <p className="text-sm" style={{ color: colors.textSecondary }}>
-                Use this page to explore and finalize design decisions before implementation
+                Header: Dark Graphite Bar | Highlight: Soft Graphite | Icons: Circular | Border: Warm Gray
               </p>
             </div>
             <span 
               className="px-3 py-1 text-xs font-medium rounded-full"
-              style={{ backgroundColor: colors.warningBg, color: colors.warning }}
+              style={{ backgroundColor: colors.infoBg, color: colors.info }}
             >
-              Work in Progress
+              Finalized Design
             </span>
-          </div>
-          
-          {/* Design Controls */}
-          <div className="grid grid-cols-2 gap-6">
-            {/* Header Style Selector */}
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wide mb-2 block" style={{ color: colors.textSecondary }}>
-                Header Style
-              </label>
-              <div className="flex gap-2">
-                {(["A", "B", "C", "D"] as const).map((style) => (
-                  <button
-                    key={style}
-                    onClick={() => setSelectedHeaderStyle(style)}
-                    className="px-3 py-2 text-sm rounded-md border transition-all"
-                    style={{
-                      backgroundColor: selectedHeaderStyle === style ? colors.graphite : colors.white,
-                      color: selectedHeaderStyle === style ? colors.white : colors.textPrimary,
-                      borderColor: selectedHeaderStyle === style ? colors.graphite : colors.borderMedium,
-                    }}
-                  >
-                    {style}: {headerStyles[style].name}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            {/* Highlight Color Selector */}
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wide mb-2 block" style={{ color: colors.textSecondary }}>
-                Active/Selection Highlight (replacing Copper Muted)
-              </label>
-              <div className="flex gap-2">
-                {(Object.keys(highlightOptions) as Array<keyof typeof highlightOptions>).map((key) => (
-                  <button
-                    key={key}
-                    onClick={() => setSelectedHighlight(key)}
-                    className="px-3 py-2 text-xs rounded-md border transition-all flex items-center gap-2"
-                    style={{
-                      backgroundColor: selectedHighlight === key ? highlightOptions[key].bg : colors.white,
-                      color: selectedHighlight === key ? highlightOptions[key].text : colors.textSecondary,
-                      borderColor: selectedHighlight === key ? highlightOptions[key].text : colors.borderLight,
-                      fontWeight: selectedHighlight === key ? 600 : 400,
-                    }}
-                  >
-                    <span 
-                      className="w-3 h-3 rounded-full border"
-                      style={{ backgroundColor: highlightOptions[key].bg, borderColor: highlightOptions[key].text }}
-                    />
-                    {highlightOptions[key].name}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </div>
 
       {/* ============================================ */}
-      {/* HEADER DESIGN OPTIONS */}
+      {/* HEADER DESIGN - FINALIZED */}
       {/* ============================================ */}
       <div className="px-6 py-8 border-b" style={{ borderColor: colors.borderLight }}>
-        <h2 className="text-sm font-semibold uppercase tracking-wide mb-4" style={{ color: colors.textSecondary }}>
-          Header Option {selectedHeaderStyle}: {headerStyles[selectedHeaderStyle].name}
+        <h2 className="text-sm font-semibold uppercase tracking-wide mb-2" style={{ color: colors.textSecondary }}>
+          Header: Dark Graphite Bar
         </h2>
-        <p className="text-sm mb-4" style={{ color: colors.textMuted }}>
-          {headerStyles[selectedHeaderStyle].description}
+        <p className="text-sm mb-6" style={{ color: colors.textMuted }}>
+          Full dark header with copper logo accent and navigation
         </p>
         
-        {/* Header A: Dark Graphite Bar */}
+        {/* Header A: Dark Graphite Bar - ONLY OPTION SHOWN */}
         {selectedHeaderStyle === "A" && (
           <header 
             className="h-14 flex items-center justify-between px-4 border-b rounded-t-lg"
@@ -486,52 +434,22 @@ export default function DesignMockupPage() {
       </div>
 
       {/* ============================================ */}
-      {/* ICON STYLE OPTIONS */}
+      {/* ICON STYLE - FINALIZED (CIRCULAR) */}
       {/* ============================================ */}
       <div className="px-6 py-8 border-b" style={{ borderColor: colors.borderLight, backgroundColor: colors.white }}>
-        <h2 className="text-sm font-semibold uppercase tracking-wide mb-4" style={{ color: colors.textSecondary }}>
-          Icon Style Options
+        <h2 className="text-sm font-semibold uppercase tracking-wide mb-2" style={{ color: colors.textSecondary }}>
+          Icon Style: Circular Backgrounds
         </h2>
         <p className="text-sm mb-6" style={{ color: colors.textMuted }}>
-          Comparing icon presentation styles for navigation and actions
+          Icons with circular background containers for better visual weight and touch targets
         </p>
         
-        <div className="grid grid-cols-3 gap-6">
-          {/* Option 1: Outlined Icons (Current) */}
-          <div className="p-4 rounded-lg border" style={{ borderColor: colors.borderLight }}>
+        <div className="grid grid-cols-1 gap-6">
+          {/* Option 2: With Background Circles - SELECTED */}
+          <div className="p-4 rounded-lg border" style={{ borderColor: colors.borderLight, backgroundColor: colors.cream }}>
             <h3 className="text-sm font-medium mb-3" style={{ color: colors.textPrimary }}>
-              A: Outlined (Lucide Default)
+              B: Circular Backgrounds (Selected)
             </h3>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="flex items-center gap-2 px-3 py-2 rounded-md" style={{ backgroundColor: currentHighlight.bg }}>
-                <Wallet className="w-5 h-5" style={{ color: currentHighlight.text }} />
-                <span className="text-sm" style={{ color: currentHighlight.text }}>Line Items</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-2">
-                <Grid3X3 className="w-5 h-5" style={{ color: colors.textSecondary }} />
-                <span className="text-sm" style={{ color: colors.textSecondary }}>Rooms</span>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button className="p-2 rounded-md" style={{ backgroundColor: colors.cream }}>
-                <FileText className="w-5 h-5" style={{ color: colors.textSecondary }} />
-              </button>
-              <button className="p-2 rounded-md" style={{ backgroundColor: colors.cream }}>
-                <Users className="w-5 h-5" style={{ color: colors.textSecondary }} />
-              </button>
-              <button className="p-2 rounded-md" style={{ backgroundColor: colors.cream }}>
-                <Calendar className="w-5 h-5" style={{ color: colors.textSecondary }} />
-              </button>
-              <button className="p-2 rounded-md" style={{ backgroundColor: colors.copper }}>
-                <Plus className="w-5 h-5" style={{ color: colors.white }} />
-              </button>
-            </div>
-            <p className="text-xs mt-3" style={{ color: colors.textMuted }}>
-              Clean, professional. Standard SaaS appearance.
-            </p>
-          </div>
-          
-          {/* Option 2: With Background Circles */}
           <div className="p-4 rounded-lg border" style={{ borderColor: colors.borderLight }}>
             <h3 className="text-sm font-medium mb-3" style={{ color: colors.textPrimary }}>
               B: Circular Backgrounds
@@ -568,47 +486,8 @@ export default function DesignMockupPage() {
               More visual weight. Better touch targets.
             </p>
           </div>
-          
-          {/* Option 3: Rounded Square Backgrounds */}
-          <div className="p-4 rounded-lg border" style={{ borderColor: colors.borderLight }}>
-            <h3 className="text-sm font-medium mb-3" style={{ color: colors.textPrimary }}>
-              C: Rounded Square Backgrounds
-            </h3>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="flex items-center gap-2 px-3 py-2 rounded-md" style={{ backgroundColor: currentHighlight.bg }}>
-                <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: colors.graphite }}>
-                  <Wallet className="w-4 h-4" style={{ color: colors.white }} />
-                </div>
-                <span className="text-sm font-medium" style={{ color: currentHighlight.text }}>Line Items</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-2">
-                <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: colors.cream }}>
-                  <Grid3X3 className="w-4 h-4" style={{ color: colors.textSecondary }} />
-                </div>
-                <span className="text-sm" style={{ color: colors.textSecondary }}>Rooms</span>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ backgroundColor: colors.cream }}>
-                <FileText className="w-4 h-4" style={{ color: colors.textSecondary }} />
-              </div>
-              <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ backgroundColor: colors.cream }}>
-                <Users className="w-4 h-4" style={{ color: colors.textSecondary }} />
-              </div>
-              <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ backgroundColor: colors.cream }}>
-                <Calendar className="w-4 h-4" style={{ color: colors.textSecondary }} />
-              </div>
-              <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ backgroundColor: colors.copper }}>
-                <Plus className="w-4 h-4" style={{ color: colors.white }} />
-              </div>
-            </div>
-            <p className="text-xs mt-3" style={{ color: colors.textMuted }}>
-              Balanced. Matches the &quot;FC&quot; logo shape.
-            </p>
-          </div>
         </div>
       </div>
-
       {/* ============================================ */}
       {/* LIVE PREVIEW SECTION */}
       {/* ============================================ */}
