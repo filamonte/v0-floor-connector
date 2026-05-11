@@ -34,8 +34,8 @@ export function ContractorWorkspacePage({
         className={[
           "border px-4 py-2.5 sm:px-5",
           darkHeader
-            ? "border-[#111111] bg-[#111111] text-white"
-            : "border-[#e2e5e9] bg-white"
+            ? "border-[var(--graphite)] bg-[var(--graphite)] text-white"
+            : "border-[var(--border-warm)] bg-white"
         ].join(" ")}
       >
         <div className="flex flex-col gap-2 xl:flex-row xl:items-end xl:justify-between">
@@ -43,7 +43,7 @@ export function ContractorWorkspacePage({
             <p
               className={[
                 "text-[10px] font-semibold uppercase tracking-[0.22em]",
-                darkHeader ? "text-[#d1d5db]" : "text-[#6b7280]"
+                darkHeader ? "text-gray-300" : "text-[var(--text-secondary)]"
               ].join(" ")}
             >
               {eyebrow}
@@ -51,7 +51,7 @@ export function ContractorWorkspacePage({
             <h2
               className={[
                 "mt-1 text-[20px] font-semibold tracking-tight sm:text-[22px]",
-                darkHeader ? "text-white" : "text-[#171717]"
+                darkHeader ? "text-white" : "text-[var(--text-primary)]"
               ].join(" ")}
             >
               {title}
@@ -59,7 +59,7 @@ export function ContractorWorkspacePage({
             <p
               className={[
                 "mt-1 max-w-4xl text-[13px] leading-5",
-                darkHeader ? "text-[#e5e7eb]" : "text-[#4b5563]"
+                darkHeader ? "text-gray-200" : "text-[var(--text-secondary)]"
               ].join(" ")}
             >
               {description}

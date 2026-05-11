@@ -43,9 +43,9 @@ export async function ContractorAppShell({
   const showDevTools = process.env.NODE_ENV !== "production";
 
   return (
-    <div className="min-h-screen bg-[#f4f1ed] text-[#211b16]">
+    <div className="min-h-screen bg-[var(--cream)] text-[var(--text-primary)]">
       <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-30 border-b border-[#d9cdc2] bg-white">
+        <header className="sticky top-0 z-30 border-b border-[var(--border-warm)] bg-white">
           <div className="hidden lg:block">
             <ProtectedAppTopNav
               currentRole={organizationContext?.membership.role}
@@ -61,7 +61,7 @@ export async function ContractorAppShell({
             />
           </div>
 
-          <div className="border-b border-[#d9cdc2] bg-white px-5 py-3 lg:hidden">
+          <div className="border-b border-[var(--border-warm)] bg-white px-5 py-3 lg:hidden">
             <div className="flex items-start justify-between gap-3">
               <OrganizationBrandLink
                 href="/dashboard"
@@ -74,10 +74,10 @@ export async function ContractorAppShell({
               />
               <div className="flex shrink-0 items-center gap-2 pt-1">
                 <AppShellMobileNav currentRole={organizationContext?.membership.role} />
-                <SignOutForm className="border-[#111111] bg-[#111111] px-3 py-2 text-white hover:border-[#2b2b2b] hover:bg-[#2b2b2b]" />
+                <SignOutForm className="border-[var(--graphite)] bg-[var(--graphite)] px-3 py-2 text-white hover:border-[var(--graphite-light)] hover:bg-[var(--graphite-light)]" />
               </div>
             </div>
-            <div className="mt-3 space-y-3 border-t border-[#ebe0d6] pt-3">
+            <div className="mt-3 space-y-3 border-t border-[var(--border-warm)] pt-3">
               <ProtectedAppBreadcrumbs organizationName={organizationName} />
               <div className="flex flex-wrap items-center gap-2">
                 <ContractorNotificationsCenter
@@ -105,12 +105,12 @@ export async function ContractorAppShell({
           </div>
         </main>
 
-        <footer className="border-t border-[#d9cdc2] bg-white px-3 py-2 sm:px-5">
+        <footer className="border-t border-[var(--border-warm)] bg-white px-3 py-2 sm:px-5">
           <div className="mx-auto flex w-full max-w-[1680px] justify-end">
             <GlobalSearch
               compact
               buttonLabel="Global Search"
-              buttonClassName="inline-flex h-10 min-w-[220px] max-w-full items-center justify-between rounded-[4px] border border-[#dbcfc4] bg-[#fbf7f2] px-3.5 text-[13px] font-medium text-[#55473b] transition hover:border-[#ef7d32] hover:bg-white hover:text-[#221a14] xl:min-w-[280px]"
+              buttonClassName="inline-flex h-10 min-w-[220px] max-w-full items-center justify-between rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-3.5 text-[13px] font-medium text-[var(--text-secondary)] transition hover:border-[var(--copper)] hover:bg-white hover:text-[var(--text-primary)] xl:min-w-[280px]"
             />
           </div>
         </footer>

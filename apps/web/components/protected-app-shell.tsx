@@ -19,18 +19,18 @@ export function ProtectedAppShell({
 }: ProtectedAppShellProps) {
   return (
     <div className="min-h-screen">
-      <header className="border-b border-slate-200/80 bg-white/90 backdrop-blur">
+      <header className="border-b border-[var(--border-warm)] bg-white/90 backdrop-blur">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-5 sm:px-10">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[var(--copper)]">
                 FloorConnector App
               </p>
-              <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+              <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
                 {organizationContext?.organization.displayName ??
                   "Organization setup pending"}
               </h1>
-              <p className="mt-2 text-sm text-slate-600">
+              <p className="mt-2 text-sm text-[var(--text-secondary)]">
                 {organizationContext
                   ? `Signed in as ${user.email ?? "authenticated user"} with ${organizationContext.membership.role} access.`
                   : "Your session is active, but the application is still waiting for organization context."}
@@ -44,8 +44,8 @@ export function ProtectedAppShell({
               </div>
             </div>
             <div className="flex flex-col items-start gap-3 sm:items-end">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                <p className="font-medium text-slate-900">
+              <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm text-[var(--text-secondary)]">
+                <p className="font-medium text-[var(--text-primary)]">
                   {organizationContext?.organization.displayName ??
                     "No active organization"}
                 </p>
@@ -56,11 +56,11 @@ export function ProtectedAppShell({
               <SignOutForm />
             </div>
           </div>
-          <div className="flex flex-col gap-4 border-t border-slate-200/80 pt-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-4 border-t border-[var(--border-warm)] pt-4 lg:flex-row lg:items-center lg:justify-between">
             <ProtectedAppNav
               currentRole={organizationContext?.membership.role}
             />
-            <div className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600">
+            <div className="rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-2 text-sm text-[var(--text-secondary)]">
               {organizationContext
                 ? `${organizationContext.organization.slug} · ${organizationContext.membership.status}`
                 : "Initialization pending"}

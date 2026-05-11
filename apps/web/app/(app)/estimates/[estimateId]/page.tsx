@@ -502,7 +502,7 @@ export default async function EstimateDetailPage({
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 print:max-w-none">
-      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6 print:hidden">
+      <div className="rounded-lg border border-[var(--border-warm)] bg-white p-5 shadow-sm sm:p-6 print:hidden">
         <DetailPageHeader
           eyebrow="Estimate Review"
           title={estimate.title ?? estimate.referenceNumber}
@@ -596,60 +596,58 @@ export default async function EstimateDetailPage({
         ) : null}
       </div>
 
-      <section className="rounded-[2rem] border border-slate-200 bg-white px-6 py-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] sm:px-8 sm:py-10 print:rounded-none print:border-none print:px-0 print:py-0 print:shadow-none">
-        <div className="flex flex-col gap-6 border-b border-slate-200 pb-8 sm:flex-row sm:items-start sm:justify-between">
+      <section className="rounded-[2rem] border border-[var(--border-warm)] bg-white px-6 py-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] sm:px-8 sm:py-10 print:rounded-none print:border-none print:px-0 print:py-0 print:shadow-none">
+        <div className="flex flex-col gap-6 border-b border-[var(--border-warm)] pb-8 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
               Prepared by
             </p>
-            <h2 className="mt-3 text-2xl font-semibold text-slate-950">
+            <h2 className="mt-3 text-2xl font-semibold text-[var(--text-primary)]">
               {organizationContext?.organization.displayName ?? "FloorConnector"}
             </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
+            <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
               {organizationContext?.organization.legalName ??
                 "Estimate prepared inside the active organization workspace."}
             </p>
           </div>
 
           <div className="sm:text-right">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-              Estimate
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
+              Estimate Reference
             </p>
-            <p className="mt-3 text-2xl font-semibold text-slate-950">
+            <p className="mt-3 text-2xl font-semibold text-[var(--text-primary)]">
               {estimate.title ?? estimate.referenceNumber}
             </p>
-            <p className="mt-2 text-sm text-slate-500">Estimate #{estimate.referenceNumber}</p>
-            <p className="mt-3 text-lg font-semibold text-slate-950">
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">Estimate #{estimate.referenceNumber}</p>
+            <p className="mt-3 text-lg font-semibold text-[var(--text-primary)]">
               {formatMoney(estimate.totalAmount)}
             </p>
           </div>
         </div>
 
-        <div className="border-b border-slate-200 py-8">
-          <div className="mb-6 print:hidden">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-              Line items
-            </p>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-              Review the proposal pricing, grouped scope, quantities, and totals here first. Workflow
-              guidance stays above while lower sections carry customer, project, notes, and activity context.
-            </p>
-          </div>
-          <div className="space-y-6">
+        <div className="border-b border-[var(--border-warm)] py-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
+            Scope
+          </p>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">
+            Review the proposal pricing, grouped scope, quantities, and totals here first. Workflow
+            guidance stays above while lower sections carry customer, project, notes, and activity context.
+          </p>
+          <div className="mt-6 space-y-6">
             {buildGroupedLineItems(estimate).map((group) => (
-              <div key={group.id ?? "ungrouped"} className="rounded-3xl border border-slate-200 bg-slate-50/40 p-4">
+              <div key={group.id ?? "ungrouped"} className="rounded-3xl border border-[var(--border-warm)] bg-[var(--highlight)] p-4">
                 <div className="mb-4 flex items-center justify-between gap-4">
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[var(--text-secondary)]">
                     {group.label}
                   </p>
-                  <p className="text-sm font-medium text-slate-700">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">
                     {group.items.length} item{group.items.length === 1 ? "" : "s"}
                   </p>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full border-separate border-spacing-y-3">
                     <thead>
-                      <tr className="text-left text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      <tr className="text-left text-xs font-semibold uppercase tracking-[0.24em] text-[var(--text-secondary)]">
                         <th className="pb-2 pr-4">Description</th>
                         <th className="pb-2 pr-4">Qty</th>
                         <th className="pb-2 pr-4">Unit</th>
@@ -659,25 +657,25 @@ export default async function EstimateDetailPage({
                     </thead>
                     <tbody>
                       {group.items.map((lineItem) => (
-                        <tr key={lineItem.id} className="align-top text-sm leading-6 text-slate-700">
-                          <td className="rounded-l-2xl border-y border-l border-slate-200 bg-white px-4 py-4">
-                            <p className="font-medium text-slate-950">{lineItem.name}</p>
+                        <tr key={lineItem.id} className="align-top text-sm leading-6 text-[var(--text-primary)]">
+                          <td className="rounded-l-2xl border-y border-l border-[var(--border-warm)] bg-white px-4 py-4">
+                            <p className="font-medium text-[var(--text-primary)]">{lineItem.name}</p>
                             {lineItem.description ? (
-                              <p className="mt-1 text-sm leading-6 text-slate-500">
+                              <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                                 {lineItem.description}
                               </p>
                             ) : null}
                           </td>
-                          <td className="border-y border-slate-200 bg-white px-4 py-4">
+                          <td className="border-y border-[var(--border-warm)] bg-white px-4 py-4">
                             {lineItem.quantity}
                           </td>
-                          <td className="border-y border-slate-200 bg-white px-4 py-4">
+                          <td className="border-y border-[var(--border-warm)] bg-white px-4 py-4">
                             {formatUnitLabel(lineItem.unit)}
                           </td>
-                          <td className="border-y border-slate-200 bg-white px-4 py-4 text-right">
+                          <td className="border-y border-[var(--border-warm)] bg-white px-4 py-4 text-right">
                             {formatMoney(lineItem.unitPrice)}
                           </td>
-                          <td className="rounded-r-2xl border-y border-r border-slate-200 bg-white px-4 py-4 text-right font-medium text-slate-950">
+                          <td className="rounded-r-2xl border-y border-r border-[var(--border-warm)] bg-white px-4 py-4 text-right font-medium text-[var(--text-primary)]">
                             {formatMoney(lineItem.lineTotal)}
                           </td>
                         </tr>
@@ -690,13 +688,13 @@ export default async function EstimateDetailPage({
           </div>
         </div>
 
-        <div className="grid gap-6 border-b border-slate-200 py-8 md:grid-cols-2">
+        <div className="grid gap-6 border-b border-[var(--border-warm)] py-8 md:grid-cols-2">
           <section>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
               Customer Contact / Billing Context
             </p>
-            <div className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-              <p className="text-lg font-semibold text-slate-950">
+            <div className="mt-3 space-y-2 text-sm leading-6 text-[var(--text-secondary)]">
+              <p className="text-lg font-semibold text-[var(--text-primary)]">
                 {estimate.customer?.name ?? "Unknown customer"}
               </p>
               {estimate.customer?.companyName ? <p>{estimate.customer.companyName}</p> : null}
@@ -707,11 +705,11 @@ export default async function EstimateDetailPage({
           </section>
 
           <section>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
               Project Service Address
             </p>
-            <div className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-              <p className="text-lg font-semibold text-slate-950">
+            <div className="mt-3 space-y-2 text-sm leading-6 text-[var(--text-secondary)]">
+              <p className="text-lg font-semibold text-[var(--text-primary)]">
                 {estimate.project?.name ?? "Unknown project"}
               </p>
               {estimate.project ? (
@@ -720,33 +718,33 @@ export default async function EstimateDetailPage({
                 </p>
               ) : null}
               {estimate.project?.description ? <p>{estimate.project.description}</p> : null}
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)]/70 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                   Service location
                 </p>
                 {projectAddress ? (
                   <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
                     <div>
-                      <dt className="text-slate-500">Address line 1</dt>
-                      <dd className="font-medium text-slate-800">
+                      <dt className="text-[var(--text-secondary)]">Address line 1</dt>
+                      <dd className="font-medium text-[var(--text-primary)]">
                         {estimate.project?.addressLine1 ?? "Not provided"}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-slate-500">Address line 2</dt>
-                      <dd className="font-medium text-slate-800">
+                      <dt className="text-[var(--text-secondary)]">Address line 2</dt>
+                      <dd className="font-medium text-[var(--text-primary)]">
                         {estimate.project?.addressLine2 ?? "Not provided"}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-slate-500">City</dt>
-                      <dd className="font-medium text-slate-800">
+                      <dt className="text-[var(--text-secondary)]">City</dt>
+                      <dd className="font-medium text-[var(--text-primary)]">
                         {estimate.project?.city ?? "Not provided"}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-slate-500">State / Postal</dt>
-                      <dd className="font-medium text-slate-800">
+                      <dt className="text-[var(--text-secondary)]">State / Postal</dt>
+                      <dd className="font-medium text-[var(--text-primary)]">
                         {[estimate.project?.stateRegion, estimate.project?.postalCode]
                           .filter(Boolean)
                           .join(" ") || "Not provided"}
@@ -754,11 +752,11 @@ export default async function EstimateDetailPage({
                     </div>
                   </dl>
                 ) : (
-                  <p className="mt-2 text-sm text-slate-500">
+                  <p className="mt-2 text-sm text-[var(--text-secondary)]">
                     No structured project service address is saved yet.
                   </p>
                 )}
-                <p className="mt-3 text-xs leading-5 text-slate-500">
+                <p className="mt-3 text-xs leading-5 text-[var(--text-secondary)]">
                   This jobsite address is separate from the customer contact or billing address.
                 </p>
               </div>
@@ -771,10 +769,10 @@ export default async function EstimateDetailPage({
             {hasHtmlContent(estimate.content.scopeSummaryHtml) ||
             getIncludedEstimateScopeItems(estimate.content).length > 0 ? (
               <section>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
                   Scope / SOW
                 </p>
-                <div className="mt-3 space-y-4 rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4 text-sm leading-7 text-slate-700">
+                <div className="mt-3 space-y-4 rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)]/70 px-5 py-4 text-sm leading-7 text-[var(--text-primary)]">
                   {renderHtmlContent(estimate.content.scopeSummaryHtml)}
                   {getIncludedEstimateScopeItems(estimate.content).length > 0 ? (
                     <ul className="space-y-2 pl-5">
@@ -787,10 +785,10 @@ export default async function EstimateDetailPage({
               </section>
             ) : (
               <section>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
                   Scope / SOW
                 </p>
-                <div className="mt-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-500">
+                <div className="mt-3 rounded-2xl border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
                   No scope / SOW output has been prepared for this estimate yet.
                 </div>
               </section>
@@ -798,10 +796,10 @@ export default async function EstimateDetailPage({
 
             {hasHtmlContent(estimate.content.termsHtml) ? (
               <section>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
                   Terms / conditions
                 </p>
-                <div className="prose prose-slate mt-3 max-w-none rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4 text-sm leading-7 text-slate-700">
+                <div className="prose prose-slate mt-3 max-w-none rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)]/70 px-5 py-4 text-sm leading-7 text-[var(--text-primary)]">
                   {renderHtmlContent(estimate.content.termsHtml)}
                 </div>
               </section>
@@ -809,10 +807,10 @@ export default async function EstimateDetailPage({
 
             {hasHtmlContent(estimate.content.inclusionsHtml) ? (
               <section>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
                   Reusable inclusions
                 </p>
-                <div className="prose prose-slate mt-3 max-w-none rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4 text-sm leading-7 text-slate-700">
+                <div className="prose prose-slate mt-3 max-w-none rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)]/70 px-5 py-4 text-sm leading-7 text-[var(--text-primary)]">
                   {renderHtmlContent(estimate.content.inclusionsHtml)}
                 </div>
               </section>
@@ -820,10 +818,10 @@ export default async function EstimateDetailPage({
 
             {hasHtmlContent(estimate.content.exclusionsHtml) ? (
               <section>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
                   Reusable exclusions
                 </p>
-                <div className="prose prose-slate mt-3 max-w-none rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4 text-sm leading-7 text-slate-700">
+                <div className="prose prose-slate mt-3 max-w-none rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)]/70 px-5 py-4 text-sm leading-7 text-[var(--text-primary)]">
                   {renderHtmlContent(estimate.content.exclusionsHtml)}
                 </div>
               </section>
@@ -833,10 +831,10 @@ export default async function EstimateDetailPage({
             !hasHtmlContent(estimate.content.inclusionsHtml) &&
             !hasHtmlContent(estimate.content.exclusionsHtml) ? (
               <section>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
                   Reusable estimate content
                 </p>
-                <div className="mt-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-500">
+                <div className="mt-3 rounded-2xl border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
                   No reusable terms, inclusions, or exclusions are filled on this estimate yet.
                 </div>
               </section>
@@ -844,10 +842,10 @@ export default async function EstimateDetailPage({
 
             {hasHtmlContent(estimate.content.notesHtml) ? (
               <section>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
                   Notes
                 </p>
-                <div className="prose prose-slate mt-3 max-w-none rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4 text-sm leading-7 text-slate-700">
+                <div className="prose prose-slate mt-3 max-w-none rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)]/70 px-5 py-4 text-sm leading-7 text-[var(--text-primary)]">
                   {renderHtmlContent(estimate.content.notesHtml)}
                 </div>
               </section>
@@ -859,15 +857,15 @@ export default async function EstimateDetailPage({
             >
               {estimate.status === "draft" || estimate.status === "rejected" ? (
                 <div className="space-y-4">
-                  <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+                  <div className="rounded-[1.5rem] border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
                     {estimate.status === "draft"
                       ? "Send this estimate through the customer portal so FloorConnector can record delivery, email tracking, and the customer approval audit trail."
                       : "This estimate was rejected or returned for revision. After you finish updates, resend it through the customer portal from here."}
                   </div>
                   {estimate.customer?.email ? (
                     <div className="space-y-4">
-                      <div className="rounded-[1.5rem] border border-slate-200 bg-white px-4 py-4 text-sm leading-6 text-slate-600">
-                        <p className="font-medium text-slate-950">
+                      <div className="rounded-[1.5rem] border border-[var(--border-warm)] bg-white px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+                        <p className="font-medium text-[var(--text-primary)]">
                           Send prerequisites
                         </p>
                         <p className="mt-2">
@@ -879,7 +877,7 @@ export default async function EstimateDetailPage({
                         {estimate.customer ? (
                           <Link
                             href="/people#customer-access"
-                            className="mt-3 inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                            className="mt-3 inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[var(--highlight)]"
                           >
                             Manage access in People
                           </Link>
@@ -922,7 +920,7 @@ export default async function EstimateDetailPage({
                           disabled={
                             isProductionActionLocked || sendContactOptions.length === 0
                           }
-                          className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+                          className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-[var(--text-secondary)]"
                         >
                           Send estimate
                         </button>
@@ -970,13 +968,13 @@ export default async function EstimateDetailPage({
               ) : null}
               <EstimateStatusActions estimateId={estimate.id} currentStatus={estimate.status} />
               {estimate.status !== "approved" ? (
-                <p className="mt-4 text-sm leading-6 text-slate-500">
+                <p className="mt-4 text-sm leading-6 text-[var(--text-secondary)]">
                   {estimate.status === "sent"
                     ? "Customer approval now happens in the portal. This workspace stays read-only on the decision itself while tracking delivery and response history."
                     : "Jobs and contracts should be created after this estimate reaches the approved state."}
                 </p>
               ) : (
-                <p className="mt-4 text-sm leading-6 text-slate-500">
+                <p className="mt-4 text-sm leading-6 text-[var(--text-secondary)]">
                   Approved estimates should now move through the project readiness hub for contract,
                   signature, and financial handoff before downstream jobs or standard invoices.
                 </p>
@@ -1073,7 +1071,7 @@ export default async function EstimateDetailPage({
                   />
                 ))}
                 {estimateContracts.length === 0 && estimateJobs.length === 0 && estimateInvoices.length === 0 ? (
-                  <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
+                  <p className="rounded-2xl border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
                     No downstream contract, job, or invoice records are linked to this estimate yet. Use the project readiness hub once this estimate is approved.
                   </p>
                 ) : null}
@@ -1088,7 +1086,7 @@ export default async function EstimateDetailPage({
                   : "Scheduling does not start from draft or sent estimates. Approval and project readiness handoff come first, so this page stays explicit about that blocker."
               }
             >
-              <div className="space-y-4 text-sm leading-6 text-slate-600">
+              <div className="space-y-4 text-sm leading-6 text-[var(--text-secondary)]">
                 {estimate.status === "approved" ? (
                   <>
                     <ScheduleContextMetrics
@@ -1221,7 +1219,7 @@ export default async function EstimateDetailPage({
               description="Estimate communication stays on canonical threads and routes back into the shared communications workspace when proposal follow-through is needed."
               countLabel="Estimate threads"
               emptyMessage="No estimate-scoped communication threads are attached to this canonical estimate yet."
-              actionClassName="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+              actionClassName="inline-flex items-center rounded-full border border-[var(--border-warm)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition hover:border-slate-400 hover:bg-[var(--highlight)]"
               threads={communicationThreads}
             />
           </aside>
