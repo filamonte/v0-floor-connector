@@ -82,12 +82,12 @@ export function EstimateWorkspaceShell({
         title,
         description: subtitle ?? "Project/Opportunity",
         actions: (
-          <div className="border border-[#d7c7b4] bg-[#fbf7f1] px-3 py-2 text-sm leading-5 text-[#665446]">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+          <div className="border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2 text-sm leading-5 text-[var(--text-primary)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
               Estimate status
             </p>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-[13px] text-[#665446]">
-              <span className="border border-[#f0c7a5] bg-[#fff1e4] px-2 py-0.5 text-[11px] font-semibold text-[#d8731f]">
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-[13px] text-[var(--text-primary)]">
+              <span className="border border-[var(--copper-light)] bg-[var(--highlight)] px-2 py-0.5 text-[11px] font-semibold text-[var(--copper)]">
                 {formatStatusBadge(statusLabel)}
               </span>
               {estimateNumber ? <span>Estimate #{estimateNumber}</span> : null}
@@ -105,7 +105,7 @@ export function EstimateWorkspaceShell({
         <header className="border-b border-[#e8ded5]">
           <div className="flex flex-col gap-4 px-4 py-3 xl:flex-row xl:items-start xl:justify-between">
             <div className="flex min-w-0 items-start gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#ffcfaa] bg-[#ef7d32] text-white">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[var(--copper-light)] bg-[var(--copper)] text-white">
                 <FileText className="h-4 w-4" />
               </div>
               <div className="min-w-0">
@@ -115,10 +115,10 @@ export function EstimateWorkspaceShell({
                       value={title}
                       onChange={(event) => onTitleChange?.(event.target.value)}
                       onBlur={onTitleBlur}
-                      className="h-9 min-w-[260px] max-w-[460px] border border-[#d6d6d6] px-3 text-[18px] font-semibold text-[#171717] outline-none"
+                      className="h-9 min-w-[260px] max-w-[460px] border border-[var(--border-medium)] px-3 text-[18px] font-semibold text-[var(--text-primary)] outline-none"
                     />
                   ) : (
-                    <h1 className="whitespace-normal break-words text-[18px] font-semibold leading-6 text-[#221a14] [overflow-wrap:anywhere]">
+                    <h1 className="whitespace-normal break-words text-[18px] font-semibold leading-6 text-[var(--text-primary)] [overflow-wrap:anywhere]">
                       {title}
                     </h1>
                   )}
@@ -127,8 +127,8 @@ export function EstimateWorkspaceShell({
                       type="button"
                       onClick={onTitleEditToggle}
                       className={[
-                        "inline-flex h-8 w-8 items-center justify-center border border-[#d6d6d6] text-[#6b7c96] hover:bg-[#f8f8f8]",
-                        titleEditing ? "bg-[#f8f8f8]" : ""
+                        "inline-flex h-8 w-8 items-center justify-center border border-[var(--border-medium)] text-[var(--text-secondary)] hover:bg-[var(--highlight)]",
+                        titleEditing ? "bg-[var(--highlight)]" : ""
                       ].join(" ")}
                       title="Edit estimate title"
                     >
@@ -136,10 +136,10 @@ export function EstimateWorkspaceShell({
                     </button>
                   ) : null}
                 </div>
-                <p className="mt-0.5 text-[13px] text-[#8a7b6e]">
+                <p className="mt-0.5 text-[13px] text-[var(--text-secondary)]">
                   {subtitle ?? "Project/Opportunity"}
                 </p>
-                <p className="mt-1 text-[12px] text-[#8f7f72]">
+                <p className="mt-1 text-[12px] text-[var(--text-tertiary)]">
                   Build items, review scope, then open the customer-facing estimate.
                 </p>
               </div>
@@ -157,12 +157,12 @@ export function EstimateWorkspaceShell({
 
         <main className="flex-1 bg-white">{children}</main>
 
-        <footer className="border-t border-[#e8ded5] bg-white px-4 py-2.5">
+        <footer className="border-t border-[var(--border-warm)] bg-white px-4 py-2.5">
           <div className="flex items-center justify-end">
             {saveAction ?? (
               <button
                 type="submit"
-                className="inline-flex h-9 min-w-[124px] items-center justify-center border border-[#d8731f] bg-[#d8731f] px-3 text-sm font-semibold text-white transition hover:bg-[#bf6519]"
+                className="inline-flex h-9 min-w-[124px] items-center justify-center border border-[var(--copper)] bg-[var(--copper)] px-3 text-sm font-semibold text-white transition hover:bg-[var(--copper-light)]"
               >
                 Save
               </button>

@@ -63,8 +63,8 @@ function UtilityIconFrame({
       className={[
         "inline-flex h-8 w-8 items-center justify-center rounded-[4px] border transition",
         active
-          ? "border-[#ef7d32] bg-[#ef7d32]/20 text-white"
-          : "border-white/14 bg-white/8 text-[#f7e8db] hover:border-[#ef7d32] hover:bg-white/12 hover:text-white"
+          ? "border-[var(--copper)] bg-[var(--copper)]/20 text-white"
+          : "border-white/14 bg-white/8 text-[#f7e8db] hover:border-[var(--copper)] hover:bg-white/12 hover:text-white"
       ].join(" ")}
       style={utilityIconFrameStyle}
     >
@@ -184,8 +184,8 @@ export function ProtectedAppTopNav({
   }, [accountMenuOpen, menuOpen]);
 
   return (
-    <div ref={shellRef} className="relative border-b border-[#d9cdc2] bg-white">
-      <div className="grid items-center gap-3 bg-[#111111] px-4 py-1.5 text-white xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+    <div ref={shellRef} className="relative border-b border-[var(--border-warm)] bg-white">
+      <div className="grid items-center gap-3 bg-[var(--graphite)] px-4 py-1.5 text-white xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
         <div className="min-w-0 text-[12px] font-medium text-[#f3e7dc]">
           <ProtectedAppBreadcrumbs organizationName={organizationName} variant="dark" />
         </div>
@@ -205,8 +205,8 @@ export function ProtectedAppTopNav({
               className={[
                 "inline-flex h-8 items-center rounded-[3px] border px-3 text-[11px] font-semibold uppercase tracking-[0.14em] transition",
                 isItemActive(item)
-                  ? "border-[#ef7d32] bg-[#ef7d32]/20 text-white"
-                  : "border-white/14 bg-white/8 text-[#f7e8db] hover:border-[#ef7d32] hover:bg-white/12 hover:text-white"
+                  ? "border-[var(--copper)] bg-[var(--copper)]/20 text-white"
+                  : "border-white/14 bg-white/8 text-[#f7e8db] hover:border-[var(--copper)] hover:bg-white/12 hover:text-white"
               ].join(" ")}
             >
               {item.label}
@@ -248,15 +248,15 @@ export function ProtectedAppTopNav({
           />
         </div>
 
-        <div className="flex shrink-0 flex-col border-l border-[#ebe0d6] 2xl:min-w-[920px]">
+        <div className="flex shrink-0 flex-col border-l border-[var(--border-warm)] 2xl:min-w-[920px]">
           <div className="flex flex-wrap items-stretch">
             <Link
               href={projectLauncherHref}
               aria-current={pathname.startsWith("/projects") ? "page" : undefined}
               className={[
-                "flex min-h-[58px] min-w-[200px] flex-1 items-center justify-between px-4 text-[#221a14] transition 2xl:min-w-[210px] 2xl:flex-none",
+                "flex min-h-[58px] min-w-[200px] flex-1 items-center justify-between px-4 text-[var(--text-primary)] transition 2xl:min-w-[210px] 2xl:flex-none",
                 pathname.startsWith("/projects")
-                  ? "bg-[#f8f1ea]"
+                  ? "bg-[var(--highlight)]"
                   : "hover:bg-[#fff7f0]"
               ].join(" ")}
             >
@@ -279,8 +279,8 @@ export function ProtectedAppTopNav({
               aria-expanded={menuOpen}
               aria-controls={menuId}
               className={[
-                "flex min-h-[58px] min-w-[174px] flex-1 items-center justify-between border-l border-[#ebe0d6] px-4 text-left transition 2xl:min-w-[184px] 2xl:flex-none",
-                menuOpen ? "bg-[#f2ebe4] text-[#221a14]" : "text-[#221a14] hover:bg-[#fff7f0]"
+                "flex min-h-[58px] min-w-[174px] flex-1 items-center justify-between border-l border-[var(--border-warm)] px-4 text-left transition 2xl:min-w-[184px] 2xl:flex-none",
+                menuOpen ? "bg-[var(--highlight)] text-[var(--text-primary)]" : "text-[var(--text-primary)] hover:bg-[#fff7f0]"
               ].join(" ")}
             >
               <div>
@@ -305,7 +305,7 @@ export function ProtectedAppTopNav({
               <UniversalCreateMenu
                 idBase="top-nav-universal-create-menu"
                 buttonLabel="Quick create"
-                buttonClassName="inline-flex h-10 items-center rounded-[3px] border border-[#ef7d32] bg-[#ef7d32] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[#de6c22]"
+                buttonClassName="inline-flex h-10 items-center rounded-[3px] border border-[var(--copper)] bg-[var(--copper)] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[var(--copper-light)]"
               />
               <ContractorNotificationsCenter notifications={notifications} />
             </div>
