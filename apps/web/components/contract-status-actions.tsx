@@ -77,7 +77,7 @@ export function ContractStatusActions({
     !canCountersign
   ) {
     return (
-      <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+      <div className="rounded-[1.5rem] border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
         This contract is in a final state. No further status changes are available from here.
       </div>
     );
@@ -86,9 +86,9 @@ export function ContractStatusActions({
   return (
     <div className="space-y-4">
       {requireContractInternalApproval && currentStatus === "draft" && !isLocked ? (
-        <div className="space-y-3 rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4">
-          <div className="text-sm leading-6 text-slate-600">
-            <p className="font-medium text-slate-950">Internal approval</p>
+        <div className="space-y-3 rounded-[1.5rem] border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4">
+          <div className="text-sm leading-6 text-[var(--text-secondary)]">
+            <p className="font-medium text-[var(--text-primary)]">Internal approval</p>
             <p className="mt-1 capitalize">
               Current state: {formatStatusLabel(currentInternalApprovalStatus)}
             </p>
@@ -109,7 +109,7 @@ export function ContractStatusActions({
                 />
                 <button
                   type="submit"
-                  className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
+                  className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-4 py-2 text-sm font-medium text-[var(--text-secondary)] shadow-sm transition hover:border-[var(--graphite-light)] hover:bg-[var(--highlight)]"
                 >
                   Approve for send
                 </button>
@@ -151,7 +151,7 @@ export function ContractStatusActions({
                 />
                 <button
                   type="submit"
-                  className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
+                  className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-4 py-2 text-sm font-medium text-[var(--text-secondary)] shadow-sm transition hover:border-[var(--graphite-light)] hover:bg-[var(--highlight)]"
                 >
                   Reset to pending
                 </button>

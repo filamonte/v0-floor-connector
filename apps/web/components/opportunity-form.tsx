@@ -106,13 +106,13 @@ export function OpportunityForm({
           hint="Leave blank to auto-generate the lead title from the contact, job type, and site."
         />
         <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-800">
+          <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
             Status
           </span>
           <select
             name="status"
             defaultValue={opportunity?.status ?? "new"}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className="w-full rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--copper)] focus:ring-4 focus:ring-[var(--copper)]/10"
             required
           >
             {opportunityStatusesList.map((status) => (
@@ -124,12 +124,12 @@ export function OpportunityForm({
         </label>
       </div>
 
-      <section className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+      <section className="space-y-4 rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] p-5">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-700">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--copper)]">
             Primary Contact
           </p>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
             The opportunity links to a real contact record. Once this lead creates or links a
             canonical customer, safe email updates can sync forward there, and downstream estimate
             send uses the customer record instead of a workforce person.
@@ -179,12 +179,12 @@ export function OpportunityForm({
         </div>
       </section>
 
-      <section className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+      <section className="space-y-4 rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] p-5">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-700">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--copper)]">
             Site and Request
           </p>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
             Keep the request type, source, and primary site structured so this same
             record can feed estimating and future app intake.
           </p>
@@ -272,12 +272,12 @@ export function OpportunityForm({
         observations={opportunity?.observations}
       />
 
-      <section className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+      <section className="space-y-4 rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] p-5">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-700">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--copper)]">
             Linked Photos and Files
           </p>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
             Attach intake evidence as linked records instead of hiding file context
             inside notes.
           </p>
@@ -286,16 +286,16 @@ export function OpportunityForm({
           {attachmentRows.map((attachment, index) => (
             <div
               key={`attachment-${index}`}
-              className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-2"
+              className="grid gap-4 rounded-2xl border border-[var(--border-warm)] bg-white p-4 md:grid-cols-2"
             >
               <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-800">
+                <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
                   Attachment type
                 </span>
                 <select
                   name="attachmentType"
                   defaultValue={attachment.attachmentType}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                  className="w-full rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--copper)] focus:ring-4 focus:ring-[var(--copper)]/10"
                 >
                   <option value="file">File</option>
                   <option value="photo">Photo</option>
@@ -342,25 +342,25 @@ export function OpportunityForm({
 
       <div className="grid gap-5 lg:grid-cols-2">
         <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-800">
+          <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
             Requirements summary
           </span>
           <textarea
             name="requirementsSummary"
             defaultValue={getValue(opportunity?.requirementsSummary)}
             rows={4}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className="w-full rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)] focus:ring-4 focus:ring-[var(--copper)]/10"
             placeholder="High-level scope summary for estimator and handoff review"
           />
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-800">Notes</span>
+          <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">Notes</span>
           <textarea
             name="notes"
             defaultValue={getValue(opportunity?.notes)}
             rows={4}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className="w-full rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)] focus:ring-4 focus:ring-[var(--copper)]/10"
             placeholder="Internal summary only. Structured intake should live in the sections above."
           />
         </label>
@@ -372,7 +372,7 @@ export function OpportunityForm({
           pendingLabel={pendingLabel}
           className="sm:min-w-[200px]"
         />
-        <p className="text-sm leading-6 text-slate-500">
+        <p className="text-sm leading-6 text-[var(--text-secondary)]">
           Leads stay scoped to the active organization automatically.
         </p>
       </div>

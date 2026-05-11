@@ -60,13 +60,13 @@ export function JobForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block md:col-span-2">
-          <span className="mb-2 block text-sm font-medium text-slate-800">
+          <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
             Project
           </span>
           <select
             name="projectId"
             defaultValue={selectedProjectId}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className="w-full rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--copper)] focus:ring-4 focus:ring-[var(--copper)]/10"
             required
           >
             <option value="" disabled>
@@ -79,19 +79,19 @@ export function JobForm({
               </option>
             ))}
           </select>
-          <span className="mt-2 block text-xs leading-5 text-slate-500">
+          <span className="mt-2 block text-xs leading-5 text-[var(--text-secondary)]">
             Jobs always belong to a project and inherit the customer from that project.
           </span>
         </label>
 
         <label className="block md:col-span-2">
-          <span className="mb-2 block text-sm font-medium text-slate-800">
+          <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
             Linked approved estimate
           </span>
           <select
             name="estimateId"
             defaultValue={job?.estimateId ?? initialEstimateId ?? ""}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className="w-full rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--copper)] focus:ring-4 focus:ring-[var(--copper)]/10"
           >
             <option value="">No linked estimate</option>
             {estimates.map((estimate) => (
@@ -101,20 +101,20 @@ export function JobForm({
               </option>
             ))}
           </select>
-          <span className="mt-2 block text-xs leading-5 text-slate-500">
+          <span className="mt-2 block text-xs leading-5 text-[var(--text-secondary)]">
             Only approved estimates can be attached to a job. Leave this blank for
             project-driven work that was not created from an estimate.
           </span>
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-800">
+          <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
             Dispatch status
           </span>
           <select
             name="dispatchStatus"
             defaultValue={job?.dispatchStatus ?? "unscheduled"}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className="w-full rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--copper)] focus:ring-4 focus:ring-[var(--copper)]/10"
             required
           >
             {jobStatusesList.map((status) => (
@@ -150,27 +150,27 @@ export function JobForm({
       <input type="hidden" name="crewVendorId" value={job?.crewVendorId ?? ""} />
 
       <label className="block">
-        <span className="mb-2 block text-sm font-medium text-slate-800">
+        <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
           Schedule notes
         </span>
         <textarea
           name="scheduleNotes"
           defaultValue={getValue(job?.scheduleNotes)}
           rows={3}
-          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+          className="w-full rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)] focus:ring-4 focus:ring-[var(--copper)]/10"
           placeholder="Optional notes for the current planned schedule"
         />
       </label>
 
       <label className="block">
-        <span className="mb-2 block text-sm font-medium text-slate-800">
+        <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
           Notes
         </span>
         <textarea
           name="notes"
           defaultValue={getValue(job?.notes)}
           rows={5}
-          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+          className="w-full rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)] focus:ring-4 focus:ring-[var(--copper)]/10"
           placeholder="Optional operational notes for this job or work order"
         />
       </label>
@@ -181,7 +181,7 @@ export function JobForm({
           pendingLabel={pendingLabel}
           className="sm:min-w-[200px]"
         />
-        <p className="text-sm leading-6 text-slate-500">
+        <p className="text-sm leading-6 text-[var(--text-secondary)]">
           Crew assignment and calendar views can layer on top of this job foundation later.
         </p>
       </div>
