@@ -38,7 +38,7 @@ export function ProtectedAppNav({
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
                 className={[
-                  "rounded-full px-4 py-2 text-sm font-medium transition",
+                  "rounded-full px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2",
                   isActive
                     ? "bg-[var(--graphite)] text-white shadow-sm"
                     : "border border-[var(--border-warm)] bg-white text-[var(--text-secondary)] hover:border-[var(--graphite-light)] hover:text-[var(--text-primary)]"
@@ -63,7 +63,7 @@ export function ProtectedAppNav({
                       href={item.href}
                       aria-current={isActive ? "page" : undefined}
                       className={[
-                        "flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition",
+                        "flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)]",
                         isActive
                           ? "bg-white text-[var(--text-primary)] shadow-[0_18px_40px_-26px_rgba(15,23,42,0.55)]"
                           : "text-white/70 hover:bg-white/8 hover:text-white"

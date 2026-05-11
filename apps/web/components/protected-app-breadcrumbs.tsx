@@ -45,20 +45,20 @@ export function ProtectedAppBreadcrumbs({
       aria-label="Breadcrumb"
       className={[
         "flex min-w-0 flex-wrap items-center gap-1.5 text-[12px]",
-        variant === "dark" ? "text-white/92" : "text-[#6f6256]"
+        variant === "dark" ? "text-white/92" : "text-[var(--text-secondary)]"
       ].join(" ")}
     >
       <HomeIcon />
       <span
         aria-hidden="true"
-        className={variant === "dark" ? "text-white/45" : "text-[#b28a6b]"}
+        className={variant === "dark" ? "text-white/45" : "text-[var(--copper-light)]"}
       >
         /
       </span>
       <span
         className={[
           "min-w-0 truncate font-medium",
-          variant === "dark" ? "text-white" : "text-[#221a14]"
+          variant === "dark" ? "text-white" : "text-[var(--text-primary)]"
         ].join(" ")}
       >
         {sectionLabel}
