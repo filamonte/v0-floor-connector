@@ -13,21 +13,30 @@ This document serves as the single source of truth for FloorConnector's visual a
 #### Primary Colors
 | Color Name | Hex | RGB | Usage | Example |
 |-----------|-----|-----|-------|---------|
-| **Warm Graphite** | `#374151` | 55, 65, 81 | Navigation, headers, primary UI elements | Sidebar, button backgrounds, section headers |
+| **Graphite** | `#374151` | 55, 65, 81 | Navigation, headers, primary UI elements | Header bar, sidebar, button backgrounds |
+| **Graphite Dark** | `#1F2937` | 31, 41, 55 | Strong emphasis, dark mode alternate | Header border, active navigation |
+| **Graphite Light** | `#4B5563` | 75, 85, 99 | Subtle emphasis, hover states | Hover backgrounds, secondary elements |
 | **Pure White** | `#FFFFFF` | 255, 255, 255 | Card surfaces, panels, modals | Workspace cards, input backgrounds |
-| **Soft Cream** | `#FAFAF8` | 250, 250, 248 | Page backgrounds, subtle surfaces | Main page background, inactive tabs |
+| **Soft Cream** | `#FAFAF8` | 250, 250, 248 | Page backgrounds, subtle surfaces | Main page background, icon backgrounds |
 
 #### Accent Color
 | Color Name | Hex | RGB | Usage | Impact |
 |-----------|-----|-----|-------|--------|
-| **True Copper** | `#B45309` | 180, 83, 9 | Call-to-action buttons, active states, key highlights | Save button, active workspace section, status badges |
+| **Copper** | `#B45309` | 180, 83, 9 | Call-to-action buttons, active states, key highlights | Save button, active workspace section, status badges |
+| **Copper Light** | `#D97706` | 217, 119, 6 | Hover states on copper elements | Button hover, hover badges |
+
+#### Highlight/Selection Color (NEW)
+| Color Name | Hex | RGB | Usage | Purpose |
+|-----------|-----|-----|-------|---------|
+| **Soft Graphite** | `#F3F4F6` | 243, 244, 246 | Active/selected navigation items, active section highlights | Replaces previous muted copper for better neutrality |
 
 #### Text Colors
 | Color Name | Hex | RGB | Usage | Contrast Ratio |
 |-----------|-----|-----|-------|-----------------|
 | **Near Black** | `#111827` | 17, 24, 39 | Body text, primary content | 20:1 on white (AAA) |
 | **Warm Gray** | `#6B7280` | 107, 114, 128 | Secondary text, labels, disabled states | 7:1 on white (AA) |
-| **Light Warm Gray** | `#D1D5DB` | 209, 213, 219 | Borders, dividers, very subtle backgrounds | Subtle separation |
+| **Light Warm Gray** | `#9CA3AF` | 156, 163, 175 | Tertiary text, hints | 4.5:1 on white (AA) |
+| **Lightest Gray** | `#D1D5DB` | 209, 213, 219 | Borders, dividers, very subtle backgrounds | Subtle separation |
 
 #### Semantic Colors
 | Intent | Hex | RGB | Usage |
@@ -44,27 +53,35 @@ Add to `globals.css`:
 ```css
 :root {
   /* Primary Colors */
-  --primary: #374151;           /* Warm Graphite */
-  --background: #FAFAF8;        /* Soft Cream */
-  --surface: #FFFFFF;           /* Pure White */
-  --accent: #B45309;            /* True Copper */
+  --primary: #374151;           /* Graphite - headers, navigation */
+  --primary-dark: #1F2937;      /* Graphite Dark - strong emphasis */
+  --primary-light: #4B5563;     /* Graphite Light - hover states */
+  --background: #FAFAF8;        /* Soft Cream - page background */
+  --surface: #FFFFFF;           /* Pure White - cards, panels */
+  
+  /* Accent Colors */
+  --accent: #B45309;            /* Copper - CTAs, key highlights */
+  --accent-light: #D97706;      /* Copper Light - hover states */
+  
+  /* Selection/Active States */
+  --highlight: #F3F4F6;         /* Soft Graphite - active navigation */
   
   /* Text Colors */
-  --text-primary: #111827;      /* Near Black */
-  --text-secondary: #6B7280;    /* Warm Gray */
-  --text-muted: #9CA3AF;        /* Lighter Gray */
-  --text-disabled: #D1D5DB;     /* Light Warm Gray */
+  --text-primary: #111827;      /* Near Black - body text */
+  --text-secondary: #6B7280;    /* Warm Gray - secondary text */
+  --text-tertiary: #9CA3AF;     /* Light Warm Gray - hints */
+  --text-disabled: #D1D5DB;     /* Lightest Gray - disabled text */
   
   /* Semantic Colors */
-  --color-success: #16A34A;
-  --color-warning: #EA8C55;
-  --color-error: #DC2626;
-  --color-info: #0EA5E9;
+  --color-success: #16A34A;     /* Green - success, approved */
+  --color-warning: #EA8C55;     /* Warm Amber - pending, needs attention */
+  --color-error: #DC2626;       /* Red - errors, overdue */
+  --color-info: #0EA5E9;        /* Sky Blue - informational */
   
   /* Borders */
-  --border-light: #E5E7EB;      /* Subtle divider */
-  --border-medium: #D1D5DB;     /* Standard border */
-  --border-dark: #9CA3AF;       /* Strong border */
+  --border-light: #E8E6E1;      /* Warm Gray - subtle divider */
+  --border-medium: #D9D5CD;     /* Medium Warm Gray - standard border */
+  --border-dark: #9CA3AF;       /* Strong border for emphasis */
   
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(17, 24, 39, 0.05);
@@ -76,7 +93,6 @@ Add to `globals.css`:
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
 }
-```
 
 ### Tailwind Config Integration
 
@@ -128,9 +144,162 @@ module.exports = {
 
 ---
 
-## Part 3: Component Improvements & Patterns
+## Part 3: Header & Navigation Design (FINALIZED)
 
-### 3.1 Design System Token Extraction (PRIORITY 1)
+### Header Style: Dark Graphite Bar
+
+The header uses a full-height dark graphite background (#374151) with integrated copper accent for the logo, creating a bold, confident top-level navigation that commands presence.
+
+**Header Anatomy:**
+```
+[Logo/Brand] [Navigation] [User Menu]
+```
+
+**Logo Section:**
+- Copper background (#B45309) rounded square (8px radius)
+- "FC" initials in white, 14px bold
+- Text "FloorConnector" in white, 16px semibold, 4px gap from logo
+
+**Navigation Section:**
+- Navigation links: "Dashboard", "Leads", "Estimates", "Jobs", "Invoices"
+- Active link: White text with `bg-white/10` background
+- Inactive links: `text-white/70` with hover state `hover:text-white hover:bg-white/5`
+- Smooth transitions on hover
+
+**User Menu (Right):**
+- Settings icon: White, hover brightens
+- User avatar: Initials in graphite background, 32px
+- Both items interactive with hover effects
+
+**CSS Implementation:**
+```tsx
+<header className="h-14 flex items-center justify-between px-4" style={{ backgroundColor: '#374151' }}>
+  {/* Logo */}
+  <div className="flex items-center gap-2">
+    <div style={{ backgroundColor: '#B45309' }} className="w-8 h-8 rounded-md flex items-center justify-center">
+      <span className="text-white font-bold text-sm">FC</span>
+    </div>
+    <span className="text-white font-semibold">FloorConnector</span>
+  </div>
+
+  {/* Navigation */}
+  <nav className="flex items-center gap-1 ml-8">
+    {navItems.map((item) => (
+      <a
+        key={item}
+        className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+          item === 'Estimates' ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white hover:bg-white/5'
+        }`}
+      >
+        {item}
+      </a>
+    ))}
+  </nav>
+
+  {/* User Menu */}
+  <div className="flex items-center gap-3">
+    <button className="p-2 text-white/70 hover:text-white rounded-md hover:bg-white/10">
+      <Settings className="w-5 h-5" />
+    </button>
+    <div style={{ backgroundColor: '#374151' }} className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium text-white">
+      JD
+    </div>
+  </div>
+</header>
+```
+
+---
+
+## Part 4: Icon System (FINALIZED)
+
+### Icon Style: Circular Backgrounds
+
+Icons use circular background containers with Lucide icons, providing visual weight and serving as better touch targets for interactive elements.
+
+**Icon Container Sizes:**
+- `24px` - Small icons (inline, tight spaces)
+- `32px` - Standard icons (sidebar navigation, buttons)
+- `40px` - Large icons (section headers, hero elements)
+
+**Icon Container Styling:**
+- Background: Soft Cream (#F3F4F6) for neutral context
+- Background: Graphite (#374151) for active/selected states
+- Background: Copper (#B45309) for CTAs and key actions
+- Border-radius: `rounded-full` (50%)
+- Icon color adapts to background contrast
+
+**Usage Examples:**
+
+**Sidebar Navigation (Active):**
+```tsx
+<div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: '#374151' }}>
+  <Wallet className="w-4 h-4" style={{ color: '#FFFFFF' }} />
+</div>
+```
+
+**Sidebar Navigation (Inactive):**
+```tsx
+<div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: '#F3F4F6' }}>
+  <Grid3X3 className="w-4 h-4" style={{ color: '#6B7280' }} />
+</div>
+```
+
+**CTA Button with Icon:**
+```tsx
+<button style={{ backgroundColor: '#B45309' }} className="w-9 h-9 rounded-full flex items-center justify-center hover:brightness-90 transition-all">
+  <Plus className="w-4 h-4" style={{ color: '#FFFFFF' }} />
+</button>
+```
+
+**Icon Size Mapping:**
+```tsx
+const iconSizes = {
+  xs: { container: 24, icon: 14 },  // Inline
+  sm: { container: 28, icon: 16 },  // Small elements
+  md: { container: 32, icon: 18 },  // Standard (default)
+  lg: { container: 40, icon: 20 },  // Section headers
+  xl: { container: 48, icon: 24 },  // Hero elements
+};
+```
+
+---
+
+## Part 5: Component Improvements & Patterns
+
+### 5.1 Sidebar Navigation Highlights
+
+**Active Section State:**
+- Background: Soft Graphite (#F3F4F6)
+- Text Color: Graphite Primary (#374151)
+- Icon: Circular background with graphite fill
+- Font Weight: 500 (medium)
+- Transition: `transition-colors duration-150`
+
+**Implementation:**
+```tsx
+<button
+  onClick={() => setActiveSection(section.id)}
+  className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-left transition-colors"
+  style={{
+    backgroundColor: isActive ? '#F3F4F6' : 'transparent',
+    color: isActive ? '#374151' : '#6B7280',
+  }}
+>
+  <div
+    className="w-7 h-7 rounded-full flex items-center justify-center"
+    style={{
+      backgroundColor: isActive ? '#374151' : '#F3F4F6',
+    }}
+  >
+    <Icon style={{ color: isActive ? '#FFFFFF' : '#6B7280' }} />
+  </div>
+  <span className="text-sm font-medium flex-1">{section.label}</span>
+</button>
+```
+
+---
+
+### 5.2 Design System Token Extraction (PRIORITY 1)
 
 **Current State:** Hardcoded color values in `estimate-workspace-shell.tsx`
 
@@ -158,7 +327,7 @@ module.exports = {
 
 ---
 
-### 3.2 Shared Component Primitives (PRIORITY 2)
+### 5.3 Shared Component Primitives (PRIORITY 2)
 
 Create new components in `@floorconnector/ui` to consolidate recurring patterns:
 
@@ -214,7 +383,7 @@ Used for: Save/Cancel buttons in edit workspaces.
 
 ---
 
-### 3.3 Iconography Standardization (PRIORITY 3)
+### 5.4 Iconography Standardization (PRIORITY 3)
 
 **Standard Icon Sizes:**
 - `16px` — Inline icons within text or tight spaces
@@ -239,7 +408,7 @@ export function Icon({ name, size = 'md', className }: IconProps) {
 
 ---
 
-### 3.4 Table & Data Presentation (PRIORITY 4)
+### 5.5 Table & Data Presentation (PRIORITY 4)
 
 Enhance `DenseTable` component with:
 
@@ -283,7 +452,7 @@ export function DenseTable({
 
 ---
 
-### 3.5 Micro-Interactions & Feedback (PRIORITY 5)
+### 5.6 Micro-Interactions & Feedback (PRIORITY 5)
 
 #### Loading States
 - Use skeleton loaders that match content structure
@@ -303,7 +472,7 @@ export function DenseTable({
 ```tsx
 <button className="
   bg-[var(--accent)] text-white
-  hover:bg-[#A24706] // Darker copper on hover
+  hover:bg-[#D97706] // Copper Light on hover
   active:brightness-90
   disabled:opacity-50 disabled:cursor-not-allowed
   transition-all duration-150
@@ -314,7 +483,7 @@ export function DenseTable({
 
 ---
 
-### 3.6 Empty & Loading States (PRIORITY 6)
+### 5.7 Empty & Loading States (PRIORITY 6)
 
 **Pattern:** Icon + heading + supporting text + CTA
 
@@ -349,7 +518,7 @@ export function EmptyState({ icon, title, description, action }: EmptyStateProps
 
 ---
 
-### 3.7 Component Architecture Refactoring (PRIORITY 7)
+### 5.8 Component Architecture Refactoring (PRIORITY 7)
 
 **Current Issue:** `[estimateId]/page.tsx` is 1,233 lines. Break into focused components:
 
@@ -378,7 +547,7 @@ lib/estimates/
 
 ---
 
-### 3.8 Workspace Navigation Consistency (PRIORITY 8)
+### 5.9 Workspace Navigation Consistency (PRIORITY 8)
 
 **Sidebar Section Config Pattern:**
 
@@ -420,7 +589,7 @@ export const ESTIMATE_WORKSPACE_SECTIONS = [
 
 ---
 
-### 3.9 Documentation Updates (PRIORITY 9)
+### 5.10 Documentation Updates (PRIORITY 9)
 
 Create new documentation files:
 
@@ -447,7 +616,7 @@ Create new documentation files:
 
 ---
 
-### 3.10 Contrast & Accessibility (PRIORITY 10)
+### 5.11 Contrast & Accessibility (PRIORITY 10)
 
 **Minimum Contrast Ratios (WCAG AA):**
 - Text on background: 4.5:1 (7:1 for AAA)
@@ -458,6 +627,7 @@ Create new documentation files:
 - Copper `#B45309` on White `#FFFFFF`: ✅ 5.2:1
 - Copper `#B45309` on Cream `#FAFAF8`: ✅ 4.8:1
 - Gray `#6B7280` on Cream `#FAFAF8`: ✅ 7.1:1
+- Warm Gray `#E8E6E1` border on White surface: ✅ 1.6:1 (subtle, acceptable for borders)
 
 **Keyboard Navigation:**
 - All interactive elements must be keyboard accessible
@@ -466,7 +636,7 @@ Create new documentation files:
 
 ---
 
-## Part 4: Implementation Roadmap
+## Part 6: Implementation Roadmap
 
 ### Phase 1: Foundation (Week 1-2)
 - [ ] Define CSS design tokens in `globals.css`
@@ -499,13 +669,13 @@ Create new documentation files:
 
 ---
 
-## Part 5: Quick Reference
+## Part 7: Quick Reference
 
 ### Button Styles
 
-**Primary CTA:**
+**Primary CTA (Copper):**
 ```tsx
-<button className="bg-[var(--accent)] text-white px-4 py-2 rounded-md hover:bg-[#A24706] transition-all">
+<button className="bg-[var(--accent)] text-white px-4 py-2 rounded-md hover:bg-[#D97706] transition-all">
   Save Changes
 </button>
 ```
@@ -536,8 +706,16 @@ Create new documentation files:
 
 ---
 
-## Conclusion
+## Part 8: Final Summary
 
-This design system establishes **Graphite & Copper** as FloorConnector's visual identity, emphasizing professionalism, reliability, and refined craftsmanship. The **Estimates module** serves as the golden reference—all future modules should follow this established pattern for consistency and quality.
+This design system establishes **Graphite & Copper** as FloorConnector's visual identity, emphasizing professionalism, reliability, and refined craftsmanship. 
 
-The 10 systematic improvements address both visual cohesion and interaction polish, creating a modern, efficient platform that contractors trust for their most important business workflows.
+**Finalized Design Decisions:**
+- **Header**: Dark Graphite Bar with copper accent logo
+- **Icons**: Circular backgrounds for visual weight and touch targets
+- **Highlights**: Soft Graphite for active states (neutral, professional)
+- **Borders**: Warm Gray (#E8E6E1) for earthy, cohesive feel
+
+The **Estimates module** serves as the golden reference—all future modules should follow this established pattern for consistency and quality.
+
+The 11 systematic improvements address both visual cohesion and interaction polish, creating a modern, efficient platform that contractors trust for their most important business workflows.
