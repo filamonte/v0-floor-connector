@@ -237,8 +237,8 @@ function ReadonlyValue({
 }) {
   return (
     <div className={className}>
-      <span className="mb-1 block text-sm font-medium text-slate-800">{label}</span>
-      <div className="min-h-9 border border-[#d6d6d6] bg-[#f7f8fa] px-3 py-2 text-sm text-slate-900">
+      <span className="mb-1 block text-sm font-medium text-[var(--text-primary)]">{label}</span>
+      <div className="min-h-9 border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2 text-sm text-[var(--text-primary)]">
         {value}
       </div>
     </div>

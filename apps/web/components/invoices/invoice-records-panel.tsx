@@ -112,15 +112,15 @@ export function InvoiceRecordsPanel({
   const visibleInvoices = applyRowsPerView(invoices, rowsPerView);
 
   return (
-    <section className="border border-[#e2e5e9] bg-white">
-      <div className="border-b border-[#e2e5e9] bg-[#f8fafc] px-4 py-2.5">
+    <section className="border border-[var(--border-warm)] bg-white">
+      <div className="border-b border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-2.5">
         <div className="flex items-end justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
               Invoice records
             </p>
           </div>
-          <div className="hidden grid-cols-[minmax(0,1.35fr)_1fr_160px_140px_180px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
+          <div className="hidden grid-cols-[minmax(0,1.35fr)_1fr_160px_140px_180px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)] md:grid md:flex-1">
             <span>Invoice</span>
             <span>Project</span>
             <span>Status</span>
@@ -128,11 +128,11 @@ export function InvoiceRecordsPanel({
             <span className="text-right">Actions</span>
           </div>
           <div className="md:hidden">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--text-secondary)]">
               Invoices list
             </p>
           </div>
-          <p className="text-sm leading-6 text-slate-500">
+          <p className="text-sm leading-6 text-[var(--text-secondary)]">
             {formatRowsPerViewVisibleCount(
               invoices.length,
               visibleInvoices.length,
@@ -142,7 +142,7 @@ export function InvoiceRecordsPanel({
         </div>
       </div>
 
-      <div className="divide-y divide-[#e5e7eb]">
+      <div className="divide-y divide-[var(--border-warm)]">
         {invoices.length > 0 ? (
           visibleInvoices.map((invoice) => {
             const primaryAction = getInvoicePrimaryAction(invoice);
@@ -150,35 +150,35 @@ export function InvoiceRecordsPanel({
             return (
             <div
               key={invoice.id}
-              className="group block px-4 py-2.5 transition hover:bg-[#f8fafc]"
+              className="group block px-4 py-2.5 transition hover:bg-[var(--highlight)]"
             >
               <div className="grid gap-3 md:grid-cols-[minmax(0,1.35fr)_1fr_160px_140px_180px] md:items-center">
                 <div className="min-w-0">
-                  <h3 className="text-sm font-semibold text-slate-950 transition group-hover:text-brand-700">
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)] transition group-hover:text-[var(--copper)]">
                     <Link href={`/invoices/${invoice.id}`}>{invoice.referenceNumber}</Link>
                   </h3>
-                  <p className="mt-0.5 text-sm leading-5 text-slate-500">
+                  <p className="mt-0.5 text-sm leading-5 text-[var(--text-secondary)]">
                     {invoice.customer?.name ?? "Unknown customer"}
                   </p>
-                  <p className="mt-0.5 text-xs uppercase tracking-[0.16em] text-slate-400">
+                  <p className="mt-0.5 text-xs uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
                     {getInvoiceContinuityCue(invoice)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] md:hidden">
                     Project
                   </p>
-                  <p className="text-sm font-medium text-slate-700">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">
                     {invoice.project?.name ?? "Unknown project"}
                   </p>
-                  <p className="mt-0.5 text-sm leading-5 text-slate-500">
+                  <p className="mt-0.5 text-sm leading-5 text-[var(--text-secondary)]">
                     {invoice.workflowRole === "deposit"
                       ? "Deposit readiness invoice"
                       : `Tax collected ${formatMoney(invoice.taxCollectedAmount)}`}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] md:hidden">
                     Status
                   </p>
                   <span
@@ -191,10 +191,10 @@ export function InvoiceRecordsPanel({
                   </span>
                 </div>
                 <div className="md:text-right">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] md:hidden">
                     Balance due
                   </p>
-                  <p className="text-sm font-semibold text-slate-950">
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">
                     {formatMoney(invoice.balanceDueAmount)}
                   </p>
                 </div>
