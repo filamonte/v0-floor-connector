@@ -226,21 +226,21 @@ export default async function EstimatesPage({
       description="A dense estimating module for draft build work, sent follow-up, customer responses, and approved handoff. New estimates start from customer and project context, then open the full estimate workspace."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Build</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">{draftCount}</p>
-          </div>
-          <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Sent</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">{sentCount}</p>
-          </div>
-          <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Approved</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">{approvedCount}</p>
-          </div>
-          <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Pipeline value</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
+      <div className="rounded-md border border-[var(--border-warm)] bg-white px-3 py-2.5">
+        <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">Build</p>
+        <p className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">{draftCount}</p>
+      </div>
+      <div className="rounded-md border border-[var(--border-warm)] bg-white px-3 py-2.5">
+        <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">Sent</p>
+        <p className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">{sentCount}</p>
+      </div>
+      <div className="rounded-md border border-[var(--border-warm)] bg-white px-3 py-2.5">
+        <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">Approved</p>
+        <p className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">{approvedCount}</p>
+      </div>
+      <div className="rounded-md border border-[var(--border-warm)] bg-white px-3 py-2.5">
+        <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">Pipeline value</p>
+        <p className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
               {formatMoney(totalPipelineValue)}
             </p>
           </div>
@@ -261,18 +261,18 @@ export default async function EstimatesPage({
               name="q"
               defaultValue={query}
               placeholder="Search estimate, opportunity, customer, project, or status"
-              className="min-w-0 flex-1 rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
+              className="min-w-0 flex-1 rounded-[4px] border border-[var(--border-warm)] bg-white px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[var(--border-warm)] bg-white px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[var(--highlight)]"
             >
               Search
             </button>
             {query.length > 0 || statusFilter !== "all" || showComposer ? (
               <Link
                 href="/estimates"
-                className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
+                className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
               >
                 Clear
               </Link>
@@ -296,15 +296,15 @@ export default async function EstimatesPage({
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
-                  ? "bg-[#171717] text-white"
-                  : "border border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"
+              ? "bg-[var(--graphite)] text-white"
+              : "border border-[var(--border-warm)] bg-white text-[var(--text-primary)] hover:bg-[var(--highlight)]"
               ].join(" ")}
             >
               <span>{view.label}</span>
               <span
                 className={[
                   "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                  isActive ? "bg-white/15 text-white" : "bg-[var(--highlight)] text-[var(--text-secondary)]"
                 ].join(" ")}
               >
                 {view.count}
@@ -326,7 +326,7 @@ export default async function EstimatesPage({
                   projectId: resolvedSearchParams.projectId
                 }) + "#estimate-create"
               }
-              className="inline-flex items-center rounded-[3px] border border-[#ef7d32] bg-[#ef7d32] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#de6c22]"
+              className="inline-flex items-center rounded-[3px] border border-[var(--copper)] bg-[var(--copper)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--copper-light)]"
             >
               Add estimate
             </Link>
@@ -409,19 +409,19 @@ export default async function EstimatesPage({
               emptyDescription="Sent estimates will appear here when customer follow-up is needed."
             />
 
-            <section className="border border-[#e2e5e9] bg-white">
-              <div className="border-b border-[#e2e5e9] bg-[#f8fafc] px-4 py-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+      <section className="border border-[var(--border-warm)] bg-white">
+        <div className="border-b border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                   Status
                 </p>
-                <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-slate-950">
+                <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]">
                   Estimates by status
                 </h3>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
+                <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                   Current-state status mix from canonical estimate records.
                 </p>
               </div>
-              <div className="divide-y divide-[#e5e7eb]">
+              <div className="divide-y divide-[var(--border-warm)]">
                 {statusBreakdown.map((status) => (
                   <Link
                     key={status.key}
@@ -433,7 +433,7 @@ export default async function EstimatesPage({
                       customerId: resolvedSearchParams.customerId,
                       projectId: resolvedSearchParams.projectId
                     })}
-                    className="grid grid-cols-[minmax(0,1fr)_120px_48px] items-center gap-3 px-4 py-3 text-sm transition hover:bg-[#f8fafc]"
+                    className="grid grid-cols-[minmax(0,1fr)_120px_48px] items-center gap-3 px-4 py-3 text-sm transition hover:bg-[var(--highlight)]"
                   >
                     <span
                       className={[
@@ -443,13 +443,13 @@ export default async function EstimatesPage({
                     >
                       {status.label} ({status.count})
                     </span>
-                    <span className="h-2 overflow-hidden rounded-full bg-slate-100">
-                      <span
-                        className="block h-full rounded-full bg-[#171717]"
+            <span className="h-2 overflow-hidden rounded-full bg-[var(--highlight)]">
+              <div
+                className="block h-full rounded-full bg-[var(--graphite)]"
                         style={{ width: `${status.percent}%` }}
                       />
                     </span>
-                    <span className="text-right text-xs font-semibold text-slate-500">
+                    <span className="text-right text-xs font-semibold text-[var(--text-secondary)]">
                       {status.percent}%
                     </span>
                   </Link>
