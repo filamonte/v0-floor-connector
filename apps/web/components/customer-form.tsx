@@ -103,27 +103,27 @@ export function CustomerForm({
         />
       </div>
 
-      <section className="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
+      <section className="rounded-[1.75rem] border border-[var(--border-warm)] bg-[var(--highlight)] p-5 sm:p-6">
         <div className="flex flex-col gap-2">
-          <p className="text-base font-semibold text-slate-950">Financial defaults</p>
-          <p className="text-sm leading-6 text-slate-600">
+          <p className="text-base font-semibold text-[var(--text-primary)]">Financial defaults</p>
+          <p className="text-sm leading-6 text-[var(--text-secondary)]">
             These defaults flow into future invoice, contract, and AIA-ready billing behavior.
           </p>
         </div>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <label className="flex items-start gap-3 rounded-[1.5rem] border border-slate-200 bg-white px-4 py-4 md:col-span-2">
+          <label className="flex items-start gap-3 rounded-[1.5rem] border border-[var(--border-warm)] bg-white px-4 py-4 md:col-span-2">
             <input
               type="checkbox"
               name="isTaxExempt"
               defaultChecked={customer?.isTaxExempt ?? false}
-              className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
+              className="mt-1 h-4 w-4 rounded border-[var(--border-warm)] text-[var(--copper)] focus:ring-[var(--copper)]/20"
             />
             <span>
-              <span className="block text-sm font-medium text-slate-900">
+              <span className="block text-sm font-medium text-[var(--text-primary)]">
                 Customer is tax exempt
               </span>
-              <span className="mt-1 block text-xs leading-5 text-slate-500">
+              <span className="mt-1 block text-xs leading-5 text-[var(--text-secondary)]">
                 Tax exemption is stored canonically on the customer so downstream financial workflows can reuse it.
               </span>
             </span>
@@ -166,14 +166,14 @@ export function CustomerForm({
       </section>
 
       <label className="block">
-        <span className="mb-2 block text-sm font-medium text-slate-800">
+        <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
           Notes
         </span>
         <textarea
           name="notes"
           defaultValue={getValue(customer?.notes)}
           rows={5}
-          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+          className="w-full rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)] focus:ring-4 focus:ring-[var(--copper)]/10"
           placeholder="Optional internal notes about this customer"
         />
       </label>
@@ -184,7 +184,7 @@ export function CustomerForm({
           pendingLabel={pendingLabel}
           className="sm:min-w-[200px]"
         />
-        <p className="text-sm leading-6 text-slate-500">
+        <p className="text-sm leading-6 text-[var(--text-secondary)]">
           Customer records are scoped to the active organization automatically and stay separate from workforce People records.
         </p>
       </div>

@@ -510,12 +510,12 @@ function renderDetailsSection(input: {
   } = input;
 
   return (
-    <section className="border-t border-[#e6e9ef] bg-white">
-      <div className="border-b border-[#e6e9ef] bg-[#f8f8f8] px-4 py-3">
-        <div className="flex items-center gap-3 text-[15px] font-semibold text-[#171717]">
+    <section className="border-t border-[var(--border-warm)] bg-white">
+      <div className="border-b border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
+        <div className="flex items-center gap-3 text-[15px] font-semibold text-[var(--text-primary)]">
           <span>Project details and estimate context</span>
         </div>
-        <p className="mt-2 text-[13px] leading-5 text-[#6b7c96]">
+        <p className="mt-2 text-[13px] leading-5 text-[var(--text-secondary)]">
           This section keeps the project-specific estimate context together. Reusable scope, terms,
           inclusions, and exclusions live in their own content areas, and project-details import is
           still coming later.
@@ -525,55 +525,55 @@ function renderDetailsSection(input: {
       <div className="grid gap-4 p-5 lg:grid-cols-2">
         <div className="space-y-4">
           <div>
-            <label className="text-[12px] font-medium text-[#5d6f8a]">Estimate Title</label>
+            <label className="text-[12px] font-medium text-[var(--text-secondary)]">Estimate Title</label>
             <input
               onChange={(event) => onTitleChange(event.target.value)}
               value={title}
-              className="mt-1.5 h-11 w-full border border-[#d8deea] px-3 text-[14px] text-[#2a2a2a] outline-none focus:border-[#8ca0bf]"
+              className="mt-1.5 h-11 w-full border border-[var(--border-warm)] px-3 text-[14px] text-[var(--text-primary)] outline-none focus:border-[var(--copper)]"
             />
           </div>
           <div>
-            <label className="text-[12px] font-medium text-[#5d6f8a]">Customer</label>
-            <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#f8f8f8] px-3 py-3 text-[14px] text-[#2a2a2a]">
+            <label className="text-[12px] font-medium text-[var(--text-secondary)]">Customer</label>
+            <div className="mt-1.5 min-h-11 border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-[14px] text-[var(--text-primary)]">
               {customerName ?? "No customer linked"}
             </div>
           </div>
           <div>
-            <label className="text-[12px] font-medium text-[#5d6f8a]">
+            <label className="text-[12px] font-medium text-[var(--text-secondary)]">
               Project / Opportunity
             </label>
-            <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#f8f8f8] px-3 py-3 text-[14px] text-[#2a2a2a]">
+            <div className="mt-1.5 min-h-11 border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-[14px] text-[var(--text-primary)]">
               {projectName ?? opportunityTitle ?? "Opportunity continuity linked"}
             </div>
           </div>
           <div>
-            <label className="text-[12px] font-medium text-[#5d6f8a]">
+            <label className="text-[12px] font-medium text-[var(--text-secondary)]">
               Project Service Address
             </label>
-            <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#f8f8f8] px-3 py-3 text-[14px] leading-5 text-[#2a2a2a]">
+            <div className="mt-1.5 min-h-11 border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-[14px] leading-5 text-[var(--text-primary)]">
               {projectServiceAddressLabel}
             </div>
-            <p className="mt-1.5 text-[12px] leading-5 text-[#7b8ba5]">
+            <p className="mt-1.5 text-[12px] leading-5 text-[var(--text-tertiary)]">
               Jobsite/service address, separate from customer billing or contact address.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="text-[12px] font-medium text-[#5d6f8a]">Estimate Date</label>
+              <label className="text-[12px] font-medium text-[var(--text-secondary)]">Estimate Date</label>
               <input
                 type="date"
                 value={estimateDate}
                 onChange={(event) => onEstimateDateChange(event.target.value)}
-                className="mt-1.5 h-11 w-full border border-[#d8deea] px-3 text-[14px] text-[#2a2a2a] outline-none focus:border-[#8ca0bf]"
+                className="mt-1.5 h-11 w-full border border-[var(--border-warm)] px-3 text-[14px] text-[var(--text-primary)] outline-none focus:border-[var(--copper)]"
               />
             </div>
             <div>
-              <label className="text-[12px] font-medium text-[#5d6f8a]">Expiration Date</label>
+              <label className="text-[12px] font-medium text-[var(--text-secondary)]">Expiration Date</label>
               <input
                 type="date"
                 value={expirationDate}
                 onChange={(event) => onExpirationDateChange(event.target.value)}
-                className="mt-1.5 h-11 w-full border border-[#d8deea] px-3 text-[14px] text-[#2a2a2a] outline-none focus:border-[#8ca0bf]"
+                className="mt-1.5 h-11 w-full border border-[var(--border-warm)] px-3 text-[14px] text-[var(--text-primary)] outline-none focus:border-[var(--copper)]"
               />
             </div>
           </div>
@@ -581,45 +581,45 @@ function renderDetailsSection(input: {
 
         <div className="space-y-4">
           <div>
-            <label className="text-[12px] font-medium text-[#5d6f8a]">Status</label>
-            <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#f8f8f8] px-3 py-3 text-[14px] capitalize text-[#2a2a2a]">
+            <label className="text-[12px] font-medium text-[var(--text-secondary)]">Status</label>
+            <div className="mt-1.5 min-h-11 border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-[14px] capitalize text-[var(--text-primary)]">
               {formatStatusLabel(currentStatus)}
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="text-[12px] font-medium text-[#5d6f8a]">Project Type</label>
+              <label className="text-[12px] font-medium text-[var(--text-secondary)]">Project Type</label>
               <input
                 value={projectType}
                 onChange={(event) => onProjectTypeChange(event.target.value)}
                 placeholder="Select type"
-                className="mt-1.5 h-11 w-full border border-[#d8deea] px-3 text-[14px] text-[#2a2a2a] outline-none focus:border-[#8ca0bf]"
+                className="mt-1.5 h-11 w-full border border-[var(--border-warm)] px-3 text-[14px] text-[var(--text-primary)] outline-none focus:border-[var(--copper)]"
               />
             </div>
             <div>
-              <label className="text-[12px] font-medium text-[#5d6f8a]">Sector</label>
+              <label className="text-[12px] font-medium text-[var(--text-secondary)]">Sector</label>
               <input
                 value={sector}
                 onChange={(event) => onSectorChange(event.target.value)}
                 placeholder="Select sector"
-                className="mt-1.5 h-11 w-full border border-[#d8deea] px-3 text-[14px] text-[#2a2a2a] outline-none focus:border-[#8ca0bf]"
+                className="mt-1.5 h-11 w-full border border-[var(--border-warm)] px-3 text-[14px] text-[var(--text-primary)] outline-none focus:border-[var(--copper)]"
               />
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="text-[12px] font-medium text-[#5d6f8a]">
+              <label className="text-[12px] font-medium text-[var(--text-secondary)]">
                 Discount Amount
               </label>
               <input
                 value={discountAmount}
                 onChange={(event) => onDiscountAmountChange(event.target.value)}
-                className="mt-1.5 h-11 w-full border border-[#d8deea] px-3 text-[14px] text-[#2a2a2a] outline-none focus:border-[#8ca0bf]"
+                className="mt-1.5 h-11 w-full border border-[var(--border-warm)] px-3 text-[14px] text-[var(--text-primary)] outline-none focus:border-[var(--copper)]"
               />
             </div>
             <div>
-              <label className="text-[12px] font-medium text-[#5d6f8a]">Tax Rule</label>
-              <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#f8f8f8] px-3 py-3 text-[14px] text-[#2a2a2a]">
+              <label className="text-[12px] font-medium text-[var(--text-secondary)]">Tax Rule</label>
+              <div className="mt-1.5 min-h-11 border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-[14px] text-[var(--text-primary)]">
                 {taxBehaviorLabel} at {taxRateLabel}
                 {customerTaxExempt ? " | Customer exempt" : ""}
               </div>
@@ -627,20 +627,20 @@ function renderDetailsSection(input: {
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <div>
-              <label className="text-[12px] font-medium text-[#5d6f8a]">Taxable Sales</label>
-              <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#f8f8f8] px-3 py-3 text-[14px] text-[#2a2a2a]">
+              <label className="text-[12px] font-medium text-[var(--text-secondary)]">Taxable Sales</label>
+              <div className="mt-1.5 min-h-11 border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-[14px] text-[var(--text-primary)]">
                 {taxableSalesLabel}
               </div>
             </div>
             <div>
-              <label className="text-[12px] font-medium text-[#5d6f8a]">Exempt Sales</label>
-              <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#f8f8f8] px-3 py-3 text-[14px] text-[#2a2a2a]">
+              <label className="text-[12px] font-medium text-[var(--text-secondary)]">Exempt Sales</label>
+              <div className="mt-1.5 min-h-11 border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-[14px] text-[var(--text-primary)]">
                 {exemptSalesLabel}
               </div>
             </div>
             <div>
-              <label className="text-[12px] font-medium text-[#5d6f8a]">Derived Tax</label>
-              <div className="mt-1.5 min-h-11 border border-[#d8deea] bg-[#f8f8f8] px-3 py-3 text-[14px] text-[#2a2a2a]">
+              <label className="text-[12px] font-medium text-[var(--text-secondary)]">Derived Tax</label>
+              <div className="mt-1.5 min-h-11 border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-[14px] text-[var(--text-primary)]">
                 {derivedTaxLabel}
               </div>
             </div>
@@ -653,11 +653,11 @@ function renderDetailsSection(input: {
 
 function renderBiddingStub() {
   return (
-    <section className="border-t border-[#e6e9ef] bg-white">
-      <div className="border-b border-[#e6e9ef] bg-[#f8f8f8] px-4 py-3 text-[15px] font-semibold text-[#171717]">
+    <section className="border-t border-[var(--border-warm)] bg-white">
+      <div className="border-b border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-[15px] font-semibold text-[var(--text-primary)]">
         Bidding
       </div>
-      <div className="px-5 py-6 text-[14px] leading-6 text-[#5f5f5f]">
+      <div className="px-5 py-6 text-[14px] leading-6 text-[var(--text-secondary)]">
         Bidding remains limited in this run. The workspace is preserving the section and estimate
         continuity, but full bid-package behavior is still outside scope.
       </div>

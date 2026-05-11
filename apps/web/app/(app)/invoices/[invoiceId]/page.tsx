@@ -607,7 +607,7 @@ export default async function InvoiceDetailPage({
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
       <section className="space-y-10">
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="rounded-lg border border-[var(--border-warm)] bg-white p-5 shadow-sm sm:p-6">
           <DetailPageHeader
             eyebrow="Invoice Review"
             title={invoice.referenceNumber}
@@ -711,8 +711,8 @@ export default async function InvoiceDetailPage({
             <div className="space-y-6">
               <section className="space-y-4">
                 <div>
-                  <p className="text-sm font-medium text-slate-950">Line items</p>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">Line items</p>
+                  <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                     {invoice.billingModel === "aia_progress"
                       ? "Read-only billing lines generated from the canonical schedule-of-values chain. Review them here, but return to the progress billing workspace for structural scope or percent-complete changes."
                       : "Canonical billing scope for this invoice, preserved in the same project, estimate, and job chain."}
@@ -724,30 +724,30 @@ export default async function InvoiceDetailPage({
                     {invoice.lineItems.map((lineItem) => (
                       <div
                         key={lineItem.id}
-                        className="rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4"
+                        className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4"
                       >
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div className="space-y-1">
-                            <p className="text-sm font-semibold text-slate-950">
+                            <p className="text-sm font-semibold text-[var(--text-primary)]">
                               {lineItem.name}
                             </p>
                             {lineItem.description ? (
-                              <p className="text-sm leading-6 text-slate-600">
+                              <p className="text-sm leading-6 text-[var(--text-secondary)]">
                                 {lineItem.description}
                               </p>
                             ) : null}
-                            <p className="text-sm text-slate-500">
+                            <p className="text-sm text-[var(--text-secondary)]">
                               {Number(lineItem.quantity).toLocaleString("en-US")} {lineItem.unit} at{" "}
                               {formatMoney(lineItem.unitPrice)}
                             </p>
-                            <p className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">
+                            <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                               {getInvoiceLineageBadge({
                                 lineageType: lineItem.lineageType,
                                 invoiceOnlyAdjustmentKind: lineItem.invoiceOnlyAdjustmentKind
                               })}
                             </p>
                           </div>
-                          <p className="text-sm font-semibold text-slate-950">
+                          <p className="text-sm font-semibold text-[var(--text-primary)]">
                             {formatMoney(lineItem.lineTotal)}
                           </p>
                         </div>
@@ -755,16 +755,16 @@ export default async function InvoiceDetailPage({
                     ))}
                   </div>
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-500">
+                  <div className="rounded-2xl border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
                     No line items are currently attached to this invoice.
                   </div>
                 )}
               </section>
 
               <section className="space-y-3">
-                <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5">
-                  <p className="text-sm font-medium text-slate-950">{invoiceContinuityTitle}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-5 py-5">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">{invoiceContinuityTitle}</p>
+                  <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                     {invoice.billingModel === "aia_progress"
                       ? "This invoice is a read-only billing snapshot of current SOV state. Keep structural percent-complete, retainage, and scope billing changes in the progress billing workspace."
                       : invoice.workflowRole === "deposit"
@@ -774,14 +774,14 @@ export default async function InvoiceDetailPage({
                   <div className="mt-4 flex flex-wrap gap-2.5">
                     <Link
                       href={continuityHref}
-                      className="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                      className="inline-flex items-center rounded-md border border-[var(--border-warm)] bg-white px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--graphite-light)] hover:bg-[var(--highlight)]"
                     >
                       {continuityLabel}
                     </Link>
                     {invoice.project ? (
                       <Link
                         href={`/projects/${invoice.project.id}`}
-                        className="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                        className="inline-flex items-center rounded-md border border-[var(--border-warm)] bg-white px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--graphite-light)] hover:bg-[var(--highlight)]"
                       >
                         Open project workspace
                       </Link>
@@ -791,17 +791,17 @@ export default async function InvoiceDetailPage({
 
                 {invoice.billingModel === "aia_progress" ? (
                   progressBillingWorkspace ? (
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
+                    <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-5">
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div className="space-y-2">
-                          <p className="text-sm font-medium text-slate-950">
+                          <p className="text-sm font-medium text-[var(--text-primary)]">
                             Linked progress billing snapshot
                           </p>
-                          <p className="text-sm leading-6 text-slate-600">
+                          <p className="text-sm leading-6 text-[var(--text-secondary)]">
                             This page summarizes the invoice outcome. The canonical SOV workspace remains the place to adjust billed percent, retainage, and scope-item billing.
                           </p>
                         </div>
-                        <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                        <span className="inline-flex rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                           {linkedProgressItems.length || invoice.lineItems.length} linked item
                           {linkedProgressItems.length === 1 || (linkedProgressItems.length === 0 && invoice.lineItems.length === 1)
                             ? ""
@@ -809,35 +809,35 @@ export default async function InvoiceDetailPage({
                         </span>
                       </div>
                       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-4">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                             Previously billed
                           </p>
-                          <p className="mt-2 text-sm font-semibold text-slate-950">
+                          <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">
                             {formatMoney(linkedProgressSummary.previousBilled)}
                           </p>
                         </div>
-                        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-4">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                             Current billed
                           </p>
-                          <p className="mt-2 text-sm font-semibold text-slate-950">
+                          <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">
                             {formatMoney(linkedProgressSummary.currentBilling)}
                           </p>
                         </div>
-                        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-4">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                             Retainage held
                           </p>
-                          <p className="mt-2 text-sm font-semibold text-slate-950">
+                          <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">
                             {formatMoney(linkedProgressSummary.retainageHeld)}
                           </p>
                         </div>
-                        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-4">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                             Balance to finish
                           </p>
-                          <p className="mt-2 text-sm font-semibold text-slate-950">
+                          <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">
                             {formatMoney(linkedProgressSummary.balanceToFinish)}
                           </p>
                         </div>
@@ -853,19 +853,19 @@ export default async function InvoiceDetailPage({
 
               <section className="grid gap-6 lg:grid-cols-2">
                 <div className="space-y-3">
-                  <p className="text-sm font-medium text-slate-950">Billing notes</p>
-                  <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">Billing notes</p>
+                  <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
                     {invoice.notes ?? "No billing notes have been captured on this invoice yet."}
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <p className="text-sm font-medium text-slate-950">Latest payment activity</p>
-                  <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">Latest payment activity</p>
+                  <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
                     <div className="space-y-3">
                       {latestPayment ? (
                         <div className="space-y-1">
-                          <p className="font-semibold text-slate-950">
+                          <p className="font-semibold text-[var(--text-primary)]">
                             {formatMoney(latestPayment.amount)}
                           </p>
                           <p>{formatDate(latestPayment.paymentDate)}</p>
@@ -877,8 +877,8 @@ export default async function InvoiceDetailPage({
                       ) : (
                         <p>No payments have been recorded for this invoice yet.</p>
                       )}
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                           Customer-facing signal
                         </p>
                         <p className="mt-2">
@@ -895,119 +895,119 @@ export default async function InvoiceDetailPage({
             </div>
 
             <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
-                <p className="text-sm font-medium text-slate-950">
+              <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-5">
+                <p className="text-sm font-medium text-[var(--text-primary)]">
                   {invoice.billingModel === "aia_progress"
                     ? "Detailed SOV billing math"
                     : "Detailed billing math"}
                 </p>
-                <dl className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+                <dl className="mt-4 space-y-3 text-sm leading-6 text-[var(--text-secondary)]">
                   <div className="flex items-center justify-between gap-4">
                     <dt>Subtotal</dt>
-                    <dd className="font-medium text-slate-950">
+                    <dd className="font-medium text-[var(--text-primary)]">
                       {formatMoney(invoice.subtotalAmount)}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Taxable sales</dt>
-                    <dd className="font-medium text-slate-950">
+                    <dd className="font-medium text-[var(--text-primary)]">
                       {formatMoney(invoice.taxableSalesAmount)}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Exempt sales</dt>
-                    <dd className="font-medium text-slate-950">
+                    <dd className="font-medium text-[var(--text-primary)]">
                       {formatMoney(invoice.exemptSalesAmount)}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Tax collected</dt>
-                    <dd className="font-medium text-slate-950">
+                    <dd className="font-medium text-[var(--text-primary)]">
                       {formatMoney(invoice.taxCollectedAmount)}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Tax</dt>
-                    <dd className="font-medium text-slate-950">
+                    <dd className="font-medium text-[var(--text-primary)]">
                       {formatMoney(invoice.taxAmount)}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Discount</dt>
-                    <dd className="font-medium text-slate-950">
+                    <dd className="font-medium text-[var(--text-primary)]">
                       {formatMoney(invoice.discountAmount)}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Retainage held</dt>
-                    <dd className="font-medium text-slate-950">
+                    <dd className="font-medium text-[var(--text-primary)]">
                       {formatMoney(invoice.retainageHeldAmount)}
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between gap-4 border-t border-slate-200 pt-3">
-                    <dt className="font-semibold text-slate-950">Total</dt>
-                    <dd className="font-semibold text-slate-950">
+                  <div className="flex items-center justify-between gap-4 border-t border-[var(--border-warm)] pt-3">
+                    <dt className="font-semibold text-[var(--text-primary)]">Total</dt>
+                    <dd className="font-semibold text-[var(--text-primary)]">
                       {formatMoney(invoice.totalAmount)}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Paid</dt>
-                    <dd className="font-medium text-slate-950">
+                    <dd className="font-medium text-[var(--text-primary)]">
                       {formatMoney(invoice.paidAmount)}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
-                    <dt className="font-semibold text-slate-950">Balance due</dt>
-                    <dd className="font-semibold text-slate-950">
+                    <dt className="font-semibold text-[var(--text-primary)]">Balance due</dt>
+                    <dd className="font-semibold text-[var(--text-primary)]">
                       {formatMoney(invoice.balanceDueAmount)}
                     </dd>
                   </div>
                 </dl>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5">
-                <p className="text-sm font-medium text-slate-950">Billing configuration</p>
-                <dl className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+              <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-5 py-5">
+                <p className="text-sm font-medium text-[var(--text-primary)]">Billing configuration</p>
+                <dl className="mt-4 space-y-3 text-sm leading-6 text-[var(--text-secondary)]">
                   <div className="flex items-center justify-between gap-4">
                     <dt>Billing model</dt>
-                    <dd className="text-right text-slate-950">{invoice.billingModel}</dd>
+                    <dd className="text-right text-[var(--text-primary)]">{invoice.billingModel}</dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Issue date</dt>
-                    <dd className="text-right text-slate-950">{formatDate(invoice.issueDate)}</dd>
+                    <dd className="text-right text-[var(--text-primary)]">{formatDate(invoice.issueDate)}</dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Due date</dt>
-                    <dd className="text-right text-slate-950">{formatDate(invoice.dueDate)}</dd>
+                    <dd className="text-right text-[var(--text-primary)]">{formatDate(invoice.dueDate)}</dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Tax behavior</dt>
-                    <dd className="text-right text-slate-950 capitalize">
+                    <dd className="text-right text-[var(--text-primary)] capitalize">
                       {invoice.taxBehaviorApplied.replaceAll("_", " ")}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Applied tax rate</dt>
-                    <dd className="text-right text-slate-950">
+                    <dd className="text-right text-[var(--text-primary)]">
                       {formatRate(invoice.taxRateApplied)}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Customer tax snapshot</dt>
-                    <dd className="text-right text-slate-950">
+                    <dd className="text-right text-[var(--text-primary)]">
                       {invoice.customerTaxExemptSnapshot ? "Exempt" : "Taxable"}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Org default tax</dt>
-                    <dd className="max-w-[14rem] text-right text-slate-950">
+                    <dd className="max-w-[14rem] text-right text-[var(--text-primary)]">
                       {financialSettings.defaultTaxBehavior.replaceAll("_", " ")} at{" "}
                       {formatRate(financialSettings.defaultTaxRate)}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Retainage %</dt>
-                    <dd className="text-right text-slate-950">
+                    <dd className="text-right text-[var(--text-primary)]">
                       {Number(invoice.retainagePercentage).toFixed(2)}%
                     </dd>
                   </div>
@@ -1027,16 +1027,16 @@ export default async function InvoiceDetailPage({
             }
           >
             <div id="payment-recording" className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5">
-                <p className="text-sm font-medium text-slate-950">
+              <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-5 py-5">
+                <p className="text-sm font-medium text-[var(--text-primary)]">
                   Customer-facing payment continuity
                 </p>
                 <div className="mt-4 grid gap-3 lg:grid-cols-3">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4 text-sm leading-6 text-slate-600">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                       Readiness
                     </p>
-                    <p className="mt-2 font-semibold text-slate-950">
+                    <p className="mt-2 font-semibold text-[var(--text-primary)]">
                       {invoiceIsSettled
                         ? "Payment settled"
                         : onlinePaymentGate.canStartCheckout
@@ -1051,11 +1051,11 @@ export default async function InvoiceDetailPage({
                       })}
                     </p>
                   </div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4 text-sm leading-6 text-slate-600">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                       Latest shared signal
                     </p>
-                    <p className="mt-2 font-semibold text-slate-950">
+                    <p className="mt-2 font-semibold text-[var(--text-primary)]">
                       {latestPaymentEvent
                         ? getPaymentEventLabel(latestPaymentEvent.eventType)
                         : "No portal-side signal yet"}
@@ -1066,11 +1066,11 @@ export default async function InvoiceDetailPage({
                         : "Customer-facing payment events will appear here once request or checkout activity starts."}
                     </p>
                   </div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4 text-sm leading-6 text-slate-600">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                       Collection attention
                     </p>
-                    <p className="mt-2 font-semibold text-slate-950">
+                    <p className="mt-2 font-semibold text-[var(--text-primary)]">
                       {latestPaymentFailure
                         ? "Recent failure needs follow-through"
                         : latestCheckoutStarted
@@ -1118,15 +1118,15 @@ export default async function InvoiceDetailPage({
               )}
 
               <div className="space-y-3">
-                <p className="text-sm font-medium text-slate-950">Recorded payments</p>
+                <p className="text-sm font-medium text-[var(--text-primary)]">Recorded payments</p>
                 {invoice.payments.length > 0 ? (
                   invoice.payments.map((payment) => (
                     <div
                       key={payment.id}
-                      className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4 text-sm leading-6 text-slate-600"
+                      className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]"
                     >
                       <div className="flex items-center justify-between gap-4">
-                        <p className="font-medium text-slate-950">
+                        <p className="font-medium text-[var(--text-primary)]">
                           {formatMoney(payment.amount)}
                         </p>
                         <p className="capitalize">{formatStatusLabel(payment.status)}</p>
@@ -1138,7 +1138,7 @@ export default async function InvoiceDetailPage({
                     </div>
                   ))
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
+                  <div className="rounded-2xl border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
                     No payments have been recorded for this invoice yet.
                   </div>
                 )}
@@ -1161,7 +1161,7 @@ export default async function InvoiceDetailPage({
             >
               {invoice.billingModel === "aia_progress" ? (
                 <div className="space-y-4">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">
+                  <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
                     Progress-billed invoice lines stay tied to approved scope through the
                     shared schedule-of-values record. Update percent complete and rebuild the
                     draft invoice from the progress billing workspace instead of editing those
@@ -1170,7 +1170,7 @@ export default async function InvoiceDetailPage({
                   {progressBillingWorkspace ? (
                     <Link
                       href={`/progress-billing/${progressBillingWorkspace.id}`}
-                      className="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                      className="inline-flex items-center rounded-md border border-[var(--border-warm)] bg-white px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--graphite-light)] hover:bg-[var(--highlight)]"
                     >
                       Open progress billing workspace
                     </Link>
@@ -1215,7 +1215,7 @@ export default async function InvoiceDetailPage({
               : "This invoice is not linked to a single job, so schedule context is summarized from canonical project jobs without creating a billing-to-schedule bridge model."
           }
           >
-            <div className="space-y-4 text-sm leading-6 text-slate-600">
+            <div className="space-y-4 text-sm leading-6 text-[var(--text-secondary)]">
               {linkedJob ? (
                 scheduleFocusJob ? (
                   <ScheduleContextFocusCard
@@ -1362,7 +1362,7 @@ export default async function InvoiceDetailPage({
                 subtitle="Project"
                 meta={invoice.customer?.name ?? "Unknown customer"}
                 badge={
-                  <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                  <span className="inline-flex rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                     {formatStatusLabel(invoice.project.status)}
                   </span>
                 }
@@ -1383,7 +1383,7 @@ export default async function InvoiceDetailPage({
                 subtitle="Estimate"
                 meta={invoice.project?.name ?? "Source estimate"}
                 badge={
-                  <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                  <span className="inline-flex rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                     {formatStatusLabel(invoice.estimate.status)}
                   </span>
                 }
@@ -1396,7 +1396,7 @@ export default async function InvoiceDetailPage({
                 subtitle="Progress billing / SOV"
                 meta={`Current ${formatMoney(progressBillingWorkspace.currentBillableTotal)} | Balance ${formatMoney(progressBillingWorkspace.balanceToFinishTotal)}`}
                 badge={
-                  <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                  <span className="inline-flex rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                     {formatStatusLabel(progressBillingWorkspace.status)}
                   </span>
                 }
@@ -1409,7 +1409,7 @@ export default async function InvoiceDetailPage({
                 subtitle="Job"
                 meta="Execution record linked to this invoice"
                 badge={
-                  <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                  <span className="inline-flex rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                     {formatStatusLabel(invoice.job.dispatchStatus)}
                   </span>
                 }
@@ -1423,7 +1423,7 @@ export default async function InvoiceDetailPage({
                 subtitle="Change order"
                 meta={`${formatMoney(changeOrder.priceAdjustment)}${changeOrder.appliedInvoiceLineItemId ? " | Applied to this invoice" : ""}`}
                 badge={
-                  <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                  <span className="inline-flex rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                     {formatStatusLabel(changeOrder.status)}
                   </span>
                 }
@@ -1501,7 +1501,7 @@ export default async function InvoiceDetailPage({
           description="Invoice-scoped communication stays on canonical threads and routes back into the shared communications workspace when billing follow-through needs context."
           countLabel="Invoice threads"
           emptyMessage="No invoice-scoped communication threads are attached to this canonical invoice yet."
-          actionClassName="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+          actionClassName="inline-flex items-center rounded-full border border-[var(--border-warm)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--graphite-light)] hover:bg-[var(--highlight)]"
           threads={communicationThreads}
         />
       </aside>

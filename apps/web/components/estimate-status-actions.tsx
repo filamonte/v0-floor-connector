@@ -14,9 +14,9 @@ export function EstimateStatusActions({
     return (
       <div
         id="estimate-decision-actions"
-        className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600"
+        className="rounded-[1.5rem] border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]"
       >
-        <p className="font-medium text-slate-950">Manual customer decision</p>
+        <p className="font-medium text-[var(--text-primary)]">Manual customer decision</p>
         <p className="mt-2">
           Use these actions when the customer approved or rejected outside the portal, such
           as a paper signature, verbal approval, fake email during testing, or a non-portal
@@ -31,7 +31,7 @@ export function EstimateStatusActions({
             <input type="hidden" name="nextStatus" value="approved" />
             <button
               type="submit"
-              className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+              className="inline-flex items-center rounded-full bg-[var(--copper)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--copper-light)]"
             >
               Record customer approval
             </button>
@@ -53,7 +53,7 @@ export function EstimateStatusActions({
   }
 
   return (
-    <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+    <div className="rounded-[1.5rem] border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
       {currentStatus === "approved"
           ? "This estimate is approved and is ready for the downstream contract and billing handoff."
           : currentStatus === "rejected"

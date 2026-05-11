@@ -206,7 +206,7 @@ function SearchIcon() {
       viewBox="0 0 24 24"
       width="16"
       height="16"
-      className="h-4 w-4 text-[#777777]"
+      className="h-4 w-4 text-[var(--text-tertiary)]"
       style={dashboardIconStyle}
       fill="none"
       stroke="currentColor"
@@ -463,7 +463,7 @@ function FinanceTable({
       action={
         <Link
           href={widget.href}
-          className="inline-flex items-center border border-[#d6d6d6] bg-[#f7f8fa] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f] transition hover:bg-white"
+          className="inline-flex items-center border border-[var(--border-warm)] bg-[var(--highlight)] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:bg-white"
         >
           {widget.actionLabel}
         </Link>
@@ -471,33 +471,33 @@ function FinanceTable({
     >
       {items.length > 0 ? (
         <div>
-          <div className="grid grid-cols-[minmax(0,1.45fr)_minmax(0,0.9fr)_auto] gap-3 border-b border-[#d6d6d6] bg-[#f7f8fa] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
+          <div className="grid grid-cols-[minmax(0,1.45fr)_minmax(0,0.9fr)_auto] gap-3 border-b border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
             <span>Record</span>
             <span>Status</span>
             <span>Amount</span>
           </div>
-          <div className="divide-y divide-[#e5e5e5]">
+          <div className="divide-y divide-[var(--border-warm)]">
             {items.map((item) => (
               <article key={item.id} className="px-4 py-3">
                 <div className="grid grid-cols-[minmax(0,1.45fr)_minmax(0,0.9fr)_auto] gap-3">
                   <div className="min-w-0">
                     <Link
                       href={item.href}
-                      className="truncate text-sm font-semibold text-[#171717] transition hover:text-brand-700"
+                      className="truncate text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
                     >
                       {item.title}
                     </Link>
-                    <p className="mt-1 truncate text-xs text-slate-500">{item.subtitle}</p>
+                    <p className="mt-1 truncate text-xs text-[var(--text-secondary)]">{item.subtitle}</p>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                       {item.badge ?? item.meta}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">{item.meta}</p>
+                    <p className="mt-1 text-xs text-[var(--text-secondary)]">{item.meta}</p>
                   </div>
                   <div className="text-right">
                     {item.trailing ? (
-                      <p className="text-sm font-semibold text-slate-900">{item.trailing}</p>
+                      <p className="text-sm font-semibold text-[var(--text-primary)]">{item.trailing}</p>
                     ) : null}
                   </div>
                 </div>
@@ -507,8 +507,8 @@ function FinanceTable({
         </div>
       ) : (
         <div className="px-4 py-5">
-          <p className="text-sm font-semibold text-[#171717]">{widget.emptyTitle}</p>
-          <p className="mt-2 text-sm leading-5 text-slate-500">{widget.emptyDescription}</p>
+          <p className="text-sm font-semibold text-[var(--text-primary)]">{widget.emptyTitle}</p>
+          <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">{widget.emptyDescription}</p>
         </div>
       )}
     </BoardPanel>
@@ -615,44 +615,44 @@ export function ContractorDashboardSurface({
   ].filter(Boolean) as DashboardShortcut[];
 
   return (
-    <div className="-mx-5 bg-[#f4f5f7] sm:-mx-8">
-      <section className="border-b border-[#d6d6d6] bg-white px-4 py-3 sm:px-6">
+    <div className="-mx-5 bg-[var(--cream)] sm:-mx-8">
+      <section className="border-b border-[var(--border-warm)] bg-white px-4 py-3 sm:px-6">
         <div className="space-y-3">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6b7280]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                 Contractor dashboard
               </p>
-              <h1 className="mt-1 text-[22px] font-semibold tracking-tight text-[#171717]">
+              <h1 className="mt-1 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
                 {header.organizationName}
               </h1>
-              <p className="mt-1 text-[13px] leading-5 text-[#4b5563]">
+              <p className="mt-1 text-[13px] leading-5 text-[var(--text-secondary)]">
                 Priority decisions, core metrics, and work queues in one contractor surface.
               </p>
             </div>
 
-            <div className="grid gap-px border border-[#d6d6d6] bg-[#d6d6d6] sm:grid-cols-3">
+            <div className="grid gap-px border border-[var(--border-warm)] bg-[var(--border-warm)] sm:grid-cols-3">
               <div className="bg-white px-3 py-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                   Role
                 </p>
-                <p className="mt-1 text-sm font-semibold text-[#171717]">
+                <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
                   {header.roleLabel}
                 </p>
               </div>
               <div className="bg-white px-3 py-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                   Active projects
                 </p>
-                <p className="mt-1 text-sm font-semibold text-[#171717]">
+                <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
                   {header.activeProjectCount}
                 </p>
               </div>
               <div className="bg-white px-3 py-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                   Open receivables
                 </p>
-                <p className="mt-1 text-sm font-semibold text-[#171717]">
+                <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
                   {header.openReceivablesLabel}
                 </p>
               </div>
@@ -674,7 +674,7 @@ export function ContractorDashboardSurface({
                   });
                 }}
                 placeholder="Search dashboard queues by project, customer, estimate, contract, invoice, status, or priority"
-                className="h-10 w-full border border-[#d6d6d6] bg-white pl-9 pr-3 text-sm text-[#2a2a2a] outline-none placeholder:text-[#777777] focus:border-[#d8731f]"
+                className="h-10 w-full border border-[var(--border-warm)] bg-white pl-9 pr-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)]"
               />
             </label>
 
@@ -682,8 +682,8 @@ export function ContractorDashboardSurface({
               <UniversalCreateMenu
                 idBase="dashboard-universal-create-menu"
                 buttonLabel="Universal create"
-                buttonClassName="inline-flex h-10 items-center border border-[#d8731f] bg-[#d8731f] px-4 text-[12px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[#bf6519]"
-                panelClassName="border-[#d6d6d6]"
+                buttonClassName="inline-flex h-10 items-center border border-[var(--copper)] bg-[var(--copper)] px-4 text-[12px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[var(--copper-light)]"
+                panelClassName="border-[var(--border-warm)]"
               />
               {topLinks.map((link) => (
                 <TopLink
@@ -744,7 +744,7 @@ export function ContractorDashboardSurface({
                 {earlyAccess.setupHref ? (
                   <Link
                     href={earlyAccess.setupHref}
-                    className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-[#11100f] px-4 text-xs font-semibold text-white transition hover:bg-[#2b241f]"
+                    className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-[var(--graphite)] px-4 text-xs font-semibold text-white transition hover:bg-[var(--graphite-light)]"
                   >
                     {earlyAccess.setupCtaLabel ?? "Finish setup"}
                   </Link>
@@ -785,16 +785,16 @@ export function ContractorDashboardSurface({
           <section aria-labelledby="dashboard-my-work-title" className="space-y-3">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6b7280]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                   Operational intelligence
                 </p>
                 <h2
                   id="dashboard-my-work-title"
-                  className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]"
+                  className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
                 >
                   My Work
                 </h2>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
+                <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                   {selectedMyWorkQueueMode?.description ??
                     "Derived attention items from canonical records."}
                 </p>
@@ -802,7 +802,7 @@ export function ContractorDashboardSurface({
               {myWorkQueueModes ? (
                 <div
                   aria-label="My Work queue mode"
-                  className="inline-flex w-full flex-col gap-1 border border-[#d6d6d6] bg-white p-1 sm:w-auto sm:flex-row"
+                  className="inline-flex w-full flex-col gap-1 border border-[var(--border-warm)] bg-white p-1 sm:w-auto sm:flex-row"
                   role="tablist"
                 >
                   {myWorkQueueModes.modes.map((mode) => {
@@ -818,15 +818,15 @@ export function ContractorDashboardSurface({
                         className={[
                           "flex h-9 items-center justify-between gap-3 px-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] transition sm:justify-center",
                           selected
-                            ? "bg-[#171717] text-white"
-                            : "bg-white text-[#4f4f4f] hover:bg-[#f8f8f8]"
+                            ? "bg-[var(--graphite)] text-white"
+                            : "bg-white text-[var(--text-secondary)] hover:bg-[var(--highlight)]"
                         ].join(" ")}
                       >
                         <span>{mode.label}</span>
                         <span
                           className={[
                             "rounded-sm px-1.5 py-0.5 text-[10px]",
-                            selected ? "bg-white/15 text-white" : "bg-[#f1f1f1] text-[#555555]"
+                            selected ? "bg-white/15 text-white" : "bg-[var(--highlight)] text-[var(--text-secondary)]"
                           ].join(" ")}
                         >
                           {mode.count}
@@ -847,17 +847,17 @@ export function ContractorDashboardSurface({
             ) : null}
             {myWorkQueueModes?.caveats.unresolvedItemsPresent &&
             selectedMyWorkQueueMode?.mode === "unresolved" ? (
-              <div className="border border-[#d6d6d6] bg-white px-4 py-3 text-sm leading-5 text-slate-600">
+              <div className="border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-5 text-[var(--text-secondary)]">
                 These attention items need a responsible person/default. They also
                 remain visible in Company.
               </div>
             ) : null}
             {selectedMyWorkQueueMode?.count === 0 ? (
-              <div className="border border-[#d6d6d6] bg-white px-4 py-5">
-                <p className="text-sm font-semibold text-[#171717]">
+              <div className="border border-[var(--border-warm)] bg-white px-4 py-5">
+                <p className="text-sm font-semibold text-[var(--text-primary)]">
                   {selectedMyWorkQueueMode.emptyTitle}
                 </p>
-                <p className="mt-2 text-sm leading-5 text-slate-500">
+                <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">
                   {selectedMyWorkQueueMode.emptyDescription}
                 </p>
               </div>
@@ -879,12 +879,12 @@ export function ContractorDashboardSurface({
 
         <section aria-labelledby="dashboard-work-queues-title" className="space-y-3">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6b7280]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
               Work queues
             </p>
             <h2
               id="dashboard-work-queues-title"
-              className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]"
+              className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
             >
               Follow up by workflow area
             </h2>

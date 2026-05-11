@@ -342,21 +342,21 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       description="Create the invoice, finish billing details, review it, send it, and then manage collections. This manager keeps the billing workflow clearer instead of jumping straight into payment detail."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Draft</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">{draftCount}</p>
+          <div className="rounded-md border border-[var(--border-warm)] bg-white px-3 py-2.5">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">Draft</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">{draftCount}</p>
           </div>
-          <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Sent</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">{sentCount}</p>
+          <div className="rounded-md border border-[var(--border-warm)] bg-white px-3 py-2.5">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">Sent</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">{sentCount}</p>
           </div>
-          <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Overdue</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">{overdueCount}</p>
+          <div className="rounded-md border border-[var(--border-warm)] bg-white px-3 py-2.5">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">Overdue</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">{overdueCount}</p>
           </div>
-          <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Open balance</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">{openCount}</p>
+          <div className="rounded-md border border-[var(--border-warm)] bg-white px-3 py-2.5">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">Open balance</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">{openCount}</p>
           </div>
         </div>
       }
@@ -380,18 +380,18 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               name="q"
               defaultValue={query}
               placeholder="Search invoice, project, customer, or role"
-              className="min-w-0 flex-1 rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
+              className="min-w-0 flex-1 rounded-[4px] border border-[var(--border-warm)] bg-white px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[var(--border-warm)] bg-white px-4 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition hover:bg-[var(--highlight)]"
             >
               Search
             </button>
             {query.length > 0 || statusFilter !== "all" || showComposer ? (
               <Link
                 href="/invoices"
-                className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
+                className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
               >
                 Clear
               </Link>
@@ -417,15 +417,15 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
-                  ? "bg-[#171717] text-white"
-                  : "border border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"
+                  ? "bg-[var(--graphite)] text-white"
+                  : "border border-[var(--border-warm)] bg-white text-[var(--text-secondary)] hover:bg-[var(--highlight)]"
               ].join(" ")}
             >
               <span>{view.label}</span>
               <span
                 className={[
                   "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                  isActive ? "bg-white/15 text-white" : "bg-[var(--highlight)] text-[var(--text-secondary)]"
                 ].join(" ")}
               >
                 {view.count}
@@ -449,7 +449,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                   workflowRole: workflowRoleFilter
                 }) + "#invoice-create"
               }
-              className="inline-flex items-center rounded-[3px] border border-[#ef7d32] bg-[#ef7d32] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#de6c22]"
+              className="inline-flex items-center rounded-[3px] border border-[var(--copper)] bg-[var(--copper)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--copper-light)]"
             >
               New invoice
             </Link>

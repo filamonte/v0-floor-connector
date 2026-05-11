@@ -43,26 +43,26 @@ export function PersonForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-800">
+          <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
             Workforce type
           </span>
           <select
             name="personType"
             defaultValue={person?.personType ?? "employee"}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className="w-full rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--copper)] focus:ring-4 focus:ring-[var(--copper)]/10"
           >
             <option value="employee">Employee</option>
             <option value="subcontractor_worker">Subcontractor worker</option>
           </select>
         </label>
         <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-800">
+          <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
             Linked app user
           </span>
           <select
             name="membershipUserId"
             defaultValue={person?.membershipUserId ?? ""}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className="w-full rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--copper)] focus:ring-4 focus:ring-[var(--copper)]/10"
           >
             <option value="">No linked user</option>
             {members.map((member) => (
@@ -81,13 +81,13 @@ export function PersonForm({
           required
         />
         <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-800">
+          <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
             Linked vendor
           </span>
           <select
             name="vendorId"
             defaultValue={person?.vendorId ?? ""}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className="w-full rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--copper)] focus:ring-4 focus:ring-[var(--copper)]/10"
           >
             <option value="">No vendor</option>
             {laborProviderVendors.map((vendor) => (
@@ -143,44 +143,44 @@ export function PersonForm({
         />
       </div>
 
-      <section className="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
+      <section className="rounded-[1.75rem] border border-[var(--border-warm)] bg-[var(--highlight)] p-5 sm:p-6">
         <div className="flex flex-col gap-2">
-          <p className="text-base font-semibold text-slate-950">Workforce state</p>
-          <p className="text-sm leading-6 text-slate-600">
+          <p className="text-base font-semibold text-[var(--text-primary)]">Workforce state</p>
+          <p className="text-sm leading-6 text-[var(--text-secondary)]">
             Keep the labor identity usable for future assignment, time, and compliance work without adding scheduling or payroll logic yet.
           </p>
         </div>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <label className="flex items-start gap-3 rounded-[1.5rem] border border-slate-200 bg-white px-4 py-4">
+          <label className="flex items-start gap-3 rounded-[1.5rem] border border-[var(--border-warm)] bg-white px-4 py-4">
             <input
               type="checkbox"
               name="isAssignable"
               defaultChecked={person?.isAssignable ?? true}
-              className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
+              className="mt-1 h-4 w-4 rounded border-[var(--border-warm)] text-[var(--copper)] focus:ring-[var(--copper)]/20"
             />
             <span>
-              <span className="block text-sm font-medium text-slate-900">
+              <span className="block text-sm font-medium text-[var(--text-primary)]">
                 Assignable workforce record
               </span>
-              <span className="mt-1 block text-xs leading-5 text-slate-500">
+              <span className="mt-1 block text-xs leading-5 text-[var(--text-secondary)]">
                 Keep this on when the person should be available for future project, job, and time allocation.
               </span>
             </span>
           </label>
 
-          <label className="flex items-start gap-3 rounded-[1.5rem] border border-slate-200 bg-white px-4 py-4">
+          <label className="flex items-start gap-3 rounded-[1.5rem] border border-[var(--border-warm)] bg-white px-4 py-4">
             <input
               type="checkbox"
               name="isActive"
               defaultChecked={person?.isActive ?? true}
-              className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
+              className="mt-1 h-4 w-4 rounded border-[var(--border-warm)] text-[var(--copper)] focus:ring-[var(--copper)]/20"
             />
             <span>
-              <span className="block text-sm font-medium text-slate-900">
+              <span className="block text-sm font-medium text-[var(--text-primary)]">
                 Active workforce record
               </span>
-              <span className="mt-1 block text-xs leading-5 text-slate-500">
+              <span className="mt-1 block text-xs leading-5 text-[var(--text-secondary)]">
                 Inactive people remain historical records but should not represent current labor capacity.
               </span>
             </span>
@@ -189,14 +189,14 @@ export function PersonForm({
       </section>
 
       <label className="block">
-        <span className="mb-2 block text-sm font-medium text-slate-800">
+        <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
           Notes
         </span>
         <textarea
           name="notes"
           defaultValue={getValue(person?.notes)}
           rows={5}
-          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+          className="w-full rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)] focus:ring-4 focus:ring-[var(--copper)]/10"
           placeholder="Optional internal notes about this workforce record"
         />
       </label>
@@ -205,7 +205,7 @@ export function PersonForm({
         <AuthSubmitButton pendingLabel={pendingLabel} className="sm:min-w-[220px]">
           <span>{submitLabel}</span>
         </AuthSubmitButton>
-        <p className="text-sm leading-6 text-slate-500">
+        <p className="text-sm leading-6 text-[var(--text-secondary)]">
           People stay scoped to the active organization and may optionally link to a labor-provider vendor.
         </p>
       </div>
