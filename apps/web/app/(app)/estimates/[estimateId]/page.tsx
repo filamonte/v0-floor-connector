@@ -630,11 +630,10 @@ export default async function EstimateDetailPage({
             Scope
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">
-              Review the proposal pricing, grouped scope, quantities, and totals here first. Workflow
-              guidance stays above while lower sections carry customer, project, notes, and activity context.
-            </p>
-          </div>
-          <div className="space-y-6">
+            Review the proposal pricing, grouped scope, quantities, and totals here first. Workflow
+            guidance stays above while lower sections carry customer, project, notes, and activity context.
+          </p>
+          <div className="mt-6 space-y-6">
             {buildGroupedLineItems(estimate).map((group) => (
               <div key={group.id ?? "ungrouped"} className="rounded-3xl border border-[var(--border-warm)] bg-[var(--highlight)] p-4">
                 <div className="mb-4 flex items-center justify-between gap-4">
