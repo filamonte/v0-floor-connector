@@ -240,10 +240,10 @@ function TopLink({
   return (
     <Link
       href={href}
-      className="inline-flex h-8 items-center gap-2 rounded-md border border-[#d6d6d6] bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f] transition hover:bg-[#f8f8f8]"
+      className="inline-flex h-8 items-center gap-2 rounded-md border border-[var(--border-warm)] bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:bg-[var(--highlight)]"
     >
       <span>{label}</span>
-      {metric ? <span className="text-[#666666]">{metric}</span> : null}
+      {metric ? <span className="text-[var(--text-secondary)]">{metric}</span> : null}
     </Link>
   );
 }
@@ -262,17 +262,17 @@ function BoardPanel({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-[#d6d6d6] bg-white">
-      <div className="flex items-start justify-between gap-3 border-b border-[#d6d6d6] px-4 py-3">
+    <section className="rounded-lg border border-[var(--border-warm)] bg-white">
+      <div className="flex items-start justify-between gap-3 border-b border-[var(--border-warm)] px-4 py-3">
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
             {eyebrow}
           </p>
-          <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]">
+          <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]">
             {title}
           </h3>
           {description ? (
-            <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+            <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{description}</p>
           ) : null}
         </div>
         {action}
@@ -286,35 +286,35 @@ function PriorityGrid({ metrics }: { metrics: DashboardMetric[] }) {
   return (
     <section
       aria-labelledby="dashboard-key-metrics-title"
-      className="rounded-lg border border-[#d6d6d6] bg-white"
+      className="rounded-lg border border-[var(--border-warm)] bg-white"
     >
-      <div className="flex items-center justify-between gap-3 border-b border-[#d6d6d6] px-4 py-3">
+      <div className="flex items-center justify-between gap-3 border-b border-[var(--border-warm)] px-4 py-3">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
             Key metrics
           </p>
           <h2
             id="dashboard-key-metrics-title"
-            className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]"
+            className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
           >
             Pipeline and execution snapshot
           </h2>
         </div>
       </div>
-      <div className="grid gap-px bg-[#d6d6d6] md:grid-cols-5">
+      <div className="grid gap-px bg-[var(--border-warm)] md:grid-cols-5">
         {metrics.map((metric) => (
           <Link
             key={metric.key}
             href={metric.href}
-            className="bg-white px-3 py-2.5 transition hover:bg-[#f8f8f8]"
+            className="bg-white px-3 py-2.5 transition hover:bg-[var(--highlight)]"
           >
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#666666]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
               {metric.label}
             </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
               {metric.value}
             </p>
-            <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-500">
+            <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-[var(--text-secondary)]">
               {metric.detail}
             </p>
           </Link>
@@ -341,13 +341,13 @@ function QueueRows({
       action={
         <Link
           href={widget.href}
-          className="inline-flex items-center border border-[#d6d6d6] bg-[#f7f8fa] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f] transition hover:bg-white"
+          className="inline-flex items-center border border-[var(--border-warm)] bg-[var(--highlight)] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:bg-white"
         >
           {widget.actionLabel}
         </Link>
       }
     >
-      <div className="divide-y divide-[#e5e5e5]">
+      <div className="divide-y divide-[var(--border-warm)]">
         {items.length > 0 ? (
           items.map((item) => (
             <article key={item.id} className="px-4 py-3">
@@ -357,7 +357,7 @@ function QueueRows({
                     <Link
                       href={item.href}
                       aria-label={`${item.actionLabel}: ${item.title}`}
-                      className="truncate text-sm font-semibold text-[#171717] transition hover:text-brand-700"
+                      className="truncate text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
                     >
                       {item.title}
                     </Link>
@@ -373,18 +373,18 @@ function QueueRows({
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-1 text-sm leading-5 text-slate-600">{item.subtitle}</p>
-                  <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+                  <p className="mt-1 text-sm leading-5 text-[var(--text-secondary)]">{item.subtitle}</p>
+                  <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                     {item.meta}
                   </p>
                   {item.supportingMeta ? (
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                       {item.supportingMeta}
                     </p>
                   ) : null}
                 </div>
                 {item.trailing ? (
-                  <p className="shrink-0 text-sm font-semibold text-slate-900">
+                  <p className="shrink-0 text-sm font-semibold text-[var(--text-primary)]">
                     {item.trailing}
                   </p>
                 ) : null}
@@ -395,7 +395,7 @@ function QueueRows({
                     <Link
                       href={item.contextHref}
                       title={`${item.contextLabel}: ${item.title}`}
-                      className="inline-flex h-8 items-center border border-[#d6d6d6] bg-white px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f] transition hover:bg-[#f8f8f8]"
+                      className="inline-flex h-8 items-center border border-[var(--border-warm)] bg-white px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:bg-[var(--highlight)]"
                     >
                       {item.contextLabel}
                     </Link>
@@ -404,7 +404,7 @@ function QueueRows({
                     <Link
                       href={item.bridgeHref}
                       title={`${item.bridgeLabel ?? "Create work item"}: ${item.title}`}
-                      className="inline-flex h-8 items-center border border-[#d6d6d6] bg-[#f7f8fa] px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f] transition hover:bg-white"
+                      className="inline-flex h-8 items-center border border-[var(--border-warm)] bg-[var(--highlight)] px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:bg-white"
                     >
                       {item.bridgeLabel ?? "Create work item"}
                     </Link>
@@ -428,7 +428,7 @@ function QueueRows({
                     <input type="hidden" name="returnTo" value="/dashboard" />
                     <button
                       type="submit"
-                      className="inline-flex h-8 items-center border border-[#d6d6d6] bg-white px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f] transition hover:bg-[#f8f8f8]"
+                      className="inline-flex h-8 items-center border border-[var(--border-warm)] bg-white px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:bg-[var(--highlight)]"
                     >
                       Dismiss
                     </button>
@@ -439,8 +439,8 @@ function QueueRows({
           ))
         ) : (
           <div className="px-4 py-5">
-            <p className="text-sm font-semibold text-[#171717]">{widget.emptyTitle}</p>
-            <p className="mt-2 text-sm leading-5 text-slate-500">{widget.emptyDescription}</p>
+            <p className="text-sm font-semibold text-[var(--text-primary)]">{widget.emptyTitle}</p>
+            <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">{widget.emptyDescription}</p>
           </div>
         )}
       </div>

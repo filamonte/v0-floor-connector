@@ -42,12 +42,12 @@ export function JobQuickCreateForm({
         footer="This creates a real unscheduled job on the shared project chain and takes you straight into the full job workspace."
       >
         <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-800">Project</span>
+          <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">Project</span>
           <select
             name="projectId"
             defaultValue={initialProjectId ?? ""}
             onChange={(event) => setSelectedProjectId(event.target.value)}
-            className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
+            className="w-full rounded-[4px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--copper)]"
             required
           >
             <option value="" disabled>

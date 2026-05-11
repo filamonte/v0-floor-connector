@@ -32,38 +32,38 @@ export function ManagerDashboardCard({
   emptyDescription
 }: ManagerDashboardCardProps) {
   return (
-    <section className="flex h-full flex-col rounded-lg border border-[#e2e5e9] bg-white">
-      <div className="flex items-start justify-between gap-3 border-b border-[#e2e5e9] px-3 py-2.5">
+    <section className="flex h-full flex-col rounded-lg border border-[var(--border-warm)] bg-white">
+      <div className="flex items-start justify-between gap-3 border-b border-[var(--border-warm)] px-3 py-2.5">
         <div className="min-w-0">
           {eyebrow ? (
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6b7280]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
               {eyebrow}
             </p>
           ) : null}
-          <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]">
+          <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]">
             {title}
           </h3>
-          <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#4b5563]">{description}</p>
+          <p className="mt-1 line-clamp-2 text-xs leading-5 text-[var(--text-secondary)]">{description}</p>
         </div>
         <Link
           href={actionHref}
-          className="inline-flex shrink-0 items-center rounded-md border border-[#d1d5db] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4b5563] transition hover:border-[#9ca3af] hover:bg-[#f8fafc] hover:text-[#221a14]"
+          className="inline-flex shrink-0 items-center rounded-md border border-[var(--border-warm)] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:border-[var(--copper)] hover:bg-[var(--highlight)] hover:text-[var(--text-primary)]"
         >
           {actionLabel}
         </Link>
       </div>
 
-      <div className="flex-1 divide-y divide-[#e2e5e9]">
+      <div className="flex-1 divide-y divide-[var(--border-warm)]">
         {items.length > 0 ? (
           items.map((item) => (
             <Link
               key={`${item.href}:${item.title}`}
               href={item.href}
-              className="group flex items-start justify-between gap-3 px-3 py-2.5 transition hover:bg-[#f8fafc]"
+              className="group flex items-start justify-between gap-3 px-3 py-2.5 transition hover:bg-[var(--highlight)]"
             >
               <div className="min-w-0">
                 <div className="flex min-w-0 items-center gap-2">
-                  <p className="truncate text-sm font-semibold text-[#171717] transition group-hover:text-slate-950">
+                  <p className="truncate text-sm font-semibold text-[var(--text-primary)] transition group-hover:text-[var(--graphite-dark)]">
                     {item.title}
                   </p>
                   {item.badge ? (
@@ -77,15 +77,15 @@ export function ManagerDashboardCard({
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-1 text-sm leading-5 text-slate-600">{item.subtitle}</p>
+                <p className="mt-1 text-sm leading-5 text-[var(--text-secondary)]">{item.subtitle}</p>
                 {item.meta ? (
-                  <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.14em] text-[#6b7280]">
+                  <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                     {item.meta}
                   </p>
                 ) : null}
               </div>
               {item.trailing ? (
-                <p className="shrink-0 text-sm font-semibold text-slate-900">
+                <p className="shrink-0 text-sm font-semibold text-[var(--text-primary)]">
                   {item.trailing}
                 </p>
               ) : null}
@@ -93,8 +93,8 @@ export function ManagerDashboardCard({
           ))
         ) : (
           <div className="px-3 py-4">
-            <p className="text-sm font-semibold text-[#171717]">{emptyTitle}</p>
-            <p className="mt-2 text-sm leading-5 text-[#4b5563]">{emptyDescription}</p>
+            <p className="text-sm font-semibold text-[var(--text-primary)]">{emptyTitle}</p>
+            <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">{emptyDescription}</p>
           </div>
         )}
       </div>
