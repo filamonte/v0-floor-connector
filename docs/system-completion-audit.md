@@ -31,7 +31,7 @@ The largest convergence gaps are:
 5. Tax administration is not go-live complete.
 6. Template/default coverage is too narrow for customer-facing document control and reusable business content.
 7. Financing exists as readiness state, but not yet as a practical contractor workflow.
-8. Reports and forms/checklists are not yet real system modules.
+8. Reports and forms/checklists now have route/foundation surfaces, but they are not yet production-complete system modules.
 9. Some Manager Pages are strong, but system completion across all major modules is still uneven.
 
 ## Current Strengths
@@ -211,7 +211,7 @@ Automation:
 - modular settings and platform defaults already exist
 
 ### Mismatched or incomplete areas
-- there is no separate contact-first directory model today
+- `/directory` exists as a current read-only route/foundation, but there is no separate contact-first directory model today
 - opportunities still auto-seed customer and project creation too early in the estimate flow
 - customer is currently doing double duty as both early intake identity and true customer account
 - financing is present as state/readiness but not as a practical workflow module
@@ -224,7 +224,7 @@ Status: structurally incomplete
 
 Current reality:
 - there is a `customers` model
-- there is no separate canonical contact-first directory entity in the current shared types/domain exports
+- `/directory` exists as a current read-only route/foundation, but there is no separate canonical contact-first directory entity in the current shared types/domain exports
 - opportunities currently store prospect fields directly:
   - `prospectName`
   - `prospectCompanyName`
@@ -239,7 +239,7 @@ Evidence:
 
 Problem:
 - the system cannot yet cleanly treat inbound identities as reusable contacts before customer promotion/classification
-- portal continuity, billing contact continuity, and future directory behavior are under-modeled
+- portal continuity, billing contact continuity, and deeper directory behavior are under-modeled
 
 Recommendation:
 - move toward a contact-first directory model as a major canonical convergence step
@@ -303,7 +303,7 @@ Evidence:
 
 Remaining gaps:
 - workspace/editor still does not fully match CF’s sectioned estimate-authoring behavior
-- no complete left-nav-driven Estimate Editoror system across all sections
+- no complete left-nav-driven Estimate Editor system across all sections
 - template/default integration is too limited
 - items database integration is incomplete
 - send/accept/protection behavior is still lighter than needed for go-live commercial rigor
@@ -369,17 +369,18 @@ Current reality:
 - shared catalog foundation exists
 - platform seeds exist
 - org adoption exists
-- contractor-facing materials module does not exist yet
-- current supported item types are only:
-  - material
-  - service
-  - system
+- `/materials` exists as a current route/foundation, and catalog/cost item/inventory surfaces exist, but contractor-facing materials workflows are still foundational rather than go-live complete
+- catalog/cost item foundations support shared item reuse, estimate sourcing, and optional inventory linkage, but deeper operational materials and inventory flows remain incomplete
 
 Evidence:
 - `apps/web/lib/catalogs/data.ts`
 - `apps/web/app/(app)/settings/catalogs/page.tsx`
 - `apps/web/app/(app)/materials/page.tsx`
-- `apps/web/app/(app)/materials/page.tsx` is still a placeholder
+- `apps/web/app/(app)/cost-items-database/page.tsx`
+- `apps/web/app/(app)/cost-items-database/inventory/page.tsx`
+- `apps/web/app/(app)/cost-items-database/items/page.tsx`
+- `apps/web/app/(app)/cost-items-database/settings/page.tsx`
+- `apps/web/app/(app)/cost-items-database/systems/page.tsx`
 
 Why this is a major blocker:
 - reusable materials and systems are required for go-live
@@ -426,8 +427,8 @@ What is missing:
 - save-as-template from more real editing surfaces
 
 Forms and reports:
-- there is no real forms/checklists module in the current app routes
-- there is no real reports module in the current app routes
+- `/forms-checklists` exists as a current route/foundation, but deeper production forms/checklist workflow remains incomplete
+- `/reports` exists as the current reporting route/foundation, but broader production reporting/report-builder workflow remains incomplete
 
 This matters because CF uses forms, checklists, and report builders as real operating surfaces. FloorConnector does not need to clone all of CF, but it does need a converged answer for reusable forms/layout/report output.
 
@@ -499,9 +500,9 @@ Strong Manager Pages:
 - daily logs
 
 Structurally missing or incomplete:
-- materials / inventory manager is missing
-- forms & checklists manager is missing
-- reports manager is missing
+- materials / inventory manager exists as route/foundation surfaces, but remains operationally incomplete
+- forms & checklists manager exists as a route/foundation, but remains operationally incomplete
+- reports manager exists as `/reports`, but remains operationally incomplete beyond current foundation reporting
 - people and vendors still need confirmation against the same final-quality manager standard
 - change orders still need full completion against the same convergence bar
 
@@ -550,11 +551,11 @@ Where it must intentionally differ:
 
 ## Biggest Investor-Demo Blockers
 1. The intake and lifecycle story is not yet fully locked to the intended operating model.
-2. Contact-first directory continuity is missing.
+2. Contact-first directory continuity is incomplete; `/directory` exists as a route/foundation, but the canonical contact-first model is not finished.
 3. Project timing is still too early because estimate flow currently creates projects before acceptance.
 4. Inventory/items/systems are not ready enough for a believable contractor OS story.
 5. Tax administration is too shallow for a realistic full-business demo.
-6. Forms/checklists and reports are absent as system modules.
+6. Forms/checklists and reports exist as route/foundation surfaces, but are not complete system modules.
 7. Financing exists conceptually but not as a real contractor workflow.
 
 ## Biggest Contractor-Usage Blockers
@@ -616,7 +617,7 @@ Why third:
 - estimates, contracts, and invoices are already strong enough to improve next
 
 Includes:
-- fuller Estimate Editoror/workspace
+- fuller Estimate Editor/workspace
 - fuller Invoice Editoror/workspace
 - contract generation and contract downstream behavior completion
 - save-as-template/default and document layout behavior

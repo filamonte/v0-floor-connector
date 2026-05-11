@@ -1,6 +1,9 @@
 # FloorConnector System Overview
 
-Status: synthesis overview of the currently implemented system and the next logical layers ahead.
+Status: Active
+Doc Type: Operational
+
+This is a synthesis overview of the currently implemented system and the next logical layers ahead.
 
 This document is designed to do three jobs at once:
 
@@ -38,7 +41,7 @@ What users can do now:
 - build estimates through an inventory-first workspace backed by shared `catalog_items`, reusable systems, and canonical `estimate_line_items`
 - expand reusable systems by sqft into estimate pricing rows through shared logic
 - use derived estimate tax behavior driven by organization defaults, customer exemption state, and item-level taxability
-- use autosave, inline estimate-title editing, and persisted status progression in the estimate workspace
+- use explicit shared save-state behavior, inline estimate-title editing, and persisted status progression in the estimate workspace
 - move approved commercial scope into downstream contract, job, and invoice workflows
 
 In practical terms, the commercial path is already live. Contractors can start with lead intake, move into project and estimate work, and carry that scope forward without recreating records in each stage.
@@ -523,9 +526,11 @@ Future features should extend the canonical record chain rather than introduce p
 
 That discipline is what keeps FloorConnector credible both as a product and as an implementation strategy.
 
-## Section 8 -- HR System
+## Section 8 -- HR And Safety Direction
 
-The HR system extends the canonical people records with:
+This section is foundation/target framing, not a claim that a complete HR system is implemented. Use [docs/current-state.md](C:/FloorConnector/docs/current-state.md) for the exact current people, vendor, compliance, time, daily-log, field-note, and reporting foundations.
+
+Future HR and safety depth should extend canonical people and project records with:
 
 - Employee profiles: employment type, role/trade, pay type, certifications via compliance_records, PTO/sick tracking, onboarding status.
 
@@ -533,9 +538,9 @@ The HR system extends the canonical people records with:
 
 - Safety Dashboard: Visualization and work queue only, not a data owner. Visualizes incidents (including near misses), severity (low, medium, high, critical), trends, compliance gaps from incidents, compliance_records, projects, people.
 
-## Section 9 -- Service Layer
+## Section 9 -- Future Service Layer
 
-The service layer provides read-only enrichment over canonical data:
+The service layer is target direction. Future service-layer capabilities should provide read-only enrichment over canonical data:
 
 - AI: Estimates, forecasting, takeoffs.
 
@@ -551,9 +556,9 @@ The service layer provides read-only enrichment over canonical data:
 
 These systems read from canonical data without owning or duplicating records.
 
-## Section 10 -- Mobile-First Field Workflows
+## Section 10 -- Mobile-First Field Workflow Direction
 
-All field workflows support mobile-first UX:
+Current field foundations should continue moving toward mobile-first UX. Future depth should support:
 
 - Time tracking
 

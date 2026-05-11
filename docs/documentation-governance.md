@@ -1,18 +1,31 @@
 # Documentation Governance
 
-Status: documentation maintenance and archival rules.
+Status: Stable
+Doc Type: Governance
 
 This document defines how documentation should be maintained in the FloorConnector repository so active docs stay trustworthy, older context is preserved safely, and future drift is reduced.
 
 Use these docs together:
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth and current branch reality
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
-- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
+- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): platform maturity roadmap
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow direction
 - [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
 
 This file governs how docs are maintained. It is not a product-source-of-truth file for implementation status or roadmap sequencing.
+
+## Governing Rules
+
+- Documentation is part of FloorConnector's product architecture.
+- [docs/current-state.md](C:/FloorConnector/docs/current-state.md) owns implemented truth.
+- Active docs must not compete with each other; if two active docs disagree, resolve the conflict or add a clear current/future boundary.
+- ADRs are mandatory for architecture decisions that affect canonical data, lifecycle semantics, portal/contractor boundaries, financial/payment/signature history, tenant isolation, navigation shell, or universal create/workspace patterns.
+- Diagrams should be updated when architecture-impacting changes alter system context, containers, lifecycle flow, or shared record relationships.
+- Superseded docs must be deprecated or archived instead of left as active guidance.
+- Docs should be concise and linked rather than repeating full platform narratives.
+- Investor and marketing docs must not replace engineering truth docs.
+- AI-facing docs must avoid ambiguous implementation claims.
 
 ## Purpose
 
@@ -25,9 +38,9 @@ This governance file exists to define:
 - how docs should be archived without deleting useful context
 - what documentation updates are required as part of normal feature delivery
 
-## Documentation Status Model
+## Documentation Maintenance Model
 
-Every documentation file should fit one of these states.
+Use [docs/documentation-standards.md](C:/FloorConnector/docs/documentation-standards.md) for metadata status vocabulary. The maintenance categories below describe how docs should be handled operationally.
 
 ### Active
 
@@ -36,9 +49,7 @@ Use this when a doc is part of the current documentation system and should be re
 Examples:
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md)
-- [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md)
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md)
-- [docs/vision.md](C:/FloorConnector/docs/vision.md)
 
 ### Exploratory
 
@@ -95,11 +106,11 @@ These are the docs that should remain primary and current.
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
   - what is actually implemented on the current branch
 
-### Source Of Truth For Forward Build Sequence
+### Source Of Truth For Maturity Sequencing
 
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md)
-  - what gets built next
-  - major phase ordering
+  - future platform maturity sequencing
+  - major platform-depth priorities
 
 ### Source Of Truth For Workflow Direction
 
@@ -131,8 +142,20 @@ These are the docs that should remain primary and current.
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md)
   - rules for keeping the docs system coherent
 
+- [docs/documentation-standards.md](C:/FloorConnector/docs/documentation-standards.md)
+  - doc layers, metadata, status vocabulary, update triggers, ADR/diagram rules, and AI readability rules
+
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md)
   - short implementation guardrail summary for day-to-day development work
+
+- [docs/adr/README.md](C:/FloorConnector/docs/adr/README.md)
+  - architecture decision records
+
+- [docs/diagrams/README.md](C:/FloorConnector/docs/diagrams/README.md)
+  - architecture and workflow diagrams as code
+
+- [docs/ai/README.md](C:/FloorConnector/docs/ai/README.md)
+  - AI-assisted development and documentation interpretation rules
 
 ## Supplementary Docs
 
@@ -219,6 +242,25 @@ At minimum, every meaningful feature or architecture task should answer:
 - should any older planning docs now be archived or relabeled?
 
 If the answer is yes to any of these, the doc updates are part of the same task, not optional cleanup for later.
+
+## Architecture Decision And Diagram Expectations
+
+Create or update an ADR when a change establishes or changes a durable architecture decision. Update diagrams when the relationship between users, app containers, providers, canonical records, or lifecycle flow changes.
+
+Use:
+- [docs/adr/README.md](C:/FloorConnector/docs/adr/README.md)
+- [docs/diagrams/README.md](C:/FloorConnector/docs/diagrams/README.md)
+
+## AI-Safe Documentation Expectations
+
+Docs intended for AI-assisted work must:
+- label implemented, foundation, planned, deferred, and archived status clearly
+- avoid phrases that make future target work sound already built
+- point back to [docs/current-state.md](C:/FloorConnector/docs/current-state.md) for implementation truth
+- preserve the canonical lifecycle exactly
+- avoid duplicate platform stories when a link to the authoritative doc is enough
+
+Use [docs/ai/README.md](C:/FloorConnector/docs/ai/README.md) for AI-specific reading and prompt rules.
 
 ## Recommended Ongoing Cleanup
 

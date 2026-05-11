@@ -40,7 +40,7 @@ Remote intake remains staging before canonical promotion. Websites and the mobil
 - Core canonical lifecycle records from opportunities through payments.
 - Lead/opportunity intake and opportunity-to-estimate handoff through customer/project creation or linking.
 - Customer, project, estimate, contract, change-order, job, invoice, payment, appointment, punchlist, daily-log, people, vendor, time, and compliance foundations.
-- Estimate authoring on canonical line items, catalog sourcing, reusable systems, import helpers, autosave, customer send, portal review, approval/rejection, and approved snapshots.
+- Estimate authoring on canonical line items, catalog sourcing, reusable systems, import helpers, explicit shared save-state behavior, customer send, portal review, approval/rejection, and approved snapshots.
 - Contract generation, internal approval/readiness, signer routing, customer portal sign/decline, optional countersign, and immutable signature events on canonical contracts.
 - Change orders with portal decision workflow, approved snapshots, and SOV/invoice integration.
 - Snapshot-based invoice lineage, retainage-aware balances, tax-aware invoice calculations, and canonical payments/payment events.

@@ -1,5 +1,8 @@
 # FloorConnector Workflows
 
+Status: Active
+Doc Type: Operational
+
 This document defines the canonical business workflows in FloorConnector as they exist today, and clarifies the intended near-term workflow direction for the contractor app.
 
 It is an operational workflow document, not a technical architecture document.
@@ -8,7 +11,7 @@ Cross-references:
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary development entry point and guardrails
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): system design
-- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): next-phase build order
+- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): platform maturity sequencing
 - [docs/inventory-cost-architecture.md](C:/FloorConnector/docs/inventory-cost-architecture.md): inventory, cost-item, and tax model
 - [docs/site-visit-scope-intake-plan.md](C:/FloorConnector/docs/site-visit-scope-intake-plan.md): Scope Intake planning guardrails between site visit and estimate planning
 
@@ -29,7 +32,7 @@ In practical terms:
 - a lead should not become a second disconnected customer-like record later
 - a website form, public AI chat, landing page conversion, campaign source, review/reputation signal, or gallery/project-proof interaction should not become a disconnected marketing record later
 - an approved estimate should feed downstream contract, job, and invoice workflows instead of being re-entered
-- downstream financial records should always inherit from immutable approved snapshots rather than live Estimate Editoror rows
+- downstream financial records should always inherit from immutable approved snapshots rather than live Estimate Editor rows
 - canonical records should stay linked so teams can follow the same job from intake through payment
 - the app should guide users toward the next best action instead of presenting every downstream action as equally primary
 - future visualizer/product/finish selections may start before lead intake, but once used operationally they should become canonical selected-system/spec context instead of disposable session-only data
@@ -568,10 +571,10 @@ Implemented flow:
 - estimates are created from project context
 - estimate authoring is cost-item-first:
   - new estimate line items are catalog-first; user-facing manual freeform estimate row creation is disabled
-  - `Create new item` saves an organization-scoped `catalog_items` record inline from the Estimate Editoror and then inserts it into the current estimate through the existing catalog insertion flow
-  - active non-system `catalog_items` can be added from the Estimate Editoror Catalog Items panel
+  - `Create new item` saves an organization-scoped `catalog_items` record inline from the Estimate Editor and then inserts it into the current estimate through the existing catalog insertion flow
+  - active non-system `catalog_items` can be added from the Estimate Editor Catalog Items panel
   - inserted catalog items become editable commercial `estimate_line_items` snapshots rather than live-bound catalog rows
-  - catalog-backed estimate item names are clickable for editing from the Estimate Editoror
+  - catalog-backed estimate item names are clickable for editing from the Estimate Editor
   - editing from the estimate updates the reusable `catalog_items` row and refreshes only the current estimate line snapshot
   - other estimates that already snapshotted the same catalog item do not silently update
   - approved estimate snapshot editing is blocked
@@ -593,7 +596,7 @@ Implemented flow:
   - otherwise organization or platform financial defaults determine the rate
 - estimate line items, totals, tax, and discount handling are live
 - `estimate_line_items` is the authoritative pricing-row source; legacy `estimates.content.itemRows` should not be used for new behavior
-- Estimate Editoror edits autosave with validation and stale-write conflict protection
+- Estimate Editor edits use explicit shared save-state behavior with validation and stale-write conflict protection
 - estimate defaults apply only when the estimate content is initially empty, resolving platform defaults first and contractor overrides second
 - estimates move through status progression such as `draft`, `sent`, `approved`, and `rejected`
 - this catalog-first estimate authoring behavior does not change schema, downstream invoice behavior, contract behavior, SOV behavior, payment behavior, or approved commercial snapshot lineage
@@ -981,12 +984,12 @@ Today, the app should be understood this way:
 - Cost Items Database is the reusable item master module backed by canonical `catalog_items`; it is the Phase 1 foundation for estimate authoring, systems, optional inventory, future invoice reuse, and materials planning
 - estimate authoring is catalog-first: users either create a new catalog/cost item inline or add an existing active non-system catalog item, and both paths insert a current-estimate `estimate_line_items` snapshot through the catalog insertion flow
 - catalog-backed estimate item names are clickable for editing; edits update the reusable catalog item and the current estimate line snapshot only, while other estimates that already snapshotted that item do not silently update
-- approved estimate snapshot editing is blocked from the Estimate Editoror
+- approved estimate snapshot editing is blocked from the Estimate Editor
 - archived items are blocked from insertion, and systems continue through the existing system expansion flow using catalog/system component sources
 - future catalog/cost item design should treat default cost, markup, labor, production, price, and tax behavior as internal cost behavior that can be overridden intentionally on an estimate and kept out of customer-facing output
 - customer-facing estimates should show only customer-facing descriptions, quantities, unit prices, and totals; markup and internal cost should not appear on customer-facing estimate output
 - one-off estimate-line price overrides should affect that estimate line, while catalog/cost item updates should affect future estimates only
-- quick system generation now supports V1 manual measurements inside the existing Estimate Editoror:
+- quick system generation now supports V1 manual measurements inside the existing Estimate Editor:
   - length x width calculates floor area and perimeter
   - direct area and direct linear footage are accepted when the contractor already knows field quantities
   - area-based system components use sqft, perimeter-based components use LF, and count-based components use count

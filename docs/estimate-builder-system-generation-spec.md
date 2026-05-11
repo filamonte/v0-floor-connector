@@ -616,7 +616,7 @@ Even if customer-facing output is collapsed later, internal line detail should r
 
 ### Templates & Systems Administration
 
-System Template and add-on/option management should eventually live in a dedicated Templates & Systems settings/admin area rather than inside the Estimate Editoror alone.
+System Template and add-on/option management should eventually live in a dedicated Templates & Systems settings/admin area rather than inside the Estimate Editor alone.
 
 That future area should manage:
 - document templates for estimates, invoices, contracts, proposal/SOW output, and future work orders

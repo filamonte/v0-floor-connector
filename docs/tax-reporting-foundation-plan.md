@@ -83,8 +83,9 @@ The first tax report should be a read-only reporting surface contractors can use
 Recommended report name:
 - `Sales Tax Summary`
 
-Recommended route:
-- add a tax section inside `/reports`, or add a focused `/reports/tax` route if the reports page becomes too dense
+Current route:
+- `/reports` is the implemented reporting entry surface and now includes the first Sales Tax Summary section.
+- `/reports/tax` remains a future/suggested split only if the reports page becomes too dense.
 
 Required filters:
 - date range

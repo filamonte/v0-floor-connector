@@ -55,7 +55,7 @@ Do not reuse old `.tmp-auth-cookies*.txt` files. Expired Supabase refresh tokens
 
 ## Estimate Editor To Contract QA Preconditions
 
-For the contractor-side Estimate Editoror -> send/approval -> contract generation slice:
+For the contractor-side Estimate Editor -> send/approval -> contract generation slice:
 
 - Sign in as a real contractor user with organization access.
 - Use or create a real customer through the UI.

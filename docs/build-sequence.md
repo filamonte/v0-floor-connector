@@ -1,6 +1,7 @@
 # FloorConnector Build Sequence
 
-Status: practical build-order guidance grounded in the current branch.
+Status: Active
+Doc Type: Roadmap
 
 This is not a speculative roadmap.
 Use it to decide what should usually come next and what should not be built out of order.

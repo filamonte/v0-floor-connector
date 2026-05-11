@@ -1,6 +1,7 @@
 # Sales To Production Workflow
 
-Status: target sales and commercial workflow design.
+Status: Planned
+Doc Type: Operational
 
 This document describes the broader sales, commercial, and readiness workflow FloorConnector is intended to support from first inquiry through production readiness.
 
@@ -8,7 +9,7 @@ It complements:
 
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
-- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
+- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): platform maturity roadmap
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md): implemented and near-term workflow direction
 - [docs/workflow-spec.md](C:/FloorConnector/docs/workflow-spec.md): primary guided contractor path
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules

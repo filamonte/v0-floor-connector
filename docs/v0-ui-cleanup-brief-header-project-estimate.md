@@ -28,7 +28,7 @@ The pass is about clarity, layout, and interaction patterns only. It must not ch
 - Make Project Quick-Create and Estimate Quick-Create scale past small test data.
 - Make project detail easier to scan by introducing contextual workspace navigation inside the project page.
 - Keep estimate creation context-aware: project-launched estimates should not ask users to reselect the same project/customer.
-- Move the long-term Estimate Editoror toward group-first item authoring without touching current insertion behavior.
+- Move the long-term Estimate Editor toward group-first item authoring without touching current insertion behavior.
 - Improve input formatting expectations for country, phone, ZIP/postal code, and validation recovery.
 - Keep all cleanup compatible with the existing shared Manager Page and Record Workspace patterns.
 
@@ -233,10 +233,10 @@ v0 should not design:
 - project/customer reselection when launched from project context.
 - changes to estimate numbering, status, or creation rules.
 
-## 5. Estimate Editoror Long-Term Layout
+## 5. Estimate Editor Long-Term Layout
 
 Current concern:
-- the Estimate Editoror is too long.
+- the Estimate Editor is too long.
 - the permanent Catalog Items panel is not the right final UI.
 
 Design requirements:
@@ -333,7 +333,7 @@ Use or adapt existing FloorConnector patterns:
 - shared mobile nav
 - `StandardWorkspaceLayout` for data-heavy module workspaces where applicable
 - Record Workspace detail pattern for project and estimate detail
-- contextual left workspace navigation inside project detail and future Estimate Editoror
+- contextual left workspace navigation inside project detail and future Estimate Editor
 - composer sheet / side sheet for Quick-Create and bounded editing
 - searchable combobox/picker for customer and project selection
 - grouped overflow menu for secondary actions
@@ -367,7 +367,7 @@ Design these screens:
 2. Project Quick-Create sheet with searchable customer picker, selected customer summary, optional safe Inline Customer Quick-Create state, validation errors that preserve entered data, and no giant customer dropdown.
 3. Project detail workspace with compact header, next-best-action/readiness summary, contextual left navigation inside the Project Workspace, clearer edit controls, and financing status placed in a readiness/financial section rather than the basic details form.
 4. Estimate Quick-Create sheet that adapts to launch context: project-launched locks/preselects project and customer; global launch requires searchable customer and project selection; customer-launched locks customer and requires project selection or safe project create. Avoid duplicate customer/project search UI.
-5. Long-term Estimate Editoror Items workspace with group-first item authoring. Each group has name, item count, subtotal, add action, and overflow menu. Add Item drawer has sources: Cost Item Database, Template/System, Previous Estimate, Custom Item. De-emphasize the permanent Catalog Items panel into the drawer.
+5. Long-term Estimate Editor Items workspace with group-first item authoring. Each group has name, item count, subtotal, add action, and overflow menu. Add Item drawer has sources: Cost Item Database, Template/System, Previous Estimate, Custom Item. De-emphasize the permanent Catalog Items panel into the drawer.
 6. Reusable address/contact input states with country dropdown, US and Canada pinned at top, phone and ZIP/postal formatting guidance, and validation states that preserve user input.
 
 Use realistic labels only. Do not invent fake workflows. Do not show internal cost/markup to customers. Keep all records tied to canonical customers, projects, estimates, catalog items, and line-item snapshots.
@@ -464,7 +464,7 @@ Validation:
 - create estimate globally.
 - validation errors preserve selected context.
 
-### Phase 5: Estimate Editoror Group-First UI Preparation
+### Phase 5: Estimate Editor Group-First UI Preparation
 
 Scope:
 - UI-only regrouping/layout cleanup from the group-first refactor plan.

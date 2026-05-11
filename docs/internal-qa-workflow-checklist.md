@@ -65,7 +65,7 @@ Expected:
 
 ### 4. Add Estimate Items
 
-1. In Estimate Editoror, add at least one catalog-backed estimate item.
+1. In Estimate Editor, add at least one catalog-backed estimate item.
 2. If no suitable catalog item exists, use the sanctioned manual/one-off flow that creates a minimal catalog item first, then adds it to the estimate.
 3. Confirm estimate line items and totals update.
 4. Confirm tax behavior follows current customer exemption, item taxable, and organization settings behavior.

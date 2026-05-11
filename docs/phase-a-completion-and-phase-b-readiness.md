@@ -27,7 +27,7 @@ The branch now has the core contractor OS, customer portal, contact-linked porta
 
 - Canonical lead/opportunity, customer, project, estimate, contract, change-order, job, invoice, and payment records are implemented.
 - Opportunity-to-estimate handoff creates or links canonical customer/project records instead of creating a duplicate lead-only workflow.
-- Estimate authoring uses canonical estimate line items, catalog-backed items, reusable content helpers, import helpers, autosave, customer send, portal review, and approved commercial snapshots.
+- Estimate authoring uses canonical estimate line items, catalog-backed items, reusable content helpers, import helpers, explicit shared save-state behavior, customer send, portal review, and approved commercial snapshots.
 - Contract generation uses approved estimate context and keeps signer routing on canonical contracts and `contract_signers`.
 - Change orders extend the same project/contract/invoice chain and can produce approved snapshots for SOV or invoice integration.
 - Invoices and payments stay on canonical billing/payment records with explicit invoice-line lineage.

@@ -1,6 +1,7 @@
 # FloorConnector Decisions
 
-Status: compact log of major product and implementation decisions already active on the current branch.
+Status: Active
+Doc Type: Operational
 
 Use this file to reduce repeat debates and prompt drift.
 If a decision here conflicts with [docs/current-state.md](C:/FloorConnector/docs/current-state.md), update this file to match current-state.

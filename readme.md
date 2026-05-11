@@ -73,17 +73,28 @@ Stripe billing readiness still requires valid test-mode `STRIPE_SECRET_KEY` and 
 Use these docs together:
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary developer entry point and implementation guardrail summary
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth on the current branch
+- [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md): concise platform maturity framing
+- [docs/module-status.md](C:/FloorConnector/docs/module-status.md): concise module status table
+- [docs/known-gaps.md](C:/FloorConnector/docs/known-gaps.md): important depth gaps without implying the core is missing
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md): canonical and near-term workflow behavior
-- [docs/product-brain.md](C:/FloorConnector/docs/product-brain.md): high-signal product memory and anti-drift rules
-- [docs/decisions.md](C:/FloorConnector/docs/decisions.md): current branch decisions worth preserving
-- [docs/build-sequence.md](C:/FloorConnector/docs/build-sequence.md): practical build-order guidance for future work
+- [docs/architecture-principles.md](C:/FloorConnector/docs/architecture-principles.md): stable architecture principles
+- [docs/canonical-lifecycle.md](C:/FloorConnector/docs/canonical-lifecycle.md): canonical record chain
+- [docs/platform-philosophy.md](C:/FloorConnector/docs/platform-philosophy.md): platform philosophy
+- [docs/ui-system.md](C:/FloorConnector/docs/ui-system.md): contractor UI system guardrails
+- [docs/financial-architecture.md](C:/FloorConnector/docs/financial-architecture.md): financial record and event guardrails
+- [docs/portal-architecture.md](C:/FloorConnector/docs/portal-architecture.md): portal shared-record guardrails
 - [docs/codex-workflow.md](C:/FloorConnector/docs/codex-workflow.md): planning-first Codex implementation workflow
 - [docs/codex-prompt-templates.md](C:/FloorConnector/docs/codex-prompt-templates.md): short reusable prompt templates
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
-- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
+- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): platform maturity roadmap
+- [docs/future-platform-expansion.md](C:/FloorConnector/docs/future-platform-expansion.md): clearly future expansion areas
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow
 - [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
+- [docs/documentation-standards.md](C:/FloorConnector/docs/documentation-standards.md): documentation layers, metadata, ADR/diagram, and AI-readability standards
+- [docs/adr/README.md](C:/FloorConnector/docs/adr/README.md): architecture decision records
+- [docs/diagrams/README.md](C:/FloorConnector/docs/diagrams/README.md): architecture diagrams as code
+- [docs/ai/README.md](C:/FloorConnector/docs/ai/README.md): AI-assisted development guidance
 
 Start with [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md). Then use [docs/current-state.md](C:/FloorConnector/docs/current-state.md) for implemented status and [docs/workflows.md](C:/FloorConnector/docs/workflows.md) for canonical and near-term workflow behavior.
 
@@ -91,7 +102,7 @@ Current estimate-system reality is documented in [docs/current-state.md](C:/Floo
 - inventory-first estimate authoring only
 - shared `catalog_items` and `catalog_system_components`
 - canonical `estimate_line_items` pricing rows
-- autosave with validation and conflict protection
+- explicit shared save-state behavior with validation and conflict protection
 - one `documents` bucket with organization-first storage paths
 
 ## Current UI Direction

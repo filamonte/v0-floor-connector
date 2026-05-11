@@ -11,7 +11,7 @@ Related docs:
 
 ## Purpose
 
-Use this checklist to verify that active `catalog_items` can be added to estimate line items from the Estimate Editoror Catalog Items panel while preserving snapshot behavior.
+Use this checklist to verify that active `catalog_items` can be added to estimate line items from the Estimate Editor Catalog Items panel while preserving snapshot behavior.
 
 The expected behavior is:
 - active non-system catalog items can be inserted
@@ -33,7 +33,7 @@ The expected behavior is:
 
 ### Catalog Panel Visibility
 
-- [ ] Open a draft Estimate Editoror page.
+- [ ] Open a draft Estimate Editor page.
 - [ ] Navigate to the Items workspace.
 - [ ] Confirm the Catalog Items panel is visible.
 - [ ] Confirm search by name still filters catalog rows.

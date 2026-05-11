@@ -1,6 +1,7 @@
 # FloorConnector Architecture
 
-Status: target platform architecture.
+Status: Planned
+Doc Type: Philosophy
 
 This document describes the **target platform architecture** for FloorConnector.
 
@@ -9,7 +10,7 @@ It defines the intended end-state system design, shared data model, and platform
 Use these docs together:
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): source of truth for implemented status
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target system design
-- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
+- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): platform maturity roadmap
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow direction
 - [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules

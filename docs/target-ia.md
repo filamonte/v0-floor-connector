@@ -1,6 +1,9 @@
 # Contractor App Target Information Architecture
 
-Status: target contractor app information architecture.
+Status: Planned
+Doc Type: Roadmap
+
+This is target contractor app information architecture.
 
 This document defines the **target information architecture** for the contractor app.
 
@@ -8,7 +11,7 @@ It is intended to guide future navigation, workspace structure, and route decisi
 
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): source of truth for what is implemented today
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
-- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
+- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): platform maturity roadmap
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow direction
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
 
@@ -441,7 +444,7 @@ Even in a project-centered system, these should still exist as global list pages
 - Estimates Manager Page (`/estimates`)
 - Jobs Manager Page (`/jobs`)
 - Invoices Manager Page (`/invoices`)
-- Documents Manager Page (`/documents`)
+- Target Documents Manager Page (`/documents`; current implemented document-writing route is `/document-writer`)
 - People Manager Page (`/people`)
 
 These routes are still useful because users often need:
@@ -457,6 +460,8 @@ The important distinction is:
 
 - project pages are the primary operational workspace
 - standalone routes are the global queue and management surfaces
+
+Current implementation note: `/documents` is target IA language only in this document. The current app route is `/document-writer`; there is no implemented `/documents` route today.
 
 ## Route Strategy Guidance
 

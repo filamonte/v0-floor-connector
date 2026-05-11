@@ -1,16 +1,27 @@
 # Current State
 
-Status: implemented truth on the current working branch.
+Status: Active
+Doc Type: Current Truth
 
 This document summarizes the current implemented architecture and feature foundation in the FloorConnector monorepo.
+
+## How To Use This Doc
+
+Use this document when you need current branch reality. For concise status maps, see [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md), [docs/module-status.md](C:/FloorConnector/docs/module-status.md), and [docs/known-gaps.md](C:/FloorConnector/docs/known-gaps.md). For workflow rules, use [docs/workflows.md](C:/FloorConnector/docs/workflows.md). For future direction, use [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md) and [docs/future-platform-expansion.md](C:/FloorConnector/docs/future-platform-expansion.md).
 
 Use [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md) as the primary developer entry point. Use this document for implemented truth after that first orientation.
 
 Use these docs together:
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary development entry point and implementation guardrails
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth and current branch reality
+- [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md): concise maturity framing
+- [docs/module-status.md](C:/FloorConnector/docs/module-status.md): concise module status map
+- [docs/known-gaps.md](C:/FloorConnector/docs/known-gaps.md): important depth gaps around the implemented core
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
-- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
+- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): platform maturity roadmap
+- [docs/future-platform-expansion.md](C:/FloorConnector/docs/future-platform-expansion.md): future expansion direction
+- [docs/architecture-principles.md](C:/FloorConnector/docs/architecture-principles.md): stable architecture principles
+- [docs/canonical-lifecycle.md](C:/FloorConnector/docs/canonical-lifecycle.md): canonical lifecycle and lineage rules
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow direction
 - [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
 - [docs/site-visit-scope-intake-plan.md](C:/FloorConnector/docs/site-visit-scope-intake-plan.md): Scope Intake planning guardrails between site visit and estimate planning
@@ -20,9 +31,10 @@ Use these docs together:
 - [docs/starter-pack-provisioning-plan.md](C:/FloorConnector/docs/starter-pack-provisioning-plan.md): starter-pack provisioning safety model, execution guardrails, and future void planning
 - [docs/starter-pack-provisioning-execution-readiness.md](C:/FloorConnector/docs/starter-pack-provisioning-execution-readiness.md): starter-pack provisioning execution readiness, field mapping, lineage, and void-readiness notes
 - [docs/starter-pack-provisioning-review.md](C:/FloorConnector/docs/starter-pack-provisioning-review.md): consolidated architecture/operator readiness review before any real void action
-- [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): future/planned UI, directory/contact, tax, Estimate Editoror, project-address, and workflow-guidance alignment backlog
+- [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): future/planned UI, directory/contact, tax, Estimate Editor, project-address, and workflow-guidance alignment backlog
 - [docs/ui-patterns.md](C:/FloorConnector/docs/ui-patterns.md): implemented decision-first UI patterns for contractor workspaces, Manager Pages, status color semantics, and portal/super-admin differences
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
+- [docs/documentation-standards.md](C:/FloorConnector/docs/documentation-standards.md): documentation layers, metadata, and AI-readability rules
 - [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md): mandatory UI and module implementation rules
 
 All future UI and module work must follow `docs/floorconnector-ui-build-rules.md` before implementation.
@@ -45,6 +57,14 @@ Implemented surfaces may still use lead or intake language where the UI is descr
 - Background/integration app reserved: `apps/worker`
 - Shared packages currently used for config, types, domain logic, UI, database access, and integrations
 - Supabase migrations live in `supabase/migrations`
+
+## Implemented Route Notes
+
+These high-value route notes exist to prevent target-vs-current drift:
+- `/reports` is the current implemented reporting entry surface; no `/reports/tax` route exists today.
+- `/document-writer` is the current implemented document-writing route; `/documents` remains target IA language only and is not an implemented route today.
+- `/materials`, `/forms-checklists`, `/directory`, and `/cost-items-database` exist as current contractor routes/foundations, but their deeper production workflows are not complete.
+- package/billing governance lives under `/super-admin/packages`, including read-only detail routes for package definitions, assignments, provider mappings, and support reviews.
 
 ## Current Architecture
 
@@ -867,7 +887,7 @@ Implemented:
 - project-to-estimate relationship
 - customer derived from project
 - proposal-style estimate detail page
-- dedicated Estimate Editoror page
+- dedicated Estimate Editor page
 - status transition actions
 - estimate detail now surfaces project-level readiness context and a clearer preferred next action instead of implying older parallel downstream shortcuts
 - contractor-side customer send flow for estimates
@@ -894,14 +914,14 @@ Quick reference:
 - approved estimates create immutable commercial snapshots for downstream contract, SOV, and invoice lineage
 - already-approved estimates with missing snapshot lineage can rebuild the canonical approval snapshot through the estimate recovery action; contract generation still refuses to read mutable/current estimate data
 - customer approval is canonical portal behavior, not a contractor-side override path
-- Estimate Editoror users can create a new catalog/cost item inline and add it through the same catalog-to-estimate insertion flow
-- Estimate Editoror users can add existing active non-system catalog items as current-estimate snapshots
+- Estimate Editor users can create a new catalog/cost item inline and add it through the same catalog-to-estimate insertion flow
+- Estimate Editor users can add existing active non-system catalog items as current-estimate snapshots
 - catalog-backed estimate item names are clickable for editing the reusable catalog item from the estimate
-- editing from the Estimate Editoror updates the reusable `catalog_items` row and only the current estimate line-item snapshot; other estimates do not silently update
+- editing from the Estimate Editor updates the reusable `catalog_items` row and only the current estimate line-item snapshot; other estimates do not silently update
 - approved estimate snapshot editing is blocked
 - systems expand by sqft using shared logic before becoming canonical estimate line items
 - defaults apply only on initial load when estimate content is effectively empty
-- autosave validates before persisting and includes conflict protection against stale overwrites
+- explicit Estimate Editor save submission validates before persisting and includes conflict protection against stale overwrites
 - estimate attachments use one shared `documents` bucket with organization-first pathing
 - global search is shell-level and rendered at the bottom only
 
@@ -915,9 +935,9 @@ Planned but not implemented in the current estimate system:
 
 Implemented:
 - estimate line item schema
-- line-item-based Estimate Editoror
+- line-item-based Estimate Editor
 - catalog-first add/edit/remove behavior for draft estimate line items
-- inline catalog/cost item creation from the Estimate Editoror, followed by server-owned estimate line-item snapshot insertion
+- inline catalog/cost item creation from the Estimate Editor, followed by server-owned estimate line-item snapshot insertion
 - click-to-edit for catalog-backed estimate item names; edits update the reusable catalog item and the current estimate snapshot only
 - database-calculated subtotal and total logic
 - tax and discount support
@@ -1284,12 +1304,12 @@ Implemented:
 - tenant-owned `estimate_system_snapshots` and `contract_system_snapshots` schema foundation for future selected-system/spec proof at customer-facing estimate and contract review/signature boundaries
 - contractor-side System Layers settings at `/settings/system-layers` for admin-only list, create, edit, status progression, archive, and component maintenance over `finish_products`, `floor_system_templates`, and `floor_system_template_components`
 - contractor-side Selected Systems settings at `/settings/selected-systems` for admin-only list, create, edit, status changes, retraction/voiding, and project-primary validation over tenant-owned `selected_floor_systems`
-- estimate line item authoring can add active non-system `catalog_items` from the Estimate Editoror Catalog Items panel, with server-owned snapshot creation
-- estimate users can create new catalog/cost items inline from the Estimate Editoror, with the saved catalog item inserted into the current estimate through the same server-owned snapshot path
-- catalog-backed estimate item names can be clicked from the Estimate Editoror to edit the reusable catalog item and refresh only the current estimate line snapshot
+- estimate line item authoring can add active non-system `catalog_items` from the Estimate Editor Catalog Items panel, with server-owned snapshot creation
+- estimate users can create new catalog/cost items inline from the Estimate Editor, with the saved catalog item inserted into the current estimate through the same server-owned snapshot path
+- catalog-backed estimate item names can be clicked from the Estimate Editor to edit the reusable catalog item and refresh only the current estimate line snapshot
 - catalog edits made from one estimate do not mutate other estimates that already snapshotted the same catalog item
 - approved estimates block catalog-backed estimate snapshot editing
-- archived catalog items remain visible for review in the Estimate Editoror panel but are blocked from insertion and rejected server-side
+- archived catalog items remain visible for review in the Estimate Editor panel but are blocked from insertion and rejected server-side
 - system catalog items continue to use the existing system expansion flow instead of direct single-line catalog insertion
 - sqft-expanded systems continue to generate normal canonical estimate line item snapshots through the existing system flow
 - organization-scoped reusable `estimate_content_blocks` foundation for scope, inclusion, exclusion, and terms snippets
@@ -1311,7 +1331,7 @@ Current design notes:
 - inventory availability is now controlled through the shared platform / organization feature policy key `inventory_enabled`
 - linked inventory rows currently use the default location in the contractor UI, while the schema allows additional locations later without splitting the item master
 - item-level tax UX is intentionally simplified to a taxable on or off checkbox, with tax rates remaining in organization and platform financial settings and optional `tax_code_id` retained as advanced infrastructure
-- estimate item sourcing snapshots from `catalog_items` for active non-system catalog items through the Estimate Editoror panel; general-purpose invoice catalog insertion and materials execution workflows remain future work
+- estimate item sourcing snapshots from `catalog_items` for active non-system catalog items through the Estimate Editor panel; general-purpose invoice catalog insertion and materials execution workflows remain future work
 - limited invoice-only manual catalog-backed rows may use `catalog_items` as a starting snapshot for explicit invoice-only adjustments, but they do not create approved-scope invoice billing from live catalog rows
 - invoice pricing remains snapshot-based through approved estimate, SOV, change-order, or invoice-only lineage; inventory quantity is operational context only and does not drive pricing
 - catalog-first estimate authoring does not change schema, downstream invoice behavior, contract behavior, SOV behavior, payment behavior, or approved-snapshot billing lineage
@@ -1409,28 +1429,28 @@ The current implemented workflow foundation supports:
 - estimate authoring with line items and totals
 - estimate line items are now the authoritative estimate item-row source of truth; `estimates.content.itemRows` remains legacy read/migration-only
 - Estimate Workspace item sourcing is now catalog/cost-item-first, using active catalog items and sqft-scaled system expansion into canonical estimate line items
-- Estimate Builder V1 quick system generation is now implemented inside the existing Estimate Editoror:
-  - contractors can add active non-system catalog items from the Estimate Editoror Catalog Items panel; insertion uses the existing server action path to create immutable estimate line-item snapshots for name, description, unit, pricing, taxability, source metadata, and supported cost fields
-  - contractors can create a new catalog/cost item inline from the Estimate Editoror; saving first creates the organization-scoped `catalog_items` record, then inserts the current estimate line through the same catalog insertion flow
-  - catalog-backed estimate item names are clickable in the Estimate Editoror; saving an edit updates the reusable `catalog_items` row and the current estimate line-item snapshot only
+- Estimate Builder V1 quick system generation is now implemented inside the existing Estimate Editor:
+  - contractors can add active non-system catalog items from the Estimate Editor Catalog Items panel; insertion uses the existing server action path to create immutable estimate line-item snapshots for name, description, unit, pricing, taxability, source metadata, and supported cost fields
+  - contractors can create a new catalog/cost item inline from the Estimate Editor; saving first creates the organization-scoped `catalog_items` record, then inserts the current estimate line through the same catalog insertion flow
+  - catalog-backed estimate item names are clickable in the Estimate Editor; saving an edit updates the reusable `catalog_items` row and the current estimate line-item snapshot only
   - other estimates that previously snapshotted the same catalog item do not silently update when the catalog item is edited from the current estimate
-  - approved estimates block catalog-backed snapshot editing from the Estimate Editoror
+  - approved estimates block catalog-backed snapshot editing from the Estimate Editor
   - archived catalog items are visible in the Catalog Items panel for review but cannot be inserted, and server-side insertion rejects archived/inactive catalog items
   - system catalog items remain routed through the system expansion flow instead of direct single-line catalog insertion
   - contractors can select an existing catalog system, enter length x width or direct area plus linear footage, preview area/perimeter-derived quantities, and append grouped canonical estimate line items
   - existing catalog system components map `sqft`/area basis rows to area, `lf`/perimeter basis rows to linear footage, and count basis rows to count input
-  - the Estimate Editoror now uses clearer V1 terminology for Catalog Items, Systems, Add-ons / Options, and Document Templates; Add-ons / Options reuse the existing catalog item `category` field instead of introducing a separate schema
+  - the Estimate Editor now uses clearer V1 terminology for Catalog Items, Systems, Add-ons / Options, and Document Templates; Add-ons / Options reuse the existing catalog item `category` field instead of introducing a separate schema
   - Catalog Items categorized as Add-ons / Options can be inserted directly or included in Systems with existing `sqft`, `lf`, count/ea, or fixed/project basis behavior; dedicated optional-component toggles remain a future Templates & Systems decision
   - generated lines remain normal editable estimate line items with catalog pricing snapshotted at insertion
   - one-off estimate-line unit price overrides are supported in the existing item table and persist on the estimate line without mutating catalog defaults
   - customer-facing portal estimate review groups line items by the existing generated group snapshot and continues to hide internal cost, markup, hidden markup, and labor/cost internals
-- Estimate Editoror now groups item insertion into one clearer estimating-tools cluster: `Create new item`, `Add from catalog`, system generation, and `Import from another estimate`; new estimate items are catalog-first rather than manual freeform rows
+- Estimate Editor now groups item insertion into one clearer estimating-tools cluster: `Create new item`, `Add from catalog`, system generation, and `Import from another estimate`; new estimate items are catalog-first rather than manual freeform rows
 - estimate line-item import from another estimate is now live for same-organization source estimates into draft destination estimates only; imported rows are reseeded as new destination `estimate_line_items` and do not create invoice rows, SOV rows, contracts, or payments
-- Estimate Editoror and detail now use clearer reusable-content language for scope / SOW, project details, terms, inclusions, and exclusions, and they distinguish insertable content blocks from defaults that only prefill empty estimates
-- Estimate Editoror now also uses one shared reusable-content insertion area for scope / SOW, terms, inclusions, and exclusions, reusing the existing content-block system while preserving append behavior into the live estimate
+- Estimate Editor and detail now use clearer reusable-content language for scope / SOW, project details, terms, inclusions, and exclusions, and they distinguish insertable content blocks from defaults that only prefill empty estimates
+- Estimate Editor now also uses one shared reusable-content insertion area for scope / SOW, terms, inclusions, and exclusions, reusing the existing content-block system while preserving append behavior into the live estimate
 - reusable content import from another estimate is now live for same-organization source estimates into draft destination estimates only; Scope / SOW, Terms, Inclusions, and Exclusions append into the live destination Estimate Workspace without changing defaults, line items, or downstream billing records
 - estimate import now uses one shared source-estimate chooser in the estimating tools area so users pick a source once, then choose `Import line items`, `Import Scope / SOW`, `Import Terms`, `Import Inclusions`, or `Import Exclusions` without changing any import behavior
-- Estimate Workspace edits now use autosave with validation, dirty/error state handling, and stale-write conflict protection
+- Estimate Workspace edits now use the shared explicit save-state pattern with validation, dirty/error state handling, and stale-write conflict protection
 - estimate defaults now hydrate only when the estimate content is initially empty, using platform defaults first and organization overrides second
 - contractor workflow settings now explain estimate defaults more explicitly: Scope / SOW, Terms, Inclusions, and Exclusions are organization-owned starting defaults for empty estimates only, while reusable blocks append on demand and estimate import copies from a selected prior estimate
 - estimate customer send, email tracking, portal review, contractor-side supported manual/offline decision actions, and status progression
@@ -1690,7 +1710,7 @@ Not implemented yet:
 - external tax provider integration
 - rich template editing UI
 - external e-sign integration workflows on top of the canonical contract record
-- broader alignment from [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md), including stronger module-page UI consistency, directory/contact unification, Estimate Editoror navigation/review improvements, line taxable-toggle planning, structured project/service address display, configurable tax-rate direction, and fuller workflow-guidance states
+- broader alignment from [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md), including stronger module-page UI consistency, directory/contact unification, Estimate Editor navigation/review improvements, line taxable-toggle planning, structured project/service address display, configurable tax-rate direction, and fuller workflow-guidance states
 
 Future-looking note:
 - the public homepage and early-access intake are implemented for FloorConnector onboarding, but contractor-owned websites, tenant-owned domains, SEO/service/location pages, landing pages, marketing attribution, generated marketing content, public AI intake, reviews/reputation, testimonials, and before/after galleries are target platform direction only; they should eventually feed the same canonical opportunity/customer/project workflow rather than becoming a separate website, CRM, marketing-contact, or AI knowledge system.

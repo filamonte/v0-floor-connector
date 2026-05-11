@@ -1,6 +1,7 @@
 # Developer Source Of Truth
 
-# FloorConnector - Developer Source of Truth
+Status: Stable
+Doc Type: Governance
 
 ## PURPOSE
 
@@ -83,17 +84,26 @@ Core:
 
 - docs/developer-source-of-truth.md
 - docs/current-state.md
+- docs/platform-maturity.md
+- docs/module-status.md
+- docs/known-gaps.md
 - docs/workflows.md
 - docs/Roadmap.md
+- docs/architecture-principles.md
+- docs/canonical-lifecycle.md
+- docs/adr/README.md
 
 UI:
 
+- docs/ui-system.md
 - docs/floorconnector-ui-build-rules.md
 - docs/v0-ui-cleanup-brief-header-project-estimate.md
 
 Execution:
 
 - docs/chat-handoff.md
+- docs/ai/README.md
+- docs/documentation-standards.md
 
 ---
 
@@ -143,7 +153,7 @@ These are target direction only unless [docs/current-state.md](C:/FloorConnector
 
 ## ↓ EXISTING SYSTEM DETAILS BELOW (DO NOT IGNORE)
 
-Status: implementation guardrail document.
+Legacy note: this file remains the primary implementation guardrail document.
 
 Use this file as the primary developer entry point and short guardrail summary for FloorConnector. It does not replace the deeper docs. It exists to reduce prompt drift and keep implementation work aligned with the current branch reality.
 
@@ -156,7 +166,7 @@ Use these docs together:
 - [docs/build-sequence.md](C:/FloorConnector/docs/build-sequence.md): practical build-order guidance
 - [docs/codex-workflow.md](C:/FloorConnector/docs/codex-workflow.md): reusable planning-first Codex operating mode
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
-- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): phased implementation plan
+- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): platform maturity roadmap
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow
 - [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
 - [docs/site-visit-scope-intake-plan.md](C:/FloorConnector/docs/site-visit-scope-intake-plan.md): Scope Intake planning guardrails between site visit and estimate planning
@@ -291,7 +301,7 @@ Important workflow rules:
 - every `schedule_of_value_items` row must use one `lineage_type`
 - estimate authoring is inventory-first; do not reintroduce user-facing manual estimate rows or manual save-back-to-catalog flows
 - estimate defaults should hydrate only when estimate content is initially empty, resolving platform defaults before contractor overrides and never silently reapplying after user edits
-- estimate autosave should validate before persist and use conflict protection against stale overwrites
+- estimate explicit save submission should validate before persist and use conflict protection against stale overwrites
 - estimate tax must stay derived from organization defaults, customer exemption state, and item-level taxable flags; do not add manual estimate tax overrides
 - `catalog_items` is the only canonical cost item model and the one shared item master across material, labor, service, equipment, subcontractor, other, and system records
 - do not create duplicate cost item tables such as `contractor_cost_items`, module-specific catalog tables, or separate estimate/invoice/materials item masters

@@ -239,7 +239,7 @@ Recommended fixes:
 ### 7. Estimate Approval Next-Steps Invoice
 
 Where it exists:
-- Estimate detail and Estimate Editoror approval next-steps panel.
+- Estimate detail and Estimate Editor approval next-steps panel.
 - [apps/web/app/(app)/estimates/[estimateId]/page.tsx](C:/FloorConnector/apps/web/app/(app)/estimates/[estimateId]/page.tsx)
 - [apps/web/app/(app)/estimates/[estimateId]/edit/page.tsx](C:/FloorConnector/apps/web/app/(app)/estimates/[estimateId]/edit/page.tsx)
 - [apps/web/components/estimates/approval-next-steps-panel.tsx](C:/FloorConnector/apps/web/components/estimates/approval-next-steps-panel.tsx)

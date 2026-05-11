@@ -23,7 +23,7 @@ Planned direction:
 - reviewed handoff from intake into system template selection, SOW generation, estimate draft lines, and labor/material planning
 - no direct Scope Intake to invoice behavior
 
-### UI, Directory, Tax, Estimate Editoror, Workflow Guidance, And Project Address Alignment
+### UI, Directory, Tax, Estimate Editor, Workflow Guidance, And Project Address Alignment
 
 Status: Planning backlog; not an implementation plan by itself.
 
@@ -33,14 +33,14 @@ Planned alignment areas:
 - contractor UI color, contrast, section hierarchy, status color, table/card, and action-hierarchy polish
 - uniform module-page defaults across header/title, primary actions, workflow guidance, filters/search, and list/card/table content
 - shared directory/contact direction that avoids duplicate person, customer, vendor, portal-user, and project-contact models
-- Estimate Editoror navigation, review/send actions, internal markup controls, and line taxable-toggle planning
+- Estimate Editor navigation, review/send actions, internal markup controls, and line taxable-toggle planning
 - contractor tax settings/rates direction, item default taxability, line-level taxable override, and customer/project tax applicability context
 - context-aware workflow guidance with complete, current, blocked, and future visual states
 - structured project/service address display distinct from customer billing/contact address
 - later configurable dashboard and module data views after strong defaults are standardized
 
 Priority grouping:
-- Now / demo polish: Estimate Editoror navigation/review actions, project service-address display, line taxable-toggle planning, and UI consistency audit
+- Now / demo polish: Estimate Editor navigation/review actions, project service-address display, line taxable-toggle planning, and UI consistency audit
 - Next / system alignment: directory/contact unification plan, tax settings/rates model, and uniform module-page polish
 - Later / platform depth: customizable dashboard/module views, USPS or other address verification, and advanced permissions/portal directory management
 

@@ -211,7 +211,7 @@ Recommended first-pass interpretation:
 - trigger: explicit user import
 - behavior: append
 
-This distinction should stay extremely explicit in settings and Estimate Editoror UX.
+This distinction should stay extremely explicit in settings and Estimate Editor UX.
 
 ## UI Plan For Contractor Settings
 
@@ -261,10 +261,10 @@ Again, UI clarity first:
 ## How Estimate Editor Should Show Default Origin
 
 ### Route / surface
-- Estimate Editoror Workspace
+- Estimate Editor Workspace
 
 ### Recommended UX
-Inside Estimate Editoror, add a small default-origin summary near the reusable-content areas.
+Inside Estimate Editor, add a small default-origin summary near the reusable-content areas.
 
 It should answer:
 - where did this default starting content come from?
@@ -299,7 +299,7 @@ Status:
 - this pass clarifies Scope / SOW, Terms, Inclusions, and Exclusions as platform seed values for organization-owned defaults without changing any data, contractor settings behavior, or estimate prefill behavior
 
 ### Phase 3
-Show default origin inside Estimate Editoror:
+Show default origin inside Estimate Editor:
 - platform starter default
 - organization default
 - edited in this estimate

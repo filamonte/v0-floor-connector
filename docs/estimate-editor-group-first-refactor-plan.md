@@ -1,4 +1,4 @@
-# Estimate Editoror Group-First Refactor Plan
+# Estimate Editor Group-First Refactor Plan
 
 Status:
 - long-term design and implementation plan
@@ -16,7 +16,7 @@ Related docs:
 
 ## Purpose
 
-The current Estimate Editoror works, but the Items workspace is too long and still feels like a collection of estimating tools above a line-item table. The long-term direction should make estimate groups the primary authoring surface:
+The current Estimate Editor works, but the Items workspace is too long and still feels like a collection of estimating tools above a line-item table. The long-term direction should make estimate groups the primary authoring surface:
 
 ```text
 create/select group -> choose item source -> review/add item -> edit line snapshot in group
@@ -39,7 +39,7 @@ Mandatory docs inspected:
 - `docs/estimate-catalog-selection-phase-2b-plan.md`
 - `docs/qa-estimate-catalog-item-insertion.md`
 
-Estimate Editoror and estimate data files inspected:
+Estimate Editor and estimate data files inspected:
 - `apps/web/components/estimate-form.tsx`
 - `apps/web/components/estimates/items-section.tsx`
 - `apps/web/components/estimates/estimate-import-chooser.tsx`
@@ -63,7 +63,7 @@ The editor already has partial group support:
 - `estimate.content.itemGroups` stores editable UI group definitions with `id`, `label`, and `sortOrder`.
 - `estimate_line_items.group_name` stores the persisted group label on the authoritative line item row.
 - `EstimateForm` maps line-item `groupName` values back to local group ids for the editor.
-- autosave posts hidden `itemGroupId` / `itemGroupLabel` values and per-line `lineItemGroupName` values.
+- explicit save posts hidden `itemGroupId` / `itemGroupLabel` values and per-line `lineItemGroupName` values.
 - `ItemsSection` renders line items grouped by local group id, includes an `Add Group` action, supports inline group rename, and deletes a group by unassigning its rows.
 - estimate detail and portal estimate review already group customer-facing rows by line-item group labels.
 
@@ -95,7 +95,7 @@ Existing support is not yet enough for a perfect group-targeted insertion flow:
 - import-from-estimate has no destination group mode.
 - group actions are currently global controls and row-level selectors, not group-row/card actions.
 
-Because this plan is planning-only, the implementation phases below avoid schema changes and recommend reusing existing client-side grouping/autosave where possible before introducing any new server input.
+Because this plan is planning-only, the implementation phases below avoid schema changes and recommend reusing existing client-side grouping and explicit save behavior where possible before introducing any new server input.
 
 ## Target UX
 
@@ -142,7 +142,7 @@ Recommended role for the current Catalog Items panel:
 - convert it into the Cost Database tab inside the group-scoped Add Item drawer.
 - optionally keep a temporary global "Add item" entry during transition, but route the user to select or create a target group before insertion.
 
-This avoids making the Estimate Editoror feel like the place to manage the Cost Items Database. Catalog maintenance should remain in `/cost-items-database` and `/settings/catalogs`; the Estimate Editoror should use catalog items as insertion sources.
+This avoids making the Estimate Editor feel like the place to manage the Cost Items Database. Catalog maintenance should remain in `/cost-items-database` and `/settings/catalogs`; the Estimate Editor should use catalog items as insertion sources.
 
 ## Snapshot Editing Direction
 
@@ -182,7 +182,7 @@ Likely files:
 Validation:
 - create, rename, and delete groups.
 - assign existing rows to groups.
-- autosave and reload to confirm groups and line group labels persist.
+- save explicitly and reload to confirm groups and line group labels persist.
 - confirm estimate detail and portal review still group rows correctly.
 - run `pnpm typecheck` and `pnpm lint`.
 
@@ -199,7 +199,7 @@ Lowest-risk path without schema/action changes:
 - after the server returns the updated line list, the client assigns the newly inserted row to the target group and marks the estimate dirty or triggers the existing persist path.
 
 Tradeoff:
-- this may require a follow-up autosave after insertion to persist `group_name`.
+- this may require a follow-up explicit save after insertion to persist `group_name`.
 - it preserves the current server action contract and avoids a schema change.
 
 Cleaner later path:
@@ -294,7 +294,7 @@ Validation:
 ### Phase E: Larger Design / v0 Pass
 
 Goal:
-- turn the Estimate Editoror into a cleaner production estimate workspace after the behavior is stable.
+- turn the Estimate Editor into a cleaner production estimate workspace after the behavior is stable.
 
 Recommended scope:
 - group-first visual redesign using the shared contractor workspace language.
@@ -314,7 +314,7 @@ Recommendation:
 
 Rationale:
 - catalog items should be maintained in the Cost Items Database.
-- the Estimate Editoror should consume reusable cost items as insertion sources.
+- the Estimate Editor should consume reusable cost items as insertion sources.
 - permanent catalog browsing makes the editor long and competes with the actual estimate groups.
 - group-level actions match contractor workflow better: choose section, then add item.
 
@@ -326,7 +326,7 @@ Transition:
 ## Risks
 
 - Group persistence drift: local group ids are stored in workspace JSON, while authoritative line rows store `group_name`. Renaming, deleting, and inserting into groups must keep those aligned.
-- Double-save complexity: using existing catalog insertion then client-assigning the new row to a group may require a follow-up autosave.
+- Double-save complexity: using existing catalog insertion then client-assigning the new row to a group may require a follow-up explicit save.
 - Inserted-row detection: if multiple users edit the same draft estimate, client-side "new row" detection needs to avoid assigning the wrong row.
 - System grouping ambiguity: system expansion currently creates a generated group label; group-first UX must choose selected group versus new system group intentionally.
 - Previous-estimate import scope: selected-row or selected-group import is more complex than the current all-line import.
@@ -344,7 +344,7 @@ Do not touch:
 - tax calculation behavior
 - database schema or migrations
 - durable group table design
-- catalog item management workflows inside the Estimate Editoror
+- catalog item management workflows inside the Estimate Editor
 - direct takeoff/AI-generated estimate lines
 - customer-facing output beyond preserving existing grouped display
 - mock data, local-only persistence, or placeholder estimating flows
@@ -352,7 +352,7 @@ Do not touch:
 ## Follow-Up Dependencies
 
 Before implementation, decide:
-- whether Phase B may use a two-step client assignment/autosave or should extend the server action with optional `groupName`.
+- whether Phase B may use a two-step client assignment/explicit save or should extend the server action with optional `groupName`.
 - whether system insertion from a group should always use the selected group or offer "new system group" as a separate action.
 - whether "custom one-off item" should remain catalog-Quick-Create-first or whether a true one-off `manual` source path should be designed separately.
 - whether previous-estimate import should support selected rows before destination-group targeting.

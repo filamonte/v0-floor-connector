@@ -1,5 +1,8 @@
 # FloorConnector Vision
 
+Status: Stable
+Doc Type: Philosophy
+
 FloorConnector is building a vertical operating system for epoxy flooring, concrete polishing, resinous flooring, and other specialty surface contractors.
 
 This document describes the long-term product vision. It is intentionally high-level and should not be treated as the source of truth for what is already implemented.
@@ -8,7 +11,7 @@ Related documents:
 
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): what is implemented today
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md): current and near-term business workflows
-- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): next-phase build order
+- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): platform maturity sequencing
 - [docs/ai-assisted-operating-system.md](C:/FloorConnector/docs/ai-assisted-operating-system.md): long-term AI-assisted operating system direction
 
 ## Who FloorConnector Is For
@@ -273,7 +276,7 @@ It does not replace:
 
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md) for implemented truth
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md) for current and near-term workflow behavior
-- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md) for sequencing what gets built next
+- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md) for platform maturity sequencing
 
 It also does not imply that every future idea should be built. The product vision should guide decision-making, but each expansion still needs to earn its place by strengthening the shared contractor workflow and canonical data model.
 

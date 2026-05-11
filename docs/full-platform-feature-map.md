@@ -65,7 +65,7 @@ Supporting systems must attach to that chain instead of creating parallel record
 - Connected lifecycle from opportunity through payment recording.
 - Lead-to-estimate conversion that creates or links canonical customer and project records.
 - Project detail as the current readiness and workflow hub.
-- Estimate authoring on canonical line items with autosave, validation, catalog sourcing, reusable systems, import from prior estimates, customer send, portal review, approval/rejection, and approved snapshot creation.
+- Estimate authoring on canonical line items with explicit shared save-state behavior, validation, catalog sourcing, reusable systems, import from prior estimates, customer send, portal review, approval/rejection, and approved snapshot creation.
 - Contract generation from approved estimate/project context using shared templates, draft editing, internal approval readiness, signer routing, portal signature/decline, optional countersign, signature events, and signature-state continuity.
 - Change-order authoring, portal review, approval/rejection, approved snapshot creation, and downstream SOV or invoice integration.
 - Jobs with first-pass execution states, schedule fields, and crew assignment foundation.
@@ -443,7 +443,7 @@ Supporting systems must attach to that chain instead of creating parallel record
 - PDF generation and document delivery are not complete.
 - E-sign workflow is implemented internally on canonical contracts, but no external e-sign provider is integrated.
 - Legal document lifecycle is limited to contract templates and contract signature workflow.
-- Shared files/documents routes exist as placeholders/foundations, not a full document management system.
+- Shared file and document-writing surfaces exist as placeholders/foundations, not a full document management system.
 - Forms/checklists and report output are not complete.
 
 ### Not Started

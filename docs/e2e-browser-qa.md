@@ -6,7 +6,7 @@ Status:
 
 ## Purpose
 
-Use this path when the in-app browser or coordinate-based automation cannot reliably click inside dense editor surfaces such as the Estimate Editoror. The current focused spec covers Phase B group-targeted catalog insertion in the Estimate Editoror.
+Use this path when the in-app browser or coordinate-based automation cannot reliably click inside dense editor surfaces such as the Estimate Editor. The current focused spec covers Phase B group-targeted catalog insertion in the Estimate Editor.
 
 ## Setup
 
@@ -163,7 +163,7 @@ $env:FLOORCONNECTOR_E2E_DRAFT_ESTIMATE_PATH="/estimates/estimate-uuid/edit"
 
 ## What The Focused Spec Verifies
 
-- protected Estimate Editoror loads with real auth
+- protected Estimate Editor loads with real auth
 - a draft estimate can create new groups through the existing UI
 - group-level `Add Item` opens the existing add-item tools
 - active non-system catalog item quick-add inserts into the selected group

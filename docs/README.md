@@ -1,5 +1,8 @@
 # Docs
 
+Status: Active
+Doc Type: Governance
+
 Product, engineering, and rollout documentation lives here.
 
 Canonical repository notes:
@@ -18,7 +21,7 @@ Current foundation priorities to document as the repo grows:
 - modular contractor settings and super-admin boundaries
 - platform defaults versus organization-owned copies and overrides
 - future Templates & Systems administration for document templates, System Templates, add-ons/options, and sharing/review controls
-- future UI, directory/contact, tax, Estimate Editoror, workflow-guidance, and project-address alignment before broader demo/investor polish
+- future UI, directory/contact, tax, Estimate Editor, workflow-guidance, and project-address alignment before broader demo/investor polish
 
 Environment notes:
 
@@ -33,9 +36,20 @@ Available setup guides:
 Document roles:
 
 - `docs/developer-source-of-truth.md`: primary entry point for day-to-day development guardrails
+- `docs/documentation-standards.md`: doc layers, metadata, status vocabulary, ADR/diagram rules, and update expectations
 - `docs/documentation-governance.md`: documentation system rules, archival policy, and doc update expectations
+- `docs/platform-maturity.md`: concise platform maturity framing
+- `docs/module-status.md`: concise module status table
+- `docs/known-gaps.md`: important depth gaps around the implemented core
+- `docs/architecture-principles.md`: stable platform architecture principles
+- `docs/canonical-lifecycle.md`: canonical record chain and lineage rules
+- `docs/platform-philosophy.md`: stable product/engineering philosophy
+- `docs/ui-system.md`: current contractor UI guardrails
+- `docs/financial-architecture.md`: financial record/event guardrails
+- `docs/portal-architecture.md`: portal shared-record guardrails
 - `docs/Architecture.md`: target system design
-- `docs/Roadmap.md`: phased implementation plan
+- `docs/Roadmap.md`: platform maturity roadmap
+- `docs/future-platform-expansion.md`: future platform expansion direction
 - `docs/current-state.md`: source of truth for implemented status
 - `docs/workflows.md`: canonical business workflows and near-term workflow direction
 - `docs/site-visit-scope-intake-plan.md`: planning guardrails for the lead site visit Scope Intake stage between appointment capture and estimate planning
@@ -53,12 +67,15 @@ Document roles:
 - `docs/starter-pack-provisioning-execution-readiness.md`: readiness review for starter-pack provisioning execution field mappings, lineage, transaction/RPC feasibility, and void-readiness foundations
 - `docs/starter-pack-provisioning-review.md`: consolidated architecture/operator readiness review for the implemented starter-pack provisioning lifecycle before any real void action
 - `docs/contractor-groups-plan.md`: planning/read-model guardrails for platform-owned contractor groups, assignment audit/history, and future non-enforcing segmentation use
-- `docs/ui-data-model-alignment-backlog.md`: planning backlog for contractor UI consistency, module-page patterns, directory/contact direction, Estimate Editoror polish, tax model alignment, workflow guidance, project address display, and later configurable module/dashboard views
+- `docs/ui-data-model-alignment-backlog.md`: planning backlog for contractor UI consistency, module-page patterns, directory/contact direction, Estimate Editor polish, tax model alignment, workflow guidance, project address display, and later configurable module/dashboard views
 - `docs/estimate-builder-build-plan.md`: long-lived Estimate Builder master blueprint
 - `docs/estimate-builder-v1-scope.md`: constrained Estimate Builder V1 execution scope
 - `docs/estimate-builder-system-generation-spec.md`: planning spec for future system-based estimate generation
 - `docs/figma-redesign-brief.md`: exploratory workflow-first design brief for future Figma work
 - `docs/archive/README.md`: archive index for historical planning/reference docs
+- `docs/adr/README.md`: architecture decision record index
+- `docs/diagrams/README.md`: Mermaid architecture and workflow diagrams
+- `docs/ai/README.md`: AI-assisted development and documentation interpretation rules
 - `docs/opportunity-model.md`: archived pointer to the historical opportunity planning doc
 - `docs/opportunity-implementation-plan.md`: archived pointer to the historical opportunity rollout plan
 
@@ -66,10 +83,14 @@ Document roles:
 
 - `docs/developer-source-of-truth.md` -> what every development session reads first
 - `docs/current-state.md` -> what is implemented today
+- `docs/platform-maturity.md` and `docs/module-status.md` -> concise current status
 - `docs/workflows.md` -> how the implemented and near-term business workflows are intended to operate
-- `docs/Roadmap.md` -> what is being built next
+- `docs/Roadmap.md` -> future platform maturity sequencing
 - `docs/Architecture.md` -> target system design
 - `docs/vision.md` -> where the product is intended to expand over time
+- `docs/adr/` -> settled architecture decisions
+- `docs/diagrams/` -> architecture diagrams as code
+- `docs/ai/` -> AI-readable implementation boundaries
 
 Current documentation focus:
 

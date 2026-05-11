@@ -299,6 +299,8 @@ Validation:
 
 ### Prompt 2: Support And Release Checklist
 
+Status: recommended future doc; not yet created in this repo snapshot. The prompt below is retained as a future-doc scaffold, not a current link.
+
 ```text
 You are continuing FloorConnector after creating the Phase B progress checkpoint.
 
@@ -312,7 +314,7 @@ Read first:
 - docs/full-build-and-launch-plan.md
 - docs/chat-handoff.md
 
-Create:
+Recommended future doc:
 - docs/internal-beta-support-release-checklist.md
 
 Include:
@@ -330,6 +332,8 @@ Validation:
 
 ### Prompt 3: Contractor Onboarding Runbook
 
+Status: recommended future doc; not yet created in this repo snapshot. The prompt below is retained as a future-doc scaffold, not a current link.
+
 ```text
 You are continuing FloorConnector after the Phase B progress checkpoint.
 
@@ -344,7 +348,7 @@ Read first:
 - docs/full-build-and-launch-plan.md
 - docs/chat-handoff.md
 
-Create:
+Recommended future doc:
 - docs/internal-beta-contractor-onboarding-runbook.md
 
 Include:
@@ -363,6 +367,8 @@ Validation:
 
 ### Prompt 4: Beta Candidate Criteria
 
+Status: recommended future doc; not yet created in this repo snapshot. The prompt below is retained as a future-doc scaffold, not a current link.
+
 ```text
 You are continuing FloorConnector after the Phase B progress checkpoint.
 
@@ -377,7 +383,7 @@ Read first:
 - docs/full-build-and-launch-plan.md
 - docs/chat-handoff.md
 
-Create:
+Recommended future doc:
 - docs/beta-candidate-criteria.md
 
 Include:
@@ -392,6 +398,8 @@ Validation:
 ```
 
 ### Prompt 5: Run And Record Phase B Validation
+
+Status: recommended future validation-results doc; not yet created in this repo snapshot. The prompt below is retained as a future-doc scaffold, not a current link.
 
 ```text
 You are continuing FloorConnector after creating the Phase B validation docs.
@@ -408,7 +416,7 @@ Read first:
 - docs/current-state.md
 - docs/chat-handoff.md
 
-Create or update:
+Recommended future results doc:
 - docs/phase-b-validation-results.md
 
 Include:

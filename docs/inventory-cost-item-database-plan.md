@@ -60,7 +60,7 @@ Inventory remains operational context only. It does not drive estimate or invoic
 
 Implemented foundation:
 - `estimate_line_items` is the authoritative estimate item-row table.
-- Estimate authoring can insert active non-system catalog items from the Estimate Editoror Catalog Items panel.
+- Estimate authoring can insert active non-system catalog items from the Estimate Editor Catalog Items panel.
 - Inserted catalog items are written through server-owned snapshot behavior onto `estimate_line_items`.
 - Archived catalog items can remain visible for review but are blocked from insertion.
 - Estimate systems expand from `catalog_system_components` into normal estimate line items.

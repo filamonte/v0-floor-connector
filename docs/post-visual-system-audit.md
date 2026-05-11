@@ -38,7 +38,7 @@ Status: review checkpoint after recent catalog, estimate, profile/account, palet
 - `catalog_items` remains the canonical reusable cost item database. No `contractor_cost_items` table or module-specific cost item model was found in active app code.
 - `inventory_items` is an optional operational stock extension linked to catalog items; it is not a duplicate sellable cost item master.
 - Estimate catalog insertion is implemented through `insertCatalogItemToEstimateAction`, which accepts only `estimateId` and `catalogItemId`, rejects client-owned pricing payloads, rejects archived/inactive items, rejects `system` items, and creates server-owned `estimate_line_items` snapshots.
-- The Estimate Editoror group-first refactor is still planning, not fully implemented. Current code has item groups and grouped output, but catalog/system/import insertion is not yet a fully group-scoped Add Item drawer workflow.
+- The Estimate Editor group-first refactor is still planning, not fully implemented. Current code has item groups and grouped output, but catalog/system/import insertion is not yet a fully group-scoped Add Item drawer workflow.
 - Invoice creation remains guarded by billing source and commercial readiness checks. Quick create requires project context plus deposit, job, approved estimate, or approved change-order source; standard job invoices require completed work.
 - Invoice rows continue to use explicit lineage paths: approved estimate snapshot item, selected SOV item, approved change-order snapshot item, or invoice-only adjustment.
 - `/settings/profile` exists, is protected, reads existing Supabase auth and `public.users` profile data, shows current organization context, and is read-only because no app-level personal profile update action is wired.

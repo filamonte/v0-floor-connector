@@ -47,7 +47,7 @@ This plan assumes the current FloorConnector guardrails remain in force:
   - `insertCatalogItemToEstimate(...)`
   - `insertSystemToEstimate(...)`
 - [apps/web/lib/estimates/actions.ts](/C:/FloorConnector/apps/web/lib/estimates/actions.ts)
-  - estimate form parsing and autosave actions
+  - estimate form parsing and explicit save actions
   - `insertCatalogItemToEstimateAction(...)`
   - `insertSystemToEstimateAction(...)`
   - `openOrCreateScheduleOfValuesAction(...)`
@@ -84,7 +84,7 @@ This plan assumes the current FloorConnector guardrails remain in force:
   - `notesHtml`
 - reusable content blocks already append into the current Estimate Workspace.
 - workflow defaults only prefill when the destination estimate content is effectively empty.
-- approved estimate downstream workflows depend on immutable approved snapshot lineage, not on the live Estimate Editoror rows.
+- approved estimate downstream workflows depend on immutable approved snapshot lineage, not on the live Estimate Editor rows.
 - progress billing explicitly requires source estimate snapshot lineage and cannot bill from imported live rows alone.
 
 ## Safest Import Rules
@@ -197,11 +197,11 @@ Recommended first-pass rule:
 ## Proposed Source Estimate Selection UX
 
 ### Placement
-Use the existing Estimate Editoror item/tool cluster. Do not create a new page or layout.
+Use the existing Estimate Editor item/tool cluster. Do not create a new page or layout.
 
 Recommended UI:
 - keep `Import from another estimate` inside the existing estimate builder insertion tool cluster
-- open a lightweight in-place selector or existing-pattern panel within the current Estimate Editoror Workspace
+- open a lightweight in-place selector or existing-pattern panel within the current Estimate Editor Workspace
 - do not introduce a new full-page chooser flow
 
 ### Selection flow
@@ -347,7 +347,7 @@ When appending rich text:
 If import copies approved snapshot rows, SOV rows, or invoice rows, the platform would violate the canonical lineage model.
 
 Mitigation:
-- only import through live Estimate Editoror inputs and canonical source seeding helpers
+- only import through live Estimate Editor inputs and canonical source seeding helpers
 
 ### Risk: importing stale or deleted source references
 Older estimates may reference catalog items or system components that no longer resolve cleanly.
@@ -382,7 +382,7 @@ Mitigation:
 Add a disabled but fully specified `Import from another estimate` action inside the existing estimate tool cluster with the final copy and safety language.
 
 ### Phase 2
-Implement source estimate search/select inside the existing Estimate Editoror Workspace using same-tenant estimates only.
+Implement source estimate search/select inside the existing Estimate Editor Workspace using same-tenant estimates only.
 
 ### Phase 3
 Implemented: line-item import only:
@@ -428,12 +428,12 @@ Goal:
 Allow importing line items from another estimate into a draft destination estimate, using canonical estimate source seeding and append-only destination behavior.
 
 Scope:
-- existing Estimate Editoror page/tool cluster
+- existing Estimate Editor page/tool cluster
 - estimate import server action/helpers
 - no new page layouts
 
 Requirements:
-1. Reuse the existing Estimate Editoror structure and item insertion tool cluster.
+1. Reuse the existing Estimate Editor structure and item insertion tool cluster.
 2. Add a real `Import from another estimate` flow for line items only.
 3. Same organization only.
 4. Exclude the current estimate from source selection.

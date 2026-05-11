@@ -1,6 +1,7 @@
 # FloorConnector Product Brain
 
-Status: high-signal product and implementation memory for future Codex sessions.
+Status: Active
+Doc Type: Operational
 
 Read this with:
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
