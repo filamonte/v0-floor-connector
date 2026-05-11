@@ -53,13 +53,13 @@ export function InvoicePaymentForm({
       </div>
 
       <label className="block">
-        <span className="mb-2 block text-sm font-medium text-slate-800">
+        <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
           Notes
         </span>
         <textarea
           name="notes"
           rows={3}
-          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+          className="w-full rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)] focus:ring-4 focus:ring-[var(--copper-light)]/20"
           placeholder="Optional payment notes"
         />
       </label>
