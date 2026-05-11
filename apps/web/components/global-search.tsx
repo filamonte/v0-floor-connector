@@ -92,7 +92,7 @@ function ArrowIcon() {
 }
 
 const defaultButtonClassName =
-  "inline-flex h-10 min-w-[240px] items-center justify-between rounded-[4px] border border-[#dbcfc4] bg-[#fbf7f2] px-3.5 text-[13px] font-medium text-[#55473b] transition hover:border-[#ef7d32] hover:bg-white hover:text-[#221a14]";
+  "inline-flex h-10 min-w-[240px] items-center justify-between rounded-[4px] border border-[var(--border-warm)] bg-[var(--cream)] px-3.5 text-[13px] font-medium text-[var(--text-secondary)] transition hover:border-[var(--copper)] hover:bg-white hover:text-[var(--text-primary)]";
 
 export function GlobalSearch({
   buttonClassName = defaultButtonClassName,
@@ -218,16 +218,16 @@ export function GlobalSearch({
           <span>{buttonLabel}</span>
         </span>
         {!compact ? (
-          <span className="rounded-[4px] border border-[#e7ddd3] bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8f5b32]">
+          <span className="rounded-[4px] border border-[var(--border-warm)] bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--copper)]">
             Ctrl K
           </span>
         ) : null}
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-[80] bg-[rgba(23,18,15,0.4)] px-4 py-6 sm:px-6" role="dialog" aria-modal="true" aria-label="Global search">
-          <div className="mx-auto flex max-h-[calc(100vh-3rem)] w-full max-w-4xl flex-col overflow-hidden rounded-[1.35rem] border border-[#d8cabd] bg-[#f8f3ed] shadow-[0_36px_90px_-40px_rgba(23,18,15,0.55)]">
-            <div className="flex items-center gap-3 border-b border-[#e5d9ce] bg-white px-4 py-3 sm:px-5">
+        <div className="fixed inset-0 z-[80] bg-[var(--text-primary)]/40 px-4 py-6 sm:px-6" role="dialog" aria-modal="true" aria-label="Global search">
+          <div className="mx-auto flex max-h-[calc(100vh-3rem)] w-full max-w-4xl flex-col overflow-hidden rounded-[1.35rem] border border-[var(--border-warm)] bg-[var(--cream)] shadow-[0_36px_90px_-40px_rgba(23,18,15,0.55)]">
+            <div className="flex items-center gap-3 border-b border-[var(--border-warm)] bg-white px-4 py-3 sm:px-5">
               <SearchIcon />
               <input
                 ref={inputRef}
@@ -235,12 +235,12 @@ export function GlobalSearch({
                 value={query}
                 onChange={(event) => setQuery(event.currentTarget.value)}
                 placeholder="Search leads, customers, projects, appointments, estimates, contracts, invoices, jobs, payments, workforce people, or vendors"
-                className="h-11 w-full bg-transparent text-[15px] text-[#221a14] outline-none placeholder:text-[#8d8074]"
+                className="h-11 w-full bg-transparent text-[15px] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)]"
               />
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="inline-flex rounded-full border border-[#e2d4c5] bg-[#fbf5ee] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#5f4d40] transition hover:border-[#caac88] hover:bg-white"
+                className="inline-flex rounded-full border border-[var(--border-warm)] bg-[var(--cream)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)] transition hover:border-[var(--copper-light)] hover:bg-white"
               >
                 Close
               </button>
@@ -249,14 +249,14 @@ export function GlobalSearch({
             <div className="overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
               {query.trim().length < 2 ? (
                 <div className="space-y-4">
-                  <div className="rounded-[1rem] border border-[#e3d7cb] bg-white px-4 py-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+                  <div className="rounded-[1rem] border border-[var(--border-warm)] bg-white px-4 py-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
                       Global search
                     </p>
-                    <h2 className="mt-2 text-lg font-semibold text-[#221a14]">
+                    <h2 className="mt-2 text-lg font-semibold text-[var(--text-primary)]">
                       Find canonical records from one shared entry point
                     </h2>
-                    <p className="mt-2 text-sm leading-6 text-[#665446]">
+                    <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                       Search across opportunities, customers, projects, appointments,
                       estimates, contracts, invoices, jobs, payments, workforce people, and vendors.
                     </p>
@@ -277,7 +277,7 @@ export function GlobalSearch({
                     ].map((item) => (
                       <span
                         key={item}
-                        className="rounded-full border border-[#e3d7cb] bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7a6656]"
+                        className="rounded-full border border-[var(--border-warm)] bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]"
                       >
                         {item}
                       </span>
@@ -285,11 +285,11 @@ export function GlobalSearch({
                   </div>
                 </div>
               ) : loading ? (
-                <div className="rounded-[1rem] border border-[#e3d7cb] bg-white px-4 py-5 text-sm text-[#665446]">
+                <div className="rounded-[1rem] border border-[var(--border-warm)] bg-white px-4 py-5 text-sm text-[var(--text-secondary)]">
                   Searching current organization records...
                 </div>
               ) : error ? (
-                <div className="rounded-[1rem] border border-[#f1c7ae] bg-[#fff2e8] px-4 py-5 text-sm text-[#7b3b12]">
+                <div className="rounded-[1rem] border border-[var(--color-error)]/30 bg-[var(--color-error)]/5 px-4 py-5 text-sm text-[var(--color-error)]">
                   {error}
                 </div>
               ) : results && resultCount > 0 ? (
@@ -297,37 +297,37 @@ export function GlobalSearch({
                   {results.groups.map((group) => (
                     <section
                       key={group.key}
-                      className="overflow-hidden rounded-[1rem] border border-[#e3d7cb] bg-white"
+                      className="overflow-hidden rounded-[1rem] border border-[var(--border-warm)] bg-white"
                     >
-                      <div className="flex items-center justify-between gap-3 border-b border-[#efe3d7] bg-[#fbf5ee] px-4 py-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+                      <div className="flex items-center justify-between gap-3 border-b border-[var(--border-warm)] bg-[var(--cream)] px-4 py-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
                           {group.label}
                         </p>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8f5b32]">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--copper)]">
                           {group.results.length} result{group.results.length === 1 ? "" : "s"}
                         </p>
                       </div>
-                      <div className="divide-y divide-[#efe3d7]">
+                      <div className="divide-y divide-[var(--border-warm)]">
                         {group.results.map((result) => (
                           <Link
                             key={`${group.key}:${result.id}`}
                             href={result.href}
                             onClick={() => setOpen(false)}
-                            className="group block px-4 py-3 transition hover:bg-[#fff8f2]"
+                            className="group block px-4 py-3 transition hover:bg-[var(--highlight)]"
                           >
                             <div className="flex items-start justify-between gap-4">
                               <div className="min-w-0">
-                                <p className="text-sm font-semibold text-[#221a14] transition group-hover:text-[#a4581a]">
+                                <p className="text-sm font-semibold text-[var(--text-primary)] transition group-hover:text-[var(--copper)]">
                                   {result.title}
                                 </p>
-                                <p className="mt-1 text-sm leading-6 text-[#665446]">
+                                <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                                   {result.subtitle}
                                 </p>
-                                <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-[#8a7666]">
+                                <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
                                   {result.meta}
                                 </p>
                               </div>
-                              <span className="mt-1 text-[#a4581a] transition group-hover:translate-x-0.5">
+                              <span className="mt-1 text-[var(--copper)] transition group-hover:translate-x-0.5">
                                 <ArrowIcon />
                               </span>
                             </div>
@@ -338,9 +338,9 @@ export function GlobalSearch({
                   ))}
                 </div>
               ) : (
-                <div className="rounded-[1rem] border border-[#e3d7cb] bg-white px-4 py-5">
-                  <p className="text-sm font-semibold text-[#221a14]">No matching records</p>
-                  <p className="mt-2 text-sm leading-6 text-[#665446]">
+                <div className="rounded-[1rem] border border-[var(--border-warm)] bg-white px-4 py-5">
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">No matching records</p>
+                  <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                     Try a broader search term or search by record number, customer, project,
                     email, phone, or status.
                   </p>

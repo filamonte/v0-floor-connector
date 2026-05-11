@@ -27,14 +27,14 @@ export function AuthShell({
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-center px-4 py-10 sm:px-6 sm:py-16 lg:px-10">
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(300px,0.95fr)] lg:gap-8">
-        <section className="rounded-[2rem] border border-slate-200/80 bg-white/90 p-6 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-8 lg:p-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-700 sm:text-sm">
+        <section className="rounded-[2rem] border border-[var(--border-warm)] bg-white/90 p-6 shadow-[0_24px_80px_-40px_rgba(34,26,20,0.35)] backdrop-blur sm:p-8 lg:p-10">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--copper)] sm:text-sm">
             {eyebrow}
           </p>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-4xl">
             {title}
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
+          <p className="mt-4 max-w-2xl text-base leading-7 text-[var(--text-secondary)]">
             {description}
           </p>
 
@@ -57,14 +57,14 @@ export function AuthShell({
           ) : null}
 
           <div className="mt-8">{children}</div>
-          {footer ? <div className="mt-8 text-sm text-slate-600">{footer}</div> : null}
+          {footer ? <div className="mt-8 text-sm text-[var(--text-secondary)]">{footer}</div> : null}
         </section>
 
-        <aside className="rounded-[2rem] border border-brand-100 bg-brand-50/85 p-6 text-slate-700 shadow-[0_24px_80px_-40px_rgba(33,104,105,0.45)] backdrop-blur sm:p-8 lg:p-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-700 sm:text-sm">
+        <aside className="rounded-[2rem] border border-brand-100 bg-brand-50/85 p-6 text-[var(--text-secondary)] shadow-[0_24px_80px_-40px_rgba(33,104,105,0.45)] backdrop-blur sm:p-8 lg:p-10">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--copper)] sm:text-sm">
             {surfaceContext?.shellEyebrow ?? "FloorConnector"}
           </p>
-          <h2 className="mt-4 text-2xl font-semibold text-slate-950">
+          <h2 className="mt-4 text-2xl font-semibold text-[var(--text-primary)]">
             {surfaceContext?.shellTitle ?? "One login for every platform surface."}
           </h2>
           <p className="mt-4 text-sm leading-7">
@@ -74,19 +74,19 @@ export function AuthShell({
 
           <div className="mt-8 space-y-3">
             <div className="rounded-2xl border border-white/70 bg-white/70 px-4 py-3">
-              <p className="text-sm font-medium text-slate-900">
+              <p className="text-sm font-medium text-[var(--text-primary)]">
                 {surfaceContext?.nextStepTitle ?? "Supported now"}
               </p>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">
                 {surfaceContext?.nextStepDescription ??
                   "Google OAuth and email/password use the same shared auth foundation."}
               </p>
             </div>
             <div className="rounded-2xl border border-white/70 bg-white/60 px-4 py-3">
-              <p className="text-sm font-medium text-slate-900">
+              <p className="text-sm font-medium text-[var(--text-primary)]">
                 {surfaceContext?.continuityTitle ?? "Shared account model"}
               </p>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">
                 {surfaceContext?.continuityDescription ??
                   "Google OAuth and email/password both feed the same shared account model across every protected surface."}
               </p>
@@ -96,7 +96,7 @@ export function AuthShell({
           <div className="mt-8 flex flex-wrap gap-3 text-sm">
             <Link
               href="/"
-              className="rounded-full border border-slate-300 px-4 py-2 text-slate-700 transition hover:border-slate-400 hover:bg-white"
+              className="rounded-full border border-[var(--border-warm)] px-4 py-2 text-[var(--text-secondary)] transition hover:border-[var(--graphite-light)] hover:bg-white"
             >
               Back to marketing
             </Link>

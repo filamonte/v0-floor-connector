@@ -54,11 +54,11 @@ export async function AuthLoginPage({ searchParams }: AuthLoginPageProps) {
       }
     >
       <div className="space-y-6">
-        <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-          <p className="text-sm font-medium text-slate-900">
+        <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] p-4">
+          <p className="text-sm font-medium text-[var(--text-primary)]">
             Recommended sign-in
           </p>
-          <p className="mt-1 text-sm leading-6 text-slate-600">
+          <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
             Google is the primary login method for FloorConnector. Use email and
             password below when you need the fallback path for this same destination.
           </p>
@@ -72,17 +72,17 @@ export async function AuthLoginPage({ searchParams }: AuthLoginPageProps) {
             </span>
             <span>{`Continue with Google`}</span>
           </AuthSubmitButton>
-          <p className="text-xs leading-5 text-slate-500">
+          <p className="text-xs leading-5 text-[var(--text-secondary)]">
             {surfaceContext.nextStepDescription}
           </p>
         </form>
 
         <div className="flex items-center gap-3 py-2">
-          <div className="h-px flex-1 bg-slate-200" />
-          <span className="text-xs font-medium uppercase tracking-[0.24em] text-slate-400">
+          <div className="h-px flex-1 bg-[var(--border-warm)]" />
+          <span className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--text-tertiary)]">
             Email login
           </span>
-          <div className="h-px flex-1 bg-slate-200" />
+          <div className="h-px flex-1 bg-[var(--border-warm)]" />
         </div>
 
         <form action={signInWithPasswordAction} className="space-y-4">
