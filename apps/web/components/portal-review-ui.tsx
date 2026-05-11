@@ -4,22 +4,22 @@ import type { ReactNode } from "react";
 import { getStatusBadgeClassName } from "@floorconnector/ui";
 
 export const portalHeroPanelClassName =
-  "rounded-2xl border border-slate-200 bg-white p-7 shadow-[0_18px_52px_-44px_rgba(15,23,42,0.3)] sm:p-8";
+  "rounded-2xl border border-[var(--border-warm)] bg-white p-7 shadow-[0_18px_52px_-44px_rgba(55,65,81,0.2)] sm:p-8";
 
 export const portalStatePanelClassName =
-  "rounded-2xl border border-slate-200 bg-slate-50/70 px-6 py-6";
+  "rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-6 py-6";
 
 export const portalInsetPanelClassName =
-  "rounded-xl border border-slate-200 bg-white px-4 py-4";
+  "rounded-xl border border-[var(--border-warm)] bg-white px-4 py-4";
 
 export const portalReviewCardClassName =
-  "rounded-2xl border border-slate-200 bg-white px-5 py-4 transition hover:border-slate-300 hover:bg-slate-50";
+  "rounded-2xl border border-[var(--border-warm)] bg-white px-5 py-4 transition hover:border-[var(--graphite-light)]/30 hover:bg-[var(--highlight)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)]";
 
 export const portalDocumentPanelClassName =
-  "rounded-2xl border border-slate-200 bg-slate-50/50 px-6 py-6";
+  "rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-6 py-6";
 
 export const portalActionBoxClassName =
-  "space-y-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4";
+  "space-y-4 rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] p-4";
 
 export function PortalStatusBadge({
   status,
@@ -53,7 +53,7 @@ export function PortalSecondaryLink({
   return (
     <Link
       href={href}
-      className="inline-flex items-center rounded-md border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+      className="inline-flex items-center rounded-md border border-[var(--border-warm)] bg-white px-3.5 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--graphite-light)] hover:bg-[var(--highlight)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2"
     >
       {children}
     </Link>

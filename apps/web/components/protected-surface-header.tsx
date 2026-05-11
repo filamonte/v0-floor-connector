@@ -25,7 +25,7 @@ export function ProtectedSurfaceHeader({
   brandSupportingLabel
 }: ProtectedSurfaceHeaderProps) {
   return (
-    <header className="border-b border-slate-200/80 bg-white/85 backdrop-blur">
+    <header className="border-b border-[var(--border-warm)] bg-white/85 backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 py-5 sm:px-10 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <OrganizationBrandLink
@@ -36,13 +36,13 @@ export function ProtectedSurfaceHeader({
             supportingLabel={brandSupportingLabel}
             className="mb-3"
           />
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
             {title}
           </h1>
-          <p className="mt-2 text-sm text-slate-600">{description}</p>
+          <p className="mt-2 text-sm text-[var(--text-secondary)]">{description}</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600">
+          <div className="rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-2 text-sm text-[var(--text-secondary)]">
             {user.email ?? "Authenticated user"}
           </div>
           <SignOutForm />

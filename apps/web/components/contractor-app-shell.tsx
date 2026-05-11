@@ -74,7 +74,7 @@ export async function ContractorAppShell({
               />
               <div className="flex shrink-0 items-center gap-2 pt-1">
                 <AppShellMobileNav currentRole={organizationContext?.membership.role} />
-                <SignOutForm className="border-[var(--graphite)] bg-[var(--graphite)] px-3 py-2 text-white hover:border-[var(--graphite-light)] hover:bg-[var(--graphite-light)]" />
+                <SignOutForm className="border-[var(--graphite)] bg-[var(--graphite)] px-3 py-2 text-white hover:border-[var(--graphite-light)] hover:bg-[var(--graphite-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2" />
               </div>
             </div>
             <div className="mt-3 space-y-3 border-t border-[var(--border-warm)] pt-3">

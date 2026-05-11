@@ -47,7 +47,7 @@ function StageBadge({
         "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold",
         reached
           ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-          : "border-slate-200 bg-slate-50 text-slate-500"
+          : "border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-tertiary)]"
       ].join(" ")}
     >
       {reached ? reachedLabel : pendingLabel}
@@ -77,18 +77,18 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
         tone="neutral"
       >
         <div className="mb-4 space-y-3">
-          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+          <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
             Progress is derived from canonical company, project, estimate, contract, and invoice records. No analytics or duplicate tenant records are used here.
           </div>
           {showDevReset ? (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
               <span className="font-semibold">DEV / TEST ONLY:</span> reset clears only the selected tenant&apos;s onboarding workflow test records and saved Stripe payment method reference. It does not create sample data or affect other tenants.
             </div>
           ) : null}
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+          <table className="min-w-full divide-y divide-[var(--border-warm)] text-sm">
+            <thead className="bg-[var(--highlight)] text-left text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
               <tr>
                 <th className="px-4 py-3">Company</th>
                 <th className="px-4 py-3">Created</th>
@@ -106,7 +106,7 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                 <th className="px-4 py-3">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 bg-white">
+            <tbody className="divide-y divide-[var(--border-warm)] bg-white">
               {tenants.map((tenant) => {
                 const isActive =
                   tenant.tenantStatus === "active" &&
@@ -115,19 +115,19 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                 return (
                   <tr key={tenant.id} className="align-top">
                     <td className="px-4 py-4">
-                      <p className="font-semibold text-slate-950">{tenant.displayName}</p>
-                      <p className="mt-1 text-xs text-slate-500">
+                      <p className="font-semibold text-[var(--text-primary)]">{tenant.displayName}</p>
+                      <p className="mt-1 text-xs text-[var(--text-tertiary)]">
                         {tenant.slug} - {tenant.legalName}
                       </p>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-4 text-slate-600">
+                    <td className="whitespace-nowrap px-4 py-4 text-[var(--text-secondary)]">
                       {formatDateTime(tenant.createdAt)}
                     </td>
                     <td className="px-4 py-4">
-                      <p className="font-medium text-slate-900">
+                      <p className="font-medium text-[var(--text-primary)]">
                         {formatStatus(tenant.tenantStatus)}
                       </p>
-                      <p className="mt-1 text-xs text-slate-500">
+                      <p className="mt-1 text-xs text-[var(--text-tertiary)]">
                         {formatStatus(tenant.lifecycleState)}
                       </p>
                     </td>
@@ -138,10 +138,10 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                         pendingLabel="Profile missing"
                       />
                     </td>
-                    <td className="px-4 py-4 text-slate-600">
+                    <td className="px-4 py-4 text-[var(--text-secondary)]">
                       {tenant.hasPaymentMethod ? "Saved" : "Not saved"}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-4 text-slate-600">
+                    <td className="whitespace-nowrap px-4 py-4 text-[var(--text-secondary)]">
                       <p>{tenant.activity.projectCount} projects</p>
                       <p>{tenant.activity.estimateCount} estimates</p>
                       <p>{tenant.activity.contractCount} contracts</p>
@@ -165,7 +165,7 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                           pendingLabel="No contract signal"
                         />
                         {tenant.lastActivityAt ? (
-                          <p className="text-xs leading-5 text-slate-500">
+                          <p className="text-xs leading-5 text-[var(--text-tertiary)]">
                             Last activity {formatDateTime(tenant.lastActivityAt)}
                           </p>
                         ) : null}
@@ -181,7 +181,7 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                           />
                           <Link
                             href={`/super-admin/early-access?feedbackCompanyId=${tenant.id}#feedback`}
-                            className="block text-xs font-semibold text-slate-950 underline-offset-4 hover:underline"
+                            className="block text-xs font-semibold text-[var(--text-primary)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)]"
                           >
                             View recent feedback
                           </Link>
@@ -227,7 +227,7 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                         readOnly
                         value={tenant.id}
                         aria-label={`${tenant.displayName} company ID`}
-                        className="w-52 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-600"
+                        className="w-52 rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2 font-mono text-xs text-[var(--text-secondary)]"
                       />
                     </td>
                     <td className="px-4 py-4">
@@ -243,7 +243,7 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                         >
                           <button
                             type="submit"
-                            className="inline-flex items-center rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800"
+                            className="inline-flex items-center rounded-full bg-[var(--graphite)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--graphite-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2"
                           >
                             Mark active
                           </button>
@@ -271,10 +271,10 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
               {tenants.length === 0 ? (
                 <tr>
                   <td colSpan={14} className="px-4 py-12 text-center">
-                    <p className="text-sm font-semibold text-slate-950">
+                    <p className="text-sm font-semibold text-[var(--text-primary)]">
                       No early-access companies yet.
                     </p>
-                    <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">
+                    <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[var(--text-tertiary)]">
                       New signup companies will appear here after organization bootstrap. Use the public Start Free Trial flow to create the first onboarding tenant.
                     </p>
                   </td>
@@ -293,9 +293,9 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
         <div id="feedback" className="space-y-4">
           {selectedFeedbackTenant ? (
             <>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+              <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
                 Showing recent feedback for{" "}
-                <span className="font-semibold text-slate-950">
+                <span className="font-semibold text-[var(--text-primary)]">
                   {selectedFeedbackTenant.displayName}
                 </span>
                 .
@@ -305,13 +305,13 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                   selectedFeedbackTenant.recentFeedback.map((feedback) => (
                     <article
                       key={`${selectedFeedbackTenant.id}-${feedback.createdAt}-${feedback.message}`}
-                      className="rounded-lg border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600"
+                      className="rounded-lg border border-[var(--border-warm)] bg-white p-4 text-sm leading-6 text-[var(--text-secondary)]"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-3">
-                        <p className="font-semibold text-slate-950">
+                        <p className="font-semibold text-[var(--text-primary)]">
                           {feedback.email ?? "No email provided"}
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-[var(--text-tertiary)]">
                           {formatDateTime(feedback.createdAt)}
                         </p>
                       </div>
@@ -319,14 +319,14 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                     </article>
                   ))
                 ) : (
-                  <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+                  <p className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
                     This company has no captured feedback yet.
                   </p>
                 )}
               </div>
             </>
           ) : (
-            <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+            <p className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
               No early-access feedback has been captured yet.
             </p>
           )}
