@@ -20,7 +20,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex min-h-11 items-center justify-center rounded-full bg-white px-5 text-sm font-semibold text-[#07080d] transition hover:bg-[#f2f5f9] disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex min-h-11 items-center justify-center rounded-full bg-white px-6 text-sm font-semibold text-[var(--graphite)] shadow-sm transition hover:bg-[var(--cream)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)] disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? "Sending..." : "Request Early Access"}
     </button>
@@ -42,7 +42,7 @@ export function EarlyAccessRequestForm() {
             name="name"
             required
             maxLength={120}
-            className="h-11 rounded-xl border border-white/10 bg-white/[0.08] px-3 text-sm text-white outline-none transition placeholder:text-white/36 focus:border-white/40"
+            className="h-11 rounded-xl border border-white/10 bg-white/[0.08] px-3 text-sm text-white outline-none transition placeholder:text-white/40 focus:border-[var(--copper-light)] focus:ring-1 focus:ring-[var(--copper-light)]/30"
             placeholder="Your name"
           />
         </label>
@@ -53,7 +53,7 @@ export function EarlyAccessRequestForm() {
             type="email"
             required
             maxLength={255}
-            className="h-11 rounded-xl border border-white/10 bg-white/[0.08] px-3 text-sm text-white outline-none transition placeholder:text-white/36 focus:border-white/40"
+            className="h-11 rounded-xl border border-white/10 bg-white/[0.08] px-3 text-sm text-white outline-none transition placeholder:text-white/40 focus:border-[var(--copper-light)] focus:ring-1 focus:ring-[var(--copper-light)]/30"
             placeholder="you@company.com"
           />
         </label>
@@ -65,7 +65,7 @@ export function EarlyAccessRequestForm() {
             name="companyName"
             required
             maxLength={120}
-            className="h-11 rounded-xl border border-white/10 bg-white/[0.08] px-3 text-sm text-white outline-none transition placeholder:text-white/36 focus:border-white/40"
+            className="h-11 rounded-xl border border-white/10 bg-white/[0.08] px-3 text-sm text-white outline-none transition placeholder:text-white/40 focus:border-[var(--copper-light)] focus:ring-1 focus:ring-[var(--copper-light)]/30"
             placeholder="Company"
           />
         </label>
@@ -74,7 +74,7 @@ export function EarlyAccessRequestForm() {
           <input
             name="trade"
             maxLength={120}
-            className="h-11 rounded-xl border border-white/10 bg-white/[0.08] px-3 text-sm text-white outline-none transition placeholder:text-white/36 focus:border-white/40"
+            className="h-11 rounded-xl border border-white/10 bg-white/[0.08] px-3 text-sm text-white outline-none transition placeholder:text-white/40 focus:border-[var(--copper-light)] focus:ring-1 focus:ring-[var(--copper-light)]/30"
             placeholder="Epoxy, polishing, coatings"
           />
         </label>
@@ -85,7 +85,7 @@ export function EarlyAccessRequestForm() {
           name="note"
           maxLength={1500}
           rows={4}
-          className="min-h-28 resize-y rounded-xl border border-white/10 bg-white/[0.08] px-3 py-2.5 text-sm leading-6 text-white outline-none transition placeholder:text-white/36 focus:border-white/40"
+          className="min-h-28 resize-y rounded-xl border border-white/10 bg-white/[0.08] px-3 py-2.5 text-sm leading-6 text-white outline-none transition placeholder:text-white/40 focus:border-[var(--copper-light)] focus:ring-1 focus:ring-[var(--copper-light)]/30"
           placeholder="Tell us what you want to try first."
         />
       </label>
