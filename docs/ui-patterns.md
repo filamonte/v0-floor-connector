@@ -43,7 +43,7 @@ Rules:
 - Do not show `Sign` on contract detail unless the contractor countersign step is actually available.
 - Keep destructive or blocked states visually distinct from normal action states.
 - If no action is currently available, show a truthful review or waiting state instead of inventing a CTA.
-- Orange is reserved for the primary CTA or intentional action emphasis.
+- Copper is reserved for the primary CTA or intentional action emphasis.
 
 ## WorkflowBar Usage
 
@@ -90,36 +90,36 @@ Use shared status helpers from `@floorconnector/ui` where practical:
 - `normalizeStatusLabel()`
 
 Semantic colors:
-- Gray: neutral, draft, not started, metadata.
-- Blue: active, current, in progress.
+- Neutral / Graphite tones: neutral, draft, not started, metadata, active/current utility states, in-progress workflow states.
 - Amber/yellow: waiting, needs action, pending readiness, warning.
 - Red: blocked, failed, declined, void, destructive, error.
 - Green: complete, approved, paid, signed, finished.
 
 Rules:
 - Green means complete or accepted, not merely sent or underway.
-- Orange is not a status color.
+- Copper is not a status color.
+- Blue is not the default contractor-app accent for active/current/in-progress UI; reserve it for explicitly scoped informational states only.
 - Metadata chips should stay neutral unless they are true status indicators.
 - Do not invent local color systems when the shared helper can represent the state.
 
-## Orange CTA Rule
+## Copper CTA Rule
 
-Orange is the contractor app's primary action color. Use it sparingly so it keeps its meaning.
+Copper is the contractor app's primary action color. Use it sparingly so it keeps its meaning.
 
-Use orange for:
+Use Copper for:
 - Primary create buttons.
 - The primary `ActionBar` CTA.
 - A single dominant action in a command surface.
 - Intentional contractor-app action emphasis.
 
-Do not use orange for:
+Do not use Copper for:
 - Passive eyebrows.
 - Decorative card borders or backgrounds.
 - Status badges.
 - Repeated secondary links.
 - Hover-only emphasis on list rows.
 
-Portal and super-admin do not automatically inherit the contractor orange CTA rule. Portal uses customer-facing action hierarchy. Super-admin keeps slate/black administrative primary actions.
+Portal and super-admin do not automatically inherit the contractor Copper CTA rule. Portal uses customer-facing action hierarchy. Super-admin keeps slate/black administrative primary actions.
 
 ## Manager And List Pages
 
@@ -168,7 +168,7 @@ Super-admin should:
 - Use semantic badges for true platform statuses where safe.
 
 Super-admin should not copy:
-- Contractor orange CTAs.
+- Contractor Copper CTAs.
 - Contractor operational next-action framing.
 - Project or workflow bars.
 - Customer/project/job execution hierarchy.

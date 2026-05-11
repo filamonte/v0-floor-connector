@@ -101,8 +101,8 @@ export function EstimateWorkspaceShell({
       }))}
       currentView={activeSection}
     >
-          <div className="flex min-h-[620px] min-w-0 flex-col bg-white">
-        <header className="border-b border-[#e8ded5]">
+      <div className="flex min-h-[620px] min-w-0 flex-col bg-white">
+        <header className="border-b border-[var(--border-warm)]">
           <div className="flex flex-col gap-4 px-4 py-3 xl:flex-row xl:items-start xl:justify-between">
             <div className="flex min-w-0 items-start gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[var(--copper-light)] bg-[var(--copper)] text-white">
@@ -148,7 +148,7 @@ export function EstimateWorkspaceShell({
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start xl:flex-shrink-0">
               <div>{statusStrip}</div>
 
-              <div className="flex items-center gap-2 text-[#6b7c96]">
+              <div className="flex items-center gap-2 text-[var(--text-secondary)]">
                 <div>{headerActions ?? <MoreVertical className="h-5 w-5" />}</div>
               </div>
             </div>

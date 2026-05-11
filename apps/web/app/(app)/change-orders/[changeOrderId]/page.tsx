@@ -8,7 +8,9 @@ import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NextActionCard } from "@/components/next-action-card";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
+import { RevisionTimeline } from "@/components/revisions/revision-timeline";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
+import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
 import {
   addApprovedChangeOrderToSovAction,
@@ -22,6 +24,8 @@ import { listContracts } from "@/lib/contracts/data";
 import { listInvoices } from "@/lib/invoices/data";
 import { listProgressBillingByProject } from "@/lib/progress-billing/data";
 import { listProjects } from "@/lib/projects/data";
+import { ensureInitialRecordRevision, listRecordRevisions } from "@/lib/revisions/data";
+import { buildChangeOrderRevisionSnapshot } from "@/lib/revisions/snapshots";
 
 type ChangeOrderDetailPageProps = {
   params: Promise<{
@@ -124,6 +128,7 @@ export default async function ChangeOrderDetailPage({
 }: ChangeOrderDetailPageProps) {
   const { changeOrderId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
+  const user = await requireAuthenticatedUser(`/change-orders/${changeOrderId}`);
   const [changeOrder, projects, contracts, invoices, communicationThreads] = await Promise.all([
     getChangeOrderById(changeOrderId, `/change-orders/${changeOrderId}`),
     listProjects(),
@@ -135,6 +140,21 @@ export default async function ChangeOrderDetailPage({
   if (!changeOrder) {
     notFound();
   }
+
+  await ensureInitialRecordRevision({
+    organizationId: changeOrder.organizationId,
+    subjectType: "change_order",
+    subjectId: changeOrder.id,
+    revisionKind: "system_snapshot",
+    revisionReason: "Initial revision captured from the existing canonical change order.",
+    snapshot: buildChangeOrderRevisionSnapshot(changeOrder),
+    createdByUserId: user.id
+  });
+  const recordRevisions = await listRecordRevisions({
+    organizationId: changeOrder.organizationId,
+    subjectType: "change_order",
+    subjectId: changeOrder.id
+  });
 
   const editable = changeOrder.status === "draft";
   const nextAction = getNextAction({
@@ -603,6 +623,8 @@ export default async function ChangeOrderDetailPage({
           actionClassName="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
           threads={communicationThreads}
         />
+
+        <RevisionTimeline revisions={recordRevisions} />
       </aside>
     </div>
   );

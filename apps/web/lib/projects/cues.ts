@@ -162,24 +162,7 @@ export function buildProjectCues(input: BuildProjectCuesInput): ProjectCue[] {
       reason: approvedEstimate.referenceNumber
         ? `Estimate ${approvedEstimate.referenceNumber} is approved.`
         : "An approved estimate exists.",
-      sortOrder: 10,
-      workItemBridge: {
-        cue: "approved_estimate_missing_contract",
-        href: buildProjectCueWorkItemHref(
-          input.project.id,
-          "approved_estimate_missing_contract"
-        ),
-        label: "Create work item",
-        sourceType: "estimate",
-        sourceId: approvedEstimate.id,
-        sourceLabel: approvedEstimate.referenceNumber
-          ? `Estimate ${approvedEstimate.referenceNumber}`
-          : "Approved estimate",
-        context: {
-          estimateId: approvedEstimate.id,
-          estimateReferenceNumber: approvedEstimate.referenceNumber ?? null
-        }
-      }
+      sortOrder: 10
     });
   }
 
@@ -197,22 +180,7 @@ export function buildProjectCues(input: BuildProjectCuesInput): ProjectCue[] {
       reason: `${depositInvoice.referenceNumber ?? "Deposit invoice"} has ${Number(
         depositInvoice.balanceDueAmount
       ).toLocaleString("en-US", { style: "currency", currency: "USD" })} open.`,
-      sortOrder: 20,
-      workItemBridge: {
-        cue: "deposit_invoice_unpaid",
-        href: buildProjectCueWorkItemHref(input.project.id, "deposit_invoice_unpaid"),
-        label: "Create work item",
-        sourceType: "invoice",
-        sourceId: depositInvoice.id,
-        sourceLabel: depositInvoice.referenceNumber ?? "Deposit invoice",
-        context: {
-          invoiceId: depositInvoice.id,
-          invoiceReferenceNumber: depositInvoice.referenceNumber ?? null,
-          invoiceStatus: depositInvoice.status,
-          invoiceWorkflowRole: depositInvoice.workflowRole ?? null,
-          balanceDueAmount: String(depositInvoice.balanceDueAmount)
-        }
-      }
+      sortOrder: 20
     });
   }
 
@@ -276,20 +244,7 @@ export function buildProjectCues(input: BuildProjectCuesInput): ProjectCue[] {
       actionLabel: "Create job",
       priority: "high",
       reason: latestContract?.title ?? "Contract signature and readiness are complete.",
-      sortOrder: 40,
-      workItemBridge: {
-        cue: "signed_contract_no_job",
-        href: buildProjectCueWorkItemHref(input.project.id, "signed_contract_no_job"),
-        label: "Create work item",
-        sourceType: "contract",
-        sourceId: signedContract.id,
-        sourceLabel: signedContract.title ?? "Signed contract",
-        context: {
-          contractId: signedContract.id,
-          estimateId: signedContract.estimateId ?? approvedEstimate?.id ?? null,
-          contractStatus: signedContract.status
-        }
-      }
+      sortOrder: 40
     });
   }
 
@@ -298,36 +253,17 @@ export function buildProjectCues(input: BuildProjectCuesInput): ProjectCue[] {
       id: `${input.project.id}:ready-unscheduled-jobs`,
       projectId: input.project.id,
       projectName: input.project.name,
-      title:
-        unscheduledJobs.length === 1
-          ? "Ready project has an unscheduled job"
-          : "Ready project has unscheduled jobs",
+      title: "Ready project needs scheduling",
       description:
-        "The project can move forward, but scheduling still needs human confirmation.",
+        "Readiness is clear, but one or more canonical jobs still need schedule placement.",
       href: buildScheduleHref(input.project.id, unscheduledJobs),
-      actionLabel: "Open schedule",
+      actionLabel: "Open scheduling",
       priority: "medium",
       reason:
         unscheduledJobs.length === 1
-          ? "One canonical job is waiting on schedule placement."
-          : `${unscheduledJobs.length} canonical jobs are waiting on schedule placement.`,
-      sortOrder: 50,
-      workItemBridge: {
-        cue: "ready_unscheduled_jobs",
-        href: buildProjectCueWorkItemHref(input.project.id, "ready_unscheduled_jobs"),
-        label: "Create work item",
-        sourceType: unscheduledJobs.length === 1 ? "job" : "project",
-        sourceId: unscheduledJobs.length === 1 ? unscheduledJobs[0].id : input.project.id,
-        sourceLabel:
-          unscheduledJobs.length === 1
-            ? "Unscheduled job"
-            : `${unscheduledJobs.length} unscheduled jobs`,
-        context: {
-          jobId: unscheduledJobs.length === 1 ? unscheduledJobs[0].id : null,
-          jobIds: unscheduledJobs.map((job) => job.id),
-          unscheduledJobCount: unscheduledJobs.length
-        }
-      }
+          ? "Project is ready to schedule and one canonical job remains unscheduled."
+          : `Project is ready to schedule and ${unscheduledJobs.length} canonical jobs remain unscheduled.`,
+      sortOrder: 50
     });
   }
 

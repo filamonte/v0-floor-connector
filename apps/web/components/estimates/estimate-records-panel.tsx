@@ -111,15 +111,15 @@ export function EstimateRecordsPanel({
   const visibleEstimates = applyRowsPerView(estimates, rowsPerView);
 
   return (
-    <section className="border border-[#e2e5e9] bg-white">
-      <div className="border-b border-[#e2e5e9] bg-[#f8fafc] px-4 py-2.5">
+    <section className="border border-[var(--border-warm)] bg-white">
+      <div className="border-b border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-2.5">
         <div className="flex items-end justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
               Estimate records
             </p>
           </div>
-          <div className="hidden grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px_170px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
+          <div className="hidden grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px_170px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)] lg:grid lg:flex-1">
             <span>EST. #</span>
             <span>Title / customer</span>
             <span>Project</span>
@@ -128,12 +128,12 @@ export function EstimateRecordsPanel({
             <span className="text-right">Total</span>
             <span className="text-right">Actions</span>
           </div>
-          <div className="md:hidden">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+          <div className="lg:hidden">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--text-secondary)]">
               Estimates list
             </p>
           </div>
-          <p className="text-sm leading-6 text-slate-500">
+          <p className="text-sm leading-6 text-[var(--text-secondary)]">
             {formatRowsPerViewVisibleCount(
               estimates.length,
               visibleEstimates.length,
@@ -143,7 +143,7 @@ export function EstimateRecordsPanel({
         </div>
       </div>
 
-      <div className="divide-y divide-[#e5e7eb]">
+      <div className="divide-y divide-[var(--border-warm)]">
         {estimates.length > 0 ? (
           visibleEstimates.map((estimate) => {
             const primaryAction = getEstimatePrimaryAction(estimate);
@@ -151,51 +151,51 @@ export function EstimateRecordsPanel({
             return (
             <div
               key={estimate.id}
-              className="group block px-4 py-2.5 transition hover:bg-[#f8fafc]"
+              className="group block px-4 py-2.5 transition hover:bg-[var(--highlight)]"
             >
-              <div className="grid gap-3 md:grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px_170px] md:items-center">
+              <div className="grid gap-3 lg:grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px_170px] lg:items-center">
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] lg:hidden">
                     EST. #
                   </p>
-                  <h3 className="text-sm font-semibold text-slate-950 transition group-hover:text-brand-700">
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)] transition group-hover:text-[var(--copper)]">
                     <Link href={`/estimates/${estimate.id}`}>{estimate.referenceNumber}</Link>
                   </h3>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-slate-950">
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">
                     {estimate.title ?? estimate.opportunity?.title ?? "Untitled estimate"}
                   </p>
-                  <p className="mt-0.5 text-sm leading-5 text-slate-500">
+                  <p className="mt-0.5 text-sm leading-5 text-[var(--text-secondary)]">
                     {estimate.customer?.name ?? "Unknown customer"}
                   </p>
-                  <p className="mt-0.5 text-xs uppercase tracking-[0.16em] text-slate-400">
+                  <p className="mt-0.5 text-xs uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
                     {getEstimateContinuityCue(estimate)}
                   </p>
                   {estimate.opportunity?.title ? (
-                    <p className="mt-0.5 truncate text-xs text-slate-400">
+                    <p className="mt-0.5 truncate text-xs text-[var(--text-tertiary)]">
                       {estimate.opportunity.title}
                     </p>
                   ) : null}
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] lg:hidden">
                     Project
                   </p>
-                  <p className="text-sm font-medium text-slate-700">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">
                     {estimate.project?.name ?? "Unknown project"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] lg:hidden">
                     Date
                   </p>
-                  <p className="text-sm font-medium text-slate-700">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">
                     {formatShortDate(estimate.estimateDate ?? estimate.updatedAt)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] lg:hidden">
                     Status
                   </p>
                   <span
@@ -207,15 +207,15 @@ export function EstimateRecordsPanel({
                     {formatStatusLabel(estimate.status)}
                   </span>
                 </div>
-                <div className="md:text-right">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                <div className="lg:text-right">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] lg:hidden">
                     Total
                   </p>
-                  <p className="text-sm font-semibold text-slate-950">
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">
                     {formatMoney(estimate.totalAmount)}
                   </p>
                 </div>
-                <div className="flex flex-wrap justify-start gap-2 md:justify-end">
+                <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
                   {primaryAction ? (
                     <Link href={primaryAction.href} className={primaryActionClassName}>
                       {primaryAction.label}

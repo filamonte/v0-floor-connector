@@ -59,16 +59,16 @@ const successStatuses = new Set([
 ]);
 
 export const statusToneClasses: Record<StatusTone, string> = {
-  neutral: "border-[#d1d5db] bg-white text-[#4b5563]",
-  info: "border-blue-200 bg-blue-50 text-blue-700",
+  neutral: "border-[var(--border-warm)] bg-white text-[var(--text-secondary)]",
+  info: "border-[var(--border-medium)] bg-[var(--highlight)] text-[var(--graphite)]",
   warning: "border-amber-200 bg-amber-50 text-amber-800",
   danger: "border-red-200 bg-red-50 text-red-700",
   success: "border-emerald-200 bg-emerald-50 text-emerald-700"
 };
 
 export const statusConnectorClasses: Record<StatusTone, string> = {
-  neutral: "bg-[#e2e5e9]",
-  info: "bg-blue-300",
+  neutral: "bg-[var(--border-warm)]",
+  info: "bg-[var(--border-dark)]",
   warning: "bg-amber-300",
   danger: "bg-red-300",
   success: "bg-emerald-300"

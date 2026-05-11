@@ -259,6 +259,55 @@ void test("respects threshold boundaries and fallback timestamp reasons", () => 
   assert.equal(cues[0]?.sourceLabel, "Estimate last updated date");
 });
 
+void test("sent estimate follow-up appears only for stale sent estimates", () => {
+  const cues = deriveOperationalCues({
+    organizationId,
+    now: new Date("2026-05-09T12:00:00.000Z"),
+    rules: [rule("estimate_sent_followup", "estimate", 3)],
+    estimates: [
+      {
+        id: "stale-sent-estimate",
+        organizationId,
+        referenceNumber: "EST-STALE",
+        status: "sent",
+        sentAt: "2026-05-05T12:00:00.000Z",
+        updatedAt: "2026-05-05T12:00:00.000Z",
+        customer: { name: "Acme Floors" },
+        project: { name: "Kitchen floor" }
+      },
+      {
+        id: "recent-sent-estimate",
+        organizationId,
+        referenceNumber: "EST-RECENT",
+        status: "sent",
+        sentAt: "2026-05-08T12:00:00.000Z",
+        updatedAt: "2026-05-08T12:00:00.000Z",
+        customer: { name: "Acme Floors" },
+        project: { name: "Kitchen floor" }
+      },
+      {
+        id: "stale-approved-estimate",
+        organizationId,
+        referenceNumber: "EST-APPROVED",
+        status: "approved",
+        sentAt: "2026-05-01T12:00:00.000Z",
+        updatedAt: "2026-05-01T12:00:00.000Z",
+        customer: { name: "Acme Floors" },
+        project: { name: "Kitchen floor" }
+      }
+    ],
+    contracts: [],
+    invoices: [],
+    jobs: []
+  });
+
+  assert.deepEqual(
+    cues.map((cue) => cue.subjectId),
+    ["stale-sent-estimate"]
+  );
+  assert.equal(cues[0]?.actionHref, "/estimates/stale-sent-estimate");
+});
+
 void test("does not create overdue invoice cues without a due date", () => {
   const cues = deriveOperationalCues({
     organizationId,
@@ -285,6 +334,63 @@ void test("does not create overdue invoice cues without a due date", () => {
   });
 
   assert.equal(cues.length, 0);
+});
+
+void test("past-due invoice cues require an open balance", () => {
+  const cues = deriveOperationalCues({
+    organizationId,
+    now: new Date("2026-05-09T12:00:00.000Z"),
+    rules: [rule("invoice_overdue", "invoice", 1)],
+    estimates: [],
+    contracts: [],
+    invoices: [
+      {
+        id: "invoice-with-balance",
+        organizationId,
+        referenceNumber: "INV-BALANCE",
+        status: "sent",
+        workflowRole: "standard",
+        issueDate: "2026-05-01",
+        dueDate: "2026-05-07",
+        balanceDueAmount: "1200.00",
+        updatedAt: "2026-05-07T12:00:00.000Z",
+        customer: { name: "Acme Floors" },
+        project: { name: "Kitchen floor" }
+      },
+      {
+        id: "invoice-zero-balance",
+        organizationId,
+        referenceNumber: "INV-ZERO",
+        status: "sent",
+        workflowRole: "standard",
+        issueDate: "2026-05-01",
+        dueDate: "2026-05-07",
+        balanceDueAmount: "0.00",
+        updatedAt: "2026-05-07T12:00:00.000Z",
+        customer: { name: "Acme Floors" },
+        project: { name: "Kitchen floor" }
+      },
+      {
+        id: "invoice-negative-balance",
+        organizationId,
+        referenceNumber: "INV-CREDIT",
+        status: "sent",
+        workflowRole: "standard",
+        issueDate: "2026-05-01",
+        dueDate: "2026-05-07",
+        balanceDueAmount: "-10.00",
+        updatedAt: "2026-05-07T12:00:00.000Z",
+        customer: { name: "Acme Floors" },
+        project: { name: "Kitchen floor" }
+      }
+    ],
+    jobs: []
+  });
+
+  assert.deepEqual(
+    cues.map((cue) => cue.subjectId),
+    ["invoice-with-balance"]
+  );
 });
 
 void test("keeps deposit invoice cues scoped to deposit workflow role", () => {
@@ -415,6 +521,80 @@ void test("keeps unscheduled and scheduled job cue cases distinct", () => {
   assert.equal(
     cues.find((cue) => cue.subjectId === "unscheduled-job")?.actionHref,
     "/schedule?jobId=unscheduled-job&view=unscheduled&action=schedule"
+  );
+});
+
+void test("scheduled job missing crew cues require a scheduled job with no assignment or crew", () => {
+  const cues = deriveOperationalCues({
+    organizationId,
+    now: new Date("2026-05-09T12:00:00.000Z"),
+    rules: [rule("job_scheduled_missing_crew", "job", 2)],
+    estimates: [],
+    contracts: [],
+    invoices: [],
+    jobs: [
+      {
+        id: "scheduled-unassigned-job",
+        organizationId,
+        dispatchStatus: "scheduled",
+        scheduledDate: "2026-05-10",
+        scheduledStartAt: null,
+        crewVendorId: null,
+        updatedAt: "2026-05-08T12:00:00.000Z",
+        assignmentCount: 0,
+        projectReadinessStatus: "ready_to_schedule",
+        projectReadyToScheduleAt: "2026-05-08T12:00:00.000Z",
+        customer: { name: "Acme Floors" },
+        project: { name: "Kitchen floor" }
+      },
+      {
+        id: "scheduled-assigned-job",
+        organizationId,
+        dispatchStatus: "scheduled",
+        scheduledDate: "2026-05-10",
+        scheduledStartAt: null,
+        crewVendorId: null,
+        updatedAt: "2026-05-08T12:00:00.000Z",
+        assignmentCount: 1,
+        projectReadinessStatus: "ready_to_schedule",
+        projectReadyToScheduleAt: "2026-05-08T12:00:00.000Z",
+        customer: { name: "Acme Floors" },
+        project: { name: "Kitchen floor" }
+      },
+      {
+        id: "scheduled-crew-vendor-job",
+        organizationId,
+        dispatchStatus: "scheduled",
+        scheduledDate: "2026-05-10",
+        scheduledStartAt: null,
+        crewVendorId: "vendor-1",
+        updatedAt: "2026-05-08T12:00:00.000Z",
+        assignmentCount: 0,
+        projectReadinessStatus: "ready_to_schedule",
+        projectReadyToScheduleAt: "2026-05-08T12:00:00.000Z",
+        customer: { name: "Acme Floors" },
+        project: { name: "Kitchen floor" }
+      },
+      {
+        id: "unscheduled-unassigned-job",
+        organizationId,
+        dispatchStatus: "unscheduled",
+        scheduledDate: null,
+        scheduledStartAt: null,
+        crewVendorId: null,
+        updatedAt: "2026-05-08T12:00:00.000Z",
+        assignmentCount: 0,
+        projectReadinessStatus: "ready_to_schedule",
+        projectReadyToScheduleAt: "2026-05-08T12:00:00.000Z",
+        customer: { name: "Acme Floors" },
+        project: { name: "Kitchen floor" }
+      }
+    ]
+  });
+
+  assert.deepEqual(
+    cues.map((cue) => cue.subjectId),
+    ["scheduled-unassigned-job"]
   );
 });
 

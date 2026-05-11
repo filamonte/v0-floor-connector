@@ -53,6 +53,8 @@ import {
   resolvePortalScopedPermissionForGrantRecord
 } from "@/lib/portal-access/data";
 import { recordContractNotificationEvent } from "@/lib/notifications/system";
+import { createRecordRevision, ensureInitialRecordRevision } from "@/lib/revisions/data";
+import { buildContractRevisionSnapshot } from "@/lib/revisions/snapshots";
 import { syncProjectCommercialReadiness } from "@/lib/projects/readiness";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -92,6 +94,8 @@ type ContractRow = {
   sent_at: string | null;
   viewed_at: string | null;
   signed_at: string | null;
+  created_by: string | null;
+  updated_by: string | null;
   created_at: string;
   updated_at: string;
   customers?:
@@ -406,6 +410,8 @@ const contractSelect = `
   sent_at,
   viewed_at,
   signed_at,
+  created_by,
+  updated_by,
   created_at,
   updated_at,
   customers (
@@ -477,6 +483,8 @@ function isContractRow(value: unknown): value is ContractRow {
     (row.sent_at === null || typeof row.sent_at === "string") &&
     (row.viewed_at === null || typeof row.viewed_at === "string") &&
     (row.signed_at === null || typeof row.signed_at === "string") &&
+    (row.created_by === null || typeof row.created_by === "string") &&
+    (row.updated_by === null || typeof row.updated_by === "string") &&
     typeof row.created_at === "string" &&
     typeof row.updated_at === "string"
   );
@@ -924,6 +932,8 @@ function mapContract(row: ContractRow): ContractRecord {
     sentAt: row.sent_at,
     viewedAt: row.viewed_at,
     signedAt: row.signed_at,
+    createdByUserId: row.created_by,
+    updatedByUserId: row.updated_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -1077,6 +1087,33 @@ export async function requireContractScope(next = "/contracts") {
   }
 
   return scope;
+}
+
+async function createContractRecordRevision(input: {
+  contractId: string;
+  revisionKind: Parameters<typeof createRecordRevision>[0]["revisionKind"];
+  revisionReason: string;
+  createdByUserId: string | null;
+  ensureInitial?: boolean;
+  next?: string;
+}) {
+  const contract = await getContractById(input.contractId, input.next ?? `/contracts/${input.contractId}`);
+
+  if (!contract) {
+    return null;
+  }
+
+  const payload = {
+    organizationId: contract.organizationId,
+    subjectType: "contract" as const,
+    subjectId: contract.id,
+    revisionKind: input.revisionKind,
+    revisionReason: input.revisionReason,
+    snapshot: buildContractRevisionSnapshot(contract),
+    createdByUserId: input.createdByUserId
+  };
+
+  return input.ensureInitial ? ensureInitialRecordRevision(payload) : createRecordRevision(payload);
 }
 
 async function getContractRecordById(
@@ -1960,6 +1997,15 @@ export async function createContractFromEstimate(
     projectId: contract.project_id
   });
 
+  await createContractRecordRevision({
+    contractId: contract.id,
+    revisionKind: "created",
+    revisionReason: "Contract generated from the approved estimate snapshot.",
+    createdByUserId: scope.userId,
+    ensureInitial: true,
+    next: `/contracts/${contract.id}`
+  });
+
   return mapContract(contract);
 }
 
@@ -2027,6 +2073,14 @@ export async function updateContractDraft(input: UpdateContractDraftInput) {
   await syncProjectCommercialReadiness({
     organizationId: scope.organizationId,
     projectId: updated.project_id
+  });
+
+  await createContractRecordRevision({
+    contractId: input.contractId,
+    revisionKind: "edited",
+    revisionReason: input.editSummary ?? "Contract draft edited.",
+    createdByUserId: scope.userId,
+    next: `/contracts/${input.contractId}`
   });
 
   return mapContract(updated);
@@ -2196,6 +2250,14 @@ export async function sendContractForSignature(input: SendContractForSignatureIn
   await syncProjectCommercialReadiness({
     organizationId: scope.organizationId,
     projectId: updated.project_id
+  });
+
+  await createContractRecordRevision({
+    contractId: input.contractId,
+    revisionKind: "pre_signature",
+    revisionReason: "Contract sent for signature and locked for signing activity.",
+    createdByUserId: scope.userId,
+    next: `/contracts/${input.contractId}`
   });
 
   return mapContract(updated);

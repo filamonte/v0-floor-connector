@@ -46,6 +46,8 @@ import {
   assertInvoiceCommercialReadiness,
   syncProjectCommercialReadiness
 } from "@/lib/projects/readiness";
+import { createRecordRevision, ensureInitialRecordRevision } from "@/lib/revisions/data";
+import { buildInvoiceRevisionSnapshot } from "@/lib/revisions/snapshots";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -77,6 +79,8 @@ type InvoiceRow = {
   total_amount: string | number;
   balance_due_amount: string | number;
   notes: string | null;
+  created_by: string | null;
+  updated_by: string | null;
   created_at: string;
   updated_at: string;
   customers?:
@@ -312,6 +316,8 @@ const invoiceSelect = `
   total_amount,
   balance_due_amount,
   notes,
+  created_by,
+  updated_by,
   created_at,
   updated_at,
   customers (
@@ -373,6 +379,8 @@ function isInvoiceRow(value: unknown): value is InvoiceRow {
     (typeof row.retainage_held_amount === "string" || typeof row.retainage_held_amount === "number") &&
     (typeof row.total_amount === "string" || typeof row.total_amount === "number") &&
     (typeof row.balance_due_amount === "string" || typeof row.balance_due_amount === "number") &&
+    (row.created_by === null || typeof row.created_by === "string") &&
+    (row.updated_by === null || typeof row.updated_by === "string") &&
     typeof row.created_at === "string" &&
     typeof row.updated_at === "string"
   );
@@ -534,6 +542,8 @@ function mapInvoice(row: InvoiceRow): InvoiceRecord {
     totalAmount: Number(row.total_amount).toFixed(2),
     balanceDueAmount: Number(row.balance_due_amount).toFixed(2),
     notes: row.notes,
+    createdByUserId: row.created_by,
+    updatedByUserId: row.updated_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -688,6 +698,33 @@ export async function requireInvoiceScope(next = "/invoices") {
   }
 
   return scope;
+}
+
+async function createInvoiceRecordRevision(input: {
+  invoiceId: string;
+  revisionKind: Parameters<typeof createRecordRevision>[0]["revisionKind"];
+  revisionReason: string;
+  createdByUserId: string | null;
+  ensureInitial?: boolean;
+  next?: string;
+}) {
+  const invoice = await getInvoiceById(input.invoiceId, input.next ?? `/invoices/${input.invoiceId}`);
+
+  if (!invoice) {
+    return null;
+  }
+
+  const payload = {
+    organizationId: invoice.organizationId,
+    subjectType: "invoice" as const,
+    subjectId: invoice.id,
+    revisionKind: input.revisionKind,
+    revisionReason: input.revisionReason,
+    snapshot: buildInvoiceRevisionSnapshot(invoice),
+    createdByUserId: input.createdByUserId
+  };
+
+  return input.ensureInitial ? ensureInitialRecordRevision(payload) : createRecordRevision(payload);
 }
 
 function sortInvoices(invoices: InvoiceListItem[]) {
@@ -2640,6 +2677,15 @@ export async function createInvoice(
     });
   }
 
+  await createInvoiceRecordRevision({
+    invoiceId: invoice.id,
+    revisionKind: "created",
+    revisionReason: "Invoice created.",
+    createdByUserId: scope.userId,
+    ensureInitial: true,
+    next: `/invoices/${invoice.id}`
+  });
+
   return mapInvoice(invoice);
 }
 
@@ -2788,6 +2834,22 @@ export async function updateInvoice(invoiceId: string, input: InvoiceInput) {
     }
   }
 
+  await createInvoiceRecordRevision({
+    invoiceId: invoice.id,
+    revisionKind:
+      invoice.status === "sent"
+        ? "sent"
+        : currentInvoice.status !== invoice.status
+          ? "status_change"
+          : "edited",
+    revisionReason:
+      currentInvoice.status !== invoice.status
+        ? `Invoice marked ${invoice.status}.`
+        : "Invoice draft details or line items updated.",
+    createdByUserId: scope.userId,
+    next: `/invoices/${invoice.id}`
+  });
+
   return mapInvoice(invoice);
 }
 
@@ -2840,6 +2902,14 @@ export async function recordInvoicePayment(input: InvoicePaymentInput) {
   }
 
   await syncInvoiceProjectReadiness(updatedInvoice);
+
+  await createInvoiceRecordRevision({
+    invoiceId: updatedInvoice.id,
+    revisionKind: "status_change",
+    revisionReason: "Payment recorded on the canonical invoice.",
+    createdByUserId: scope.userId,
+    next: `/invoices/${updatedInvoice.id}`
+  });
 
   return mapInvoice(updatedInvoice);
 }

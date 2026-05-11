@@ -38,14 +38,14 @@ export function WorkflowBar({
     <section
       aria-label={title}
       className={[
-        "rounded-lg border border-[#e2e5e9] bg-white px-4 py-3 sm:px-5",
+        "rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3 sm:px-5",
         className
       ]
         .filter(Boolean)
         .join(" ")}
     >
       <div className="flex flex-col gap-3">
-        <h2 className="text-[16px] font-semibold text-[#171717]">{title}</h2>
+        <h2 className="text-[16px] font-semibold text-[var(--text-primary)]">{title}</h2>
         <ol className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
           {steps.map((step, index) => (
             <li key={step.id} className="min-w-0">
@@ -59,11 +59,11 @@ export function WorkflowBar({
                   {index + 1}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[13px] font-semibold leading-5 text-[#171717]">
+                  <p className="text-[13px] font-semibold leading-5 text-[var(--text-primary)]">
                     {step.label}
                   </p>
                   {step.description ? (
-                    <div className="mt-0.5 text-[12px] leading-4 text-[#4b5563]">
+                    <div className="mt-0.5 text-[12px] leading-4 text-[var(--text-secondary)]">
                       {step.description}
                     </div>
                   ) : null}

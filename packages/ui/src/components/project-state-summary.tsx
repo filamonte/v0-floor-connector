@@ -38,14 +38,14 @@ export function ProjectStateSummary({
     <section
       aria-label={title}
       className={[
-        "rounded-lg border border-[#e2e5e9] bg-white px-4 py-3 sm:px-5",
+        "rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3 sm:px-5",
         className
       ]
         .filter(Boolean)
         .join(" ")}
     >
       <div className="flex flex-col gap-3">
-        <h2 className="text-[16px] font-semibold text-[#171717]">{title}</h2>
+        <h2 className="text-[16px] font-semibold text-[var(--text-primary)]">{title}</h2>
         <dl className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           {items.map((item) => (
             <div

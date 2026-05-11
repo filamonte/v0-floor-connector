@@ -70,6 +70,8 @@ import {
   trackNotificationDeliveryClicked,
   trackNotificationDeliveryOpened
 } from "@/lib/notifications/system";
+import { createRecordRevision, ensureInitialRecordRevision } from "@/lib/revisions/data";
+import { buildEstimateRevisionSnapshot } from "@/lib/revisions/snapshots";
 import type {
   EstimatePortalCommentInput,
   EstimatePortalDecisionInput,
@@ -108,6 +110,8 @@ type EstimateRow = {
   approved_by_portal_user_id: string | null;
   rejected_at: string | null;
   rejected_by_portal_user_id: string | null;
+  created_by: string | null;
+  updated_by: string | null;
   created_at: string;
   updated_at: string;
   customers?:
@@ -410,6 +414,8 @@ const estimateSelect = `
   approved_by_portal_user_id,
   rejected_at,
   rejected_by_portal_user_id,
+  created_by,
+  updated_by,
   created_at,
   updated_at,
   customers (
@@ -488,6 +494,8 @@ function isEstimateRow(value: unknown): value is EstimateRow {
     (row.rejected_at === null || typeof row.rejected_at === "string") &&
     (row.rejected_by_portal_user_id === null ||
       typeof row.rejected_by_portal_user_id === "string") &&
+    (row.created_by === null || typeof row.created_by === "string") &&
+    (row.updated_by === null || typeof row.updated_by === "string") &&
     typeof row.created_at === "string" &&
     typeof row.updated_at === "string"
   );
@@ -683,6 +691,8 @@ function mapEstimate(row: EstimateRow): EstimateRecord {
     approvedByPortalUserId: row.approved_by_portal_user_id,
     rejectedAt: row.rejected_at,
     rejectedByPortalUserId: row.rejected_by_portal_user_id,
+    createdByUserId: row.created_by,
+    updatedByUserId: row.updated_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -833,6 +843,33 @@ export async function requireEstimateScope(next = "/estimates") {
   }
 
   return scope;
+}
+
+async function createEstimateRecordRevision(input: {
+  estimateId: string;
+  revisionKind: Parameters<typeof createRecordRevision>[0]["revisionKind"];
+  revisionReason: string;
+  createdByUserId: string | null;
+  ensureInitial?: boolean;
+  next?: string;
+}) {
+  const estimate = await getEstimateById(input.estimateId, input.next ?? `/estimates/${input.estimateId}`);
+
+  if (!estimate) {
+    return null;
+  }
+
+  const payload = {
+    organizationId: estimate.organizationId,
+    subjectType: "estimate" as const,
+    subjectId: estimate.id,
+    revisionKind: input.revisionKind,
+    revisionReason: input.revisionReason,
+    snapshot: buildEstimateRevisionSnapshot(estimate),
+    createdByUserId: input.createdByUserId
+  };
+
+  return input.ensureInitial ? ensureInitialRecordRevision(payload) : createRecordRevision(payload);
 }
 
 export async function listEstimatePortalRecipients(input: {
@@ -2262,6 +2299,15 @@ export async function createEstimate(
 
   await syncEstimateProjectReadiness(scope.organizationId, [project.id]);
 
+  await createEstimateRecordRevision({
+    estimateId: data.id,
+    revisionKind: "created",
+    revisionReason: "Estimate created.",
+    createdByUserId: scope.userId,
+    ensureInitial: true,
+    next: "/estimates"
+  });
+
   return mapEstimate(estimate);
 }
 
@@ -2336,6 +2382,14 @@ export async function updateEstimate(
     currentEstimate.project_id,
     project.id
   ]);
+
+  await createEstimateRecordRevision({
+    estimateId,
+    revisionKind: "edited",
+    revisionReason: "Estimate details or line items updated.",
+    createdByUserId: scope.userId,
+    next: `/estimates/${estimateId}`
+  });
 
   return mapEstimate(estimate);
 }
@@ -2477,6 +2531,14 @@ export async function updateEstimateStatus(
   }
 
   await syncEstimateProjectReadiness(scope.organizationId, [currentEstimate.project_id]);
+
+  await createEstimateRecordRevision({
+    estimateId,
+    revisionKind: "status_change",
+    revisionReason: `Estimate marked ${nextStatus}.`,
+    createdByUserId: scope.userId,
+    next: `/estimates/${estimateId}`
+  });
 
   return mapEstimate(updatedEstimate);
 }
@@ -2921,6 +2983,14 @@ export async function sendEstimateToCustomer(
   }
 
   await syncEstimateProjectReadiness(scope.organizationId, [estimate.project_id]);
+
+  await createEstimateRecordRevision({
+    estimateId: estimate.id,
+    revisionKind: "sent",
+    revisionReason: "Estimate sent to the customer for review.",
+    createdByUserId: scope.userId,
+    next: `/estimates/${estimate.id}`
+  });
 
   return updatedEstimate;
 }
@@ -3496,6 +3566,14 @@ export async function insertCatalogItemToEstimate(input: {
     throw new Error("Estimate not found after inserting the catalog item.");
   }
 
+  await createEstimateRecordRevision({
+    estimateId: input.estimateId,
+    revisionKind: "edited",
+    revisionReason: "Estimate line items updated.",
+    createdByUserId: scope.userId,
+    next: `/estimates/${input.estimateId}/edit`
+  });
+
   return updatedEstimate;
 }
 
@@ -3627,6 +3705,14 @@ export async function updateCatalogItemFromEstimateLine(input: {
     throw new Error("Estimate not found after updating the catalog item.");
   }
 
+  await createEstimateRecordRevision({
+    estimateId: input.estimateId,
+    revisionKind: "edited",
+    revisionReason: "Estimate catalog-backed line item updated.",
+    createdByUserId: scope.userId,
+    next: `/estimates/${input.estimateId}/edit`
+  });
+
   return updatedEstimate;
 }
 
@@ -3688,6 +3774,14 @@ export async function insertSystemToEstimate(input: {
   if (!updatedEstimate) {
     throw new Error("Estimate not found after inserting the expanded system.");
   }
+
+  await createEstimateRecordRevision({
+    estimateId: input.estimateId,
+    revisionKind: "edited",
+    revisionReason: "Estimate system line items inserted.",
+    createdByUserId: scope.userId,
+    next: `/estimates/${input.estimateId}/edit`
+  });
 
   return updatedEstimate;
 }
@@ -3784,6 +3878,14 @@ export async function importEstimateLineItemsFromEstimate(input: {
   if (!updatedEstimate) {
     throw new Error("Estimate not found after importing line items.");
   }
+
+  await createEstimateRecordRevision({
+    estimateId: input.destinationEstimateId,
+    revisionKind: "edited",
+    revisionReason: `Estimate line items imported from ${sourceEstimate.reference_number}.`,
+    createdByUserId: scope.userId,
+    next: `/estimates/${input.destinationEstimateId}/edit`
+  });
 
   return {
     estimate: updatedEstimate,

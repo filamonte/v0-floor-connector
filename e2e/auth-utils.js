@@ -39,7 +39,7 @@ async function loginWithEmail(page, email, password, options = {}) {
 
   await page.goto(loginPath);
 
-  const emailLoginButton = page.getByRole("button", { name: "Log in with email" });
+  const emailLoginButton = page.getByRole("button", { name: "Sign in" });
   const emailLoginForm = page.locator("form").filter({ has: emailLoginButton });
   const emailInput = emailLoginForm.locator('input[name="email"]');
   const passwordInput = emailLoginForm.locator('input[name="password"]');
@@ -47,7 +47,7 @@ async function loginWithEmail(page, email, password, options = {}) {
   await expect(emailInput).toBeVisible();
   await emailInput.fill(email);
   await passwordInput.fill(password);
-  await emailLoginForm.getByRole("button", { name: "Log in with email" }).click();
+  await emailLoginForm.getByRole("button", { name: "Sign in" }).click();
 
   await page.waitForURL((url) => url.pathname === expectedPath, { timeout: 30_000 });
   await expect(page.locator("body")).toContainText(

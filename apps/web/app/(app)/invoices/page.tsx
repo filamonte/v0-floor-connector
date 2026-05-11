@@ -5,6 +5,7 @@ import { ContractorWorkspacePage } from "@/components/contractor-workspace-page"
 import { InvoiceQuickCreateForm } from "@/components/invoice-quick-create-form";
 import { InvoiceRecordsPanel } from "@/components/invoices/invoice-records-panel";
 import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
+import { PerspectiveSwitcher } from "@/components/perspectives/perspective-switcher";
 import { RowsPerViewControl } from "@/components/rows-per-view-control";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
@@ -15,6 +16,8 @@ import { getEstimateById, listEstimates } from "@/lib/estimates/data";
 import { getJobById, listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
+import { buildPerspectiveSearchParams, matchesPerspective } from "@/lib/perspectives/query";
+import { parsePerspectiveView, type PerspectiveView } from "@/lib/perspectives/types";
 import { listProjects } from "@/lib/projects/data";
 
 type InvoicesPageProps = {
@@ -27,6 +30,7 @@ type InvoicesPageProps = {
     compose?: string;
     q?: string;
     status?: "all" | "draft" | "sent" | "open" | "paid" | "void";
+    view?: PerspectiveView;
     error?: string;
     message?: string;
   }>;
@@ -86,40 +90,24 @@ function buildInvoicesHref(input: {
   jobId?: string;
   changeOrderId?: string;
   workflowRole?: string;
+  view?: PerspectiveView;
 }) {
-  const searchParams = new URLSearchParams();
-
-  if (input.q && input.q.trim().length > 0) {
-    searchParams.set("q", input.q.trim());
-  }
-
-  if (input.status && input.status !== "all") {
-    searchParams.set("status", input.status);
-  }
-
-  if (input.compose === "1") {
-    searchParams.set("compose", "1");
-  }
-
-  if (input.projectId) {
-    searchParams.set("projectId", input.projectId);
-  }
-
-  if (input.estimateId) {
-    searchParams.set("estimateId", input.estimateId);
-  }
-
-  if (input.jobId) {
-    searchParams.set("jobId", input.jobId);
-  }
-
-  if (input.changeOrderId) {
-    searchParams.set("changeOrderId", input.changeOrderId);
-  }
-
-  if (input.workflowRole && input.workflowRole !== "standard") {
-    searchParams.set("workflowRole", input.workflowRole);
-  }
+  const searchParams = buildPerspectiveSearchParams(
+    {
+      q: input.q,
+      status: input.status && input.status !== "all" ? input.status : undefined,
+      compose: input.compose === "1" ? "1" : undefined,
+      projectId: input.projectId,
+      estimateId: input.estimateId,
+      jobId: input.jobId,
+      changeOrderId: input.changeOrderId,
+      workflowRole:
+        input.workflowRole && input.workflowRole !== "standard"
+          ? input.workflowRole
+          : undefined
+    },
+    input.view ?? "company"
+  );
 
   const query = searchParams.toString();
   return query.length > 0 ? `/invoices?${query}` : "/invoices";
@@ -234,25 +222,11 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       title: changeOrder.title
     }));
 
-  const draftCount = invoices.filter((invoice) => invoice.status === "draft").length;
-  const sentCount = invoices.filter((invoice) => invoice.status === "sent").length;
-  const openCount = invoices.filter(
-    (invoice) => invoice.status !== "paid" && invoice.status !== "void"
-  ).length;
-  const partialCount = invoices.filter(
-    (invoice) => invoice.status === "partially_paid"
-  ).length;
   const todayIso = new Date().toISOString().slice(0, 10);
-  const overdueCount = invoices.filter(
-    (invoice) =>
-      invoice.dueDate !== null &&
-      invoice.status !== "paid" &&
-      invoice.status !== "void" &&
-      invoice.dueDate < todayIso
-  ).length;
   const query = resolvedSearchParams.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
   const statusFilter = resolvedSearchParams.status ?? "all";
+  const perspective = parsePerspectiveView(resolvedSearchParams.view);
   const projectFilterId = resolvedSearchParams.projectId?.trim() ?? initialState.projectId ?? "";
   const estimateFilterId = resolvedSearchParams.estimateId?.trim() ?? initialState.estimateId ?? "";
   const jobFilterId = resolvedSearchParams.jobId?.trim() ?? initialState.jobId ?? "";
@@ -270,7 +244,17 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
     Boolean(resolvedSearchParams.estimateId) ||
     Boolean(resolvedSearchParams.jobId) ||
     Boolean(resolvedSearchParams.changeOrderId);
-  const scopedInvoices = invoices.filter((invoice) => {
+  const perspectiveInvoices = invoices.filter((invoice) =>
+    matchesPerspective(
+      {
+        createdByUserId: invoice.createdByUserId,
+        updatedByUserId: invoice.updatedByUserId
+      },
+      perspective,
+      user.id
+    )
+  );
+  const scopedInvoices = perspectiveInvoices.filter((invoice) => {
     const matchesProject = projectFilterId ? invoice.projectId === projectFilterId : true;
     const matchesEstimate = estimateFilterId ? invoice.estimateId === estimateFilterId : true;
     const matchesJob = jobFilterId ? invoice.jobId === jobFilterId : true;
@@ -280,6 +264,21 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
 
     return matchesProject && matchesEstimate && matchesJob && matchesWorkflowRole;
   });
+  const draftCount = scopedInvoices.filter((invoice) => invoice.status === "draft").length;
+  const sentCount = scopedInvoices.filter((invoice) => invoice.status === "sent").length;
+  const openCount = scopedInvoices.filter(
+    (invoice) => invoice.status !== "paid" && invoice.status !== "void"
+  ).length;
+  const partialCount = scopedInvoices.filter(
+    (invoice) => invoice.status === "partially_paid"
+  ).length;
+  const overdueCount = scopedInvoices.filter(
+    (invoice) =>
+      invoice.dueDate !== null &&
+      invoice.status !== "paid" &&
+      invoice.status !== "void" &&
+      invoice.dueDate < todayIso
+  ).length;
   const filteredInvoices = scopedInvoices.filter((invoice) => {
     const matchesStatus =
       statusFilter === "all"
@@ -369,6 +368,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         searchSlot: (
           <form action="/invoices" className="flex flex-col gap-2 sm:flex-row">
             {statusFilter !== "all" ? <input type="hidden" name="status" value={statusFilter} /> : null}
+            {perspective !== "company" ? <input type="hidden" name="view" value={perspective} /> : null}
             {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
             {projectFilterId ? <input type="hidden" name="projectId" value={projectFilterId} /> : null}
             {estimateFilterId ? <input type="hidden" name="estimateId" value={estimateFilterId} /> : null}
@@ -388,7 +388,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             >
               Search
             </button>
-            {query.length > 0 || statusFilter !== "all" || showComposer ? (
+            {query.length > 0 || statusFilter !== "all" || showComposer || perspective !== "company" ? (
               <Link
                 href="/invoices"
                 className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
@@ -398,41 +398,62 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             ) : null}
           </form>
         ),
-        filterSlot: invoiceViews.map((view) => {
-          const isActive = statusFilter === view.key;
+        filterSlot: (
+          <>
+            <PerspectiveSwitcher
+              value={perspective}
+              hrefForView={(view) =>
+                buildInvoicesHref({
+                  q: query,
+                  status: statusFilter,
+                  compose: showComposer ? "1" : undefined,
+                  projectId: projectFilterId || undefined,
+                  estimateId: estimateFilterId || undefined,
+                  jobId: jobFilterId || undefined,
+                  changeOrderId: changeOrderFilterId || undefined,
+                  workflowRole: workflowRoleFilter,
+                  view
+                })
+              }
+            />
+            {invoiceViews.map((view) => {
+              const isActive = statusFilter === view.key;
 
-          return (
-            <Link
-              key={view.key}
-              href={buildInvoicesHref({
-                q: query,
-                status: view.key,
-                compose: showComposer ? "1" : undefined,
-                projectId: projectFilterId || undefined,
-                estimateId: estimateFilterId || undefined,
-                jobId: jobFilterId || undefined,
-                changeOrderId: changeOrderFilterId || undefined,
-                workflowRole: workflowRoleFilter
-              })}
-              className={[
-                "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
-                isActive
-                  ? "bg-[var(--graphite)] text-white"
-                  : "border border-[var(--border-warm)] bg-white text-[var(--text-secondary)] hover:bg-[var(--highlight)]"
-              ].join(" ")}
-            >
-              <span>{view.label}</span>
-              <span
-                className={[
-                  "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-[var(--highlight)] text-[var(--text-secondary)]"
-                ].join(" ")}
-              >
-                {view.count}
-              </span>
-            </Link>
-          );
-        }),
+              return (
+                <Link
+                  key={view.key}
+                  href={buildInvoicesHref({
+                    q: query,
+                    status: view.key,
+                    compose: showComposer ? "1" : undefined,
+                    projectId: projectFilterId || undefined,
+                    estimateId: estimateFilterId || undefined,
+                    jobId: jobFilterId || undefined,
+                    changeOrderId: changeOrderFilterId || undefined,
+                    workflowRole: workflowRoleFilter,
+                    view: perspective
+                  })}
+                  className={[
+                    "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
+                    isActive
+                      ? "bg-[var(--graphite)] text-white"
+                      : "border border-[var(--border-warm)] bg-white text-[var(--text-secondary)] hover:bg-[var(--highlight)]"
+                  ].join(" ")}
+                >
+                  <span>{view.label}</span>
+                  <span
+                    className={[
+                      "rounded-full px-2 py-0.5 text-xs font-semibold",
+                      isActive ? "bg-white/15 text-white" : "bg-[var(--highlight)] text-[var(--text-secondary)]"
+                    ].join(" ")}
+                  >
+                    {view.count}
+                  </span>
+                </Link>
+              );
+            })}
+          </>
+        ),
         actionSlot: (
           <>
             <RowsPerViewControl storageKey={INVOICES_ROWS_PER_VIEW_STORAGE_KEY} />
@@ -446,7 +467,8 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                   estimateId: estimateFilterId || undefined,
                   jobId: jobFilterId || undefined,
                   changeOrderId: changeOrderFilterId || undefined,
-                  workflowRole: workflowRoleFilter
+                  workflowRole: workflowRoleFilter,
+                  view: perspective
                 }) + "#invoice-create"
               }
               className="inline-flex items-center rounded-[3px] border border-[var(--copper)] bg-[var(--copper)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--copper-light)]"
@@ -473,7 +495,8 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                 estimateId: estimateFilterId || undefined,
                 jobId: jobFilterId || undefined,
                 changeOrderId: changeOrderFilterId || undefined,
-                workflowRole: workflowRoleFilter
+                workflowRole: workflowRoleFilter,
+                view: perspective
               }) + "#invoice-create"
             }
           />

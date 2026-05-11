@@ -44,11 +44,13 @@ function buildResponsibilityText(cue: OperationalCue) {
 export function NeedsAttentionPanel({
   cues,
   description = "Derived from canonical records and enabled organization cue rules.",
-  emptyLabel = "No current attention items"
+  emptyLabel = "No current attention items",
+  getWorkItemAction
 }: {
   cues: OperationalCue[];
   description?: string;
   emptyLabel?: string;
+  getWorkItemAction?: (cue: OperationalCue) => { href: string; label: string } | null;
 }) {
   return (
     <section
@@ -83,6 +85,7 @@ export function NeedsAttentionPanel({
               formatThresholdLabel(cue.thresholdLabel),
               cue.triggeredAtLabel
             ].filter(Boolean);
+            const workItemAction = getWorkItemAction?.(cue) ?? null;
 
             return (
             <article
@@ -124,13 +127,24 @@ export function NeedsAttentionPanel({
                     ))}
                   </dl>
                 </div>
-                <Link
-                  href={cue.actionHref}
-                  aria-label={`${cue.actionLabel}: ${cue.title}`}
-                  className="inline-flex w-full shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 sm:w-auto"
-                >
-                  {cue.actionLabel}
-                </Link>
+                <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto">
+                  <Link
+                    href={cue.actionHref}
+                    aria-label={`${cue.actionLabel}: ${cue.title}`}
+                    className="inline-flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 sm:w-auto"
+                  >
+                    {cue.actionLabel}
+                  </Link>
+                  {workItemAction ? (
+                    <Link
+                      href={workItemAction.href}
+                      aria-label={`${workItemAction.label}: ${cue.title}`}
+                      className="inline-flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 sm:w-auto"
+                    >
+                      {workItemAction.label}
+                    </Link>
+                  ) : null}
+                </div>
               </div>
             </article>
             );

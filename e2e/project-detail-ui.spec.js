@@ -15,7 +15,7 @@ test("project detail renders decision-first UI", async ({ page }) => {
   }
 
   await expect(page.getByRole("region", { name: "Current state and next action" })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Project readiness workflow" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Project workflow" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Project state summary" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Core Workflow" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Project workflow" })).toBeVisible();
 });

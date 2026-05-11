@@ -47,6 +47,7 @@ export type ContractSignerId = string;
 export type ContractSignatureEventId = string;
 export type ChangeOrderId = string;
 export type ChangeOrderEventId = string;
+export type RecordRevisionId = string;
 export type CommunicationThreadId = string;
 export type CommunicationMessageId = string;
 export type CommunicationPreferenceId = string;
@@ -185,6 +186,16 @@ export type InvoiceStatus =
   | "void";
 export type ContractStatus = "draft" | "sent" | "viewed" | "signed" | "void";
 export type ChangeOrderStatus = "draft" | "sent" | "approved" | "rejected";
+export type RecordRevisionSubjectType = "estimate" | "invoice" | "contract" | "change_order";
+export type RecordRevisionKind =
+  | "created"
+  | "edited"
+  | "sent"
+  | "status_change"
+  | "system_snapshot"
+  | "pre_signature"
+  | "pre_payment"
+  | "manual";
 export type ContractSignerRole = "customer" | "contractor";
 export type ContractSignerStatus =
   | "pending"
@@ -753,6 +764,8 @@ export interface Estimate {
   approvedByPortalUserId: ProfileId | null;
   rejectedAt: string | null;
   rejectedByPortalUserId: ProfileId | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1117,6 +1130,8 @@ export interface Invoice {
   totalAmount: string;
   balanceDueAmount: string;
   notes: string | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1195,8 +1210,24 @@ export interface Contract {
   sentAt: string | null;
   viewedAt: string | null;
   signedAt: string | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RecordRevision {
+  id: RecordRevisionId;
+  organizationId: OrganizationId;
+  subjectType: RecordRevisionSubjectType;
+  subjectId: string;
+  revisionNumber: number;
+  isCurrent: boolean;
+  revisionReason: string | null;
+  revisionKind: RecordRevisionKind;
+  snapshot: Record<string, unknown>;
+  createdByUserId: ProfileId | null;
+  createdAt: string;
 }
 
 export interface ContractRevision {

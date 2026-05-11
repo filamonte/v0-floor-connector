@@ -1,6 +1,7 @@
 import type {
   AppointmentStatus,
   AppointmentType,
+  OperationalCueKey,
   OpportunityStatus,
   WorkItemKind,
   WorkItemPriority,
@@ -8,14 +9,10 @@ import type {
 } from "@floorconnector/types";
 
 import { classifyLeadFollowUp } from "../opportunities/follow-up-read-model";
+import type { OperationalCue } from "../operational-cues/types";
 import type { ProjectCueWorkItemBridge } from "../projects/cues";
 
-export type ProjectGuidanceWorkItemCue =
-  | "approved_estimate_missing_contract"
-  | "deposit_invoice_unpaid"
-  | "open_blocker_field_notes"
-  | "signed_contract_no_job"
-  | "ready_unscheduled_jobs";
+export type ProjectGuidanceWorkItemCue = "open_blocker_field_notes";
 
 export type CueWorkItemPrefill = {
   title: string;
@@ -37,6 +34,13 @@ export type CueWorkItemPrefill = {
   metadata: Record<string, unknown>;
 };
 
+type OperationalCueBridgeConfig = {
+  label: string;
+  title: string;
+  kind: CueWorkItemPrefill["kind"];
+  priority: WorkItemPriority;
+};
+
 function labelize(value: string) {
   return value.replaceAll("_", " ");
 }
@@ -52,6 +56,93 @@ function compactDescription(parts: Array<string | null | undefined>) {
 
 function dateKey(value: string | null) {
   return value ? new Date(value).toISOString().slice(0, 10) : "none";
+}
+
+function getOperationalCueBridgeConfig(
+  cueKey: OperationalCueKey
+): OperationalCueBridgeConfig | null {
+  switch (cueKey) {
+    case "estimate_sent_followup":
+      return {
+        label: "Create follow-up",
+        title: "Follow up on sent estimate",
+        kind: "estimate_follow_up",
+        priority: "normal"
+      };
+    case "invoice_overdue":
+      return {
+        label: "Create collection follow-up",
+        title: "Follow up on past-due invoice",
+        kind: "invoice_follow_up",
+        priority: "high"
+      };
+    default:
+      return null;
+  }
+}
+
+export function getOperationalCueWorkItemBridgeAction(cue: OperationalCue) {
+  const config = getOperationalCueBridgeConfig(cue.cueKey);
+
+  if (!config) {
+    return null;
+  }
+
+  return {
+    href: `${cue.actionHref}?workItemCue=${cue.cueKey}#work-items`,
+    label: config.label
+  };
+}
+
+export function buildOperationalCueWorkItemPrefill(input: {
+  cue: OperationalCue;
+}): (CueWorkItemPrefill & {
+  sourceType: WorkItemSourceType;
+  sourceId: string;
+  linkPath: string;
+}) | null {
+  const { cue } = input;
+  const config = getOperationalCueBridgeConfig(cue.cueKey);
+
+  if (!config) {
+    return null;
+  }
+
+  return {
+    title: config.title,
+    description: compactDescription([
+      "Prefilled from a deterministic operational cue. Review the owner, due date, and context before submitting this internal work item.",
+      `Cue: ${cue.title}`,
+      cue.explanation,
+      `Reason: ${cue.reason}`,
+      cue.customerName ? `Customer: ${cue.customerName}` : null,
+      cue.projectName ? `Project: ${cue.projectName}` : null,
+      cue.sourceValue ? `${cue.sourceLabel}: ${cue.sourceValue}` : cue.sourceLabel,
+      cue.thresholdLabel,
+      cue.triggeredAtLabel,
+      `Workflow handoff: ${cue.actionHref}`
+    ]),
+    dueAt: null,
+    priority: config.priority,
+    kind: config.kind,
+    dedupeKey: `operational-cue:${cue.cueKey}:${cue.subjectType}:${cue.subjectId}`,
+    sourceType: cue.subjectType,
+    sourceId: cue.subjectId,
+    linkPath: cue.actionHref,
+    metadata: {
+      cue: "operational_cue",
+      cueKey: cue.cueKey,
+      subjectType: cue.subjectType,
+      subjectId: cue.subjectId,
+      projectId: cue.projectId,
+      urgency: cue.urgency,
+      sourceLabel: cue.sourceLabel,
+      sourceValue: cue.sourceValue,
+      thresholdLabel: cue.thresholdLabel,
+      triggeredAtLabel: cue.triggeredAtLabel,
+      actionHref: cue.actionHref
+    }
+  };
 }
 
 export function buildOpportunityFollowUpWorkItemPrefill(input: {
@@ -165,15 +256,8 @@ function getProjectGuidanceKind(
   cue: ProjectGuidanceWorkItemCue
 ): CueWorkItemPrefill["kind"] {
   switch (cue) {
-    case "approved_estimate_missing_contract":
-      return "estimate_follow_up";
-    case "deposit_invoice_unpaid":
-      return "invoice_follow_up";
     case "open_blocker_field_notes":
       return "human_handoff";
-    case "signed_contract_no_job":
-    case "ready_unscheduled_jobs":
-      return "manual";
   }
 }
 
@@ -182,16 +266,8 @@ function getProjectGuidanceTitle(input: {
   projectName: string;
 }) {
   switch (input.cue) {
-    case "approved_estimate_missing_contract":
-      return `Create contract follow-through for ${input.projectName}`;
-    case "deposit_invoice_unpaid":
-      return `Follow up on deposit invoice for ${input.projectName}`;
     case "open_blocker_field_notes":
       return `Resolve project blocker for ${input.projectName}`;
-    case "signed_contract_no_job":
-      return `Create job follow-through for ${input.projectName}`;
-    case "ready_unscheduled_jobs":
-      return `Schedule ready project work for ${input.projectName}`;
   }
 }
 
@@ -199,14 +275,8 @@ function getProjectGuidancePriority(
   cue: ProjectGuidanceWorkItemCue
 ): WorkItemPriority {
   switch (cue) {
-    case "approved_estimate_missing_contract":
-    case "deposit_invoice_unpaid":
-      return "high";
     case "open_blocker_field_notes":
       return "high";
-    case "signed_contract_no_job":
-    case "ready_unscheduled_jobs":
-      return "normal";
   }
 }
 

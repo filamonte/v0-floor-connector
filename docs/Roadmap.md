@@ -99,6 +99,8 @@ Financial work must preserve canonical invoices, payments, line-item lineage, ap
 
 Current status: Foundation for communications/notifications and deterministic operational cues; broad AI is planned.
 
+Planning reference: [docs/ai/intelligent-follow-up-engine.md](C:/FloorConnector/docs/ai/intelligent-follow-up-engine.md) defines the follow-up intelligence model, starting from deterministic evidence-backed cues over canonical records before AI summaries, drafts, or controlled automation.
+
 Future depth:
 
 - provider-backed customer messaging and delivery proof

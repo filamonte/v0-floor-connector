@@ -42,6 +42,8 @@ What users can do now:
 - expand reusable systems by sqft into estimate pricing rows through shared logic
 - use derived estimate tax behavior driven by organization defaults, customer exemption state, and item-level taxability
 - use explicit shared save-state behavior, inline estimate-title editing, and persisted status progression in the estimate workspace
+- review first-pass immutable revision snapshots on estimates, invoices, contracts, and change orders without cloning those business records
+- switch estimates, invoices, and leads between `My Work` and `Company` operational perspectives where safe ownership or assignment cues exist
 - move approved commercial scope into downstream contract, job, and invoice workflows
 
 In practical terms, the commercial path is already live. Contractors can start with lead intake, move into project and estimate work, and carry that scope forward without recreating records in each stage.
@@ -174,6 +176,8 @@ Once those records exist, the system becomes the source of truth for the workflo
 - time and field execution stay attached to the same project chain
 
 This matters because the system is not passing around snapshots, exports, or portal copies. It is holding the active business record.
+
+The implemented revision layer reinforces that rule. Revision snapshots are immutable evidence attached to the active canonical estimate, invoice, contract, or change order. They provide timeline visibility and future compare/restore hooks, but they are not cloned records and they do not replace specialized approval, signature, payment, or commercial snapshot evidence.
 
 ### Step 3: Customer -> System
 

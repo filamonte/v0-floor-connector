@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import {
-  ChevronDown,
   ChevronRight,
   FileText,
   Grid3X3,
@@ -13,17 +12,11 @@ import {
   Save,
   Send,
   Settings,
-  Trash2,
   Users,
   Wallet,
-  X,
   Check,
-  Clock,
-  AlertCircle,
-  Home,
   Building2,
   Calendar,
-  DollarSign,
   Layers,
   Copy,
   Download,
@@ -177,19 +170,9 @@ function ActionButton({
 
 export default function DesignMockupPage() {
   const [activeSection, setActiveSection] = useState("items");
-  const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  const [selectedHeaderStyle] = useState<"A" | "B" | "C" | "D">("A");
   // Locked selections based on user preferences
   const selectedHighlight = "softGraphite";
-  const selectedHeaderStyle = "A";
-  const selectedIconStyle = "B"; // Circular backgrounds
-
-  // Header style configurations
-  const headerStyles = {
-    A: { name: "Dark Graphite Bar", description: "Full dark header with copper logo accent" },
-    B: { name: "Light with Dark Accent", description: "White header with graphite left section" },
-    C: { name: "Minimal Light", description: "Clean white header, subtle borders" },
-    D: { name: "Two-Tone Split", description: "Dark logo area, light navigation" },
-  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
@@ -700,7 +683,7 @@ export default function DesignMockupPage() {
                 </tr>
               </thead>
               <tbody>
-                {lineItems.map((item, index) => (
+                {lineItems.map((item) => (
                   <tr 
                     key={item.id}
                     className="border-t transition-colors hover:bg-gray-50"
@@ -845,6 +828,7 @@ export default function DesignMockupPage() {
           </div>
         </main>
       </div>
+    </div>
     </div>
   );
 }

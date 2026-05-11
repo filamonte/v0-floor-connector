@@ -1,8 +1,15 @@
-# FloorConnector Design System: Comprehensive Implementation Guide
+# FloorConnector Design System: Graphite & Copper Reference
 
 ## Executive Overview
 
-This document serves as the single source of truth for FloorConnector's visual and interaction design. The Graphite & Copper color scheme is paired with systematic improvements to component architecture, typography, and micro-interactions. The **Estimates module** is the reference implementation—all other modules should follow this established pattern.
+This document is the visual reference for FloorConnector's accepted Graphite & Copper contractor-app foundation. It complements, but does not replace, [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md), [docs/current-state.md](C:/FloorConnector/docs/current-state.md), and [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md).
+
+Post-v0 closeout status:
+- Graphite & Copper is accepted as the contractor-app visual-token foundation.
+- Estimates served as the first reference surface for the visual pass.
+- The validated implementation preserved the existing top-nav-first contractor shell, Manager Page rhythm, and shared Record Workspace language.
+- The v0 pass was visual/test/docs scoped only. It did not change schema, RLS, auth behavior, middleware, server actions, data loading, route protection, financial logic, calculations, workflow transitions, or app navigation.
+- Future design work should be targeted polish or scoped pattern propagation, not broad shell redesign or module-local layout invention.
 
 ---
 
@@ -22,7 +29,7 @@ This document serves as the single source of truth for FloorConnector's visual a
 #### Accent Color
 | Color Name | Hex | RGB | Usage | Impact |
 |-----------|-----|-----|-------|--------|
-| **Copper** | `#B45309` | 180, 83, 9 | Call-to-action buttons, active states, key highlights | Save button, active workspace section, status badges |
+| **Copper** | `#B45309` | 180, 83, 9 | Call-to-action buttons, active action emphasis, key highlights | Save button, active workspace section, focus treatment |
 | **Copper Light** | `#D97706` | 217, 119, 6 | Hover states on copper elements | Button hover, hover badges |
 
 #### Highlight/Selection Color (NEW)
@@ -48,20 +55,19 @@ This document serves as the single source of truth for FloorConnector's visual a
 
 ### Design Tokens (CSS Variables)
 
-Add to `globals.css`:
+Reference token model:
 
 ```css
 :root {
   /* Primary Colors */
-  --primary: #374151;           /* Graphite - headers, navigation */
-  --primary-dark: #1F2937;      /* Graphite Dark - strong emphasis */
-  --primary-light: #4B5563;     /* Graphite Light - hover states */
-  --background: #FAFAF8;        /* Soft Cream - page background */
-  --surface: #FFFFFF;           /* Pure White - cards, panels */
+  --graphite: #374151;          /* Graphite - headers, navigation */
+  --graphite-dark: #1F2937;     /* Graphite Dark - strong emphasis */
+  --graphite-light: #4B5563;    /* Graphite Light - hover states */
+  --cream: #FAFAF8;             /* Soft Cream - page background */
   
   /* Accent Colors */
-  --accent: #B45309;            /* Copper - CTAs, key highlights */
-  --accent-light: #D97706;      /* Copper Light - hover states */
+  --copper: #B45309;            /* Copper - CTAs, key highlights */
+  --copper-light: #D97706;      /* Copper Light - hover states */
   
   /* Selection/Active States */
   --highlight: #F3F4F6;         /* Soft Graphite - active navigation */
@@ -76,23 +82,14 @@ Add to `globals.css`:
   --color-success: #16A34A;     /* Green - success, approved */
   --color-warning: #EA8C55;     /* Warm Amber - pending, needs attention */
   --color-error: #DC2626;       /* Red - errors, overdue */
-  --color-info: #0EA5E9;        /* Sky Blue - informational */
+  --color-info: #0EA5E9;        /* Informational messages only, not default contractor-app accent */
   
   /* Borders */
-  --border-light: #E8E6E1;      /* Warm Gray - subtle divider */
+  --border-warm: #E8E6E1;       /* Warm Gray - subtle divider */
   --border-medium: #D9D5CD;     /* Medium Warm Gray - standard border */
   --border-dark: #9CA3AF;       /* Strong border for emphasis */
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(17, 24, 39, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(17, 24, 39, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(17, 24, 39, 0.1);
-  
-  /* Radius */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
 }
+```
 
 ### Tailwind Config Integration
 
@@ -101,8 +98,14 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#374151',
-        accent: '#B45309',
+        graphite: {
+          700: '#374151',
+          800: '#1F2937',
+        },
+        copper: {
+          500: '#B45309',
+          600: '#D97706',
+        },
         'text-primary': '#111827',
         'text-secondary': '#6B7280',
       },
@@ -144,7 +147,7 @@ module.exports = {
 
 ---
 
-## Part 3: Header & Navigation Design (FINALIZED)
+## Part 3: Header & Navigation Design (Accepted Baseline)
 
 ### Header Style: Dark Graphite Bar
 

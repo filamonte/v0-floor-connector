@@ -43,7 +43,7 @@ export function FinancialSummaryBar({
   visibleItemCount
 }: FinancialSummaryBarProps) {
   return (
-    <section className="border-b border-[#e6e9ef] bg-white">
+    <section className="border-b border-[var(--border-warm)] bg-white">
       <div className="flex flex-col gap-4 px-4 py-3">
         <div className="flex min-h-[62px] flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -51,10 +51,10 @@ export function FinancialSummaryBar({
               <FileSpreadsheet className="h-5 w-5" />
             </span>
             <div>
-              <span className="block text-[15px] font-semibold text-[#171717]">
+              <span className="block text-[15px] font-semibold text-[var(--text-primary)]">
                 Financial Summary
               </span>
-              <span className="text-[12px] text-[#666666]">
+              <span className="text-[12px] text-[var(--text-secondary)]">
                 {visibleItemCount} visible estimate item{visibleItemCount === 1 ? "" : "s"}
               </span>
             </div>
@@ -73,55 +73,55 @@ export function FinancialSummaryBar({
             <span className={`${ICON_WRAPPER_CLASS} bg-[#ebe4ff] text-[#7a57db]`}>
               <BriefcaseBusiness className="h-4 w-4" />
             </span>
-            <span className={`${ICON_WRAPPER_CLASS} bg-[#ffe5dc] text-[#ef7d32]`}>
+            <span className={`${ICON_WRAPPER_CLASS} bg-[var(--copper)]/10 text-[var(--copper)]`}>
               <CalendarDays className="h-4 w-4" />
             </span>
-            <span className={`${ICON_WRAPPER_CLASS} bg-[#f1f4f8] text-[#5f5f5f]`}>
+            <span className={`${ICON_WRAPPER_CLASS} bg-[var(--highlight)] text-[var(--text-secondary)]`}>
               <Settings2 className="h-4 w-4" />
             </span>
           </div>
 
-          <div className="text-right text-[16px] font-semibold text-[#171717]">
+          <div className="text-right text-[16px] font-semibold text-[var(--text-primary)]">
             {totalLabel}
           </div>
         </div>
 
-        <div className="grid gap-3 text-[12px] text-[#6d7d95] md:grid-cols-3 xl:grid-cols-7">
-          <div className="rounded-[8px] bg-[#f8f8f8] px-3 py-2">
-            <div className="uppercase tracking-[0.12em] text-[#8a98ad]">Subtotal</div>
-            <div className="mt-1 text-[16px] font-semibold text-[#171717]">{subtotalAmount}</div>
+        <div className="grid gap-3 text-[12px] text-[var(--text-secondary)] md:grid-cols-3 xl:grid-cols-7">
+          <div className="rounded-[8px] bg-[var(--highlight)] px-3 py-2">
+            <div className="uppercase tracking-[0.12em] text-[var(--text-tertiary)]">Subtotal</div>
+            <div className="mt-1 text-[16px] font-semibold text-[var(--text-primary)]">{subtotalAmount}</div>
           </div>
-          <div className="rounded-[8px] bg-[#f8f8f8] px-3 py-2">
-            <div className="uppercase tracking-[0.12em] text-[#8a98ad]">Markup</div>
-            <div className="mt-1 text-[16px] font-semibold text-[#171717]">
+          <div className="rounded-[8px] bg-[var(--highlight)] px-3 py-2">
+            <div className="uppercase tracking-[0.12em] text-[var(--text-tertiary)]">Markup</div>
+            <div className="mt-1 text-[16px] font-semibold text-[var(--text-primary)]">
               {showMarkup ? markupAmount : "Hidden"}
             </div>
           </div>
-          <div className="rounded-[8px] bg-[#f8f8f8] px-3 py-2">
-            <div className="uppercase tracking-[0.12em] text-[#8a98ad]">Taxable</div>
-            <div className="mt-1 text-[16px] font-semibold text-[#171717]">
+          <div className="rounded-[8px] bg-[var(--highlight)] px-3 py-2">
+            <div className="uppercase tracking-[0.12em] text-[var(--text-tertiary)]">Taxable</div>
+            <div className="mt-1 text-[16px] font-semibold text-[var(--text-primary)]">
               {taxableSubtotal}
             </div>
           </div>
-          <div className="rounded-[8px] bg-[#f8f8f8] px-3 py-2">
-            <div className="uppercase tracking-[0.12em] text-[#8a98ad]">Exempt</div>
-            <div className="mt-1 text-[16px] font-semibold text-[#171717]">
+          <div className="rounded-[8px] bg-[var(--highlight)] px-3 py-2">
+            <div className="uppercase tracking-[0.12em] text-[var(--text-tertiary)]">Exempt</div>
+            <div className="mt-1 text-[16px] font-semibold text-[var(--text-primary)]">
               {exemptSubtotal}
             </div>
           </div>
-          <div className="rounded-[8px] bg-[#f8f8f8] px-3 py-2">
-            <div className="uppercase tracking-[0.12em] text-[#8a98ad]">Tax</div>
-            <div className="mt-1 text-[16px] font-semibold text-[#171717]">{taxAmount}</div>
+          <div className="rounded-[8px] bg-[var(--highlight)] px-3 py-2">
+            <div className="uppercase tracking-[0.12em] text-[var(--text-tertiary)]">Tax</div>
+            <div className="mt-1 text-[16px] font-semibold text-[var(--text-primary)]">{taxAmount}</div>
           </div>
-          <div className="rounded-[8px] bg-[#f8f8f8] px-3 py-2">
-            <div className="uppercase tracking-[0.12em] text-[#8a98ad]">Discount</div>
-            <div className="mt-1 text-[16px] font-semibold text-[#171717]">
+          <div className="rounded-[8px] bg-[var(--highlight)] px-3 py-2">
+            <div className="uppercase tracking-[0.12em] text-[var(--text-tertiary)]">Discount</div>
+            <div className="mt-1 text-[16px] font-semibold text-[var(--text-primary)]">
               {renderAdjustment(discountAmount)}
             </div>
           </div>
-          <div className="rounded-[8px] bg-[#fff1e4] px-3 py-2">
-            <div className="uppercase tracking-[0.12em] text-[#b26a32]">Total</div>
-            <div className="mt-1 text-[16px] font-semibold text-[#171717]">{totalAmount}</div>
+          <div className="rounded-[8px] bg-[var(--copper)]/10 px-3 py-2">
+            <div className="uppercase tracking-[0.12em] text-[var(--copper)]">Total</div>
+            <div className="mt-1 text-[16px] font-semibold text-[var(--text-primary)]">{totalAmount}</div>
           </div>
         </div>
       </div>

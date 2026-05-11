@@ -18,7 +18,7 @@ const signedReadyNoJobFixtureCustomerEmail =
   "e2e-signed-ready-no-job-cue@floorconnector.local";
 const unscheduledJobCueBridgePath =
   process.env.FLOORCONNECTOR_E2E_UNSCHEDULED_JOB_CUE_BRIDGE_PATH;
-const unscheduledJobCueTitle = "Ready project has an unscheduled job";
+const unscheduledJobCueTitle = "Ready project needs scheduling";
 const unscheduledJobFixtureProjectName = "[E2E] Unscheduled Job Cue Bridge";
 const unscheduledJobFixtureCustomerEmail =
   "e2e-unscheduled-job-cue@floorconnector.local";
@@ -1342,7 +1342,7 @@ test("ready-to-schedule handoff opens the project schedule when jobs are already
   expect(issues).toEqual([]);
 });
 
-test("project unpaid deposit cue opens source-locked work-item prefill without creating one", async ({
+test("project unpaid deposit cue routes to invoice without work-item prefill", async ({
   page
 }) => {
   const issues = attachIssueCapture(page);
@@ -1364,56 +1364,13 @@ test("project unpaid deposit cue opens source-locked work-item prefill without c
   expect(invoiceHref).toMatch(/^\/invoices\/[0-9a-f-]+$/);
   const invoiceId = invoiceHref.split("/").at(-1);
 
-  const openCountBefore = await getOpenWorkItemCount(page);
-
-  const bridgeHref = await depositCue
-    .getByRole("link", { name: "Create work item" })
-    .getAttribute("href");
-  expect(bridgeHref).toContain("workItemCue=deposit_invoice_unpaid");
-  expect(bridgeHref).toContain("#work-items");
-
-  const bridgeLink = depositCue.getByRole("link", { name: "Create work item" });
-  await bridgeLink.scrollIntoViewIfNeeded();
-  await bridgeLink.click();
-  await page.waitForLoadState("domcontentloaded");
-
-  expect(new URL(page.url()).searchParams.get("workItemCue")).toBe(
-    "deposit_invoice_unpaid"
-  );
-  await expect(page.locator("#work-items")).toBeVisible();
-  await expect(page.locator("#work-items")).toContainText(
+  expect(invoiceId).toMatch(/^[0-9a-f-]+$/);
+  await expect(depositCue.getByRole("link", { name: "Create work item" })).toHaveCount(0);
+  expect(invoiceHref).not.toContain("workItemCue=");
+  expect(invoiceHref).not.toContain("#work-items");
+  await expect(page.locator("#work-items")).not.toContainText(
     "Prefilled from project guidance"
   );
-
-  const workItemsPanel = page.locator("#work-items");
-
-  await expect(workItemsPanel.locator('input[name="sourceType"]')).toHaveValue("invoice");
-  await expect(workItemsPanel.locator('input[name="sourceId"]')).toHaveValue(invoiceId);
-  await expect(workItemsPanel.locator('input[name="projectId"]')).toHaveValue(
-    projectIdFromPath(projectCueBridgePath)
-  );
-  await expect(workItemsPanel.locator('input[name="linkPath"]')).toHaveValue(invoiceHref);
-  await expect(workItemsPanel.locator('select[name="kind"]')).toHaveValue("invoice_follow_up");
-  await expect(workItemsPanel.locator('input[name="title"]')).toHaveValue(
-    /Follow up on deposit invoice/
-  );
-  await expect(workItemsPanel.locator('textarea[name="description"]')).toContainText(
-    "Prefilled from project guidance"
-  );
-  await expect(workItemsPanel.locator('textarea[name="description"]')).toContainText(
-    "Deposit invoice is still unpaid"
-  );
-
-  const metadata = JSON.parse(
-    await workItemsPanel.locator('input[name="metadata"]').inputValue()
-  );
-  expect(metadata.cue).toBe("project_guidance");
-  expect(metadata.projectCue).toBe("deposit_invoice_unpaid");
-  expect(metadata.invoiceId).toBe(invoiceId);
-  expect(metadata.workflowHref).toBe(invoiceHref);
-
-  expect(await getOpenWorkItemCount(page)).toBe(openCountBefore);
-  await expect(page.getByRole("button", { name: "Create work item" })).toBeVisible();
   await expect(page.locator("#work-items")).not.toContainText("Work item created.");
 
   expect(issues).toEqual([]);
@@ -1497,7 +1454,7 @@ test("dashboard project cue preview routes to project guidance without opening w
   expect(issues).toEqual([]);
 });
 
-test("project approved-estimate cue opens estimate-locked work-item prefill without creating one", async ({
+test("project approved-estimate cue routes to contract generation without work-item prefill", async ({
   page
 }) => {
   const issues = attachIssueCapture(page);
@@ -1540,83 +1497,26 @@ test("project approved-estimate cue opens estimate-locked work-item prefill with
       name: new RegExp(`Generate contract.*${estimateCueTitle}`)
     })
   ).toBeVisible();
-  await expect(
-    estimateCue.getByRole("link", {
-      name: new RegExp(`Create work item.*${estimateCueTitle}`)
-    })
-  ).toBeVisible();
+  await expect(estimateCue.getByRole("link", { name: "Create work item" })).toHaveCount(0);
 
   const contractHref = await estimateCue
     .getByRole("link", { name: "Generate contract" })
     .getAttribute("href");
   expect(contractHref).toMatch(/^\/contracts\?estimateId=[0-9a-f-]+$/);
-  const estimateId = new URL(contractHref, "http://localhost").searchParams.get("estimateId");
-
-  const openCountBefore = await getOpenWorkItemCount(page);
-
-  const bridgeHref = await estimateCue
-    .getByRole("link", { name: "Create work item" })
-    .getAttribute("href");
-  expect(bridgeHref).toContain("workItemCue=approved_estimate_missing_contract");
-  expect(bridgeHref).toContain("#work-items");
-
-  const bridgeLink = estimateCue.getByRole("link", { name: "Create work item" });
-  await bridgeLink.scrollIntoViewIfNeeded();
-  await Promise.all([
-    page.waitForURL((url) => {
-      return (
-        url.searchParams.get("workItemCue") ===
-          "approved_estimate_missing_contract" && url.hash === "#work-items"
-      );
-    }),
-    bridgeLink.click()
-  ]);
-
-  expect(new URL(page.url()).searchParams.get("workItemCue")).toBe(
-    "approved_estimate_missing_contract"
+  expect(new URL(contractHref, "http://localhost").searchParams.get("estimateId")).toMatch(
+    /^[0-9a-f-]+$/
   );
-  await expect(page.locator("#work-items")).toBeVisible();
-  await expect(page.locator("#work-items")).toContainText(
+  expect(contractHref).not.toContain("workItemCue=");
+  expect(contractHref).not.toContain("#work-items");
+  await expect(page.locator("#work-items")).not.toContainText(
     "Prefilled from project guidance"
   );
-
-  const workItemsPanel = page.locator("#work-items");
-
-  await expect(workItemsPanel.locator('input[name="sourceType"]')).toHaveValue("estimate");
-  await expect(workItemsPanel.locator('input[name="sourceId"]')).toHaveValue(estimateId);
-  await expect(workItemsPanel.locator('input[name="projectId"]')).toHaveValue(
-    projectIdFromPath(projectPath)
-  );
-  await expect(workItemsPanel.locator('input[name="linkPath"]')).toHaveValue(contractHref);
-  await expect(workItemsPanel.locator('select[name="kind"]')).toHaveValue(
-    "estimate_follow_up"
-  );
-  await expect(workItemsPanel.locator('input[name="title"]')).toHaveValue(
-    /Create contract follow-through/
-  );
-  await expect(workItemsPanel.locator('textarea[name="description"]')).toContainText(
-    "Prefilled from project guidance"
-  );
-  await expect(workItemsPanel.locator('textarea[name="description"]')).toContainText(
-    estimateCueTitle
-  );
-
-  const metadata = JSON.parse(
-    await workItemsPanel.locator('input[name="metadata"]').inputValue()
-  );
-  expect(metadata.cue).toBe("project_guidance");
-  expect(metadata.projectCue).toBe("approved_estimate_missing_contract");
-  expect(metadata.estimateId).toBe(estimateId);
-  expect(metadata.workflowHref).toBe(contractHref);
-
-  expect(await getOpenWorkItemCount(page)).toBe(openCountBefore);
-  await expect(page.getByRole("button", { name: "Create work item" })).toBeVisible();
   await expect(page.locator("#work-items")).not.toContainText("Work item created.");
 
   expect(issues).toEqual([]);
 });
 
-test("project signed-ready no-job cue opens contract-locked work-item prefill without creating one", async ({
+test("project signed-ready no-job cue routes to job quick-create without work-item prefill", async ({
   page
 }) => {
   const issues = attachIssueCapture(page);
@@ -1664,72 +1564,18 @@ test("project signed-ready no-job cue opens contract-locked work-item prefill wi
   expect(contractId).toMatch(/^[0-9a-f-]+$/);
   expect(estimateId).toMatch(/^[0-9a-f-]+$/);
 
-  const openCountBefore = await getOpenWorkItemCount(page);
-
-  const bridgeHref = await signedNoJobCue
-    .getByRole("link", { name: "Create work item" })
-    .getAttribute("href");
-  expect(bridgeHref).toContain("workItemCue=signed_contract_no_job");
-  expect(bridgeHref).toContain("#work-items");
-
-  const bridgeLink = signedNoJobCue.getByRole("link", { name: "Create work item" });
-  await bridgeLink.scrollIntoViewIfNeeded();
-  await Promise.all([
-    page.waitForURL((url) => {
-      return (
-        url.searchParams.get("workItemCue") === "signed_contract_no_job" &&
-        url.hash === "#work-items"
-      );
-    }),
-    bridgeLink.click()
-  ]);
-
-  expect(new URL(page.url()).searchParams.get("workItemCue")).toBe(
-    "signed_contract_no_job"
-  );
-  await expect(page.locator("#work-items")).toBeVisible();
-  await expect(page.locator("#work-items")).toContainText(
+  await expect(signedNoJobCue.getByRole("link", { name: "Create work item" })).toHaveCount(0);
+  expect(jobHref).not.toContain("workItemCue=");
+  expect(jobHref).not.toContain("#work-items");
+  await expect(page.locator("#work-items")).not.toContainText(
     "Prefilled from project guidance"
   );
-
-  const workItemsPanel = page.locator("#work-items");
-
-  await expect(workItemsPanel.locator('input[name="sourceType"]')).toHaveValue("contract");
-  await expect(workItemsPanel.locator('input[name="sourceId"]')).toHaveValue(contractId);
-  await expect(workItemsPanel.locator('input[name="projectId"]')).toHaveValue(projectId);
-  await expect(workItemsPanel.locator('input[name="linkPath"]')).toHaveValue(jobHref);
-  await expect(workItemsPanel.locator('select[name="kind"]')).toHaveValue("manual");
-  await expect(workItemsPanel.locator('input[name="title"]')).toHaveValue(
-    /Create job follow-through/
-  );
-  await expect(workItemsPanel.locator('textarea[name="description"]')).toContainText(
-    "Prefilled from project guidance"
-  );
-  await expect(workItemsPanel.locator('textarea[name="description"]')).toContainText(
-    signedReadyNoJobCueTitle
-  );
-  await expect(workItemsPanel.locator('textarea[name="description"]')).toContainText(
-    "Workflow handoff:"
-  );
-
-  const metadata = JSON.parse(
-    await workItemsPanel.locator('input[name="metadata"]').inputValue()
-  );
-  expect(metadata.cue).toBe("project_guidance");
-  expect(metadata.projectCue).toBe("signed_contract_no_job");
-  expect(metadata.contractId).toBe(contractId);
-  expect(metadata.estimateId).toBe(estimateId);
-  expect(metadata.contractStatus).toBe("signed");
-  expect(metadata.workflowHref).toBe(jobHref);
-
-  expect(await getOpenWorkItemCount(page)).toBe(openCountBefore);
-  await expect(page.getByRole("button", { name: "Create work item" })).toBeVisible();
   await expect(page.locator("#work-items")).not.toContainText("Work item created.");
 
   expect(issues).toEqual([]);
 });
 
-test("project ready unscheduled-job cue opens job-locked work-item prefill without creating one", async ({
+test("project ready unscheduled-job cue routes to scheduling without work-item prefill", async ({
   page
 }) => {
   const issues = attachIssueCapture(page);
@@ -1760,11 +1606,11 @@ test("project ready unscheduled-job cue opens job-locked work-item prefill witho
   });
   await expect(unscheduledJobCue).toBeVisible();
   await expect(unscheduledJobCue).toContainText(
-    "The project can move forward, but scheduling still needs human confirmation"
+    "Readiness is clear, but one or more canonical jobs still need schedule placement"
   );
 
   const scheduleHref = await unscheduledJobCue
-    .getByRole("link", { name: "Open schedule" })
+    .getByRole("link", { name: "Open scheduling" })
     .getAttribute("href");
   expect(scheduleHref).toMatch(
     /^\/schedule\?projectId=[0-9a-f-]+&view=unscheduled&action=schedule&jobId=[0-9a-f-]+$/
@@ -1779,66 +1625,12 @@ test("project ready unscheduled-job cue opens job-locked work-item prefill witho
   expect(scheduleParams.get("action")).toBe("schedule");
   expect(jobId).toMatch(/^[0-9a-f-]+$/);
 
-  const openCountBefore = await getOpenWorkItemCount(page);
-
-  const bridgeHref = await unscheduledJobCue
-    .getByRole("link", { name: "Create work item" })
-    .getAttribute("href");
-  expect(bridgeHref).toContain("workItemCue=ready_unscheduled_jobs");
-  expect(bridgeHref).toContain("#work-items");
-
-  const bridgeLink = unscheduledJobCue.getByRole("link", { name: "Create work item" });
-  await bridgeLink.scrollIntoViewIfNeeded();
-  await Promise.all([
-    page.waitForURL((url) => {
-      return (
-        url.searchParams.get("workItemCue") === "ready_unscheduled_jobs" &&
-        url.hash === "#work-items"
-      );
-    }),
-    bridgeLink.click()
-  ]);
-
-  expect(new URL(page.url()).searchParams.get("workItemCue")).toBe(
-    "ready_unscheduled_jobs"
-  );
-  await expect(page.locator("#work-items")).toBeVisible();
-  await expect(page.locator("#work-items")).toContainText(
+  await expect(unscheduledJobCue.getByRole("link", { name: "Create work item" })).toHaveCount(0);
+  expect(scheduleHref).not.toContain("workItemCue=");
+  expect(scheduleHref).not.toContain("#work-items");
+  await expect(page.locator("#work-items")).not.toContainText(
     "Prefilled from project guidance"
   );
-
-  const workItemsPanel = page.locator("#work-items");
-
-  await expect(workItemsPanel.locator('input[name="sourceType"]')).toHaveValue("job");
-  await expect(workItemsPanel.locator('input[name="sourceId"]')).toHaveValue(jobId);
-  await expect(workItemsPanel.locator('input[name="projectId"]')).toHaveValue(projectId);
-  await expect(workItemsPanel.locator('input[name="linkPath"]')).toHaveValue(scheduleHref);
-  await expect(workItemsPanel.locator('select[name="kind"]')).toHaveValue("manual");
-  await expect(workItemsPanel.locator('input[name="title"]')).toHaveValue(
-    /Schedule ready project work/
-  );
-  await expect(workItemsPanel.locator('textarea[name="description"]')).toContainText(
-    "Prefilled from project guidance"
-  );
-  await expect(workItemsPanel.locator('textarea[name="description"]')).toContainText(
-    unscheduledJobCueTitle
-  );
-  await expect(workItemsPanel.locator('textarea[name="description"]')).toContainText(
-    "Workflow handoff:"
-  );
-
-  const metadata = JSON.parse(
-    await workItemsPanel.locator('input[name="metadata"]').inputValue()
-  );
-  expect(metadata.cue).toBe("project_guidance");
-  expect(metadata.projectCue).toBe("ready_unscheduled_jobs");
-  expect(metadata.jobId).toBe(jobId);
-  expect(metadata.jobIds).toEqual([jobId]);
-  expect(metadata.unscheduledJobCount).toBe(1);
-  expect(metadata.workflowHref).toBe(scheduleHref);
-
-  expect(await getOpenWorkItemCount(page)).toBe(openCountBefore);
-  await expect(page.getByRole("button", { name: "Create work item" })).toBeVisible();
   await expect(page.locator("#work-items")).not.toContainText("Work item created.");
 
   expect(issues).toEqual([]);

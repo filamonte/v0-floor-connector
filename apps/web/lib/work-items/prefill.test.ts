@@ -3,15 +3,59 @@ import test from "node:test";
 
 import {
   buildAppointmentCueWorkItemPrefill,
+  buildOperationalCueWorkItemPrefill,
   buildOpportunityFollowUpWorkItemPrefill,
-  buildProjectGuidanceWorkItemPrefill
+  buildProjectGuidanceWorkItemPrefill,
+  getOperationalCueWorkItemBridgeAction
 } from "./prefill";
 import { workItemCreateSchema } from "./schemas";
+import type { OperationalCue } from "../operational-cues/types";
 
 const opportunityId = "11111111-1111-4111-8111-111111111111";
 const appointmentId = "22222222-2222-4222-8222-222222222222";
 const projectId = "44444444-4444-4444-8444-444444444444";
 const invoiceId = "55555555-5555-4555-8555-555555555555";
+const estimateId = "66666666-6666-4666-8666-666666666666";
+
+function buildOperationalCue(
+  overrides: Partial<OperationalCue>
+): OperationalCue {
+  return {
+    cueKey: "estimate_sent_followup",
+    subjectType: "estimate",
+    subjectId: estimateId,
+    projectId,
+    organizationId: "77777777-7777-4777-8777-777777777777",
+    assignedUserId: null,
+    ownerStrategy: "estimator",
+    ownerStrategyLabel: "Estimator",
+    ownerResolutionStatus: "strategy_only",
+    responsibility: {
+      strategy: "estimator",
+      strategyLabel: "Estimator",
+      displayLabel: "Estimator",
+      resolutionStatus: "strategy_only",
+      personId: null,
+      userId: null,
+      source: "cue_owner_strategy"
+    },
+    title: "Follow up on EST-100",
+    message: "Estimate was sent and is still awaiting a customer decision.",
+    urgency: "high",
+    ageDays: 7,
+    customerName: "Taylor Customer",
+    projectName: "Garage floor",
+    actionHref: `/estimates/${estimateId}`,
+    actionLabel: "Open estimate",
+    reason: "Sent 7 days ago.",
+    explanation: "Estimate was sent 7 days ago. This rule triggers after 5 days.",
+    sourceLabel: "Estimate sent date",
+    sourceValue: "May 4, 2026",
+    thresholdLabel: "Rule threshold: 5 days",
+    triggeredAtLabel: "Triggered after 7 days",
+    ...overrides
+  };
+}
 
 void test("opportunity follow-up cue prefill creates a source-locked work item draft", () => {
   const prefill = buildOpportunityFollowUpWorkItemPrefill({
@@ -115,42 +159,45 @@ void test("appointment cue prefill creates high-priority follow-up for no-show a
   assert.match(prefill.description ?? "", /Status: no show/);
 });
 
-void test("project guidance cue prefill creates a source-aware invoice work item draft", () => {
+void test("project guidance cue prefill creates a source-locked human follow-up draft", () => {
   const prefill = buildProjectGuidanceWorkItemPrefill({
     projectId,
     projectName: "Garage floor",
     customerName: "Taylor Customer",
-    cueTitle: "Deposit invoice is still unpaid",
+    cueTitle: "Open blocker field notes need review",
     cueDescription:
-      "Financial readiness is waiting on the existing deposit invoice before scheduling can continue.",
-    cueReason: "INV-100 has $500.00 open.",
-    workflowHref: `/invoices/${invoiceId}`,
+      "Field blockers are still open on daily logs for this project.",
+    cueReason: "Moisture issue",
+    workflowHref: "/daily-logs/daily-log-1",
     bridge: {
-      cue: "deposit_invoice_unpaid",
-      href: `/projects/${projectId}?workItemCue=deposit_invoice_unpaid#work-items`,
+      cue: "open_blocker_field_notes",
+      href: `/projects/${projectId}?workItemCue=open_blocker_field_notes#work-items`,
       label: "Create work item",
-      sourceType: "invoice",
-      sourceId: invoiceId,
-      sourceLabel: "Invoice INV-100",
+      sourceType: "project",
+      sourceId: projectId,
+      sourceLabel: "Field note: Moisture issue",
       context: {
-        invoiceId,
-        invoiceReferenceNumber: "INV-100",
-        balanceDueAmount: "500.00"
+        fieldNoteId: "note-1",
+        dailyLogId: "daily-log-1",
+        fieldNoteTitle: "Moisture issue",
+        fieldNoteType: "blocker",
+        fieldNoteStatus: "open",
+        openBlockerFieldNoteCount: 1
       }
     }
   });
 
-  assert.equal(prefill.kind, "invoice_follow_up");
+  assert.equal(prefill.kind, "human_handoff");
   assert.equal(prefill.priority, "high");
-  assert.equal(prefill.sourceType, "invoice");
-  assert.equal(prefill.sourceId, invoiceId);
-  assert.equal(prefill.linkPath, `/invoices/${invoiceId}`);
+  assert.equal(prefill.sourceType, "project");
+  assert.equal(prefill.sourceId, projectId);
+  assert.equal(prefill.linkPath, "/daily-logs/daily-log-1");
   assert.equal(
     prefill.dedupeKey,
-    `project-guidance:${projectId}:deposit_invoice_unpaid:invoice:${invoiceId}`
+    `project-guidance:${projectId}:open_blocker_field_notes:project:${projectId}`
   );
   assert.match(prefill.description ?? "", /Prefilled from project guidance/);
-  assert.equal(prefill.metadata.projectCue, "deposit_invoice_unpaid");
+  assert.equal(prefill.metadata.projectCue, "open_blocker_field_notes");
 
   const parsed = workItemCreateSchema.safeParse({
     title: prefill.title,
@@ -170,4 +217,116 @@ void test("project guidance cue prefill creates a source-aware invoice work item
   });
 
   assert.equal(parsed.success, true);
+});
+
+void test("estimate operational cue prefill creates an estimate source-locked work item draft", () => {
+  const cue = buildOperationalCue({});
+  const action = getOperationalCueWorkItemBridgeAction(cue);
+  const prefill = buildOperationalCueWorkItemPrefill({ cue });
+
+  assert.deepEqual(action, {
+    href: `/estimates/${estimateId}?workItemCue=estimate_sent_followup#work-items`,
+    label: "Create follow-up"
+  });
+  assert.ok(prefill);
+  assert.equal(prefill.kind, "estimate_follow_up");
+  assert.equal(prefill.priority, "normal");
+  assert.equal(prefill.sourceType, "estimate");
+  assert.equal(prefill.sourceId, estimateId);
+  assert.equal(prefill.linkPath, `/estimates/${estimateId}`);
+  assert.equal(prefill.title, "Follow up on sent estimate");
+  assert.match(prefill.description ?? "", /Estimate was sent 7 days ago/);
+  assert.match(prefill.description ?? "", /Estimate sent date: May 4, 2026/);
+  assert.equal(
+    prefill.dedupeKey,
+    `operational-cue:estimate_sent_followup:estimate:${estimateId}`
+  );
+  assert.equal(prefill.metadata.cue, "operational_cue");
+  assert.equal(prefill.metadata.cueKey, "estimate_sent_followup");
+
+  const parsed = workItemCreateSchema.safeParse({
+    title: prefill.title,
+    description: prefill.description,
+    priority: prefill.priority,
+    kind: prefill.kind,
+    dueAt: prefill.dueAt,
+    assignedPersonId: "",
+    sourceType: prefill.sourceType,
+    sourceId: prefill.sourceId,
+    customerId: "",
+    projectId,
+    linkPath: prefill.linkPath,
+    visibility: "internal",
+    dedupeKey: prefill.dedupeKey,
+    metadata: prefill.metadata
+  });
+
+  assert.equal(parsed.success, true);
+});
+
+void test("invoice operational cue prefill creates an invoice source-locked collection draft", () => {
+  const cue = buildOperationalCue({
+    cueKey: "invoice_overdue",
+    subjectType: "invoice",
+    subjectId: invoiceId,
+    title: "INV-100 is overdue",
+    message: "Invoice still has an open balance after the due date.",
+    urgency: "high",
+    ageDays: 3,
+    actionHref: `/invoices/${invoiceId}`,
+    actionLabel: "Open invoice",
+    reason: "Due 3 days ago with $500.00 open.",
+    explanation: "Invoice due date has passed and the invoice is still open.",
+    sourceLabel: "Invoice due date",
+    sourceValue: "May 8, 2026",
+    thresholdLabel: "Rule threshold: 0 days",
+    triggeredAtLabel: "Triggered after 3 days"
+  });
+  const action = getOperationalCueWorkItemBridgeAction(cue);
+  const prefill = buildOperationalCueWorkItemPrefill({ cue });
+
+  assert.deepEqual(action, {
+    href: `/invoices/${invoiceId}?workItemCue=invoice_overdue#work-items`,
+    label: "Create collection follow-up"
+  });
+  assert.ok(prefill);
+  assert.equal(prefill.kind, "invoice_follow_up");
+  assert.equal(prefill.priority, "high");
+  assert.equal(prefill.sourceType, "invoice");
+  assert.equal(prefill.sourceId, invoiceId);
+  assert.equal(prefill.linkPath, `/invoices/${invoiceId}`);
+  assert.equal(prefill.title, "Follow up on past-due invoice");
+  assert.match(prefill.description ?? "", /Due 3 days ago with \$500.00 open/);
+  assert.match(prefill.description ?? "", /Invoice due date: May 8, 2026/);
+
+  const parsed = workItemCreateSchema.safeParse({
+    title: prefill.title,
+    description: prefill.description,
+    priority: prefill.priority,
+    kind: prefill.kind,
+    dueAt: prefill.dueAt,
+    assignedPersonId: "",
+    sourceType: prefill.sourceType,
+    sourceId: prefill.sourceId,
+    customerId: "",
+    projectId,
+    linkPath: prefill.linkPath,
+    visibility: "internal",
+    dedupeKey: prefill.dedupeKey,
+    metadata: prefill.metadata
+  });
+
+  assert.equal(parsed.success, true);
+});
+
+void test("unsupported operational cue types do not produce prefill bridge actions", () => {
+  const cue = buildOperationalCue({
+    cueKey: "job_scheduled_missing_crew",
+    subjectType: "job",
+    subjectId: "88888888-8888-4888-8888-888888888888",
+    actionHref: "/jobs/88888888-8888-4888-8888-888888888888"
+  });
+
+  assert.equal(getOperationalCueWorkItemBridgeAction(cue), null);
+  assert.equal(buildOperationalCueWorkItemPrefill({ cue }), null);
 });

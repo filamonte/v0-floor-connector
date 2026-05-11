@@ -20,6 +20,8 @@ import {
 } from "@/lib/portal-access/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getProjectById, listProjects } from "@/lib/projects/data";
+import { createRecordRevision, ensureInitialRecordRevision } from "@/lib/revisions/data";
+import { buildChangeOrderRevisionSnapshot } from "@/lib/revisions/snapshots";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { appendChangeOrderSnapshotItemsToScheduleOfValues } from "@/lib/financial/sov";
@@ -363,6 +365,36 @@ async function requireChangeOrderScope(next: string) {
     userId: user.id,
     organizationId: organizationContext.organization.id
   };
+}
+
+async function createChangeOrderRecordRevision(input: {
+  changeOrderId: string;
+  revisionKind: Parameters<typeof createRecordRevision>[0]["revisionKind"];
+  revisionReason: string;
+  createdByUserId: string | null;
+  ensureInitial?: boolean;
+  next?: string;
+}) {
+  const changeOrder = await getChangeOrderById(
+    input.changeOrderId,
+    input.next ?? `/change-orders/${input.changeOrderId}`
+  );
+
+  if (!changeOrder) {
+    return null;
+  }
+
+  const payload = {
+    organizationId: changeOrder.organizationId,
+    subjectType: "change_order" as const,
+    subjectId: changeOrder.id,
+    revisionKind: input.revisionKind,
+    revisionReason: input.revisionReason,
+    snapshot: buildChangeOrderRevisionSnapshot(changeOrder),
+    createdByUserId: input.createdByUserId
+  };
+
+  return input.ensureInitial ? ensureInitialRecordRevision(payload) : createRecordRevision(payload);
 }
 
 async function getChangeOrderRecordByIdInCurrentScope(changeOrderId: string, next?: string) {
@@ -768,7 +800,20 @@ export async function createChangeOrder(input: ChangeOrderQuickCreateInput) {
     );
   }
 
-  return mapChangeOrder(response.data as ChangeOrderRow);
+  const changeOrder = await attachLatestCommercialSnapshot(
+    mapChangeOrder(response.data as ChangeOrderRow)
+  );
+
+  await createChangeOrderRecordRevision({
+    changeOrderId: changeOrder.id,
+    revisionKind: "created",
+    revisionReason: "Change order created.",
+    createdByUserId: scope.userId,
+    ensureInitial: true,
+    next: `/change-orders/${changeOrder.id}`
+  });
+
+  return changeOrder;
 }
 
 export async function updateChangeOrder(changeOrderId: string, input: ChangeOrderInput) {
@@ -814,7 +859,19 @@ export async function updateChangeOrder(changeOrderId: string, input: ChangeOrde
     );
   }
 
-  return mapChangeOrder(response.data as ChangeOrderRow);
+  const changeOrder = await attachLatestCommercialSnapshot(
+    mapChangeOrder(response.data as ChangeOrderRow)
+  );
+
+  await createChangeOrderRecordRevision({
+    changeOrderId: changeOrder.id,
+    revisionKind: "edited",
+    revisionReason: "Change order draft updated.",
+    createdByUserId: scope.userId,
+    next: `/change-orders/${changeOrder.id}`
+  });
+
+  return changeOrder;
 }
 
 export async function updateChangeOrderStatus(
@@ -888,7 +945,17 @@ export async function updateChangeOrderStatus(
     throw new Error("Change order could not be reloaded after status update.");
   }
 
-  return mapChangeOrder(refreshed);
+  const changeOrder = await attachLatestCommercialSnapshot(mapChangeOrder(refreshed));
+
+  await createChangeOrderRecordRevision({
+    changeOrderId,
+    revisionKind: nextStatus === "sent" ? "sent" : "status_change",
+    revisionReason: `Change order marked ${nextStatus}.`,
+    createdByUserId: scope.userId,
+    next: `/change-orders/${changeOrderId}`
+  });
+
+  return changeOrder;
 }
 
 export async function recordPortalViewedChangeOrder(changeOrderId: string, next = "/portal") {

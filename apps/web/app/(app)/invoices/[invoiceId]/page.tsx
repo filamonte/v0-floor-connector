@@ -17,12 +17,15 @@ import { InvoicePaymentForm } from "@/components/invoice-payment-form";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
+import { RevisionTimeline } from "@/components/revisions/revision-timeline";
 import {
   ScheduleContextActions,
   ScheduleContextFocusCard,
   ScheduleContextMetrics,
   ScheduleContextNotice
 } from "@/components/schedule-context-card";
+import { WorkItemCreateForm } from "@/components/work-items/work-item-create-form";
+import { WorkItemList } from "@/components/work-items/work-item-list";
 import { listCatalogItems } from "@/lib/catalogs/data";
 import { listInvoiceChangeOrders } from "@/lib/change-orders/data";
 import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
@@ -30,14 +33,18 @@ import {
   recordInvoicePaymentAction,
   updateInvoiceAction
 } from "@/lib/invoices/actions";
+import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getInvoiceById, listInvoiceSourceOptions } from "@/lib/invoices/data";
 import { listEstimates } from "@/lib/estimates/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 import { getOperationalCuesForSubject } from "@/lib/operational-cues/data";
+import { listPeople } from "@/lib/people/data";
 import { getProgressBillingByEstimateId } from "@/lib/progress-billing/data";
 import { listProjects } from "@/lib/projects/data";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
+import { ensureInitialRecordRevision, listRecordRevisions } from "@/lib/revisions/data";
+import { buildInvoiceRevisionSnapshot } from "@/lib/revisions/snapshots";
 import { buildScheduleHref } from "@/lib/schedule/links";
 import {
   formatScheduleSummaryWindow,
@@ -50,6 +57,16 @@ import {
   WorkflowBar
 } from "@floorconnector/ui";
 import type { ProjectStateSummaryProps, WorkflowStep } from "@floorconnector/ui";
+import {
+  completeWorkItemAction,
+  createWorkItemAction,
+  dismissWorkItemAction
+} from "@/lib/work-items/actions";
+import { listWorkItemsForSource } from "@/lib/work-items/data";
+import {
+  buildOperationalCueWorkItemPrefill,
+  getOperationalCueWorkItemBridgeAction
+} from "@/lib/work-items/prefill";
 
 type InvoiceDetailPageProps = {
   params: Promise<{
@@ -58,6 +75,7 @@ type InvoiceDetailPageProps = {
   searchParams?: Promise<{
     error?: string;
     message?: string;
+    workItemCue?: string;
   }>;
 };
 
@@ -258,6 +276,7 @@ export default async function InvoiceDetailPage({
 }: InvoiceDetailPageProps) {
   const { invoiceId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
+  const user = await requireAuthenticatedUser(`/invoices/${invoiceId}`);
   const [invoice, projects, estimates, jobs, changeOrders, sourceOptions, catalogItems, communicationThreads] =
     await Promise.all([
       getInvoiceById(invoiceId, `/invoices/${invoiceId}`),
@@ -274,6 +293,21 @@ export default async function InvoiceDetailPage({
     notFound();
   }
 
+  await ensureInitialRecordRevision({
+    organizationId: invoice.organizationId,
+    subjectType: "invoice",
+    subjectId: invoice.id,
+    revisionKind: "system_snapshot",
+    revisionReason: "Initial revision captured from the existing canonical invoice.",
+    snapshot: buildInvoiceRevisionSnapshot(invoice),
+    createdByUserId: user.id
+  });
+  const recordRevisions = await listRecordRevisions({
+    organizationId: invoice.organizationId,
+    subjectType: "invoice",
+    subjectId: invoice.id
+  });
+
   const progressBillingWorkspace = invoice.estimate
     ? await getProgressBillingByEstimateId(
         invoice.estimate.id,
@@ -286,11 +320,36 @@ export default async function InvoiceDetailPage({
     organizationId: invoice.organizationId,
     projectId: invoice.projectId
   });
-  const invoiceAttentionCues = await getOperationalCuesForSubject({
-    organizationId: invoice.organizationId,
-    subjectType: "invoice",
-    subjectId: invoice.id
-  });
+  const [invoiceAttentionCues, linkedWorkItems, people] = await Promise.all([
+    getOperationalCuesForSubject({
+      organizationId: invoice.organizationId,
+      subjectType: "invoice",
+      subjectId: invoice.id
+    }),
+    listWorkItemsForSource({
+      sourceType: "invoice",
+      sourceId: invoice.id
+    }),
+    listPeople()
+  ]);
+  const selectedWorkItemCue =
+    invoiceAttentionCues.find(
+      (cue) => cue.cueKey === resolvedSearchParams.workItemCue
+    ) ?? null;
+  const invoiceWorkItemPrefill = selectedWorkItemCue
+    ? buildOperationalCueWorkItemPrefill({ cue: selectedWorkItemCue })
+    : null;
+  const defaultInvoiceWorkItemSource = invoiceWorkItemPrefill ?? {
+    sourceType: "invoice" as const,
+    sourceId: invoice.id,
+    linkPath: `/invoices/${invoice.id}`
+  };
+  const assignablePeople = people
+    .filter((person) => person.isActive && person.isAssignable)
+    .map((person) => ({
+      id: person.id,
+      displayName: person.displayName
+    }));
   const onlinePaymentGate = computeInvoicePaymentWorkflowGate({
     invoiceStatus: invoice.status,
     balanceDueAmount: invoice.balanceDueAmount
@@ -693,7 +752,91 @@ export default async function InvoiceDetailPage({
             <NeedsAttentionPanel
               cues={invoiceAttentionCues}
               description="Invoice-specific collection cues derived from this canonical invoice and enabled organization rules."
+              getWorkItemAction={getOperationalCueWorkItemBridgeAction}
             />
+
+            <section
+              id="work-items"
+              className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5"
+            >
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                    Internal work items
+                  </p>
+                  <h3 className="mt-1 text-base font-semibold text-slate-950">
+                    Invoice follow-through
+                  </h3>
+                  <p className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600">
+                    Create an internal contractor work item tied to this invoice. Cue
+                    prefill is only a draft; nothing is created until you submit.
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 md:w-56">
+                  <p className="font-semibold text-slate-950">Open linked items</p>
+                  <p className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
+                    {linkedWorkItems.filter((workItem) => workItem.status === "open").length}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                <section className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-4">
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    Create internal work item
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {invoiceWorkItemPrefill
+                      ? "Prefilled from a deterministic invoice cue. Review the owner, due date, and context; nothing is created until you submit."
+                      : "Use this form when invoice follow-through needs an owner, due date, and explicit completion state."}
+                  </p>
+                  <div className="mt-4">
+                    <WorkItemCreateForm
+                      action={createWorkItemAction}
+                      returnTo={`/invoices/${invoice.id}`}
+                      sourceType={defaultInvoiceWorkItemSource.sourceType}
+                      sourceId={defaultInvoiceWorkItemSource.sourceId}
+                      linkPath={defaultInvoiceWorkItemSource.linkPath}
+                      customerId={invoice.customerId}
+                      projectId={invoice.projectId}
+                      defaultKind={invoiceWorkItemPrefill?.kind ?? "invoice_follow_up"}
+                      defaultTitle={invoiceWorkItemPrefill?.title}
+                      defaultDescription={invoiceWorkItemPrefill?.description}
+                      defaultDueAt={invoiceWorkItemPrefill?.dueAt}
+                      defaultPriority={invoiceWorkItemPrefill?.priority ?? "normal"}
+                      dedupeKey={invoiceWorkItemPrefill?.dedupeKey}
+                      metadata={invoiceWorkItemPrefill?.metadata}
+                      kindOptions={[
+                        { value: "invoice_follow_up", label: "Invoice follow-up" },
+                        { value: "human_handoff", label: "Human handoff" },
+                        { value: "manual", label: "Manual" }
+                      ]}
+                      assignablePeople={assignablePeople}
+                      boundaryCopy="Work items are internal-only and human-submitted. Creating, completing, or dismissing one does not change invoice status, payment state, customer-visible messages, financial calculations, project readiness, or workflow transitions."
+                    />
+                  </div>
+                </section>
+
+                <section className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-4">
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    Linked work items
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Internal actions tied directly to this canonical invoice.
+                  </p>
+                  <div className="mt-4">
+                    <WorkItemList
+                      workItems={linkedWorkItems}
+                      returnTo={`/invoices/${invoice.id}`}
+                      completeAction={completeWorkItemAction}
+                      dismissAction={dismissWorkItemAction}
+                      emptyTitle="No work items are linked to this invoice yet."
+                      emptyDescription="Create an internal work item when invoice follow-up needs an owner, due date, and completion state."
+                    />
+                  </div>
+                </section>
+              </div>
+            </section>
           </div>
         </div>
 
@@ -1504,6 +1647,8 @@ export default async function InvoiceDetailPage({
           actionClassName="inline-flex items-center rounded-full border border-[var(--border-warm)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--graphite-light)] hover:bg-[var(--highlight)]"
           threads={communicationThreads}
         />
+
+        <RevisionTimeline revisions={recordRevisions} />
       </aside>
     </div>
   );

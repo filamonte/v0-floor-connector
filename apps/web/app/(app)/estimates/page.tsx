@@ -4,6 +4,7 @@ import { ContractorWorkspacePage } from "@/components/contractor-workspace-page"
 import { EstimateRecordsPanel } from "@/components/estimates/estimate-records-panel";
 import { EstimateQuickCreateForm } from "@/components/estimate-quick-create-form";
 import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
+import { PerspectiveSwitcher } from "@/components/perspectives/perspective-switcher";
 import { RowsPerViewControl } from "@/components/rows-per-view-control";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
@@ -17,6 +18,8 @@ import { getActiveOrganizationContext } from "@/lib/organizations/active-context
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { listOpportunities } from "@/lib/opportunities/data";
+import { buildPerspectiveSearchParams, matchesPerspective } from "@/lib/perspectives/query";
+import { parsePerspectiveView, type PerspectiveView } from "@/lib/perspectives/types";
 import { listProjects } from "@/lib/projects/data";
 import { getStatusBadgeClassName } from "@floorconnector/ui";
 
@@ -25,6 +28,7 @@ type EstimatesPageProps = {
     compose?: string;
     q?: string;
     status?: "all" | "draft" | "sent" | "approved" | "rejected";
+    view?: PerspectiveView;
     creationMode?: "opportunity" | "customer" | "standalone";
     opportunityId?: string;
     customerId?: string;
@@ -59,32 +63,19 @@ function buildEstimatesHref(input: {
   opportunityId?: string;
   customerId?: string;
   projectId?: string;
+  view?: PerspectiveView;
 }) {
-  const searchParams = new URLSearchParams();
-
-  if (input.q && input.q.trim().length > 0) {
-    searchParams.set("q", input.q.trim());
-  }
-
-  if (input.status && input.status !== "all") {
-    searchParams.set("status", input.status);
-  }
-
-  if (input.compose === "1") {
-    searchParams.set("compose", "1");
-  }
-
-  if (input.opportunityId) {
-    searchParams.set("opportunityId", input.opportunityId);
-  }
-
-  if (input.customerId) {
-    searchParams.set("customerId", input.customerId);
-  }
-
-  if (input.projectId) {
-    searchParams.set("projectId", input.projectId);
-  }
+  const searchParams = buildPerspectiveSearchParams(
+    {
+      q: input.q,
+      status: input.status && input.status !== "all" ? input.status : undefined,
+      compose: input.compose === "1" ? "1" : undefined,
+      opportunityId: input.opportunityId,
+      customerId: input.customerId,
+      projectId: input.projectId
+    },
+    input.view ?? "company"
+  );
 
   const query = searchParams.toString();
   return query ? `/estimates?${query}` : "/estimates";
@@ -147,19 +138,31 @@ export default async function EstimatesPage({
   const query = resolvedSearchParams.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
   const statusFilter = resolvedSearchParams.status ?? "all";
+  const perspective = parsePerspectiveView(resolvedSearchParams.view);
   const showComposer =
     resolvedSearchParams.compose === "1" ||
     Boolean(resolvedSearchParams.error) ||
     Boolean(resolvedSearchParams.opportunityId) ||
     Boolean(resolvedSearchParams.customerId) ||
     Boolean(resolvedSearchParams.projectId);
-  const draftCount = estimates.filter((estimate) => estimate.status === "draft").length;
-  const sentCount = estimates.filter((estimate) => estimate.status === "sent").length;
-  const approvedCount = estimates.filter((estimate) => estimate.status === "approved").length;
-  const totalPipelineValue = estimates
+  const perspectiveEstimates = estimates.filter((estimate) =>
+    matchesPerspective(
+      {
+        createdByUserId: estimate.createdByUserId,
+        updatedByUserId: estimate.updatedByUserId,
+        sentByUserId: estimate.sentByUserId
+      },
+      perspective,
+      user.id
+    )
+  );
+  const draftCount = perspectiveEstimates.filter((estimate) => estimate.status === "draft").length;
+  const sentCount = perspectiveEstimates.filter((estimate) => estimate.status === "sent").length;
+  const approvedCount = perspectiveEstimates.filter((estimate) => estimate.status === "approved").length;
+  const totalPipelineValue = perspectiveEstimates
     .reduce((sum, estimate) => sum + Number(estimate.totalAmount), 0)
     .toFixed(2);
-  const filteredEstimates = estimates.filter((estimate) => {
+  const filteredEstimates = perspectiveEstimates.filter((estimate) => {
     const matchesStatus =
       statusFilter === "all" ? true : estimate.status === statusFilter;
     const matchesQuery =
@@ -179,25 +182,25 @@ export default async function EstimatesPage({
     return matchesStatus && matchesQuery;
   });
   const estimateViews = [
-    { key: "all", label: "All estimates", count: estimates.length },
+    { key: "all", label: "All estimates", count: perspectiveEstimates.length },
     { key: "draft", label: "Build", count: draftCount },
     { key: "sent", label: "Sent", count: sentCount },
     { key: "approved", label: "Approved", count: approvedCount },
     {
       key: "rejected",
       label: "Revision",
-      count: estimates.filter((estimate) => estimate.status === "rejected").length
+      count: perspectiveEstimates.filter((estimate) => estimate.status === "rejected").length
     }
   ] as const;
-  const draftQueue = estimates.filter((estimate) => estimate.status === "draft").slice(0, 4);
-  const followUpQueue = estimates.filter((estimate) => estimate.status === "sent").slice(0, 4);
-  const approvedQueue = estimates
+  const draftQueue = perspectiveEstimates.filter((estimate) => estimate.status === "draft").slice(0, 4);
+  const followUpQueue = perspectiveEstimates.filter((estimate) => estimate.status === "sent").slice(0, 4);
+  const approvedQueue = perspectiveEstimates
     .filter((estimate) => estimate.status === "approved")
     .slice(0, 4);
-  const revisionQueue = estimates
+  const revisionQueue = perspectiveEstimates
     .filter((estimate) => estimate.status === "rejected")
     .slice(0, 4);
-  const recentClientResponses = estimates
+  const recentClientResponses = perspectiveEstimates
     .filter(
       (estimate) =>
         Boolean(estimate.approvedAt) ||
@@ -211,7 +214,7 @@ export default async function EstimatesPage({
       return rightDate.localeCompare(leftDate);
     })
     .slice(0, 5);
-  const statusBreakdownTotal = Math.max(estimates.length, 1);
+  const statusBreakdownTotal = Math.max(perspectiveEstimates.length, 1);
   const statusBreakdown = estimateViews
     .filter((view) => view.key !== "all")
     .map((view) => ({
@@ -255,6 +258,7 @@ export default async function EstimatesPage({
         searchSlot: (
           <form action="/estimates" className="flex flex-col gap-2 sm:flex-row">
             {statusFilter !== "all" ? <input type="hidden" name="status" value={statusFilter} /> : null}
+            {perspective !== "company" ? <input type="hidden" name="view" value={perspective} /> : null}
             {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
             <input
               type="search"
@@ -269,7 +273,7 @@ export default async function EstimatesPage({
             >
               Search
             </button>
-            {query.length > 0 || statusFilter !== "all" || showComposer ? (
+            {query.length > 0 || statusFilter !== "all" || showComposer || perspective !== "company" ? (
               <Link
                 href="/estimates"
                 className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
@@ -279,39 +283,58 @@ export default async function EstimatesPage({
             ) : null}
           </form>
         ),
-        filterSlot: estimateViews.map((view) => {
-          const isActive = statusFilter === view.key;
+        filterSlot: (
+          <>
+            <PerspectiveSwitcher
+              value={perspective}
+              hrefForView={(view) =>
+                buildEstimatesHref({
+                  q: query,
+                  status: statusFilter,
+                  compose: showComposer ? "1" : undefined,
+                  opportunityId: resolvedSearchParams.opportunityId,
+                  customerId: resolvedSearchParams.customerId,
+                  projectId: resolvedSearchParams.projectId,
+                  view
+                })
+              }
+            />
+            {estimateViews.map((view) => {
+              const isActive = statusFilter === view.key;
 
-          return (
-            <Link
-              key={view.key}
-              href={buildEstimatesHref({
-                q: query,
-                status: view.key,
-                compose: showComposer ? "1" : undefined,
-                opportunityId: resolvedSearchParams.opportunityId,
-                customerId: resolvedSearchParams.customerId,
-                projectId: resolvedSearchParams.projectId
-              })}
-              className={[
-                "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
-                isActive
-              ? "bg-[var(--graphite)] text-white"
-              : "border border-[var(--border-warm)] bg-white text-[var(--text-primary)] hover:bg-[var(--highlight)]"
-              ].join(" ")}
-            >
-              <span>{view.label}</span>
-              <span
-                className={[
-                  "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-[var(--highlight)] text-[var(--text-secondary)]"
-                ].join(" ")}
-              >
-                {view.count}
-              </span>
-            </Link>
-          );
-        }),
+              return (
+                <Link
+                  key={view.key}
+                  href={buildEstimatesHref({
+                    q: query,
+                    status: view.key,
+                    compose: showComposer ? "1" : undefined,
+                    opportunityId: resolvedSearchParams.opportunityId,
+                    customerId: resolvedSearchParams.customerId,
+                    projectId: resolvedSearchParams.projectId,
+                    view: perspective
+                  })}
+                  className={[
+                    "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
+                    isActive
+                  ? "bg-[var(--graphite)] text-white"
+                  : "border border-[var(--border-warm)] bg-white text-[var(--text-primary)] hover:bg-[var(--highlight)]"
+                  ].join(" ")}
+                >
+                  <span>{view.label}</span>
+                  <span
+                    className={[
+                      "rounded-full px-2 py-0.5 text-xs font-semibold",
+                      isActive ? "bg-white/15 text-white" : "bg-[var(--highlight)] text-[var(--text-secondary)]"
+                    ].join(" ")}
+                  >
+                    {view.count}
+                  </span>
+                </Link>
+              );
+            })}
+          </>
+        ),
         actionSlot: (
           <>
             <RowsPerViewControl storageKey={ESTIMATES_ROWS_PER_VIEW_STORAGE_KEY} />
@@ -323,7 +346,8 @@ export default async function EstimatesPage({
                   compose: "1",
                   opportunityId: resolvedSearchParams.opportunityId,
                   customerId: resolvedSearchParams.customerId,
-                  projectId: resolvedSearchParams.projectId
+                  projectId: resolvedSearchParams.projectId,
+                  view: perspective
                 }) + "#estimate-create"
               }
               className="inline-flex items-center rounded-[3px] border border-[var(--copper)] bg-[var(--copper)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--copper-light)]"
@@ -339,7 +363,7 @@ export default async function EstimatesPage({
           <div className="order-1">
             <EstimateRecordsPanel
               estimates={filteredEstimates}
-              totalEstimateCount={estimates.length}
+              totalEstimateCount={perspectiveEstimates.length}
               storageKey={ESTIMATES_ROWS_PER_VIEW_STORAGE_KEY}
               createHref={
                 buildEstimatesHref({
@@ -348,7 +372,8 @@ export default async function EstimatesPage({
                   compose: "1",
                   opportunityId: resolvedSearchParams.opportunityId,
                   customerId: resolvedSearchParams.customerId,
-                  projectId: resolvedSearchParams.projectId
+                  projectId: resolvedSearchParams.projectId,
+                  view: perspective
                 }) + "#estimate-create"
               }
             />
@@ -365,7 +390,8 @@ export default async function EstimatesPage({
                 compose: showComposer ? "1" : undefined,
                 opportunityId: resolvedSearchParams.opportunityId,
                 customerId: resolvedSearchParams.customerId,
-                projectId: resolvedSearchParams.projectId
+                projectId: resolvedSearchParams.projectId,
+                view: perspective
               })}
               actionLabel="View register"
               items={recentClientResponses.map((estimate) => ({
@@ -394,7 +420,8 @@ export default async function EstimatesPage({
                 compose: showComposer ? "1" : undefined,
                 opportunityId: resolvedSearchParams.opportunityId,
                 customerId: resolvedSearchParams.customerId,
-                projectId: resolvedSearchParams.projectId
+                projectId: resolvedSearchParams.projectId,
+                view: perspective
               })}
               actionLabel="View sent queue"
               items={followUpQueue.map((estimate) => ({
@@ -431,7 +458,8 @@ export default async function EstimatesPage({
                       compose: showComposer ? "1" : undefined,
                       opportunityId: resolvedSearchParams.opportunityId,
                       customerId: resolvedSearchParams.customerId,
-                      projectId: resolvedSearchParams.projectId
+                      projectId: resolvedSearchParams.projectId,
+                      view: perspective
                     })}
                     className="grid grid-cols-[minmax(0,1fr)_120px_48px] items-center gap-3 px-4 py-3 text-sm transition hover:bg-[var(--highlight)]"
                   >
@@ -469,7 +497,8 @@ export default async function EstimatesPage({
                 compose: showComposer ? "1" : undefined,
                 opportunityId: resolvedSearchParams.opportunityId,
                 customerId: resolvedSearchParams.customerId,
-                projectId: resolvedSearchParams.projectId
+                projectId: resolvedSearchParams.projectId,
+                view: perspective
               })}
               actionLabel="View build queue"
               items={draftQueue.map((estimate) => ({
@@ -494,7 +523,8 @@ export default async function EstimatesPage({
                 compose: showComposer ? "1" : undefined,
                 opportunityId: resolvedSearchParams.opportunityId,
                 customerId: resolvedSearchParams.customerId,
-                projectId: resolvedSearchParams.projectId
+                projectId: resolvedSearchParams.projectId,
+                view: perspective
               })}
               actionLabel="View approved"
               items={approvedQueue.map((estimate) => ({
@@ -519,7 +549,8 @@ export default async function EstimatesPage({
                 compose: showComposer ? "1" : undefined,
                 opportunityId: resolvedSearchParams.opportunityId,
                 customerId: resolvedSearchParams.customerId,
-                projectId: resolvedSearchParams.projectId
+                projectId: resolvedSearchParams.projectId,
+                view: perspective
               })}
               actionLabel="View revision queue"
               items={revisionQueue.map((estimate) => ({
@@ -561,10 +592,11 @@ export default async function EstimatesPage({
               compose: "1",
               opportunityId: resolvedSearchParams.opportunityId,
               customerId: resolvedSearchParams.customerId,
-              projectId: resolvedSearchParams.projectId
+              projectId: resolvedSearchParams.projectId,
+              view: perspective
             }) + "#estimate-create"
           }
-          closeHref={buildEstimatesHref({ q: query, status: statusFilter })}
+          closeHref={buildEstimatesHref({ q: query, status: statusFilter, view: perspective })}
           openLabel="Open estimate quick create"
         >
           <EstimateQuickCreateForm

@@ -1,6 +1,10 @@
-# Graphite & Copper Design System: Implementation Complete
+# Graphite & Copper Design System: Accepted Foundation Closeout
 
-## Completed Tasks
+Status: Accepted visual foundation after v0 closeout.
+
+This document records the visual implementation scope. It is not approval for a broad contractor-shell redesign, new module shells, new navigation systems, or business/workflow changes. The accepted work preserved the existing top-nav-first contractor shell, shared Manager Page pattern, and shared Record Workspace language.
+
+## Completed / Verified Scope
 
 ### 1. Icon Container Component (Foundation)
 **File:** `apps/web/components/icon-container.tsx`
@@ -32,7 +36,7 @@ Applied Graphite & Copper design tokens:
 **File:** `apps/web/components/estimates/estimate-workspace-shell.tsx`
 
 Applied design tokens throughout:
-- Status badge: Uses `var(--highlight)` + `var(--copper)`
+- Active workspace badge/action accent: Uses `var(--highlight)` + `var(--copper)`
 - Save button: `var(--copper)` background with hover state
 - Text colors: `var(--text-primary)`, `var(--text-secondary)`, `var(--text-tertiary)`
 - Borders: `var(--border-warm)` for consistent separation
@@ -59,6 +63,8 @@ All tokens available in `apps/web/app/globals.css`:
 | `--copper-light` | #D97706 | Hover states |
 | `--highlight` | #F3F4F6 | Active/selection states |
 | `--border-warm` | #E8E6E1 | Borders, dividers |
+| `--border-medium` | #D9D5CD | Inputs and medium-emphasis controls |
+| `--border-dark` | #9CA3AF | Hover/focus border contrast |
 | `--text-primary` | #111827 | Body text |
 | `--text-secondary` | #6B7280 | Secondary text |
 | `--text-tertiary` | #9CA3AF | Hints, tertiary |
@@ -79,19 +85,20 @@ Extended in `apps/web/tailwind.config.ts`:
 ✅ All text colors now consistent and token-based  
 ✅ Icon backgrounds use circular containers with proper contrast  
 
-## Next Steps (Ready to Build)
+## Future Targeted Work
 
-1. **StandardWorkspaceLayout sidebar** - Update to use Soft Graphite highlights + circular icons
-2. **Other workspace components** - Apply tokens systematically
-3. **Form components** - Update input, select, button styling
-4. **Modals/popovers** - Consistent with new system
-5. **Tables** - Apply token-based row hover states, borders
+Future visual work should be scoped to targeted polish or safe propagation of existing shared patterns. It must follow [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md) and must not change schema, RLS, auth, server actions, data loading, route protection, financial logic, workflow behavior, or app navigation.
 
-All components can now import and use CSS variables via Tailwind utility classes.
+Appropriate follow-up examples:
+1. Apply tokens to a specific existing module surface when a visual regression or off-system accent is found.
+2. Reuse existing shared Manager Page and Record Workspace patterns where a page already belongs to those patterns.
+3. Improve form, table, modal, and focus-state consistency inside existing components without changing data or workflow behavior.
+
+Do not treat this document as permission to create a new app shell, permanent primary left sidebar, module-local wrapper, or broad redesign pass.
 
 ## Files Modified
 
-- `apps/web/app/globals.css` — Added 17 design tokens
+- `apps/web/app/globals.css` — Added Graphite & Copper design tokens
 - `apps/web/tailwind.config.ts` — Extended color palettes
 - `apps/web/components/icon-container.tsx` — NEW component
 - `apps/web/components/protected-app-top-nav.tsx` — Updated colors

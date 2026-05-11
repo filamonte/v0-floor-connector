@@ -100,10 +100,10 @@ Current Phase 1 module-home definitions:
 ## 5. Visual Consistency
 
 - Match existing FloorConnector and contractor-facing density.
-- Contractor app uses Graphite & Copper design system (see `docs/design-system-comprehensive-prompt.md` for complete specifications):
+- Contractor app uses the accepted Graphite & Copper design system (see `docs/design-system-comprehensive-prompt.md` for the visual reference):
   - **Graphite (#374151)** for primary chrome, headers, and strong navigation
   - **Graphite Dark (#1F2937)** for secondary chrome and emphasis
-  - **Copper (#B45309)** for primary actions, active states, and CTAs
+  - **Copper (#B45309)** for primary actions, CTAs, active action emphasis, and focus treatment
   - **Soft Cream (#FAFAF8)** for page backgrounds and work surfaces
   - **Warm Gray (#E8E6E1)** for borders, dividers, and subtle separation
   - **Soft Graphite (#F3F4F6)** for active/highlighted states and selections

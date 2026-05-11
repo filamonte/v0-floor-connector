@@ -79,7 +79,7 @@ test("project and estimate detail render decision-first primitives", async ({ pa
 
   await expectAuthenticatedDetail(page, detailFixtures.project);
   await expect(page.getByRole("region", { name: "Current state and next action" })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Project readiness workflow" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Project workflow" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Project state summary" })).toBeVisible();
 
   await expectAuthenticatedDetail(page, detailFixtures.estimate);

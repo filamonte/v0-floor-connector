@@ -615,7 +615,7 @@ export function ContractorDashboardSurface({
   ].filter(Boolean) as DashboardShortcut[];
 
   return (
-    <div className="-mx-5 bg-[var(--cream)] sm:-mx-8">
+    <div className="overflow-x-hidden bg-[var(--cream)]">
       <section className="border-b border-[var(--border-warm)] bg-white px-4 py-3 sm:px-6">
         <div className="space-y-3">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">

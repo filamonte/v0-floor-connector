@@ -4,26 +4,27 @@ import { AppEmptyState } from "@/components/app-empty-state";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
 import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { OpportunityQuickCreateForm } from "@/components/opportunity-quick-create-form";
+import { PerspectiveSwitcher } from "@/components/perspectives/perspective-switcher";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { listAppointments } from "@/lib/appointments/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { quickCreateOpportunityAction } from "@/lib/opportunities/actions";
 import { listOpportunities } from "@/lib/opportunities/data";
+import { parsePerspectiveView, type PerspectiveView } from "@/lib/perspectives/types";
 import { listLeadFollowUpQueue } from "@/lib/opportunities/follow-up-data";
 import {
   labelLeadFollowUpBucket,
   type LeadFollowUpBucket
 } from "@/lib/opportunities/follow-up-read-model";
 
-type LeadView = "all" | "mine";
 type LeadFollowUpView = "all" | "due" | "overdue" | "no_follow_up";
 
 type LeadsPageProps = {
   searchParams?: Promise<{
     compose?: string;
     q?: string;
-    view?: LeadView;
+    view?: PerspectiveView;
     followUp?: LeadFollowUpView;
     error?: string;
     message?: string;
@@ -53,7 +54,7 @@ function formatDateLabel(value: string) {
 
 function buildLeadsHref(input: {
   q?: string;
-  view?: LeadView;
+  view?: PerspectiveView;
   followUp?: LeadFollowUpView;
   compose?: string;
 }) {
@@ -63,7 +64,7 @@ function buildLeadsHref(input: {
     searchParams.set("q", input.q.trim());
   }
 
-  if (input.view && input.view !== "all") {
+  if (input.view && input.view !== "company") {
     searchParams.set("view", input.view);
   }
 
@@ -86,7 +87,7 @@ function getFollowUpBadgeClasses(bucket: LeadFollowUpBucket) {
     case "due_today":
       return "border-amber-200 bg-amber-50 text-amber-800";
     case "upcoming":
-      return "border-blue-200 bg-blue-50 text-blue-700";
+      return "border-[var(--border-medium)] bg-[var(--highlight)] text-[var(--graphite)]";
     case "no_follow_up":
       return "border-[#d9cdc2] bg-[#fbf7f2] text-[#594839]";
   }
@@ -113,7 +114,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
   ]);
   const query = resolvedSearchParams.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
-  const view = resolvedSearchParams.view ?? "all";
+  const view = parsePerspectiveView(resolvedSearchParams.view);
   const followUpView = resolvedSearchParams.followUp ?? "all";
   const showComposer =
     resolvedSearchParams.compose === "1" || Boolean(resolvedSearchParams.error);
@@ -168,7 +169,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
   }
 
   const visibleOpportunities = opportunities.filter((opportunity) => {
-    const matchesView = view === "all" ? true : myLeadIds.has(opportunity.id);
+    const matchesView = view === "company" ? true : myLeadIds.has(opportunity.id);
     const followUpItem = followUpByOpportunityId.get(opportunity.id);
     const matchesFollowUp =
       followUpView === "all"
@@ -258,7 +259,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
         ),
         searchSlot: (
           <form action="/leads" className="flex flex-col gap-2 sm:flex-row">
-            {view !== "all" ? <input type="hidden" name="view" value={view} /> : null}
+            {view !== "company" ? <input type="hidden" name="view" value={view} /> : null}
             {followUpView !== "all" ? (
               <input type="hidden" name="followUp" value={followUpView} />
             ) : null}
@@ -276,7 +277,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
             >
               Search
             </button>
-            {query.length > 0 || view !== "all" || followUpView !== "all" || showComposer ? (
+            {query.length > 0 || view !== "company" || followUpView !== "all" || showComposer ? (
               <Link
                 href="/leads"
                 className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
@@ -286,41 +287,20 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
             ) : null}
           </form>
         ),
-        filterSlot: ([
-          { key: "all", label: "All leads", count: opportunities.length },
-          { key: "mine", label: "My leads", count: myLeads.length }
-        ] as const).map((item) => {
-          const isActive = view === item.key;
-
-          return (
-            <Link
-              key={item.key}
-              href={buildLeadsHref({
+        filterSlot: [
+          <PerspectiveSwitcher
+            key="perspective"
+            value={view}
+            hrefForView={(nextView) =>
+              buildLeadsHref({
                 q: query,
-                view: item.key,
+                view: nextView,
                 followUp: followUpView,
                 compose: showComposer ? "1" : undefined
-              })}
-              className={[
-                "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
-                isActive
-                  ? "bg-[#171717] text-white"
-                  : "border border-[#d9cdc2] bg-white text-[#594839] hover:bg-[#fbf7f2]"
-              ].join(" ")}
-            >
-              <span>{item.label}</span>
-              <span
-                className={[
-                  "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-[#f2e7dc] text-[#8f5b32]"
-                ].join(" ")}
-              >
-                {item.count}
-              </span>
-            </Link>
-          );
-        }).concat(
-          ([
+              })
+            }
+          />,
+          ...([
             { key: "all", label: "All follow-up", count: leadFollowUps.length },
             { key: "due", label: "Due", count: dueFollowUps.length },
             { key: "overdue", label: "Overdue", count: overdueFollowUps.length },
@@ -356,7 +336,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
               </Link>
             );
           })
-        ),
+        ],
         actionSlot: (
           <Link
             href={
@@ -480,7 +460,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                 Lead records
               </p>
               <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#221a14]">
-                {view === "mine" ? "Assigned leads" : "All leads"}
+                {view === "my" ? "Assigned leads" : "All leads"}
               </h3>
             </div>
             <p className="text-sm leading-6 text-slate-500">

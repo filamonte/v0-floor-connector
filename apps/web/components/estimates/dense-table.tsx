@@ -18,17 +18,17 @@ type DenseEstimateRow = {
 
 function statusClass(status: string) {
   const value = status.toLowerCase();
-  if (value.includes("approve")) return "bg-green-100 text-green-700";
-  if (value.includes("pending")) return "bg-yellow-100 text-yellow-700";
-  return "bg-orange-100 text-orange-700";
+  if (value.includes("approve")) return "bg-[var(--color-success)]/10 text-[var(--color-success)]";
+  if (value.includes("pending")) return "bg-amber-50 text-amber-800";
+  return "bg-[var(--copper)]/10 text-[var(--copper)]";
 }
 
 export function EstimateDenseTable({ rows }: { rows: DenseEstimateRow[] }) {
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+    <section className="overflow-hidden rounded-lg border border-[var(--border-warm)] bg-white">
       <div className="overflow-x-auto">
         <table className="min-w-full">
-          <thead className="bg-slate-100 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <thead className="bg-[var(--highlight)] text-[11px] font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
             <tr>
               <th className="w-[70px] px-3 py-3 text-left">EST #</th>
               <th className="w-[180px] px-3 py-3 text-left">Title</th>
@@ -46,24 +46,24 @@ export function EstimateDenseTable({ rows }: { rows: DenseEstimateRow[] }) {
           </thead>
           <tbody>
             {rows.map((row, index) => (
-              <tr key={row.reference} className={index % 2 === 0 ? "bg-white hover:bg-[#f0f4f8]" : "bg-slate-50 hover:bg-[#f0f4f8]"}>
-                <td className="h-11 px-3 py-2 text-sm text-slate-700">{row.reference}</td>
-                <td className="h-11 px-3 py-2 text-sm text-slate-700">{row.title}</td>
-                <td className="h-11 px-3 py-2 text-sm text-slate-700">{row.customer}</td>
-                <td className="h-11 px-3 py-2 text-sm text-slate-700">{row.estimator}</td>
-                <td className="h-11 px-3 py-2 text-sm text-slate-700">{row.pm}</td>
-                <td className="h-11 px-3 py-2 text-right text-sm text-slate-700">{row.cost}</td>
-                <td className="h-11 px-3 py-2 text-right text-sm text-slate-700">{row.total}</td>
-                <td className="h-11 px-3 py-2 text-right text-sm text-slate-700">{row.profit}</td>
-                <td className="h-11 px-3 py-2 text-right text-sm text-slate-700">{row.markup}</td>
+              <tr key={row.reference} className={index % 2 === 0 ? "bg-white hover:bg-[var(--highlight)]" : "bg-[var(--highlight)]/60 hover:bg-[var(--highlight)]"}>
+                <td className="h-11 px-3 py-2 text-sm text-[var(--text-primary)]">{row.reference}</td>
+                <td className="h-11 px-3 py-2 text-sm text-[var(--text-primary)]">{row.title}</td>
+                <td className="h-11 px-3 py-2 text-sm text-[var(--text-primary)]">{row.customer}</td>
+                <td className="h-11 px-3 py-2 text-sm text-[var(--text-primary)]">{row.estimator}</td>
+                <td className="h-11 px-3 py-2 text-sm text-[var(--text-primary)]">{row.pm}</td>
+                <td className="h-11 px-3 py-2 text-right text-sm text-[var(--text-primary)]">{row.cost}</td>
+                <td className="h-11 px-3 py-2 text-right text-sm text-[var(--text-primary)]">{row.total}</td>
+                <td className="h-11 px-3 py-2 text-right text-sm text-[var(--text-primary)]">{row.profit}</td>
+                <td className="h-11 px-3 py-2 text-right text-sm text-[var(--text-primary)]">{row.markup}</td>
                 <td className="h-11 px-3 py-2">
-                  <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">{row.type}</span>
+                  <span className="rounded-md bg-[var(--highlight)] px-2 py-1 text-xs font-medium text-[var(--text-secondary)]">{row.type}</span>
                 </td>
                 <td className="h-11 px-3 py-2">
                   <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusClass(row.status)}`}>{row.status}</span>
                 </td>
                 <td className="h-11 px-3 py-2">
-                  <div className="flex items-center justify-end gap-2 text-slate-400">
+                  <div className="flex items-center justify-end gap-2 text-[var(--text-tertiary)]">
                     <CalendarDays className="h-4 w-4" />
                     <MoreVertical className="h-4 w-4" />
                   </div>
@@ -73,7 +73,7 @@ export function EstimateDenseTable({ rows }: { rows: DenseEstimateRow[] }) {
           </tbody>
         </table>
       </div>
-      <div className="border-t border-slate-200 px-4 py-3 text-sm text-slate-500">Page 1 of 1</div>
+      <div className="border-t border-[var(--border-warm)] px-4 py-3 text-sm text-[var(--text-secondary)]">Page 1 of 1</div>
     </section>
   );
 }

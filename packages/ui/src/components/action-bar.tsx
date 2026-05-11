@@ -34,7 +34,7 @@ export function ActionBar({
     <section
       aria-label="Current state and next action"
       className={[
-        "rounded-lg border border-[#e2e5e9] bg-white px-4 py-3 sm:px-5",
+        "rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3 sm:px-5",
         className
       ]
         .filter(Boolean)
@@ -54,22 +54,22 @@ export function ActionBar({
               </span>
             ) : null}
             {nextActionLabel ? (
-              <span className="inline-flex min-h-7 items-center rounded-md border border-[#d1d5db] bg-[#f8fafc] px-2.5 py-1 text-[12px] font-semibold text-[#4b5563]">
+              <span className="inline-flex min-h-7 items-center rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-2.5 py-1 text-[12px] font-semibold text-[var(--text-secondary)]">
                 {nextActionLabel}
               </span>
             ) : null}
           </div>
           <div>
-            <h2 className="text-[16px] font-semibold leading-6 text-[#171717]">
+            <h2 className="text-[16px] font-semibold leading-6 text-[var(--text-primary)]">
               {title}
             </h2>
             {description ? (
-              <div className="mt-1 max-w-3xl text-[13px] leading-5 text-[#4b5563]">
+              <div className="mt-1 max-w-3xl text-[13px] leading-5 text-[var(--text-secondary)]">
                 {description}
               </div>
             ) : null}
           </div>
-          {meta ? <div className="text-[12px] text-[#6b7280]">{meta}</div> : null}
+          {meta ? <div className="text-[12px] text-[var(--text-secondary)]">{meta}</div> : null}
         </div>
 
         {primaryAction || secondaryActions ? (

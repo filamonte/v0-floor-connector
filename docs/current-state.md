@@ -107,6 +107,7 @@ Current shared canonical model includes:
 - projects
 - estimates
 - estimate line items
+- record revisions for first-pass immutable snapshots on estimates, invoices, contracts, and change orders
 - change orders
 - schedule of values
 - schedule of value items
@@ -124,6 +125,34 @@ Current shared canonical model includes:
 - work items
 - workflow error events
 - payments
+
+## Canonical Revision Snapshots
+
+First-pass canonical revision infrastructure is implemented through `record_revisions`.
+
+Implemented behavior:
+- supported subjects are `estimate`, `invoice`, `contract`, and `change_order`
+- each revision is an immutable JSON snapshot attached to the existing canonical record
+- revisions store tenant/company scope, subject type, subject id, revision number, current-revision marker, revision kind, optional reason, actor, and timestamp
+- only one current revision is allowed per subject, and revision numbers are unique per tenant-scoped subject
+- estimate, invoice, contract, and change-order workspaces show a secondary revision timeline
+- existing records lazily receive an initial `system_snapshot` revision when a supported workspace loads
+- create/edit/send/status-change/payment-sensitive mutation paths create new snapshots where the contractor app has a safe authenticated mutation hook
+
+This infrastructure does not clone business records. It does not add rollback, restore, branching, merging, advanced diffing, or event-sourcing behavior. Existing approved-estimate commercial snapshots, change-order commercial snapshots, contract draft edit revisions, signature events, payment events, and notification events remain their existing specialized workflow evidence; `record_revisions` is the shared record-level timeline foundation beside those systems.
+
+## Perspective Views
+
+First-pass perspective switching is implemented on the estimates manager, invoices manager, and leads manager.
+
+Implemented behavior:
+- supported URL values are `?view=my` and `?view=company`
+- `Company` shows organization-scoped records the current user can already access
+- `My Work` filters estimates and invoices using existing creator/updater/sender user fields only
+- `My Work` on leads uses the existing appointment assigned-person membership linkage
+- perspective filtering combines with existing search, status, source, and follow-up filters
+
+No new permissions model, saved views, AI prioritization, team routing, or broad dashboard redesign is implemented by this pass.
 
 ## Authentication
 
@@ -222,11 +251,11 @@ Current shell behavior:
 - wider main workspace and calmer dashboard-first shell framing
 - flattened shell/header chrome with one shared contractor header system instead of competing stacked header layers
 - shared breadcrumb and page-context continuity now live inside the unified top header structure instead of a separate colored band beneath navigation
-- the contractor shell and shared Manager Page wrappers now use the same black/gray/orange/white theme direction as the dashboard instead of the older blue-heavy overview styling
+- the contractor shell and shared Manager Page wrappers now use the accepted Graphite & Copper visual-token foundation instead of the older blue-heavy overview styling
 - shared contractor Manager Page wrapper and command-bar pattern now drive the main overview surfaces
 - the always-on left sidebar is no longer the primary navigation pattern
 - left-side navigation is now reserved for contextual workspace use where needed inside deeper screens
-- the first major contractor workspace UI normalization and polish pass is now complete enough to stop and move on from
+- the v0 / Graphite & Copper visual hardening pass is closed and validated; the current top-nav-first shell and shared Manager Page / Record Workspace patterns remain the active UI baseline
 - dashboard, projects, leads, invoices, contracts, customers, estimates, appointments, daily logs, time, people, vendors, and jobs now follow the shared contractor manager rhythm closely enough that it should be treated as the active UI baseline
 - a first shared universal-create launcher now exists in the shell and dashboard, routing into the existing module Quick-Create managers so new canonical records can be started broadly without creating a second creation system
 - `/schedule` now surfaces canonical appointments beside scheduled jobs in internal contractor schedule views through a discriminated read model; jobs still read from canonical job/job-assignment scheduling data and appointments still read from canonical `appointments`
@@ -236,10 +265,12 @@ Current shell behavior:
 - the lead manager now surfaces follow-up filters and badges for due, overdue, upcoming, and no-follow-up opportunity states using the same internal read model
 - dashboard lead follow-up cues and lead-manager follow-up rows now include explicit manual bridge links into the lead workspace work-item form; those links prefill an internal opportunity-linked work item for human confirmation but do not auto-create work, mutate follow-up fields, or change lead status
 - dashboard appointment cues now link into appointment work-item creation with appointment prep or follow-up defaults for human confirmation; completing or dismissing those work items does not change appointment status or schedule state
-- project workspaces now include a deterministic `Suggested project actions` panel that reads existing project context only and links into existing human-confirmed workflows for approved-estimate-to-contract, deposit invoice review, open blocker field-note review, signed-contract-to-job quick-create, and ready-project scheduling follow-through; bridgeable cues can also prefill the existing internal work-item form with source-locked context for human submission, but these cues do not call external AI, auto-create records, or mutate readiness, financial, contract, job, schedule, or field-note state
+- project workspaces now include a deterministic `Suggested project actions` panel that reads existing project context only and links into existing human-confirmed workflows for approved-estimate-to-contract, deposit invoice review, open blocker field-note review, signed-contract-to-job quick-create, and ready-project scheduling follow-through; canonical next-step cues route to existing contract, invoice, job, or schedule actions, while only human coordination cues such as open blocker field-note follow-up can prefill the existing internal work-item form with project source-locked context for human submission. These cues do not call external AI, auto-create records, or mutate readiness, financial, contract, job, schedule, or field-note state
 - dashboard now includes a compact `Project guidance` preview of the highest-priority project cues, linking back to the project cue panel and preserving existing canonical workflow links instead of exposing dashboard-level work-item creation or creating a separate AI dashboard, task queue, or automation surface
 - dashboard now includes a lightweight `My Work` Operational Intelligence section. It derives review-only estimate, contract, invoice, and job cues server-side from canonical records plus tenant-owned `organization_operational_cue_rules`; each cue includes compact explanation/source/threshold details and a derived responsibility result so users can see why it appears and which built-in role lane owns the follow-up. Organization-level responsibility defaults can now resolve starter role strategies to active, assignable People records, with a linked app user derived from `people.membership_user_id` when present. Dashboard `My Work` has display-only queue modes for Company, Mine, and Unresolved: Company remains the all-cues organization safety net, Mine filters already-derived cues resolved to the current app user or linked Person, and Unresolved filters strategy-only, organization-queue, and unavailable record-owner fallbacks. It does not persist cue instances, auto-create work items, send notifications, run AI, create assignment state, or introduce a standalone task app.
+- the first deterministic follow-up cue slice is computed only: stale sent estimates, past-due invoices with open balances, ready unscheduled jobs/projects, and scheduled jobs missing crew derive from canonical records and existing rules, then route users to the matching estimate, invoice, job, project, or schedule surface for human action.
 - project, estimate, contract, invoice, and job detail workspaces now include compact record-level `Needs Attention` panels that reuse the same derived Operational Intelligence cues and show the cue explanation/source and responsibility context. Project detail can surface linked estimate, contract, invoice, and job cues while remaining the workflow/readiness hub.
+- estimate and invoice workspaces can bridge selected record-level operational cues into the existing internal work-item form: stale sent-estimate cues can prefill an estimate source-locked follow-up, and past-due invoice cues can prefill an invoice source-locked collection follow-up. These are cue-to-work-item prefill drafts only; the contractor must submit the existing form, and the bridge does not auto-create work items, send messages, persist cue state, or mutate estimate, invoice, payment, readiness, financial, or workflow status.
 - a first real contractor-side global search now exists at the shared shell level:
   - one shared search entry point for contractor users
   - rendered in the shared contractor shell footer instead of the top header
@@ -293,27 +324,27 @@ Implemented contractor UI direction now includes:
 - the shell and dashboard now expose a shared universal-create launcher that deep-links into those existing Quick-Create overlays across the canonical workflow
 
 Current contractor UI design notes:
-- the dashboard is now the visual reference point for the contractor app shell and Manager Page surface language
+- the dashboard and Estimates reference pass now anchor the accepted Graphite & Copper contractor-app visual foundation without authorizing a broad shell redesign
 - existing canonical-record edit forms now use a shared save-state pattern: unchanged records show `Saved`, edits switch the control to `Save`, saving shows `Saving...`, and successful saves reset the dirty baseline to the persisted values
 - the dashboard now reads more like a contractor home base than a light summary page:
   - compact priority metrics
   - modular commercial, operations, and finance queues
   - local Quick-Create studio using canonical short-form create flows
-  - stronger black/orange-inspired contractor styling scoped to the dashboard surface
+  - stronger Graphite/Copper contractor styling scoped to the dashboard surface
 - that dashboard/header direction is now pushed more broadly through the protected contractor app:
   - shared Manager Page headers and command bars
   - shared Quick-Create/composer surfaces
   - shared settings and linked-record cards
   - shared overview/detail typography and surface treatment
 - the active contractor-app theme direction is now:
-  - black or near-black framing where framing helps
-  - orange reserved for primary CTAs and intentional action emphasis, not passive status or decorative card chrome
-  - semantic status colors through shared helpers: gray for neutral/draft/not-started, blue for active/current/in-progress, amber/yellow for waiting or needs-action states, red for blocked/error/failed, and green only for complete/approved/paid/signed states
+  - Graphite for primary chrome, headers, and strong navigation
+  - Copper reserved for primary CTAs, save actions, active action emphasis, and focus treatment, not passive status or decorative card chrome
+  - semantic status colors through shared helpers: neutral/Graphite tones for draft/not-started/active/current/in-progress utility states, amber/yellow for waiting or needs-action states, red for blocked/error/failed, and green only for complete/approved/paid/signed states
   - white or light-neutral surfaces for primary reading and work areas
   - tighter, more practical spacing and typography across manager screens
 - customer portal and super-admin surfaces received only safe visual consistency cleanup after the contractor system stabilized:
   - portal keeps customer-review simplicity and does not copy contractor ActionBar/WorkflowBar patterns wholesale
-  - super-admin keeps slate/black administrative CTA hierarchy rather than contractor orange primary actions
+  - super-admin keeps slate/black administrative CTA hierarchy rather than contractor Copper primary actions
   - both surfaces use calmer card/border/status treatment where safe without changing auth, access, permissions, loaders, routes, schema, backend, RLS, or workflow logic
 - the contractor header is now also the shared home for global record search, so search should be treated as shell-level continuity into canonical records rather than as a dashboard-only or module-local widget
 - overview pages should read as operational manager screens rather than dense admin tables or stacked forms
@@ -1559,9 +1590,10 @@ Implemented:
   - `work_items` stores tenant-scoped internal contractor action items with title, description, due date, priority, kind, optional assigned person, optional canonical source link, optional customer/project context, internal visibility, safe metadata, and completion/dismissal timestamps
   - active organization members can read, create, and update internal work items through RLS; no portal/customer access policies exist
   - server utilities validate assigned people as active and assignable within the active organization, validate source records before source-linked creation, and keep completed/dismissed items closed in V1
-  - dashboard, lead workspace, appointment workspace, and project workspace UI can now create, list, complete, and dismiss manually created internal work items without adding a dedicated work-items manager route
-  - project and dashboard cue panels can suggest next actions from existing project, estimate, contract, invoice, job, and field-note context; project cues can optionally prefill the existing internal work-item form for approved-estimate, deposit-invoice, blocker-field-note, signed-contract/no-job, and ready-unscheduled-job follow-through, but the contractor must submit the form manually
-  - work items do not auto-generate from lead follow-up queues, appointment cues, project guidance cues, notifications, automation runs, or workflow errors in this pass
+  - dashboard, lead workspace, appointment workspace, project workspace, estimate workspace, and invoice workspace UI can now create, list, complete, and dismiss manually created internal work items without adding a dedicated work-items manager route
+  - project and dashboard cue panels can suggest next actions from existing project, estimate, contract, invoice, job, and field-note context; project cues with canonical next steps route to the existing contract, invoice, job Quick-Create, or schedule workflows, while only open blocker field-note human follow-up can prefill the existing internal work-item form with project source lock. The contractor must submit the form manually
+  - record-level estimate and invoice Needs Attention panels can prefill the same existing internal work-item form for stale sent-estimate follow-up and past-due invoice follow-up; the prefill preserves source type/id, link path, evidence, dedupe key, and safe metadata, but no work item is created until the contractor submits
+  - work items do not auto-generate from lead follow-up queues, appointment cues, project guidance cues, operational cues, notifications, automation runs, or workflow errors in this pass
 - first Operational Intelligence cue-rule foundation:
   - `organization_operational_cue_rules` stores tenant-owned rule configuration for enabled state, cue key, subject type, threshold days, urgency, owner strategy, and escalation days
   - `organization_responsibility_role_defaults` stores tenant-owned People-first defaults for the starter responsibility roles `estimator`, `project_manager`, `billing_owner`, and `scheduler`; mappings point to `people.id`, not directly to app users

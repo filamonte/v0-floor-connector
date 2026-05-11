@@ -27,6 +27,8 @@ This document defines what AI tools must not invent when producing implementatio
 - Human confirmation is required for risky customer-facing, commercial, legal, billing, scheduling, permission, or compliance actions unless an approved workflow explicitly says otherwise.
 - Route target/future docs through current-state before treating them as implemented.
 - Treat diagrams as conceptual orientation, not exhaustive schema, route, or module truth.
+- Follow-up intelligence must start with deterministic, evidence-backed cues over canonical records. AI summaries, drafts, or recommendations are later assistance layers and must not become the detector, source of truth, or autonomous actor for V1 follow-up workflows.
+- Cue-to-work-item behavior must reuse the existing internal `work_items` model after user confirmation. Do not introduce a duplicate task, reminder, or cue-instance lifecycle model unless a later schema plan explicitly approves it.
 
 ## Prompt Safety
 

@@ -1,5 +1,9 @@
 # Quick Reference: Graphite & Copper Design System
 
+Status: accepted contractor-app visual foundation after v0 closeout.
+
+Use this as a quick token reference for targeted visual fixes. It does not authorize broad shell redesigns, new module-local wrappers, or business/workflow changes. Future UI work must follow [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md).
+
 ## Color Tokens (Use These, Not Hardcoded Values)
 
 ### Core Colors
@@ -12,6 +16,8 @@
 --cream: #FAFAF8;             /* Page backgrounds */
 --highlight: #F3F4F6;         /* Active/selected items */
 --border-warm: #E8E6E1;       /* Borders, dividers */
+--border-medium: #D9D5CD;     /* Inputs, standard controls */
+--border-dark: #9CA3AF;       /* Stronger hover/focus borders */
 ```
 
 ### Text & Semantic
@@ -22,6 +28,7 @@
 --color-success: #16A34A;     /* Approved, paid, complete */
 --color-warning: #EA8C55;     /* Pending, needs attention */
 --color-error: #DC2626;       /* Errors, destructive actions */
+--color-info: #0EA5E9;        /* Informational messages only, not default accents */
 ```
 
 ## Component Patterns

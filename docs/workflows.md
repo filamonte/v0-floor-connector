@@ -34,6 +34,7 @@ In practical terms:
 - an approved estimate should feed downstream contract, job, and invoice workflows instead of being re-entered
 - downstream financial records should always inherit from immutable approved snapshots rather than live Estimate Editor rows
 - canonical records should stay linked so teams can follow the same job from intake through payment
+- record-level revision snapshots should attach to canonical records instead of cloning estimates, invoices, contracts, or change orders
 - the app should guide users toward the next best action instead of presenting every downstream action as equally primary
 - future visualizer/product/finish selections may start before lead intake, but once used operationally they should become canonical selected-system/spec context instead of disposable session-only data
 - a future contractor-facing `Directory` may unify how contact-like records are browsed and managed, but it must remain a view over canonical records rather than a replacement business model
@@ -148,6 +149,19 @@ Future Activity Timeline:
 - project, customer, and record timelines should summarize important canonical events across the lifecycle
 - timeline entries should be readable memory over canonical records, not replacement source-of-truth rows
 - examples include finish selected, estimate sent/viewed/approved, contract sent/signed, invoice sent/paid, payment completed, file uploaded, message received, job scheduled, daily log finalized, and closeout evidence captured
+
+Implemented Revision Timeline:
+- `record_revisions` now provides first-pass immutable snapshots for estimates, invoices, contracts, and change orders
+- supported record workspaces show a secondary revision timeline with revision number, current marker, kind, reason, timestamp, actor id when available, and compact snapshot summary
+- revisions are attached to the active canonical record and are not downstream business records
+- compare, restore, branching, merging, and rollback are intentionally deferred
+- approved-estimate commercial snapshots, change-order commercial snapshots, contract signature events, payment events, and notification events remain their specialized workflow evidence
+
+Implemented Perspective Views:
+- estimates, invoices, and leads support first-pass `My Work` / `Company` perspectives through `?view=my` and `?view=company`
+- company view keeps the existing organization-scoped queue behavior
+- personal view uses only safe existing ownership or assignment cues: estimate/invoice creator, updater, sender where available, and lead appointment assignment through linked people membership
+- perspective filters do not introduce permissions, saved views, AI prioritization, or separate record models
 
 ## Financial Workflow Rules
 
@@ -525,7 +539,8 @@ Implemented flow:
 - appointment workspaces can now show appointment-linked internal `work_items`, explicitly create manual appointment prep or appointment follow-up work items tied to the current appointment, and complete or dismiss those linked items without changing appointment status, schedule fields, customer-visible appointment notes, or portal visibility
 - dashboard lead follow-up cues and lead-manager follow-up rows can now bridge into prefilled opportunity-linked work-item creation, but the contractor must still confirm the form; no work item is auto-generated from follow-up state
 - dashboard appointment cues can now bridge into prefilled appointment-linked prep or follow-up work-item creation, but the contractor must still confirm the form; no work item is auto-generated from appointment status
-- project workspaces now show deterministic project guidance cues from existing project context only, including approved estimates missing contracts, unpaid deposit invoices, open blocker field notes, signed ready projects without jobs, and ready projects with unscheduled jobs; each cue keeps its existing project, contract, invoice, daily-log, job Quick-Create, or schedule workflow link for human confirmation, and bridgeable cues can optionally prefill the existing internal work-item form for manual submission
+- project workspaces now show deterministic project guidance cues from existing project context only, including approved estimates missing contracts, unpaid deposit invoices, open blocker field notes, signed ready projects without jobs, and ready projects with unscheduled jobs; canonical next-step cues keep their existing contract, invoice, job Quick-Create, or schedule workflow links for human confirmation, while only open blocker field-note coordination can prefill the existing internal work-item form for manual submission
+- estimate and invoice workspaces can bridge selected record-level Needs Attention cues into cue-to-work-item prefill: stale sent-estimate cues prefill estimate-linked follow-up work, and past-due invoice cues prefill invoice-linked collection follow-up. These are source-locked drafts only; no work item exists until the contractor submits the existing form.
 - dashboard can preview the highest-priority project cues and now points users back to the project cue panel while preserving existing workflow links; the preview remains an entry point back into project-centered canonical workflows rather than a separate AI dashboard, task queue, or automation surface
 - the lead workspace includes lightweight site visit Scope Intake capture for manual measurements and structured observations
 - starting the estimate path creates or links the downstream customer and project records as needed
@@ -872,11 +887,11 @@ How this should be interpreted today:
 
 ### Task Lifecycle Workflow
 
-- Create: Internal contractor work items can be manually created and optionally linked to a canonical source record. The current contractor UI supports explicit creation from a lead workspace against the current opportunity, from an appointment workspace against the current appointment, and from a project workspace against the current project or a selected project guidance cue source such as an estimate, invoice, contract, job, or project-level blocker context.
+- Create: Internal contractor work items can be manually created and optionally linked to a canonical source record. The current contractor UI supports explicit creation from a lead workspace against the current opportunity, from an appointment workspace against the current appointment, from a project workspace against the current project or selected project-level human follow-up context such as open blocker field notes, and from estimate or invoice workspaces against the current record. Selected deterministic estimate/invoice operational cues can prefill source-locked work-item context, but the user must submit the form.
 
 - Track: Work items store internal ownership, due date, priority, status, assigned person, source link, and safe metadata on `work_items`. Dashboard work-item visibility prefers the current user's linked active `people` record when available and falls back to open company work items when needed.
 
-- Complete: Open work items can be completed or dismissed from the dashboard, lead workspace, appointment workspace, or project workspace. Completed/dismissed work items are not reopened in V1.
+- Complete: Open work items can be completed or dismissed from the dashboard, lead workspace, appointment workspace, project workspace, estimate workspace, or invoice workspace. Completed/dismissed work items are not reopened in V1.
 
 Boundary:
 - Work items do not replace canonical opportunity follow-up fields, appointment statuses, notification events, automation runs, workflow error events, or the main lifecycle.
@@ -901,7 +916,7 @@ Implemented flow:
 - Derived cue results include read-only responsible role strategy fields for the starter role set: `estimator`, `project_manager`, `billing_owner`, and `scheduler`. Current cue mapping is estimate follow-up -> estimator, contract signature follow-up -> project manager, invoice/deposit follow-up -> billing owner, and job schedule/crew follow-up -> scheduler.
 - Derived cue results include a responsibility resolution object for display and future filtering. Starter strategies first resolve through organization responsibility defaults when a mapped person is active and assignable; if that person has `people.membership_user_id`, the linked app user id is derived for future filtering. Without a mapping, starter strategies fall back to the role label. `organization` resolves to the organization queue, and legacy `record_owner` resolves to an unavailable record-owner fallback.
 - Project, estimate, contract, invoice, and job detail workspaces show compact `Needs Attention` panels using the same derived cue results and explanation/source details. Estimate, contract, invoice, and job detail panels filter to the current canonical record; project detail aggregates linked child-record cues by project id.
-- Cue rows link back to the canonical estimate, contract, invoice, job, or schedule action rather than creating a separate task surface.
+- Cue rows link back to the canonical estimate, contract, invoice, job, or schedule action rather than creating a separate task surface. In record workspace contexts only, stale sent-estimate and past-due invoice cues can also open the existing internal work-item form with source-locked prefill; dashboard cues remain awareness and workflow-link surfaces in this pass.
 - Disabled rules are suppressed during derivation; threshold and urgency changes affect the query-time cue results without persisting cue instances.
 - Company cue visibility remains organization-wide even when cues resolve to a responsible person or linked app user, and unresolved cues remain visible in Company. My Work queue modes do not add permissions or persisted selection. Project-level overrides and record-level overrides are deferred. `sales_owner` and `field_lead` are intentionally deferred.
 
@@ -917,7 +932,7 @@ Current canonical records involved:
 - job assignments
 
 Boundary:
-- Operational cues do not create or update estimates, contracts, invoices, jobs, projects, customers, payments, notifications, work items, automation runs, or communication records.
+- Operational cues do not create or update estimates, contracts, invoices, jobs, projects, customers, payments, notifications, work items, automation runs, or communication records. Cue-to-work-item prefill only prepares the existing work-item form for user-confirmed submission.
 - No `operational_cues` table, persisted cue instance lifecycle, task subsystem, project-level override, record-level override, snooze/dismiss/acknowledge state, notification delivery, AI behavior, custom expression builder, or standalone task-management subsystem is implemented.
 - Responsible role defaults and My Work queue modes are display/resolution metadata, not assignment state. Operational cues do not assign work to a person or user, create task records, or persist cue lifecycle state.
 - Record-level Needs Attention panels are contextual views over derived cues only; they do not create separate workflow state or compete with project readiness/next-action guidance.

@@ -14,8 +14,8 @@ Read in this order:
 5. [docs/ai/canonical-terminology.md](C:/FloorConnector/docs/ai/canonical-terminology.md)
 6. [docs/ai/implementation-boundaries.md](C:/FloorConnector/docs/ai/implementation-boundaries.md)
 7. [docs/ai/ai-documentation-rules.md](C:/FloorConnector/docs/ai/ai-documentation-rules.md)
+8. [docs/ai/intelligent-follow-up-engine.md](C:/FloorConnector/docs/ai/intelligent-follow-up-engine.md), when planning follow-up intelligence, operational cues, cue state, or cue-to-work-item behavior
 
 ## Core Rule
 
 `docs/current-state.md` owns implemented truth. Future, roadmap, vision, and target IA docs do not authorize implementation claims.
-

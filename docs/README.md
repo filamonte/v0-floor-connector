@@ -45,6 +45,9 @@ Document roles:
 - `docs/canonical-lifecycle.md`: canonical record chain and lineage rules
 - `docs/platform-philosophy.md`: stable product/engineering philosophy
 - `docs/ui-system.md`: current contractor UI guardrails
+- `docs/floorconnector-ui-build-rules.md`: mandatory contractor UI build rules, including the accepted Graphite & Copper visual foundation and shell/workspace guardrails
+- `docs/design-system-comprehensive-prompt.md`: Graphite & Copper visual reference for targeted future UI work
+- `docs/design-system-implementation-status.md`, `docs/graphite-copper-implementation.md`, and `docs/quick-reference-graphite-copper.md`: post-v0 visual-system status and quick token references
 - `docs/financial-architecture.md`: financial record/event guardrails
 - `docs/portal-architecture.md`: portal shared-record guardrails
 - `docs/Architecture.md`: target system design

@@ -18,19 +18,7 @@ void test("dashboard project cue preview keeps approved-estimate cue as project 
     actionLabel: "Generate contract",
     priority: "critical",
     reason: "Estimate EST-100 is approved.",
-    sortOrder: 10,
-    workItemBridge: {
-      cue: "approved_estimate_missing_contract",
-      href: `/projects/${projectId}?workItemCue=approved_estimate_missing_contract#work-items`,
-      label: "Create work item",
-      sourceType: "estimate",
-      sourceId: estimateId,
-      sourceLabel: "Estimate EST-100",
-      context: {
-        estimateId,
-        estimateReferenceNumber: "EST-100"
-      }
-    }
+    sortOrder: 10
   } satisfies ProjectCue;
 
   const item = mapProjectCueToDashboardPreviewItem(cue);

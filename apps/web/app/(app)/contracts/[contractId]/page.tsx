@@ -21,6 +21,7 @@ import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
 import { ReadyToScheduleActionPanel } from "@/components/ready-to-schedule-action-panel";
+import { RevisionTimeline } from "@/components/revisions/revision-timeline";
 import {
   ScheduleContextActions,
   ScheduleContextFocusCard,
@@ -37,6 +38,8 @@ import { isOrganizationActivatedForProductionAction } from "@/lib/organizations/
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { getOperationalCuesForSubject } from "@/lib/operational-cues/data";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
+import { ensureInitialRecordRevision, listRecordRevisions } from "@/lib/revisions/data";
+import { buildContractRevisionSnapshot } from "@/lib/revisions/snapshots";
 import { buildScheduleHref } from "@/lib/schedule/links";
 import {
   formatScheduleSummaryWindow,
@@ -452,6 +455,21 @@ export default async function ContractDetailPage({
   if (!contract) {
     notFound();
   }
+
+  await ensureInitialRecordRevision({
+    organizationId: contract.organizationId,
+    subjectType: "contract",
+    subjectId: contract.id,
+    revisionKind: "system_snapshot",
+    revisionReason: "Initial revision captured from the existing canonical contract.",
+    snapshot: buildContractRevisionSnapshot(contract),
+    createdByUserId: user.id
+  });
+  const recordRevisions = await listRecordRevisions({
+    organizationId: contract.organizationId,
+    subjectType: "contract",
+    subjectId: contract.id
+  });
 
   const workflowSettings = await getOrganizationWorkflowSettings(contract.organizationId);
   const readinessSnapshot = await getProjectFinancialReadinessSnapshot({
@@ -1316,6 +1334,8 @@ export default async function ContractDetailPage({
                 )}
               </div>
             </DetailPanel>
+
+            <RevisionTimeline revisions={recordRevisions} />
           </aside>
         </div>
       </PrimarySection>

@@ -287,7 +287,7 @@ Important workflow rules:
 - the first major contractor workspace UI normalization pass is complete enough to stop; remaining issues should be treated as normal iterative polish rather than structural layout-system repair
 - the contractor shell now uses top-level navigation as the primary app navigation, with a wider workspace, integrated breadcrumb/page-context header row, and command-bar-driven Manager Pages
 - dashboard, projects, leads, invoices, contracts, customers, estimates, daily logs, time, people, vendors, and jobs now follow that newer Manager Page surface direction; avoid reintroducing a full-time left sidebar as the primary navigation model
-- the protected contractor app now shares one black/gray/orange/white UI direction across the shell, Manager Pages, Quick-Create surfaces, and common cards; do not reintroduce blue-heavy overview chrome on new or updated contractor pages
+- the protected contractor app now shares the accepted Graphite & Copper visual foundation across the shell, Manager Pages, Quick-Create surfaces, and common cards; do not reintroduce blue-heavy overview chrome on new or updated contractor pages
 - dashboards are entry surfaces into the same lifecycle, not separate product worlds
 - Quick-Create must create canonical records first and then route into the relevant `<Resource> Workspace`
 - creation must remain context-aware: project-launched creation auto-links the project, customer-launched creation requires project selection or creation, and global creation requires explicit customer and project selection
@@ -329,8 +329,8 @@ Do:
 - keep the contractor shell flat and unified: top navigation with integrated breadcrumb/page context, thin command/search strip, then workspace
 - treat the dashboard as the visual reference for contractor Manager Page surfaces
 - use the current contractor theme direction consistently:
-  - black or near-black framing
-  - orange for actions, emphasis, and identity
+  - Graphite for primary chrome, headers, and strong navigation
+  - Copper for primary actions, save actions, and intentional action emphasis
   - white or warm light-neutral surfaces for working areas
   - tighter, practical typography and spacing over roomy marketing-style composition
 - treat the dashboard as an operational command center, not as a light stats page and not as a separate module world
