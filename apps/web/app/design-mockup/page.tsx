@@ -40,7 +40,6 @@ const colors = {
   // Accent
   copper: "#B45309",
   copperLight: "#D97706",
-  copperMuted: "#FEF3C7",
   copperBorder: "#FCD34D",
   
   // Backgrounds
@@ -65,6 +64,24 @@ const colors = {
   errorBg: "#FEF2F2",
   info: "#0284C7",
   infoBg: "#F0F9FF",
+};
+
+// Alternative highlight/selection colors (to replace Copper Muted)
+const highlightOptions = {
+  // Option A: Soft Graphite - keeps it neutral, no copper association
+  softGraphite: { bg: "#F3F4F6", text: "#374151", name: "Soft Graphite" },
+  
+  // Option B: Warm Stone - earthy, subtle warmth without being orange
+  warmStone: { bg: "#F5F5F4", text: "#57534E", name: "Warm Stone" },
+  
+  // Option C: Slate Blue - adds a cool professional contrast
+  slateBlue: { bg: "#F1F5F9", text: "#475569", name: "Slate Blue" },
+  
+  // Option D: Sage Tint - subtle green, natural/organic feel
+  sageTint: { bg: "#F0FDF4", text: "#166534", name: "Sage Tint" },
+  
+  // Option E: Cream Emphasis - just slightly warmer cream
+  creamEmphasis: { bg: "#FEFCE8", text: "#854D0E", name: "Cream Emphasis" },
 };
 
 // Sample estimate data
@@ -161,13 +178,449 @@ function ActionButton({
 export default function DesignMockupPage() {
   const [activeSection, setActiveSection] = useState("items");
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  const [selectedHighlight, setSelectedHighlight] = useState<keyof typeof highlightOptions>("softGraphite");
+  const [selectedHeaderStyle, setSelectedHeaderStyle] = useState<"A" | "B" | "C" | "D">("A");
   
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
   };
+  
+  const currentHighlight = highlightOptions[selectedHighlight];
+
+  // Header style configurations
+  const headerStyles = {
+    A: { name: "Dark Graphite Bar", description: "Full dark header with copper logo accent" },
+    B: { name: "Light with Dark Accent", description: "White header with graphite left section" },
+    C: { name: "Minimal Light", description: "Clean white header, subtle borders" },
+    D: { name: "Two-Tone Split", description: "Dark logo area, light navigation" },
+  };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: colors.cream }}>
+      
+      {/* ============================================ */}
+      {/* DESIGN EXPLORATION PANEL - STICKY TOP */}
+      {/* ============================================ */}
+      <div 
+        className="sticky top-0 z-50 border-b shadow-sm"
+        style={{ backgroundColor: colors.white, borderColor: colors.borderMedium }}
+      >
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-lg font-bold" style={{ color: colors.textPrimary }}>
+                FloorConnector Design System Mockup
+              </h1>
+              <p className="text-sm" style={{ color: colors.textSecondary }}>
+                Use this page to explore and finalize design decisions before implementation
+              </p>
+            </div>
+            <span 
+              className="px-3 py-1 text-xs font-medium rounded-full"
+              style={{ backgroundColor: colors.warningBg, color: colors.warning }}
+            >
+              Work in Progress
+            </span>
+          </div>
+          
+          {/* Design Controls */}
+          <div className="grid grid-cols-2 gap-6">
+            {/* Header Style Selector */}
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wide mb-2 block" style={{ color: colors.textSecondary }}>
+                Header Style
+              </label>
+              <div className="flex gap-2">
+                {(["A", "B", "C", "D"] as const).map((style) => (
+                  <button
+                    key={style}
+                    onClick={() => setSelectedHeaderStyle(style)}
+                    className="px-3 py-2 text-sm rounded-md border transition-all"
+                    style={{
+                      backgroundColor: selectedHeaderStyle === style ? colors.graphite : colors.white,
+                      color: selectedHeaderStyle === style ? colors.white : colors.textPrimary,
+                      borderColor: selectedHeaderStyle === style ? colors.graphite : colors.borderMedium,
+                    }}
+                  >
+                    {style}: {headerStyles[style].name}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Highlight Color Selector */}
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wide mb-2 block" style={{ color: colors.textSecondary }}>
+                Active/Selection Highlight (replacing Copper Muted)
+              </label>
+              <div className="flex gap-2">
+                {(Object.keys(highlightOptions) as Array<keyof typeof highlightOptions>).map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => setSelectedHighlight(key)}
+                    className="px-3 py-2 text-xs rounded-md border transition-all flex items-center gap-2"
+                    style={{
+                      backgroundColor: selectedHighlight === key ? highlightOptions[key].bg : colors.white,
+                      color: selectedHighlight === key ? highlightOptions[key].text : colors.textSecondary,
+                      borderColor: selectedHighlight === key ? highlightOptions[key].text : colors.borderLight,
+                      fontWeight: selectedHighlight === key ? 600 : 400,
+                    }}
+                  >
+                    <span 
+                      className="w-3 h-3 rounded-full border"
+                      style={{ backgroundColor: highlightOptions[key].bg, borderColor: highlightOptions[key].text }}
+                    />
+                    {highlightOptions[key].name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ============================================ */}
+      {/* HEADER DESIGN OPTIONS */}
+      {/* ============================================ */}
+      <div className="px-6 py-8 border-b" style={{ borderColor: colors.borderLight }}>
+        <h2 className="text-sm font-semibold uppercase tracking-wide mb-4" style={{ color: colors.textSecondary }}>
+          Header Option {selectedHeaderStyle}: {headerStyles[selectedHeaderStyle].name}
+        </h2>
+        <p className="text-sm mb-4" style={{ color: colors.textMuted }}>
+          {headerStyles[selectedHeaderStyle].description}
+        </p>
+        
+        {/* Header A: Dark Graphite Bar */}
+        {selectedHeaderStyle === "A" && (
+          <header 
+            className="h-14 flex items-center justify-between px-4 border-b rounded-t-lg"
+            style={{ backgroundColor: colors.graphite, borderColor: colors.graphiteDark }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div 
+                  className="w-8 h-8 rounded-md flex items-center justify-center font-bold text-sm"
+                  style={{ backgroundColor: colors.copper, color: colors.white }}
+                >
+                  FC
+                </div>
+                <span className="text-white font-semibold">FloorConnector</span>
+              </div>
+              <nav className="flex items-center gap-1 ml-8">
+                {["Dashboard", "Leads", "Estimates", "Jobs", "Invoices"].map((item) => (
+                  <a
+                    key={item}
+                    href="#"
+                    className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                      item === "Estimates" ? "bg-white/10 text-white" : "text-white/70 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    {item}
+                  </a>
+                ))}
+              </nav>
+            </div>
+            <div className="flex items-center gap-3">
+              <button className="p-2 text-white/70 hover:text-white rounded-md hover:bg-white/10">
+                <Settings className="w-5 h-5" />
+              </button>
+              <div 
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium"
+                style={{ backgroundColor: colors.copperLight, color: colors.white }}
+              >
+                JD
+              </div>
+            </div>
+          </header>
+        )}
+        
+        {/* Header B: Light with Dark Accent */}
+        {selectedHeaderStyle === "B" && (
+          <header 
+            className="h-14 flex items-center border-b rounded-t-lg overflow-hidden"
+            style={{ backgroundColor: colors.white, borderColor: colors.borderLight }}
+          >
+            <div 
+              className="h-full px-4 flex items-center gap-2"
+              style={{ backgroundColor: colors.graphite }}
+            >
+              <div 
+                className="w-7 h-7 rounded flex items-center justify-center font-bold text-xs"
+                style={{ backgroundColor: colors.copper, color: colors.white }}
+              >
+                FC
+              </div>
+              <span className="text-white font-semibold text-sm">FloorConnector</span>
+            </div>
+            <nav className="flex items-center gap-1 ml-6">
+              {["Dashboard", "Leads", "Estimates", "Jobs", "Invoices"].map((item) => (
+                <a
+                  key={item}
+                  href="#"
+                  className="px-3 py-1.5 text-sm rounded-md transition-colors"
+                  style={{
+                    backgroundColor: item === "Estimates" ? currentHighlight.bg : "transparent",
+                    color: item === "Estimates" ? colors.textPrimary : colors.textSecondary,
+                    fontWeight: item === "Estimates" ? 500 : 400,
+                  }}
+                >
+                  {item}
+                </a>
+              ))}
+            </nav>
+            <div className="flex items-center gap-3 ml-auto pr-4">
+              <button className="p-2 rounded-md hover:bg-gray-100" style={{ color: colors.textSecondary }}>
+                <Settings className="w-5 h-5" />
+              </button>
+              <div 
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium"
+                style={{ backgroundColor: colors.graphite, color: colors.white }}
+              >
+                JD
+              </div>
+            </div>
+          </header>
+        )}
+        
+        {/* Header C: Minimal Light */}
+        {selectedHeaderStyle === "C" && (
+          <header 
+            className="h-14 flex items-center justify-between px-4 border rounded-t-lg"
+            style={{ backgroundColor: colors.white, borderColor: colors.borderLight }}
+          >
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <div 
+                  className="w-8 h-8 rounded-md flex items-center justify-center font-bold text-sm"
+                  style={{ backgroundColor: colors.graphite, color: colors.white }}
+                >
+                  FC
+                </div>
+                <span className="font-semibold" style={{ color: colors.textPrimary }}>FloorConnector</span>
+              </div>
+              <div className="w-px h-6" style={{ backgroundColor: colors.borderLight }} />
+              <nav className="flex items-center gap-1">
+                {["Dashboard", "Leads", "Estimates", "Jobs", "Invoices"].map((item) => (
+                  <a
+                    key={item}
+                    href="#"
+                    className="px-3 py-1.5 text-sm rounded-md transition-colors"
+                    style={{
+                      color: item === "Estimates" ? colors.copper : colors.textSecondary,
+                      fontWeight: item === "Estimates" ? 600 : 400,
+                      borderBottom: item === "Estimates" ? `2px solid ${colors.copper}` : "2px solid transparent",
+                    }}
+                  >
+                    {item}
+                  </a>
+                ))}
+              </nav>
+            </div>
+            <div className="flex items-center gap-3">
+              <button className="p-2 rounded-md hover:bg-gray-100" style={{ color: colors.textSecondary }}>
+                <Settings className="w-5 h-5" />
+              </button>
+              <div 
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium border"
+                style={{ backgroundColor: colors.cream, color: colors.textPrimary, borderColor: colors.borderMedium }}
+              >
+                JD
+              </div>
+            </div>
+          </header>
+        )}
+        
+        {/* Header D: Two-Tone Split */}
+        {selectedHeaderStyle === "D" && (
+          <header 
+            className="h-14 flex items-center rounded-t-lg overflow-hidden border"
+            style={{ borderColor: colors.borderLight }}
+          >
+            <div 
+              className="h-full px-5 flex items-center gap-3"
+              style={{ backgroundColor: colors.graphiteDark }}
+            >
+              <div 
+                className="w-8 h-8 rounded-md flex items-center justify-center font-bold text-sm"
+                style={{ backgroundColor: colors.copper, color: colors.white }}
+              >
+                FC
+              </div>
+              <div>
+                <span className="text-white font-semibold text-sm block leading-tight">FloorConnector</span>
+                <span className="text-white/50 text-xs">Pro</span>
+              </div>
+            </div>
+            <div className="flex-1 h-full flex items-center justify-between px-4" style={{ backgroundColor: colors.cream }}>
+              <nav className="flex items-center gap-1">
+                {["Dashboard", "Leads", "Estimates", "Jobs", "Invoices"].map((item) => (
+                  <a
+                    key={item}
+                    href="#"
+                    className="px-3 py-1.5 text-sm rounded-md transition-colors"
+                    style={{
+                      backgroundColor: item === "Estimates" ? colors.white : "transparent",
+                      color: item === "Estimates" ? colors.textPrimary : colors.textSecondary,
+                      fontWeight: item === "Estimates" ? 500 : 400,
+                      boxShadow: item === "Estimates" ? "0 1px 2px rgba(0,0,0,0.05)" : "none",
+                    }}
+                  >
+                    {item}
+                  </a>
+                ))}
+              </nav>
+              <div className="flex items-center gap-3">
+                <button className="p-2 rounded-md hover:bg-white" style={{ color: colors.textSecondary }}>
+                  <Settings className="w-5 h-5" />
+                </button>
+                <div 
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium"
+                  style={{ backgroundColor: colors.graphite, color: colors.white }}
+                >
+                  JD
+                </div>
+              </div>
+            </div>
+          </header>
+        )}
+      </div>
+
+      {/* ============================================ */}
+      {/* ICON STYLE OPTIONS */}
+      {/* ============================================ */}
+      <div className="px-6 py-8 border-b" style={{ borderColor: colors.borderLight, backgroundColor: colors.white }}>
+        <h2 className="text-sm font-semibold uppercase tracking-wide mb-4" style={{ color: colors.textSecondary }}>
+          Icon Style Options
+        </h2>
+        <p className="text-sm mb-6" style={{ color: colors.textMuted }}>
+          Comparing icon presentation styles for navigation and actions
+        </p>
+        
+        <div className="grid grid-cols-3 gap-6">
+          {/* Option 1: Outlined Icons (Current) */}
+          <div className="p-4 rounded-lg border" style={{ borderColor: colors.borderLight }}>
+            <h3 className="text-sm font-medium mb-3" style={{ color: colors.textPrimary }}>
+              A: Outlined (Lucide Default)
+            </h3>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-md" style={{ backgroundColor: currentHighlight.bg }}>
+                <Wallet className="w-5 h-5" style={{ color: currentHighlight.text }} />
+                <span className="text-sm" style={{ color: currentHighlight.text }}>Line Items</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2">
+                <Grid3X3 className="w-5 h-5" style={{ color: colors.textSecondary }} />
+                <span className="text-sm" style={{ color: colors.textSecondary }}>Rooms</span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button className="p-2 rounded-md" style={{ backgroundColor: colors.cream }}>
+                <FileText className="w-5 h-5" style={{ color: colors.textSecondary }} />
+              </button>
+              <button className="p-2 rounded-md" style={{ backgroundColor: colors.cream }}>
+                <Users className="w-5 h-5" style={{ color: colors.textSecondary }} />
+              </button>
+              <button className="p-2 rounded-md" style={{ backgroundColor: colors.cream }}>
+                <Calendar className="w-5 h-5" style={{ color: colors.textSecondary }} />
+              </button>
+              <button className="p-2 rounded-md" style={{ backgroundColor: colors.copper }}>
+                <Plus className="w-5 h-5" style={{ color: colors.white }} />
+              </button>
+            </div>
+            <p className="text-xs mt-3" style={{ color: colors.textMuted }}>
+              Clean, professional. Standard SaaS appearance.
+            </p>
+          </div>
+          
+          {/* Option 2: With Background Circles */}
+          <div className="p-4 rounded-lg border" style={{ borderColor: colors.borderLight }}>
+            <h3 className="text-sm font-medium mb-3" style={{ color: colors.textPrimary }}>
+              B: Circular Backgrounds
+            </h3>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-md" style={{ backgroundColor: currentHighlight.bg }}>
+                <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: colors.graphite }}>
+                  <Wallet className="w-4 h-4" style={{ color: colors.white }} />
+                </div>
+                <span className="text-sm font-medium" style={{ color: currentHighlight.text }}>Line Items</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: colors.cream }}>
+                  <Grid3X3 className="w-4 h-4" style={{ color: colors.textSecondary }} />
+                </div>
+                <span className="text-sm" style={{ color: colors.textSecondary }}>Rooms</span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: colors.cream }}>
+                <FileText className="w-4 h-4" style={{ color: colors.textSecondary }} />
+              </div>
+              <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: colors.cream }}>
+                <Users className="w-4 h-4" style={{ color: colors.textSecondary }} />
+              </div>
+              <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: colors.cream }}>
+                <Calendar className="w-4 h-4" style={{ color: colors.textSecondary }} />
+              </div>
+              <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: colors.copper }}>
+                <Plus className="w-4 h-4" style={{ color: colors.white }} />
+              </div>
+            </div>
+            <p className="text-xs mt-3" style={{ color: colors.textMuted }}>
+              More visual weight. Better touch targets.
+            </p>
+          </div>
+          
+          {/* Option 3: Rounded Square Backgrounds */}
+          <div className="p-4 rounded-lg border" style={{ borderColor: colors.borderLight }}>
+            <h3 className="text-sm font-medium mb-3" style={{ color: colors.textPrimary }}>
+              C: Rounded Square Backgrounds
+            </h3>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-md" style={{ backgroundColor: currentHighlight.bg }}>
+                <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: colors.graphite }}>
+                  <Wallet className="w-4 h-4" style={{ color: colors.white }} />
+                </div>
+                <span className="text-sm font-medium" style={{ color: currentHighlight.text }}>Line Items</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2">
+                <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: colors.cream }}>
+                  <Grid3X3 className="w-4 h-4" style={{ color: colors.textSecondary }} />
+                </div>
+                <span className="text-sm" style={{ color: colors.textSecondary }}>Rooms</span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ backgroundColor: colors.cream }}>
+                <FileText className="w-4 h-4" style={{ color: colors.textSecondary }} />
+              </div>
+              <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ backgroundColor: colors.cream }}>
+                <Users className="w-4 h-4" style={{ color: colors.textSecondary }} />
+              </div>
+              <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ backgroundColor: colors.cream }}>
+                <Calendar className="w-4 h-4" style={{ color: colors.textSecondary }} />
+              </div>
+              <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ backgroundColor: colors.copper }}>
+                <Plus className="w-4 h-4" style={{ color: colors.white }} />
+              </div>
+            </div>
+            <p className="text-xs mt-3" style={{ color: colors.textMuted }}>
+              Balanced. Matches the &quot;FC&quot; logo shape.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ============================================ */}
+      {/* LIVE PREVIEW SECTION */}
+      {/* ============================================ */}
+      <div className="px-6 pt-6 pb-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide mb-2" style={{ color: colors.textSecondary }}>
+          Live Preview: Estimate Workspace
+        </h2>
+        <p className="text-sm mb-4" style={{ color: colors.textMuted }}>
+          See your selected highlight color applied in context
+        </p>
+      </div>
+
       {/* Top Navigation Bar */}
       <header 
         className="h-14 flex items-center justify-between px-4 border-b"
@@ -278,8 +731,8 @@ export default function DesignMockupPage() {
                   onClick={() => setActiveSection(section.id)}
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-left transition-colors"
                   style={{
-                    backgroundColor: isActive ? colors.copperMuted : "transparent",
-                    color: isActive ? colors.copper : colors.textSecondary,
+                    backgroundColor: isActive ? currentHighlight.bg : "transparent",
+                    color: isActive ? currentHighlight.text : colors.textSecondary,
                   }}
                 >
                   <Icon className="w-4 h-4" />
@@ -288,7 +741,7 @@ export default function DesignMockupPage() {
                     <span 
                       className="text-xs px-1.5 py-0.5 rounded"
                       style={{ 
-                        backgroundColor: isActive ? colors.copper : colors.cream,
+                        backgroundColor: isActive ? colors.graphite : colors.cream,
                         color: isActive ? colors.white : colors.textSecondary,
                       }}
                     >
@@ -441,13 +894,13 @@ export default function DesignMockupPage() {
                 { name: "Graphite Dark", hex: colors.graphiteDark, text: "white" },
                 { name: "Copper", hex: colors.copper, text: "white" },
                 { name: "Copper Light", hex: colors.copperLight, text: "white" },
-                { name: "Copper Muted", hex: colors.copperMuted, text: colors.copper },
                 { name: "Cream", hex: colors.cream, text: colors.textPrimary },
                 { name: "White", hex: colors.white, text: colors.textPrimary },
                 { name: "Text Primary", hex: colors.textPrimary, text: "white" },
                 { name: "Text Secondary", hex: colors.textSecondary, text: "white" },
                 { name: "Border Light", hex: colors.borderLight, text: colors.textPrimary },
                 { name: "Success", hex: colors.success, text: "white" },
+                { name: "Error", hex: colors.error, text: "white" },
               ].map((color) => (
                 <div key={color.name} className="flex items-center gap-3">
                   <div 
@@ -460,6 +913,30 @@ export default function DesignMockupPage() {
                   </div>
                 </div>
               ))}
+            </div>
+            
+            {/* Selected Highlight Color */}
+            <div className="mt-6 pt-6 border-t" style={{ borderColor: colors.borderLight }}>
+              <h4 className="text-sm font-semibold mb-3" style={{ color: colors.textPrimary }}>
+                Selected Highlight Color (Active/Selection State)
+              </h4>
+              <div className="flex items-center gap-4">
+                <div 
+                  className="w-16 h-16 rounded-md border flex items-center justify-center"
+                  style={{ backgroundColor: currentHighlight.bg, borderColor: currentHighlight.text }}
+                >
+                  <Check className="w-6 h-6" style={{ color: currentHighlight.text }} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium" style={{ color: colors.textPrimary }}>{currentHighlight.name}</p>
+                  <p className="text-xs font-mono" style={{ color: colors.textSecondary }}>
+                    Background: {currentHighlight.bg}
+                  </p>
+                  <p className="text-xs font-mono" style={{ color: colors.textSecondary }}>
+                    Text: {currentHighlight.text}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
