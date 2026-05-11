@@ -14,6 +14,23 @@
   --accent-deep: oklch(0.44 0.13 48);
   --accent-soft: oklch(0.91 0.04 62);
   --glow: oklch(0.82 0.055 62);
+
+  /* Graphite & Copper Design System */
+  --graphite: #374151;
+  --graphite-light: #4B5563;
+  --graphite-dark: #1F2937;
+  --copper: #B45309;
+  --copper-light: #D97706;
+  --cream: #FAFAF8;
+  --highlight: #F3F4F6;
+  --border-warm: #E8E6E1;
+  --text-primary: #111827;
+  --text-secondary: #6B7280;
+  --text-tertiary: #9CA3AF;
+  --color-success: #16A34A;
+  --color-warning: #EA8C55;
+  --color-error: #DC2626;
+  --color-info: #0EA5E9;
 }
 
 * {

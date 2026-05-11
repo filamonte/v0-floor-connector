@@ -100,17 +100,18 @@ Current Phase 1 module-home definitions:
 ## 5. Visual Consistency
 
 - Match existing FloorConnector and contractor-facing density.
-- Contractor app palette direction is black / gray / orange / white:
-  - black or near-black for primary chrome and strong headings
-  - dark gray / charcoal for secondary chrome
-  - warm orange for primary actions, active states, and focus/highlight states
-  - white or off-white work surfaces
-  - warm gray borders and muted text
+- Contractor app uses Graphite & Copper design system (see `docs/design-system-comprehensive-prompt.md` for complete specifications):
+  - **Graphite (#374151)** for primary chrome, headers, and strong navigation
+  - **Graphite Dark (#1F2937)** for secondary chrome and emphasis
+  - **Copper (#B45309)** for primary actions, active states, and CTAs
+  - **Soft Cream (#FAFAF8)** for page backgrounds and work surfaces
+  - **Warm Gray (#E8E6E1)** for borders, dividers, and subtle separation
+  - **Soft Graphite (#F3F4F6)** for active/highlighted states and selections
 - Blue must not be used as the default contractor-app accent for buttons, links, focus rings, page chrome, manager tabs, sort controls, or utility states.
 - Green / emerald is reserved for semantic success, approved, paid, or completed statuses. It must not be used as primary app chrome, active navigation, generic health decoration, or default positive emphasis.
 - Red / rose is reserved for destructive, error, blocked, or missing-required-action states.
 - Amber is reserved for warning, pending, or prerequisite-needed states.
-- Non-semantic informational panels, filters, sort controls, table states, and utility actions should use warm gray, near-black, white/off-white, and orange rather than blue, green, cyan, indigo, purple, or teal.
+- Non-semantic informational panels, filters, sort controls, table states, and utility actions should use warm gray, near-black, white/off-white, and copper rather than blue, green, cyan, indigo, purple, or teal.
 - Use compact headers.
 - Use dense operational grids.
 - Use small action buttons where appropriate.
