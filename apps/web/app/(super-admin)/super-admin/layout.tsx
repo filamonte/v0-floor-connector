@@ -19,7 +19,7 @@ export default async function SuperAdminLayout({
   const user = await requireAuthenticatedUser("/super-admin");
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#f3efe6_0%,#eef2f7_42%,#e6ebf2_100%)]">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,var(--cream)_0%,#eef2f7_42%,#e6ebf2_100%)]">
       <ProtectedSurfaceHeader
         title="Platform Admin"
         description="Global defaults, starter records, tenant governance, and modular platform controls."
@@ -34,11 +34,11 @@ export default async function SuperAdminLayout({
             navItems={platformAdminNavItems}
             tone="neutral"
             meta={
-              <div className="rounded-[1.75rem] border border-slate-200 bg-slate-50/90 px-5 py-5 text-sm text-slate-600">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+              <div className="rounded-[1.75rem] border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-5 text-sm text-[var(--text-secondary)]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--text-tertiary)]">
                   Platform access
                 </p>
-                <p className="mt-3 text-base font-semibold text-slate-950">
+                <p className="mt-3 text-base font-semibold text-[var(--text-primary)]">
                   {scope.email ?? "Platform admin"}
                 </p>
                 <p className="mt-2 leading-6">

@@ -54,7 +54,7 @@ export default async function SuperAdminHomePage() {
           ctaLabel="Manage platform defaults"
           tone="neutral"
         >
-          <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+          <div className="space-y-2 rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
             <p>
               Tax: {financialDefaults.defaultTaxBehavior} at{" "}
               {formatPercentFromRate(financialDefaults.defaultTaxRate)}%
@@ -79,9 +79,9 @@ export default async function SuperAdminHomePage() {
               return (
                 <div
                   key={templateType}
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600"
+                  className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm text-[var(--text-secondary)]"
                 >
-                  <p className="font-medium capitalize text-slate-950">{templateType}</p>
+                  <p className="font-medium capitalize text-[var(--text-primary)]">{templateType}</p>
                   <p className="mt-1">{count} seed{count === 1 ? "" : "s"}</p>
                 </div>
               );
@@ -103,9 +103,9 @@ export default async function SuperAdminHomePage() {
               return (
                 <div
                   key={itemType}
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600"
+                  className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm text-[var(--text-secondary)]"
                 >
-                  <p className="font-medium capitalize text-slate-950">{itemType}s</p>
+                  <p className="font-medium capitalize text-[var(--text-primary)]">{itemType}s</p>
                   <p className="mt-1">{count} seed{count === 1 ? "" : "s"}</p>
                 </div>
               );
@@ -120,8 +120,8 @@ export default async function SuperAdminHomePage() {
           ctaLabel="Manage module controls"
           tone="neutral"
         >
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-            <p className="font-medium text-slate-950">{featurePolicies.length} platform feature policies</p>
+          <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm text-[var(--text-secondary)]">
+            <p className="font-medium text-[var(--text-primary)]">{featurePolicies.length} platform feature policies</p>
             <p className="mt-1">{tenants.length} tenant organizations on the shared platform model</p>
           </div>
         </SettingsOverviewCard>
@@ -133,8 +133,8 @@ export default async function SuperAdminHomePage() {
           ctaLabel="Review package readiness"
           tone="neutral"
         >
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
-            <p className="font-medium text-slate-950">
+          <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+            <p className="font-medium text-[var(--text-primary)]">
               Package governance foundation
             </p>
             <p className="mt-1">
@@ -150,8 +150,8 @@ export default async function SuperAdminHomePage() {
           ctaLabel="Review system health"
           tone="neutral"
         >
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
-            <p className="font-medium text-slate-950">Read-only operations foundation</p>
+          <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+            <p className="font-medium text-[var(--text-primary)]">Read-only operations foundation</p>
             <p className="mt-1">
               No retry, provisioning, entitlement, pricing, assignment, or runtime controls.
             </p>

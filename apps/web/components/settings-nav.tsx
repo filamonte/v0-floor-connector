@@ -29,19 +29,19 @@ export function SettingsNav({ items, tone = "warm" }: SettingsNavProps) {
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={[
-              "block border px-4 py-3 transition",
+              "block border px-4 py-3 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2",
               active
-                ? "border-[#171717] bg-[#171717] text-white shadow-[0_18px_40px_-30px_rgba(23,23,23,0.5)]"
+                ? "border-[var(--graphite)] bg-[var(--graphite)] text-white shadow-[0_18px_40px_-30px_rgba(23,23,23,0.5)]"
                 : neutral
-                  ? "rounded-md border-[#e2e5e9] bg-white text-[#374151] hover:border-[#9ca3af] hover:bg-[#f8fafc] hover:text-[#111827]"
-                  : "border-[#d9cdc2] bg-white text-[#594839] hover:border-[#ef7d32] hover:bg-[#fbf7f2]"
+                  ? "rounded-md border-[var(--border-warm)] bg-white text-[var(--text-secondary)] hover:border-[var(--graphite-light)] hover:bg-[var(--highlight)] hover:text-[var(--text-primary)]"
+                  : "border-[var(--border-warm)] bg-white text-[var(--text-secondary)] hover:border-[var(--copper)] hover:bg-[var(--cream)]"
             ].join(" ")}
           >
             <p className="text-sm font-semibold tracking-tight">{item.label}</p>
             <p
               className={[
                 "mt-2 text-xs leading-5",
-                active ? "text-[#f3e7dc]" : neutral ? "text-[#6b7280]" : "text-[#8f7f72]"
+                active ? "text-[var(--cream)]" : neutral ? "text-[var(--text-tertiary)]" : "text-[var(--text-tertiary)]"
               ].join(" ")}
             >
               {item.description}
