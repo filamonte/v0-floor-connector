@@ -16,6 +16,7 @@ import { InvoiceForm } from "@/components/invoice-form";
 import { InvoicePaymentForm } from "@/components/invoice-payment-form";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
+import { CueStateControls } from "@/components/cue-states/cue-state-controls";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
 import { RevisionTimeline } from "@/components/revisions/revision-timeline";
 import {
@@ -39,6 +40,8 @@ import { listEstimates } from "@/lib/estimates/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 import { getOperationalCuesForSubject } from "@/lib/operational-cues/data";
+import { getCueStateActionSupport } from "@/lib/cue-states/apply";
+import { buildOperationalCueIdentity } from "@/lib/cue-states/identity";
 import { listPeople } from "@/lib/people/data";
 import { getProgressBillingByEstimateId } from "@/lib/progress-billing/data";
 import { listProjects } from "@/lib/projects/data";
@@ -324,7 +327,8 @@ export default async function InvoiceDetailPage({
     getOperationalCuesForSubject({
       organizationId: invoice.organizationId,
       subjectType: "invoice",
-      subjectId: invoice.id
+      subjectId: invoice.id,
+      currentUserId: user.id
     }),
     listWorkItemsForSource({
       sourceType: "invoice",
@@ -753,6 +757,13 @@ export default async function InvoiceDetailPage({
               cues={invoiceAttentionCues}
               description="Invoice-specific collection cues derived from this canonical invoice and enabled organization rules."
               getWorkItemAction={getOperationalCueWorkItemBridgeAction}
+              getCueStateControls={(cue) => (
+                <CueStateControls
+                  identity={buildOperationalCueIdentity(cue)}
+                  support={getCueStateActionSupport(cue)}
+                  returnTo={`/invoices/${invoice.id}`}
+                />
+              )}
             />
 
             <section

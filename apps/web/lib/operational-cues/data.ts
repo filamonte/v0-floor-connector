@@ -3,6 +3,9 @@ import "server-only";
 import { cache } from "react";
 
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { applyCueStates } from "@/lib/cue-states/apply";
+import { buildOperationalCueIdentity } from "@/lib/cue-states/identity";
+import { listWorkflowCueStatesForIdentities } from "@/lib/cue-states/data";
 import {
   deriveOperationalCues,
   filterOperationalCuesForProject,
@@ -259,6 +262,7 @@ function appliesToSubject(
 async function loadOperationalCues(input: {
   organizationId: string;
   scope: CueQueryScope;
+  currentUserId?: string | null;
 }) {
   await ensureDefaultOperationalCueRules({
     organizationId: input.organizationId
@@ -424,10 +428,10 @@ async function loadOperationalCues(input: {
     jobRows.push(...validJobRows.map((job) => mapJobRow(job, assignmentCountsByJobId)));
   }
 
-  return {
-    cues: deriveOperationalCues({
+  const now = new Date();
+  const cues = deriveOperationalCues({
       organizationId: input.organizationId,
-      now: new Date(),
+      now,
       rules,
       responsibilityDefaults:
         toOperationalCueResponsibilityDefaults(responsibilityDefaults),
@@ -435,16 +439,32 @@ async function loadOperationalCues(input: {
       contracts: contractRows,
       invoices: invoiceRows,
       jobs: jobRows
-    }),
+    });
+  const visibleCues = input.currentUserId
+    ? applyCueStates({
+        cues,
+        states: await listWorkflowCueStatesForIdentities({
+          companyId: input.organizationId,
+          currentUserId: input.currentUserId,
+          identities: cues.map((cue) => buildOperationalCueIdentity(cue))
+        }),
+        currentUserId: input.currentUserId,
+        now
+      }).visibleCues
+    : cues;
+
+  return {
+    cues: visibleCues,
     rules
   };
 }
 
 export const getOperationalCueDashboard = cache(
-  async (input: { organizationId: string }) => {
+  async (input: { organizationId: string; currentUserId?: string | null }) => {
     const { cues, rules } = await loadOperationalCues({
       organizationId: input.organizationId,
-      scope: { kind: "dashboard" }
+      scope: { kind: "dashboard" },
+      currentUserId: input.currentUserId
     });
 
     return {
@@ -460,6 +480,7 @@ export const getOperationalCuesForSubject = cache(
     organizationId: string;
     subjectType: "estimate" | "contract" | "invoice" | "job";
     subjectId: string;
+    currentUserId?: string | null;
   }) => {
     const { cues } = await loadOperationalCues({
       organizationId: input.organizationId,
@@ -467,7 +488,8 @@ export const getOperationalCuesForSubject = cache(
         kind: "subject",
         subjectType: input.subjectType,
         subjectId: input.subjectId
-      }
+      },
+      currentUserId: input.currentUserId
     });
 
     return filterOperationalCuesForSubject(cues, input);
@@ -475,10 +497,15 @@ export const getOperationalCuesForSubject = cache(
 );
 
 export const getOperationalCuesForProject = cache(
-  async (input: { organizationId: string; projectId: string }) => {
+  async (input: {
+    organizationId: string;
+    projectId: string;
+    currentUserId?: string | null;
+  }) => {
     const { cues } = await loadOperationalCues({
       organizationId: input.organizationId,
-      scope: { kind: "project", projectId: input.projectId }
+      scope: { kind: "project", projectId: input.projectId },
+      currentUserId: input.currentUserId
     });
 
     return filterOperationalCuesForProject(cues, {

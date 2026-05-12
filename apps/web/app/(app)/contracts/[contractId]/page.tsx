@@ -19,6 +19,7 @@ import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
+import { CueStateControls } from "@/components/cue-states/cue-state-controls";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
 import { ReadyToScheduleActionPanel } from "@/components/ready-to-schedule-action-panel";
 import { RevisionTimeline } from "@/components/revisions/revision-timeline";
@@ -37,6 +38,8 @@ import { getActiveOrganizationContext } from "@/lib/organizations/active-context
 import { isOrganizationActivatedForProductionAction } from "@/lib/organizations/activation-guard";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { getOperationalCuesForSubject } from "@/lib/operational-cues/data";
+import { getCueStateActionSupport } from "@/lib/cue-states/apply";
+import { buildOperationalCueIdentity } from "@/lib/cue-states/identity";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
 import { ensureInitialRecordRevision, listRecordRevisions } from "@/lib/revisions/data";
 import { buildContractRevisionSnapshot } from "@/lib/revisions/snapshots";
@@ -479,7 +482,8 @@ export default async function ContractDetailPage({
   const contractAttentionCues = await getOperationalCuesForSubject({
     organizationId: contract.organizationId,
     subjectType: "contract",
-    subjectId: contract.id
+    subjectId: contract.id,
+    currentUserId: user.id
   });
   const contractGate = computeContractWorkflowGate({
     status: contract.status,
@@ -814,6 +818,13 @@ export default async function ContractDetailPage({
           <NeedsAttentionPanel
             cues={contractAttentionCues}
             description="Contract-specific signature cues derived from this canonical contract and enabled organization rules."
+            getCueStateControls={(cue) => (
+              <CueStateControls
+                identity={buildOperationalCueIdentity(cue)}
+                support={getCueStateActionSupport(cue)}
+                returnTo={`/contracts/${contract.id}`}
+              />
+            )}
           />
 
           {showReadyToSchedulePanel ? (

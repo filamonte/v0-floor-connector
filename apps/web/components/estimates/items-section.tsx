@@ -91,8 +91,14 @@ type ItemsSectionProps = {
   isPreviewPending?: boolean;
   onSelectedSystemIdChange: (value: string) => void;
   onSystemMeasurementChange: (field: string, value: string) => void;
-  onQuickAddCatalogItem: (catalogItemId: string, targetGroupId?: string | null) => void;
-  onAddPreviewCatalogItem: (catalogItemId: string, targetGroupId?: string | null) => void;
+  onQuickAddCatalogItem: (
+    catalogItemId: string,
+    targetGroupId?: string | null
+  ) => void;
+  onAddPreviewCatalogItem: (
+    catalogItemId: string,
+    targetGroupId?: string | null
+  ) => void;
   onImportLineItemsFromEstimate: (
     sourceEstimateId: string
   ) => Promise<{ ok: boolean; message: string }>;
@@ -164,6 +170,12 @@ function resolveTypeLabel(lineItem: EstimateItemsDraft) {
   }
 }
 
+function resolveSourceLabel(lineItem: EstimateItemsDraft) {
+  return lineItem.sourceType === "system_component"
+    ? "System-generated"
+    : "Catalog-backed";
+}
+
 function getNumericValue(value: string) {
   return Number(value.replace(/[$,%\s,]/g, "")) || 0;
 }
@@ -176,7 +188,12 @@ function formatUnitLabel(unit: string) {
   const normalized = unit.trim();
   const lower = normalized.toLowerCase();
 
-  if (lower === "sqft" || lower === "sf" || lower === "square foot" || lower === "square feet") {
+  if (
+    lower === "sqft" ||
+    lower === "sf" ||
+    lower === "square foot" ||
+    lower === "square feet"
+  ) {
     return "sqft";
   }
 
@@ -192,7 +209,9 @@ function formatUnitLabel(unit: string) {
 }
 
 function getCatalogPriceBasis(lineItem: EstimateItemsDraft) {
-  const unitPriceBeforeHiddenMarkup = getNumericValue(lineItem.unitPriceBeforeHiddenMarkup);
+  const unitPriceBeforeHiddenMarkup = getNumericValue(
+    lineItem.unitPriceBeforeHiddenMarkup
+  );
   const hiddenMarkupAmount = getNumericValue(lineItem.hiddenMarkupAmount);
 
   if (unitPriceBeforeHiddenMarkup > 0) {
@@ -341,7 +360,9 @@ export function ItemsSection({
   const catalogSearchInputRef = useRef<HTMLInputElement | null>(null);
   const [itemSearch, setItemSearch] = useState("");
   const [showAddItemTools, setShowAddItemTools] = useState(false);
-  const [selectedAddItemGroupId, setSelectedAddItemGroupId] = useState<string | null>(null);
+  const [selectedAddItemGroupId, setSelectedAddItemGroupId] = useState<
+    string | null
+  >(null);
   const [showCreateItemForm, setShowCreateItemForm] = useState(false);
   const [showImportTools, setShowImportTools] = useState(false);
   const [quickItemName, setQuickItemName] = useState("");
@@ -349,7 +370,8 @@ export function ItemsSection({
   const [quickItemUnit, setQuickItemUnit] = useState("each");
   const [quickItemPrice, setQuickItemPrice] = useState("");
   const [quickItemTaxable, setQuickItemTaxable] = useState(true);
-  const [editingLineItem, setEditingLineItem] = useState<EstimateItemsDraft | null>(null);
+  const [editingLineItem, setEditingLineItem] =
+    useState<EstimateItemsDraft | null>(null);
   const [editItemName, setEditItemName] = useState("");
   const [editItemDescription, setEditItemDescription] = useState("");
   const [editItemUnit, setEditItemUnit] = useState("each");
@@ -359,22 +381,37 @@ export function ItemsSection({
   const [catalogPreviewType, setCatalogPreviewType] = useState("all");
   const [catalogPreviewCategory, setCatalogPreviewCategory] = useState("all");
   const [selectedCatalogPreviewId, setSelectedCatalogPreviewId] = useState("");
-  const visibleGroups = getVisibleRowGroups(lineItems, itemGroups, showOnlyZeroItems);
-  const visibleItemCount = visibleGroups.reduce((sum, group) => sum + group.rows.length, 0);
+  const visibleGroups = getVisibleRowGroups(
+    lineItems,
+    itemGroups,
+    showOnlyZeroItems
+  );
+  const visibleItemCount = visibleGroups.reduce(
+    (sum, group) => sum + group.rows.length,
+    0
+  );
   const normalizedItemSearch = itemSearch.trim().toLowerCase();
   const hasItemSearch = normalizedItemSearch.length > 0;
   const filteredPickerItems = visibleCatalogItems.filter((item) =>
     item.name.toLowerCase().includes(normalizedItemSearch)
   );
-  const directCatalogItems = filteredPickerItems.filter((item) => item.itemType !== "system");
-  const systemCatalogItems = filteredPickerItems.filter((item) => item.itemType === "system");
+  const directCatalogItems = filteredPickerItems.filter(
+    (item) => item.itemType !== "system"
+  );
+  const systemCatalogItems = filteredPickerItems.filter(
+    (item) => item.itemType === "system"
+  );
   const quickAddItems = directCatalogItems.slice(0, 6);
   const firstQuickAddItem = quickAddItems[0] ?? directCatalogItems[0] ?? null;
-  const readOnlyCatalogItems = catalogItemsForReview.length > 0
-    ? catalogItemsForReview
-    : visibleCatalogItems;
+  const readOnlyCatalogItems =
+    catalogItemsForReview.length > 0
+      ? catalogItemsForReview
+      : visibleCatalogItems;
   const catalogPreviewTypeOptions = useMemo(
-    () => Array.from(new Set(readOnlyCatalogItems.map((item) => item.itemType))).sort(),
+    () =>
+      Array.from(
+        new Set(readOnlyCatalogItems.map((item) => item.itemType))
+      ).sort(),
     [readOnlyCatalogItems]
   );
   const catalogPreviewCategoryOptions = useMemo(
@@ -398,10 +435,12 @@ export function ItemsSection({
         (item.category ?? "").toLowerCase().includes(normalizedSearch) ||
         (item.sku ?? "").toLowerCase().includes(normalizedSearch) ||
         (item.costCode ?? "").toLowerCase().includes(normalizedSearch);
-      const matchesType = catalogPreviewType === "all" || item.itemType === catalogPreviewType;
+      const matchesType =
+        catalogPreviewType === "all" || item.itemType === catalogPreviewType;
       const matchesCategory =
         catalogPreviewCategory === "all" ||
-        item.category?.trim().toLowerCase() === catalogPreviewCategory.toLowerCase();
+        item.category?.trim().toLowerCase() ===
+          catalogPreviewCategory.toLowerCase();
 
       return matchesSearch && matchesType && matchesCategory;
     });
@@ -440,11 +479,12 @@ export function ItemsSection({
     quickItemUnit.trim().length > 0 &&
     quickItemPrice.trim().length > 0;
   const normalizedQuickItemName = quickItemName.trim().toLowerCase();
-  const quickCreateDuplicateItem = normalizedQuickItemName.length > 0
-    ? catalogItemsForReview.find(
-        (item) => item.name.trim().toLowerCase() === normalizedQuickItemName
-      ) ?? null
-    : null;
+  const quickCreateDuplicateItem =
+    normalizedQuickItemName.length > 0
+      ? (catalogItemsForReview.find(
+          (item) => item.name.trim().toLowerCase() === normalizedQuickItemName
+        ) ?? null)
+      : null;
   const canSubmitCatalogEdit =
     Boolean(editingLineItem?.id && editingLineItem.catalogItemId) &&
     editItemName.trim().length > 0 &&
@@ -452,17 +492,19 @@ export function ItemsSection({
     editItemPrice.trim().length > 0 &&
     estimateStatus !== "approved";
   const normalizedEditItemName = editItemName.trim().toLowerCase();
-  const editDuplicateItem = normalizedEditItemName.length > 0
-    ? catalogItemsForReview.find(
-        (item) =>
-          item.id !== editingLineItem?.catalogItemId &&
-          item.name.trim().toLowerCase() === normalizedEditItemName
-      ) ?? null
-    : null;
+  const editDuplicateItem =
+    normalizedEditItemName.length > 0
+      ? (catalogItemsForReview.find(
+          (item) =>
+            item.id !== editingLineItem?.catalogItemId &&
+            item.name.trim().toLowerCase() === normalizedEditItemName
+        ) ?? null)
+      : null;
   const selectedAddItemGroup =
     selectedAddItemGroupId == null
       ? null
-      : itemGroups.find((group) => group.id === selectedAddItemGroupId) ?? null;
+      : (itemGroups.find((group) => group.id === selectedAddItemGroupId) ??
+        null);
 
   return (
     <section className="border-t border-[#e6e9ef] bg-white">
@@ -492,11 +534,11 @@ export function ItemsSection({
         >
           <span className="flex min-w-0 items-center gap-2">
             <Package className="h-4 w-4 text-[#d8731f]" />
-            <span>Add item sources</span>
+            <span>Build proposal section</span>
             <span className="hidden text-[12px] font-medium text-[#666666] sm:inline">
               {selectedAddItemGroup
-                ? `Adding catalog items into ${selectedAddItemGroup.label}`
-                : "Catalog item, system expansion, or previous estimate import"}
+                ? `Adding items into ${selectedAddItemGroup.label}`
+                : "Catalog, system, custom, or previous estimate import"}
             </span>
           </span>
           <span className="rounded-full border border-[#d6d6d6] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#666666]">
@@ -505,709 +547,820 @@ export function ItemsSection({
         </summary>
 
         <div className="grid gap-4 px-4 pb-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
-        <div className="order-3 rounded-[12px] border border-[#dfe5ef] bg-white p-4 xl:col-span-2">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <div className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#5f5f5f]">
-                Catalog Items
+          <div className="order-3 rounded-[12px] border border-[#dfe5ef] bg-white p-4 xl:col-span-2">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <div className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#5f5f5f]">
+                  Catalog-backed items
+                </div>
+                <p className="mt-1 max-w-3xl text-[13px] leading-5 text-[#6b7c96]">
+                  Start from reusable catalog items, then add active non-system
+                  items to this estimate as proposal snapshots. Internal cost
+                  details stay here for contractor review.
+                </p>
               </div>
-              <p className="mt-1 max-w-3xl text-[13px] leading-5 text-[#6b7c96]">
-                Catalog items are reusable cost items for future estimates, invoices, and materials
-                planning. Selecting a row previews its details; active non-system items can be
-                added to this estimate as locked snapshots.
-              </p>
+              <span className="inline-flex w-fit rounded-full border border-[#f0c7a5] bg-[#fff7ef] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#a4581a]">
+                Active direct items can be added
+              </span>
             </div>
-            <span className="inline-flex w-fit rounded-full border border-[#f0c7a5] bg-[#fff7ef] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#a4581a]">
-              Active direct items can be added
-            </span>
-          </div>
 
-          <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(280px,0.7fr)]">
-            <div>
-              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_220px]">
-                <label className="text-[12px] font-medium text-[#5d6f8a]">
-                  Search by name
-                  <div className="mt-1.5 flex h-10 items-center rounded-[8px] border border-[#d6d6d6] bg-white px-3">
-                    <Search className="h-4 w-4 text-[#7b8aa3]" />
-                    <input
-                      value={catalogPreviewSearch}
-                      onChange={(event) => setCatalogPreviewSearch(event.target.value)}
-                      placeholder="Search catalog items"
-                      className="h-full w-full border-0 bg-transparent px-3 text-[14px] text-[#2a2a2a] outline-none"
-                      data-testid="estimate-catalog-preview-search"
-                    />
-                  </div>
-                </label>
-                <label className="text-[12px] font-medium text-[#5d6f8a]">
-                  Type
-                  <select
-                    value={catalogPreviewType}
-                    onChange={(event) => setCatalogPreviewType(event.target.value)}
-                    className="mt-1.5 h-10 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
-                  >
-                    <option value="all">All types</option>
-                    {catalogPreviewTypeOptions.map((itemType) => (
-                      <option key={itemType} value={itemType}>
-                        {formatCatalogTypeLabel(itemType)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="text-[12px] font-medium text-[#5d6f8a]">
-                  Category
-                  <select
-                    value={catalogPreviewCategory}
-                    onChange={(event) => setCatalogPreviewCategory(event.target.value)}
-                    className="mt-1.5 h-10 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
-                  >
-                    <option value="all">All categories</option>
-                    {catalogPreviewCategoryOptions.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
-              <div className="mt-4 overflow-hidden rounded-[10px] border border-[#e1e7f0]">
-                <div className="overflow-x-auto">
-                  <div className="min-w-[760px]">
-                    <div className="grid grid-cols-[minmax(0,1.35fr)_minmax(120px,0.55fr)_88px_120px_82px_92px] bg-[#f8f8f8] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#666666]">
-                      <span>Name</span>
-                      <span>Type / Category</span>
-                      <span>Unit</span>
-                      <span className="text-right">Default Price</span>
-                      <span className="text-center">Taxable</span>
-                      <span className="text-right">Status</span>
+            <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(280px,0.7fr)]">
+              <div>
+                <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_220px]">
+                  <label className="text-[12px] font-medium text-[#5d6f8a]">
+                    Search by name
+                    <div className="mt-1.5 flex h-10 items-center rounded-[8px] border border-[#d6d6d6] bg-white px-3">
+                      <Search className="h-4 w-4 text-[#7b8aa3]" />
+                      <input
+                        value={catalogPreviewSearch}
+                        onChange={(event) =>
+                          setCatalogPreviewSearch(event.target.value)
+                        }
+                        placeholder="Search catalog items"
+                        className="h-full w-full border-0 bg-transparent px-3 text-[14px] text-[#2a2a2a] outline-none"
+                        data-testid="estimate-catalog-preview-search"
+                      />
                     </div>
-                    <div className="max-h-[300px] overflow-auto">
-                      {filteredCatalogPreviewItems.map((item) => {
-                        const isSelected = selectedCatalogPreviewItem?.id === item.id;
+                  </label>
+                  <label className="text-[12px] font-medium text-[#5d6f8a]">
+                    Type
+                    <select
+                      value={catalogPreviewType}
+                      onChange={(event) =>
+                        setCatalogPreviewType(event.target.value)
+                      }
+                      className="mt-1.5 h-10 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
+                    >
+                      <option value="all">All types</option>
+                      {catalogPreviewTypeOptions.map((itemType) => (
+                        <option key={itemType} value={itemType}>
+                          {formatCatalogTypeLabel(itemType)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="text-[12px] font-medium text-[#5d6f8a]">
+                    Category
+                    <select
+                      value={catalogPreviewCategory}
+                      onChange={(event) =>
+                        setCatalogPreviewCategory(event.target.value)
+                      }
+                      className="mt-1.5 h-10 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
+                    >
+                      <option value="all">All categories</option>
+                      {catalogPreviewCategoryOptions.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
 
-                        return (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => setSelectedCatalogPreviewId(item.id)}
-                            className={[
-                              "grid w-full grid-cols-[minmax(0,1.35fr)_minmax(120px,0.55fr)_88px_120px_82px_92px] items-center gap-0 border-t border-[#e5e5e5] px-3 py-3 text-left text-[13px] transition",
-                              isSelected ? "bg-[#fff7ef]" : "bg-white hover:bg-[#f8f8f8]"
-                            ].join(" ")}
-                            data-testid="estimate-catalog-preview-row"
-                            data-catalog-item-name={item.name}
-                            data-catalog-item-status={item.status}
-                            data-catalog-item-type={item.itemType}
-                          >
-                            <span className="min-w-0">
-                              <span className="block truncate font-semibold text-[#171717]">
-                                {item.name}
+                <div className="mt-4 overflow-hidden rounded-[10px] border border-[#e1e7f0]">
+                  <div className="overflow-x-auto">
+                    <div className="min-w-[760px]">
+                      <div className="grid grid-cols-[minmax(0,1.35fr)_minmax(120px,0.55fr)_88px_120px_82px_92px] bg-[#f8f8f8] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#666666]">
+                        <span>Name</span>
+                        <span>Type / Category</span>
+                        <span>Unit</span>
+                        <span className="text-right">Default Price</span>
+                        <span className="text-center">Taxable</span>
+                        <span className="text-right">Status</span>
+                      </div>
+                      <div className="max-h-[300px] overflow-auto">
+                        {filteredCatalogPreviewItems.map((item) => {
+                          const isSelected =
+                            selectedCatalogPreviewItem?.id === item.id;
+
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() =>
+                                setSelectedCatalogPreviewId(item.id)
+                              }
+                              className={[
+                                "grid w-full grid-cols-[minmax(0,1.35fr)_minmax(120px,0.55fr)_88px_120px_82px_92px] items-center gap-0 border-t border-[#e5e5e5] px-3 py-3 text-left text-[13px] transition",
+                                isSelected
+                                  ? "bg-[#fff7ef]"
+                                  : "bg-white hover:bg-[#f8f8f8]"
+                              ].join(" ")}
+                              data-testid="estimate-catalog-preview-row"
+                              data-catalog-item-name={item.name}
+                              data-catalog-item-status={item.status}
+                              data-catalog-item-type={item.itemType}
+                            >
+                              <span className="min-w-0">
+                                <span className="block truncate font-semibold text-[#171717]">
+                                  {item.name}
+                                </span>
+                                <span className="mt-0.5 block truncate text-[11px] text-[#8a98ad]">
+                                  {item.sku ||
+                                    item.costCode ||
+                                    item.description ||
+                                    "Reusable cost item"}
+                                </span>
                               </span>
-                              <span className="mt-0.5 block truncate text-[11px] text-[#8a98ad]">
-                                {item.sku || item.costCode || item.description || "Reusable cost item"}
+                              <span className="min-w-0 text-[#5d6f8a]">
+                                <span className="block truncate">
+                                  {formatCatalogTypeLabel(item.itemType)}
+                                </span>
+                                <span className="mt-0.5 block truncate text-[11px] text-[#8a98ad]">
+                                  {getCatalogCategoryLabel(item)}
+                                </span>
                               </span>
-                            </span>
-                            <span className="min-w-0 text-[#5d6f8a]">
-                              <span className="block truncate">
-                                {formatCatalogTypeLabel(item.itemType)}
+                              <span className="text-[#2a2a2a]">
+                                {formatUnitLabel(item.unit)}
                               </span>
-                              <span className="mt-0.5 block truncate text-[11px] text-[#8a98ad]">
-                                {getCatalogCategoryLabel(item)}
+                              <span className="text-right font-semibold text-[#171717]">
+                                {formatCatalogCurrency(item.defaultUnitPrice)}
                               </span>
-                            </span>
-                            <span className="text-[#2a2a2a]">{formatUnitLabel(item.unit)}</span>
-                            <span className="text-right font-semibold text-[#171717]">
-                              {formatCatalogCurrency(item.defaultUnitPrice)}
-                            </span>
-                            <span className="text-center text-[#5d6f8a]">
-                              {item.taxable ? "Yes" : "No"}
-                            </span>
-                            <span className="text-right">
-                              <span
-                                className={[
-                                  "inline-flex rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]",
-                                  item.status === "active"
-                                    ? "bg-emerald-50 text-emerald-700"
-                                    : "bg-slate-100 text-slate-600"
-                                ].join(" ")}
-                              >
-                                {item.status === "active" ? "Active" : "Archived"}
+                              <span className="text-center text-[#5d6f8a]">
+                                {item.taxable ? "Yes" : "No"}
                               </span>
-                            </span>
-                          </button>
-                        );
-                      })}
-                      {filteredCatalogPreviewItems.length === 0 ? (
-                        <div className="border-t border-[#e5e5e5] bg-[#f8f8f8] px-4 py-8 text-center text-[14px] leading-6 text-[#666666]">
-                          No catalog items match this search yet. Catalog items are reusable cost
-                          items for estimates, invoices, and materials planning.
-                        </div>
-                      ) : null}
+                              <span className="text-right">
+                                <span
+                                  className={[
+                                    "inline-flex rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]",
+                                    item.status === "active"
+                                      ? "bg-emerald-50 text-emerald-700"
+                                      : "bg-slate-100 text-slate-600"
+                                  ].join(" ")}
+                                >
+                                  {item.status === "active"
+                                    ? "Active"
+                                    : "Archived"}
+                                </span>
+                              </span>
+                            </button>
+                          );
+                        })}
+                        {filteredCatalogPreviewItems.length === 0 ? (
+                          <div className="border-t border-[#e5e5e5] bg-[#f8f8f8] px-4 py-8 text-center text-[14px] leading-6 text-[#666666]">
+                            No catalog items match this search yet. Catalog
+                            items are reusable cost items for estimates,
+                            invoices, and materials planning.
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <aside className="rounded-[10px] border border-[#dfe5ef] bg-[#f8f8f8] p-4">
-              {selectedCatalogPreviewItem ? (
-                <div>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#666666]">
-                        Preview
-                      </p>
-                      <h3 className="mt-1 break-words text-[17px] font-semibold leading-6 text-[#171717]">
-                        {selectedCatalogPreviewItem.name}
-                      </h3>
+              <aside className="rounded-[10px] border border-[#dfe5ef] bg-[#f8f8f8] p-4">
+                {selectedCatalogPreviewItem ? (
+                  <div>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#666666]">
+                          Preview
+                        </p>
+                        <h3 className="mt-1 break-words text-[17px] font-semibold leading-6 text-[#171717]">
+                          {selectedCatalogPreviewItem.name}
+                        </h3>
+                      </div>
+                      <span
+                        className={[
+                          "shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]",
+                          selectedCatalogPreviewItem.status === "active"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-slate-100 text-slate-600"
+                        ].join(" ")}
+                      >
+                        {selectedCatalogPreviewItem.status === "active"
+                          ? "Active"
+                          : "Archived"}
+                      </span>
                     </div>
-                    <span
+                    <p className="mt-3 text-[13px] leading-5 text-[#6b7c96]">
+                      {selectedCatalogPreviewItem.description ||
+                        "No description saved for this reusable cost item yet."}
+                    </p>
+                    <dl className="mt-4 grid grid-cols-2 gap-3 text-[12px]">
+                      <div className="rounded-[8px] bg-white p-3">
+                        <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
+                          Type
+                        </dt>
+                        <dd className="mt-1 text-[14px] font-semibold text-[#171717]">
+                          {formatCatalogTypeLabel(
+                            selectedCatalogPreviewItem.itemType
+                          )}
+                        </dd>
+                      </div>
+                      <div className="rounded-[8px] bg-white p-3">
+                        <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
+                          Category
+                        </dt>
+                        <dd className="mt-1 text-[14px] font-semibold text-[#171717]">
+                          {getCatalogCategoryLabel(selectedCatalogPreviewItem)}
+                        </dd>
+                      </div>
+                      <div className="rounded-[8px] bg-white p-3">
+                        <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
+                          Unit
+                        </dt>
+                        <dd className="mt-1 text-[14px] font-semibold text-[#171717]">
+                          {formatUnitLabel(selectedCatalogPreviewItem.unit)}
+                        </dd>
+                      </div>
+                      <div className="rounded-[8px] bg-white p-3">
+                        <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
+                          Default Price
+                        </dt>
+                        <dd className="mt-1 text-[14px] font-semibold text-[#171717]">
+                          {formatCatalogCurrency(
+                            selectedCatalogPreviewItem.defaultUnitPrice
+                          )}
+                        </dd>
+                      </div>
+                      <div className="rounded-[8px] bg-white p-3">
+                        <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
+                          Taxable
+                        </dt>
+                        <dd className="mt-1 text-[14px] font-semibold text-[#171717]">
+                          {selectedCatalogPreviewItem.taxable ? "Yes" : "No"}
+                        </dd>
+                      </div>
+                      <div className="rounded-[8px] bg-white p-3">
+                        <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
+                          Code
+                        </dt>
+                        <dd className="mt-1 truncate text-[14px] font-semibold text-[#171717]">
+                          {selectedCatalogPreviewItem.sku ||
+                            selectedCatalogPreviewItem.costCode ||
+                            "Not set"}
+                        </dd>
+                      </div>
+                    </dl>
+                    <button
+                      type="button"
+                      disabled={
+                        !canAddSelectedCatalogPreviewItem ||
+                        isCatalogPreviewAddPending
+                      }
+                      onClick={() => {
+                        if (
+                          !selectedCatalogPreviewItem ||
+                          !canAddSelectedCatalogPreviewItem
+                        ) {
+                          return;
+                        }
+
+                        onAddPreviewCatalogItem(
+                          selectedCatalogPreviewItem.id,
+                          selectedAddItemGroupId
+                        );
+                      }}
                       className={[
-                        "shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]",
-                        selectedCatalogPreviewItem.status === "active"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-slate-100 text-slate-600"
+                        "mt-4 inline-flex h-10 w-full items-center justify-center rounded-[8px] border px-4 text-[13px] font-semibold transition",
+                        canAddSelectedCatalogPreviewItem &&
+                        !isCatalogPreviewAddPending
+                          ? "border-[#d8731f] bg-[#d8731f] text-white hover:bg-[#bf6519]"
+                          : "border-[#d6d6d6] bg-white text-[#8a98ad]"
                       ].join(" ")}
+                      title={selectedCatalogPreviewAddTitle}
+                      data-testid="estimate-catalog-preview-add"
                     >
-                      {selectedCatalogPreviewItem.status === "active" ? "Active" : "Archived"}
-                    </span>
+                      {selectedCatalogPreviewAddLabel}
+                    </button>
+                    {catalogPreviewAddMessage ? (
+                      <p className="mt-2 rounded-[8px] border border-[#dfe5ef] bg-white px-3 py-2 text-[12px] leading-5 text-[#6b7c96]">
+                        {catalogPreviewAddMessage}
+                      </p>
+                    ) : null}
                   </div>
-                  <p className="mt-3 text-[13px] leading-5 text-[#6b7c96]">
-                    {selectedCatalogPreviewItem.description ||
-                      "No description saved for this reusable cost item yet."}
-                  </p>
-                  <dl className="mt-4 grid grid-cols-2 gap-3 text-[12px]">
-                    <div className="rounded-[8px] bg-white p-3">
-                      <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
-                        Type
-                      </dt>
-                      <dd className="mt-1 text-[14px] font-semibold text-[#171717]">
-                        {formatCatalogTypeLabel(selectedCatalogPreviewItem.itemType)}
-                      </dd>
-                    </div>
-                    <div className="rounded-[8px] bg-white p-3">
-                      <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
-                        Category
-                      </dt>
-                      <dd className="mt-1 text-[14px] font-semibold text-[#171717]">
-                        {getCatalogCategoryLabel(selectedCatalogPreviewItem)}
-                      </dd>
-                    </div>
-                    <div className="rounded-[8px] bg-white p-3">
-                      <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
-                        Unit
-                      </dt>
-                      <dd className="mt-1 text-[14px] font-semibold text-[#171717]">
-                        {formatUnitLabel(selectedCatalogPreviewItem.unit)}
-                      </dd>
-                    </div>
-                    <div className="rounded-[8px] bg-white p-3">
-                      <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
-                        Default Price
-                      </dt>
-                      <dd className="mt-1 text-[14px] font-semibold text-[#171717]">
-                        {formatCatalogCurrency(selectedCatalogPreviewItem.defaultUnitPrice)}
-                      </dd>
-                    </div>
-                    <div className="rounded-[8px] bg-white p-3">
-                      <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
-                        Taxable
-                      </dt>
-                      <dd className="mt-1 text-[14px] font-semibold text-[#171717]">
-                        {selectedCatalogPreviewItem.taxable ? "Yes" : "No"}
-                      </dd>
-                    </div>
-                    <div className="rounded-[8px] bg-white p-3">
-                      <dt className="font-semibold uppercase tracking-[0.08em] text-[#8a98ad]">
-                        Code
-                      </dt>
-                      <dd className="mt-1 truncate text-[14px] font-semibold text-[#171717]">
-                        {selectedCatalogPreviewItem.sku ||
-                          selectedCatalogPreviewItem.costCode ||
-                          "Not set"}
-                      </dd>
-                    </div>
-                  </dl>
-                  <button
-                    type="button"
-                    disabled={!canAddSelectedCatalogPreviewItem || isCatalogPreviewAddPending}
-                    onClick={() => {
-                      if (!selectedCatalogPreviewItem || !canAddSelectedCatalogPreviewItem) {
+                ) : (
+                  <div className="flex min-h-[260px] items-center justify-center rounded-[8px] border border-dashed border-[#d6d6d6] bg-white px-4 text-center text-[13px] leading-6 text-[#666666]">
+                    Select a catalog item to preview reusable cost, unit,
+                    taxability, and status details before adding an active
+                    direct item to this estimate.
+                  </div>
+                )}
+              </aside>
+            </div>
+          </div>
+
+          <div className="order-2 rounded-[12px] border border-[#dfe5ef] bg-white p-4 xl:order-2">
+            <div className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#5f5f5f]">
+              Other item paths
+            </div>
+            <div className="mb-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCreateItemForm((current) => !current)}
+                className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d6d6d6] bg-white px-4 text-[14px] font-medium text-[#5f5f5f]"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Create new item</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCreateItemForm(false);
+                  catalogSearchInputRef.current?.focus();
+                }}
+                className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d6d6d6] bg-white px-4 text-[14px] font-medium text-[#2a2a2a]"
+              >
+                <Package className="h-4 w-4" />
+                <span>Add from catalog</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCreateItemForm(false);
+                  setShowImportTools((current) => !current);
+                }}
+                className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d6d6d6] bg-white px-4 text-[14px] font-medium text-[#5f5f5f]"
+              >
+                <FileDown className="h-4 w-4" />
+                <span>Import</span>
+              </button>
+            </div>
+            <details
+              open={showImportTools}
+              onToggle={(event) => setShowImportTools(event.currentTarget.open)}
+              className="mb-4 rounded-[10px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-3"
+            >
+              <summary className="cursor-pointer text-[13px] font-medium text-[#48617f]">
+                Import from another estimate
+              </summary>
+              <div className="mt-3">
+                <EstimateImportChooser
+                  estimateStatus={estimateStatus}
+                  importSourceEstimates={importSourceEstimates}
+                  onImportLineItemsFromEstimate={onImportLineItemsFromEstimate}
+                  onImportReusableContentFromEstimate={
+                    onImportReusableContentFromEstimate
+                  }
+                />
+              </div>
+            </details>
+            <div className="mb-3">
+              <label className="text-[12px] font-medium text-[#5d6f8a]">
+                Add from catalog / cost database
+                <div className="mt-1.5 flex h-11 items-center rounded-[8px] border border-[#d6d6d6] bg-white px-3">
+                  <Search className="h-4 w-4 text-[#7b8aa3]" />
+                  <input
+                    ref={catalogSearchInputRef}
+                    value={itemSearch}
+                    onChange={(event) => setItemSearch(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter" || !firstQuickAddItem) {
                         return;
                       }
 
-                      onAddPreviewCatalogItem(
-                        selectedCatalogPreviewItem.id,
+                      event.preventDefault();
+                      onQuickAddCatalogItem(
+                        firstQuickAddItem.id,
                         selectedAddItemGroupId
                       );
                     }}
-                    className={[
-                      "mt-4 inline-flex h-10 w-full items-center justify-center rounded-[8px] border px-4 text-[13px] font-semibold transition",
-                      canAddSelectedCatalogPreviewItem && !isCatalogPreviewAddPending
-                        ? "border-[#d8731f] bg-[#d8731f] text-white hover:bg-[#bf6519]"
-                        : "border-[#d6d6d6] bg-white text-[#8a98ad]"
-                    ].join(" ")}
-                    title={selectedCatalogPreviewAddTitle}
-                    data-testid="estimate-catalog-preview-add"
-                  >
-                    {selectedCatalogPreviewAddLabel}
-                  </button>
-                  {catalogPreviewAddMessage ? (
-                    <p className="mt-2 rounded-[8px] border border-[#dfe5ef] bg-white px-3 py-2 text-[12px] leading-5 text-[#6b7c96]">
-                      {catalogPreviewAddMessage}
+                    placeholder="Search reusable items and systems"
+                    className="h-full w-full border-0 bg-transparent px-3 text-[14px] text-[#2a2a2a] outline-none"
+                    data-testid="estimate-catalog-search"
+                  />
+                </div>
+              </label>
+            </div>
+            {firstQuickAddItem ? (
+              <div className="mb-3 text-[12px] text-[#6b7c96]">
+                Press Enter to add{" "}
+                <span className="font-medium text-[#2a2a2a]">
+                  {firstQuickAddItem.name}
+                </span>{" "}
+                as an estimate item.
+              </div>
+            ) : null}
+            {quickAddItems.length > 0 ? (
+              <div className="mt-3">
+                <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#666666]">
+                  {hasItemSearch
+                    ? "Catalog quick matches"
+                    : "Suggested catalog items"}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {quickAddItems.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() =>
+                        onQuickAddCatalogItem(item.id, selectedAddItemGroupId)
+                      }
+                      className="inline-flex items-center gap-2 rounded-full border border-[#d6d6d6] bg-white px-3 py-1.5 text-[13px] font-medium text-[#2a2a2a]"
+                      data-testid="estimate-catalog-quick-add"
+                      data-catalog-item-name={item.name}
+                    >
+                      <Package className="h-3.5 w-3.5" />
+                      <span>{item.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="mt-3 rounded-[8px] border border-dashed border-[#d6d6d6] bg-[#f8f8f8] px-3 py-3 text-[13px] leading-5 text-[#666666]">
+                {hasItemSearch
+                  ? "No active direct catalog items match this search. Try a different item name or create a new catalog item."
+                  : "Start typing to search catalog items. Suggested active items will appear here from the current catalog order."}
+              </div>
+            )}
+            {showCreateItemForm ? (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4 py-6">
+                <div className="w-full max-w-xl rounded-[10px] border border-[#d6d6d6] bg-white shadow-[0_24px_80px_-38px_rgba(15,23,42,0.65)]">
+                  <div className="flex items-start justify-between gap-4 border-b border-[#e6e9ef] px-5 py-4">
+                    <div>
+                      <h2 className="text-[18px] font-semibold text-[#171717]">
+                        Create Catalog Item
+                      </h2>
+                      <p className="mt-1 text-[13px] leading-5 text-[#6b7c96]">
+                        Create the reusable catalog item first, then add it to
+                        this estimate immediately.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateItemForm(false)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] border border-[#d6d6d6] text-[#5d6f8a]"
+                      title="Close"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="grid gap-3 px-5 py-4 md:grid-cols-2">
+                    <label className="text-[12px] font-medium text-[#5d6f8a]">
+                      Name
+                      <input
+                        value={quickItemName}
+                        onChange={(event) =>
+                          setQuickItemName(event.target.value)
+                        }
+                        className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
+                      />
+                    </label>
+                    <label className="text-[12px] font-medium text-[#5d6f8a]">
+                      Unit
+                      <input
+                        value={quickItemUnit}
+                        onChange={(event) =>
+                          setQuickItemUnit(event.target.value)
+                        }
+                        className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
+                      />
+                    </label>
+                    <label className="text-[12px] font-medium text-[#5d6f8a]">
+                      Price
+                      <input
+                        value={quickItemPrice}
+                        onChange={(event) =>
+                          setQuickItemPrice(event.target.value)
+                        }
+                        className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
+                      />
+                    </label>
+                    <label className="md:col-span-2 text-[12px] font-medium text-[#5d6f8a]">
+                      Description
+                      <textarea
+                        value={quickItemDescription}
+                        onChange={(event) =>
+                          setQuickItemDescription(event.target.value)
+                        }
+                        className="mt-1.5 min-h-20 w-full rounded-[8px] border border-[#d6d6d6] px-3 py-2 text-[14px] text-[#2a2a2a] outline-none"
+                      />
+                    </label>
+                    <label className="inline-flex items-center gap-2 text-[13px] font-medium text-[#2a2a2a]">
+                      <input
+                        type="checkbox"
+                        checked={quickItemTaxable}
+                        onChange={(event) =>
+                          setQuickItemTaxable(event.target.checked)
+                        }
+                        className="h-4 w-4 rounded border-[#cbd4e1] text-[#d8731f] focus:ring-[#d8731f]"
+                      />
+                      Taxable
+                    </label>
+                  </div>
+                  {quickCreateDuplicateItem ? (
+                    <p className="mt-3 text-[13px] text-amber-800">
+                      A catalog item named "{quickCreateDuplicateItem.name}"
+                      already exists. You can still save with a different name
+                      or add the existing item from catalog.
                     </p>
                   ) : null}
+                  {inventoryCreateError ? (
+                    <p className="px-5 text-[13px] text-rose-700">
+                      {inventoryCreateError}
+                    </p>
+                  ) : null}
+                  <div className="flex justify-end gap-2 border-t border-[#e6e9ef] px-5 py-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateItemForm(false)}
+                      className="rounded-[8px] border border-[#d6d6d6] px-4 py-2 text-[14px] font-medium text-[#2a2a2a]"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void (async () => {
+                          const didCreate = await onQuickCreateCatalogItem({
+                            name: quickItemName,
+                            description:
+                              quickItemDescription.trim().length > 0
+                                ? quickItemDescription
+                                : null,
+                            unit: quickItemUnit,
+                            defaultUnitPrice: quickItemPrice,
+                            taxable: quickItemTaxable
+                          });
+                          if (didCreate) {
+                            setQuickItemName("");
+                            setQuickItemDescription("");
+                            setQuickItemUnit("each");
+                            setQuickItemPrice("");
+                            setQuickItemTaxable(true);
+                            setShowCreateItemForm(false);
+                          }
+                        })();
+                      }}
+                      disabled={!canSubmitQuickCreate}
+                      className="rounded-[8px] bg-[#ef7d32] px-4 py-2 text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:bg-[#9fb7ea]"
+                    >
+                      Create item and add to estimate
+                    </button>
+                  </div>
                 </div>
-              ) : (
-                <div className="flex min-h-[260px] items-center justify-center rounded-[8px] border border-dashed border-[#d6d6d6] bg-white px-4 text-center text-[13px] leading-6 text-[#666666]">
-                  Select a catalog item to preview reusable cost, unit, taxability, and status
-                  details before adding an active direct item to this estimate.
-                </div>
-              )}
-            </aside>
+              </div>
+            ) : null}
           </div>
-        </div>
 
-        <div className="order-2 rounded-[12px] border border-[#dfe5ef] bg-white p-4 xl:order-2">
-          <div className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#5f5f5f]">
-            More ways to add items
-          </div>
-          <div className="mb-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setShowCreateItemForm((current) => !current)}
-              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d6d6d6] bg-white px-4 text-[14px] font-medium text-[#5f5f5f]"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Create new item</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowCreateItemForm(false);
-                catalogSearchInputRef.current?.focus();
-              }}
-              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d6d6d6] bg-white px-4 text-[14px] font-medium text-[#2a2a2a]"
-            >
-              <Package className="h-4 w-4" />
-              <span>Add from catalog</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowCreateItemForm(false);
-                setShowImportTools((current) => !current);
-              }}
-              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d6d6d6] bg-white px-4 text-[14px] font-medium text-[#5f5f5f]"
-            >
-              <FileDown className="h-4 w-4" />
-              <span>Import</span>
-            </button>
-          </div>
-          <details
-            open={showImportTools}
-            onToggle={(event) => setShowImportTools(event.currentTarget.open)}
-            className="mb-4 rounded-[10px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-3"
+          <div
+            id="system-estimate-builder"
+            className="order-1 rounded-[12px] border border-[#dfe5ef] bg-white p-4 xl:order-1"
           >
-            <summary className="cursor-pointer text-[13px] font-medium text-[#48617f]">
-              Import from another estimate
-            </summary>
-            <div className="mt-3">
-              <EstimateImportChooser
-                estimateStatus={estimateStatus}
-                importSourceEstimates={importSourceEstimates}
-                onImportLineItemsFromEstimate={onImportLineItemsFromEstimate}
-                onImportReusableContentFromEstimate={onImportReusableContentFromEstimate}
-              />
+            <div className="mb-2 inline-flex rounded-full border border-[#f0c7a5] bg-[#fff7ef] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#a4581a]">
+              System-generated items
             </div>
-          </details>
-          <div className="mb-3">
-            <label className="text-[12px] font-medium text-[#5d6f8a]">
-              Add from catalog / cost database
-              <div className="mt-1.5 flex h-11 items-center rounded-[8px] border border-[#d6d6d6] bg-white px-3">
-                <Search className="h-4 w-4 text-[#7b8aa3]" />
-                <input
-                  ref={catalogSearchInputRef}
-                  value={itemSearch}
-                  onChange={(event) => setItemSearch(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key !== "Enter" || !firstQuickAddItem) {
-                      return;
-                    }
-
-                    event.preventDefault();
-                    onQuickAddCatalogItem(firstQuickAddItem.id, selectedAddItemGroupId);
-                  }}
-                  placeholder="Search reusable items and systems"
-                  className="h-full w-full border-0 bg-transparent px-3 text-[14px] text-[#2a2a2a] outline-none"
-                  data-testid="estimate-catalog-search"
-                />
-              </div>
-            </label>
-          </div>
-          {firstQuickAddItem ? (
-            <div className="mb-3 text-[12px] text-[#6b7c96]">
-              Press Enter to add <span className="font-medium text-[#2a2a2a]">{firstQuickAddItem.name}</span> as an estimate item.
+            <div className="mb-4">
+              <h2 className="text-[18px] font-semibold tracking-tight text-[#171717]">
+                Generate items from system
+              </h2>
+              <p className="mt-1 text-[13px] leading-5 text-[#6b7c96]">
+                Pick a reusable system, confirm measured quantities, then
+                generate grouped proposal items for review.
+              </p>
             </div>
-          ) : null}
-          {quickAddItems.length > 0 ? (
-            <div className="mt-3">
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#666666]">
-                {hasItemSearch ? "Catalog quick matches" : "Suggested catalog items"}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {quickAddItems.map((item) => (
+            <div className="flex flex-wrap items-end gap-3">
+              <label className="min-w-[220px] flex-1 text-[12px] font-medium text-[#5d6f8a]">
+                Catalog system
+                <select
+                  value={selectedSystemId}
+                  onChange={(event) =>
+                    onSelectedSystemIdChange(event.target.value)
+                  }
+                  className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
+                >
+                  <option value="">Select system</option>
+                  {systemCatalogItems.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="w-full">
+                <div className="mb-2 inline-flex overflow-hidden rounded-[8px] border border-[#d6d6d6] bg-white text-[13px] font-medium">
                   <button
-                    key={item.id}
                     type="button"
-                    onClick={() => onQuickAddCatalogItem(item.id, selectedAddItemGroupId)}
-                    className="inline-flex items-center gap-2 rounded-full border border-[#d6d6d6] bg-white px-3 py-1.5 text-[13px] font-medium text-[#2a2a2a]"
-                    data-testid="estimate-catalog-quick-add"
-                    data-catalog-item-name={item.name}
+                    onClick={() =>
+                      onSystemMeasurementChange("inputMode", "dimensions")
+                    }
+                    className={
+                      systemInputMode === "dimensions"
+                        ? "bg-[#171717] px-3 py-2 text-white"
+                        : "px-3 py-2 text-[#5d6f8a]"
+                    }
                   >
-                    <Package className="h-3.5 w-3.5" />
-                    <span>{item.name}</span>
+                    Length x Width
                   </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="mt-3 rounded-[8px] border border-dashed border-[#d6d6d6] bg-[#f8f8f8] px-3 py-3 text-[13px] leading-5 text-[#666666]">
-              {hasItemSearch
-                ? "No active direct catalog items match this search. Try a different item name or create a new catalog item."
-                : "Start typing to search catalog items. Suggested active items will appear here from the current catalog order."}
-            </div>
-          )}
-          {showCreateItemForm ? (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4 py-6">
-              <div className="w-full max-w-xl rounded-[10px] border border-[#d6d6d6] bg-white shadow-[0_24px_80px_-38px_rgba(15,23,42,0.65)]">
-              <div className="flex items-start justify-between gap-4 border-b border-[#e6e9ef] px-5 py-4">
-                <div>
-                  <h2 className="text-[18px] font-semibold text-[#171717]">
-                    Create Catalog Item
-                  </h2>
-                  <p className="mt-1 text-[13px] leading-5 text-[#6b7c96]">
-                    Create the reusable catalog item first, then add it to this estimate immediately.
-                  </p>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onSystemMeasurementChange("inputMode", "direct")
+                    }
+                    className={
+                      systemInputMode === "direct"
+                        ? "bg-[#171717] px-3 py-2 text-white"
+                        : "px-3 py-2 text-[#5d6f8a]"
+                    }
+                  >
+                    Direct Area + LF
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowCreateItemForm(false)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] border border-[#d6d6d6] text-[#5d6f8a]"
-                  title="Close"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                {systemInputMode === "dimensions" ? (
+                  <div className="grid gap-3 md:grid-cols-4">
+                    <label className="text-[12px] font-medium text-[#5d6f8a]">
+                      Length
+                      <input
+                        value={systemLength}
+                        onChange={(event) =>
+                          onSystemMeasurementChange(
+                            "length",
+                            event.target.value
+                          )
+                        }
+                        className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
+                      />
+                    </label>
+                    <label className="text-[12px] font-medium text-[#5d6f8a]">
+                      Width
+                      <input
+                        value={systemWidth}
+                        onChange={(event) =>
+                          onSystemMeasurementChange("width", event.target.value)
+                        }
+                        className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
+                      />
+                    </label>
+                    <label className="text-[12px] font-medium text-[#5d6f8a]">
+                      Area (sqft)
+                      <input
+                        value={systemSquareFootage}
+                        readOnly
+                        className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-[#f5f7fb] px-3 text-[14px] text-[#2a2a2a] outline-none"
+                      />
+                    </label>
+                    <label className="text-[12px] font-medium text-[#5d6f8a]">
+                      Perimeter (lf)
+                      <input
+                        value={systemLinearFootage}
+                        readOnly
+                        className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-[#f5f7fb] px-3 text-[14px] text-[#2a2a2a] outline-none"
+                      />
+                    </label>
+                  </div>
+                ) : (
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <label className="text-[12px] font-medium text-[#5d6f8a]">
+                      Direct Area (sqft)
+                      <input
+                        value={systemSquareFootage}
+                        onChange={(event) =>
+                          onSystemMeasurementChange("area", event.target.value)
+                        }
+                        className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
+                      />
+                    </label>
+                    <label className="text-[12px] font-medium text-[#5d6f8a]">
+                      Direct Linear Footage (lf)
+                      <input
+                        value={systemLinearFootage}
+                        onChange={(event) =>
+                          onSystemMeasurementChange(
+                            "linearFootage",
+                            event.target.value
+                          )
+                        }
+                        className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
+                      />
+                    </label>
+                    <label className="text-[12px] font-medium text-[#5d6f8a]">
+                      Count (ea)
+                      <input
+                        value={systemCount}
+                        onChange={(event) =>
+                          onSystemMeasurementChange("count", event.target.value)
+                        }
+                        className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
+                      />
+                    </label>
+                  </div>
+                )}
               </div>
-              <div className="grid gap-3 px-5 py-4 md:grid-cols-2">
-                <label className="text-[12px] font-medium text-[#5d6f8a]">
-                  Name
-                  <input
-                    value={quickItemName}
-                    onChange={(event) => setQuickItemName(event.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
-                  />
-                </label>
-                <label className="text-[12px] font-medium text-[#5d6f8a]">
-                  Unit
-                  <input
-                    value={quickItemUnit}
-                    onChange={(event) => setQuickItemUnit(event.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
-                  />
-                </label>
-                <label className="text-[12px] font-medium text-[#5d6f8a]">
-                  Price
-                  <input
-                    value={quickItemPrice}
-                    onChange={(event) => setQuickItemPrice(event.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
-                  />
-                </label>
-                <label className="md:col-span-2 text-[12px] font-medium text-[#5d6f8a]">
-                  Description
-                  <textarea
-                    value={quickItemDescription}
-                    onChange={(event) => setQuickItemDescription(event.target.value)}
-                    className="mt-1.5 min-h-20 w-full rounded-[8px] border border-[#d6d6d6] px-3 py-2 text-[14px] text-[#2a2a2a] outline-none"
-                  />
-                </label>
-                <label className="inline-flex items-center gap-2 text-[13px] font-medium text-[#2a2a2a]">
-                  <input
-                    type="checkbox"
-                    checked={quickItemTaxable}
-                    onChange={(event) => setQuickItemTaxable(event.target.checked)}
-                    className="h-4 w-4 rounded border-[#cbd4e1] text-[#d8731f] focus:ring-[#d8731f]"
-                  />
-                  Taxable
-                </label>
-              </div>
-              {quickCreateDuplicateItem ? (
-                <p className="mt-3 text-[13px] text-amber-800">
-                  A catalog item named "{quickCreateDuplicateItem.name}" already exists. You can
-                  still save with a different name or add the existing item from catalog.
-                </p>
-              ) : null}
-              {inventoryCreateError ? (
-                <p className="px-5 text-[13px] text-rose-700">{inventoryCreateError}</p>
-              ) : null}
-              <div className="flex justify-end gap-2 border-t border-[#e6e9ef] px-5 py-4">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateItemForm(false)}
-                  className="rounded-[8px] border border-[#d6d6d6] px-4 py-2 text-[14px] font-medium text-[#2a2a2a]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    void (async () => {
-                      const didCreate = await onQuickCreateCatalogItem({
-                        name: quickItemName,
-                        description:
-                          quickItemDescription.trim().length > 0
-                            ? quickItemDescription
-                            : null,
-                        unit: quickItemUnit,
-                        defaultUnitPrice: quickItemPrice,
-                        taxable: quickItemTaxable
-                      });
-                      if (didCreate) {
-                        setQuickItemName("");
-                        setQuickItemDescription("");
-                        setQuickItemUnit("each");
-                        setQuickItemPrice("");
-                        setQuickItemTaxable(true);
-                        setShowCreateItemForm(false);
-                      }
-                    })();
-                  }}
-                  disabled={!canSubmitQuickCreate}
-                  className="rounded-[8px] bg-[#ef7d32] px-4 py-2 text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:bg-[#9fb7ea]"
-                >
-                  Create item and add to estimate
-                </button>
-              </div>
-              </div>
-            </div>
-          ) : null}
-        </div>
-
-        <div
-          id="system-estimate-builder"
-          className="order-1 rounded-[14px] border border-[#efb583] bg-[linear-gradient(180deg,#fff7ef,#ffffff)] p-5 shadow-[0_22px_55px_-42px_rgba(239,125,50,0.95)] xl:order-1"
-        >
-          <div className="mb-2 inline-flex rounded-full bg-[#ef7d32] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white">
-            Generate from System
-          </div>
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold tracking-tight text-[#2b2118]">
-              Generate Estimate from System
-            </h2>
-            <p className="mt-1 text-[13px] leading-5 text-[#6b5a4f]">
-              Pick a system, confirm the measured sqft and lf, then generate grouped estimate items.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="min-w-[220px] flex-1 text-[12px] font-medium text-[#5d6f8a]">
-              Catalog system
-              <select
-                value={selectedSystemId}
-                onChange={(event) => onSelectedSystemIdChange(event.target.value)}
-                className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
+              <button
+                type="button"
+                onClick={onPreviewSystem}
+                disabled={
+                  !selectedSystemId || getNumericValue(systemSquareFootage) <= 0
+                }
+                className="inline-flex h-11 items-center gap-2 rounded-[8px] border border-[#d8be9f] bg-white px-4 text-[14px] font-medium text-[#5f3b20] disabled:cursor-not-allowed disabled:text-[#b7a594]"
               >
-                <option value="">Select system</option>
-                {systemCatalogItems.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="w-full">
-              <div className="mb-2 inline-flex overflow-hidden rounded-[8px] border border-[#d6d6d6] bg-white text-[13px] font-medium">
-                <button
-                  type="button"
-                  onClick={() => onSystemMeasurementChange("inputMode", "dimensions")}
-                  className={systemInputMode === "dimensions" ? "bg-[#171717] px-3 py-2 text-white" : "px-3 py-2 text-[#5d6f8a]"}
-                >
-                  Length x Width
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onSystemMeasurementChange("inputMode", "direct")}
-                  className={systemInputMode === "direct" ? "bg-[#171717] px-3 py-2 text-white" : "px-3 py-2 text-[#5d6f8a]"}
-                >
-                  Direct Area + LF
-                </button>
-              </div>
-              {systemInputMode === "dimensions" ? (
-                <div className="grid gap-3 md:grid-cols-4">
-                  <label className="text-[12px] font-medium text-[#5d6f8a]">
-                    Length
-                    <input
-                      value={systemLength}
-                      onChange={(event) => onSystemMeasurementChange("length", event.target.value)}
-                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
-                    />
-                  </label>
-                  <label className="text-[12px] font-medium text-[#5d6f8a]">
-                    Width
-                    <input
-                      value={systemWidth}
-                      onChange={(event) => onSystemMeasurementChange("width", event.target.value)}
-                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
-                    />
-                  </label>
-                  <label className="text-[12px] font-medium text-[#5d6f8a]">
-                    Area (sqft)
-                    <input
-                      value={systemSquareFootage}
-                      readOnly
-                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-[#f5f7fb] px-3 text-[14px] text-[#2a2a2a] outline-none"
-                    />
-                  </label>
-                  <label className="text-[12px] font-medium text-[#5d6f8a]">
-                    Perimeter (lf)
-                    <input
-                      value={systemLinearFootage}
-                      readOnly
-                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-[#f5f7fb] px-3 text-[14px] text-[#2a2a2a] outline-none"
-                    />
-                  </label>
-                </div>
-              ) : (
-                <div className="grid gap-3 md:grid-cols-3">
-                  <label className="text-[12px] font-medium text-[#5d6f8a]">
-                    Direct Area (sqft)
-                    <input
-                      value={systemSquareFootage}
-                      onChange={(event) => onSystemMeasurementChange("area", event.target.value)}
-                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
-                    />
-                  </label>
-                  <label className="text-[12px] font-medium text-[#5d6f8a]">
-                    Direct Linear Footage (lf)
-                    <input
-                      value={systemLinearFootage}
-                      onChange={(event) => onSystemMeasurementChange("linearFootage", event.target.value)}
-                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
-                    />
-                  </label>
-                  <label className="text-[12px] font-medium text-[#5d6f8a]">
-                    Count (ea)
-                    <input
-                      value={systemCount}
-                      onChange={(event) => onSystemMeasurementChange("count", event.target.value)}
-                      className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] bg-white px-3 text-[14px] text-[#2a2a2a] outline-none"
-                    />
-                  </label>
-                </div>
-              )}
+                <Search className="h-4 w-4" />
+                <span>
+                  {isPreviewPending ? "Previewing..." : "Preview system"}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={onExpandSystem}
+                disabled={!systemPreview || isPreviewPending}
+                className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-[#ef7d32] px-5 text-[14px] font-semibold text-white disabled:cursor-not-allowed disabled:bg-[#e6b894]"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Generate items</span>
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={onPreviewSystem}
-              disabled={!selectedSystemId || getNumericValue(systemSquareFootage) <= 0}
-              className="inline-flex h-11 items-center gap-2 rounded-[8px] border border-[#d8be9f] bg-white px-4 text-[14px] font-medium text-[#5f3b20] disabled:cursor-not-allowed disabled:text-[#b7a594]"
-            >
-              <Search className="h-4 w-4" />
-              <span>{isPreviewPending ? "Previewing..." : "Preview system"}</span>
-            </button>
-            <button
-              type="button"
-              onClick={onExpandSystem}
-              disabled={!systemPreview || isPreviewPending}
-              className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-[#ef7d32] px-5 text-[14px] font-semibold text-white shadow-[0_14px_30px_-20px_rgba(239,125,50,0.9)] disabled:cursor-not-allowed disabled:bg-[#e6b894]"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Generate items</span>
-            </button>
-          </div>
-          {systemPreviewMessage ? (
-            <div className="mt-3 rounded-[8px] border border-[#d6d6d6] bg-white px-3 py-2 text-[13px] text-[#48617f]">
-              {systemPreviewMessage}
-            </div>
-          ) : null}
-          {systemPreview ? (
-            <div className="mt-4 rounded-[10px] border border-[#d6d6d6] bg-white">
-              <div className="grid gap-3 border-b border-[#e6e9ef] px-3 py-3 text-[12px] text-[#5f5f5f] sm:grid-cols-4">
-                <div>
-                  <span className="block font-semibold uppercase tracking-[0.08em]">
-                    Catalog Items
-                  </span>
-                  <span className="mt-1 block text-[15px] font-semibold text-[#171717]">
-                    {systemPreview.rows.length}
-                  </span>
-                </div>
-                <div>
-                  <span className="block font-semibold uppercase tracking-[0.08em]">
-                    Cost
-                  </span>
-                  <span className="mt-1 block text-[15px] font-semibold text-[#171717]">
-                    ${systemPreview.totalCost}
-                  </span>
-                </div>
-                <div>
-                  <span className="block font-semibold uppercase tracking-[0.08em]">
-                    Price
-                  </span>
-                  <span className="mt-1 block text-[15px] font-semibold text-[#171717]">
-                    ${systemPreview.totalPrice}
-                  </span>
-                </div>
-                <div>
-                  <span className="block font-semibold uppercase tracking-[0.08em]">
-                    Tax Mix
-                  </span>
-                  <span className="mt-1 block text-[13px] font-semibold text-[#171717]">
-                    T ${systemPreview.taxablePrice} / E ${systemPreview.exemptPrice}
-                  </span>
-                </div>
+            {systemPreviewMessage ? (
+              <div className="mt-3 rounded-[8px] border border-[#d6d6d6] bg-white px-3 py-2 text-[13px] text-[#48617f]">
+                {systemPreviewMessage}
               </div>
-              <div className="max-h-[220px] overflow-auto">
-                <table className="min-w-full border-collapse">
-                  <thead>
-                    <tr className="border-b border-[#e6e9ef] bg-[#f8f8f8] text-[11px] uppercase tracking-[0.08em] text-[#666666]">
-                      <th className="px-3 py-2 text-left">Catalog Item</th>
-                      <th className="px-3 py-2 text-right">Qty</th>
-                      <th className="px-3 py-2 text-right">Cost</th>
-                      <th className="px-3 py-2 text-right">Price</th>
-                      <th className="px-3 py-2 text-center">Tax</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {systemPreview.rows.map((row) => (
-                      <tr key={row.componentId} className="border-b border-[#e5e5e5] text-[13px] text-[#2a2a2a]">
-                        <td className="px-3 py-2">
-                          <div className="font-medium">{row.name}</div>
-                          <div className="text-[11px] text-[#8694ab]">{row.unit}</div>
-                        </td>
-                        <td className="px-3 py-2 text-right">{row.quantity}</td>
-                        <td className="px-3 py-2 text-right">${row.lineCost}</td>
-                        <td className="px-3 py-2 text-right">${row.linePrice}</td>
-                        <td className="px-3 py-2 text-center">
-                          {row.taxable ? "T" : "E"}
-                        </td>
+            ) : null}
+            {systemPreview ? (
+              <div className="mt-4 rounded-[10px] border border-[#d6d6d6] bg-white">
+                <div className="grid gap-3 border-b border-[#e6e9ef] px-3 py-3 text-[12px] text-[#5f5f5f] sm:grid-cols-4">
+                  <div>
+                    <span className="block font-semibold uppercase tracking-[0.08em]">
+                    Generated items
+                    </span>
+                    <span className="mt-1 block text-[15px] font-semibold text-[#171717]">
+                      {systemPreview.rows.length}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold uppercase tracking-[0.08em]">
+                      Cost
+                    </span>
+                    <span className="mt-1 block text-[15px] font-semibold text-[#171717]">
+                      ${systemPreview.totalCost}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold uppercase tracking-[0.08em]">
+                      Price
+                    </span>
+                    <span className="mt-1 block text-[15px] font-semibold text-[#171717]">
+                      ${systemPreview.totalPrice}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold uppercase tracking-[0.08em]">
+                      Tax Mix
+                    </span>
+                    <span className="mt-1 block text-[13px] font-semibold text-[#171717]">
+                      T ${systemPreview.taxablePrice} / E $
+                      {systemPreview.exemptPrice}
+                    </span>
+                  </div>
+                </div>
+                <div className="max-h-[220px] overflow-auto">
+                  <table className="min-w-full border-collapse">
+                    <thead>
+                      <tr className="border-b border-[#e6e9ef] bg-[#f8f8f8] text-[11px] uppercase tracking-[0.08em] text-[#666666]">
+                        <th className="px-3 py-2 text-left">Catalog Item</th>
+                        <th className="px-3 py-2 text-right">Qty</th>
+                        <th className="px-3 py-2 text-right">Cost</th>
+                        <th className="px-3 py-2 text-right">Price</th>
+                        <th className="px-3 py-2 text-center">Tax</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {systemPreview.rows.map((row) => (
+                        <tr
+                          key={row.componentId}
+                          className="border-b border-[#e5e5e5] text-[13px] text-[#2a2a2a]"
+                        >
+                          <td className="px-3 py-2">
+                            <div className="font-medium">{row.name}</div>
+                            <div className="text-[11px] text-[#8694ab]">
+                              {row.unit}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {row.quantity}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            ${row.lineCost}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            ${row.linePrice}
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            {row.taxable ? "T" : "E"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          ) : null}
-        </div>
+            ) : null}
+          </div>
         </div>
       </details>
 
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#e6e9ef] px-4 py-3">
         <div className="space-y-1 text-[13px] text-[#666666]">
           <div className="font-semibold uppercase tracking-[0.08em] text-[#171717]">
-            Estimate groups
+            Proposal sections
           </div>
           <div>
-            Tax: <span className="font-medium text-[#171717]">{taxBehaviorLabel}</span> | Rate:{" "}
+            Tax:{" "}
+            <span className="font-medium text-[#171717]">
+              {taxBehaviorLabel}
+            </span>{" "}
+            | Rate:{" "}
             <span className="font-medium text-[#171717]">{taxRateLabel}</span>
             {customerTaxExempt ? (
               <span className="ml-2 rounded-full bg-[#eef3fb] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#5f5f5f]">
@@ -1248,14 +1401,22 @@ export function ItemsSection({
             <button
               type="button"
               onClick={() => onToggleShowOnlyZeroItems(true)}
-              className={showOnlyZeroItems ? "bg-[#ef7d32] px-3 py-1.5 text-white" : "px-3 py-1.5 text-[#777777]"}
+              className={
+                showOnlyZeroItems
+                  ? "bg-[#ef7d32] px-3 py-1.5 text-white"
+                  : "px-3 py-1.5 text-[#777777]"
+              }
             >
               $0 Only
             </button>
             <button
               type="button"
               onClick={() => onToggleShowOnlyZeroItems(false)}
-              className={!showOnlyZeroItems ? "bg-[#ef7d32] px-3 py-1.5 text-white" : "px-3 py-1.5 text-[#777777]"}
+              className={
+                !showOnlyZeroItems
+                  ? "bg-[#ef7d32] px-3 py-1.5 text-white"
+                  : "px-3 py-1.5 text-[#777777]"
+              }
             >
               All
             </button>
@@ -1273,9 +1434,8 @@ export function ItemsSection({
       </div>
 
       <div className="border-b border-[#e6e9ef] bg-white px-4 py-2.5 text-[12px] leading-5 text-[#666666]">
-        Build the estimate by section first. Line items remain locked commercial snapshots from
-        catalog entries or server-expanded systems, and downstream billing does not read live draft
-        editing rows.
+        Build customer-facing proposal sections first. Internal cost, markup,
+        and snapshot controls stay available here for contractor review only.
       </div>
 
       <div className="min-h-[360px] bg-[#f8f9fc] p-3">
@@ -1294,7 +1454,12 @@ export function ItemsSection({
                   {group.id ? (
                     <input
                       value={group.label}
-                      onChange={(event) => onGroupLabelChange(group.id as string, event.target.value)}
+                      onChange={(event) =>
+                        onGroupLabelChange(
+                          group.id as string,
+                          event.target.value
+                        )
+                      }
                       className="h-8 min-w-[220px] rounded-[6px] border border-[#d6d6d6] bg-white px-3 text-[15px] font-semibold text-[#171717] outline-none focus:border-[#d8731f]"
                       data-testid="estimate-group-name-input"
                     />
@@ -1314,7 +1479,7 @@ export function ItemsSection({
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="rounded-[8px] border border-[#e5e5e5] bg-white px-3 py-1.5 text-right">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#777777]">
-                      Subtotal
+                      Section total
                     </div>
                     <div className="text-[15px] font-semibold text-[#171717]">
                       {renderGroupSubtotal(group.rows)}
@@ -1323,9 +1488,12 @@ export function ItemsSection({
                   <button
                     type="button"
                     onClick={() => {
-                        setSelectedAddItemGroupId(group.id);
-                        setShowAddItemTools(true);
-                      window.setTimeout(() => catalogSearchInputRef.current?.focus(), 0);
+                      setSelectedAddItemGroupId(group.id);
+                      setShowAddItemTools(true);
+                      window.setTimeout(
+                        () => catalogSearchInputRef.current?.focus(),
+                        0
+                      );
                     }}
                     className="inline-flex h-9 items-center gap-2 rounded-[6px] border border-[#d8731f] bg-white px-3 text-[13px] font-semibold text-[#a4581a]"
                     data-testid="estimate-group-add-item"
@@ -1352,21 +1520,33 @@ export function ItemsSection({
                     <tr className="border-b border-[#e6e9ef] bg-white text-[11px] uppercase tracking-[0.08em] text-[#666666]">
                       <th className="w-8 px-2 py-2 text-left"></th>
                       <th className="w-[64px] px-2 py-2 text-left">Type</th>
-                      <th className="min-w-[280px] px-2 py-2 text-left">Item Name</th>
-                      <th className="w-[140px] px-2 py-2 text-left">Group</th>
+                      <th className="min-w-[280px] px-2 py-2 text-left">
+                        Customer-facing item
+                      </th>
+                      <th className="w-[140px] px-2 py-2 text-left">Section</th>
                       <th className="w-[84px] px-2 py-2 text-right">Qty</th>
                       <th className="w-[88px] px-2 py-2 text-left">Unit</th>
-                      <th className="w-[120px] px-2 py-2 text-right">Snapshot Cost</th>
-                      {showMarkup ? (
-                        <th className="w-[96px] px-2 py-2 text-right">Snapshot MU%</th>
-                      ) : null}
-                      <th className="w-[96px] px-2 py-2 text-right">Hidden%</th>
-                      <th className="w-[136px] px-2 py-2 text-right">
-                        {showMarkup ? "Locked Sell Price" : "Locked Price"}
+                      <th className="w-[120px] px-2 py-2 text-right">
+                        Internal cost
                       </th>
-                      <th className="w-[120px] px-2 py-2 text-right">Total</th>
+                      {showMarkup ? (
+                        <th className="w-[96px] px-2 py-2 text-right">
+                          Markup
+                        </th>
+                      ) : null}
+                      <th className="w-[96px] px-2 py-2 text-right">
+                        Hidden markup
+                      </th>
+                      <th className="w-[136px] px-2 py-2 text-right">
+                        Unit price
+                      </th>
+                      <th className="w-[120px] px-2 py-2 text-right">
+                        Line total
+                      </th>
                       <th className="w-[72px] px-2 py-2 text-center">Tax</th>
-                      <th className="w-[118px] px-2 py-2 text-left">Assigned To</th>
+                      <th className="w-[118px] px-2 py-2 text-left">
+                        Follow-up
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1383,33 +1563,35 @@ export function ItemsSection({
                         data-group-label={group.label}
                       >
                         <td className="px-2 py-2 text-[#a5b1c4]">
-              <div className="flex flex-col items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => onMoveLineItem(lineItem.rowKey, -1)}
-                  className="text-[#7e8ca3]"
-                >
-                  <ArrowUp className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onMoveLineItem(lineItem.rowKey, 1)}
-                  className="text-[#7e8ca3]"
-                >
-                  <ArrowDown className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onRemoveLineItem(lineItem.rowKey)}
-                  className="text-rose-700"
-                  title="Remove item"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </td>
+                          <div className="flex flex-col items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onMoveLineItem(lineItem.rowKey, -1)
+                              }
+                              className="text-[#7e8ca3]"
+                            >
+                              <ArrowUp className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onMoveLineItem(lineItem.rowKey, 1)}
+                              className="text-[#7e8ca3]"
+                            >
+                              <ArrowDown className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onRemoveLineItem(lineItem.rowKey)}
+                              className="text-rose-700"
+                              title="Remove item"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
                         <td className="px-2 py-2">
-                          <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#e8f0ff] text-[#2f66d7]">
+                          <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#f5f7fb] text-[#5d6f8a]">
                             <Package className="h-4 w-4" />
                           </div>
                           <div className="mt-1 text-[11px] text-[#8694ab]">
@@ -1430,7 +1612,9 @@ export function ItemsSection({
                                 setEditItemDescription(lineItem.description);
                                 setEditItemUnit(lineItem.unit);
                                 setEditItemPrice(lineItem.unitPrice);
-                                setEditItemTaxable(lineItem.taxCode === "taxable");
+                                setEditItemTaxable(
+                                  lineItem.taxCode === "taxable"
+                                );
                               }}
                               disabled={!lineItem.id || !lineItem.catalogItemId}
                               className="inline-flex min-h-7 w-fit max-w-full items-center gap-1 px-0 text-left text-[14px] font-medium text-[#2a2a2a] underline-offset-4 enabled:hover:underline disabled:cursor-default"
@@ -1446,11 +1630,17 @@ export function ItemsSection({
                               ) : null}
                             </button>
                             <div className="min-h-7 px-0 text-[12px] text-[#8694ab]">
-                              {lineItem.description || "Estimate item snapshot from catalog"}
+                              {lineItem.description ||
+                                "Estimate item snapshot from catalog"}
                             </div>
-                            <div className="inline-flex w-fit items-center gap-1 rounded-full bg-[#eef3fb] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#5f5f5f]">
-                              <Lock className="h-3 w-3" />
-                              <span>Locked Estimate Snapshot</span>
+                            <div className="flex flex-wrap gap-1">
+                              <div className="inline-flex w-fit items-center gap-1 rounded-full bg-[#eef3fb] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#5f5f5f]">
+                                <Lock className="h-3 w-3" />
+                                <span>Estimate snapshot</span>
+                              </div>
+                              <span className="inline-flex w-fit rounded-full bg-[#f8f8f8] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7b8aa3]">
+                                {resolveSourceLabel(lineItem)}
+                              </span>
                             </div>
                           </div>
                         </td>
@@ -1458,7 +1648,11 @@ export function ItemsSection({
                           <select
                             value={lineItem.groupId ?? ""}
                             onChange={(event) =>
-                              onLineItemChange(lineItem.rowKey, "groupId", event.target.value)
+                              onLineItemChange(
+                                lineItem.rowKey,
+                                "groupId",
+                                event.target.value
+                              )
                             }
                             className="h-9 w-full rounded-[6px] border border-[#d6d6d6] bg-white px-2 text-[14px] text-[#2a2a2a] outline-none"
                           >
@@ -1474,7 +1668,11 @@ export function ItemsSection({
                           <input
                             value={lineItem.quantity}
                             onChange={(event) =>
-                              onLineItemChange(lineItem.rowKey, "quantity", event.target.value)
+                              onLineItemChange(
+                                lineItem.rowKey,
+                                "quantity",
+                                event.target.value
+                              )
                             }
                             className="h-9 w-full rounded-[6px] border border-[#d6d6d6] bg-white px-2 text-right text-[15px] text-[#2a2a2a] outline-none"
                           />
@@ -1488,22 +1686,25 @@ export function ItemsSection({
                           </div>
                         </td>
                         <td className="px-2 py-2">
-                          <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2 text-right text-[15px] text-[#2a2a2a]">
+                          <div className="rounded-[8px] bg-[#f8f9fc] px-2 py-2 text-right text-[13px] text-[#6b7c96]">
                             {lineItem.baseUnitCost}
                           </div>
                         </td>
                         {showMarkup ? (
                           <td className="px-2 py-2">
-                            <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2 text-right text-[15px] text-[#2a2a2a]">
+                            <div className="rounded-[8px] bg-[#f8f9fc] px-2 py-2 text-right text-[13px] text-[#6b7c96]">
                               {lineItem.markupPercent}%
                             </div>
                           </td>
                         ) : null}
                         <td className="px-2 py-2 text-right">
-                          <div className="rounded-[8px] bg-[#f5f7fb] px-2 py-2 text-[15px] text-[#8694ab]">
+                          <div className="rounded-[8px] bg-[#f8f9fc] px-2 py-2 text-[13px] text-[#8a98ad]">
                             {lineItem.hiddenMarkupPercent}%
                             <div className="mt-1 text-[11px] text-[#a2aec0]">
-                              +${getNumericValue(lineItem.hiddenMarkupAmount).toFixed(2)}
+                              +$
+                              {getNumericValue(
+                                lineItem.hiddenMarkupAmount
+                              ).toFixed(2)}
                             </div>
                           </div>
                         </td>
@@ -1513,13 +1714,18 @@ export function ItemsSection({
                               <input
                                 value={lineItem.unitPrice}
                                 onChange={(event) =>
-                                  onLineItemChange(lineItem.rowKey, "unitPrice", event.target.value)
+                                  onLineItemChange(
+                                    lineItem.rowKey,
+                                    "unitPrice",
+                                    event.target.value
+                                  )
                                 }
                                 className="h-8 w-full rounded-[6px] border border-[#d6d6d6] bg-white px-2 text-right text-[15px] text-[#2a2a2a] outline-none"
                               />
                             </div>
                             <div className="mt-1 text-[12px] text-[#8694ab]">
-                              Catalog price ${getCatalogPriceBasis(lineItem).toFixed(2)}
+                              Catalog basis $
+                              {getCatalogPriceBasis(lineItem).toFixed(2)}
                             </div>
                             {isUnitPriceOverridden(lineItem) ? (
                               <div className="mt-2 inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-900">
@@ -1540,12 +1746,18 @@ export function ItemsSection({
                                 onLineItemChange(
                                   lineItem.rowKey,
                                   "taxCode",
-                                  event.target.checked ? "taxable" : "non-taxable"
+                                  event.target.checked
+                                    ? "taxable"
+                                    : "non-taxable"
                                 )
                               }
                               className="h-4 w-4 rounded border-[#cbd4e1] text-[#d8731f] focus:ring-[#d8731f]"
                             />
-                            <span>{lineItem.taxCode === "taxable" ? "Taxable" : "Exempt"}</span>
+                            <span>
+                              {lineItem.taxCode === "taxable"
+                                ? "Taxable"
+                                : "Exempt"}
+                            </span>
                           </label>
                           {customerTaxExempt ? (
                             <div className="mt-1 text-[10px] font-medium normal-case tracking-normal text-[#8c99ad]">
@@ -1580,8 +1792,8 @@ export function ItemsSection({
                           colSpan={showMarkup ? 13 : 12}
                           className="px-4 py-7 text-center text-[14px] text-[#777777]"
                         >
-                          This estimate section is ready. Use Add Item to open the existing catalog,
-                          catalog item, system, or import tools.
+                          Add catalog items or generate a system to build this
+                          proposal section.
                         </td>
                       </tr>
                     ) : null}
@@ -1597,9 +1809,12 @@ export function ItemsSection({
           <div className="w-full max-w-xl rounded-[10px] border border-[#d6d6d6] bg-white shadow-[0_24px_80px_-38px_rgba(15,23,42,0.65)]">
             <div className="flex items-start justify-between gap-4 border-b border-[#e6e9ef] px-5 py-4">
               <div>
-                <h2 className="text-[18px] font-semibold text-[#171717]">Edit Catalog Item</h2>
+                <h2 className="text-[18px] font-semibold text-[#171717]">
+                  Edit Catalog Item
+                </h2>
                 <p className="mt-1 text-[13px] leading-5 text-[#6b7c96]">
-                  Updates the reusable catalog item and this estimate line snapshot only.
+                  Updates the reusable catalog item and this estimate line
+                  snapshot only.
                 </p>
               </div>
               <button
@@ -1649,14 +1864,17 @@ export function ItemsSection({
                 Description
                 <textarea
                   value={editItemDescription}
-                  onChange={(event) => setEditItemDescription(event.target.value)}
+                  onChange={(event) =>
+                    setEditItemDescription(event.target.value)
+                  }
                   className="mt-1.5 min-h-24 w-full rounded-[8px] border border-[#d6d6d6] px-3 py-2 text-[14px] text-[#2a2a2a] outline-none"
                 />
               </label>
               {editDuplicateItem ? (
                 <p className="md:col-span-2 text-[13px] text-amber-800">
-                  A catalog item named "{editDuplicateItem.name}" already exists. Rename this item
-                  before saving to avoid duplicate catalog names.
+                  A catalog item named "{editDuplicateItem.name}" already
+                  exists. Rename this item before saving to avoid duplicate
+                  catalog names.
                 </p>
               ) : null}
               {estimateStatus === "approved" ? (
@@ -1687,7 +1905,9 @@ export function ItemsSection({
                       catalogItemId: editingLineItem.catalogItemId,
                       name: editItemName,
                       description:
-                        editItemDescription.trim().length > 0 ? editItemDescription : null,
+                        editItemDescription.trim().length > 0
+                          ? editItemDescription
+                          : null,
                       unit: editItemUnit,
                       defaultUnitPrice: editItemPrice,
                       taxable: editItemTaxable

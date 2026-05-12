@@ -264,7 +264,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
         <SettingsOverviewCard
           title="Operational Intelligence"
-          description="Tune the built-in My Work cue rules without creating task records or custom automation logic."
+          description="Configure deterministic cues, responsibility defaults, and user-scoped dismiss/snooze behavior without creating task records or custom automation logic."
           href="/settings/operational-intelligence"
           ctaLabel="Configure My Work cues"
         >
@@ -274,8 +274,9 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               contracts, invoices, and jobs.
             </p>
             <p>
-              Editable fields are enablement, threshold days, and urgency. Cue instances
-              are still calculated from canonical records at query time.
+              Editable fields are enablement, threshold days, and urgency. Cue results
+              still derive from canonical records; dismiss and snooze only affect user
+              visibility.
             </p>
           </div>
         </SettingsOverviewCard>

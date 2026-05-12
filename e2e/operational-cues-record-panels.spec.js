@@ -584,7 +584,10 @@ async function ensureFixture() {
 
   return {
     supabase,
+    userId,
     organizationId,
+    estimateId: estimate.id,
+    overdueInvoiceId: overdueInvoice.id,
     projectPath: `/projects/${project.id}`,
     estimatePath: `/estimates/${estimate.id}`,
     sentContractPath: `/contracts/${sentContract.id}`,
@@ -605,6 +608,54 @@ async function ensureFixture() {
   };
 }
 
+async function clearFixtureCueStates() {
+  if (!fixture || fixture.skipReason) {
+    return;
+  }
+
+  const response = await fixture.supabase
+    .from("workflow_cue_states")
+    .delete()
+    .eq("company_id", fixture.organizationId)
+    .eq("user_id", fixture.userId)
+    .eq("cue_family", "operational")
+    .in("subject_id", [fixture.estimateId, fixture.overdueInvoiceId]);
+
+  if (response.error) {
+    throw new Error(`Unable to reset fixture cue state: ${response.error.message}`);
+  }
+}
+
+async function countCueFixtureWorkItems() {
+  const estimateResponse = await fixture.supabase
+    .from("work_items")
+    .select("id", { count: "exact", head: true })
+    .eq("company_id", fixture.organizationId)
+    .eq("source_type", "estimate")
+    .eq("source_id", fixture.estimateId);
+
+  if (estimateResponse.error) {
+    throw new Error(
+      `Unable to count estimate work items before cue state QA: ${estimateResponse.error.message}`
+    );
+  }
+
+  const invoiceResponse = await fixture.supabase
+    .from("work_items")
+    .select("id", { count: "exact", head: true })
+    .eq("company_id", fixture.organizationId)
+    .eq("source_type", "invoice")
+    .eq("source_id", fixture.overdueInvoiceId);
+
+  if (invoiceResponse.error) {
+    throw new Error(
+      `Unable to count invoice work items before cue state QA: ${invoiceResponse.error.message}`
+    );
+  }
+
+  return (estimateResponse.count ?? 0) + (invoiceResponse.count ?? 0);
+}
+
 async function expectAuthenticatedPage(page) {
   await page.waitForLoadState("domcontentloaded");
 
@@ -622,9 +673,11 @@ function needsAttentionPanel(page) {
 test.describe.serial("operational cue record-level panels", () => {
   test.beforeAll(async () => {
     fixture = await ensureFixture();
+    await clearFixtureCueStates();
   });
 
   test.afterAll(async () => {
+    await clearFixtureCueStates();
     await restoreCueRules();
   });
 
@@ -676,16 +729,16 @@ test.describe.serial("operational cue record-level panels", () => {
     test.skip(Boolean(fixture.skipReason), fixture.skipReason);
     const issues = attachIssueCapture(page);
     const checks = [
-      [fixture.estimatePath, fixture.titles.estimate, fixture.estimatePath],
-      [fixture.sentContractPath, fixture.titles.contractSent, fixture.sentContractPath],
-      [fixture.viewedContractPath, fixture.titles.contractViewed, fixture.viewedContractPath],
-      [fixture.overdueInvoicePath, fixture.titles.invoiceOverdue, fixture.overdueInvoicePath],
-      [fixture.depositInvoicePath, fixture.titles.depositInvoice, fixture.depositInvoicePath],
-      [fixture.unscheduledJobPath, fixture.titles.jobReady, "/schedule?"],
-      [fixture.scheduledJobPath, fixture.titles.jobMissingCrew, fixture.scheduledJobPath]
+      [fixture.estimatePath, fixture.titles.estimate, "Open estimate"],
+      [fixture.sentContractPath, fixture.titles.contractSent, "Open contract"],
+      [fixture.viewedContractPath, fixture.titles.contractViewed, "Open contract"],
+      [fixture.overdueInvoicePath, fixture.titles.invoiceOverdue, "Open invoice"],
+      [fixture.depositInvoicePath, fixture.titles.depositInvoice, "Open deposit invoice"],
+      [fixture.unscheduledJobPath, fixture.titles.jobReady, "Open schedule"],
+      [fixture.scheduledJobPath, fixture.titles.jobMissingCrew, "Open job"]
     ];
 
-    for (const [path, title, hrefPrefix] of checks) {
+    for (const [path, title, actionLabel] of checks) {
       await page.goto(path, { waitUntil: "domcontentloaded" });
       await expectAuthenticatedPage(page);
 
@@ -693,7 +746,12 @@ test.describe.serial("operational cue record-level panels", () => {
       await expect(panel).toBeVisible();
       await expect(panel).toContainText(title);
       await expect(panel).toContainText("Threshold:");
-      await expect(panel.locator(`a[href^="${hrefPrefix}"]`)).toHaveCount(1);
+      await expect(
+        panel.getByRole("link", {
+          name: `${actionLabel}: ${title}`,
+          exact: true
+        })
+      ).toHaveCount(1);
     }
 
     expect(issues).toEqual([]);
@@ -781,6 +839,143 @@ test.describe.serial("operational cue record-level panels", () => {
     await page.keyboard.press("Tab");
     await expect(saveButton).not.toBeFocused();
 
+    expect(issues).toEqual([]);
+  });
+
+  test("record cue-state controls are user-scoped and do not mutate canonical records", async ({
+    page
+  }) => {
+    test.skip(Boolean(fixture.skipReason), fixture.skipReason);
+    await clearFixtureCueStates();
+    const issues = attachIssueCapture(page);
+
+    const estimateBefore = await fixture.supabase
+      .from("estimates")
+      .select("status")
+      .eq("id", fixture.estimateId)
+      .single();
+
+    if (estimateBefore.error) {
+      throw new Error(`Unable to inspect estimate before cue state QA: ${estimateBefore.error.message}`);
+    }
+
+    const workItemCountBefore = await countCueFixtureWorkItems();
+
+    await page.goto(fixture.estimatePath, { waitUntil: "domcontentloaded" });
+    await expectAuthenticatedPage(page);
+    let panel = needsAttentionPanel(page);
+    await expect(panel).toContainText(fixture.titles.estimate);
+    await expect(panel.getByRole("button", { name: "Dismiss" })).toBeVisible();
+    await expect(panel.getByRole("button", { name: "Snooze" })).toBeVisible();
+    await expect(panel).toContainText("Only for you");
+
+    await panel.getByRole("button", { name: "Dismiss" }).click();
+    await page.waitForURL(/message=Cue\+dismissed\./, { timeout: 15_000 });
+    await expect(page.getByText(fixture.titles.estimate)).toHaveCount(0);
+
+    const dismissedState = await fixture.supabase
+      .from("workflow_cue_states")
+      .select("scope,user_id,state,dismissed_at,snoozed_until")
+      .eq("company_id", fixture.organizationId)
+      .eq("cue_family", "operational")
+      .eq("cue_key", "estimate_sent_followup")
+      .eq("subject_id", fixture.estimateId)
+      .eq("user_id", fixture.userId)
+      .single();
+
+    if (dismissedState.error) {
+      throw new Error(`Unable to inspect dismissed cue state: ${dismissedState.error.message}`);
+    }
+
+    expect(dismissedState.data).toMatchObject({
+      scope: "user",
+      user_id: fixture.userId,
+      state: "dismissed",
+      snoozed_until: null
+    });
+    expect(dismissedState.data.dismissed_at).toBeTruthy();
+
+    const estimateAfter = await fixture.supabase
+      .from("estimates")
+      .select("status")
+      .eq("id", fixture.estimateId)
+      .single();
+
+    if (estimateAfter.error) {
+      throw new Error(`Unable to inspect estimate after cue state QA: ${estimateAfter.error.message}`);
+    }
+
+    expect(estimateAfter.data.status).toBe(estimateBefore.data.status);
+
+    const invoiceBefore = await fixture.supabase
+      .from("invoices")
+      .select("status")
+      .eq("id", fixture.overdueInvoiceId)
+      .single();
+
+    if (invoiceBefore.error) {
+      throw new Error(`Unable to inspect invoice before cue state QA: ${invoiceBefore.error.message}`);
+    }
+
+    await page.goto(fixture.overdueInvoicePath, { waitUntil: "domcontentloaded" });
+    await expectAuthenticatedPage(page);
+    panel = needsAttentionPanel(page);
+    await expect(panel).toContainText(fixture.titles.invoiceOverdue);
+    await expect(panel.getByRole("button", { name: "Dismiss" })).toHaveCount(0);
+    await expect(panel.getByRole("button", { name: "Snooze" })).toBeVisible();
+    await panel.getByRole("combobox", { name: "Snooze duration" }).selectOption("next_week");
+    await panel.getByRole("button", { name: "Snooze" }).click();
+    await page.waitForURL(/message=Cue\+snoozed\./, { timeout: 15_000 });
+    await expect(page.getByText(fixture.titles.invoiceOverdue)).toHaveCount(0);
+
+    const snoozedState = await fixture.supabase
+      .from("workflow_cue_states")
+      .select("scope,user_id,state,dismissed_at,snoozed_until")
+      .eq("company_id", fixture.organizationId)
+      .eq("cue_family", "operational")
+      .eq("cue_key", "invoice_overdue")
+      .eq("subject_id", fixture.overdueInvoiceId)
+      .eq("user_id", fixture.userId)
+      .single();
+
+    if (snoozedState.error) {
+      throw new Error(`Unable to inspect snoozed cue state: ${snoozedState.error.message}`);
+    }
+
+    expect(snoozedState.data.scope).toBe("user");
+    expect(snoozedState.data.user_id).toBe(fixture.userId);
+    expect(snoozedState.data.state).toBe("snoozed");
+    expect(snoozedState.data.snoozed_until).toBeTruthy();
+
+    const expireResponse = await fixture.supabase
+      .from("workflow_cue_states")
+      .update({ snoozed_until: "2020-01-01T00:00:00.000Z", updated_by: fixture.userId })
+      .eq("company_id", fixture.organizationId)
+      .eq("cue_family", "operational")
+      .eq("cue_key", "invoice_overdue")
+      .eq("subject_id", fixture.overdueInvoiceId)
+      .eq("user_id", fixture.userId);
+
+    if (expireResponse.error) {
+      throw new Error(`Unable to expire snoozed cue state: ${expireResponse.error.message}`);
+    }
+
+    await page.goto(fixture.overdueInvoicePath, { waitUntil: "domcontentloaded" });
+    await expectAuthenticatedPage(page);
+    await expect(needsAttentionPanel(page)).toContainText(fixture.titles.invoiceOverdue);
+
+    const invoiceAfter = await fixture.supabase
+      .from("invoices")
+      .select("status")
+      .eq("id", fixture.overdueInvoiceId)
+      .single();
+
+    if (invoiceAfter.error) {
+      throw new Error(`Unable to inspect invoice after cue state QA: ${invoiceAfter.error.message}`);
+    }
+
+    expect(invoiceAfter.data.status).toBe(invoiceBefore.data.status);
+    await expect.poll(() => countCueFixtureWorkItems()).toBe(workItemCountBefore);
     expect(issues).toEqual([]);
   });
 });

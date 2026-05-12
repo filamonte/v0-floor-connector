@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import type { OperationalCue } from "@/lib/operational-cues/types";
 
@@ -45,12 +46,14 @@ export function NeedsAttentionPanel({
   cues,
   description = "Derived from canonical records and enabled organization cue rules.",
   emptyLabel = "No current attention items",
-  getWorkItemAction
+  getWorkItemAction,
+  getCueStateControls
 }: {
   cues: OperationalCue[];
   description?: string;
   emptyLabel?: string;
   getWorkItemAction?: (cue: OperationalCue) => { href: string; label: string } | null;
+  getCueStateControls?: (cue: OperationalCue) => ReactNode;
 }) {
   return (
     <section
@@ -86,6 +89,7 @@ export function NeedsAttentionPanel({
               cue.triggeredAtLabel
             ].filter(Boolean);
             const workItemAction = getWorkItemAction?.(cue) ?? null;
+            const cueStateControls = getCueStateControls?.(cue) ?? null;
 
             return (
             <article
@@ -144,6 +148,7 @@ export function NeedsAttentionPanel({
                       {workItemAction.label}
                     </Link>
                   ) : null}
+                  {cueStateControls}
                 </div>
               </div>
             </article>

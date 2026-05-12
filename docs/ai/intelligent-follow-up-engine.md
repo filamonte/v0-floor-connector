@@ -1,9 +1,9 @@
 # Intelligent Follow-Up Engine Plan
 
-Status: Implemented Foundation / Planning
+Status: Implemented Foundation
 Doc Type: AI Guidance
 
-This is a planning and implementation-boundary document for FloorConnector's AI / Intelligent Follow-Up Engine. The current branch implements a deterministic computed-cue and user-confirmed cue-action foundation. It does not implement persisted cue instances, cue lifecycle state, AI provider calls, automation, autonomous actions, or customer-visible AI actions.
+This is a planning and implementation-boundary document for FloorConnector's AI / Intelligent Follow-Up Engine. The current branch implements a deterministic computed-cue, user-confirmed cue-action, and user-scoped cue-state foundation. It does not implement persisted cue instances as business records, broad resolve workflows, AI provider calls, automation, autonomous actions, or customer-visible AI actions.
 
 For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/current-state.md). For the current workflow model, use [docs/workflows.md](C:/FloorConnector/docs/workflows.md).
 
@@ -24,6 +24,7 @@ The canonical lifecycle remains:
 | `organization_operational_cue_rules` | Tenant-owned configuration for built-in cue rules. Current rules cover sent estimates, sent/viewed unsigned contracts, overdue invoices, unpaid deposits, ready unscheduled jobs, and scheduled jobs missing crew. | Reuse as the current rule-configuration foundation. Extend only with explicit migrations later. |
 | `organization_responsibility_role_defaults` | Maps starter responsibility strategies to active assignable `people` records for display/resolution metadata. | Reuse for cue responsibility display. Do not treat as assignment state. |
 | Derived Operational Intelligence cues | `apps/web/lib/operational-cues/*` derives query-time cues from canonical estimates, contracts, invoices, jobs, projects, and job assignments. Cue rows include evidence, threshold, explanation, urgency, responsible lane, and canonical route. | Reuse as the current deterministic cue engine. Add new cue keys here before any AI suggestions. |
+| `workflow_cue_states` | Canonical tenant-scoped response layer for deterministic cue identities. V1 stores user-scoped dismissed or snoozed states by cue family, key, version, subject, and fingerprint. Absence of a row means the cue remains active/visible. | Reuse only for cue visibility handling. It is not a task model, cue-instance truth, workflow status, or canonical-record completion state. |
 | `NeedsAttentionPanel` | Record-level cue display on project, estimate, contract, invoice, and job workspaces. | Reuse for contextual record-level cue placement. |
 | Dashboard `My Work` | Company/Mine/Unresolved display modes over derived cues. No persisted cue instances, no task creation, no notification delivery, and no AI. | Reuse as the first organization-wide cue surface. |
 | Project `Suggested project actions` | Deterministic project guidance from existing project context, with workflow links and optional work-item prefill. | Reuse for project hub follow-through. Keep it human-confirmed. |
@@ -34,7 +35,7 @@ The canonical lifecycle remains:
 | `workflow_error_events` | Tenant/platform operational issue and feedback log, including early-access feedback and platform operations visibility. | Reuse for system/support evidence. Avoid using it as a user task or cue lifecycle table. |
 | `automation_runs` | Tenant-scoped audit and idempotency ledger for manual internal notification-only automation execution. | Keep separate from cue lifecycle. Reuse only if a later automation phase explicitly executes internal notifications. |
 | Project readiness utilities | `getProjectFinancialReadinessSnapshot`, `computeCommercialReadiness`, and readiness gate utilities drive contract/deposit/scheduling safety. | Reuse as evidence. Never bypass or reinterpret readiness independently. |
-| `/settings/operational-intelligence` | Admin route to tune built-in cue rules and responsibility defaults. | Reuse for deterministic rule settings. |
+| `/settings/operational-intelligence` | Admin route to tune built-in cue rules and responsibility defaults. The current UI explains each rule's trigger, impact, surface, safe next action, and user-scoped visibility behavior. | Reuse for deterministic rule settings. |
 | `/settings/automation` | Manual, notification-only automation readiness/execution surface. | Avoid for cue display. It can become a later controlled automation bridge only after cue state and review are proven. |
 | Existing AI docs | `docs/ai-assisted-operating-system.md`, `docs/ai-contractor-workflows.md`, `docs/ai/implementation-boundaries.md`, and `docs/ai/ai-documentation-rules.md` define AI as an operating layer over canonical records. | Reuse as guardrails. This doc narrows that direction to follow-up intelligence. |
 
@@ -68,9 +69,11 @@ Current bridge implementation:
 
 - Estimate Workspace record-level `estimate_sent_followup` cues can open the existing work-item form with estimate source lock, `Follow up on sent estimate` title, human-readable cue evidence, normal priority, and safe operational-cue metadata.
 - Invoice Workspace record-level `invoice_overdue` cues can open the existing work-item form with invoice source lock, `Follow up on past-due invoice` title, due-date/open-balance evidence, high priority, and safe operational-cue metadata.
-- Project Workspace deterministic project cue actions route canonical next steps first: approved estimates open contract generation, unpaid deposit invoices open the invoice, signed ready projects open job Quick-Create, and ready unscheduled jobs open the schedule handoff. Project cue work-item prefill is limited to human coordination cues such as open blocker field-note follow-up, with project source lock and user-confirmed submission.
+- Project Workspace deterministic project cue actions route canonical next steps first: approved estimates open contract generation, unpaid deposit invoices open the invoice, signed ready projects open job Quick-Create, and ready unscheduled jobs open the schedule handoff. The project guidance UI groups these canonical workflow actions separately from human follow-up actions. Project cue work-item prefill is limited to human coordination cues such as open blocker field-note follow-up, with project source lock and user-confirmed submission.
 - Dashboard `My Work` cues remain awareness/workflow-link only in this pass and do not expose work-item creation.
 - Unsupported operational cue types do not produce cue-to-work-item prefill actions until separately approved.
+- Record and Project Workspace cue surfaces can now suppress supported cues with user-scoped dismiss or snooze state. Dismiss hides only cues that match the same deterministic fingerprint; snooze hides only until the selected time expires. Dashboard previews respect suppression but do not expose mutation controls.
+- Cue-state writes do not resolve canonical business records, create work items, send notifications, or change readiness/workflow status. Broad resolve remains deferred.
 
 AI fits later as drafting and explanation support. Deterministic cues decide whether attention is needed. LLM assistance can later summarize evidence, draft a follow-up message, or prepare an action proposal, but it should not be the first detector for V1 follow-up needs.
 
@@ -103,41 +106,85 @@ AI fits later as drafting and explanation support. Deterministic cues decide whe
 
 ## Data Model Direction
 
-Recommended direction: combine computed cues with persisted dismiss/snooze state later.
+Recommended direction: combine computed cues with persisted dismiss/snooze state as a thin response layer.
 
-The current implementation already uses option C for cue instances: computed/query-only cues with no persistence. It also uses persisted rule settings and responsibility defaults. That is the correct starting point and should remain the foundation for Phase 1.
+The current implementation uses computed/query-only cues as the cue source of truth. It also uses persisted rule settings, responsibility defaults, and `workflow_cue_states` for user response state. Cue derivation remains pure and deterministic; persisted state is applied after derivation to control visibility.
 
-For Phase 2, add only a small persisted cue-state layer if product needs dismiss, snooze, or resolve tracking. Do not persist full cue copies as business truth. Persist only the user or organization decision around a deterministic cue identity.
+The persisted cue-state layer does not store active rows. Absence of a row means active/visible. Rows store only dismissed, snoozed, or schema-supported resolved state around a deterministic cue identity and fingerprint. V1 exposes user-scoped dismiss and snooze only; broad resolve is not exposed.
 
-Proposed later table shape, planning only:
+Implemented table shape:
 
 ```text
 workflow_cue_states
 - id uuid primary key
 - company_id uuid not null references companies(id)
+- cue_family text not null
 - cue_key text not null
+- cue_version integer not null
+- cue_fingerprint text not null
 - subject_type canonical_record_subject_type not null
 - subject_id uuid not null
 - project_id uuid null
-- state text not null check in ('active', 'dismissed', 'snoozed', 'resolved')
+- scope text not null check in ('user', 'company')
+- user_id uuid null references users(id)
+- state text not null check in ('dismissed', 'snoozed', 'resolved')
 - snoozed_until timestamptz null
+- dismissed_at timestamptz null
+- resolved_at timestamptz null
+- last_seen_at timestamptz null
 - reason text null
-- actor_user_id uuid null references users(id)
-- evidence_hash text not null
-- last_evidence_at timestamptz null
 - metadata jsonb not null default '{}'
+- created_by uuid null references users(id)
+- updated_by uuid null references users(id)
 - created_at timestamptz not null
 - updated_at timestamptz not null
-- unique(company_id, cue_key, subject_type, subject_id, evidence_hash)
 ```
 
-Rules for that later table:
+Rules:
 
 - It stores cue lifecycle preference, not a second task.
-- `evidence_hash` lets changed source evidence resurface a previously dismissed cue.
+- `cue_fingerprint` lets changed source evidence resurface a previously dismissed or snoozed cue.
+- User-scoped rows require `user_id`; company-scoped rows are schema-supported but not exposed by V1 actions.
 - RLS must be tenant-scoped.
 - It must not create or update canonical records.
 - Work items remain the internal action record when a person wants ownership, due date, completion, or dismissal.
+
+### Cue State Expansion Planning
+
+The next cue-state work should extend this response layer only after the safety model is explicit. The system should keep these concepts separate:
+
+- computed cue: derived at query time from canonical records, rules, readiness, and responsibility metadata.
+- cue identity / dedupe key: deterministic cue family, key, version, subject, and fingerprint used to match a response row to one material cue state.
+- cue state: response/visibility handling around a cue identity, not copied cue content and not workflow truth.
+- cue event: a possible later audit trail of cue-state changes; not needed for V1 dismiss/snooze behavior.
+- work item: the existing internal action record for owner, due date, status, and follow-through after user confirmation.
+- notification: delivery or in-app alert evidence, not cue lifecycle truth.
+- automation event: idempotency and audit evidence for approved automation runs, not cue state.
+
+Recommended scope split:
+
+- User-scoped state remains the default for snooze, dismiss, hide, and read-style visibility. Example: an estimator snoozes a sent-estimate follow-up until tomorrow without hiding it from another teammate's company queue.
+- Company-scoped state should be reserved for explicit owner/admin-style handling such as future mark handled or resolve. Example: an overdue-invoice cue is company-resolved only after the organization agrees the follow-up is handled.
+- Work-item-linked state should reference the existing `work_items` record when a cue has been converted to human-owned follow-through. Example: a blocker cue can link to an existing project work item without letting the cue state become a second task system.
+
+Future schema options:
+
+| Option | Fit | Pros | Cons / Risks |
+| --- | --- | --- | --- |
+| Single `workflow_cue_states` table with `scope` and nullable `user_id` | Recommended current direction | Reuses the implemented table, keeps cue identity rules in one place, supports user and company response state without a second lifecycle table. | Company-scoped controls need careful role gates so important work is not hidden too broadly. |
+| Separate organization and user cue-state tables | Not recommended yet | Clear physical separation between personal visibility and company handling. | More joins, duplicated uniqueness/fingerprint rules, and higher drift risk across cue families. |
+| Event-only cue state model | Later audit option | Strong history for who dismissed, snoozed, resolved, or reopened a cue. | Too heavy for current needs unless paired with a projected current-state table; easy to overbuild. |
+| Reuse only `work_items` | Avoid | No new cue-state table. | Cannot model snooze/dismiss/read visibility without turning work items into a hidden cue lifecycle system. |
+
+If company-scoped handling is approved later, prefer extending the current table over creating a new cue-instance model. Candidate fields should be additive and narrow, such as `linked_work_item_id`, `handled_at`, `handled_by`, `handled_reason`, or `last_seen_at`, with same-company validation for any linked work item. Do not store active cue copies, raw provider payloads, AI-only summaries, or duplicated canonical record state.
+
+RLS and safety principles for that later pass:
+
+- all cue state remains tenant-scoped through active company membership.
+- user-scoped rows are mutable only by that user; owner/admin read visibility can be considered separately if there is a concrete support workflow.
+- company-scoped resolve or handled state requires an explicit authorized membership rule, not generic member writes.
+- linked work items must belong to the same company and point to a compatible source record when a source link exists.
+- dashboards may respect suppression, but dashboard mutation controls should wait until contextual record/project controls are proven.
 
 ## UX Placement Recommendation
 
@@ -170,7 +217,7 @@ Future Communications Center should eventually show cues tied to stale replies, 
 - Dashboard `My Work` surfaces estimate, invoice, and job operational cues through existing My Work widgets.
 - Project Workspace `Suggested project actions` surfaces ready-project scheduling follow-through when readiness is clear and canonical jobs remain unscheduled, and routes project cues with canonical next steps into existing contract, invoice, job, and schedule workflows.
 - Record-level `Needs Attention` panels continue to surface derived cues on project, estimate, contract, invoice, and job workspaces.
-- V1 cues route to existing canonical record workspaces or schedule actions. Record-level estimate and invoice contexts can also prefill the existing work-item creation form for user-confirmed submission. Project Workspace cue-to-work-item prefill is limited to human coordination cues without a safer direct workflow action, currently open blocker field-note follow-up. Cues do not create records, mutate workflow state, send notifications, auto-create work items, dismiss/snooze cues, or call AI providers.
+- V1 cues route to existing canonical record workspaces or schedule actions. Record-level estimate and invoice contexts can also prefill the existing work-item creation form for user-confirmed submission. Project Workspace cue-to-work-item prefill is limited to human coordination cues without a safer direct workflow action, currently open blocker field-note follow-up. Cues do not create records, mutate workflow state, send notifications, auto-create work items, or call AI providers. User-scoped dismiss/snooze controls only affect cue visibility for supported cue identities.
 - Continue deriving cues from canonical records plus `organization_operational_cue_rules`.
 - Add any new deterministic cue keys only after confirming canonical source fields and safe destination routes.
 - Keep every cue evidence-backed and tenant-scoped.
@@ -178,9 +225,12 @@ Future Communications Center should eventually show cues tied to stale replies, 
 
 ### Phase 2: Persisted Cue State
 
-- Add a narrow cue-state table only when dismiss/snooze/resolve is approved.
-- Persist state around cue identity and evidence hash, not copied canonical data.
-- Add RLS, tenant indexes, and explicit docs in the same change set.
+- Implemented V1 adds `workflow_cue_states` with RLS, tenant indexes, deterministic cue identity, and fingerprint-based suppression.
+- Record and Project Workspace surfaces expose user-scoped dismiss/snooze only for approved cue types.
+- Dashboard preview respects suppression but remains awareness-only with no mutation controls.
+- Persist state around cue identity and fingerprint, not copied canonical data.
+- Broad resolve remains deferred; cue state must not mark canonical business records complete.
+- Next expansion should add only one safety slice at a time: first company-scoped handling rules and tests if needed, then contextual UI, then dashboard controls after the record/project workflow is proven.
 
 ### Phase 3: Cue-To-Work-Item Bridge
 
@@ -193,7 +243,8 @@ Future Communications Center should eventually show cues tied to stale replies, 
 
 ### Phase 4: Organization Follow-Up Rules And Settings
 
-- Expand `/settings/operational-intelligence` only for built-in deterministic rules, thresholds, urgency, and responsibility defaults.
+- `/settings/operational-intelligence` now stays limited to built-in deterministic rules, thresholds, urgency, responsibility defaults, and explanatory guardrails.
+- Rule cards explain trigger, why the cue matters, where it appears, safe next action, and whether visibility handling is user-scoped.
 - Avoid a generic expression builder until the built-in cue set is proven.
 - Keep settings owner/admin controlled.
 
@@ -212,12 +263,14 @@ Future Communications Center should eventually show cues tied to stale replies, 
 
 ## Open Decisions
 
-- Whether Phase 2 should persist cue state at organization scope, user scope, or both.
-- Which canonical evidence fields should define each cue's `evidence_hash`.
+- Whether any future cue should expose company-scoped resolve, and which owner/admin controls would be required.
+- Whether company-scoped handling should use the existing `scope = 'company'` shape or wait for a dedicated event trail before exposing resolve in the UI.
+- Whether cue-linked work-item status should only annotate the cue or also suppress repeated prompting while the linked item remains open.
+- Whether later cue fingerprints need per-cue material-state refinements beyond the current deterministic identity helpers.
 - Whether lead/opportunity follow-up should join the `organization_operational_cue_rules` family or remain a separate opportunity follow-up read model for now.
 - Whether cue-to-work-item conversion should be available from dashboard `My Work`, record-level panels, or only record workspaces at first.
 - How AI draft review should integrate with communication consent, portal permissions, and activation guard checks before any provider-backed send.
 
 ## Planning Boundary
 
-This document is a boundary and planning checkpoint around the implemented deterministic cue foundation and first user-confirmed cue-to-work-item prefill bridge. It does not create `workflow_cue_states`, `workflow_cues`, new migrations, new server actions, AI calls, provider integrations, persisted cue lifecycle state, autonomous actions, auto-created work items, or customer-visible automation.
+This document is a boundary and implementation checkpoint around the deterministic cue foundation, user-confirmed cue-to-work-item prefill bridge, and user-scoped persisted cue-state response layer. It does not create `workflow_cues`, persisted cue instances as business truth, AI calls, provider integrations, autonomous actions, auto-created work items, dashboard mutation controls, broad resolve workflows, or customer-visible automation.

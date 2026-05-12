@@ -87,15 +87,53 @@ export default async function OperationalIntelligenceSettingsPage({
 
       <DetailPanel
         title="Operational Intelligence / My Work"
-        description="Configure built-in operational cue rules for this organization. FloorConnector still derives cue results from canonical estimates, contracts, invoices, and jobs at query time; this page only tunes the rule templates that My Work uses."
+        description="Tune the deterministic rule templates that feed My Work and record workspace attention panels. Cue results still derive from canonical estimates, contracts, invoices, and jobs at query time."
       >
         <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
-          <p className="font-medium text-slate-950">Derived cues, not tasks</p>
-          <p className="mt-1">
-            Disabling or adjusting a rule changes which follow-up cues appear in My Work.
-            It does not create task records, send notifications, assign owners, snooze
-            items, or store cue instances.
+          <p className="font-medium text-slate-950">
+            Guidance controls, not automation
           </p>
+          <p className="mt-1">
+            These rules decide when deterministic cues appear. They do not complete
+            work, update invoices, send messages, schedule jobs, change customer-facing
+            records, or create work items.
+          </p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                What changes
+              </p>
+              <p className="mt-1 text-xs leading-5">
+                Enabled state, threshold days, urgency, and responsibility display.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                What stays manual
+              </p>
+              <p className="mt-1 text-xs leading-5">
+                Work items, customer messages, payments, scheduling, and status changes.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Visibility state
+              </p>
+              <p className="mt-1 text-xs leading-5">
+                Dismiss and snooze are user-scoped where supported and never mark work
+                complete.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Readiness gates
+              </p>
+              <p className="mt-1 text-xs leading-5">
+                Cue visibility never bypasses project readiness, billing, signature, or
+                scheduling rules.
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="mt-5 grid gap-4 xl:grid-cols-2">
@@ -175,6 +213,35 @@ export default async function OperationalIntelligenceSettingsPage({
                     </dd>
                   </div>
                 </dl>
+
+                {definition ? (
+                  <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                    <p className="text-sm font-semibold text-slate-950">
+                      What this rule affects
+                    </p>
+                    <dl className="mt-3 grid gap-3 text-sm leading-6 text-slate-600 lg:grid-cols-2">
+                      <div>
+                        <dt className="font-medium text-slate-900">Trigger</dt>
+                        <dd className="mt-1">{definition.triggerSummary}</dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-slate-900">Why it matters</dt>
+                        <dd className="mt-1">{definition.whyItMatters}</dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-slate-900">Where it appears</dt>
+                        <dd className="mt-1">{definition.appearsIn}</dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-slate-900">Safe next action</dt>
+                        <dd className="mt-1">{definition.safeAction}</dd>
+                      </div>
+                    </dl>
+                    <p className="mt-3 border-t border-slate-200 pt-3 text-xs leading-5 text-slate-500">
+                      {definition.visibilityNote}
+                    </p>
+                  </div>
+                ) : null}
 
                 <SaveStateForm
                   action={updateOperationalCueRuleSettingsAction}

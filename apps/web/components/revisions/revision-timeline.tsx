@@ -22,10 +22,10 @@ export function RevisionTimeline({ revisions }: RevisionTimelineProps) {
           History
         </p>
         <h2 className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]">
-          Revisions
+          Revision history
         </h2>
         <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-          Immutable snapshots on this canonical record. Compare and restore are reserved for a later workflow.
+          Snapshots preserve what changed over time without creating duplicate records. Compare and restore are reserved for a later workflow.
         </p>
       </div>
 

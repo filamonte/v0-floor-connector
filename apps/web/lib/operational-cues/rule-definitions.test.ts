@@ -63,6 +63,26 @@ void test("maps each built-in cue key to the starter owner strategy set", () => 
   assert.equal(operationalCueOwnerStrategies.includes("field_lead" as never), false);
 });
 
+void test("documents human-facing rule behavior for settings UX", () => {
+  for (const definition of operationalCueRuleDefinitions) {
+    assert.ok(definition.description.length > 20);
+    assert.ok(definition.triggerSummary.length > 20);
+    assert.ok(definition.whyItMatters.length > 20);
+    assert.ok(definition.appearsIn.includes("Workspace"));
+    assert.ok(definition.safeAction.length > 20);
+    assert.ok(definition.visibilityNote.length > 20);
+  }
+
+  const invoiceOverdue = operationalCueRuleDefinitions.find(
+    (definition) => definition.cueKey === "invoice_overdue"
+  );
+
+  assert.equal(
+    invoiceOverdue?.visibilityNote,
+    "This cue can be snoozed by the current user in supported workspaces, but it is not dismissible in V1."
+  );
+});
+
 void test("parses blank or bounded threshold days only", () => {
   assert.equal(parseOperationalCueThresholdDays(""), null);
   assert.equal(parseOperationalCueThresholdDays("0"), 0);

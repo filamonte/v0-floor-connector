@@ -1490,6 +1490,12 @@ test("project approved-estimate cue routes to contract generation without work-i
   await expect(page.getByRole("region", { name: "Suggested project actions" })).toContainText(
     /nothing is created or changed until you submit/i
   );
+  await expect(page.getByRole("region", { name: "Suggested project actions" })).toContainText(
+    "Canonical workflow actions"
+  );
+  await expect(page.getByRole("region", { name: "Suggested project actions" })).toContainText(
+    "without creating side records"
+  );
   await expect(estimateCue).toContainText(/Priority:\s*critical/i);
 
   await expect(
@@ -1666,6 +1672,12 @@ test("project open field-note blocker cue opens project-locked work-item prefill
     hasText: fieldNoteCueTitle
   });
   await expect(fieldNoteCue).toBeVisible();
+  await expect(page.getByRole("region", { name: "Suggested project actions" })).toContainText(
+    "Human follow-up actions"
+  );
+  await expect(page.getByRole("region", { name: "Suggested project actions" })).toContainText(
+    "work item is still user-confirmed"
+  );
   await expect(fieldNoteCue).toContainText(
     "Field blockers are still open on daily logs for this project"
   );

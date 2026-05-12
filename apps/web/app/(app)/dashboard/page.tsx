@@ -30,6 +30,9 @@ import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-
 import { hasCompanyProfileFields } from "@/lib/organizations/setup-status";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { getOperationalCueDashboard } from "@/lib/operational-cues/data";
+import { applyCueStates } from "@/lib/cue-states/apply";
+import { buildProjectCueIdentity } from "@/lib/cue-states/identity";
+import { listWorkflowCueStatesForIdentities } from "@/lib/cue-states/data";
 import { groupOperationalCuesBySubject } from "@/lib/operational-cues/derive";
 import {
   buildMyWorkQueueModes,
@@ -276,7 +279,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     getBillingSetupState(organizationContext.organization.id),
     listFieldNotes(),
     getOperationalCueDashboard({
-      organizationId: organizationContext.organization.id
+      organizationId: organizationContext.organization.id,
+      currentUserId: user.id
     })
   ]);
 
@@ -294,8 +298,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       ] as const)
     )
   );
-  const projectCues = selectHighestPriorityProjectCues(
-    activeProjects.flatMap((project) =>
+  const derivedProjectCues = activeProjects.flatMap((project) =>
       buildProjectCues({
         project,
         readinessSnapshot: projectReadinessSnapshots.get(project.id) ?? null,
@@ -305,7 +308,22 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         jobs: jobs.filter((job) => job.projectId === project.id),
         fieldNotes: fieldNotes.filter((fieldNote) => fieldNote.projectId === project.id)
       })
-    ),
+    );
+  const projectCueStates = await listWorkflowCueStatesForIdentities({
+    companyId: organizationContext.organization.id,
+    currentUserId: user.id,
+    identities: derivedProjectCues.map((cue) =>
+      buildProjectCueIdentity(organizationContext.organization.id, cue)
+    )
+  });
+  const projectCues = selectHighestPriorityProjectCues(
+    applyCueStates({
+      cues: derivedProjectCues,
+      states: projectCueStates,
+      currentUserId: user.id,
+      now: new Date(),
+      companyId: organizationContext.organization.id
+    }).visibleCues,
     5
   );
   const openInvoices = invoices.filter(

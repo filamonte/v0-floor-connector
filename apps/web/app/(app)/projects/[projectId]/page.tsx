@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
 import {
   ActionBar,
   ProjectStateSummary,
@@ -20,6 +21,7 @@ import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
+import { CueStateControls } from "@/components/cue-states/cue-state-controls";
 import { ProjectForm } from "@/components/project-form";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
 import { ReadyToScheduleActionPanel } from "@/components/ready-to-schedule-action-panel";
@@ -40,6 +42,13 @@ import { listFieldNotes } from "@/lib/field-notes/data";
 import { getInvoiceById, listInvoices } from "@/lib/invoices/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getOperationalCuesForProject } from "@/lib/operational-cues/data";
+import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { applyCueStates, getCueStateActionSupport } from "@/lib/cue-states/apply";
+import {
+  buildOperationalCueIdentity,
+  buildProjectCueIdentity
+} from "@/lib/cue-states/identity";
+import { listWorkflowCueStatesForIdentities } from "@/lib/cue-states/data";
 import { getOpportunityByProjectId } from "@/lib/opportunities/data";
 import { listPeople } from "@/lib/people/data";
 import { listPunchlistItemsByProject } from "@/lib/punchlists/data";
@@ -96,6 +105,9 @@ type ProjectEstimateListItem = Awaited<ReturnType<typeof listEstimates>>[number]
 type ProjectContractListItem = Awaited<ReturnType<typeof listContracts>>[number];
 type ProjectInvoiceListItem = Awaited<ReturnType<typeof listInvoices>>[number];
 type ProjectChangeOrderListItem = Awaited<ReturnType<typeof listProjectChangeOrders>>[number];
+type ProjectJobListItem = Awaited<ReturnType<typeof listJobs>>[number];
+type ProjectDailyLogListItem = Awaited<ReturnType<typeof listDailyLogsByProject>>[number];
+type ProjectFieldNoteListItem = Awaited<ReturnType<typeof listFieldNotes>>[number];
 type ProjectPaymentListItem = NonNullable<Awaited<ReturnType<typeof getInvoiceById>>>["payments"][number];
 type WorkspaceStateTone = "positive" | "warning" | "critical" | "neutral";
 type WorkspaceActionItem = {
@@ -114,6 +126,18 @@ type SectionOverviewProps = {
   href: string;
   linkLabel: string;
   stat: string;
+};
+type LinkedRecordRecencyItem = {
+  id: string;
+  recordKey: string;
+  typeLabel: string;
+  title: string;
+  href: string;
+  statusLabel: string;
+  activityLabel: string;
+  timestamp: string;
+  timestampLabel: string;
+  isDrivingRecord: boolean;
 };
 
 function getProjectCuePriorityClassName(priority: ProjectCue["priority"]) {
@@ -170,6 +194,14 @@ function formatMoney(value: string | number) {
 
 function formatDateTime(value: string | null) {
   return value ? new Date(value).toLocaleString() : "Not marked yet";
+}
+
+function joinMetaParts(parts: Array<string | null | undefined>) {
+  return parts.filter((part): part is string => Boolean(part && part.trim())).join(" | ");
+}
+
+function formatUpdatedActivity(value: string | null | undefined) {
+  return value ? `Updated ${formatDateTime(value)}` : null;
 }
 
 function formatLocation(parts: Array<string | null | undefined>) {
@@ -271,7 +303,167 @@ function SectionOverview({
   );
 }
 
-function ProjectCuePanel({ cues }: { cues: ProjectCue[] }) {
+function LinkedRecordRecencyPanel({ items }: { items: LinkedRecordRecencyItem[] }) {
+  const mostRecent = items[0] ?? null;
+
+  return (
+    <section
+      aria-labelledby="linked-record-recency-title"
+      className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5"
+    >
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+            Linked record recency
+          </p>
+          <h3 id="linked-record-recency-title" className="mt-1 text-base font-semibold text-slate-950">
+            What changed recently
+          </h3>
+          <p className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600">
+            Existing linked records sorted by their own timestamps. This is a breadcrumb
+            summary, not a separate project activity feed.
+          </p>
+        </div>
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+          {items.length} linked {items.length === 1 ? "record" : "records"}
+        </span>
+      </div>
+
+      {mostRecent ? (
+        <div className="mt-4 space-y-3">
+          <div className="rounded-lg border border-[#e3d6c7] bg-[#fbf4ea] px-4 py-3 text-sm leading-6 text-[#5f4d3d]">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7a614a]">
+              Most recent linked record
+            </p>
+            <p className="mt-1 font-semibold text-[#2b2118]">
+              {mostRecent.typeLabel}: {mostRecent.title}
+            </p>
+            <p className="mt-1">{mostRecent.activityLabel}</p>
+          </div>
+
+          <div className="grid gap-3 lg:grid-cols-2">
+            {items.slice(0, 6).map((item) => (
+              <Link
+                key={item.id}
+                href={item.href}
+                className={[
+                  "rounded-lg border bg-slate-50/80 px-4 py-3 text-sm leading-6 transition hover:border-slate-300 hover:bg-white",
+                  item.isDrivingRecord
+                    ? "border-[#d7b98f] ring-1 ring-[#ef7d32]/25"
+                    : "border-slate-200"
+                ].join(" ")}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      {item.typeLabel}
+                    </p>
+                    <p className="mt-1 truncate font-semibold text-slate-950">{item.title}</p>
+                  </div>
+                  <div className="flex flex-wrap justify-end gap-2">
+                    {item.isDrivingRecord ? (
+                      <span className="rounded-full border border-[#d7b98f] bg-[#fbf4ea] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#775635]">
+                        Driving next step
+                      </span>
+                    ) : null}
+                    {renderStatusBadge(item.statusLabel)}
+                  </div>
+                </div>
+                <p className="mt-3 text-slate-600">{item.activityLabel}</p>
+                <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
+                  {item.timestampLabel}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+          No timestamped linked records are available for this project yet.
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ProjectCuePanel({
+  cues,
+  getCueStateControls
+}: {
+  cues: ProjectCue[];
+  getCueStateControls?: (cue: ProjectCue) => ReactNode;
+}) {
+  const visibleCues = cues.slice(0, 4);
+  const canonicalWorkflowCues = visibleCues.filter((cue) => !cue.workItemBridge);
+  const humanFollowUpCues = visibleCues.filter((cue) => cue.workItemBridge);
+  const renderCueCards = (groupCues: ProjectCue[]) =>
+    groupCues.map((cue) => {
+      const cueDomId = cue.id.replace(/[^a-zA-Z0-9_-]/g, "-");
+      const cueTitleId = `${cueDomId}-title`;
+      const cueDescriptionId = `${cueDomId}-description`;
+      const cueReasonId = `${cueDomId}-reason`;
+      const cueStateControls = getCueStateControls?.(cue) ?? null;
+
+      return (
+        <article
+          key={cue.id}
+          aria-labelledby={cueTitleId}
+          aria-describedby={`${cueDescriptionId} ${cueReasonId}`}
+          className={[
+            "rounded-lg border px-4 py-3 text-sm leading-6",
+            getProjectCuePriorityClassName(cue.priority)
+          ].join(" ")}
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h4 id={cueTitleId} className="text-sm font-semibold text-slate-950">
+                {cue.title}
+              </h4>
+              <p id={cueDescriptionId} className="mt-1 text-sm text-slate-700">
+                {cue.description}
+              </p>
+              <p
+                id={cueReasonId}
+                className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-slate-500"
+              >
+                {cue.reason}
+              </p>
+            </div>
+            <span className="rounded-full border border-white/70 bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+              Priority: {cue.priority}
+            </span>
+          </div>
+          <div
+            role="group"
+            aria-label={`Actions for ${cue.title}`}
+            className="mt-3 flex flex-wrap gap-2"
+          >
+            <Link
+              href={cue.href}
+              aria-label={`${cue.actionLabel} for suggested project action: ${cue.title}`}
+              title={`${cue.actionLabel}: ${cue.title}`}
+              aria-describedby={`${cueDescriptionId} ${cueReasonId}`}
+              className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:text-brand-700"
+            >
+              {cue.actionLabel}
+            </Link>
+            {cue.workItemBridge ? (
+              <a
+                href={cue.workItemBridge.href}
+                aria-label={`${cue.workItemBridge.label} from suggested project action: ${cue.title}`}
+                title={`${cue.workItemBridge.label}: ${cue.title}`}
+                aria-describedby={`${cueDescriptionId} ${cueReasonId}`}
+                className="inline-flex items-center rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-brand-700"
+              >
+                {cue.workItemBridge.label}
+              </a>
+            ) : null}
+            {cueStateControls}
+          </div>
+        </article>
+      );
+    });
+
   return (
     <section
       id="project-guidance-cues"
@@ -294,81 +486,51 @@ function ProjectCuePanel({ cues }: { cues: ProjectCue[] }) {
             id="project-guidance-cues-description"
             className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600"
           >
-            Suggestions from current project records only. Review an existing workflow or
-            open a prefilled work item draft; nothing is created or changed until you submit.
+            Suggestions from current project records only. Canonical actions open the existing
+            workflow; human follow-up can open a prefilled work item draft. Nothing is created
+            or changed until you submit.
           </p>
         </div>
         <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-          Review suggestion
+          Guidance only
         </span>
       </div>
 
-      {cues.length > 0 ? (
-        <div className="mt-4 grid gap-3 lg:grid-cols-2">
-          {cues.slice(0, 4).map((cue) => {
-            const cueDomId = cue.id.replace(/[^a-zA-Z0-9_-]/g, "-");
-            const cueTitleId = `${cueDomId}-title`;
-            const cueDescriptionId = `${cueDomId}-description`;
-            const cueReasonId = `${cueDomId}-reason`;
+      {visibleCues.length > 0 ? (
+        <div className="mt-4 space-y-4">
+          {canonicalWorkflowCues.length > 0 ? (
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-950">
+                  Canonical workflow actions
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-600">
+                  These open existing estimate, contract, invoice, job, or schedule
+                  workflows without creating side records.
+                </p>
+              </div>
+              <div className="grid gap-3 lg:grid-cols-2">
+                {renderCueCards(canonicalWorkflowCues)}
+              </div>
+            </div>
+          ) : null}
 
-            return (
-              <article
-                key={cue.id}
-                aria-labelledby={cueTitleId}
-                aria-describedby={`${cueDescriptionId} ${cueReasonId}`}
-                className={[
-                  "rounded-lg border px-4 py-3 text-sm leading-6",
-                  getProjectCuePriorityClassName(cue.priority)
-                ].join(" ")}
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h4 id={cueTitleId} className="text-sm font-semibold text-slate-950">
-                      {cue.title}
-                    </h4>
-                    <p id={cueDescriptionId} className="mt-1 text-sm text-slate-700">
-                      {cue.description}
-                    </p>
-                    <p
-                      id={cueReasonId}
-                      className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-slate-500"
-                    >
-                      {cue.reason}
-                    </p>
-                  </div>
-                  <span className="rounded-full border border-white/70 bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
-                    Priority: {cue.priority}
-                  </span>
-                </div>
-                <div
-                  role="group"
-                  aria-label={`Actions for ${cue.title}`}
-                  className="mt-3 flex flex-wrap gap-2"
-                >
-                  <Link
-                    href={cue.href}
-                    aria-label={`${cue.actionLabel} for suggested project action: ${cue.title}`}
-                    title={`${cue.actionLabel}: ${cue.title}`}
-                    aria-describedby={`${cueDescriptionId} ${cueReasonId}`}
-                    className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:text-brand-700"
-                  >
-                    {cue.actionLabel}
-                  </Link>
-                  {cue.workItemBridge ? (
-                    <a
-                      href={cue.workItemBridge.href}
-                      aria-label={`${cue.workItemBridge.label} from suggested project action: ${cue.title}`}
-                      title={`${cue.workItemBridge.label}: ${cue.title}`}
-                      aria-describedby={`${cueDescriptionId} ${cueReasonId}`}
-                      className="inline-flex items-center rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-brand-700"
-                    >
-                      {cue.workItemBridge.label}
-                    </a>
-                  ) : null}
-                </div>
-              </article>
-            );
-          })}
+          {humanFollowUpCues.length > 0 ? (
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-950">
+                  Human follow-up actions
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-600">
+                  These can prefill internal work item drafts for coordination. The
+                  work item is still user-confirmed.
+                </p>
+              </div>
+              <div className="grid gap-3 lg:grid-cols-2">
+                {renderCueCards(humanFollowUpCues)}
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : (
         <div
@@ -468,6 +630,258 @@ function getProjectInvoiceSummary(invoice: ProjectInvoiceListItem) {
   }
 
   return `Balance due ${formatMoney(invoice.balanceDueAmount)}`;
+}
+
+function getDrivingRecordKey(input: {
+  nextAction: NextAction;
+  approvedEstimate: ProjectEstimateListItem | null;
+  latestEstimate: ProjectEstimateListItem | null;
+  latestContract: ProjectContractListItem | null;
+  pendingChangeOrder: ProjectChangeOrderListItem | null;
+  depositInvoice: ProjectInvoiceListItem | null;
+  latestOpenInvoice: ProjectInvoiceListItem | null;
+  projectJobs: ProjectJobListItem[];
+  unscheduledJobs: ProjectJobListItem[];
+}) {
+  const href = input.nextAction.primaryHref ?? input.nextAction.secondaryHref ?? "";
+
+  if (href.startsWith("/estimates/") && input.latestEstimate) {
+    return `estimate:${input.latestEstimate.id}`;
+  }
+
+  if (href.startsWith("/contracts?") && input.approvedEstimate) {
+    return `estimate:${input.approvedEstimate.id}`;
+  }
+
+  if (href.startsWith("/contracts/") && input.latestContract) {
+    return `contract:${input.latestContract.id}`;
+  }
+
+  if (href.startsWith("/change-orders/") && input.pendingChangeOrder) {
+    return `change_order:${input.pendingChangeOrder.id}`;
+  }
+
+  if (href.startsWith("/invoices/")) {
+    const invoice = input.depositInvoice ?? input.latestOpenInvoice;
+
+    return invoice ? `invoice:${invoice.id}` : null;
+  }
+
+  if (href.startsWith("/jobs")) {
+    const job = input.projectJobs[0] ?? null;
+
+    return job ? `job:${job.id}` : null;
+  }
+
+  if (href.startsWith("/schedule")) {
+    const job = input.unscheduledJobs[0] ?? input.projectJobs[0] ?? null;
+
+    return job ? `job:${job.id}` : null;
+  }
+
+  return null;
+}
+
+function getProjectWorkflowDriverLabel(input: {
+  nextAction: NextAction;
+  approvedEstimate: ProjectEstimateListItem | null;
+  latestEstimate: ProjectEstimateListItem | null;
+  latestContract: ProjectContractListItem | null;
+  pendingChangeOrder: ProjectChangeOrderListItem | null;
+  depositInvoice: ProjectInvoiceListItem | null;
+  latestOpenInvoice: ProjectInvoiceListItem | null;
+  projectJobsCount: number;
+  unscheduledJobsCount: number;
+}) {
+  const href = input.nextAction.primaryHref ?? input.nextAction.secondaryHref ?? "";
+
+  if (href.startsWith("/estimates/") && input.latestEstimate) {
+    return `Estimate ${input.latestEstimate.referenceNumber}`;
+  }
+
+  if (href.startsWith("/contracts?") && input.approvedEstimate) {
+    return `Approved estimate ${input.approvedEstimate.referenceNumber}`;
+  }
+
+  if (href.startsWith("/contracts/") && input.latestContract) {
+    return `Contract ${input.latestContract.title}`;
+  }
+
+  if (href.startsWith("/change-orders/") && input.pendingChangeOrder) {
+    return `Change order ${formatStatusLabel(input.pendingChangeOrder.status)}`;
+  }
+
+  if (href.startsWith("/invoices/")) {
+    const invoice = input.depositInvoice ?? input.latestOpenInvoice;
+
+    return invoice ? `Invoice ${invoice.referenceNumber}` : "Invoice workspace";
+  }
+
+  if (href.startsWith("/jobs")) {
+    return input.projectJobsCount > 0 ? "Existing job chain" : "Project readiness";
+  }
+
+  if (href.startsWith("/schedule")) {
+    return input.unscheduledJobsCount > 0
+      ? `${input.unscheduledJobsCount} unscheduled ${
+          input.unscheduledJobsCount === 1 ? "job" : "jobs"
+        }`
+      : "Schedule workspace";
+  }
+
+  return "Project readiness";
+}
+
+function buildLinkedRecordRecencyItems(input: {
+  estimates: ProjectEstimateListItem[];
+  contracts: ProjectContractListItem[];
+  jobs: ProjectJobListItem[];
+  invoices: ProjectInvoiceListItem[];
+  changeOrders: ProjectChangeOrderListItem[];
+  dailyLogs: ProjectDailyLogListItem[];
+  fieldNotes: ProjectFieldNoteListItem[];
+  drivingRecordKey: string | null;
+}) {
+  const items: LinkedRecordRecencyItem[] = [];
+  const pushItem = (item: Omit<LinkedRecordRecencyItem, "isDrivingRecord">) => {
+    items.push({
+      ...item,
+      isDrivingRecord: item.recordKey === input.drivingRecordKey
+    });
+  };
+
+  input.estimates.forEach((estimate) => {
+    pushItem({
+      id: `estimate-${estimate.id}`,
+      recordKey: `estimate:${estimate.id}`,
+      typeLabel: "Estimate",
+      title: estimate.referenceNumber,
+      href: `/estimates/${estimate.id}`,
+      statusLabel: formatStatusLabel(estimate.status),
+      activityLabel: joinMetaParts([
+        `Total ${formatMoney(estimate.totalAmount)}`,
+        formatUpdatedActivity(estimate.updatedAt)
+      ]),
+      timestamp: estimate.updatedAt,
+      timestampLabel: formatUpdatedActivity(estimate.updatedAt) ?? "Updated date unavailable"
+    });
+  });
+
+  input.contracts.forEach((contract) => {
+    pushItem({
+      id: `contract-${contract.id}`,
+      recordKey: `contract:${contract.id}`,
+      typeLabel: "Contract",
+      title: contract.title,
+      href: `/contracts/${contract.id}`,
+      statusLabel: formatStatusLabel(contract.status),
+      activityLabel: joinMetaParts([
+        contract.sentAt
+          ? `Sent ${formatDateTime(contract.sentAt)}`
+          : contract.signedAt
+            ? `Signed ${formatDateTime(contract.signedAt)}`
+            : "Contract record",
+        formatUpdatedActivity(contract.updatedAt)
+      ]),
+      timestamp: contract.updatedAt,
+      timestampLabel: formatUpdatedActivity(contract.updatedAt) ?? "Updated date unavailable"
+    });
+  });
+
+  input.jobs.forEach((job) => {
+    pushItem({
+      id: `job-${job.id}`,
+      recordKey: `job:${job.id}`,
+      typeLabel: "Job",
+      title: job.project?.name ?? "Project job",
+      href: `/jobs/${job.id}`,
+      statusLabel: formatStatusLabel(job.dispatchStatus),
+      activityLabel: joinMetaParts([
+        job.scheduledDate
+          ? `Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}`
+          : "Unscheduled",
+        job.crewVendor?.name ?? "Crew not assigned",
+        formatUpdatedActivity(job.updatedAt)
+      ]),
+      timestamp: job.updatedAt,
+      timestampLabel: formatUpdatedActivity(job.updatedAt) ?? "Updated date unavailable"
+    });
+  });
+
+  input.invoices.forEach((invoice) => {
+    pushItem({
+      id: `invoice-${invoice.id}`,
+      recordKey: `invoice:${invoice.id}`,
+      typeLabel: invoice.workflowRole === "deposit" ? "Deposit invoice" : "Invoice",
+      title: invoice.referenceNumber,
+      href: `/invoices/${invoice.id}`,
+      statusLabel: formatStatusLabel(invoice.status),
+      activityLabel: joinMetaParts([
+        getProjectInvoiceSummary(invoice),
+        formatUpdatedActivity(invoice.updatedAt)
+      ]),
+      timestamp: invoice.updatedAt,
+      timestampLabel: formatUpdatedActivity(invoice.updatedAt) ?? "Updated date unavailable"
+    });
+  });
+
+  input.changeOrders.forEach((changeOrder) => {
+    pushItem({
+      id: `change-order-${changeOrder.id}`,
+      recordKey: `change_order:${changeOrder.id}`,
+      typeLabel: "Change order",
+      title: changeOrder.title,
+      href: `/change-orders/${changeOrder.id}`,
+      statusLabel: formatStatusLabel(changeOrder.status),
+      activityLabel: joinMetaParts([
+        formatMoney(changeOrder.priceAdjustment),
+        changeOrder.invoice ? `Invoice ${changeOrder.invoice.referenceNumber}` : "Project scope change",
+        formatUpdatedActivity(changeOrder.updatedAt)
+      ]),
+      timestamp: changeOrder.updatedAt,
+      timestampLabel: formatUpdatedActivity(changeOrder.updatedAt) ?? "Updated date unavailable"
+    });
+  });
+
+  input.dailyLogs.forEach((dailyLog) => {
+    pushItem({
+      id: `daily-log-${dailyLog.id}`,
+      recordKey: `daily_log:${dailyLog.id}`,
+      typeLabel: "Daily log",
+      title:
+        dailyLog.summary?.trim() ||
+        new Date(`${dailyLog.logDate}T00:00:00`).toLocaleDateString(),
+      href: `/daily-logs/${dailyLog.id}`,
+      statusLabel: formatStatusLabel(dailyLog.status),
+      activityLabel: joinMetaParts([
+        dailyLog.job ? `Job ${dailyLog.job.id.slice(0, 8)}` : "Project-day execution",
+        dailyLog.weatherSummary ?? null,
+        formatUpdatedActivity(dailyLog.updatedAt)
+      ]),
+      timestamp: dailyLog.updatedAt,
+      timestampLabel: formatUpdatedActivity(dailyLog.updatedAt) ?? "Updated date unavailable"
+    });
+  });
+
+  input.fieldNotes.forEach((fieldNote) => {
+    pushItem({
+      id: `field-note-${fieldNote.id}`,
+      recordKey: `field_note:${fieldNote.id}`,
+      typeLabel: "Field note",
+      title: fieldNote.title,
+      href: fieldNote.dailyLog ? `/daily-logs/${fieldNote.dailyLog.id}` : "/daily-logs",
+      statusLabel: formatStatusLabel(fieldNote.status),
+      activityLabel: joinMetaParts([
+        formatStatusLabel(fieldNote.noteType),
+        fieldNote.job ? `Job ${fieldNote.job.id.slice(0, 8)}` : "Project field note",
+        formatUpdatedActivity(fieldNote.updatedAt)
+      ]),
+      timestamp: fieldNote.updatedAt,
+      timestampLabel: formatUpdatedActivity(fieldNote.updatedAt) ?? "Updated date unavailable"
+    });
+  });
+
+  return items.sort((left, right) => right.timestamp.localeCompare(left.timestamp));
 }
 
 function getProjectInvoiceContinuitySummary(input: {
@@ -1292,6 +1706,7 @@ export default async function ProjectDetailPage({
 }: ProjectDetailPageProps) {
   const { projectId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
+  const user = await requireAuthenticatedUser(`/projects/${projectId}`);
   const [
     project,
     customers,
@@ -1344,7 +1759,8 @@ export default async function ProjectDetailPage({
     listWorkItemsForProject(project.id, `/projects/${projectId}`),
     getOperationalCuesForProject({
       organizationId: project.organizationId,
-      projectId: project.id
+      projectId: project.id,
+      currentUserId: user.id
     }),
     listPeople()
   ]);
@@ -1621,7 +2037,7 @@ export default async function ProjectDetailPage({
     isReadyToSchedule: Boolean(readinessSnapshot?.isReadyToSchedule),
     hasProgressBillingInvoiceGap
   });
-  const projectCues = buildProjectCues({
+  const derivedProjectCues = buildProjectCues({
     project,
     readinessSnapshot,
     estimates: projectEstimates,
@@ -1630,6 +2046,20 @@ export default async function ProjectDetailPage({
     jobs: projectJobs,
     fieldNotes: projectFieldNotes
   });
+  const projectCueStates = await listWorkflowCueStatesForIdentities({
+    companyId: project.organizationId,
+    currentUserId: user.id,
+    identities: derivedProjectCues.map((cue) =>
+      buildProjectCueIdentity(project.organizationId, cue)
+    )
+  });
+  const projectCues = applyCueStates({
+    cues: derivedProjectCues,
+    states: projectCueStates,
+    currentUserId: user.id,
+    now: new Date(),
+    companyId: project.organizationId
+  }).visibleCues;
   const selectedWorkItemCue =
     projectCues.find(
       (cue) => cue.workItemBridge?.cue === resolvedSearchParams.workItemCue
@@ -1715,6 +2145,38 @@ export default async function ProjectDetailPage({
       tone: mapWorkspaceToneToProjectStateTone(schedulingState.tone)
     }
   ];
+  const workflowDriverLabel = getProjectWorkflowDriverLabel({
+    nextAction,
+    approvedEstimate: approvedEstimate ?? null,
+    latestEstimate,
+    latestContract,
+    pendingChangeOrder,
+    depositInvoice,
+    latestOpenInvoice,
+    projectJobsCount: projectJobs.length,
+    unscheduledJobsCount: unscheduledJobs.length
+  });
+  const drivingRecordKey = getDrivingRecordKey({
+    nextAction,
+    approvedEstimate: approvedEstimate ?? null,
+    latestEstimate,
+    latestContract,
+    pendingChangeOrder,
+    depositInvoice,
+    latestOpenInvoice,
+    projectJobs,
+    unscheduledJobs
+  });
+  const linkedRecordRecencyItems = buildLinkedRecordRecencyItems({
+    estimates: projectEstimates,
+    contracts: projectContracts,
+    jobs: projectJobs,
+    invoices: projectInvoices,
+    changeOrders: projectChangeOrders,
+    dailyLogs: projectDailyLogs,
+    fieldNotes: projectFieldNotes,
+    drivingRecordKey
+  });
 
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.12fr)_320px]">
@@ -1846,12 +2308,30 @@ export default async function ProjectDetailPage({
 
             <ProjectStateSummary title="Project state summary" items={projectStateItems} />
 
+            <LinkedRecordRecencyPanel items={linkedRecordRecencyItems} />
+
             <NeedsAttentionPanel
               cues={projectAttentionCues}
               description="Linked estimate, contract, invoice, and job cues for this project. These are derived at view time and do not create tasks or mutate workflow state."
+              getCueStateControls={(cue) => (
+                <CueStateControls
+                  identity={buildOperationalCueIdentity(cue)}
+                  support={getCueStateActionSupport(cue)}
+                  returnTo={`/projects/${project.id}`}
+                />
+              )}
             />
 
-            <ProjectCuePanel cues={projectCues} />
+            <ProjectCuePanel
+              cues={projectCues}
+              getCueStateControls={(cue) => (
+                <CueStateControls
+                  identity={buildProjectCueIdentity(project.organizationId, cue)}
+                  support={getCueStateActionSupport(cue)}
+                  returnTo={`/projects/${project.id}`}
+                />
+              )}
+            />
 
             <section
               id="work-items"
@@ -1999,7 +2479,7 @@ export default async function ProjectDetailPage({
 
         <CoreWorkflowSection
           title="Workflow sections"
-          description="Overview, estimate, contract, jobs, and invoices stay in the same order as the canonical project handoff."
+          description="Overview, estimate, contract, jobs, and invoices stay in the same order as the canonical project handoff. The overview names the linked record or workspace currently driving the next step."
         >
           <section className="space-y-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 lg:col-span-2 xl:col-span-4">
             <div className="flex items-center justify-between gap-3">
@@ -2026,6 +2506,10 @@ export default async function ProjectDetailPage({
                   {
                     label: "Next step",
                     value: nextAction.primaryLabel ?? nextAction.title
+                  },
+                  {
+                    label: "Driving record",
+                    value: workflowDriverLabel
                   }
                 ]}
               />
@@ -2048,7 +2532,10 @@ export default async function ProjectDetailPage({
                       href={`/estimates/${estimate.id}`}
                       title={estimate.referenceNumber}
                       subtitle={estimate.customer?.name ?? project.customer?.name ?? "Unknown customer"}
-                      meta={`Total ${formatMoney(estimate.totalAmount)}`}
+                      meta={joinMetaParts([
+                        `Total ${formatMoney(estimate.totalAmount)}`,
+                        formatUpdatedActivity(estimate.updatedAt)
+                      ])}
                       badge={renderStatusBadge(formatStatusLabel(estimate.status))}
                     />
                   ))}
@@ -2094,7 +2581,10 @@ export default async function ProjectDetailPage({
                       href={`/contracts/${contract.id}`}
                       title={contract.title}
                       subtitle={contract.customer?.name ?? project.customer?.name ?? "Unknown customer"}
-                      meta={getProjectContractSummary({ contract, readinessSnapshot })}
+                      meta={joinMetaParts([
+                        getProjectContractSummary({ contract, readinessSnapshot }),
+                        formatUpdatedActivity(contract.updatedAt)
+                      ])}
                       badge={renderStatusBadge(formatStatusLabel(contract.status))}
                     />
                   ))}
@@ -2135,9 +2625,12 @@ export default async function ProjectDetailPage({
                       title={job.project?.name ?? project.name}
                       subtitle={job.customer?.name ?? project.customer?.name ?? "Unknown customer"}
                       meta={
-                        job.scheduledDate
-                          ? `${job.crewVendor?.name ?? "Crew not assigned"} / Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}`
-                          : `${job.crewVendor?.name ?? "Crew not assigned"} / Unscheduled`
+                        joinMetaParts([
+                          job.scheduledDate
+                            ? `${job.crewVendor?.name ?? "Crew not assigned"} / Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}`
+                            : `${job.crewVendor?.name ?? "Crew not assigned"} / Unscheduled`,
+                          formatUpdatedActivity(job.updatedAt)
+                        ])
                       }
                       badge={renderStatusBadge(formatStatusLabel(job.dispatchStatus))}
                     />
@@ -2185,7 +2678,10 @@ export default async function ProjectDetailPage({
                     href={`/invoices/${invoice.id}`}
                     title={invoice.referenceNumber}
                     subtitle={invoice.customer?.name ?? project.customer?.name ?? "Unknown customer"}
-                    meta={getProjectInvoiceSummary(invoice)}
+                    meta={joinMetaParts([
+                      getProjectInvoiceSummary(invoice),
+                      formatUpdatedActivity(invoice.updatedAt)
+                    ])}
                     badge={renderStatusBadge(formatStatusLabel(invoice.status))}
                   />
                 ))
@@ -2399,9 +2895,12 @@ export default async function ProjectDetailPage({
                       title={job.project?.name ?? project.name}
                       subtitle={job.customer?.name ?? project.customer?.name ?? "Unknown customer"}
                       meta={
-                        job.scheduledDate
-                          ? `${job.crewVendor?.name ?? "Crew not assigned"} / Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}`
-                          : `${job.crewVendor?.name ?? "Crew not assigned"} / Unscheduled`
+                        joinMetaParts([
+                          job.scheduledDate
+                            ? `${job.crewVendor?.name ?? "Crew not assigned"} / Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}`
+                            : `${job.crewVendor?.name ?? "Crew not assigned"} / Unscheduled`,
+                          formatUpdatedActivity(job.updatedAt)
+                        ])
                       }
                       badge={renderStatusBadge(formatStatusLabel(job.dispatchStatus))}
                     />
@@ -2466,9 +2965,12 @@ export default async function ProjectDetailPage({
                       }
                       subtitle={new Date(`${dailyLog.logDate}T00:00:00`).toLocaleDateString()}
                       meta={
-                        dailyLog.job
-                          ? `Job ${dailyLog.job.id.slice(0, 8)} / ${dailyLog.weatherSummary ?? "No weather summary"}`
-                          : dailyLog.weatherSummary ?? "Project-day execution record"
+                        joinMetaParts([
+                          dailyLog.job
+                            ? `Job ${dailyLog.job.id.slice(0, 8)} / ${dailyLog.weatherSummary ?? "No weather summary"}`
+                            : dailyLog.weatherSummary ?? "Project-day execution record",
+                          formatUpdatedActivity(dailyLog.updatedAt)
+                        ])
                       }
                       badge={renderStatusBadge(formatStatusLabel(dailyLog.status))}
                     />
@@ -2514,7 +3016,13 @@ export default async function ProjectDetailPage({
                       href={`/change-orders/${changeOrder.id}`}
                       title={changeOrder.title}
                       subtitle={changeOrder.customer?.name ?? project.customer?.name ?? "Unknown customer"}
-                      meta={`${formatMoney(changeOrder.priceAdjustment)}${changeOrder.invoice ? ` / Invoice ${changeOrder.invoice.referenceNumber}` : ""}`}
+                      meta={joinMetaParts([
+                        formatMoney(changeOrder.priceAdjustment),
+                        changeOrder.invoice
+                          ? `Invoice ${changeOrder.invoice.referenceNumber}`
+                          : "Project scope change",
+                        formatUpdatedActivity(changeOrder.updatedAt)
+                      ])}
                       badge={renderStatusBadge(formatStatusLabel(changeOrder.status))}
                     />
                   ))
@@ -2575,7 +3083,10 @@ export default async function ProjectDetailPage({
                         invoice.customer?.name ?? project.customer?.name ?? "Unknown customer"
                       }
                       meta={
-                        getProjectInvoiceSummary(invoice)
+                        joinMetaParts([
+                          getProjectInvoiceSummary(invoice),
+                          formatUpdatedActivity(invoice.updatedAt)
+                        ])
                       }
                       badge={renderStatusBadge(formatStatusLabel(invoice.status))}
                     />
@@ -2929,11 +3440,12 @@ export default async function ProjectDetailPage({
                 href={`/estimates/${projectEstimates[0].id}`}
                 title={projectEstimates[0].referenceNumber}
                 subtitle="Primary estimate"
-                meta={
+                meta={joinMetaParts([
                   projectEstimates[0].customer?.name ??
-                  project.customer?.name ??
-                  "Unknown customer"
-                }
+                    project.customer?.name ??
+                    "Unknown customer",
+                  formatUpdatedActivity(projectEstimates[0].updatedAt)
+                ])}
                 badge={renderStatusBadge(formatStatusLabel(projectEstimates[0].status))}
               />
             ) : null}
@@ -2942,10 +3454,13 @@ export default async function ProjectDetailPage({
                 href={`/contracts/${projectContracts[0].id}`}
                 title={projectContracts[0].title}
                 subtitle="Primary contract"
-                meta={getProjectContractSummary({
-                  contract: projectContracts[0],
-                  readinessSnapshot
-                })}
+                meta={joinMetaParts([
+                  getProjectContractSummary({
+                    contract: projectContracts[0],
+                    readinessSnapshot
+                  }),
+                  formatUpdatedActivity(projectContracts[0].updatedAt)
+                ])}
                 badge={renderStatusBadge(formatStatusLabel(projectContracts[0].status))}
               />
             ) : null}
@@ -2954,7 +3469,10 @@ export default async function ProjectDetailPage({
                 href={`/jobs/${projectJobs[0].id}`}
                 title={projectJobs[0].project?.name ?? project.name}
                 subtitle="Current job"
-                meta={projectJobs[0].estimate?.referenceNumber ?? "Project-driven job"}
+                meta={joinMetaParts([
+                  projectJobs[0].estimate?.referenceNumber ?? "Project-driven job",
+                  formatUpdatedActivity(projectJobs[0].updatedAt)
+                ])}
                 badge={renderStatusBadge(formatStatusLabel(projectJobs[0].dispatchStatus))}
               />
             ) : null}
@@ -2967,7 +3485,10 @@ export default async function ProjectDetailPage({
                     ? "Deposit invoice"
                     : "Current invoice"
                 }
-                meta={getProjectInvoiceSummary(projectInvoices[0])}
+                meta={joinMetaParts([
+                  getProjectInvoiceSummary(projectInvoices[0]),
+                  formatUpdatedActivity(projectInvoices[0].updatedAt)
+                ])}
                 badge={renderStatusBadge(formatStatusLabel(projectInvoices[0].status))}
               />
             ) : null}
@@ -2976,7 +3497,13 @@ export default async function ProjectDetailPage({
                 href={`/change-orders/${projectChangeOrders[0].id}`}
                 title={projectChangeOrders[0].title}
                 subtitle="Current change order"
-                meta={`${formatMoney(projectChangeOrders[0].priceAdjustment)} / ${projectChangeOrders[0].invoice ? `Invoice ${projectChangeOrders[0].invoice.referenceNumber}` : "Project-linked scope change"}`}
+                meta={joinMetaParts([
+                  formatMoney(projectChangeOrders[0].priceAdjustment),
+                  projectChangeOrders[0].invoice
+                    ? `Invoice ${projectChangeOrders[0].invoice.referenceNumber}`
+                    : "Project-linked scope change",
+                  formatUpdatedActivity(projectChangeOrders[0].updatedAt)
+                ])}
                 badge={renderStatusBadge(formatStatusLabel(projectChangeOrders[0].status))}
               />
             ) : null}
@@ -3009,9 +3536,10 @@ export default async function ProjectDetailPage({
                   new Date(`${projectDailyLogs[0].logDate}T00:00:00`).toLocaleDateString()
                 }
                 subtitle="Current daily log"
-                meta={
-                  projectDailyLogs[0].weatherSummary ?? "Recent field execution record"
-                }
+                meta={joinMetaParts([
+                  projectDailyLogs[0].weatherSummary ?? "Recent field execution record",
+                  formatUpdatedActivity(projectDailyLogs[0].updatedAt)
+                ])}
                 badge={renderStatusBadge(formatStatusLabel(projectDailyLogs[0].status))}
               />
             ) : null}

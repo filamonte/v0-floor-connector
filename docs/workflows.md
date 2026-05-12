@@ -901,13 +901,14 @@ Boundary:
 ### Operational Intelligence / My Work Cue Workflow
 
 Implemented flow:
-- Organization cue rules are persisted in `organization_operational_cue_rules`; cue instances are not persisted.
+- Organization cue rules are persisted in `organization_operational_cue_rules`; cue instances are not persisted as business records.
+- Cue response state is persisted in `workflow_cue_states` for deterministic cue identities. Absence of a row means active/visible; V1 exposes user-scoped dismiss and snooze only on contextual record/project cue surfaces.
 - Organization responsibility defaults are persisted in `organization_responsibility_role_defaults`; they map the starter role strategies to active assignable People records, not directly to users and not to copied workflow records.
 - Default rules are ensured server-side for `estimate_sent_followup`, `contract_sent_unsigned`, `contract_viewed_unsigned`, `invoice_overdue`, `deposit_invoice_unpaid`, `job_ready_unscheduled`, and `job_scheduled_missing_crew`.
 - Contractor owners/admins can tune the built-in My Work cue rules at `/settings/operational-intelligence` by changing enabled state, threshold days, and urgency, and can configure company-level responsibility defaults for estimator, project manager, billing owner, and scheduler.
 - Active organization members can read saved cue rules for derived My Work visibility, but manager/member settings navigation hides this admin route and cue-rule writes are blocked by owner/admin server action authorization plus owner/admin RLS policies.
 - Active organization members can read saved responsibility defaults for cue display. Responsibility-default writes and clears are blocked by owner/admin server action authorization plus owner/admin RLS policies.
-- Dashboard `My Work` derives grouped estimate, contract, invoice, and job cues from canonical records plus enabled organization rules.
+- Dashboard `My Work` derives grouped estimate, contract, invoice, and job cues from canonical records plus enabled organization rules, then applies any matching user-scoped cue suppression before display.
 - Dashboard `My Work` has display-only queue modes:
   - Company shows all derived attention items visible to the organization and remains the safety net.
   - Mine shows cues resolved to the current app user or the current user's linked active Person.
@@ -915,9 +916,9 @@ Implemented flow:
 - Derived cue results include user-facing explanation/source fields so `My Work` and record-level panels can show which canonical date/status triggered the cue, which threshold was used, and whether a conservative fallback timestamp was used.
 - Derived cue results include read-only responsible role strategy fields for the starter role set: `estimator`, `project_manager`, `billing_owner`, and `scheduler`. Current cue mapping is estimate follow-up -> estimator, contract signature follow-up -> project manager, invoice/deposit follow-up -> billing owner, and job schedule/crew follow-up -> scheduler.
 - Derived cue results include a responsibility resolution object for display and future filtering. Starter strategies first resolve through organization responsibility defaults when a mapped person is active and assignable; if that person has `people.membership_user_id`, the linked app user id is derived for future filtering. Without a mapping, starter strategies fall back to the role label. `organization` resolves to the organization queue, and legacy `record_owner` resolves to an unavailable record-owner fallback.
-- Project, estimate, contract, invoice, and job detail workspaces show compact `Needs Attention` panels using the same derived cue results and explanation/source details. Estimate, contract, invoice, and job detail panels filter to the current canonical record; project detail aggregates linked child-record cues by project id.
+- Project, estimate, contract, invoice, and job detail workspaces show compact `Needs Attention` panels using the same derived cue results and explanation/source details. Estimate, contract, invoice, and job detail panels filter to the current canonical record; project detail aggregates linked child-record cues by project id. Project Workspace guidance separates canonical workflow actions from human follow-up so users can distinguish existing record handoffs from user-confirmed work-item drafts. Project detail also shows a compact linked-record recency summary from existing canonical timestamps/statuses so the driving record and recent linked-record changes are easier to scan without introducing a separate activity feed. Supported cues can be dismissed or snoozed for the current user from these contextual surfaces only.
 - Cue rows link back to the canonical estimate, contract, invoice, job, or schedule action rather than creating a separate task surface. In record workspace contexts only, stale sent-estimate and past-due invoice cues can also open the existing internal work-item form with source-locked prefill; dashboard cues remain awareness and workflow-link surfaces in this pass.
-- Disabled rules are suppressed during derivation; threshold and urgency changes affect the query-time cue results without persisting cue instances.
+- Disabled rules are suppressed during derivation; threshold and urgency changes affect the query-time cue results without persisting cue instances. Dismissed or snoozed rows suppress only matching fingerprints, so a material cue change reappears and expired snoozes become visible again.
 - Company cue visibility remains organization-wide even when cues resolve to a responsible person or linked app user, and unresolved cues remain visible in Company. My Work queue modes do not add permissions or persisted selection. Project-level overrides and record-level overrides are deferred. `sales_owner` and `field_lead` are intentionally deferred.
 
 Current canonical records involved:
@@ -932,9 +933,9 @@ Current canonical records involved:
 - job assignments
 
 Boundary:
-- Operational cues do not create or update estimates, contracts, invoices, jobs, projects, customers, payments, notifications, work items, automation runs, or communication records. Cue-to-work-item prefill only prepares the existing work-item form for user-confirmed submission.
-- No `operational_cues` table, persisted cue instance lifecycle, task subsystem, project-level override, record-level override, snooze/dismiss/acknowledge state, notification delivery, AI behavior, custom expression builder, or standalone task-management subsystem is implemented.
-- Responsible role defaults and My Work queue modes are display/resolution metadata, not assignment state. Operational cues do not assign work to a person or user, create task records, or persist cue lifecycle state.
+- Operational cues do not create or update estimates, contracts, invoices, jobs, projects, customers, payments, notifications, work items, automation runs, or communication records. Cue-to-work-item prefill only prepares the existing work-item form for user-confirmed submission. Cue-state controls only write response/visibility state.
+- No `operational_cues` table, persisted cue instance lifecycle, task subsystem, project-level override, record-level override, dashboard cue mutation control, notification delivery, AI behavior, custom expression builder, or standalone task-management subsystem is implemented. Broad resolve remains deferred.
+- Responsible role defaults and My Work queue modes are display/resolution metadata, not assignment state. Operational cues do not assign work to a person or user, create task records, or persist cue lifecycle state as business truth.
 - Record-level Needs Attention panels are contextual views over derived cues only; they do not create separate workflow state or compete with project readiness/next-action guidance.
 - Where a canonical timestamp is unavailable, derivation uses the existing conservative timestamp fallback documented in the cue reason/explanation instead of adding broad timing fields in this pass.
 
@@ -978,6 +979,7 @@ In UX terms, the near-term direction is:
 - `Project` should become the operational hub
 - estimates, contracts, jobs, invoices, files, selected systems/specs, delivery proof, communication history, and activity should feel like connected parts of one project
 - standalone module routes should continue to exist as global queues and work surfaces, not as separate mental models
+- current Project Workspace recency breadcrumbs are derived from existing linked-record timestamps and statuses only; a full project activity/event timeline remains future work
 
 ### Workflow Tightening Still Needed
 

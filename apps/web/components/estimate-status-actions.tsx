@@ -18,11 +18,10 @@ export function EstimateStatusActions({
       >
         <p className="font-medium text-[var(--text-primary)]">Manual customer decision</p>
         <p className="mt-2">
-          Use these actions when the customer approved or rejected outside the portal, such
-          as a paper signature, verbal approval, fake email during testing, or a non-portal
-          customer. This records the customer decision on the canonical estimate so
-          downstream contract, job, and invoice workflows can continue without waiting for
-          send-mail or portal delivery.
+          Use manual approval or rejection only when the customer decision happened outside
+          the portal, such as a paper signature, verbal approval, fake email during testing,
+          or a non-portal customer. This records the decision on the canonical estimate so
+          downstream workflows can continue from customer-confirmed scope.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <form action={updateEstimateStatusAction}>

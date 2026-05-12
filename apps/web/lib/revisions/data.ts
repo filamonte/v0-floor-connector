@@ -8,7 +8,6 @@ import type {
 
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import {
-  getNextRevisionNumber,
   getRecordRevisionDisplayMetadata,
   parseRecordRevisionKind,
   parseRecordRevisionSubjectType,
@@ -143,70 +142,24 @@ export async function createRecordRevision(input: CreateRecordRevisionInput) {
   }
 
   const supabase = await getSupabaseServerClient();
-  const existingResponse = await supabase
-    .from("record_revisions")
-    .select("revision_number")
-    .eq("company_id", input.organizationId)
-    .eq("subject_type", input.subjectType)
-    .eq("subject_id", input.subjectId);
-
-  if (existingResponse.error) {
-    throw new Error(`Unable to inspect existing record revisions: ${existingResponse.error.message}`);
-  }
-
-  const existingRevisionNumbers =
-    ((existingResponse.data ?? []) as Array<{ revision_number: number }>).map(
-      (row) => row.revision_number
-    );
-  const revisionNumber = getNextRevisionNumber(existingRevisionNumbers);
-  const clearCurrentResponse = await supabase
-    .from("record_revisions")
-    .update({ is_current: false })
-    .eq("company_id", input.organizationId)
-    .eq("subject_type", input.subjectType)
-    .eq("subject_id", input.subjectId)
-    .eq("is_current", true);
-
-  if (clearCurrentResponse.error) {
-    throw new Error(`Unable to clear current record revision: ${clearCurrentResponse.error.message}`);
-  }
-
-  const insertResponse = await supabase
-    .from("record_revisions")
-    .insert({
-      company_id: input.organizationId,
-      subject_type: input.subjectType,
-      subject_id: input.subjectId,
-      revision_number: revisionNumber,
-      is_current: true,
-      revision_reason: input.revisionReason ?? null,
-      revision_kind: input.revisionKind,
-      snapshot: input.snapshot,
-      created_by: input.createdByUserId ?? null
+  const response = await supabase
+    .rpc("create_record_revision", {
+      p_company_id: input.organizationId,
+      p_subject_type: input.subjectType,
+      p_subject_id: input.subjectId,
+      p_revision_kind: input.revisionKind,
+      p_snapshot: input.snapshot,
+      p_revision_reason: input.revisionReason ?? null,
+      p_created_by: input.createdByUserId ?? null
     })
-    .select(
-      `
-        id,
-        company_id,
-        subject_type,
-        subject_id,
-        revision_number,
-        is_current,
-        revision_reason,
-        revision_kind,
-        snapshot,
-        created_by,
-        created_at
-      `
-    )
     .single();
 
-  if (insertResponse.error) {
-    throw new Error(`Unable to create record revision: ${insertResponse.error.message}`);
+  if (response.error) {
+    throw new Error(`Unable to create record revision: ${response.error.message}`);
   }
 
   return getRecordRevisionDisplayMetadata(
-    mapRecordRevision(insertResponse.data as RecordRevisionRow)
+    mapRecordRevision(response.data as RecordRevisionRow)
   );
 }
 

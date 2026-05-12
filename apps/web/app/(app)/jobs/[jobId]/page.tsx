@@ -13,6 +13,7 @@ import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
+import { CueStateControls } from "@/components/cue-states/cue-state-controls";
 import {
   SaveStateForm,
   SaveStateSubmitButton
@@ -32,6 +33,9 @@ import { listPeople } from "@/lib/people/data";
 import { listPunchlistItemsByJob } from "@/lib/punchlists/data";
 import { listOpenTimeCardStates, listTimeCardsByJob } from "@/lib/time/data";
 import { getOperationalCuesForSubject } from "@/lib/operational-cues/data";
+import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { getCueStateActionSupport } from "@/lib/cue-states/apply";
+import { buildOperationalCueIdentity } from "@/lib/cue-states/identity";
 import { listVendors } from "@/lib/vendors/data";
 import {
   ActionBar,
@@ -287,6 +291,7 @@ export default async function JobDetailPage({
 }: JobDetailPageProps) {
   const { jobId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
+  const user = await requireAuthenticatedUser(`/jobs/${jobId}`);
   const job = await getJobById(jobId, `/jobs/${jobId}`);
 
   if (!job) {
@@ -305,7 +310,8 @@ export default async function JobDetailPage({
   const jobAttentionCues = await getOperationalCuesForSubject({
     organizationId: job.organizationId,
     subjectType: "job",
-    subjectId: job.id
+    subjectId: job.id,
+    currentUserId: user.id
   });
   const [jobTimeCards, openTimeStates] = await Promise.all([
     listTimeCardsByJob(job.id, `/jobs/${jobId}`),
@@ -483,6 +489,13 @@ export default async function JobDetailPage({
             <NeedsAttentionPanel
               cues={jobAttentionCues}
               description="Job-specific scheduling and crew cues derived from this canonical job and enabled organization rules."
+              getCueStateControls={(cue) => (
+                <CueStateControls
+                  identity={buildOperationalCueIdentity(cue)}
+                  support={getCueStateActionSupport(cue)}
+                  returnTo={`/jobs/${job.id}`}
+                />
+              )}
             />
           </div>
         </div>

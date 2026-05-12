@@ -28,7 +28,7 @@ This document defines what AI tools must not invent when producing implementatio
 - Route target/future docs through current-state before treating them as implemented.
 - Treat diagrams as conceptual orientation, not exhaustive schema, route, or module truth.
 - Follow-up intelligence must start with deterministic, evidence-backed cues over canonical records. AI summaries, drafts, or recommendations are later assistance layers and must not become the detector, source of truth, or autonomous actor for V1 follow-up workflows.
-- Cue-to-work-item behavior must reuse the existing internal `work_items` model after user confirmation. Do not introduce a duplicate task, reminder, or cue-instance lifecycle model unless a later schema plan explicitly approves it.
+- Cue-to-work-item behavior must reuse the existing internal `work_items` model after user confirmation. The approved `workflow_cue_states` layer stores user/company response state around deterministic cue identities only; it is not a duplicate task, reminder, cue-instance truth, canonical-record completion state, or workflow status model.
 
 ## Prompt Safety
 

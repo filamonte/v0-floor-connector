@@ -18,4 +18,9 @@ test("project detail renders decision-first UI", async ({ page }) => {
   await expect(page.getByRole("region", { name: "Project workflow" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Project state summary" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Project workflow" })).toBeVisible();
+  await expect(page.getByText("Driving record")).toBeVisible();
+  await expect(page.getByText(/currently driving the next step/i)).toBeVisible();
+  await expect(page.getByText("Linked record recency")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What changed recently" })).toBeVisible();
+  await expect(page.getByText(/not a separate project activity feed/i)).toBeVisible();
 });

@@ -97,9 +97,24 @@ Financial work must preserve canonical invoices, payments, line-item lineage, ap
 
 ## 6. Communications, Automation, And AI Assistance
 
-Current status: Foundation for communications/notifications and deterministic operational cues; broad AI is planned.
+Current status: Foundation for communications/notifications and a closed deterministic Operational Intelligence / Intelligent Follow-Up foundation; broad AI remains planned.
 
 Planning reference: [docs/ai/intelligent-follow-up-engine.md](C:/FloorConnector/docs/ai/intelligent-follow-up-engine.md) defines the follow-up intelligence model, starting from deterministic evidence-backed cues over canonical records before AI summaries, drafts, or controlled automation.
+
+Implemented deterministic foundation:
+- operational cue derivation from canonical estimates, contracts, invoices, jobs, projects, and organization rule settings
+- record and project workspace cue surfaces with safe canonical workflow routing
+- user-confirmed work-item prefill for approved cue contexts only
+- user-scoped dismiss/snooze through `workflow_cue_states`
+- admin-facing built-in cue-rule guidance at `/settings/operational-intelligence`
+- dashboard awareness surfaces without cue mutation controls
+
+Deferred:
+- company-scoped cue resolve or mark-handled
+- dashboard dismiss/snooze controls
+- AI summaries and draft assistance
+- autonomous or provider-backed AI actions
+- controlled automation beyond existing guarded notification-only foundations
 
 Future depth:
 

@@ -16,6 +16,7 @@ import { EstimateCustomerTimeline } from "@/components/estimates/estimate-custom
 import { EarlyAccessLockNotice } from "@/components/early-access-lock-notice";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
+import { CueStateControls } from "@/components/cue-states/cue-state-controls";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
 import { RevisionTimeline } from "@/components/revisions/revision-timeline";
 import {
@@ -45,6 +46,8 @@ import {
 import { listInvoices } from "@/lib/invoices/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getOperationalCuesForSubject } from "@/lib/operational-cues/data";
+import { getCueStateActionSupport } from "@/lib/cue-states/apply";
+import { buildOperationalCueIdentity } from "@/lib/cue-states/identity";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { isOrganizationActivatedForProductionAction } from "@/lib/organizations/activation-guard";
 import { listPeople } from "@/lib/people/data";
@@ -370,7 +373,8 @@ export default async function EstimateDetailPage({
     getOperationalCuesForSubject({
       organizationId: estimate.organizationId,
       subjectType: "estimate",
-      subjectId: estimate.id
+      subjectId: estimate.id,
+      currentUserId: user.id
     }),
     listWorkItemsForSource({
       sourceType: "estimate",
@@ -586,7 +590,7 @@ export default async function EstimateDetailPage({
             description={nextAction.description}
             statusLabel={`${formatStatusLabel(estimate.status)} estimate`}
             statusTone={actionBarStatusTone}
-            nextActionLabel="Preferred next action"
+            nextActionLabel="Next best action"
             primaryAction={
               estimatePrimaryAction ? (
                 estimatePrimaryAction.href.startsWith("#") ? (
@@ -631,94 +635,6 @@ export default async function EstimateDetailPage({
 
           <ProjectStateSummary title="Estimate state summary" items={estimateStateItems} />
 
-          <NeedsAttentionPanel
-            cues={estimateAttentionCues}
-            description="Estimate-specific My Work cues derived from this canonical estimate and enabled organization rules."
-            getWorkItemAction={getOperationalCueWorkItemBridgeAction}
-          />
-
-          <section
-            id="work-items"
-            className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5"
-          >
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                  Internal work items
-                </p>
-                <h3 className="mt-1 text-base font-semibold text-slate-950">
-                  Estimate follow-through
-                </h3>
-                <p className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600">
-                  Create an internal contractor work item tied to this estimate. Cue
-                  prefill is only a draft; nothing is created until you submit.
-                </p>
-              </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 md:w-56">
-                <p className="font-semibold text-slate-950">Open linked items</p>
-                <p className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
-                  {linkedWorkItems.filter((workItem) => workItem.status === "open").length}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-              <section className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-4">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-                  Create internal work item
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {estimateWorkItemPrefill
-                    ? "Prefilled from a deterministic estimate cue. Review the owner, due date, and context; nothing is created until you submit."
-                    : "Use this form when estimate follow-through needs an owner, due date, and explicit completion state."}
-                </p>
-                <div className="mt-4">
-                  <WorkItemCreateForm
-                    action={createWorkItemAction}
-                    returnTo={`/estimates/${estimate.id}`}
-                    sourceType={defaultEstimateWorkItemSource.sourceType}
-                    sourceId={defaultEstimateWorkItemSource.sourceId}
-                    linkPath={defaultEstimateWorkItemSource.linkPath}
-                    customerId={estimate.customerId}
-                    projectId={estimate.projectId}
-                    defaultKind={estimateWorkItemPrefill?.kind ?? "estimate_follow_up"}
-                    defaultTitle={estimateWorkItemPrefill?.title}
-                    defaultDescription={estimateWorkItemPrefill?.description}
-                    defaultDueAt={estimateWorkItemPrefill?.dueAt}
-                    defaultPriority={estimateWorkItemPrefill?.priority ?? "normal"}
-                    dedupeKey={estimateWorkItemPrefill?.dedupeKey}
-                    metadata={estimateWorkItemPrefill?.metadata}
-                    kindOptions={[
-                      { value: "estimate_follow_up", label: "Estimate follow-up" },
-                      { value: "human_handoff", label: "Human handoff" },
-                      { value: "manual", label: "Manual" }
-                    ]}
-                    assignablePeople={assignablePeople}
-                    boundaryCopy="Work items are internal-only and human-submitted. Creating, completing, or dismissing one does not change estimate status, customer-visible messages, contract generation, invoice state, project readiness, or financial calculations."
-                  />
-                </div>
-              </section>
-
-              <section className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-4">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-                  Linked work items
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Internal actions tied directly to this canonical estimate.
-                </p>
-                <div className="mt-4">
-                  <WorkItemList
-                    workItems={linkedWorkItems}
-                    returnTo={`/estimates/${estimate.id}`}
-                    completeAction={completeWorkItemAction}
-                    dismissAction={dismissWorkItemAction}
-                    emptyTitle="No work items are linked to this estimate yet."
-                    emptyDescription="Create an internal work item when estimate follow-up needs an owner, due date, and completion state."
-                  />
-                </div>
-              </section>
-            </div>
-          </section>
         </div>
 
         {estimate.status === "approved" && approvalOrchestration ? (
@@ -738,8 +654,85 @@ export default async function EstimateDetailPage({
       </div>
 
       <section className="rounded-[2rem] border border-[var(--border-warm)] bg-white px-6 py-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] sm:px-8 sm:py-10 print:rounded-none print:border-none print:px-0 print:py-0 print:shadow-none">
-        <div className="flex flex-col gap-6 border-b border-[var(--border-warm)] pb-8 sm:flex-row sm:items-start sm:justify-between">
-          <div>
+        <div className="grid gap-6 border-b border-[var(--border-warm)] pb-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start">
+          <div className="space-y-6">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--copper)]">
+                Customer-facing estimate
+              </p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
+                {estimate.title ?? estimate.referenceNumber}
+              </h2>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">
+                Review the proposal scope, pricing, customer context, and downstream handoff from
+                one canonical estimate record.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-[8px] border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+                  Customer
+                </p>
+                <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                  {estimate.customer?.name ?? "Unknown customer"}
+                </p>
+              </div>
+              <div className="rounded-[8px] border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+                  Project
+                </p>
+                <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                  {estimate.project?.name ?? "Unknown project"}
+                </p>
+              </div>
+              <div className="rounded-[8px] border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+                  Status
+                </p>
+                <p className="mt-1 text-sm font-semibold capitalize text-[var(--text-primary)]">
+                  {formatStatusLabel(estimate.status)}
+                </p>
+              </div>
+            </div>
+
+            {projectAddress ? (
+              <p className="text-sm leading-6 text-[var(--text-secondary)]">
+                Service location: <span className="font-medium text-[var(--text-primary)]">{projectAddress}</span>
+              </p>
+            ) : null}
+          </div>
+
+          <div className="rounded-[1.25rem] border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
+              Current proposal total
+            </p>
+            <p className="mt-3 text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
+              {formatMoney(estimate.totalAmount)}
+            </p>
+            <dl className="mt-4 grid gap-3 text-sm text-[var(--text-secondary)]">
+              <div className="flex items-center justify-between gap-4 border-t border-[var(--border-warm)] pt-3">
+                <dt>Estimate reference</dt>
+                <dd className="font-medium text-[var(--text-primary)]">#{estimate.referenceNumber}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-4 border-t border-[var(--border-warm)] pt-3">
+                <dt>Subtotal</dt>
+                <dd className="font-medium text-[var(--text-primary)]">
+                  {formatMoney(estimate.subtotalAmount)}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-4 border-t border-[var(--border-warm)] pt-3">
+                <dt>Tax / discount</dt>
+                <dd className="font-medium text-[var(--text-primary)]">
+                  {formatMoney(estimate.taxAmount)} / {formatMoney(estimate.discountAmount)}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+
+        <div className="grid gap-6 border-b border-[var(--border-warm)] py-8 md:grid-cols-2">
+          <section>
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
               Prepared by
             </p>
@@ -750,20 +743,20 @@ export default async function EstimateDetailPage({
               {organizationContext?.organization.legalName ??
                 "Estimate prepared inside the active organization workspace."}
             </p>
-          </div>
+          </section>
 
-          <div className="sm:text-right">
+          <section>
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
-              Estimate Reference
+              Proposal status
             </p>
-            <p className="mt-3 text-2xl font-semibold text-[var(--text-primary)]">
-              {estimate.title ?? estimate.referenceNumber}
-            </p>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">Estimate #{estimate.referenceNumber}</p>
-            <p className="mt-3 text-lg font-semibold text-[var(--text-primary)]">
-              {formatMoney(estimate.totalAmount)}
-            </p>
-          </div>
+            <div className="mt-3 space-y-2 text-sm leading-6 text-[var(--text-secondary)]">
+              <p className="text-lg font-semibold capitalize text-[var(--text-primary)]">
+                {formatStatusLabel(estimate.status)}
+              </p>
+              <p>Estimate #{estimate.referenceNumber}</p>
+              <p>{lineItemCount} line item{lineItemCount === 1 ? "" : "s"} in the current proposal.</p>
+            </div>
+          </section>
         </div>
 
         <div className="border-b border-[var(--border-warm)] py-8">
@@ -1128,9 +1121,107 @@ export default async function EstimateDetailPage({
             >
               <EstimateCustomerTimeline events={customerEvents} />
             </DetailPanel>
+
+            <section
+              id="work-items"
+              className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5"
+            >
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                    Internal follow-through
+                  </p>
+                  <h3 className="mt-1 text-base font-semibold text-slate-950">
+                    Team work tied to this estimate
+                  </h3>
+                  <p className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600">
+                    Create a work item when this estimate needs team follow-up. Cue prefill is
+                    only a draft; nothing is created until you submit.
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 md:w-56">
+                  <p className="font-semibold text-slate-950">Open linked items</p>
+                  <p className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
+                    {linkedWorkItems.filter((workItem) => workItem.status === "open").length}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                <section className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-4">
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    Create internal work item
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {estimateWorkItemPrefill
+                      ? "Prefilled from a deterministic estimate cue. Review the owner, due date, and context; nothing is created until you submit."
+                      : "Use this form when estimate follow-through needs an owner, due date, and explicit completion state."}
+                  </p>
+                  <div className="mt-4">
+                    <WorkItemCreateForm
+                      action={createWorkItemAction}
+                      returnTo={`/estimates/${estimate.id}`}
+                      sourceType={defaultEstimateWorkItemSource.sourceType}
+                      sourceId={defaultEstimateWorkItemSource.sourceId}
+                      linkPath={defaultEstimateWorkItemSource.linkPath}
+                      customerId={estimate.customerId}
+                      projectId={estimate.projectId}
+                      defaultKind={estimateWorkItemPrefill?.kind ?? "estimate_follow_up"}
+                      defaultTitle={estimateWorkItemPrefill?.title}
+                      defaultDescription={estimateWorkItemPrefill?.description}
+                      defaultDueAt={estimateWorkItemPrefill?.dueAt}
+                      defaultPriority={estimateWorkItemPrefill?.priority ?? "normal"}
+                      dedupeKey={estimateWorkItemPrefill?.dedupeKey}
+                      metadata={estimateWorkItemPrefill?.metadata}
+                      kindOptions={[
+                        { value: "estimate_follow_up", label: "Estimate follow-up" },
+                        { value: "human_handoff", label: "Human handoff" },
+                        { value: "manual", label: "Manual" }
+                      ]}
+                      assignablePeople={assignablePeople}
+                      boundaryCopy="Work items are internal-only and human-submitted. Creating, completing, or dismissing one does not change estimate status, customer-visible messages, contract generation, invoice state, project readiness, or financial calculations."
+                    />
+                  </div>
+                </section>
+
+                <section className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-4">
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    Linked work items
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Internal actions tied directly to this canonical estimate.
+                  </p>
+                  <div className="mt-4">
+                    <WorkItemList
+                      workItems={linkedWorkItems}
+                      returnTo={`/estimates/${estimate.id}`}
+                      completeAction={completeWorkItemAction}
+                      dismissAction={dismissWorkItemAction}
+                      emptyTitle="No work items are linked to this estimate yet."
+                      emptyDescription="Create an internal work item when estimate follow-up needs an owner, due date, and completion state."
+                    />
+                  </div>
+                </section>
+              </div>
+            </section>
           </div>
 
           <aside className="space-y-6">
+            <RevisionTimeline revisions={recordRevisions} />
+
+            <NeedsAttentionPanel
+              cues={estimateAttentionCues}
+              description="Estimate-specific cues stay secondary to the customer-facing proposal. Dismiss and snooze only adjust your visibility."
+              getWorkItemAction={getOperationalCueWorkItemBridgeAction}
+              getCueStateControls={(cue) => (
+                <CueStateControls
+                  identity={buildOperationalCueIdentity(cue)}
+                  support={getCueStateActionSupport(cue)}
+                  returnTo={`/estimates/${estimate.id}`}
+                />
+              )}
+            />
+
             <DetailPanel
               title="Connected Workflow"
               description="Project, contract, job, and invoice continuity stays visible here without displacing the proposal as the main review surface."
@@ -1363,8 +1454,6 @@ export default async function EstimateDetailPage({
               actionClassName="inline-flex items-center rounded-full border border-[var(--border-warm)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition hover:border-[var(--border-dark)] hover:bg-[var(--highlight)]"
               threads={communicationThreads}
             />
-
-            <RevisionTimeline revisions={recordRevisions} />
           </aside>
         </div>
       </section>
