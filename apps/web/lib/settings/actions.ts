@@ -394,7 +394,33 @@ export async function updateOrganizationWorkflowSettingsAction(formData: FormDat
     nextEstimateNumber: getFieldValue(formData, "nextEstimateNumber"),
     nextInvoiceNumber: getFieldValue(formData, "nextInvoiceNumber"),
     nextChangeOrderNumber: getFieldValue(formData, "nextChangeOrderNumber"),
-    nextContractNumber: getFieldValue(formData, "nextContractNumber")
+    nextContractNumber: getFieldValue(formData, "nextContractNumber"),
+    workflowMode: getFieldValue(formData, "workflowMode"),
+    showNextBestActions: getCheckboxValue(formData, "showNextBestActions"),
+    showReadinessGuidance: getCheckboxValue(formData, "showReadinessGuidance"),
+    strictReadinessEnforcement: getCheckboxValue(
+      formData,
+      "strictReadinessEnforcement"
+    ),
+    showShortcutCleanupPrompts: getCheckboxValue(
+      formData,
+      "showShortcutCleanupPrompts"
+    ),
+    showWorkflowExplanationCopy: getCheckboxValue(
+      formData,
+      "showWorkflowExplanationCopy"
+    ),
+    enableAiSuggestions: getCheckboxValue(formData, "enableAiSuggestions"),
+    enableAiSummaries: getCheckboxValue(formData, "enableAiSummaries"),
+    enableAiDrafting: getCheckboxValue(formData, "enableAiDrafting"),
+    enableAiFormPrefillSuggestions: getCheckboxValue(
+      formData,
+      "enableAiFormPrefillSuggestions"
+    ),
+    enableAiWorkItemRecommendations: getCheckboxValue(
+      formData,
+      "enableAiWorkItemRecommendations"
+    )
   });
 
   if (!result.success) {
@@ -426,7 +452,37 @@ export async function updateOrganizationWorkflowSettingsAction(formData: FormDat
     await upsertOrganizationWorkflowSettings({
       organizationId: scope.organizationId,
       userId: scope.userId,
-      ...result.data
+      approvedEstimateContractTemplateId: result.data.approvedEstimateContractTemplateId,
+      requireContractInternalApproval: result.data.requireContractInternalApproval,
+      requireContractSignatureBeforeJobScheduling:
+        result.data.requireContractSignatureBeforeJobScheduling,
+      requireDepositBeforeJobScheduling: result.data.requireDepositBeforeJobScheduling,
+      requireFinancingApprovalBeforeJobScheduling:
+        result.data.requireFinancingApprovalBeforeJobScheduling,
+      defaultDepositPercentage: result.data.defaultDepositPercentage,
+      defaultEstimateTermsHtml: result.data.defaultEstimateTermsHtml,
+      defaultEstimateInclusionsHtml: result.data.defaultEstimateInclusionsHtml,
+      defaultEstimateExclusionsHtml: result.data.defaultEstimateExclusionsHtml,
+      defaultEstimateScopeSummaryHtml: result.data.defaultEstimateScopeSummaryHtml,
+      nextEstimateNumber: result.data.nextEstimateNumber,
+      nextInvoiceNumber: result.data.nextInvoiceNumber,
+      nextChangeOrderNumber: result.data.nextChangeOrderNumber,
+      nextContractNumber: result.data.nextContractNumber,
+      workflowGuidancePreferences: {
+        workflowMode: result.data.workflowMode,
+        showNextBestActions: result.data.showNextBestActions,
+        showReadinessGuidance: result.data.showReadinessGuidance,
+        strictReadinessEnforcement: result.data.strictReadinessEnforcement,
+        allowOneOffInvoiceShortcuts: false,
+        showShortcutCleanupPrompts: result.data.showShortcutCleanupPrompts,
+        showWorkflowExplanationCopy: result.data.showWorkflowExplanationCopy,
+        enableAiSuggestions: result.data.enableAiSuggestions,
+        enableAiSummaries: result.data.enableAiSummaries,
+        enableAiDrafting: result.data.enableAiDrafting,
+        enableAiFormPrefillSuggestions: result.data.enableAiFormPrefillSuggestions,
+        enableAiWorkItemRecommendations: result.data.enableAiWorkItemRecommendations,
+        requireConfirmationBeforeAiActions: true
+      }
     });
   } catch (error) {
     redirect(
@@ -443,7 +499,7 @@ export async function updateOrganizationWorkflowSettingsAction(formData: FormDat
 
   redirect(
     buildRedirect("/settings/workflows", {
-      message: "Contract workflow defaults were updated."
+      message: "Workflow defaults and guidance preferences were updated."
     })
   );
 }

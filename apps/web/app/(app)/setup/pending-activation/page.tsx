@@ -20,11 +20,11 @@ export default async function PendingActivationPage() {
             Step 3 of 3
           </p>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[#11100f]">
-            You&apos;re in early access
+            You&apos;re in founder early access
           </h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-[#625a52]">
             Your workspace is ready. You can enter the dashboard, create real records,
-            and move through the contractor workflow while activation is pending.
+            and move through the contractor workflow while platform activation is pending.
           </p>
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -61,6 +61,13 @@ export default async function PendingActivationPage() {
             <p className="mt-5 text-xs leading-5 text-white/50">
               External sends, customer-facing payment processing, and provider-backed
               emails stay locked until activation.
+            </p>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-950">
+            <p className="font-semibold">What happens next</p>
+            <p className="mt-2 text-amber-900">
+              A platform operator reviews your setup, billing readiness, and founder access notes before marking the tenant active. Activation unlocks guarded external production actions; it does not create a Stripe subscription or charge a card.
             </p>
           </div>
 

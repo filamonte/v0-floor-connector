@@ -50,6 +50,7 @@ import {
 } from "@/lib/cue-states/identity";
 import { listWorkflowCueStatesForIdentities } from "@/lib/cue-states/data";
 import { getOpportunityByProjectId } from "@/lib/opportunities/data";
+import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { listPeople } from "@/lib/people/data";
 import { listPunchlistItemsByProject } from "@/lib/punchlists/data";
 import { listProgressBillingByProject } from "@/lib/progress-billing/data";
@@ -73,6 +74,11 @@ import {
 } from "@/lib/work-items/actions";
 import { listWorkItemsForProject } from "@/lib/work-items/data";
 import { buildProjectGuidanceWorkItemPrefill } from "@/lib/work-items/prefill";
+import {
+  normalizeWorkflowGuidancePreferences,
+  shouldShowNextBestActions,
+  shouldShowReadinessGuidance
+} from "@/lib/workflow-guidance/preferences";
 
 type ProjectDetailPageProps = {
   params: Promise<{
@@ -1743,6 +1749,12 @@ export default async function ProjectDetailPage({
     organizationId: project.organizationId,
     projectId: project.id
   });
+  const workflowSettings = await getOrganizationWorkflowSettings(project.organizationId);
+  const guidancePreferences = normalizeWorkflowGuidancePreferences(
+    workflowSettings.workflowGuidancePreferences
+  );
+  const showNextBestActionGuidance = shouldShowNextBestActions(guidancePreferences);
+  const showReadinessGuidancePanel = shouldShowReadinessGuidance(guidancePreferences);
   const [
     projectTimeCards,
     openTimeStates,
@@ -2181,7 +2193,7 @@ export default async function ProjectDetailPage({
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.12fr)_320px]">
       <section className="space-y-10">
-        <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+        <div className="rounded-lg border border-[var(--border-warm)] bg-white p-5 shadow-sm sm:p-6">
           <DetailPageHeader
             eyebrow="Project Workspace"
             title={project.name}
@@ -2249,6 +2261,7 @@ export default async function ProjectDetailPage({
           ) : null}
 
           <div className="mt-6 space-y-4">
+            {showNextBestActionGuidance ? (
             <ActionBar
               title={nextAction.title}
               description={
@@ -2303,13 +2316,17 @@ export default async function ProjectDetailPage({
                 project.postalCode
               ])}`}
             />
+            ) : null}
 
-            <WorkflowBar title="Project workflow" steps={workflowSteps} />
+            {showReadinessGuidancePanel ? (
+              <WorkflowBar title="Project workflow" steps={workflowSteps} />
+            ) : null}
 
             <ProjectStateSummary title="Project state summary" items={projectStateItems} />
 
             <LinkedRecordRecencyPanel items={linkedRecordRecencyItems} />
 
+            {showReadinessGuidancePanel ? (
             <NeedsAttentionPanel
               cues={projectAttentionCues}
               description="Linked estimate, contract, invoice, and job cues for this project. These are derived at view time and do not create tasks or mutate workflow state."
@@ -2321,7 +2338,9 @@ export default async function ProjectDetailPage({
                 />
               )}
             />
+            ) : null}
 
+            {showNextBestActionGuidance ? (
             <ProjectCuePanel
               cues={projectCues}
               getCueStateControls={(cue) => (
@@ -2332,6 +2351,7 @@ export default async function ProjectDetailPage({
                 />
               )}
             />
+            ) : null}
 
             <section
               id="work-items"
@@ -2702,7 +2722,7 @@ export default async function ProjectDetailPage({
           </section>
         </CoreWorkflowSection>
 
-        {nextActionQueue.length > 1 ? (
+        {showNextBestActionGuidance && nextActionQueue.length > 1 ? (
           <DetailPanel
             title="Follow-Up Actions"
             description="Secondary project actions stay available after the primary next step, without competing with the core workflow above."
@@ -2731,6 +2751,7 @@ export default async function ProjectDetailPage({
           </DetailPanel>
         ) : null}
 
+        {showReadinessGuidancePanel ? (
         <DetailPanel
           title="Upstream Readiness Chain"
           description="The project hub still reflects the commercial handoff in order, so operations can see what is blocking downstream work at a glance."
@@ -2755,6 +2776,7 @@ export default async function ProjectDetailPage({
             </div>
           </div>
         </DetailPanel>
+        ) : null}
 
         <DetailPanel
           title="Coordination"

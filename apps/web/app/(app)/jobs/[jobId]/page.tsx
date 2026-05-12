@@ -395,7 +395,7 @@ export default async function JobDetailPage({
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
       <section className="space-y-8">
-        <div className="rounded-[2rem] border border-slate-200 bg-white/92 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+        <div className="rounded-lg border border-[var(--border-warm)] bg-white p-5 shadow-sm sm:p-6">
           <DetailPageHeader
             eyebrow="Job Workspace"
             title={job.project?.name ?? "Job record"}

@@ -10,6 +10,24 @@ import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-se
 import { updateOrganizationWorkflowSettingsAction } from "@/lib/settings/actions";
 import { listDocumentTemplates } from "@/lib/templates/data";
 
+const workflowModeOptions = [
+  {
+    value: "guided",
+    label: "Guided workflow",
+    description: "Show the strongest coaching, next steps, and readiness framing."
+  },
+  {
+    value: "flexible",
+    label: "Flexible workflow",
+    description: "Keep guidance visible while giving teams quieter shortcut context."
+  },
+  {
+    value: "manual",
+    label: "Manual workflow",
+    description: "Reduce prompts and let experienced teams work with fewer coaching cues."
+  }
+] as const;
+
 type PageProps = {
   searchParams?: Promise<{
     error?: string;
@@ -28,6 +46,7 @@ export default async function SettingsWorkflowsPage({ searchParams }: PageProps)
   const activeContractTemplates = templates.filter(
     (template) => template.status === "active"
   );
+  const guidancePreferences = workflowSettings.workflowGuidancePreferences;
 
   return (
     <div className="space-y-6">
@@ -151,6 +170,181 @@ export default async function SettingsWorkflowsPage({ searchParams }: PageProps)
               className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
             />
           </label>
+
+          <section className="rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-sm">
+            <div>
+              <p className="text-sm font-semibold text-slate-950">
+                Workflow guidance
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Workflow guidance changes how much FloorConnector coaches your team through the recommended process. It does not change financial, security, signature, or audit rules.
+              </p>
+            </div>
+
+            <div className="mt-4 grid gap-3 lg:grid-cols-3">
+              {workflowModeOptions.map((option) => (
+                <label
+                  key={option.value}
+                  className="flex h-full items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-4"
+                >
+                  <input
+                    type="radio"
+                    name="workflowMode"
+                    value={option.value}
+                    defaultChecked={guidancePreferences.workflowMode === option.value}
+                    className="mt-1 h-4 w-4 border-slate-300 text-brand-700 focus:ring-brand-200"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium text-slate-950">
+                      {option.label}
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-slate-500">
+                      {option.description}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {[
+                {
+                  name: "showNextBestActions",
+                  label: "Show next best actions",
+                  description:
+                    "Show the primary follow-through cards on project and record workspaces.",
+                  checked: guidancePreferences.showNextBestActions
+                },
+                {
+                  name: "showReadinessGuidance",
+                  label: "Show readiness guidance",
+                  description:
+                    "Show readiness summaries and blockers where the workflow already has evidence.",
+                  checked: guidancePreferences.showReadinessGuidance
+                },
+                {
+                  name: "strictReadinessEnforcement",
+                  label: "Use strict readiness presentation",
+                  description:
+                    "Keep blockers visually prominent in guided mode. Server-side readiness gates still enforce required workflows either way.",
+                  checked: guidancePreferences.strictReadinessEnforcement
+                },
+                {
+                  name: "showShortcutCleanupPrompts",
+                  label: "Show shortcut cleanup prompts",
+                  description:
+                    "Reserve space for future prompts that help teams reconnect safe shortcuts to the canonical workflow.",
+                  checked: guidancePreferences.showShortcutCleanupPrompts
+                },
+                {
+                  name: "showWorkflowExplanationCopy",
+                  label: "Show workflow explanation copy",
+                  description:
+                    "Keep short helper copy visible around guidance-heavy workflow sections.",
+                  checked: guidancePreferences.showWorkflowExplanationCopy
+                }
+              ].map((preference) => (
+                <label
+                  key={preference.name}
+                  className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-4"
+                >
+                  <input
+                    type="checkbox"
+                    name={preference.name}
+                    defaultChecked={preference.checked}
+                    className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium text-slate-900">
+                      {preference.label}
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-slate-500">
+                      {preference.description}
+                    </span>
+                  </span>
+                </label>
+              ))}
+
+              <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-4">
+                <p className="text-sm font-medium text-slate-900">
+                  Allow one-off invoice shortcuts
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Planned only in this phase. The future shortcut must still create or use canonical customer, project, invoice, and payment records before it can be enabled.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-sm">
+            <div>
+              <p className="text-sm font-semibold text-slate-950">
+                AI assistance
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                AI assistance is separate from workflow guidance. Turning guidance down does not turn AI on, and turning AI on later will still require human confirmation before customer-facing, billing, scheduling, permission, signature, or commercial actions.
+              </p>
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {[
+                {
+                  name: "enableAiSuggestions",
+                  label: "AI suggestions",
+                  checked: guidancePreferences.enableAiSuggestions
+                },
+                {
+                  name: "enableAiSummaries",
+                  label: "AI summaries",
+                  checked: guidancePreferences.enableAiSummaries
+                },
+                {
+                  name: "enableAiDrafting",
+                  label: "AI drafting",
+                  checked: guidancePreferences.enableAiDrafting
+                },
+                {
+                  name: "enableAiFormPrefillSuggestions",
+                  label: "AI form prefill suggestions",
+                  checked: guidancePreferences.enableAiFormPrefillSuggestions
+                },
+                {
+                  name: "enableAiWorkItemRecommendations",
+                  label: "AI work-item recommendations",
+                  checked: guidancePreferences.enableAiWorkItemRecommendations
+                }
+              ].map((preference) => (
+                <label
+                  key={preference.name}
+                  className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-4"
+                >
+                  <input
+                    type="checkbox"
+                    name={preference.name}
+                    defaultChecked={preference.checked}
+                    className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium text-slate-900">
+                      {preference.label}
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-slate-500">
+                      Stores the preference contract only; no autonomous AI action is enabled here.
+                    </span>
+                  </span>
+                </label>
+              ))}
+
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-4">
+                <p className="text-sm font-medium text-amber-950">
+                  Human confirmation remains required
+                </p>
+                <p className="mt-1 text-xs leading-5 text-amber-900">
+                  AI-prepared actions cannot auto-send, auto-bill, auto-sign, auto-schedule, or change permissions from these settings.
+                </p>
+              </div>
+            </div>
+          </section>
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
             <p className="font-medium text-slate-900">Estimate starting defaults</p>

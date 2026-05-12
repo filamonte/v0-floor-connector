@@ -34,6 +34,10 @@ module.exports = defineConfig({
       testMatch: /(^|[\\/])platform-admin-auth\.setup\.js$/
     },
     {
+      name: "setup-portal",
+      testMatch: /(^|[\\/])portal-auth\.setup\.js$/
+    },
+    {
       name: "chromium-public",
       testMatch: /(?:marketing-login|save-state-form|ui-primitives)\.spec\.js/,
       use: { ...devices["Desktop Chrome"] }
@@ -55,6 +59,13 @@ module.exports = defineConfig({
         ...devices["Desktop Chrome"],
         contractorStorageState: authStatePath,
         platformAdminStorageState: platformAdminAuthStatePath
+      }
+    },
+    {
+      name: "chromium-portal",
+      testMatch: /portal-golden-path\.spec\.js/,
+      use: {
+        ...devices["Desktop Chrome"]
       }
     }
   ],

@@ -10,6 +10,7 @@ This is a compact operational handoff for the current branch. It is not a compet
 Before doing implementation or documentation work, read [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md).
 
 Then use:
+
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md) for implemented truth
 - [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md) for maturity framing
 - [docs/module-status.md](C:/FloorConnector/docs/module-status.md) for concise module status
@@ -33,6 +34,7 @@ It is best understood as a platform operating-system foundation with evolving UX
 ## Current Active Focus
 
 Current work should generally preserve the implemented operational core while tightening:
+
 - project-centered continuity
 - workflow/readiness guidance
 - scheduling and dispatch depth
@@ -42,11 +44,40 @@ Current work should generally preserve the implemented operational core while ti
 
 ## Latest UI Checkpoint
 
+- Phase 0 estimate-led workspace standardization tightened the existing UI baseline without reopening the shell: Estimate remains the reference surface, and Project, Contract, Invoice, and Job Workspaces should continue using the same header, next-action, workflow-summary, semantic status, context-rail, connected-record, and internal follow-through grammar.
+- This Phase 0 pass was presentation/documentation only. It did not change schema, RLS, auth behavior, data loading, server actions, route architecture, business logic, financial calculations, workflow transitions, or app navigation.
 - The v0 / Graphite & Copper validation sequence is closed. Graphite & Copper is the accepted contractor-app visual-token foundation, and Estimates served as the first reference surface for the pass.
 - Final validation covered token cleanup, authenticated desktop QA, mobile/tablet QA, E2E auth selector cleanup, regression validation, forensic scope audit, and closeout cleanup. `pnpm typecheck`, `pnpm lint`, `git diff --check`, `pnpm e2e:auth`, `pnpm exec playwright test e2e/detail-workspace-ui.spec.js --project=chromium-protected`, and `pnpm exec playwright test e2e/dashboard-ui.spec.js --project=chromium-protected` passed during closeout.
 - The accepted work preserved the top-nav-first contractor shell, Manager Page rhythm, and shared Record Workspace language. It did not change schema, RLS, auth behavior, middleware, server actions, data loading, route protection, business logic, financial calculations, workflow transitions, or app navigation.
 - The stale protected Playwright project-workflow assertion was updated to the current `Project workflow` accessible region name. The malformed invoice route from the prompt is not present in repo files; if the prior invoice fixture is needed again, use `a6c30047-5307-43d7-8b7a-aeb1c4d14604`.
 - Do not reopen broad visual-system validation unless a specific regression appears. Next product work should start from the current Graphite & Copper baseline, follow [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md), and focus on targeted product depth such as project-centered continuity, workflow/readiness guidance, scheduling/dispatch depth, materials/catalog/document depth, financial/reporting/integration depth, and communications/AI layers on canonical records.
+
+## Latest Workflow Guidance Checkpoint
+
+- Phase 0.5 adds the first tenant-owned workflow guidance preference layer on the existing `organization_workflow_settings` row.
+- Contractor admins can manage Guided/Flexible/Manual workflow mode, next-best-action visibility, readiness-guidance visibility, strict blocker presentation, shortcut cleanup prompt visibility, workflow explanation copy, and separate AI-assistance intent flags from `/settings/workflows`.
+- Project Workspace is the first surface wired to these preferences: next-best-action and readiness guidance panels can be reduced or shown by organization settings.
+- These controls are presentation/configuration only. They do not change schema beyond the workflow-settings JSONB preference column, do not loosen readiness gates, do not alter invoice/payment/signature/portal behavior, do not create autonomous AI actions, and do not introduce one-off/direct invoice behavior.
+- One-off/direct invoice shortcuts remain a documented follow-up: the future path must still create or use canonical customer/project context and canonical invoice/payment records.
+- Protected route QA must use the configured Playwright authenticated storage state or E2E auth setup. Do not count a redirect to `/login` as successful protected-page QA.
+
+## Latest Golden Workflow Demo Checkpoint
+
+- Phase 1 defines the Golden Workflow Demo Path in [docs/golden-workflow-demo-path.md](C:/FloorConnector/docs/golden-workflow-demo-path.md).
+- The path is a QA/demo spine through existing contractor routes, not a new workflow engine or seeded demo environment.
+- The primary route sequence is `/dashboard -> /leads -> /customers -> /projects -> /estimates -> /contracts -> /invoices -> /payments -> /jobs -> /schedule -> /daily-logs`, with linked detail workspaces opened where real fixture data exists.
+- Project Workspace remains the continuity hub, Estimate Workspace remains the proposal-first UI/workflow reference, and Guided mode remains the primary demo mode.
+- Flexible and Manual guidance checks must confirm that critical financial, payment, signature, portal, readiness, and security facts remain visible even when coaching prompts are reduced.
+- Portal/customer-facing signature and payment checks require valid portal/customer auth or scoped portal routes; access-denied or login screens are not successful portal QA unless access denial is the expected result.
+- Phase 1.1 adds an opt-in portal/customer E2E auth path: `pnpm e2e:portal-auth` writes `playwright/.auth/portal-user.json` when `FLOORCONNECTOR_PORTAL_E2E_EMAIL` and `FLOORCONNECTOR_PORTAL_E2E_PASSWORD` are configured for a real portal customer user, and `pnpm e2e:portal` runs portal smoke checks. Phase 1.2 adds `pnpm e2e:portal-fixture` to validate the stable portal customer fixture, plus explicit write mode gated by `FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1` to create canonical dev/test customer, contact, project, access-grant, estimate, contract, signer, and invoice records. Missing portal credentials, missing project access grants, and missing shared estimate/contract/invoice links are explicit skipped prerequisites, not successful QA.
+- One-off/direct invoice behavior remains out of scope for Phase 1.
+
+## Latest Revenue Readiness Checkpoint
+
+- Project Detail smoke assertions should not require Project Workspace coaching regions that can be reduced by Guided/Flexible/Manual workflow guidance settings. Stable protected smoke should assert non-negotiable Project state, recency, internal follow-through, and customer/readiness/schedule facts unless a test explicitly sets Guided mode first.
+- `pnpm e2e:portal-fixture` remains validation-first. Missing fixture env is reported by env var name only, write mode remains gated by `FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1`, and portal smoke success still requires real portal authentication plus canonical portal access grants.
+- Paid early-access prep now lives in [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md). The Phase 2 operating layer adds clearer `/super-admin/early-access` founder tenant buckets and contractor setup/pending-activation copy, but current billing setup remains no-charge SetupIntent card collection only; live subscriptions, automatic activation, entitlement enforcement, and Stripe subscription management are future focused work.
+- If local protected Playwright auth times out because the dev server is on `localhost:3000` while Playwright defaults to `localhost:3001`, rerun with `PLAYWRIGHT_BASE_URL=http://localhost:3000` and do not count `/login` as successful protected QA.
 
 ## Latest AI / Follow-Up Planning Checkpoint
 

@@ -26,6 +26,12 @@ For core workflow records, the preferred top stack is:
 
 Project, Estimate, Contract, Invoice, and Job Workspaces now follow this direction. Project remains the primary workflow/readiness hub. Other record workspaces support their own immediate decision while linking back to the Project Workspace when broader handoff state matters.
 
+Estimates are the contractor app's reference implementation for this pattern. Use the Estimate Workspace to calibrate proposal-first language, commercial context, customer/project continuity, semantic status treatment, connected record rails, internal follow-through, and the separation between customer-facing review content and internal-only operational context.
+
+Workflow guidance is now organization-configurable. Guided/Flexible/Manual preferences may reduce next-best-action and readiness guidance visibility on supported workspaces, starting with Project Workspace, but the shared visual grammar and server-side workflow gates remain intact. AI assistance preferences are separate from workflow guidance and should never be treated as permission for autonomous customer-facing, billing, scheduling, signature, or permission actions.
+
+The Golden Workflow Demo Path in [docs/golden-workflow-demo-path.md](C:/FloorConnector/docs/golden-workflow-demo-path.md) is the current route-by-route QA spine for this pattern. Demo-path polish should preserve the same Record Workspace language across Project, Estimate, Contract, Invoice, Job, Schedule, and Daily Log surfaces instead of adding route-local visual systems.
+
 ## ActionBar Usage
 
 Use `ActionBar` near the top of contractor workflow workspaces when a user needs an operational next step.
@@ -139,6 +145,7 @@ Rules:
 - Do not add heavy `ActionBar` or `WorkflowBar` patterns to list pages unless the page naturally supports them.
 - Avoid duplicate status emphasis across summary tiles, queue cards, filters, and rows.
 - Keep Quick-Create overlays as short canonical-record-first entry points that hand off into the full Record Workspace.
+- Preserve the Estimate Manager Page as the reference for operational entry surfaces: compact summary, command/search/filter rhythm, proposal queues, canonical quick create, and continuity into the full Estimate Workspace.
 
 ## Portal Differences
 
@@ -181,5 +188,6 @@ For UI-only pattern work, use scoped validation:
 - `git diff --check`
 - Playwright discovery with `PLAYWRIGHT_SKIP_WEB_SERVER=1 pnpm exec playwright test --list`
 - Targeted decision-first Playwright smoke tests when practical
+- Golden Workflow route smoke through the protected Playwright project when demo-path continuity is touched
 
 Mutation-heavy workflow tests should stay scoped to explicit workflow tasks. UI pattern work should not bypass readiness guards, auth, RLS, server actions, or canonical workflow rules.

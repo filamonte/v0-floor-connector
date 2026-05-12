@@ -693,7 +693,7 @@ export default async function ContractDetailPage({
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 print:max-w-none">
-      <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10 print:hidden">
+      <div className="rounded-lg border border-[var(--border-warm)] bg-white p-5 shadow-sm sm:p-6 print:hidden">
         <DetailPageHeader
           eyebrow="Contract Review"
           title={contract.title}

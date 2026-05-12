@@ -11,6 +11,7 @@ import {
   StandardWorkspaceLayout,
   type StandardWorkspaceSidebarItem
 } from "@/components/workspace/standard-workspace-layout";
+import { getStatusBadgeClassName } from "@floorconnector/ui";
 
 export type EstimateWorkspaceSectionId =
   | "details"
@@ -79,15 +80,21 @@ export function EstimateWorkspaceShell({
   return (
     <StandardWorkspaceLayout
       header={{
+        eyebrow: "Estimate Editor",
         title,
         description: subtitle ?? "Project/Opportunity",
         actions: (
           <div className="border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2 text-sm leading-5 text-[var(--text-primary)]">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
               Estimate status
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-[13px] text-[var(--text-primary)]">
-              <span className="border border-[var(--copper-light)] bg-[var(--highlight)] px-2 py-0.5 text-[11px] font-semibold text-[var(--copper)]">
+              <span
+                className={[
+                  "rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em]",
+                  getStatusBadgeClassName(statusLabel ?? "draft")
+                ].join(" ")}
+              >
                 {formatStatusBadge(statusLabel)}
               </span>
               {estimateNumber ? <span>Estimate #{estimateNumber}</span> : null}

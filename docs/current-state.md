@@ -12,6 +12,7 @@ Use this document when you need current branch reality. For concise status maps,
 Use [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md) as the primary developer entry point. Use this document for implemented truth after that first orientation.
 
 Use these docs together:
+
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary development entry point and implementation guardrails
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth and current branch reality
 - [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md): concise maturity framing
@@ -33,6 +34,8 @@ Use these docs together:
 - [docs/starter-pack-provisioning-review.md](C:/FloorConnector/docs/starter-pack-provisioning-review.md): consolidated architecture/operator readiness review before any real void action
 - [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): future/planned UI, directory/contact, tax, Estimate Editor, project-address, and workflow-guidance alignment backlog
 - [docs/ui-patterns.md](C:/FloorConnector/docs/ui-patterns.md): implemented decision-first UI patterns for contractor workspaces, Manager Pages, status color semantics, and portal/super-admin differences
+- [docs/golden-workflow-demo-path.md](C:/FloorConnector/docs/golden-workflow-demo-path.md): repeatable Phase 1 route-by-route demo and QA spine for the existing canonical workflow
+- [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md): Phase 2 paid early-access readiness plan and billing/activation boundaries
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
 - [docs/documentation-standards.md](C:/FloorConnector/docs/documentation-standards.md): documentation layers, metadata, and AI-readability rules
 - [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md): mandatory UI and module implementation rules
@@ -61,6 +64,7 @@ Implemented surfaces may still use lead or intake language where the UI is descr
 ## Implemented Route Notes
 
 These high-value route notes exist to prevent target-vs-current drift:
+
 - `/reports` is the current implemented reporting entry surface; no `/reports/tax` route exists today.
 - `/document-writer` is the current implemented document-writing route; `/documents` remains target IA language only and is not an implemented route today.
 - `/materials`, `/forms-checklists`, `/directory`, and `/cost-items-database` exist as current contractor routes/foundations, but their deeper production workflows are not complete.
@@ -71,6 +75,7 @@ These high-value route notes exist to prevent target-vs-current drift:
 FloorConnector is currently implemented as a modular monolith on a shared multi-tenant foundation.
 
 Core architectural characteristics:
+
 - Next.js App Router in `apps/web`
 - Supabase for authentication, database access, and row-level-security-backed tenant isolation
 - shared canonical business entities across modules
@@ -78,6 +83,7 @@ Core architectural characteristics:
 - server actions plus server-side data utilities for protected business workflows
 
 Current shared canonical model includes:
+
 - users/profile extension
 - organizations
 - memberships
@@ -131,6 +137,7 @@ Current shared canonical model includes:
 First-pass canonical revision infrastructure is implemented through `record_revisions`.
 
 Implemented behavior:
+
 - supported subjects are `estimate`, `invoice`, `contract`, and `change_order`
 - each revision is an immutable JSON snapshot attached to the existing canonical record
 - revisions store tenant/company scope, subject type, subject id, revision number, current-revision marker, revision kind, optional reason, actor, and timestamp
@@ -147,6 +154,7 @@ This infrastructure does not clone business records. It does not add rollback, r
 First-pass perspective switching is implemented on the estimates manager, invoices manager, and leads manager.
 
 Implemented behavior:
+
 - supported URL values are `?view=my` and `?view=company`
 - `Company` shows organization-scoped records the current user can already access
 - `My Work` filters estimates and invoices using existing creator/updater/sender user fields only
@@ -160,6 +168,7 @@ No new permissions model, saved views, AI prioritization, team routing, or broad
 Authentication is real and already implemented with Supabase Auth.
 
 Implemented auth capabilities:
+
 - Google OAuth
 - email/password signup
 - email/password login
@@ -169,6 +178,7 @@ Implemented auth capabilities:
 - authenticated redirect handling
 
 Current auth routes:
+
 - `/login`
 - `/signup`
 - `/forgot-password`
@@ -176,16 +186,19 @@ Current auth routes:
 - `/auth/callback`
 
 Compatibility aliases still exist:
+
 - `/sign-in`
 - `/sign-up`
 
 Protected post-auth landing:
+
 - safe internal `next` values are respected, except `/super-admin` still requires the explicit platform role
 - platform admins with no `next` land on `/super-admin`
 - contractor users with completed company setup land on `/dashboard`
 - authenticated contractor users without completed company setup land on `/setup/company`
 
 Early-access setup routes:
+
 - `/setup/company`
 - `/setup/billing`
 - `/setup/pending-activation`
@@ -195,6 +208,7 @@ Early-access setup routes:
 Tenant isolation is already part of the working system.
 
 Implemented tenant foundation:
+
 - authenticated users bootstrap into the app data model on first entry
 - first-time users receive:
   - profile record
@@ -232,6 +246,7 @@ Implemented tenant foundation:
   - `/setup/billing` lets users retry secure billing or continue setup and add billing later if SetupIntent creation, network access, or Stripe card confirmation fails
 
 Membership roles currently supported:
+
 - `owner`
 - `admin`
 - `manager`
@@ -242,6 +257,7 @@ Membership roles currently supported:
 The protected contractor app shell is implemented and organization-aware.
 
 Current shell behavior:
+
 - shared protected layout for authenticated app routes
 - top-level navigation is now the primary contractor app navigation
 - sign out action
@@ -303,6 +319,7 @@ Current shell behavior:
 ### Contractor UI System
 
 Implemented contractor UI direction now includes:
+
 - top-nav-first navigation as the default contractor app model
 - one flattened shell/header system with breadcrumb and page context folded into the same top header instead of a permanent left-nav-plus-header stack
 - thinner command/search strips beneath page identity on Manager Page surfaces
@@ -327,6 +344,7 @@ Implemented contractor UI direction now includes:
 - the shell and dashboard now expose a shared universal-create launcher that deep-links into those existing Quick-Create overlays across the canonical workflow
 
 Current contractor UI design notes:
+
 - the dashboard and Estimates reference pass now anchor the accepted Graphite & Copper contractor-app visual foundation without authorizing a broad shell redesign
 - existing canonical-record edit forms now use a shared save-state pattern: unchanged records show `Saved`, edits switch the control to `Save`, saving shows `Saving...`, and successful saves reset the dirty baseline to the persisted values
 - the dashboard now reads more like a contractor home base than a light summary page:
@@ -358,6 +376,7 @@ Current contractor UI design notes:
 - the contractor-facing app is now coherent enough for broader testing, with remaining issues understood as polish and density work rather than structural UI drift
 
 Current protected routes include:
+
 - Dashboard (`/dashboard`)
 - Financials Home (`/financials`)
 - Leads Manager Page (`/leads`)
@@ -384,6 +403,7 @@ Current protected routes include:
 - Settings (`/settings`)
 
 Current route-language note:
+
 - `/people` is now the intended contractor-side management home for people identity across workforce records, related customer contacts, portal invite state, contact-permission readiness, and project visibility administration
 - `/directory` remains the read-only unified contractor-facing scan-and-jump view over canonical customers, related customer contacts, people, vendors, and opportunities, while editable ownership stays on canonical workspaces
 - this People management direction does not introduce a duplicate portal user, contact, customer, or permissions model
@@ -394,6 +414,7 @@ Current route-language note:
 ### Module Home Standard
 
 Implemented now:
+
 - major sections can introduce a canonical Module Home route that acts as the control-panel entry point for the domain without creating a second app shell
 - `/financials` is now the implemented Financials Home route
 - Financials Home is intentionally summary-first and routing-first:
@@ -415,6 +436,7 @@ Implemented now:
 - `/reports` does not create reporting tables, snapshots, exports, charts, mutations, filing workflows, tax-provider integrations, or a separate analytics model
 
 Defined but still foundation-only:
+
 - `/financials/accounts-receivable` exists as a purpose-defined placeholder for future collections, follow-up, aging, and receivable management work
 - `/financials/accounts-payable` exists as a purpose-defined placeholder for future vendor-bill and outgoing-payment workflows
 - AR and AP are structure/spec routes only in this pass:
@@ -423,6 +445,7 @@ Defined but still foundation-only:
   - no payable-side ledger or reporting engine
 
 Additional protected surfaces beyond the contractor app:
+
 - `/portal` now has a real customer-facing shell and project-centered workspace foundation on top of canonical customer-anchored access control, with branded header navigation returning to `/portal`
 - `/super-admin` now has a real modular configuration foundation
 
@@ -431,6 +454,7 @@ Additional protected surfaces beyond the contractor app:
 ### Leads / Opportunities
 
 Implemented:
+
 - organization-scoped opportunity schema
 - create/list/read/update flows
 - protected leads list page
@@ -443,6 +467,7 @@ Implemented:
 - canonical lead-to-estimate conversion flow that creates or links the downstream customer and project records as needed
 
 Opportunity statuses currently implemented:
+
 - `new`
 - `contacted`
 - `qualified`
@@ -455,10 +480,12 @@ Opportunity statuses currently implemented:
 - `converted`
 
 Opportunities currently link to:
+
 - optional customer
 - optional project
 
 Current opportunity design notes:
+
 - opportunities are the canonical pre-project commercial record
 - the protected leads surface now starts the contractor revenue path before a full project exists
 - starting the estimate flow from an opportunity creates or links the canonical customer and project chain instead of introducing duplicate intake-specific entities
@@ -469,6 +496,7 @@ Current opportunity design notes:
 ### Customers
 
 Implemented:
+
 - organization-scoped customer schema
 - create/list/read/update flows
 - protected customers list page
@@ -486,6 +514,7 @@ Implemented:
 - null-contact customer-level grants still continue to use legacy portal behavior during this first enforcement rollout
 
 Current customer-account guardrails:
+
 - `customers` remain the canonical customer/account records for commercial and financial workflows
 - customer entries that later appear inside a unified contractor `Directory` should still be those full canonical customer/account records, not lightweight contact cards
 - estimate send, invoice recipient, contract customer context, payment/billing context, and project ownership should continue to use canonical customer/account context, with portal-ready related contacts selected where existing access data supports it
@@ -493,6 +522,7 @@ Current customer-account guardrails:
 - `customers.email` remains the account-level fallback for estimate, contract, and invoice recipient continuity when a more specific portal-ready related contact is not selected
 
 Starter fields include:
+
 - name
 - company name
 - phone
@@ -506,6 +536,7 @@ Starter fields include:
 ### Projects
 
 Implemented:
+
 - organization-scoped project schema
 - create/list/read/update flows
 - project-to-customer relationship
@@ -532,6 +563,7 @@ Implemented:
 - invoice detail now also includes a compact linked-schedule context card derived only from canonical invoice `projectId` / optional `jobId` links plus canonical jobs and job assignments, surfacing linked-job or project-level production state without changing billing lineage
 
 Starter fields include:
+
 - name
 - customer
 - status
@@ -545,6 +577,7 @@ Starter fields include:
 ### Portal Access
 
 Implemented:
+
 - organization-scoped canonical `portal_access_grants` foundation
 - nullable `portal_access_grants.customer_contact_id` support for optionally linking a grant to one canonical `customer_contacts` row
 - tenant-scoped canonical `customer_contact_portal_permissions` foundation attached to linked `customer_contacts`
@@ -561,6 +594,7 @@ Implemented:
 - customer detail now clearly labels customer-level grants versus linked contact grants and provides cleanup guidance for gradually attaching legacy customer-level grants to existing related customer contacts
 
 Starter fields include:
+
 - canonical customer anchor
 - authenticated user linkage
 - invited email metadata
@@ -571,6 +605,7 @@ Starter fields include:
 - explicit project visibility beneath the customer grant
 
 Current portal access design notes:
+
 - portal access is anchored to the canonical customer record instead of inventing a separate portal-customer model
 - normal contractor workflow now starts customer portal access from a contractor-created customer/project invite, not from customer self-registration before anything is shared
 - null `customer_contact_id` still represents the existing customer-level portal grant behavior
@@ -594,6 +629,7 @@ Current portal access design notes:
 ### Change Orders
 
 Implemented:
+
 - organization-scoped canonical change order schema
 - change order linkage to the shared project record and optional linkage to the shared contract and invoice records
 - contractor-side change-order Manager Page using the shared Manager Page and command-bar pattern
@@ -607,12 +643,14 @@ Implemented:
 - approved change-order snapshots can now create canonical invoice line items or append into canonical SOV rows on the same billing chain
 
 Change order statuses currently implemented:
+
 - `draft`
 - `sent`
 - `approved`
 - `rejected`
 
 Change orders currently link to:
+
 - project
 - customer
 - optional contract
@@ -620,6 +658,7 @@ Change orders currently link to:
 - optional applied invoice line item
 
 Current change-order design notes:
+
 - change orders are canonical shared records, not report-only records and not a portal-specific approval object
 - change orders extend the existing project, contract, and invoice chain instead of creating a separate scope-change subsystem
 - contractor-side Quick-Create captures only the minimum project, title, price-adjustment, and optional linked-record context before handing off to the full change-order workspace
@@ -633,6 +672,7 @@ Current change-order design notes:
 ### People
 
 Implemented:
+
 - organization-scoped workforce person foundation
 - shared canonical `people` model for internal employees and vendor-linked subcontractor workers
 - tenant-safe list/read/create/update data access foundation
@@ -642,6 +682,7 @@ Implemented:
 - basic compliance visibility on people surfaces
 
 Starter fields include:
+
 - display name
 - first and last name
 - email
@@ -657,6 +698,7 @@ Starter fields include:
 - timestamps
 
 Current people design notes:
+
 - employees and subcontractor workers now share one canonical people foundation instead of parallel employee and subcontractor person tables
 - subcontractor workers link to vendor companies through `people.vendor_id`
 - people surfaces now use the same protected CRUD pattern as other canonical admin records, with organization-member linkage and labor-provider vendor selection available in the form flow
@@ -665,6 +707,7 @@ Current people design notes:
 ### Vendors
 
 Implemented:
+
 - organization-scoped vendor and subcontractor company foundation
 - tenant-safe list/read/create/update data access foundation
 - labor-provider flag foundation for future subcontract labor assignment and time attribution
@@ -673,6 +716,7 @@ Implemented:
 - basic linked-worker and compliance visibility on vendor surfaces
 
 Starter fields include:
+
 - name
 - vendor type
 - labor-provider flag
@@ -686,6 +730,7 @@ Starter fields include:
 - timestamps
 
 Current vendor design notes:
+
 - vendor companies remain separate from people records
 - subcontract labor can now be modeled as vendor company plus vendor-linked workforce people
 - vendor detail now shows linked workforce people from the shared people model instead of inventing a vendor-specific worker table
@@ -694,12 +739,14 @@ Current vendor design notes:
 ### Compliance Records
 
 Implemented:
+
 - organization-scoped shared compliance and credential foundation
 - shared canonical `compliance_records` model attachable to either workforce people or vendor companies
 - tenant-safe list/read/create/update data access foundation
 - future document-linkage hook on the compliance record without introducing a separate compliance-file subsystem yet
 
 Supported record categories currently include:
+
 - `license`
 - `insurance`
 - `certification`
@@ -708,6 +755,7 @@ Supported record categories currently include:
 - `other`
 
 Starter fields include:
+
 - subject type
 - subject id
 - name
@@ -721,12 +769,14 @@ Starter fields include:
 - timestamps
 
 Compliance statuses currently implemented:
+
 - `valid`
 - `expiring`
 - `expired`
 - `missing_information`
 
 Current compliance design notes:
+
 - people and vendors are now the only canonical compliance attachment points for workforce participants and external companies
 - insurance, certification, license, and training records extend the same shared compliance model instead of separate per-category silos
 - subject existence is validated against the canonical people and vendors foundations in the tenant-scoped server data layer
@@ -735,6 +785,7 @@ Current compliance design notes:
 ### Time Tracking
 
 Implemented:
+
 - organization-scoped canonical `time_punch_events` foundation
 - organization-scoped derived `time_cards` foundation
 - tenant-safe list/read/create data access foundation for time punches and derived time cards
@@ -749,12 +800,14 @@ Implemented:
 - project-attributed time punches are blocked server-side unless the connected project passes the centralized readiness gate
 
 Supported punch event types currently include:
+
 - `punch_in`
 - `punch_out`
 - `break_start`
 - `break_end`
 
 Starter attribution and location fields include:
+
 - person
 - project
 - optional job
@@ -768,6 +821,7 @@ Starter attribution and location fields include:
 - optional superseded event linkage
 
 Current time tracking design notes:
+
 - punch events are the canonical source of truth for workforce time capture
 - time cards are derived operational summaries and not the authoritative audit source
 - punch recording currently enforces active-person constraints before time can be captured
@@ -778,6 +832,7 @@ Current time tracking design notes:
 ### Daily Logs
 
 Implemented:
+
 - organization-scoped canonical `daily_logs` foundation
 - project-level daily execution record with optional dominant job linkage
 - tenant-safe list/read/create/update data access foundation
@@ -791,10 +846,12 @@ Implemented:
 - daily-log creation is blocked server-side unless the connected project passes the centralized readiness gate
 
 Daily log statuses currently implemented:
+
 - `draft`
 - `finalized`
 
 Starter fields currently include:
+
 - project
 - optional job
 - log date
@@ -810,6 +867,7 @@ Starter fields currently include:
 - timestamps
 
 Current daily log design notes:
+
 - daily logs are project-centered execution records and not a separate field-report subsystem
 - one canonical daily log currently exists per project and date, with optional job context when one job dominates the day
 - job linkage is validated against the selected project in the tenant-scoped server data layer
@@ -821,6 +879,7 @@ Current daily log design notes:
 ### Field Notes
 
 Implemented:
+
 - organization-scoped canonical `field_notes` foundation
 - field notes now require a canonical parent `daily_log`
 - tenant-safe list/read/create/update data access foundation
@@ -831,6 +890,7 @@ Implemented:
 - field-note creation is blocked server-side unless the connected project passes the centralized readiness gate
 
 Supported field note types currently include:
+
 - `general`
 - `labor`
 - `material`
@@ -840,14 +900,17 @@ Supported field note types currently include:
 - `punch_list`
 
 Field note statuses currently implemented:
+
 - `open`
 - `noted`
 - `resolved`
 
 Field note visibility currently implemented:
+
 - `internal`
 
 Starter fields currently include:
+
 - daily log
 - project
 - optional job
@@ -862,6 +925,7 @@ Starter fields currently include:
 - timestamps
 
 Current field note design notes:
+
 - field notes are the canonical execution observation model under daily logs for project-day issues, blockers, and supporting observations
 - field note project linkage must match the selected daily log, and optional job linkage must belong to the same project
 - optional time card linkage is validated against the same project and log date, and also respects selected person/job linkage when provided
@@ -873,6 +937,7 @@ Current field note design notes:
 ### Execution Attachments
 
 Implemented:
+
 - organization-scoped canonical `execution_attachments` foundation
 - shared attachment linkage limited to:
   - `daily_log`
@@ -882,14 +947,17 @@ Implemented:
 - execution-attachment creation is blocked server-side unless the connected project passes the centralized readiness gate
 
 Supported attachment subject types currently include:
+
 - `daily_log`
 - `field_note`
 
 Supported attachment types currently include:
+
 - `photo`
 - `file`
 
 Starter fields currently include:
+
 - subject type
 - subject id
 - attachment type
@@ -901,11 +969,13 @@ Starter fields currently include:
 - timestamps
 
 Current execution attachment design notes:
+
 - execution attachments are lightweight subject-scoped references for field evidence and context, not a full managed file subsystem
 - attachments currently hang directly off canonical daily logs or field notes instead of separate issue, blocker, or punch-list entities
 - customer-facing sharing, markup, and broad file-management workflows are not implemented in this pass
 
 Financing statuses currently implemented:
+
 - `not_applicable`
 - `offered`
 - `prequalified`
@@ -916,6 +986,7 @@ Financing statuses currently implemented:
 ### Estimates
 
 Implemented:
+
 - organization-scoped estimate schema
 - create/list/read/update flows
 - project-to-estimate relationship
@@ -933,6 +1004,7 @@ Implemented:
 - estimate email tracking for sent, opened, clicked, and viewed states tied to portal review links
 
 Estimate statuses currently implemented:
+
 - `draft`
 - `sent`
 - `approved`
@@ -941,6 +1013,7 @@ Estimate statuses currently implemented:
 #### Estimate System (Current Behavior)
 
 Quick reference:
+
 - catalog-first only; new user-facing manual estimate rows are intentionally disabled
 - `catalog_items` is the canonical reusable cost item database and the source for reusable estimate items
 - `catalog_system_components` drives reusable systems on top of `catalog_items`
@@ -960,6 +1033,7 @@ Quick reference:
 - global search is shell-level and rendered at the bottom only
 
 Planned but not implemented in the current estimate system:
+
 - manual measurement-driven estimate generation from length x width, direct floor area, direct linear footage, counts, or room/zone measurements
 - full System Template estimate generation with formulas, grouping rules, optional components, required inputs, and quick/detailed build modes
 - AI Capture or AI-generated estimate draft workflows
@@ -968,6 +1042,7 @@ Planned but not implemented in the current estimate system:
 ### Estimate Line Items
 
 Implemented:
+
 - estimate line item schema
 - line-item-based Estimate Editor
 - catalog-first add/edit/remove behavior for draft estimate line items
@@ -978,6 +1053,7 @@ Implemented:
 - approved-estimate-triggered commercial snapshot and schedule-of-values seeding foundation
 
 Estimate totals are currently derived from:
+
 - line item totals
 - tax amount
 - discount amount
@@ -985,6 +1061,7 @@ Estimate totals are currently derived from:
 ### Jobs
 
 Implemented:
+
 - organization-scoped jobs/work orders schema
 - create/list/read/update flows
 - protected jobs list page
@@ -1006,12 +1083,14 @@ Implemented:
 - job detail scheduling workspace for schedule state, assigned crew, and vendor visibility/editing
 
 Job statuses currently implemented:
+
 - `unscheduled`
 - `scheduled`
 - `in_progress`
 - `completed`
 
 Jobs currently link to:
+
 - project
 - customer
 - optional approved estimate
@@ -1019,6 +1098,7 @@ Jobs currently link to:
 - optional job assignments to people or vendors
 
 Current job design notes:
+
 - scheduling now extends the canonical job record instead of creating a second dispatch model
 - crew assignment now extends the same job through `job_assignments` so time, daily logs, and downstream records can continue pointing at one execution record
 - this is intentionally a first scheduling pass only; there is still no route optimization or broader dispatch automation
@@ -1026,6 +1106,7 @@ Current job design notes:
 ### Invoices
 
 Implemented:
+
 - organization-scoped invoice schema
 - create/list/read/update flows
 - protected invoices list page
@@ -1043,6 +1124,7 @@ Implemented:
 - invoice creation from approved estimate snapshots, selected SOV rows, approved change-order snapshot rows, or invoice-only adjustments
 
 Invoice statuses currently implemented:
+
 - `draft`
 - `sent`
 - `partially_paid`
@@ -1050,12 +1132,14 @@ Invoice statuses currently implemented:
 - `void`
 
 Invoices currently link to:
+
 - project
 - customer
 - optional approved estimate
 - optional job
 
 Current invoice design notes:
+
 - invoices remain canonical financial records rather than an isolated module model
 - customer and project context stay linked through existing shared entities
 - `billing_model` is included so future AIA/progress billing can extend the same canonical invoice header without replacing v1
@@ -1098,6 +1182,7 @@ Current invoice design notes:
 ### Appointments
 
 Implemented:
+
 - canonical appointment schema linked to required organization plus optional opportunity, customer, and project continuity
 - optional assigned-person linkage to the shared people model
 - contractor-side appointments manager/list page using the shared Manager Page pattern
@@ -1108,6 +1193,7 @@ Implemented:
 - lead, customer, and project continuity links into the same appointment workflow
 
 Appointment types currently implemented:
+
 - `site_visit`
 - `customer_meeting`
 - `estimate_appointment`
@@ -1115,18 +1201,21 @@ Appointment types currently implemented:
 - `internal`
 
 Appointment statuses currently implemented:
+
 - `scheduled`
 - `completed`
 - `canceled`
 - `no_show`
 
 Appointments currently link to:
+
 - optional opportunity
 - optional customer
 - optional project
 - optional assigned person
 
 Current appointment design notes:
+
 - appointments are canonical visit, meeting, and planning-block records, not a second execution scheduler
 - customer-visible appointment storage and first customer portal display are implemented for project-linked appointments where `customer_visible = true`
 - portal appointment display is read-only and project-scoped through existing portal access; it does not support customer self-scheduling, rescheduling, confirmation actions, reminders, or provider-backed calendar sync
@@ -1136,18 +1225,21 @@ Current appointment design notes:
 - appointments may support the same project/customer/opportunity chain, but they should not replace jobs or create schedule-only records
 
 Invoice workflow roles currently implemented:
+
 - `standard`
 - `deposit`
 
 ### Invoice Line Items
 
 Implemented:
+
 - invoice line item schema
 - add/edit/remove line item UI inside invoice create and detail flows
 - database-calculated invoice subtotal and total logic
 - explicit `lineage_type` support for `estimate_snapshot_item`, `sov_item`, `change_order_snapshot_item`, and `invoice_only_adjustment`
 
 Invoice totals are currently derived from:
+
 - line item totals
 - org tax defaults plus customer exemption snapshots
 - discount amount
@@ -1156,6 +1248,7 @@ Invoice totals are currently derived from:
 ### Payments
 
 Implemented:
+
 - canonical payment schema linked directly to invoices
 - basic payment recording flow from invoice detail
 - automatic invoice balance due updates from recorded payments
@@ -1174,6 +1267,7 @@ Implemented:
 - contractor and portal payment guidance now distinguish real provider-backed completion, failure, void, pending, partial, and paid outcomes without introducing any separate billing model or checkout record
 
 Payment design notes:
+
 - payment records remain invoice-linked and organization-scoped
 - future online payments extend the canonical payment record rather than create a second payment model
 - in-progress checkout sessions now attach to canonical `payments` as pending rows rather than a separate pending-payment or checkout-attempt table
@@ -1185,6 +1279,7 @@ Payment design notes:
 ### Punchlists
 
 Implemented:
+
 - canonical punchlist item schema linked to the shared project record and optional shared job record
 - optional assignee linkage to the shared people model
 - contractor-side punchlist manager/list page using the shared Manager Page pattern
@@ -1193,17 +1288,20 @@ Implemented:
 - project and job continuity sections now surface linked punchlist items on the same shared execution chain
 
 Punchlist statuses currently implemented:
+
 - `open`
 - `in_progress`
 - `resolved`
 - `closed`
 
 Punchlists currently link to:
+
 - project
 - optional job
 - optional assignee person
 
 Current punchlist design notes:
+
 - punchlists are canonical durable closeout records, not dashboard-only artifacts and not a project copy
 - punchlists coexist with daily logs and field notes instead of replacing them:
   - daily logs and field notes remain project-day narrative execution records
@@ -1213,6 +1311,7 @@ Current punchlist design notes:
 ### Financial Settings, Tax, And AIA Scaffolding
 
 Implemented:
+
 - organization-level financial settings foundation for default tax rate and tax behavior
 - organization-level retainage baseline used to prefill new customer defaults
 - customer-level tax exemption and exemption metadata
@@ -1229,6 +1328,7 @@ Implemented:
 - Accounts Receivable and Accounts Payable route definitions now exist as module-home placeholders only
 
 Current design notes:
+
 - external tax providers are not integrated yet, but the organization financial settings model includes extension points for them
 - estimate tax is now derived from organization defaults, customer tax-exempt state, and line-item taxable flags; there is no manual estimate tax override path
 - estimate and invoice commercial pricing is now server-owned:
@@ -1246,6 +1346,7 @@ Current design notes:
 ### Notifications And Communications
 
 Implemented:
+
 - immutable `notification_events` stream for cross-module workflow activity
 - per-user `notifications` records for in-app unread and read state
 - channel-aware `notification_deliveries` ledger for in-app and email delivery tracking, with future SMS support reserved in the same model; delivery rows can now optionally link back to the canonical `communication_messages` row they attempted to deliver
@@ -1265,6 +1366,7 @@ Implemented:
   - contractor users can mark selected-thread or all communication notifications read by updating canonical per-user `notifications` records only
 
 Current design notes:
+
 - notifications are now implemented as stored canonical workflow signals rather than ephemeral shell-only state
 - notification deliveries track sent, delivered, opened, clicked, and failed channel outcomes without creating duplicate estimate, invoice, or change-order records
 - communication threads stay attached to the same canonical customer/project chain instead of creating module-specific inboxes
@@ -1304,6 +1406,7 @@ Current design notes:
 ### Shared Templates
 
 Implemented:
+
 - shared organization-scoped `document_templates` foundation for estimate, invoice, and contract workflows
 - platform-managed template seed definitions that can be copied into contractor organizations as editable tenant-owned templates
 - contractor-side settings UI for adopting, editing, archiving, and defaulting organization-owned estimate, invoice, and contract templates
@@ -1311,6 +1414,7 @@ Implemented:
 - default-template resolution helpers for estimate, invoice, and contract workflows
 
 Current design notes:
+
 - organization templates are editable copies and do not stay coupled to a mutable global platform template record
 - estimate and invoice records now support optional shared template references instead of module-specific template models
 - contract template generation is shared through the same template and merge-data foundation
@@ -1322,6 +1426,7 @@ Current design notes:
 ### Catalogs And Reusable Items
 
 Implemented:
+
 - platform-scoped starter catalog item seeds for materials, labor, services, equipment, and systems
 - organization-scoped reusable catalog item records
 - `catalog_items` now act as the canonical reusable cost item database for commercial pricing foundations and optional inventory tracking
@@ -1349,6 +1454,7 @@ Implemented:
 - organization-scoped reusable `estimate_content_blocks` foundation for scope, inclusion, exclusion, and terms snippets
 
 Current design notes:
+
 - organizations do not depend on one mutable global starter item after adoption
 - reusable items stay on the same canonical foundation instead of spawning module-specific catalog silos
 - `catalog_items` is the shared commercial item master and the only canonical cost item model; there is no second cost item table
@@ -1380,6 +1486,7 @@ Current design notes:
 ### Contracts
 
 Implemented:
+
 - organization-scoped contract schema
 - contract generation from approved estimate and project context
 - contract Quick-Create opens from `/contracts?compose=1`, preserves `estimateId` selection context, and shows returned generation blockers inside the composer
@@ -1399,6 +1506,7 @@ Implemented:
 - contractor-side onsite customer signature capture for sent/viewed contracts, using a canvas signature pad and the same canonical signer/event workflow
 
 Contract statuses currently implemented:
+
 - `draft`
 - `sent`
 - `viewed`
@@ -1406,12 +1514,14 @@ Contract statuses currently implemented:
 - `void`
 
 Contracts currently link to:
+
 - project
 - customer
 - optional approved estimate
 - shared document template
 
 Current contract design notes:
+
 - contracts are canonical records, not detached documents
 - contract rendering is generated from the shared template system and canonical merge data
 - contractor organizations can now set an approved-estimate contract template preference without forking a separate contract-template silo
@@ -1447,9 +1557,11 @@ Current contract design notes:
 ## Current Workflow Coverage
 
 The implemented canonical flow currently spans:
+
 - opportunities or leads -> customers -> projects -> estimates -> contracts -> change orders -> jobs -> invoices -> payments
 
 The current implemented workflow foundation supports:
+
 - user authentication into a protected contractor app
 - automatic first-user tenant bootstrap
 - lead and opportunity intake
@@ -1532,6 +1644,7 @@ The current implemented workflow foundation supports:
 ## What Exists But Is Still Minimal
 
 These surfaces exist but are still foundational rather than production-complete:
+
 - dashboard command-center surface, including modular queue composition and Quick-Create studio direction
 - early module-dashboard pattern on overview pages
 - Financials Home control-panel structure, with AR and AP still defined only as placeholders
@@ -1547,6 +1660,7 @@ These surfaces exist but are still foundational rather than production-complete:
 ### Contractor Settings / Admin
 
 Implemented:
+
 - modular contractor-side organization settings surface with sections for:
   - organization profile/settings
   - document templates
@@ -1567,6 +1681,12 @@ Implemented:
 - organization-scoped retainage baseline for new customer creation and lead conversion
 - contractor-side workflow defaults for approved-estimate contract template assignment
 - stored contractor preferences for internal contract approval, signed-contract readiness, deposit-before-scheduling readiness, and financing-approval readiness
+- first organization-owned workflow guidance preferences on the existing `organization_workflow_settings` row:
+  - supports Guided, Flexible, and Manual workflow modes
+  - stores separate display preferences for next-best-action visibility, readiness guidance visibility, strict blocker presentation, shortcut cleanup prompts, and workflow explanation copy
+  - stores separate AI-assistance intent flags for suggestions, summaries, drafting, form-prefill suggestions, and work-item recommendations, with human confirmation still required
+  - Project Workspace now uses these preferences to reduce or show next-best-action and readiness guidance panels without changing readiness enforcement
+  - one-off/direct invoice shortcuts remain planned only; no direct invoice shortcut is exposed yet and invoices still must stay linked to canonical customer/project/invoice/payment records
 - organization-scoped reusable catalog item management
 - `/settings/catalogs` now renders the same contractor cost item settings component used by `/cost-items-database/settings`
 - `/settings/system-layers` now provides the first admin/data access layer for finish products, floor system templates, and catalog-backed template components
@@ -1615,9 +1735,12 @@ Implemented:
   - project-level overrides, record-level overrides, assignment actions, cue instances, task records, dashboard dismiss/snooze controls, notification delivery, AI feedback, custom expression rules, and persisted queue selection are not implemented in this pass
 
 Current design notes:
+
 - this is a contractor organization settings surface, separate from platform super-admin controls
 - shared templates remain on one canonical template system across estimates, invoices, and contracts
 - contract approval, signature, deposit, and financing readiness preferences are stored canonically now even though deeper enforcement UX is still future work
+- workflow guidance preferences tune contractor coaching visibility only; they do not change server-side readiness gates, invoice/payment truth, signature history, tenant isolation, portal access, financial calculations, or canonical record requirements
+- AI assistance preferences are stored separately from workflow guidance, but broad AI summaries, drafting, recommendations, autonomous actions, provider sends, and customer-facing AI actions are still not implemented
 - Operational Intelligence settings tune built-in My Work and record-level Needs Attention cue rules plus People-first organization responsibility defaults only; they are not a generic automation builder, assignment surface, project override surface, record override surface, or cue/task creation system
 - automation readiness reads real canonical foundations only, while the manual runner is tenant-scoped and guarded by `automation_runs` idempotency before notification creation
 - the notification-template preview on `/settings/automation` is static application copy only; it is not editable, does not save template records, and does not send customer messages
@@ -1627,6 +1750,7 @@ Current design notes:
 ### Super Admin
 
 Implemented:
+
 - modular super-admin surface with sections for:
   - overview
   - platform defaults
@@ -1680,12 +1804,15 @@ Implemented:
 - tenant lifecycle/status administration foundation
 - `/super-admin/early-access` provides a minimal onboarding visibility view over existing `companies` and canonical workflow records:
   - company name, created date, tenant status, lifecycle state, and saved-payment-method presence derived from `companies.stripe_payment_method_id`
+  - operator summary buckets for pending setup, pending activation, active founder access, and suspended/blocked tenants derived from existing company status/profile/billing-reference fields
+  - per-tenant operating-state labels and follow-up guidance that separate activation review from billing setup evidence
   - project, estimate, contract, and invoice counts derived from existing canonical tables
   - first workflow, estimate-stage, and contract-stage progress derived from those counts
   - light early-user signals derived from existing records only: recent login based on `company_memberships.last_active_at` / `users.last_sign_in_at`, reached-estimate from estimate counts, and reached-contract from contract counts
   - feedback indicators and recent-feedback drill-in derived from existing `workflow_error_events` rows where `action = 'early_access.feedback'`
   - mark-active action using existing `companies.tenant_status` and `companies.lifecycle_state`
   - mark-active includes a confirmation step and returns the concise success feedback `Company activated`
+  - billing labels on this page mean SetupIntent payment-method reference presence only; they do not indicate a subscription, paid invoice, live charge, or entitlement state
   - in non-production environments only, platform admins can run a clearly labeled `DEV / TEST ONLY` onboarding reset for a selected company; the reset is tenant-scoped, clears project/estimate/contract/invoice workflow test records and related dependent workflow rows, clears `companies.stripe_payment_method_id`, and returns the company to `tenant_status = trialing` / `lifecycle_state = trial`
   - the dev reset intentionally keeps `companies.stripe_customer_id` in place and fails safely if insert-only binding system snapshots exist, because those records are canonical and cannot be deleted through a lightweight QA utility
 - non-production contractor app sessions show a subtle `DEV MODE` badge with `Reset session`, which signs out through the real auth action after clearing browser local/session storage
@@ -1693,6 +1820,7 @@ Implemented:
 - non-production `/setup/billing` shows a small Stripe status indicator for test-mode, missing, mixed, or live key configuration
 
 Current design notes:
+
 - super admin is the source of truth for platform-wide defaults and system controls
 - contractor organizations remain isolated and own their copies after adoption
 - platform admin uses a separate platform-role assignment layer instead of piggybacking on tenant membership roles
@@ -1708,6 +1836,7 @@ Current design notes:
 ## What Is Not Implemented Yet
 
 Not implemented yet:
+
 - full scheduling/dispatch system
 - drag-and-drop rescheduling, dispatch optimization, and deeper crew-calendar coordination
 - automated dispatching and external notifications
@@ -1750,6 +1879,7 @@ Not implemented yet:
 - broader alignment from [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md), including stronger module-page UI consistency, directory/contact unification, Estimate Editor navigation/review improvements, line taxable-toggle planning, structured project/service address display, configurable tax-rate direction, and fuller workflow-guidance states
 
 Future-looking note:
+
 - the public homepage and early-access intake are implemented for FloorConnector onboarding, but contractor-owned websites, tenant-owned domains, SEO/service/location pages, landing pages, marketing attribution, generated marketing content, public AI intake, reviews/reputation, testimonials, and before/after galleries are target platform direction only; they should eventually feed the same canonical opportunity/customer/project workflow rather than becoming a separate website, CRM, marketing-contact, or AI knowledge system.
 - the current vendors, people, compliance, jobs, daily logs, time, communication, notification, and portal access foundations could support future scoped collaboration, but no contractor network, marketplace, open contractor chat, or external subcontractor/vendor collaboration surface is implemented today.
 - the current projects, estimates, estimate line items, reusable catalog item foundations, platform starter catalog foundations, organization-owned catalog items, document-template/settings foundations, selected-system schema foundation, files/attachments foundations, site-assessment fields, communication/notification foundations, and customer/project workflow could support future visual/product/finish selection, selected-system/spec workflows, shared file/evidence linking, delivery proof, activity timelines, measurement-driven estimating, System Template generation, add-ons/options, Templates & Systems administration, Takeoff & Scope Intelligence, and AI Capture.
@@ -1760,24 +1890,34 @@ Future-looking note:
 ## UI Direction Update (Latest)
 
 The decision-first contractor UI refactor is implemented across the main contractor dashboard, Manager Pages, and core Record Workspaces.
+Estimates now serve as the contractor app's UI/workflow reference pattern because they concentrate proposal review, commercial context, customer trust, and downstream handoff in one workspace.
+The Phase 1 Golden Workflow Demo Path is now documented as the repeatable QA spine through the existing route chain from dashboard and opportunity review into customer, project, estimate, contract, invoice/payment, job, schedule, and daily-log surfaces.
+Phase 1.1 adds portal/customer Playwright fixture infrastructure for that same spine: `pnpm e2e:portal-auth` can create a local portal customer storage state from real portal E2E credentials, and `pnpm e2e:portal` smokes the customer-facing portal home, project workspace, and shared estimate/contract/invoice review routes where canonical portal access grants and fixture records exist. Phase 1.2 adds `pnpm e2e:portal-fixture` as a validation-first helper for that customer-side fixture; write mode is explicitly gated by `FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1` and creates only canonical dev/test customer, contact, project, access-grant, estimate, contract, signer, and invoice records for the contractor E2E organization.
+The paid early-access planning boundary is documented in [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md). The current branch implements no-charge billing setup, manual/platform-admin activation controls, the Phase 2 early-access operating layer, and read-only package/provider governance only; live SaaS subscription creation, automatic activation, entitlement enforcement, and Stripe subscription management remain future focused work.
 
 Implemented UI behavior now:
+
 - Project remains the primary workflow and readiness hub.
 - Dashboard emphasizes high-signal priorities before passive metrics.
 - Project, Estimate, Contract, Invoice, and Job Workspaces lead with next-action and workflow-state context before supporting panels.
+- Estimate, Contract, Invoice, Job, and Project Workspaces share the same baseline grammar: compact header band, semantic status pill, next-action card, workflow summary, state facts, primary record surface, context rail, connected records, and internal follow-through sections.
 - Projects, Estimates, Invoices, Jobs, Contracts, and Customers Manager Pages use the shared Manager Page rhythm with clearer status scanning, primary create actions, and compact continuity cues.
 - Portal and super-admin received only safe consistency cleanup; they do not copy contractor operational patterns wholesale.
+- Portal/customer smoke coverage is test infrastructure only. It does not create portal-only records, fake payments, fake signatures, new portal access rules, or duplicate customer/project/commercial records.
 
 Context-aware creation remains unchanged:
+
 - Project context: downstream records are auto-linked to the project and derived customer.
 - Customer context: the customer is prefilled, and a project must be selected or created.
 - Global context: both customer and project must be selected explicitly.
 - Applies to estimates, jobs, contracts, and invoices.
 
 Constraints preserved:
+
 - No changes to data model.
 - No workflow changes.
 - No calculation changes.
 - No auth, RLS, route, server-action, or backend behavior changes.
+- No one-off/direct invoice shortcut, demo-only state, portal-only copy, or duplicate lifecycle was introduced by the Golden Workflow Demo Path documentation.
 
 For implementation guidance on the current UI baseline, use [docs/ui-patterns.md](C:/FloorConnector/docs/ui-patterns.md).

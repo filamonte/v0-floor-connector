@@ -326,6 +326,8 @@ This area should include:
 - module enable/disable
 - integrations
 - financial defaults
+- workflow guidance controls for Guided, Flexible, and Manual coaching intensity
+- AI assistance preferences that remain separate from workflow guidance
 - Templates & Systems administration later
 - reusable catalogs and starter items
 - automation settings later
@@ -346,6 +348,8 @@ Templates & Systems should not become a separate estimating or document silo. Es
 Important boundary:
 
 - contractor `Settings` is tenant-scoped organization administration
+- workflow guidance controls may adjust coaching visibility, but they must not weaken canonical records, readiness gates, financial/payment rules, signature history, portal access, or tenant security
+- AI assistance controls are preference/permission gates for future assistance and must not imply autonomous customer-facing or financial actions
 - platform-wide defaults and rollout policy belong in the separate super-admin surface
 
 ## Project As The Operational Root
@@ -479,23 +483,26 @@ Practical direction:
 
 Target contractor record pages should converge on the same structural pattern:
 
-- header band: title, status, primary action, secondary actions
-- workflow summary band: readiness, blockers, next best action
-- primary workspace: the main review or execution surface for that record
-- context rail: connected records and compact supporting metadata
-- secondary sections: lower-priority editing, history, labor, files, or related modules
+- header band: record title, semantic status pill, key customer/project context, primary action, secondary actions, and a clear back/continuity link
+- workflow summary band: current stage, readiness, blockers, warnings, next best action, and customer/project/financial handoff signals
+- primary workspace: the main review, edit, billing, signature, or execution surface for that record
+- context rail or context cards: customer, project, linked estimate/contract/invoice/job, important dates, financial context, and portal/customer-facing context where relevant
+- secondary sections: history/activity, internal notes, linked work items, revision history, field/labor context, files, related communication, and lower-priority edit controls
 
 Page-role guidance inside that shared pattern:
 
 - project detail is the authoritative workflow and readiness hub
-- estimate and contract detail support document review and workflow progression, including onsite signature action when an eligible sent contract has an unsigned customer signer, then point back to the project hub for broader handoff state
+- estimate detail is the visual and interaction reference for proposal-first workspace structure; it keeps customer-facing scope/pricing primary while preserving project, contract, job, invoice, schedule, communication, and internal follow-through context around it
+- contract detail supports contract review and signature readiness, including onsite signature action when an eligible sent contract has an unsigned customer signer, then points back to the project hub for broader handoff state
 - invoice detail should be structured as review-first billing workspace, not primarily as a top-heavy edit form
 - job detail should use the same shared page language rather than a separate ad hoc detail pattern
+- Manager Pages should keep page identity, command bar, compact overview/list workspace, and canonical Quick-Create behavior; they should route into Record Workspaces rather than becoming separate module dashboards
 
 Current implementation note:
 
 - the first major contractor workspace UI polish pass is now complete enough to stop
 - project, estimate, contract, invoice, and job detail pages now broadly follow this shared pattern on the current branch
+- [docs/golden-workflow-demo-path.md](C:/FloorConnector/docs/golden-workflow-demo-path.md) now defines the route-by-route Phase 1 demo spine for validating that the current standalone Manager Pages and Record Workspaces behave like one connected sales-to-production workflow
 - further layout work should be treated as incremental polish unless a future structural break is introduced
 
 This means a route like `/jobs` can continue to exist while the long-term UX emphasizes jobs inside project workspaces.

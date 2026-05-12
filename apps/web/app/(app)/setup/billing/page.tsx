@@ -45,8 +45,7 @@ export default async function BillingSetupPage() {
             Add your billing method
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[#625a52]">
-            You won&apos;t be charged during early access. Add a card now when secure billing is available,
-            or continue and finish billing before activation.
+            You won&apos;t be charged during early access. This saves a future billing method only when secure Stripe setup is available; activation and any paid founder arrangement still require platform review.
           </p>
           {showDevStripeStatus ? (
             <div className="mt-4 inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900">
@@ -95,7 +94,7 @@ export default async function BillingSetupPage() {
             <p className="text-sm font-semibold">Secure card collection</p>
             <p className="mt-2 text-sm leading-6 text-white/68">
               {billingState.deferredReason ??
-                "Card details are collected securely by Stripe. FloorConnector stores only safe billing references, never raw card details."}
+                "Card details are collected securely by Stripe through a no-charge SetupIntent. FloorConnector stores only safe billing references, never raw card details, subscriptions, invoices, or charges."}
             </p>
           </div>
 

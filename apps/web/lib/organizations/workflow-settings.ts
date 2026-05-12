@@ -2,12 +2,17 @@ import "server-only";
 
 import type {
   AutomationNotificationPreference,
-  OrganizationWorkflowSettings
+  OrganizationWorkflowSettings,
+  WorkflowGuidancePreferences
 } from "@floorconnector/types";
 
 import { normalizeAutomationNotificationPreferences } from "@/lib/automation/preferences";
 import { getPlatformWorkflowDefaults } from "@/lib/platform-admin/data";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  defaultWorkflowGuidancePreferences,
+  normalizeWorkflowGuidancePreferences
+} from "@/lib/workflow-guidance/preferences";
 
 type OrganizationWorkflowSettingsRow = {
   company_id: string;
@@ -26,6 +31,7 @@ type OrganizationWorkflowSettingsRow = {
   next_change_order_number: number | null;
   next_contract_number: number | null;
   automation_notification_preferences: unknown;
+  workflow_guidance_preferences: unknown;
   created_at: string;
   updated_at: string;
 };
@@ -63,6 +69,7 @@ function isOrganizationWorkflowSettingsRow(
       typeof row.next_change_order_number === "number") &&
     (row.next_contract_number === null || typeof row.next_contract_number === "number") &&
     typeof row.automation_notification_preferences !== "undefined" &&
+    typeof row.workflow_guidance_preferences !== "undefined" &&
     typeof row.created_at === "string" &&
     typeof row.updated_at === "string"
   );
@@ -98,6 +105,9 @@ function mapOrganizationWorkflowSettings(
     nextContractNumber: row.next_contract_number ?? fallback.nextContractNumber,
     automationNotificationPreferences: normalizeAutomationNotificationPreferences(
       row.automation_notification_preferences
+    ),
+    workflowGuidancePreferences: normalizeWorkflowGuidancePreferences(
+      row.workflow_guidance_preferences
     ),
     createdAt: row.created_at,
     updatedAt: row.updated_at
@@ -187,6 +197,7 @@ export async function getOrganizationWorkflowSettings(
         next_change_order_number,
         next_contract_number,
         automation_notification_preferences,
+        workflow_guidance_preferences,
         created_at,
         updated_at
       `
@@ -224,6 +235,7 @@ export async function getOrganizationWorkflowSettings(
       nextChangeOrderNumber: platformDefaults.defaultChangeOrderStartNumber,
       nextContractNumber: platformDefaults.defaultContractStartNumber,
       automationNotificationPreferences: normalizeAutomationNotificationPreferences(null),
+      workflowGuidancePreferences: defaultWorkflowGuidancePreferences,
       createdAt: new Date(0).toISOString(),
       updatedAt: new Date(0).toISOString()
     };
@@ -255,6 +267,7 @@ export async function upsertOrganizationWorkflowSettings(input: {
   nextChangeOrderNumber: number;
   nextContractNumber: number;
   automationNotificationPreferences?: AutomationNotificationPreference[];
+  workflowGuidancePreferences?: WorkflowGuidancePreferences;
 }) {
   const supabase = await getSupabaseServerClient();
   const [platformDefaults, currentSettings, recordCounts] = await Promise.all([
@@ -302,6 +315,8 @@ export async function upsertOrganizationWorkflowSettings(input: {
   const automationNotificationPreferences =
     input.automationNotificationPreferences ??
     currentSettings.automationNotificationPreferences;
+  const workflowGuidancePreferences =
+    input.workflowGuidancePreferences ?? currentSettings.workflowGuidancePreferences;
 
   const response = await supabase
     .from("organization_workflow_settings")
@@ -326,6 +341,7 @@ export async function upsertOrganizationWorkflowSettings(input: {
         next_change_order_number: input.nextChangeOrderNumber,
         next_contract_number: input.nextContractNumber,
         automation_notification_preferences: automationNotificationPreferences,
+        workflow_guidance_preferences: workflowGuidancePreferences,
         updated_by: input.userId,
         created_by: input.userId
       },
@@ -351,6 +367,7 @@ export async function upsertOrganizationWorkflowSettings(input: {
         next_change_order_number,
         next_contract_number,
         automation_notification_preferences,
+        workflow_guidance_preferences,
         created_at,
         updated_at
       `
@@ -404,6 +421,7 @@ export async function upsertOrganizationAutomationNotificationPreferences(input:
     nextInvoiceNumber: currentSettings.nextInvoiceNumber,
     nextChangeOrderNumber: currentSettings.nextChangeOrderNumber,
     nextContractNumber: currentSettings.nextContractNumber,
-    automationNotificationPreferences: input.automationNotificationPreferences
+    automationNotificationPreferences: input.automationNotificationPreferences,
+    workflowGuidancePreferences: currentSettings.workflowGuidancePreferences
   });
 }

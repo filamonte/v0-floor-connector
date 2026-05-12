@@ -14,13 +14,13 @@ test("project detail renders decision-first UI", async ({ page }) => {
     );
   }
 
-  await expect(page.getByRole("region", { name: "Current state and next action" })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Project workflow" })).toBeVisible();
+  // Next-action and readiness coaching can be reduced by organization workflow
+  // guidance settings. The project smoke asserts stable project facts that must
+  // stay visible in Guided, Flexible, and Manual modes.
   await expect(page.getByRole("region", { name: "Project state summary" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Project workflow" })).toBeVisible();
-  await expect(page.getByText("Driving record")).toBeVisible();
-  await expect(page.getByText(/currently driving the next step/i)).toBeVisible();
-  await expect(page.getByText("Linked record recency")).toBeVisible();
   await expect(page.getByRole("heading", { name: "What changed recently" })).toBeVisible();
   await expect(page.getByText(/not a separate project activity feed/i)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Project follow-through" })).toBeVisible();
+  await expect(page.getByText(/Create internal work item/i)).toBeVisible();
+  await expect(page.locator("body")).toContainText(/Customer|Readiness|Schedule|Project/i);
 });

@@ -42,6 +42,7 @@ What users can do now:
 - expand reusable systems by sqft into estimate pricing rows through shared logic
 - use derived estimate tax behavior driven by organization defaults, customer exemption state, and item-level taxability
 - use explicit shared save-state behavior, inline estimate-title editing, and persisted status progression in the estimate workspace
+- use Estimates as the UI/workflow reference pattern for proposal-first workspaces, with shared header rhythm, next-action guidance, workflow summary, context rail, connected records, and internal follow-through carried into project, contract, invoice, and job workspaces
 - review first-pass immutable revision snapshots on estimates, invoices, contracts, and change orders without cloning those business records
 - switch estimates, invoices, and leads between `My Work` and `Company` operational perspectives where safe ownership or assignment cues exist
 - move approved commercial scope into downstream contract, job, and invoice workflows
@@ -87,6 +88,7 @@ What contractor teams can do now:
 - navigate organization-aware modules
 - use project detail as the main readiness and workflow hub
 - use estimate, contract, invoice, and job detail pages as connected workspaces
+- configure workflow guidance intensity separately from AI assistance intent, with Project Workspace respecting next-best-action and readiness-guidance visibility while server-side readiness gates remain unchanged
 - rely on server-side readiness enforcement before scheduling and execution workflows proceed
 - manage organization-level settings and admin foundations
 - use super-admin configuration foundations at the platform layer
@@ -237,6 +239,8 @@ In practical terms:
 - payment lands on canonical payments tied to those invoices
 - execution continues through jobs, daily logs, field notes, time cards, and related records on the same project chain
 
+The Phase 1 Golden Workflow Demo Path makes this loop testable through current routes: `/dashboard`, `/leads`, `/customers`, `/projects`, `/estimates`, `/contracts`, `/invoices`, `/payments`, `/jobs`, `/schedule`, and `/daily-logs`, with detail workspaces opened where fixture data exists. The demo path is documented in [docs/golden-workflow-demo-path.md](C:/FloorConnector/docs/golden-workflow-demo-path.md) and should be treated as route-by-route QA over the existing canonical workflow, not a separate demo environment.
+
 ### Customer Flow
 
 The implemented customer-side chain can be summarized as:
@@ -348,6 +352,8 @@ There is no separate checkout-payment model and no separate portal billing model
 ## Section 5 -- What Is Not Built Yet
 
 The right way to describe the current product is not "unfinished in general." The operating backbone is implemented: the shared commercial, contract, billing, payment, portal, workforce, and field-execution chain is real. The remaining items below are intentionally not yet built or are only partially implemented as later-depth layers.
+
+Early-access operations are controlled rather than public self-serve. Founder onboarding uses the real company/setup path, no-charge SetupIntent billing setup where configured, manual platform-admin activation, and `/super-admin/early-access` operating buckets for pending setup, pending activation, active founder access, and suspended/blocked tenants. Those buckets are derived from existing company lifecycle/profile/billing-reference state and do not create subscriptions, charges, entitlements, or a second tenant model.
 
 ### Not Built Yet
 

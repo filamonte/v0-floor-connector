@@ -889,7 +889,8 @@ test("schedule handoff opens one unscheduled job in the focused scheduling compo
   const scheduleForm = await getScheduleUpdateForm(page);
   await expect(scheduleForm.locator('input[name="jobId"]')).toHaveValue(fixture.jobId);
   await expect(scheduleForm.locator('input[name="scheduledDate"]')).toHaveValue("");
-  await expect(scheduleForm.getByRole("button", { name: "Saved" })).toBeVisible();
+  await expect(scheduleForm.getByRole("button", { name: "Save schedule" })).toBeDisabled();
+  await expect(scheduleForm.locator('[role="status"]')).toContainText("Saved");
   await expect(page.getByRole("button", { name: "Move back to unscheduled" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Create job" })).toHaveCount(0);
   await expect(page.locator("#work-items")).toHaveCount(0);

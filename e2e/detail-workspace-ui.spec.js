@@ -24,6 +24,20 @@ const detailFixtures = {
   ]
 };
 
+const goldenWorkflowManagerRoutes = [
+  "/dashboard",
+  "/leads",
+  "/customers",
+  "/projects",
+  "/estimates",
+  "/contracts",
+  "/invoices",
+  "/payments",
+  "/jobs",
+  "/schedule",
+  "/daily-logs"
+];
+
 function attachIssueCapture(page) {
   const issues = [];
 
@@ -47,8 +61,7 @@ function attachIssueCapture(page) {
 }
 
 async function expectAuthenticatedDetail(page, path) {
-  const response = await page.goto(path);
-  await page.waitForLoadState("domcontentloaded");
+  const response = await page.goto(path, { waitUntil: "domcontentloaded" });
 
   if (new URL(page.url()).pathname.startsWith("/login")) {
     throw new Error(
@@ -74,13 +87,29 @@ test("dashboard PriorityStrip renders inside the authenticated dashboard", async
   expect(issues).toEqual([]);
 });
 
+test("golden workflow manager route spine stays authenticated", async ({ page }) => {
+  const issues = attachIssueCapture(page);
+
+  for (const route of goldenWorkflowManagerRoutes) {
+    await expectAuthenticatedDetail(page, route);
+    expect(new URL(page.url()).pathname, `${route} should not redirect`).toBe(route);
+    await expect(page.locator("body")).not.toContainText(/Application error|Unhandled Runtime Error/i);
+  }
+
+  expect(issues).toEqual([]);
+});
+
 test("project and estimate detail render decision-first primitives", async ({ page }) => {
   const issues = attachIssueCapture(page);
 
   await expectAuthenticatedDetail(page, detailFixtures.project);
-  await expect(page.getByRole("region", { name: "Current state and next action" })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Project workflow" })).toBeVisible();
+  // Project coaching panels are organization-configurable after Phase 0.5.
+  // This smoke keeps the non-negotiable state and continuity assertions stable
+  // across Guided, Flexible, and Manual modes.
   await expect(page.getByRole("region", { name: "Project state summary" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What changed recently" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Project follow-through" })).toBeVisible();
+  await expect(page.locator("body")).toContainText(/Customer|Readiness|Schedule|Project/i);
 
   await expectAuthenticatedDetail(page, detailFixtures.estimate);
   await expect(page.getByRole("region", { name: "Current state and next action" })).toBeVisible();

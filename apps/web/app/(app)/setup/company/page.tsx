@@ -66,7 +66,7 @@ export default async function CompanySetupPage({ searchParams }: PageProps) {
               Let&apos;s set up your company
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-[#625a52]">
-              Add the basics that will appear on estimates, contracts, invoices, and the customer portal.
+              Add the basics that will appear on estimates, contracts, invoices, and the customer portal. This starts your real contractor workspace, not a demo account.
             </p>
 
             <form action={saveCompanySetupAction} className="mt-8 space-y-6">
@@ -201,7 +201,8 @@ export default async function CompanySetupPage({ searchParams }: PageProps) {
             </p>
             <div className="mt-5 space-y-4 text-sm leading-6 text-white/68">
               <p>This updates your real company profile.</p>
-              <p>You can enter the dashboard after setup and refine details later.</p>
+              <p>You can enter the dashboard after setup and refine details later while platform activation is pending.</p>
+              <p>External sends and customer payment processing stay locked until activation.</p>
               <p>Tax and financial defaults stay in settings.</p>
             </div>
             <Link

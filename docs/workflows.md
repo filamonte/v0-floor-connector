@@ -265,6 +265,21 @@ When the existing readiness snapshot is clear after contract signature, contract
 
 This is a Sign -> Schedule -> Execute UI handoff only. It must continue to use the centralized readiness gate and canonical `jobs` scheduling fields rather than introducing a contract-specific scheduling model. When the handoff starts from signed contract or project readiness context and an approved estimate is available, job Quick-Create should preserve that estimate lineage on the canonical job. When exactly one unscheduled canonical job already exists for the project, the `/schedule` handoff may carry `jobId` and `action=schedule` so the existing schedule action panel opens in that job context.
 
+## Configurable Workflow Guidance
+
+FloorConnector now stores organization-owned guidance preferences on the existing `organization_workflow_settings` row. These preferences tune how much coaching the contractor app shows; they do not change the canonical lifecycle, tenant isolation, readiness enforcement, financial rules, signature history, portal access, or payment truth.
+
+Implemented guidance modes:
+- Guided: default mode with next-best-action and readiness guidance visible.
+- Flexible: guidance remains available but can be made less forceful.
+- Manual: next-best-action prompts can be reduced for teams that want less hand-holding.
+
+Workflow guidance and AI assistance are separate settings groups. Disabling guidance does not enable AI, and enabling AI-assistance intent flags does not permit autonomous actions. Any future AI-prepared customer-facing, commercial, legal, billing, scheduling, permission, or compliance action must still require human confirmation and must route through canonical server-side workflows.
+
+Project Workspace is the first high-value surface wired to these preferences: next-best-action and readiness guidance panels can be shown or reduced according to organization settings, while the underlying readiness gate still runs through the centralized server-side project readiness helpers.
+
+One-off/direct invoice shortcuts are still planned only. A future shortcut may allow a contractor to start a simple invoice path, but it must still create or use canonical customer and project context and write canonical invoice/payment records. There is no disconnected invoice model and no active direct-invoice shortcut in this phase.
+
 ## Current Implemented Workflows
 
 The current app already supports the following live workflows:
@@ -283,6 +298,7 @@ Implemented flow:
 - `/setup/pending-activation` shows the existing tenant status/lifecycle state and lets early-access users enter the real contractor app with guardrails
 - user lands in the protected contractor app and can sample the real system through canonical records
 - pending/trial organizations may create and review real internal canonical records, but the shared activation guard blocks irreversible external production actions until the organization is activated
+- `/super-admin/early-access` is the platform-admin operating view for controlled founder tenants. It groups companies into pending setup, pending activation, active founder access, and suspended/blocked buckets from existing company/profile/billing-reference state, shows SetupIntent payment-method references as billing setup evidence only, and keeps activation manual.
 - non-production QA can use `/dashboard?fresh=true` to force the existing Start Here onboarding prompts visible without creating fake records or changing tenant data
 - non-production platform admins can reset a selected early-access tenant from `/super-admin/early-access`; this is a development-only utility over existing company and workflow records, not a sandbox/demo mode
 - `/super-admin` access is not inherited from contractor organization ownership or administration. It requires an explicit platform role assignment in `platform_user_roles`; contractor owner/admin/member test accounts remain contractor-scoped unless separately granted a platform role.
@@ -1032,6 +1048,21 @@ Today, the app should be understood this way:
 - `/people` remains the current workforce-oriented route, while a future `Directory` workspace is intended to unify contractor-facing account and contact browsing without changing the canonical data model underneath
 
 That means FloorConnector is already operating on one shared business chain, even though some screens still expose the workflow in a more module-driven way than the intended product direction.
+
+## Golden Workflow Demo Path
+
+The Phase 1 demo spine is documented in [docs/golden-workflow-demo-path.md](C:/FloorConnector/docs/golden-workflow-demo-path.md). It is the repeatable QA path through the existing implemented surfaces:
+
+`dashboard -> lead/opportunity -> customer -> project -> estimate -> contract -> invoice/payment -> job -> schedule -> daily log`
+
+Interpretation rules:
+- the demo path uses the canonical lifecycle `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
+- Project Workspace remains the continuity hub and should be reopened between major stages to confirm the current next action and readiness state
+- Estimate Workspace remains the proposal-first UI/workflow reference point
+- contract signature, invoice/payment, schedule, and daily-log steps must act on existing canonical records and linked project/customer context
+- Guided mode is the primary demo mode; Flexible and Manual checks may reduce coaching but must not hide financial, payment, signature, portal, readiness, or security truth
+- a missing detail fixture, missing portal/customer session, or redirect to `/login` must be reported as skipped/blocked rather than treated as successful QA
+- one-off/direct invoice behavior remains a planned follow-up and is not part of the Phase 1 demo path
 
 ## CONTEXT-AWARE CREATION RULE
 

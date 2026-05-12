@@ -628,6 +628,24 @@ export interface AutomationNotificationPreference {
   notifyRoles: AutomationNotificationPreferenceRole[];
 }
 
+export type WorkflowGuidanceMode = "guided" | "flexible" | "manual";
+
+export interface WorkflowGuidancePreferences {
+  workflowMode: WorkflowGuidanceMode;
+  showNextBestActions: boolean;
+  showReadinessGuidance: boolean;
+  strictReadinessEnforcement: boolean;
+  allowOneOffInvoiceShortcuts: boolean;
+  showShortcutCleanupPrompts: boolean;
+  showWorkflowExplanationCopy: boolean;
+  enableAiSuggestions: boolean;
+  enableAiSummaries: boolean;
+  enableAiDrafting: boolean;
+  enableAiFormPrefillSuggestions: boolean;
+  enableAiWorkItemRecommendations: boolean;
+  requireConfirmationBeforeAiActions: boolean;
+}
+
 export interface AutomationNotificationTemplateContextField {
   key: string;
   label: string;
@@ -680,6 +698,7 @@ export interface OrganizationWorkflowSettings {
   nextChangeOrderNumber: number;
   nextContractNumber: number;
   automationNotificationPreferences: AutomationNotificationPreference[];
+  workflowGuidancePreferences: WorkflowGuidancePreferences;
   createdAt: string;
   updatedAt: string;
 }

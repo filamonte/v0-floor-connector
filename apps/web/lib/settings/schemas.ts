@@ -4,6 +4,7 @@ import {
   automationNotificationPreferenceCategories,
   automationNotificationPreferenceRoles
 } from "@/lib/automation/preferences";
+import { workflowGuidanceModes } from "@/lib/workflow-guidance/preferences";
 import {
   operationalCueRuleDefinitions,
   operationalCueThresholdDayMaximum,
@@ -23,6 +24,10 @@ const automationNotificationPreferenceRoleOptions =
     (typeof automationNotificationPreferenceRoles)[number],
     ...(typeof automationNotificationPreferenceRoles)[number][]
   ];
+const workflowGuidanceModeOptions = workflowGuidanceModes as unknown as [
+  (typeof workflowGuidanceModes)[number],
+  ...(typeof workflowGuidanceModes)[number][]
+];
 const operationalCueKeyOptions = operationalCueRuleDefinitions.map(
   (definition) => definition.cueKey
 ) as [
@@ -205,7 +210,18 @@ export const organizationWorkflowSettingsInputSchema = z.object({
   nextEstimateNumber: positiveIntegerField("Next estimate number"),
   nextInvoiceNumber: positiveIntegerField("Next invoice number"),
   nextChangeOrderNumber: positiveIntegerField("Next change order number"),
-  nextContractNumber: positiveIntegerField("Next contract number")
+  nextContractNumber: positiveIntegerField("Next contract number"),
+  workflowMode: z.enum(workflowGuidanceModeOptions),
+  showNextBestActions: z.boolean(),
+  showReadinessGuidance: z.boolean(),
+  strictReadinessEnforcement: z.boolean(),
+  showShortcutCleanupPrompts: z.boolean(),
+  showWorkflowExplanationCopy: z.boolean(),
+  enableAiSuggestions: z.boolean(),
+  enableAiSummaries: z.boolean(),
+  enableAiDrafting: z.boolean(),
+  enableAiFormPrefillSuggestions: z.boolean(),
+  enableAiWorkItemRecommendations: z.boolean()
 });
 
 export const automationNotificationPreferencesInputSchema = z.object({

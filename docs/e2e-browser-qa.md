@@ -1,6 +1,7 @@
 # E2E Browser QA
 
 Status:
+
 - local Playwright browser QA setup for protected FloorConnector contractor flows
 - test infrastructure only; no schema, workflow, auth, RLS, estimate calculation, invoice, or catalog behavior changes
 
@@ -34,6 +35,22 @@ The Playwright config defaults to:
 PLAYWRIGHT_BASE_URL=http://localhost:3001
 PLAYWRIGHT_STORAGE_STATE=playwright/.auth/local-user.json
 ```
+
+If your local Next dev server is already running on `localhost:3000`, set the base URL explicitly for auth and smoke commands:
+
+```bash
+$env:PLAYWRIGHT_BASE_URL="http://localhost:3000"
+$env:PLAYWRIGHT_SKIP_WEB_SERVER="1"
+pnpm e2e:auth
+```
+
+To check which local port is listening on Windows:
+
+```bash
+netstat -ano | Select-String ":3000|:3001"
+```
+
+If Playwright times out waiting for `localhost:3001` while the app is on `localhost:3000`, that is a local dev-server/base-URL mismatch. Rerun with `PLAYWRIGHT_BASE_URL=http://localhost:3000` or stop the stray server and let Playwright start its configured server.
 
 The public `chromium-public` project also includes the marketing entry-point regression spec:
 
@@ -78,6 +95,8 @@ That file is local-only and should not be committed.
 
 Running protected specs through `pnpm e2e` also runs the setup project first. If either credential variable is missing, auth setup fails with a clear environment-variable error instead of letting protected tests drift into `/login`.
 
+If a protected smoke reaches `/login`, the saved storage state is missing, stale, or rejected for the current app URL. Refresh it with `pnpm e2e:auth` using the same `PLAYWRIGHT_BASE_URL` as the smoke run. Do not count the login page as successful protected QA.
+
 If you already have a saved storage-state file, point Playwright to it:
 
 ```bash
@@ -87,6 +106,7 @@ $env:PLAYWRIGHT_STORAGE_STATE="C:\path\to\local-user.json"
 ## Super Admin Access Regression QA
 
 The super-admin access spec uses two real authenticated states:
+
 - contractor-only owner state from `FLOORCONNECTOR_E2E_EMAIL` / `FLOORCONNECTOR_E2E_PASSWORD`
 - platform-admin state from `FLOORCONNECTOR_PLATFORM_E2E_EMAIL` / `FLOORCONNECTOR_PLATFORM_E2E_PASSWORD`
 
@@ -129,12 +149,110 @@ playwright/.auth/platform-admin.json
 ```
 
 The spec verifies:
+
 - platform-admin auth setup lands the platform account on `/super-admin` after a normal login when no `next` is supplied
 - platform-admin user can load `/super-admin`
 - contractor-only owner is redirected from `/super-admin` to `/dashboard?error=Platform+admin+access+is+required.`
 - contractor-only owner can still load `/dashboard`, `/projects`, and `/settings`
 
 Contractor route-continuity checks assume the contractor E2E account has completed the real `/setup/company` gate. If the account redirects to `/setup/company`, complete that form through the app UI and rerun `pnpm e2e:super-admin`; do not patch storage state manually.
+
+## Portal Customer Auth And Golden Path Smoke
+
+Portal/customer QA uses a separate customer session because portal users are not contractor organization members. The portal smoke path must authenticate a real Supabase Auth user whose portal access is backed by canonical `portal_access_grants` and `portal_project_access` rows. Do not count `/login`, an accidental 404, an access-denied page, or a missing shared project as successful portal QA unless the test is intentionally checking unauthorized access.
+
+Phase 1.2 adds a stable portal customer fixture helper. The helper validates by default and only writes when the operator explicitly enables local E2E fixture writes. It creates or repairs canonical customer, contact, project, portal grant, project visibility, estimate, contract, invoice, and signer rows for the contractor E2E organization; it does not create portal-only records, fake signatures, fake payments, or checkout success.
+
+Required local environment variables for generating the portal storage state:
+
+```text
+FLOORCONNECTOR_PORTAL_E2E_EMAIL
+FLOORCONNECTOR_PORTAL_E2E_PASSWORD
+```
+
+Required environment variables for validating or writing the portal fixture:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL
+SUPABASE_SERVICE_ROLE_KEY
+FLOORCONNECTOR_E2E_EMAIL
+FLOORCONNECTOR_PORTAL_E2E_EMAIL
+```
+
+Write mode also requires:
+
+```text
+FLOORCONNECTOR_PORTAL_E2E_PASSWORD
+FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1
+```
+
+Optional local overrides for stable portal fixture routes:
+
+```text
+PLAYWRIGHT_PORTAL_STORAGE_STATE
+FLOORCONNECTOR_E2E_PORTAL_PROJECT_PATH
+FLOORCONNECTOR_E2E_PORTAL_ESTIMATE_PATH
+FLOORCONNECTOR_E2E_PORTAL_CONTRACT_PATH
+FLOORCONNECTOR_E2E_PORTAL_INVOICE_PATH
+FLOORCONNECTOR_E2E_PORTAL_UNAUTHORIZED_PROJECT_PATH
+```
+
+To validate the current fixture state without mutating data:
+
+```bash
+pnpm e2e:portal-fixture
+```
+
+Validation mode prints missing prerequisite env var names together when required setup is absent. It should stop before any data writes and must not print secret values.
+
+To create or repair the local/dev E2E fixture, use write mode deliberately:
+
+```bash
+$env:FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE="1"
+pnpm e2e:portal-fixture -- --write
+```
+
+The fixture helper prints only non-secret route outputs, such as `FLOORCONNECTOR_E2E_PORTAL_PROJECT_PATH`, that can be copied into `.env.local` when deterministic portal routes are preferred. It must not print passwords, service-role keys, tokens, invite tokens, or storage-state contents.
+
+To create or refresh the portal customer storage state:
+
+```bash
+pnpm e2e:portal-auth
+```
+
+The generated file defaults to:
+
+```text
+playwright/.auth/portal-user.json
+```
+
+That file is local-only and should not be committed. If the portal credential variables are missing, `pnpm e2e:portal-auth` skips with the missing prerequisite instead of creating fake auth state.
+
+Run the portal golden-path smoke:
+
+```bash
+pnpm e2e:portal
+```
+
+The smoke spec covers:
+
+- `/portal` authenticated customer workspace
+- first granted `/portal/projects/[projectId]` workspace discovered from the portal home, or `FLOORCONNECTOR_E2E_PORTAL_PROJECT_PATH`
+- `/portal/estimates/[estimateId]` when a shared estimate link or route override exists
+- `/portal/contracts/[contractId]` when a shared contract link or route override exists
+- `/portal/invoices/[invoiceId]` when a shared invoice link or route override exists, without clicking checkout or attempting payment
+- an intentional unauthorized-project 404 only when `FLOORCONNECTOR_E2E_PORTAL_UNAUTHORIZED_PROJECT_PATH` is configured
+
+Fixture requirements:
+
+- the portal user must be a real authenticated user
+- the portal user should be created through Supabase Auth or by the local fixture helper in explicit write mode
+- the canonical `public.users` profile must exist for that portal auth account
+- the fixture customer/contact must remain canonical contractor-owned records
+- the portal user must have an active customer-anchored portal access grant
+- at least one active project access row is required for project workspace smoke
+- estimate, contract, and invoice checks require records linked from that granted project or explicit route overrides
+- the invoice smoke only loads the review page and stops before any irreversible external charge boundary
 
 ## Estimate Group Catalog Insertion QA
 
@@ -252,6 +370,7 @@ pnpm exec playwright test e2e/project-ai-cue-work-item-bridge.spec.js --project=
 ```
 
 If no path is provided, the fixture-backed cue and handoff regressions create or reuse small canonical E2E fixtures for the contractor test organization:
+
 - approved-estimate cue: one customer, one project, one opportunity, and one approved estimate with no generated contract
 - signed-ready-no-job cue: one customer, one project, one opportunity, one approved estimate, and one signed contract with no linked jobs
 - ready-project-with-unscheduled-job cue: one customer, one project, one opportunity, one approved estimate, one signed contract, and exactly one unscheduled job
@@ -259,6 +378,7 @@ If no path is provided, the fixture-backed cue and handoff regressions create or
 - open-blocker-field-note cue: one customer, one ready project, one opportunity, one approved estimate, one signed contract, one daily log, and one open blocker field note
 
 The project cue bridge spec verifies:
+
 - unpaid deposit invoice, approved-estimate-missing-contract, signed-ready-no-job, ready-unscheduled-job, and open blocker/issue field-note bridge behavior
 - ready-to-schedule Project Detail handoff copy and routes for no-job, one-unscheduled-job, and already-scheduled-job states
 - dashboard project guidance preview routes back to Project Detail / `#project-guidance-cues`
@@ -295,7 +415,26 @@ FLOORCONNECTOR_E2E_SCHEDULED_JOB_HANDOFF_PATH
 ```
 
 It verifies:
+
 - `/schedule?projectId={projectId}&jobId={jobId}&view=unscheduled&action=schedule` opens the existing schedule composer for that exact unscheduled job
 - `/schedule?projectId={projectId}&view=unscheduled&action=schedule` still uses the exact-one unscheduled job fallback when the project has exactly one unscheduled job
 - `/schedule?projectId={projectId}` stays project-scoped for already scheduled jobs without opening job creation, work-item creation, or schedule mutation surfaces
 - the intentional submit-path regression uses a disposable `[E2E] Schedule Submit Path ...` fixture, schedules that one canonical job through the existing `/schedule` composer, verifies the saved schedule persists after reload, confirms no duplicate jobs or work items were created, and resets that fixture job back to unscheduled after the assertions
+
+## Golden Workflow Demo Path QA
+
+The Golden Workflow Demo Path is documented in [docs/golden-workflow-demo-path.md](C:/FloorConnector/docs/golden-workflow-demo-path.md). Protected route checks must use the same authenticated contractor storage-state setup described above.
+
+Focused smoke command:
+
+```bash
+pnpm exec playwright test e2e/detail-workspace-ui.spec.js --project=chromium-protected
+```
+
+The protected smoke coverage verifies:
+
+- manager routes in the demo spine load authenticated instead of stopping at `/login`
+- core Project, Estimate, Contract, Invoice, and Job Workspaces still render their decision-first regions
+- route checks do not seed fake data or create demo-only workflow state
+
+For full manual QA, pair that smoke run with the route-by-route checklist in `docs/golden-workflow-demo-path.md` and record missing fixtures, missing portal/customer auth, or skipped detail routes explicitly.

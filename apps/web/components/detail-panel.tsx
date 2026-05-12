@@ -21,17 +21,17 @@ export function DetailPanel({
     <section
       id={id}
       className={[
-        "border p-7 sm:p-8",
+        "border p-5 sm:p-6",
         neutral
-          ? "rounded-lg border-[var(--border-warm)] bg-white shadow-[0_16px_40px_-36px_rgba(15,23,42,0.24)]"
-          : "rounded-[2rem] border-[var(--border-warm)] bg-white/88 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.32)] backdrop-blur"
+          ? "rounded-lg border-[var(--border-warm)] bg-white shadow-sm"
+          : "rounded-lg border-[var(--border-warm)] bg-white shadow-sm"
       ].join(" ")}
     >
       <div className="space-y-2.5">
         <p
           className={[
             "text-[11px] font-semibold uppercase tracking-[0.26em]",
-            neutral ? "text-[var(--text-secondary)]" : "text-[var(--copper)]"
+            neutral ? "text-[var(--text-secondary)]" : "text-[var(--text-secondary)]"
           ].join(" ")}
         >
           {title}

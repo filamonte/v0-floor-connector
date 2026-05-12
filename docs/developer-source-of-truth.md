@@ -119,6 +119,13 @@ Execution:
 ## ACTIVE DIRECTION
 
 - Improve UI clarity (no system logic changes)
+- Treat Estimates as the contractor app's UI/workflow reference pattern for proposal-first record workspaces
+- Treat Guided/Flexible/Manual workflow guidance as configurable presentation, not a data-model or enforcement escape hatch
+- Treat the Golden Workflow Demo Path as the repeatable QA spine through the existing canonical chain, not as permission for demo-only records or disconnected shortcuts
+- Treat portal/customer Golden Workflow QA as a real-auth, real-grant smoke path. Portal checks must use a valid portal customer session backed by canonical `portal_access_grants` and `portal_project_access`; `/login`, accidental 404s, access-denied pages, or missing fixtures are not successful portal QA unless intentionally asserted as the expected unauthorized result
+- Use `pnpm e2e:portal-fixture` to validate the stable portal customer fixture. Write mode requires `FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1` plus `-- --write` and may only create canonical dev/test fixture records; it must not create portal-only records, print secrets, fake signature/payment success, or bypass portal access grants
+- Use [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md) before paid early-access work. The Phase 2 operating layer now surfaces founder tenant setup/activation/billing-reference state in `/super-admin/early-access`, but current billing setup remains no-charge SetupIntent card collection and manual/platform activation only; live subscriptions, automatic activation, entitlement enforcement, and Stripe subscription management require a dedicated approved implementation slice
+- Keep AI-assistance preferences separate from workflow guidance; AI must not own source of truth or take autonomous customer-facing, financial, legal, scheduling, permission, or signature actions
 - Enforce context-aware creation
 - Strengthen project-centered operational continuity
 
@@ -175,6 +182,7 @@ Use these docs together:
 - [docs/estimate-builder-system-generation-spec.md](C:/FloorConnector/docs/estimate-builder-system-generation-spec.md): future system-generation planning detail
 - [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md): canonical UI standardization and interaction guardrails
 - [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): planning backlog for UI, directory/contact, tax, Estimate Editor, project-address, and workflow-guidance alignment
+- [docs/golden-workflow-demo-path.md](C:/FloorConnector/docs/golden-workflow-demo-path.md): Phase 1 demo/QA spine for the existing canonical sales-to-production path
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): doc maintenance and archival rules
 
 ## What Is Implemented Now
@@ -337,6 +345,7 @@ Do:
 - build Manager Pages around page identity, command bar, and overview/list workspace
 - use shared composer-sheet or modal patterns for create flows on Manager Pages
 - prefer Quick-Create overlays that capture only minimum required fields, create the canonical record, and then route into the relevant `<Resource> Workspace`
+- use the Estimate Workspace as the tuning fork for shared Record Workspace rhythm: header band, truthful next action, workflow summary, customer/project context, connected record rail, and internal follow-through below the primary record work
 - treat module dashboards as operational entry surfaces with summary, queues, create entry, and continuity links back to shared records
 - keep change orders canonical and workflow-linked: contractor authoring, portal approval, and downstream invoice impact must stay on the same shared record chain
 - reserve left-side rails for contextual deeper-screen navigation only when they materially help

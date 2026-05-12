@@ -8,6 +8,10 @@ import {
   markEarlyAccessTenantActiveAction,
   resetEarlyAccessTenantOnboardingStateAction
 } from "@/lib/platform-admin/actions";
+import {
+  buildEarlyAccessOperatingSummary,
+  getEarlyAccessOperatingState
+} from "@/lib/platform-admin/early-access-operating-core";
 import { listEarlyAccessTenantsForPlatformAdmin } from "@/lib/platform-admin/data";
 
 type PageProps = {
@@ -30,6 +34,22 @@ function formatDateTime(value: string) {
 
 function formatStatus(value: string) {
   return value.replaceAll("_", " ");
+}
+
+function getOperatingStateClasses(state: string) {
+  if (state === "active_founder_access") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+
+  if (state === "suspended_or_blocked") {
+    return "border-red-200 bg-red-50 text-red-700";
+  }
+
+  if (state === "pending_activation") {
+    return "border-amber-200 bg-amber-50 text-amber-800";
+  }
+
+  return "border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-tertiary)]";
 }
 
 function StageBadge({
@@ -58,6 +78,18 @@ function StageBadge({
 export default async function EarlyAccessPage({ searchParams }: PageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const tenants = await listEarlyAccessTenantsForPlatformAdmin();
+  const operatingSummary = buildEarlyAccessOperatingSummary(
+    tenants.map((tenant) => ({
+      tenantStatus: tenant.tenantStatus,
+      lifecycleState: tenant.lifecycleState,
+      hasCompanyProfile: tenant.hasCompanyProfile,
+      hasPaymentMethod: tenant.hasPaymentMethod,
+      projectCount: tenant.activity.projectCount,
+      estimateCount: tenant.activity.estimateCount,
+      contractCount: tenant.activity.contractCount,
+      invoiceCount: tenant.activity.invoiceCount
+    }))
+  );
   const selectedFeedbackTenant =
     tenants.find((tenant) => tenant.id === resolvedSearchParams.feedbackCompanyId) ??
     tenants.find((tenant) => tenant.hasFeedback) ??
@@ -80,6 +112,40 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
           <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
             Progress is derived from canonical company, project, estimate, contract, and invoice records. No analytics or duplicate tenant records are used here.
           </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                Pending setup
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-[var(--text-primary)]">
+                {operatingSummary.pendingSetup}
+              </p>
+            </div>
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-800">
+                Pending activation
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-amber-950">
+                {operatingSummary.pendingActivation}
+              </p>
+            </div>
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
+                Active founders
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-emerald-950">
+                {operatingSummary.activeFounderAccess}
+              </p>
+            </div>
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-red-700">
+                Suspended / blocked
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-red-950">
+                {operatingSummary.suspendedOrBlocked}
+              </p>
+            </div>
+          </div>
           {showDevReset ? (
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
               <span className="font-semibold">DEV / TEST ONLY:</span> reset clears only the selected tenant&apos;s onboarding workflow test records and saved Stripe payment method reference. It does not create sample data or affect other tenants.
@@ -92,6 +158,7 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
               <tr>
                 <th className="px-4 py-3">Company</th>
                 <th className="px-4 py-3">Created</th>
+                <th className="px-4 py-3">Operating state</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Company profile</th>
                 <th className="px-4 py-3">Payment method</th>
@@ -111,6 +178,16 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                 const isActive =
                   tenant.tenantStatus === "active" &&
                   tenant.lifecycleState === "active";
+                const operatingState = getEarlyAccessOperatingState({
+                  tenantStatus: tenant.tenantStatus,
+                  lifecycleState: tenant.lifecycleState,
+                  hasCompanyProfile: tenant.hasCompanyProfile,
+                  hasPaymentMethod: tenant.hasPaymentMethod,
+                  projectCount: tenant.activity.projectCount,
+                  estimateCount: tenant.activity.estimateCount,
+                  contractCount: tenant.activity.contractCount,
+                  invoiceCount: tenant.activity.invoiceCount
+                });
 
                 return (
                   <tr key={tenant.id} className="align-top">
@@ -122,6 +199,19 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                     </td>
                     <td className="whitespace-nowrap px-4 py-4 text-[var(--text-secondary)]">
                       {formatDateTime(tenant.createdAt)}
+                    </td>
+                    <td className="min-w-56 px-4 py-4">
+                      <span
+                        className={[
+                          "inline-flex rounded-full border px-3 py-1.5 text-xs font-semibold",
+                          getOperatingStateClasses(operatingState.state)
+                        ].join(" ")}
+                      >
+                        {operatingState.statusLabel}
+                      </span>
+                      <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">
+                        {operatingState.followUpLabel}
+                      </p>
                     </td>
                     <td className="px-4 py-4">
                       <p className="font-medium text-[var(--text-primary)]">
@@ -139,7 +229,7 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                       />
                     </td>
                     <td className="px-4 py-4 text-[var(--text-secondary)]">
-                      {tenant.hasPaymentMethod ? "Saved" : "Not saved"}
+                      {operatingState.billingLabel}
                     </td>
                     <td className="whitespace-nowrap px-4 py-4 text-[var(--text-secondary)]">
                       <p>{tenant.activity.projectCount} projects</p>
@@ -270,7 +360,7 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
               })}
               {tenants.length === 0 ? (
                 <tr>
-                  <td colSpan={14} className="px-4 py-12 text-center">
+                  <td colSpan={15} className="px-4 py-12 text-center">
                     <p className="text-sm font-semibold text-[var(--text-primary)]">
                       No early-access companies yet.
                     </p>

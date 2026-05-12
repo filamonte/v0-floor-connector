@@ -147,7 +147,7 @@ function BillingSetupInnerForm({
 
       {isSaved ? (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">
-          <span className="font-semibold">Payment method saved.</span> You can continue to activation. No charge has been created.
+          <span className="font-semibold">Payment method saved.</span> You can continue to activation review. No charge, invoice, or subscription has been created.
         </div>
       ) : null}
 
@@ -188,7 +188,7 @@ function ContinueWithoutStripeLink({
         <p className="mt-1 text-amber-900">{reason}</p>
       </div>
       <p className="text-amber-900">
-        You can still continue into early access and add a billing method before activation.
+        You can still continue into founder early access and add a billing method before platform activation.
       </p>
       <div className="flex flex-col gap-3 sm:flex-row">
         {onRetry ? (
