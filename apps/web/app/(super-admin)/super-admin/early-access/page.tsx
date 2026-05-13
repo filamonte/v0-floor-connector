@@ -6,11 +6,13 @@ import { ResetOnboardingStateForm } from "@/components/platform-admin/reset-onbo
 import { SettingsFeedback } from "@/components/settings-feedback";
 import {
   markEarlyAccessTenantActiveAction,
-  resetEarlyAccessTenantOnboardingStateAction
+  resetEarlyAccessTenantOnboardingStateAction,
+  updateFounderBillingEvidenceAction
 } from "@/lib/platform-admin/actions";
 import {
   buildEarlyAccessOperatingSummary,
-  getEarlyAccessOperatingState
+  getEarlyAccessOperatingState,
+  getFounderBillingEvidenceModel
 } from "@/lib/platform-admin/early-access-operating-core";
 import { listEarlyAccessTenantsForPlatformAdmin } from "@/lib/platform-admin/data";
 
@@ -36,6 +38,10 @@ function formatStatus(value: string) {
   return value.replaceAll("_", " ");
 }
 
+function formatOptionalStatus(value: string | null) {
+  return value ? formatStatus(value) : "Not recorded";
+}
+
 function getOperatingStateClasses(state: string) {
   if (state === "active_founder_access") {
     return "border-emerald-200 bg-emerald-50 text-emerald-700";
@@ -50,6 +56,38 @@ function getOperatingStateClasses(state: string) {
   }
 
   return "border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-tertiary)]";
+}
+
+function getFounderBillingClasses(tone: string) {
+  if (tone === "good") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+
+  if (tone === "critical") {
+    return "border-red-200 bg-red-50 text-red-700";
+  }
+
+  if (tone === "warning") {
+    return "border-amber-200 bg-amber-50 text-amber-800";
+  }
+
+  return "border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-tertiary)]";
+}
+
+function formatAmountInput(value: number | null) {
+  if (value == null) {
+    return "";
+  }
+
+  return (value / 100).toFixed(value % 100 === 0 ? 0 : 2);
+}
+
+function formatDateTimeInput(value: string | null) {
+  if (!value) {
+    return "";
+  }
+
+  return value.slice(0, 16);
 }
 
 function StageBadge({
@@ -162,6 +200,8 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Company profile</th>
                 <th className="px-4 py-3">Payment method</th>
+                <th className="px-4 py-3">Stripe SaaS billing</th>
+                <th className="px-4 py-3">Founder billing evidence</th>
                 <th className="px-4 py-3">Activity</th>
                 <th className="px-4 py-3">Light signals</th>
                 <th className="px-4 py-3">Feedback</th>
@@ -187,6 +227,13 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                   estimateCount: tenant.activity.estimateCount,
                   contractCount: tenant.activity.contractCount,
                   invoiceCount: tenant.activity.invoiceCount
+                });
+                const founderBilling = getFounderBillingEvidenceModel({
+                  status: tenant.founderBilling.status,
+                  method: tenant.founderBilling.method,
+                  monthlyAmountCents: tenant.founderBilling.monthlyAmountCents,
+                  evidenceReceivedAt: tenant.founderBilling.evidenceReceivedAt,
+                  followUpAt: tenant.founderBilling.followUpAt
                 });
 
                 return (
@@ -230,6 +277,180 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                     </td>
                     <td className="px-4 py-4 text-[var(--text-secondary)]">
                       {operatingState.billingLabel}
+                    </td>
+                    <td className="min-w-64 px-4 py-4 text-xs leading-5 text-[var(--text-secondary)]">
+                      <p>
+                        Customer:{" "}
+                        {tenant.stripeCustomerId ? "Stored reference" : "Not recorded"}
+                      </p>
+                      <p>
+                        Subscription:{" "}
+                        {tenant.stripeSubscriptionId
+                          ? "Stored reference"
+                          : "Not recorded"}
+                      </p>
+                      <p>Status: {formatOptionalStatus(tenant.stripeSubscriptionStatus)}</p>
+                      <p>
+                        Lifecycle:{" "}
+                        {formatOptionalStatus(tenant.stripeSubscriptionLifecycleState)}
+                      </p>
+                      <p>
+                        Period end:{" "}
+                        {tenant.stripeCurrentPeriodEnd
+                          ? formatDateTime(tenant.stripeCurrentPeriodEnd)
+                          : "Not recorded"}
+                      </p>
+                      <p className="mt-2 text-[11px] text-[var(--text-tertiary)]">
+                        Display only; does not activate tenants or touch invoice payments.
+                      </p>
+                    </td>
+                    <td className="min-w-[22rem] px-4 py-4">
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <span
+                            className={[
+                              "inline-flex rounded-full border px-3 py-1.5 text-xs font-semibold",
+                              getFounderBillingClasses(founderBilling.tone)
+                            ].join(" ")}
+                          >
+                            {founderBilling.statusLabel}
+                          </span>
+                          <div className="text-xs leading-5 text-[var(--text-secondary)]">
+                            <p>
+                              {tenant.founderBilling.planLabel ??
+                                "No founder plan label"}{" "}
+                              - {founderBilling.amountLabel}
+                            </p>
+                            <p>{founderBilling.methodLabel}</p>
+                            <p>Evidence: {founderBilling.evidenceLabel}</p>
+                            <p>Follow-up: {founderBilling.followUpLabel}</p>
+                            {tenant.founderBilling.reference ? (
+                              <p className="break-words">
+                                Reference: {tenant.founderBilling.reference}
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+                        <form
+                          action={updateFounderBillingEvidenceAction}
+                          className="grid gap-2 rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] p-3"
+                        >
+                          <input type="hidden" name="companyId" value={tenant.id} />
+                          <label className="grid gap-1 text-xs font-semibold text-[var(--text-secondary)]">
+                            Plan label
+                            <input
+                              name="founderPlanLabel"
+                              defaultValue={tenant.founderBilling.planLabel ?? ""}
+                              maxLength={120}
+                              className="rounded-lg border border-[var(--border-warm)] bg-white px-3 py-2 text-xs font-normal text-[var(--text-primary)]"
+                              placeholder="Founder monthly"
+                            />
+                          </label>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            <label className="grid gap-1 text-xs font-semibold text-[var(--text-secondary)]">
+                              Monthly amount
+                              <input
+                                name="founderMonthlyAmountCents"
+                                defaultValue={formatAmountInput(
+                                  tenant.founderBilling.monthlyAmountCents
+                                )}
+                                inputMode="decimal"
+                                className="rounded-lg border border-[var(--border-warm)] bg-white px-3 py-2 text-xs font-normal text-[var(--text-primary)]"
+                                placeholder="499"
+                              />
+                            </label>
+                            <label className="grid gap-1 text-xs font-semibold text-[var(--text-secondary)]">
+                              Status
+                              <select
+                                name="founderBillingStatus"
+                                defaultValue={tenant.founderBilling.status}
+                                className="rounded-lg border border-[var(--border-warm)] bg-white px-3 py-2 text-xs font-normal text-[var(--text-primary)]"
+                              >
+                                <option value="not_started">Not started</option>
+                                <option value="pending">Pending evidence</option>
+                                <option value="evidence_received">
+                                  Evidence received
+                                </option>
+                                <option value="waived">Waived</option>
+                                <option value="blocked">Blocked</option>
+                              </select>
+                            </label>
+                          </div>
+                          <label className="grid gap-1 text-xs font-semibold text-[var(--text-secondary)]">
+                            Collection method
+                            <select
+                              name="founderBillingMethod"
+                              defaultValue={tenant.founderBilling.method}
+                              className="rounded-lg border border-[var(--border-warm)] bg-white px-3 py-2 text-xs font-normal text-[var(--text-primary)]"
+                            >
+                              <option value="manual_invoice">Manual invoice</option>
+                              <option value="stripe_payment_link">
+                                Stripe Payment Link
+                              </option>
+                              <option value="stripe_subscription_future">
+                                Future Stripe subscription
+                              </option>
+                              <option value="waived">Waived</option>
+                            </select>
+                          </label>
+                          <label className="grid gap-1 text-xs font-semibold text-[var(--text-secondary)]">
+                            External reference
+                            <input
+                              name="founderBillingReference"
+                              defaultValue={tenant.founderBilling.reference ?? ""}
+                              maxLength={500}
+                              className="rounded-lg border border-[var(--border-warm)] bg-white px-3 py-2 text-xs font-normal text-[var(--text-primary)]"
+                              placeholder="Manual invoice, receipt, or Payment Link reference"
+                            />
+                          </label>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            <label className="grid gap-1 text-xs font-semibold text-[var(--text-secondary)]">
+                              Evidence received
+                              <input
+                                type="datetime-local"
+                                name="founderBillingEvidenceReceivedAt"
+                                defaultValue={formatDateTimeInput(
+                                  tenant.founderBilling.evidenceReceivedAt
+                                )}
+                                className="rounded-lg border border-[var(--border-warm)] bg-white px-3 py-2 text-xs font-normal text-[var(--text-primary)]"
+                              />
+                            </label>
+                            <label className="grid gap-1 text-xs font-semibold text-[var(--text-secondary)]">
+                              Follow-up
+                              <input
+                                type="datetime-local"
+                                name="founderBillingFollowUpAt"
+                                defaultValue={formatDateTimeInput(
+                                  tenant.founderBilling.followUpAt
+                                )}
+                                className="rounded-lg border border-[var(--border-warm)] bg-white px-3 py-2 text-xs font-normal text-[var(--text-primary)]"
+                              />
+                            </label>
+                          </div>
+                          <label className="grid gap-1 text-xs font-semibold text-[var(--text-secondary)]">
+                            Billing notes
+                            <textarea
+                              name="founderBillingNotes"
+                              defaultValue={tenant.founderBilling.notes ?? ""}
+                              maxLength={2000}
+                              rows={3}
+                              className="rounded-lg border border-[var(--border-warm)] bg-white px-3 py-2 text-xs font-normal text-[var(--text-primary)]"
+                              placeholder="Platform-only notes. Do not store secrets or raw provider payloads."
+                            />
+                          </label>
+                          <p className="text-[11px] leading-5 text-[var(--text-tertiary)]">
+                            Evidence is operator-entered only. Saving this does not
+                            activate the tenant, create a Stripe subscription, or
+                            charge a card.
+                          </p>
+                          <button
+                            type="submit"
+                            className="inline-flex items-center justify-center rounded-full bg-[var(--graphite)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--graphite-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2"
+                          >
+                            Save billing evidence
+                          </button>
+                        </form>
+                      </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-4 text-[var(--text-secondary)]">
                       <p>{tenant.activity.projectCount} projects</p>
@@ -360,7 +581,7 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
               })}
               {tenants.length === 0 ? (
                 <tr>
-                  <td colSpan={15} className="px-4 py-12 text-center">
+                  <td colSpan={17} className="px-4 py-12 text-center">
                     <p className="text-sm font-semibold text-[var(--text-primary)]">
                       No early-access companies yet.
                     </p>

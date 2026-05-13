@@ -89,7 +89,7 @@ Future depth:
 - AIA/progress billing UX, exports, and draw-management depth
 - deeper payment reconciliation, retries, refunds, disputes, and provider sync
 - subscription/billing governance only after explicit security and release gates
-- paid early-access infrastructure should follow [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md); the current Phase 2 operating layer covers founder setup/activation visibility only, while Stripe Billing, entitlement enforcement, public self-serve launch, and provider mutation remain separate approved phases
+- paid early-access infrastructure should follow [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md); the current Phase 2.2 foundation covers founder setup/activation visibility, platform-admin-entered billing evidence, and a test-mode-only FloorConnector SaaS subscription Checkout Session bridge, while live Stripe Billing, webhook reconciliation, entitlement enforcement, public self-serve launch, and provider mutation remain separate approved phases
 - external e-sign provider integration on canonical contracts
 - tax and accounting adapters
 - package/billing governance beyond current read-only foundations

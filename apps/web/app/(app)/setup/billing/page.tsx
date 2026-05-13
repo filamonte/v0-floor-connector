@@ -4,10 +4,19 @@ import { getPublicEnv } from "@floorconnector/config";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getBillingSetupState } from "@/lib/onboarding/billing-setup";
+import { getSaasBillingCheckoutState } from "@/lib/onboarding/saas-billing-checkout";
 import { SetupEscapeBanner } from "@/components/setup-escape-banner";
+import { SaasSubscriptionCheckoutButton } from "@/components/stripe/saas-subscription-checkout-button";
 import { SetupIntentForm } from "@/components/stripe/setup-intent-form";
 
-export default async function BillingSetupPage() {
+type PageProps = {
+  searchParams?: Promise<{
+    billing_checkout?: string;
+  }>;
+};
+
+export default async function BillingSetupPage({ searchParams }: PageProps) {
+  const resolvedSearchParams = (await searchParams) ?? {};
   const user = await requireAuthenticatedUser("/setup/billing");
   const organizationContext = await getActiveOrganizationContext(user.id);
 
@@ -22,6 +31,12 @@ export default async function BillingSetupPage() {
   }
 
   const billingState = await getBillingSetupState(organizationContext.organization.id);
+  const saasCheckoutState = await getSaasBillingCheckoutState({
+    organizationId: organizationContext.organization.id,
+    userCanManageBilling: ["owner", "admin"].includes(
+      organizationContext.membership.role
+    )
+  });
   const publicEnv = getPublicEnv();
   const showDevStripeStatus = process.env.NODE_ENV !== "production";
   const stripeStatusLabel =
@@ -47,6 +62,16 @@ export default async function BillingSetupPage() {
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[#625a52]">
             You won&apos;t be charged during early access. This saves a future billing method only when secure Stripe setup is available; activation and any paid founder arrangement still require platform review.
           </p>
+          {resolvedSearchParams.billing_checkout === "returned" ? (
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+              Subscription checkout returned to FloorConnector. Subscription status still waits for signed Stripe webhook confirmation and platform review; activation remains separate.
+            </div>
+          ) : null}
+          {resolvedSearchParams.billing_checkout === "cancelled" ? (
+            <div className="mt-4 rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4 text-sm leading-6 text-[#625a52]">
+              Subscription checkout was cancelled. No tenant activation, invoice/payment state, or portal payment state changed.
+            </div>
+          ) : null}
           {showDevStripeStatus ? (
             <div className="mt-4 inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900">
               {stripeStatusLabel}
@@ -107,6 +132,21 @@ export default async function BillingSetupPage() {
               }
               initialPaymentMethodSaved={Boolean(billingState.stripePaymentMethodId)}
             />
+          </div>
+
+          <div className="mt-6 rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-5">
+            <p className="text-sm font-semibold text-[#171412]">
+              Founder subscription checkout
+            </p>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#625a52]">
+              This starts FloorConnector SaaS subscription checkout in Stripe test mode only. Checkout does not activate the workspace and does not touch contractor-customer invoice payments.
+            </p>
+            <div className="mt-4">
+              <SaasSubscriptionCheckoutButton
+                canStartCheckout={saasCheckoutState.canStartCheckout}
+                unavailableReason={saasCheckoutState.unavailableReason}
+              />
+            </div>
           </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -67,7 +67,7 @@ module.exports = defineConfig({
     },
     {
       name: "chromium-portal",
-      testMatch: /portal-golden-path\.spec\.js/,
+      testMatch: /portal-(?:golden-path|invite-acceptance)\.spec\.js/,
       use: {
         ...devices["Desktop Chrome"]
       }

@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildEarlyAccessOperatingSummary,
   getEarlyAccessOperatingState,
+  getFounderBillingEvidenceModel,
   type EarlyAccessOperatingTenantInput
 } from "./early-access-operating-core";
 
@@ -70,4 +71,30 @@ void test("summarizes early-access tenants by operator bucket", () => {
     activeFounderAccess: 1,
     suspendedOrBlocked: 1
   });
+});
+
+void test("summarizes founder billing evidence without implying Stripe truth", () => {
+  const pending = getFounderBillingEvidenceModel({
+    status: "pending",
+    method: "stripe_payment_link",
+    monthlyAmountCents: 49900,
+    evidenceReceivedAt: null,
+    followUpAt: "2026-05-20T12:00:00.000Z"
+  });
+  const received = getFounderBillingEvidenceModel({
+    status: "evidence_received",
+    method: "manual_invoice",
+    monthlyAmountCents: 49900,
+    evidenceReceivedAt: "2026-05-13T12:00:00.000Z",
+    followUpAt: null
+  });
+
+  assert.equal(pending.statusLabel, "Pending evidence");
+  assert.equal(pending.methodLabel, "Stripe Payment Link");
+  assert.equal(pending.amountLabel, "$499");
+  assert.equal(pending.tone, "warning");
+  assert.equal(pending.hasEvidence, false);
+  assert.equal(received.statusLabel, "Evidence received");
+  assert.equal(received.tone, "good");
+  assert.equal(received.hasEvidence, true);
 });

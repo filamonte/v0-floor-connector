@@ -16,6 +16,8 @@ const fixture = {
   contactName: "E2E Portal Customer",
   projectName: "[E2E] Portal Golden Path",
   unauthorizedProjectName: "[E2E] Portal Unauthorized Boundary",
+  opportunityTitle: "[E2E] Portal Golden Path Opportunity",
+  catalogItemName: "[E2E] Portal Surface System",
   estimateTitle: "E2E Portal Estimate Review",
   contractTitle: "E2E Portal Contract Review",
   invoiceNotes:
@@ -179,6 +181,32 @@ async function ensureAuthUser({ supabase, email, password, write, results }) {
   const existingUser = await findAuthUserByEmail(supabase, email);
 
   if (existingUser) {
+    if (write) {
+      if (!password) {
+        throw new Error(
+          "FLOORCONNECTOR_PORTAL_E2E_PASSWORD is required to repair the portal auth user."
+        );
+      }
+
+      const { data, error } = await supabase.auth.admin.updateUserById(
+        existingUser.id,
+        {
+          password,
+          email_confirm: true,
+          user_metadata: {
+            full_name: fixture.contactName
+          }
+        }
+      );
+
+      if (error) {
+        throw new Error(`Unable to update portal auth user: ${error.message}`);
+      }
+
+      addResult(results, "Supabase Auth portal user", "updated");
+      return data.user ?? existingUser;
+    }
+
     addResult(results, "Supabase Auth portal user", "present");
     return existingUser;
   }
@@ -672,6 +700,124 @@ async function ensurePortalProjectAccess({
   return id;
 }
 
+async function ensureOpportunity({
+  supabase,
+  organizationId,
+  userId,
+  customerId,
+  projectId,
+  portalEmail,
+  write,
+  results
+}) {
+  if (!customerId || !projectId) {
+    addResult(results, "Portal opportunity fixture", "missing");
+    return null;
+  }
+
+  const existing = await findSingleBy(supabase, "opportunities", "id", [
+    { column: "company_id", value: organizationId },
+    { column: "customer_id", value: customerId },
+    { column: "project_id", value: projectId },
+    { column: "title", value: fixture.opportunityTitle }
+  ]);
+
+  if (existing) {
+    addResult(results, "Portal opportunity fixture", "present");
+    return existing.id;
+  }
+
+  if (!write) {
+    addResult(results, "Portal opportunity fixture", "missing");
+    return null;
+  }
+
+  const now = new Date().toISOString();
+  const id = await insertAndReturnId(
+    supabase,
+    "opportunities",
+    {
+      company_id: organizationId,
+      customer_id: customerId,
+      project_id: projectId,
+      status: "converted",
+      title: fixture.opportunityTitle,
+      source: "e2e_fixture",
+      service_type: "portal_e2e",
+      prospect_name: fixture.contactName,
+      prospect_company_name: fixture.customerCompanyName,
+      email: portalEmail,
+      phone: "555-0130",
+      address_line_1: "130 Portal Fixture Way",
+      city: "Fixture City",
+      state_region: "FL",
+      postal_code: "00000",
+      country_code: "US",
+      notes: "Stable local portal E2E opportunity fixture.",
+      qualified_at: now,
+      converted_at: now,
+      created_by: userId,
+      updated_by: userId
+    },
+    "portal opportunity"
+  );
+
+  addResult(results, "Portal opportunity fixture", "created");
+  return id;
+}
+
+async function ensureCatalogItem({
+  supabase,
+  organizationId,
+  userId,
+  write,
+  results
+}) {
+  const existing = await findSingleBy(supabase, "catalog_items", "id", [
+    { column: "company_id", value: organizationId },
+    { column: "name", value: fixture.catalogItemName }
+  ]);
+
+  if (existing) {
+    addResult(results, "Portal catalog item fixture", "present");
+    return existing.id;
+  }
+
+  if (!write) {
+    addResult(results, "Portal catalog item fixture", "missing");
+    return null;
+  }
+
+  const id = await insertAndReturnId(
+    supabase,
+    "catalog_items",
+    {
+      company_id: organizationId,
+      item_type: "service",
+      name: fixture.catalogItemName,
+      description: "Fixture customer-facing catalog service for portal E2E.",
+      unit: "each",
+      default_unit_cost: "900.00",
+      default_unit_price: "1500.00",
+      markup_percent: "0.00",
+      hidden_markup_percent: "0.00",
+      taxable: false,
+      category: "E2E",
+      sku: "E2E-PORTAL-SURFACE",
+      status: "active",
+      is_default: false,
+      metadata: {},
+      sort_order: 0,
+      created_by: userId,
+      updated_by: userId
+    },
+    "portal catalog item"
+  );
+
+  addResult(results, "Portal catalog item fixture", "created");
+  return id;
+}
+
 async function ensurePortalPermissions({
   supabase,
   organizationId,
@@ -736,10 +882,12 @@ async function ensureEstimate({
   userId,
   customerId,
   projectId,
+  opportunityId,
+  catalogItemId,
   write,
   results
 }) {
-  if (!customerId || !projectId) {
+  if (!customerId || !projectId || !opportunityId || !catalogItemId) {
     addResult(results, "Portal estimate fixture", "missing");
     return null;
   }
@@ -752,6 +900,15 @@ async function ensureEstimate({
 
   if (existing) {
     addResult(results, "Portal estimate fixture", "present");
+    await ensureEstimateLineItem({
+      supabase,
+      organizationId,
+      userId,
+      estimateId: existing.id,
+      catalogItemId,
+      write,
+      results
+    });
     return existing.id;
   }
 
@@ -768,6 +925,7 @@ async function ensureEstimate({
       company_id: organizationId,
       customer_id: customerId,
       project_id: projectId,
+      opportunity_id: opportunityId,
       title: fixture.estimateTitle,
       status: "sent",
       discount_amount: "0.00",
@@ -790,17 +948,81 @@ async function ensureEstimate({
     "portal estimate"
   );
 
-  await insertAndReturnId(
+  await ensureEstimateLineItem({
+    supabase,
+    organizationId,
+    userId,
+    estimateId,
+    catalogItemId,
+    write,
+    results
+  });
+
+  addResult(results, "Portal estimate fixture", "created");
+  return estimateId;
+}
+
+async function ensureEstimateLineItem({
+  supabase,
+  organizationId,
+  userId,
+  estimateId,
+  catalogItemId,
+  write,
+  results
+}) {
+  if (!estimateId || !catalogItemId) {
+    addResult(results, "Portal estimate line item fixture", "missing");
+    return null;
+  }
+
+  const existing = await findSingleBy(supabase, "estimate_line_items", "id", [
+    { column: "company_id", value: organizationId },
+    { column: "estimate_id", value: estimateId },
+    { column: "catalog_item_id", value: catalogItemId }
+  ]);
+
+  if (existing) {
+    addResult(results, "Portal estimate line item fixture", "present");
+    return existing.id;
+  }
+
+  if (!write) {
+    addResult(results, "Portal estimate line item fixture", "missing");
+    return null;
+  }
+
+  const id = await insertAndReturnId(
     supabase,
     "estimate_line_items",
     {
       company_id: organizationId,
       estimate_id: estimateId,
-      name: "Portal E2E surface system",
+      catalog_item_id: catalogItemId,
+      source_type: "catalog_item",
+      source_system_id: null,
+      source_component_id: null,
+      item_type: "service",
+      name: fixture.catalogItemName,
       description: "Fixture customer-facing estimate line.",
       quantity: "1.00",
       unit: "each",
+      base_unit_cost: "900.00",
+      base_unit_price: "1500.00",
+      markup_percent: "0.00",
+      hidden_markup_percent: "0.00",
+      unit_price_before_hidden_markup: "1500.00",
+      visible_markup_amount: "0.00",
+      hidden_markup_amount: "0.00",
       unit_price: "1500.00",
+      taxable: false,
+      tax_rate_snapshot: "0.000000",
+      discount_amount: "0.00",
+      line_subtotal: "1500.00",
+      tax_amount: "0.00",
+      cost_code: "E2E-PORTAL",
+      group_name: "Portal E2E fixture",
+      assigned_to: null,
       sort_order: 1,
       created_by: userId,
       updated_by: userId
@@ -808,8 +1030,8 @@ async function ensureEstimate({
     "portal estimate line item"
   );
 
-  addResult(results, "Portal estimate fixture", "created");
-  return estimateId;
+  addResult(results, "Portal estimate line item fixture", "created");
+  return id;
 }
 
 async function ensureContract({
@@ -1149,12 +1371,31 @@ async function main() {
     results
   });
 
+  const opportunityId = await ensureOpportunity({
+    supabase,
+    organizationId: contractor.organizationId,
+    userId: contractor.userId,
+    customerId,
+    projectId,
+    portalEmail,
+    write,
+    results
+  });
+  const catalogItemId = await ensureCatalogItem({
+    supabase,
+    organizationId: contractor.organizationId,
+    userId: contractor.userId,
+    write,
+    results
+  });
   const estimateId = await ensureEstimate({
     supabase,
     organizationId: contractor.organizationId,
     userId: contractor.userId,
     customerId,
     projectId,
+    opportunityId,
+    catalogItemId,
     write,
     results
   });

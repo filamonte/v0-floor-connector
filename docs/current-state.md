@@ -217,6 +217,7 @@ Implemented tenant foundation:
 - repeat logins do not duplicate profile/org/membership records
 - tenant-owned tables use Supabase RLS
 - protected app queries are scoped to the active organization membership
+- authenticated customer portal users with active portal grants but no contractor membership are treated as portal-only and are returned to `/portal` instead of being bootstrapped into contractor workspace ownership when they try contractor routes
 - `/setup/company` now provides a first company setup step after signup:
   - writes legal name, display name, logo URL/reference, company phone, company email, website URL, primary trade/service type, brand/accent color, and time zone to the existing `companies` organization record
   - writes the primary address to the existing primary `locations` record, creating that location if needed
@@ -228,9 +229,16 @@ Implemented tenant foundation:
   - creates a Stripe SetupIntent with automatic payment methods for secure Stripe Elements card collection
   - confirms the SetupIntent client-side without charging the card or creating a subscription
   - verifies the completed SetupIntent server-side, sets the saved payment method as the Stripe customer default, and stores only the `stripe_payment_method_id` reference on `companies`
-  - does not store raw card data, create local Stripe-object copies, create a subscription, or charge the user during early access
+  - does not store raw card data, create local Stripe-object copies, or charge the user during early access
   - when Stripe is not configured or card collection fails, shows a safe fallback that lets the user continue to pending activation and finish billing later before activation
+  - includes a separate FloorConnector SaaS subscription checkout launcher only when matching Stripe test-mode keys and `STRIPE_FOUNDER_PLAN_PRICE_ID` are configured
+  - creates Stripe Checkout Sessions in `subscription` mode from the server with `company_id`, `billing_domain=floorconnector_saas`, and environment metadata for the Checkout Session and Subscription
+  - requires the authenticated organization owner/admin role, returns to `/setup/billing`, and never activates the tenant from checkout return
+  - does not touch contractor-customer invoice/payment checkout, portal payment state, invoice rows, payment rows, signature rows, or activation state
 - `/setup/pending-activation` reuses existing `companies.tenant_status` and `companies.lifecycle_state` as the pending/active activation state and lets early users enter the real dashboard for safe app exploration
+- founder billing evidence is stored on the existing `companies` row for platform-admin tracking only:
+  - plan label, expected monthly amount, evidence status, collection method, external reference, notes, evidence timestamp, follow-up timestamp, and updater metadata
+  - evidence fields do not create Stripe products, prices, customers, Payment Links, subscriptions, invoices, charges, entitlements, or tenant activation
 - the public homepage now includes `Log in`, `Start early access`, and optional `Request Early Access` entry points; requests write to existing canonical `contacts` plus `opportunities` with `opportunities.source = 'early_access'` and `source_detail = 'homepage_request'`
   - in production, `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` must point to the existing company that owns public intake leads; when it is missing, public request submission fails with user-friendly fallback copy instead of silently writing to an arbitrary tenant
   - in non-production only, the form falls back to the oldest existing company if no explicit intake company is configured
@@ -1815,13 +1823,14 @@ Implemented:
   - company name, created date, tenant status, lifecycle state, and saved-payment-method presence derived from `companies.stripe_payment_method_id`
   - operator summary buckets for pending setup, pending activation, active founder access, and suspended/blocked tenants derived from existing company status/profile/billing-reference fields
   - per-tenant operating-state labels and follow-up guidance that separate activation review from billing setup evidence
+  - platform-admin editable founder billing evidence fields for plan label, expected amount, status, collection method, external reference, evidence timestamp, follow-up timestamp, and platform-only notes
   - project, estimate, contract, and invoice counts derived from existing canonical tables
   - first workflow, estimate-stage, and contract-stage progress derived from those counts
   - light early-user signals derived from existing records only: recent login based on `company_memberships.last_active_at` / `users.last_sign_in_at`, reached-estimate from estimate counts, and reached-contract from contract counts
   - feedback indicators and recent-feedback drill-in derived from existing `workflow_error_events` rows where `action = 'early_access.feedback'`
   - mark-active action using existing `companies.tenant_status` and `companies.lifecycle_state`
   - mark-active includes a confirmation step and returns the concise success feedback `Company activated`
-  - billing labels on this page mean SetupIntent payment-method reference presence only; they do not indicate a subscription, paid invoice, live charge, or entitlement state
+  - SetupIntent billing labels on this page mean saved payment-method reference presence only; founder billing evidence fields are platform-admin notes/references only; stored Stripe customer/subscription/status references are displayed separately and do not indicate verified live subscription state, entitlement state, or automatic activation
   - in non-production environments only, platform admins can run a clearly labeled `DEV / TEST ONLY` onboarding reset for a selected company; the reset is tenant-scoped, clears project/estimate/contract/invoice workflow test records and related dependent workflow rows, clears `companies.stripe_payment_method_id`, and returns the company to `tenant_status = trialing` / `lifecycle_state = trial`
   - the dev reset intentionally keeps `companies.stripe_customer_id` in place and fails safely if insert-only binding system snapshots exist, because those records are canonical and cannot be deleted through a lightweight QA utility
 - non-production contractor app sessions show a subtle `DEV MODE` badge with `Reset session`, which signs out through the real auth action after clearing browser local/session storage
@@ -1878,7 +1887,9 @@ Not implemented yet:
 - external e-sign provider integration
 - deeper PDF/email delivery and external e-sign provider lifecycle integration
 - deeper gateway-backed reconciliation, retry, and provider-sync workflows
-- billing/subscriptions
+- live billing/subscriptions
+- Stripe Customer Portal for FloorConnector SaaS subscription management
+- webhook-confirmed FloorConnector SaaS subscription reconciliation
 - deeper gateway-backed customer-facing payment completion and reconciliation workflows
 - advanced permissions UI
 - deeper AIA/pay-application UX, export/reporting forms, and richer SOV draw management
@@ -1902,7 +1913,7 @@ The decision-first contractor UI refactor is implemented across the main contrac
 Estimates now serve as the contractor app's UI/workflow reference pattern because they concentrate proposal review, commercial context, customer trust, and downstream handoff in one workspace.
 The Phase 1 Golden Workflow Demo Path is now documented as the repeatable QA spine through the existing route chain from dashboard and opportunity review into customer, project, estimate, contract, invoice/payment, job, schedule, and daily-log surfaces.
 Phase 1.1 adds portal/customer Playwright fixture infrastructure for that same spine: `pnpm e2e:portal-auth` can create a local portal customer storage state from real portal E2E credentials, and `pnpm e2e:portal` smokes the customer-facing portal home, project workspace, and shared estimate/contract/invoice review routes where canonical portal access grants and fixture records exist. Phase 1.2 adds `pnpm e2e:portal-fixture` as a validation-first helper for that customer-side fixture; write mode is explicitly gated by `FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1` and creates only canonical dev/test customer, contact, project, access-grant, estimate, contract, signer, and invoice records for the contractor E2E organization.
-The paid early-access planning boundary is documented in [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md). The current branch implements no-charge billing setup, manual/platform-admin activation controls, the Phase 2 early-access operating layer, and read-only package/provider governance only; live SaaS subscription creation, automatic activation, entitlement enforcement, and Stripe subscription management remain future focused work.
+The paid early-access planning boundary is documented in [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md). The current branch implements no-charge billing setup, a test-mode-only FloorConnector SaaS subscription Checkout Session bridge, manual/platform-admin activation controls, the Phase 2.1 early-access operating/evidence layer, and read-only package/provider governance only; live SaaS subscription creation, automatic activation, entitlement enforcement, Stripe Customer Portal, and webhook-confirmed subscription reconciliation remain future focused work.
 
 Implemented UI behavior now:
 

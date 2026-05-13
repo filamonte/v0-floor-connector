@@ -38,6 +38,7 @@ export const serverEnvSchema = publicEnvSchema.extend({
   STRIPE_SECRET_KEY: optionalString,
   STRIPE_WEBHOOK_SECRET: optionalString,
   STRIPE_CONNECT_WEBHOOK_SECRET: optionalString,
+  STRIPE_FOUNDER_PLAN_PRICE_ID: optionalString,
   STRIPE_PRICE_ID_BASE: optionalString,
   FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID: optionalString,
   PLATFORM_SUPER_ADMIN_EMAIL: optionalString,
@@ -109,6 +110,7 @@ function getServerRawEnv(): Record<keyof ServerEnv, string | undefined> {
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     STRIPE_CONNECT_WEBHOOK_SECRET: process.env.STRIPE_CONNECT_WEBHOOK_SECRET,
+    STRIPE_FOUNDER_PLAN_PRICE_ID: process.env.STRIPE_FOUNDER_PLAN_PRICE_ID,
     STRIPE_PRICE_ID_BASE: process.env.STRIPE_PRICE_ID_BASE,
     FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID:
       process.env.FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID,

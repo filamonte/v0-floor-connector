@@ -84,6 +84,21 @@ pnpm exec playwright test --project=chromium-public e2e/marketing-login.spec.js
 
 That spec verifies the public homepage exposes `Log in -> /login` and preserves `Start early access -> /signup?next=/setup/company`.
 
+Stripe Billing checkout QA must stay test-mode only. To verify the `/setup/billing`
+subscription launcher, configure names-only prerequisites locally, restart the dev
+server, and use contractor owner/admin auth:
+
+```text
+STRIPE_SECRET_KEY
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+STRIPE_FOUNDER_PLAN_PRICE_ID
+```
+
+Do not use live keys for local QA. Do not print checkout URLs, because Stripe
+Checkout Session URLs can contain session tokens. Checkout return should land on
+`/setup/billing`, leave activation manual, and leave contractor-customer invoice
+payment records untouched.
+
 ## Auth Strategy
 
 Protected contractor specs use the shared `chromium-protected` Playwright project. That project depends on the `setup` project, which logs in through the real local `/login` route and saves storage state before protected tests run.
@@ -187,7 +202,7 @@ Portal/customer QA uses a separate customer session because portal users are not
 
 Portal invite QA should distinguish pending invite records from Auth delivery. The current app-managed portal invite creates or reuses canonical contact-linked portal access records and may return a fresh `/portal/invite?token=...` copy-link fallback, but it does not create a Supabase Auth user or call Supabase admin invite. Branded provider email is attempted only when Postmark delivery is configured and activation guard allows external sends; otherwise the UI should show truthful no-send status. New contractor-created invites should select a `customer_contacts` row; null-contact grants are legacy compatibility records. The unauthenticated invite page should show customer-safe context plus signup, sign-in, and password-reset actions that preserve the invite return path and use the invited contact email.
 
-Phase 1.2 adds a stable portal customer fixture helper. The helper validates by default and only writes when the operator explicitly enables local E2E fixture writes. It creates or repairs canonical customer, contact, project, portal grant, project visibility, estimate, contract, invoice, and signer rows for the contractor E2E organization; it does not create portal-only records, fake signatures, fake payments, or checkout success.
+Phase 1.2 adds a stable portal customer fixture helper. The helper validates by default and only writes when the operator explicitly enables local E2E fixture writes. It creates or repairs the portal Supabase Auth user/password plus canonical customer, contact, customer-contact, project, opportunity, catalog item, portal grant, project visibility, estimate, contract, invoice, and signer rows for the contractor E2E organization; it does not create portal-only records, fake signatures, fake payments, or checkout success.
 
 Required local environment variables for generating the portal storage state:
 
@@ -263,11 +278,13 @@ pnpm e2e:portal
 The smoke spec covers:
 
 - `/portal` authenticated customer workspace
+- a portal-authenticated customer redirected back to `/portal` instead of being bootstrapped into the contractor dashboard when they have portal access but no contractor membership
 - first granted `/portal/projects/[projectId]` workspace discovered from the portal home, or `FLOORCONNECTOR_E2E_PORTAL_PROJECT_PATH`
 - `/portal/estimates/[estimateId]` when a shared estimate link or route override exists
 - `/portal/contracts/[contractId]` when a shared contract link or route override exists
 - `/portal/invoices/[invoiceId]` when a shared invoice link or route override exists, without clicking checkout or attempting payment
 - an intentional unauthorized-project 404 only when `FLOORCONNECTOR_E2E_PORTAL_UNAUTHORIZED_PROJECT_PATH` is configured
+- unauthenticated `/portal/invite?token=...` account-onboarding copy when a pending invite fixture can be prepared with `FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1`
 
 Fixture requirements:
 
@@ -276,6 +293,7 @@ Fixture requirements:
 - invite acceptance should occur after signup/sign-in/password reset returns to `/portal/invite?token=...`
 - the canonical `public.users` profile must exist for that portal auth account
 - portal-only authentication should not create a contractor company owner membership for the portal customer
+- portal-only customers with active portal grants and no contractor membership should be returned to `/portal` if they try to open contractor workspace routes
 - the fixture customer/contact must remain canonical contractor-owned records
 - the portal user must have an active customer-anchored portal access grant
 - at least one active project access row is required for project workspace smoke

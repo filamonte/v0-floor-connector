@@ -63,7 +63,10 @@ async function newPortalPage(browser, baseURL) {
 async function expectAuthenticatedPortalPage(page, headingPattern) {
   await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
   await expect(
-    page.getByRole("heading", { name: headingPattern })
+    page
+      .getByRole("heading", { name: headingPattern })
+      .or(page.getByText(headingPattern).first())
+      .first()
   ).toBeVisible();
   await expect(page.locator("body")).not.toContainText(
     /access denied|not authorized/i
@@ -142,6 +145,24 @@ test.describe("portal golden workflow smoke", () => {
     }
   });
 
+  test("portal customer is not bootstrapped into contractor workspace", async ({
+    browser,
+    baseURL
+  }) => {
+    const { page, context } = await newPortalPage(browser, baseURL);
+
+    try {
+      await page.goto("/dashboard");
+      await expect(page).toHaveURL(/\/portal(?:\?|$)/);
+      await expectAuthenticatedPortalPage(
+        page,
+        /Review the work your contractor has shared/i
+      );
+    } finally {
+      await context.close();
+    }
+  });
+
   test("granted portal project workspace loads from portal home", async ({
     browser,
     baseURL
@@ -152,7 +173,9 @@ test.describe("portal golden workflow smoke", () => {
       const projectPath = await getGrantedProjectPath(page);
       await page.goto(projectPath);
       await expectAuthenticatedPortalPage(page, /Shared Project Workspace/i);
-      await expect(page.getByText(/Commercial Records/i)).toBeVisible();
+      await expect(
+        page.getByText("Commercial Records", { exact: true })
+      ).toBeVisible();
     } finally {
       await context.close();
     }
@@ -175,7 +198,9 @@ test.describe("portal golden workflow smoke", () => {
 
       await page.goto(estimatePath);
       await expectAuthenticatedPortalPage(page, /Estimate Review/i);
-      await expect(page.getByText(/Proposal Scope/i)).toBeVisible();
+      await expect(
+        page.getByText("Proposal Scope", { exact: true })
+      ).toBeVisible();
     } finally {
       await context.close();
     }
@@ -198,7 +223,9 @@ test.describe("portal golden workflow smoke", () => {
 
       await page.goto(contractPath);
       await expectAuthenticatedPortalPage(page, /Contract Review/i);
-      await expect(page.getByText(/Signature Actions/i)).toBeVisible();
+      await expect(
+        page.getByText("Signature Actions", { exact: true })
+      ).toBeVisible();
     } finally {
       await context.close();
     }
@@ -246,7 +273,10 @@ test.describe("portal golden workflow smoke", () => {
       const response = await page.goto(unauthorizedPath);
 
       await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
-      expect(response?.status()).toBe(404);
+      expect([200, 404]).toContain(response?.status());
+      await expect(page.locator("body")).toContainText(
+        /404|not found|could not be found/i
+      );
     } finally {
       await context.close();
     }

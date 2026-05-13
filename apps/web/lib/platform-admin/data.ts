@@ -132,6 +132,10 @@ import {
   type StarterPackProvisioningDestinationUsageFacts,
   type StarterPackProvisioningVoidReadiness
 } from "@/lib/platform-admin/starter-pack-provisioning-void-readiness-core";
+import type {
+  FounderBillingMethod,
+  FounderBillingStatus
+} from "@/lib/platform-admin/early-access-operating-core";
 
 type PlatformTemplateSeedRow = {
   id: string;
@@ -864,7 +868,27 @@ type EarlyAccessTenantRow = {
   time_zone: string | null;
   tenant_status: string;
   lifecycle_state: string;
+  stripe_customer_id: string | null;
   stripe_payment_method_id: string | null;
+  company_subscriptions:
+    | Array<{
+        id: string;
+        status: string;
+        lifecycle_state: string;
+        stripe_subscription_id: string | null;
+        current_period_end: string | null;
+      }>
+    | null;
+  founder_plan_label: string | null;
+  founder_monthly_amount_cents: number | null;
+  founder_billing_status: FounderBillingStatus;
+  founder_billing_method: FounderBillingMethod;
+  founder_billing_reference: string | null;
+  founder_billing_notes: string | null;
+  founder_billing_follow_up_at: string | null;
+  founder_billing_evidence_received_at: string | null;
+  founder_billing_updated_by: string | null;
+  founder_billing_updated_at: string | null;
   created_at: string;
 };
 
@@ -5961,7 +5985,7 @@ export async function listEarlyAccessTenantsForPlatformAdmin() {
       supabase
         .from("companies")
         .select(
-          "id, slug, legal_name, display_name, logo_url, phone, email, website_url, primary_trade, brand_accent_color, time_zone, tenant_status, lifecycle_state, stripe_payment_method_id, created_at"
+          "id, slug, legal_name, display_name, logo_url, phone, email, website_url, primary_trade, brand_accent_color, time_zone, tenant_status, lifecycle_state, stripe_customer_id, stripe_payment_method_id, founder_plan_label, founder_monthly_amount_cents, founder_billing_status, founder_billing_method, founder_billing_reference, founder_billing_notes, founder_billing_follow_up_at, founder_billing_evidence_received_at, founder_billing_updated_by, founder_billing_updated_at, created_at, company_subscriptions (id, status, lifecycle_state, stripe_subscription_id, current_period_end)"
         )
         .order("created_at", { ascending: false }),
       supabase.from("projects").select("company_id"),
@@ -6052,6 +6076,10 @@ export async function listEarlyAccessTenantsForPlatformAdmin() {
         contractCount: contractCounts.get(tenant.id) ?? 0,
         invoiceCount: invoiceCounts.get(tenant.id) ?? 0
       };
+      const currentSubscription = Array.isArray(tenant.company_subscriptions)
+        ? (tenant.company_subscriptions.find((subscription) => Boolean(subscription)) ??
+          null)
+        : null;
 
       return {
         id: tenant.id,
@@ -6061,6 +6089,24 @@ export async function listEarlyAccessTenantsForPlatformAdmin() {
         tenantStatus: tenant.tenant_status,
         lifecycleState: tenant.lifecycle_state,
         createdAt: tenant.created_at,
+        stripeCustomerId: tenant.stripe_customer_id,
+        stripeSubscriptionId: currentSubscription?.stripe_subscription_id ?? null,
+        stripeSubscriptionStatus: currentSubscription?.status ?? null,
+        stripeSubscriptionLifecycleState:
+          currentSubscription?.lifecycle_state ?? null,
+        stripeCurrentPeriodEnd: currentSubscription?.current_period_end ?? null,
+        founderBilling: {
+          planLabel: tenant.founder_plan_label,
+          monthlyAmountCents: tenant.founder_monthly_amount_cents,
+          status: tenant.founder_billing_status,
+          method: tenant.founder_billing_method,
+          reference: tenant.founder_billing_reference,
+          notes: tenant.founder_billing_notes,
+          followUpAt: tenant.founder_billing_follow_up_at,
+          evidenceReceivedAt: tenant.founder_billing_evidence_received_at,
+          updatedBy: tenant.founder_billing_updated_by,
+          updatedAt: tenant.founder_billing_updated_at
+        },
         hasCompanyProfile: hasCompletedCompanyProfile(tenant),
         hasPaymentMethod: Boolean(tenant.stripe_payment_method_id),
         guardedExternalActionsLocked:
@@ -6104,6 +6150,43 @@ export async function updateTenantPlatformStatus(input: {
 }
 
 export const updateCompanyTenantStatus = updateTenantPlatformStatus;
+
+export async function updateFounderBillingEvidence(input: {
+  companyId: string;
+  founderPlanLabel: string | null;
+  founderMonthlyAmountCents: number | null;
+  founderBillingStatus: FounderBillingStatus;
+  founderBillingMethod: FounderBillingMethod;
+  founderBillingReference: string | null;
+  founderBillingNotes: string | null;
+  founderBillingFollowUpAt: string | null;
+  founderBillingEvidenceReceivedAt: string | null;
+  updatedBy: string;
+}) {
+  const supabase = getSupabaseAdminClient();
+  const response = await supabase
+    .from("companies")
+    .update({
+      founder_plan_label: input.founderPlanLabel,
+      founder_monthly_amount_cents: input.founderMonthlyAmountCents,
+      founder_billing_status: input.founderBillingStatus,
+      founder_billing_method: input.founderBillingMethod,
+      founder_billing_reference: input.founderBillingReference,
+      founder_billing_notes: input.founderBillingNotes,
+      founder_billing_follow_up_at: input.founderBillingFollowUpAt,
+      founder_billing_evidence_received_at:
+        input.founderBillingEvidenceReceivedAt,
+      founder_billing_updated_by: input.updatedBy,
+      founder_billing_updated_at: new Date().toISOString()
+    })
+    .eq("id", input.companyId);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to update founder billing evidence: ${response.error.message}`
+    );
+  }
+}
 
 export async function resetEarlyAccessTenantOnboardingState(input: {
   companyId: string;

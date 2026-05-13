@@ -91,6 +91,7 @@ Customer acceptance today:
 7. `accept_portal_invite` activates the grant only when the signed-in canonical user email matches `invited_email`.
 8. The grant becomes active, `user_id` is set, `invite_accepted_at` is recorded, and the user lands on the granted project.
 9. Portal-bound auth redirects do not bootstrap a contractor company or company membership for portal-only customers. The Supabase Auth account is mirrored into `public.users` by the auth profile sync trigger, and portal visibility still comes only from the active grant.
+10. Active portal-only customers with no contractor membership are returned to `/portal` if they try to open contractor workspace routes; contractor app access still requires a contractor membership instead of portal access.
 
 Password setup today:
 

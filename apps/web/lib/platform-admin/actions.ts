@@ -22,6 +22,7 @@ import {
   removeOrganizationFromContractorGroup,
   resetEarlyAccessTenantOnboardingState,
   updateCompanyTenantStatus,
+  updateFounderBillingEvidence,
   updatePlatformTemplateSeed,
   upsertTenantWorkflowNumberingByPlatformAdmin,
   upsertPlatformCatalogItemSeed,
@@ -43,6 +44,7 @@ import {
   platformCatalogSeedInputSchema,
   platformFeaturePolicyInputSchema,
   platformFinancialDefaultsInputSchema,
+  platformFounderBillingEvidenceInputSchema,
   platformStarterPackCatalogItemInputSchema,
   platformStarterPackAssignmentInputSchema,
   platformStarterPackAssignmentRemoveInputSchema,
@@ -1161,6 +1163,62 @@ export async function markEarlyAccessTenantActiveAction(formData: FormData) {
     buildRedirect("/super-admin/early-access", {
       message:
         "Company activated. Guarded production actions are unlocked; billing or subscription setup still requires separate operator action unless already implemented."
+    })
+  );
+}
+
+export async function updateFounderBillingEvidenceAction(formData: FormData) {
+  const scope = await requirePlatformAdminUser("/super-admin/early-access");
+  const result = platformFounderBillingEvidenceInputSchema.safeParse({
+    companyId: getFieldValue(formData, "companyId"),
+    founderPlanLabel: getFieldValue(formData, "founderPlanLabel"),
+    founderMonthlyAmountCents: getFieldValue(
+      formData,
+      "founderMonthlyAmountCents"
+    ),
+    founderBillingStatus: getFieldValue(formData, "founderBillingStatus"),
+    founderBillingMethod: getFieldValue(formData, "founderBillingMethod"),
+    founderBillingReference: getFieldValue(formData, "founderBillingReference"),
+    founderBillingNotes: getFieldValue(formData, "founderBillingNotes"),
+    founderBillingFollowUpAt: getFieldValue(formData, "founderBillingFollowUpAt"),
+    founderBillingEvidenceReceivedAt: getFieldValue(
+      formData,
+      "founderBillingEvidenceReceivedAt"
+    )
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/super-admin/early-access", {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to update founder billing evidence."
+      })
+    );
+  }
+
+  try {
+    await updateFounderBillingEvidence({
+      ...result.data,
+      updatedBy: scope.userId
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/super-admin/early-access", {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to update founder billing evidence."
+      })
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    buildRedirect("/super-admin/early-access", {
+      message:
+        "Founder billing evidence updated. Activation remains a separate platform-admin action."
     })
   );
 }

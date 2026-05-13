@@ -3,6 +3,10 @@ import { z } from "zod";
 import { STARTER_PACK_PROVISIONING_APPROVAL_CONFIRMATION } from "./starter-pack-provisioning-draft-review-core";
 import { STARTER_PACK_PROVISIONING_EXECUTION_CONFIRMATION } from "./starter-pack-provisioning-execution-core";
 import { CONTRACTOR_GROUP_PROPOSAL_MANUAL_ASSIGNMENT_CONFIRMATION } from "./contractor-group-proposal-apply-core";
+import {
+  founderBillingMethods,
+  founderBillingStatuses
+} from "./early-access-operating-core";
 
 function trimmedNullableString(maxLength: number) {
   return z
@@ -70,6 +74,42 @@ function positiveIntegerField(label: string) {
     .refine((value) => Number.isInteger(value) && value > 0, {
       message: `${label} must be a whole number greater than zero.`
     });
+}
+
+function optionalDateTimeField(label: string) {
+  return z
+    .string()
+    .trim()
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .optional()
+    .refine(
+      (value) => value == null || !Number.isNaN(new Date(value).getTime()),
+      {
+        message: `${label} must be a valid date and time.`
+      }
+    )
+    .transform((value) => (value == null ? null : new Date(value).toISOString()));
+}
+
+function optionalMonthlyAmountCentsField(label: string) {
+  return z
+    .string()
+    .trim()
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .optional()
+    .refine((value) => value == null || !Number.isNaN(Number(value)), {
+      message: `${label} must be a valid amount.`
+    })
+    .transform((value) => (value == null ? null : Number(value)))
+    .refine((value) => value == null || value >= 0, {
+      message: `${label} must be zero or greater.`
+    })
+    .refine((value) => value == null || value <= 1000000, {
+      message: `${label} must be 1,000,000 or less.`
+    })
+    .transform((value) => (value == null ? null : Math.round(value * 100)));
 }
 
 export const platformFinancialDefaultsInputSchema = z.object({
@@ -459,6 +499,22 @@ export const platformTenantStatusInputSchema = z.object({
 
 export const platformTenantActivationInputSchema = z.object({
   companyId: z.string().uuid("Company id is required.")
+});
+
+export const platformFounderBillingEvidenceInputSchema = z.object({
+  companyId: z.string().uuid("Company id is required."),
+  founderPlanLabel: trimmedNullableString(120),
+  founderMonthlyAmountCents: optionalMonthlyAmountCentsField(
+    "Expected monthly amount"
+  ),
+  founderBillingStatus: z.enum(founderBillingStatuses),
+  founderBillingMethod: z.enum(founderBillingMethods),
+  founderBillingReference: trimmedNullableString(500),
+  founderBillingNotes: trimmedNullableString(2000),
+  founderBillingFollowUpAt: optionalDateTimeField("Follow-up date"),
+  founderBillingEvidenceReceivedAt: optionalDateTimeField(
+    "Evidence received date"
+  )
 });
 
 export const platformTenantResetInputSchema = z.object({
