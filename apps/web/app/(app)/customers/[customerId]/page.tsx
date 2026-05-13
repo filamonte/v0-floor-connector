@@ -10,6 +10,7 @@ import { DetailPanel } from "@/components/detail-panel";
 import { DirectoryContextCard } from "@/components/directory-context-card";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { PortalAccessGrantForm } from "@/components/portal-access-grant-form";
+import { PortalInviteEmailStatus } from "@/components/portal-invite-email-status";
 import { PortalProjectAccessForm } from "@/components/portal-project-access-form";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
 import {
@@ -25,9 +26,9 @@ import { updateCustomerAppointmentReminderPreferenceAction } from "@/lib/communi
 import { listCustomerAppointmentReminderPreferenceSummary } from "@/lib/communications/communication-preferences";
 import { updateCustomerAction } from "@/lib/customers/actions";
 import { getCustomerById } from "@/lib/customers/data";
-import { listEstimates } from "@/lib/estimates/data";
-import { listInvoices } from "@/lib/invoices/data";
-import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
+import { listEstimatesByProjectIds } from "@/lib/estimates/data";
+import { listInvoicesByCustomer } from "@/lib/invoices/data";
+import { listJobAssignmentsByJobIds, listJobsByCustomer } from "@/lib/jobs/data";
 import {
   createCustomerContactAction,
   makeCustomerContactPrimaryAction,
@@ -43,6 +44,7 @@ import {
 import { buildScheduleHref } from "@/lib/schedule/links";
 import {
   createPortalAccessGrantAction,
+  sendPortalInviteEmailAction,
   updateCustomerContactPortalPermissionAction,
   updatePortalAccessGrantLinkAction,
   createPortalProjectAccessAction,
@@ -156,9 +158,6 @@ export default async function CustomerDetailPage({
   const [
     customer,
     projects,
-    estimates,
-    jobs,
-    invoices,
     customerContacts,
     portalAccessGrants,
     customerContactPortalPermissions,
@@ -168,9 +167,6 @@ export default async function CustomerDetailPage({
   ] = await Promise.all([
     getCustomerById(customerId, `/customers/${customerId}`),
     listProjectsByCustomer(customerId, `/customers/${customerId}`),
-    listEstimates(),
-    listJobs(),
-    listInvoices(),
     listCustomerContactsByCustomer(customerId, `/customers/${customerId}`),
     listPortalAccessGrantsByCustomer(customerId, `/customers/${customerId}`),
     listCustomerContactPortalPermissionsByCustomer(customerId, `/customers/${customerId}`),
@@ -183,14 +179,18 @@ export default async function CustomerDetailPage({
     notFound();
   }
 
-  const projectIds = new Set(projects.map((project) => project.id));
-  const customerEstimates = estimates.filter((estimate) => projectIds.has(estimate.projectId));
-  const customerJobs = jobs.filter((job) => job.customerId === customer.id);
+  const [customerEstimates, customerJobs, customerInvoices] = await Promise.all([
+    listEstimatesByProjectIds(
+      projects.map((project) => project.id),
+      `/customers/${customerId}`
+    ),
+    listJobsByCustomer(customer.id, `/customers/${customerId}`),
+    listInvoicesByCustomer(customer.id, `/customers/${customerId}`)
+  ]);
   const customerJobAssignments = await listJobAssignmentsByJobIds(
     customerJobs.map((job) => job.id),
     `/customers/${customerId}`
   );
-  const customerInvoices = invoices.filter((invoice) => invoice.customerId === customer.id);
   const openInvoices = customerInvoices.filter(
     (invoice) => invoice.status !== "paid" && invoice.status !== "void"
   );
@@ -258,6 +258,7 @@ export default async function CustomerDetailPage({
 
     return {
       id: customerContact.id,
+      email: contactEmail || null,
       label: contactEmail
         ? `${contactName} (${contactEmail}) - ${primaryLabel}`
         : `${contactName} - ${primaryLabel}`
@@ -310,11 +311,13 @@ export default async function CustomerDetailPage({
             <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-950">
               <p className="font-semibold">Portal invite link</p>
               <p className="mt-1">
-                Share this local QA link with{" "}
+                Use this fresh app invite link as the copy-link fallback for{" "}
                 <span className="font-medium">
                   {resolvedSearchParams.inviteEmail ?? "the invited customer"}
                 </span>
-                . It is shown only after creation; the database stores only the token hash.
+                . If provider delivery was configured and unlocked, the branded email was
+                attempted separately. The raw token is shown only after creation or resend;
+                the database stores only the token hash.
               </p>
               <p className="mt-3 break-all rounded-xl border border-amber-200 bg-white/80 px-3 py-2 font-mono text-xs text-slate-900">
                 {resolvedSearchParams.inviteUrl}
@@ -619,15 +622,15 @@ export default async function CustomerDetailPage({
 
         <DetailPanel
           title="Portal Access"
-          description="Customer detail keeps access context visible, while People is the management home for contact identity, invite state, stored permissions, and project visibility."
+          description="Manage customer contacts and contact-level portal access together on this customer account. People remains the cross-customer administration view."
         >
           <div className="space-y-8">
             <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
-              <p className="font-medium text-slate-950">Manage portal access from People</p>
+              <p className="font-medium text-slate-950">Contact-level access model</p>
               <p className="mt-1">
-                Estimate, contract, and invoice workflows can trigger or verify access, but
-                portal identity and permissions are administered from the People customer-access
-                section.
+                Portal access is granted to a customer contact, authenticated by Supabase
+                Auth, then scoped to the projects that contact can open. Legacy
+                customer-level grants remain visible for compatibility.
               </p>
               <Link
                 href="/people#customer-access"
@@ -638,16 +641,19 @@ export default async function CustomerDetailPage({
             </div>
             <section className="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
               <div className="flex flex-col gap-2">
-                <p className="text-base font-semibold text-slate-950">Invite customer to portal</p>
+                <p className="text-base font-semibold text-slate-950">Invite contact to portal</p>
                 <p className="text-sm leading-6 text-slate-600">
-                  Invite a customer contact after the contractor has created the customer and project. The invite creates a pending customer-anchored portal grant, scopes it to one project, and activates only when the invited email signs up or logs in.
+                  Select the customer contact and project first. The invite creates or
+                  reuses a contact-linked portal grant, scopes it to one project, and
+                  activates only when the invited email signs up or logs in. This action
+                  sends branded email when delivery is configured and unlocked, and returns
+                  a fresh app invite link as the copy-link fallback.
                 </p>
               </div>
               <div className="mt-5">
                 <PortalAccessGrantForm
                   action={createPortalAccessGrantAction}
                   customerId={customer.id}
-                  defaultEmail={customer.email}
                   customerContacts={customerContactOptions}
                   projects={projects.map((project) => ({
                     id: project.id,
@@ -792,6 +798,16 @@ export default async function CustomerDetailPage({
                         )}
                       </div>
 
+                      <div className="mt-6">
+                        <PortalInviteEmailStatus
+                          action={sendPortalInviteEmailAction}
+                          customerId={customer.id}
+                          portalAccessGrantId={grant.id}
+                          status={grant.status}
+                          delivery={grant.inviteEmailDelivery}
+                        />
+                      </div>
+
                       <div className="mt-6 space-y-5">
                         <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
                           <p className="text-sm font-medium text-slate-950">Grant identity</p>
@@ -832,7 +848,11 @@ export default async function CustomerDetailPage({
                                   defaultValue={grant.customerContactId ?? ""}
                                   className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
                                 >
-                                  <option value="">Customer-level grant</option>
+                                  {!grant.customerContactId ? (
+                                    <option value="">
+                                      Legacy customer-level grant
+                                    </option>
+                                  ) : null}
                                   {customerContactOptions.map((customerContact) => (
                                     <option key={customerContact.id} value={customerContact.id}>
                                       {customerContact.label}
@@ -1171,7 +1191,7 @@ export default async function CustomerDetailPage({
               <AppEmptyState
                 eyebrow="No portal access yet"
                 title="Grant the first customer portal user"
-                description="Portal access remains narrow in this pass: connect one authenticated user to this canonical customer, then explicitly grant the projects they should be able to review."
+                description="Portal access remains narrow in this pass: create or reuse one customer/contact grant, then explicitly grant the projects they should be able to review. Pending contacts need the app invite link to sign up or log in."
               />
             )}
           </div>

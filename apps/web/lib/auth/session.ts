@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import {
   defaultAuthenticatedPath,
+  isPortalAuthPath,
   sanitizeRedirectPath,
   signInPath
 } from "./paths";
@@ -35,7 +36,9 @@ export async function requireAuthenticatedUser(next = defaultAuthenticatedPath) 
     redirect(`${destination.pathname}${destination.search}`);
   }
 
-  await ensureAuthenticatedUserBootstrap(supabase);
+  if (!isPortalAuthPath(next)) {
+    await ensureAuthenticatedUserBootstrap(supabase);
+  }
 
   return user;
 }
@@ -47,6 +50,10 @@ export async function redirectIfAuthenticated(next?: string | null) {
   } = await supabase.auth.getUser();
 
   if (user) {
+    if (next && isPortalAuthPath(next)) {
+      redirect(next);
+    }
+
     const bootstrap = await ensureAuthenticatedUserBootstrap(supabase);
     const destination = await resolvePostLoginRedirect({
       userId: bootstrap.user_id,

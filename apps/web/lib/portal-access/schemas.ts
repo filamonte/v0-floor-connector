@@ -48,7 +48,10 @@ export const portalInviteInputSchema = z.object({
     .uuid("Select a valid related customer contact.")
     .nullable()
     .optional()
-    .transform((value) => value ?? null),
+    .transform((value) => value ?? null)
+    .refine((value) => value !== null, {
+      message: "Select the customer contact receiving portal access."
+    }),
   projectId: z.string().trim().uuid("Select a valid project."),
   invitedEmail: optionalEmailField().refine((value) => value !== null, {
     message: "Enter the customer email to invite."

@@ -576,9 +576,14 @@ Implemented flow:
 - customer records are managed in the protected app
 - projects are created under canonical customers
 - project detail acts as the current bridge into estimating and downstream work
-- contractor admins manage customer contact identity, portal invite state, and project-scoped portal visibility from People after a customer and project exist
+- contractor admins manage customer contact identity, portal invite state, and project-scoped portal visibility from the customer account, with People remaining the cross-customer administration view
 - estimate, contract, and invoice workflows may trigger or verify portal access contextually, but they do not own portal identity or permissions management
+- new contractor-created portal invites require selecting the customer contact who will authenticate through Supabase Auth; legacy null-contact grants remain compatibility records
 - invited customers use `/portal/invite?token=...` to sign up or log in, and the invite activates only when the authenticated email matches the contractor-created invite
+- portal invite creation and resend use FloorConnector app-managed invite links, do not send Supabase Auth admin invites, and send branded provider-backed email only when email delivery is configured and the organization is allowed to send externally
+- when provider email is activation-locked or not configured, the contractor UI shows truthful no-send status and preserves a fresh copy-link fallback rather than claiming delivery
+- customer password setup happens through normal Supabase-backed signup, login, forgot-password, and update-password routes, not through a contractor-side password setter; invite links preserve a safe return path so the customer can authenticate and then accept the pending contact-level grant
+- portal-bound auth returns do not run contractor tenant bootstrap for portal-only customers; contractor workspace bootstrap remains for contractor app users
 - portal customers can see read-only, project-linked appointments only when a contractor explicitly marks the canonical appointment `customer_visible = true`
 - customer-facing appointment display uses customer-safe fields only: appointment title/type, date/time, status, location, and `customer_notes`; it does not expose internal notes, legacy appointment notes, assignment internals, or internal communication
 - portal appointment display does not include appointment confirmation actions, email-send actions, or communication-message display yet, even when a contractor logs or later sends a customer-visible appointment confirmation internally
@@ -593,8 +598,9 @@ Current canonical records involved:
 
 Current customer-account interpretation:
 - the customer is the full canonical customer/account record, not a lightweight contact card
-- additional customer contacts sit beneath that account and are managed from People for identity, relationship, and portal access administration, but the account remains the commercial and financial source of truth
+- additional customer contacts sit beneath that account and are managed from the customer account and People for identity, relationship, and portal access administration, but the account remains the commercial and financial source of truth
 - normal portal onboarding is contractor-initiated from the shared customer/project workflow; customers do not self-register first unless a later customer-led quote/intake surface explicitly supports that path
+- the current portal identity architecture is mapped in [docs/portal-identity-review.md](C:/FloorConnector/docs/portal-identity-review.md)
 
 ### Project To Estimate
 

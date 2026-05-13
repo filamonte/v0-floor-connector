@@ -5,6 +5,7 @@ type LoginPageProps = {
     error?: string;
     message?: string;
     next?: string;
+    email?: string;
   }>;
 };
 

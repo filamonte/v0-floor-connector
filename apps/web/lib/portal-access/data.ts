@@ -15,13 +15,17 @@ import type {
   PortalAccessGrantInput,
   PortalProjectAccessInput
 } from "./schemas";
+import { buildPortalInviteEmailContent } from "./email";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { getOrganizationProductionActionLockState } from "@/lib/organizations/activation-guard";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { isPostmarkEmailConfigured } from "@floorconnector/integrations";
 
 type PortalAdminScope = {
   userId: string;
   organizationId: string;
+  organizationName: string;
 };
 
 type PortalAccessGrantRow = {
@@ -114,6 +118,22 @@ type CustomerContactPortalPermissionRow = {
   updated_at: string;
 };
 
+type PortalInviteNotificationEventRow = {
+  id: string;
+  payload: Record<string, unknown> | null;
+  occurred_at: string;
+};
+
+type PortalInviteNotificationDeliveryRow = {
+  id: string;
+  notification_event_id: string;
+  status: "pending" | "sent" | "delivered" | "opened" | "clicked" | "failed";
+  error_message: string | null;
+  sent_at: string | null;
+  failed_at: string | null;
+  created_at: string;
+};
+
 export type PortalAccessGrantListItem = PortalAccessGrantRecord & {
   customer: {
     id: string;
@@ -143,6 +163,16 @@ export type PortalAccessGrantListItem = PortalAccessGrantRecord & {
     email: string;
     fullName: string | null;
   } | null;
+  inviteEmailDelivery: PortalInviteEmailDeliverySummary;
+};
+
+export type PortalInviteEmailDeliverySummary = {
+  status: "not_sent" | "sent" | "failed";
+  sendCount: number;
+  lastSentAt: string | null;
+  lastFailedAt: string | null;
+  lastAttemptAt: string | null;
+  lastFailureMessage: string | null;
 };
 
 export type PortalProjectAccessListItem = PortalProjectAccessRecord & {
@@ -162,6 +192,16 @@ export type PortalInviteCreationResult = {
   inviteExpiresAt: string | null;
   activatedImmediately: boolean;
   reusedExistingGrant: boolean;
+};
+
+export type PortalInviteEmailSendResult = {
+  portalAccessGrant: PortalAccessGrantListItem;
+  invitedEmail: string;
+  inviteToken: string;
+  inviteExpiresAt: string;
+  emailStatus: "sent" | "not_sent" | "failed";
+  message: string;
+  reason: "sent" | "activation_locked" | "not_configured" | "provider_failed";
 };
 
 export type PortalInvitePreview = {
@@ -564,7 +604,19 @@ function mapPortalAccessGrantListItem(
           email: row.invited_by_user.email,
           fullName: row.invited_by_user.full_name
         }
-      : null
+      : null,
+    inviteEmailDelivery: emptyPortalInviteEmailDeliverySummary()
+  };
+}
+
+function emptyPortalInviteEmailDeliverySummary(): PortalInviteEmailDeliverySummary {
+  return {
+    status: "not_sent",
+    sendCount: 0,
+    lastSentAt: null,
+    lastFailedAt: null,
+    lastAttemptAt: null,
+    lastFailureMessage: null
   };
 }
 
@@ -619,6 +671,139 @@ function mapCustomerContactPortalPermission(
   };
 }
 
+function getPortalAccessGrantIdFromPayload(payload: Record<string, unknown> | null) {
+  return typeof payload?.portalAccessGrantId === "string"
+    ? payload.portalAccessGrantId
+    : null;
+}
+
+function summarizePortalInviteEmailDeliveries(
+  eventRows: PortalInviteNotificationEventRow[],
+  deliveryRows: PortalInviteNotificationDeliveryRow[]
+) {
+  const eventIdToGrantId = new Map<string, string>();
+
+  for (const event of eventRows) {
+    const grantId = getPortalAccessGrantIdFromPayload(event.payload);
+
+    if (grantId) {
+      eventIdToGrantId.set(event.id, grantId);
+    }
+  }
+
+  const summaries = new Map<string, PortalInviteEmailDeliverySummary>();
+
+  for (const delivery of deliveryRows) {
+    const grantId = eventIdToGrantId.get(delivery.notification_event_id);
+
+    if (!grantId) {
+      continue;
+    }
+
+    const existing = summaries.get(grantId) ?? emptyPortalInviteEmailDeliverySummary();
+    const attemptAt = delivery.sent_at ?? delivery.failed_at ?? delivery.created_at;
+    const isSent =
+      delivery.status === "sent" ||
+      delivery.status === "delivered" ||
+      delivery.status === "opened" ||
+      delivery.status === "clicked";
+    const isFailed = delivery.status === "failed";
+
+    summaries.set(grantId, {
+      status: isFailed && existing.status !== "sent" ? "failed" : isSent ? "sent" : existing.status,
+      sendCount: existing.sendCount + (isSent ? 1 : 0),
+      lastSentAt:
+        isSent && (!existing.lastSentAt || attemptAt.localeCompare(existing.lastSentAt) > 0)
+          ? attemptAt
+          : existing.lastSentAt,
+      lastFailedAt:
+        isFailed && (!existing.lastFailedAt || attemptAt.localeCompare(existing.lastFailedAt) > 0)
+          ? attemptAt
+          : existing.lastFailedAt,
+      lastAttemptAt:
+        !existing.lastAttemptAt || attemptAt.localeCompare(existing.lastAttemptAt) > 0
+          ? attemptAt
+          : existing.lastAttemptAt,
+      lastFailureMessage:
+        isFailed && delivery.error_message
+          ? delivery.error_message.slice(0, 240)
+          : existing.lastFailureMessage
+    });
+  }
+
+  return summaries;
+}
+
+async function getPortalInviteEmailDeliverySummaries(input: {
+  organizationId: string;
+  portalAccessGrantIds: string[];
+}) {
+  if (input.portalAccessGrantIds.length === 0) {
+    return new Map<string, PortalInviteEmailDeliverySummary>();
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const eventsResponse = await supabase
+    .from("notification_events")
+    .select("id, payload, occurred_at")
+    .eq("company_id", input.organizationId)
+    .eq("event_type", "portal_invite.email_requested")
+    .order("occurred_at", { ascending: false })
+    .limit(250);
+
+  if (eventsResponse.error) {
+    throw new Error(
+      `Unable to load portal invite email events: ${eventsResponse.error.message}`
+    );
+  }
+
+  const eventRows = ((eventsResponse.data as PortalInviteNotificationEventRow[] | null) ?? [])
+    .filter((event) => {
+      const grantId = getPortalAccessGrantIdFromPayload(event.payload);
+      return grantId ? input.portalAccessGrantIds.includes(grantId) : false;
+    });
+
+  if (eventRows.length === 0) {
+    return new Map<string, PortalInviteEmailDeliverySummary>();
+  }
+
+  const deliveriesResponse = await supabase
+    .from("notification_deliveries")
+    .select("id, notification_event_id, status, error_message, sent_at, failed_at, created_at")
+    .eq("company_id", input.organizationId)
+    .in(
+      "notification_event_id",
+      eventRows.map((event) => event.id)
+    )
+    .order("created_at", { ascending: false });
+  const deliveryRows =
+    (deliveriesResponse.data as PortalInviteNotificationDeliveryRow[] | null) ?? [];
+
+  if (deliveriesResponse.error) {
+    throw new Error(
+      `Unable to load portal invite email deliveries: ${deliveriesResponse.error.message}`
+    );
+  }
+
+  return summarizePortalInviteEmailDeliveries(eventRows, deliveryRows);
+}
+
+async function attachPortalInviteEmailDeliverySummaries(
+  organizationId: string,
+  grants: PortalAccessGrantListItem[]
+) {
+  const summaries = await getPortalInviteEmailDeliverySummaries({
+    organizationId,
+    portalAccessGrantIds: grants.map((grant) => grant.id)
+  });
+
+  return grants.map((grant) => ({
+    ...grant,
+    inviteEmailDelivery:
+      summaries.get(grant.id) ?? emptyPortalInviteEmailDeliverySummary()
+  }));
+}
+
 async function getPortalAdminScope(next = "/settings"): Promise<PortalAdminScope | null> {
   const user = await requireAuthenticatedUser(next);
   const organizationContext = await getActiveOrganizationContext(user.id);
@@ -629,7 +814,11 @@ async function getPortalAdminScope(next = "/settings"): Promise<PortalAdminScope
 
   return {
     userId: user.id,
-    organizationId: organizationContext.organization.id
+    organizationId: organizationContext.organization.id,
+    organizationName:
+      organizationContext.organization.displayName?.trim() ||
+      organizationContext.organization.legalName?.trim() ||
+      "your contractor"
   };
 }
 
@@ -1137,7 +1326,10 @@ export const listPortalAccessGrants = cache(
       return [];
     }
 
-    return data.map(mapPortalAccessGrantListItem);
+    return attachPortalInviteEmailDeliverySummaries(
+      scope.organizationId,
+      data.map(mapPortalAccessGrantListItem)
+    );
   }
 );
 
@@ -1167,7 +1359,10 @@ export async function listPortalAccessGrantsByCustomer(
       const fallbackData: unknown = fallbackResponse.data;
 
       if (!fallbackResponse.error && isPortalAccessGrantRowArray(fallbackData)) {
-        return fallbackData.map(mapPortalAccessGrantListItem);
+        return attachPortalInviteEmailDeliverySummaries(
+          scope.organizationId,
+          fallbackData.map(mapPortalAccessGrantListItem)
+        );
       }
 
       return [];
@@ -1182,7 +1377,10 @@ export async function listPortalAccessGrantsByCustomer(
     return [];
   }
 
-  return data.map(mapPortalAccessGrantListItem);
+  return attachPortalInviteEmailDeliverySummaries(
+    scope.organizationId,
+    data.map(mapPortalAccessGrantListItem)
+  );
 }
 
 export async function getPortalAccessGrantById(
@@ -1239,6 +1437,11 @@ export async function createPortalAccessGrant(input: PortalAccessGrantInput) {
 
 export async function createPortalInvite(input: PortalInviteInput): Promise<PortalInviteCreationResult> {
   const scope = await requirePortalAdminScope("/settings");
+
+  if (!input.customerContactId) {
+    throw new Error("Portal invites must be created from a related customer contact.");
+  }
+
   await validatePortalAccessGrantInput(scope.organizationId, {
     customerId: input.customerId,
     customerContactId: input.customerContactId,
@@ -1284,11 +1487,54 @@ export async function createPortalInvite(input: PortalInviteInput): Promise<Port
   const existingGrantData = existingGrantRows[0];
 
   if (isPortalAccessGrantRow(existingGrantData)) {
+    let existingGrant = existingGrantData;
+
+    if (
+      existingGrant.customer_contact_id &&
+      existingGrant.customer_contact_id !== input.customerContactId
+    ) {
+      throw new Error(
+        "Portal access for this email is already linked to a different customer contact."
+      );
+    }
+
+    if (!existingGrant.customer_contact_id) {
+      const linkResponse = await supabase
+        .from("portal_access_grants")
+        .update({
+          customer_contact_id: input.customerContactId
+        })
+        .eq("company_id", scope.organizationId)
+        .eq("id", existingGrant.id)
+        .select(portalAccessGrantSelect)
+        .maybeSingle();
+      const linkData: unknown = linkResponse.data;
+
+      if (linkResponse.error) {
+        throw new Error(
+          `Unable to link the existing portal invite to the selected customer contact: ${linkResponse.error.message}`
+        );
+      }
+
+      if (!isPortalAccessGrantRow(linkData)) {
+        throw new Error("Existing portal invite was not found for contact linking.");
+      }
+
+      await synchronizePortalPermissionStateForGrant({
+        organizationId: scope.organizationId,
+        portalAccessGrantId: linkData.id,
+        customerId: input.customerId,
+        customerContactId: input.customerContactId
+      });
+
+      existingGrant = linkData;
+    }
+
     const projectAccessResponse = await supabase
       .from("portal_project_access")
       .insert({
         company_id: scope.organizationId,
-        portal_access_grant_id: existingGrantData.id,
+        portal_access_grant_id: existingGrant.id,
         project_id: input.projectId,
         status: "active"
       })
@@ -1305,14 +1551,14 @@ export async function createPortalInvite(input: PortalInviteInput): Promise<Port
     }
 
     return {
-      portalAccessGrant: mapPortalAccessGrantListItem(existingGrantData),
+      portalAccessGrant: mapPortalAccessGrantListItem(existingGrant),
       projectAccess: isPortalProjectAccessRow(projectAccessData)
         ? mapPortalProjectAccessListItem(projectAccessData)
         : null,
       invitedEmail,
       inviteToken: null,
-      inviteExpiresAt: existingGrantData.invite_expires_at,
-      activatedImmediately: existingGrantData.status === "active",
+      inviteExpiresAt: existingGrant.invite_expires_at,
+      activatedImmediately: existingGrant.status === "active",
       reusedExistingGrant: true
     };
   }
@@ -1388,6 +1634,215 @@ export async function createPortalInvite(input: PortalInviteInput): Promise<Port
     activatedImmediately: Boolean(existingPortalUser),
     reusedExistingGrant: false
   };
+}
+
+async function prepareFreshPortalInviteToken(input: {
+  organizationId: string;
+  portalAccessGrantId: string;
+}) {
+  const inviteToken = generatePortalInviteToken();
+  const inviteExpiresAt = getPortalInviteExpiration();
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("portal_access_grants")
+    .update({
+      invite_token_hash: hashPortalInviteToken(inviteToken),
+      invite_expires_at: inviteExpiresAt
+    })
+    .eq("company_id", input.organizationId)
+    .eq("id", input.portalAccessGrantId)
+    .eq("status", "invited")
+    .is("user_id", null)
+    .select(portalAccessGrantSelect)
+    .maybeSingle();
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(`Unable to prepare a fresh portal invite link: ${response.error.message}`);
+  }
+
+  if (!isPortalAccessGrantRow(data)) {
+    throw new Error("Only pending unaccepted portal invites can be sent or resent.");
+  }
+
+  return {
+    portalAccessGrant: mapPortalAccessGrantListItem(data),
+    inviteToken,
+    inviteExpiresAt
+  };
+}
+
+async function getPrimaryProjectForPortalInviteEmail(input: {
+  organizationId: string;
+  portalAccessGrantId: string;
+}) {
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("portal_project_access")
+    .select(portalProjectAccessSelect)
+    .eq("company_id", input.organizationId)
+    .eq("portal_access_grant_id", input.portalAccessGrantId)
+    .eq("status", "active")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load project visibility for portal invite email: ${response.error.message}`
+    );
+  }
+
+  if (!isPortalProjectAccessRow(data)) {
+    throw new Error("Add project visibility before sending a portal invite email.");
+  }
+
+  return mapPortalProjectAccessListItem(data);
+}
+
+export async function sendPortalInviteEmail(input: {
+  portalAccessGrantId: string;
+  inviteOrigin: string;
+  next?: string;
+}): Promise<PortalInviteEmailSendResult> {
+  const scope = await requirePortalAdminScope(input.next ?? "/settings");
+  const existingGrant = await ensureScopedPortalAccessGrant(
+    scope.organizationId,
+    input.portalAccessGrantId
+  );
+
+  if (existingGrant.status !== "invited") {
+    throw new Error("Only pending portal invites can be sent or resent.");
+  }
+
+  if (existingGrant.userId) {
+    throw new Error("This contact already has an authenticated portal account linked.");
+  }
+
+  const invitedEmail = existingGrant.invitedEmail?.trim().toLowerCase();
+
+  if (!invitedEmail) {
+    throw new Error("Pending portal invites must have an invited email before sending.");
+  }
+
+  const [{ portalAccessGrant, inviteToken, inviteExpiresAt }, projectAccess, lockState] =
+    await Promise.all([
+      prepareFreshPortalInviteToken({
+        organizationId: scope.organizationId,
+        portalAccessGrantId: input.portalAccessGrantId
+      }),
+      getPrimaryProjectForPortalInviteEmail({
+        organizationId: scope.organizationId,
+        portalAccessGrantId: input.portalAccessGrantId
+      }),
+      getOrganizationProductionActionLockState(scope.organizationId)
+    ]);
+
+  if (lockState.isLocked) {
+    return {
+      portalAccessGrant,
+      invitedEmail,
+      inviteToken,
+      inviteExpiresAt,
+      emailStatus: "not_sent",
+      reason: "activation_locked",
+      message:
+        "A fresh invite link was prepared, but provider-backed email is locked during early access."
+    };
+  }
+
+  if (!isPostmarkEmailConfigured()) {
+    return {
+      portalAccessGrant,
+      invitedEmail,
+      inviteToken,
+      inviteExpiresAt,
+      emailStatus: "not_sent",
+      reason: "not_configured",
+      message:
+        "A fresh invite link was prepared, but Postmark email delivery is not configured."
+    };
+  }
+
+  const inviteUrl = `${input.inviteOrigin}/portal/invite?token=${encodeURIComponent(inviteToken)}`;
+  const emailContent = buildPortalInviteEmailContent({
+    contractorCompanyName: scope.organizationName,
+    contactName: portalAccessGrant.customerContact?.contact?.displayName ?? null,
+    customerName:
+      portalAccessGrant.customer?.companyName ??
+      portalAccessGrant.customer?.name ??
+      null,
+    projectName: projectAccess.project?.name ?? null,
+    inviteUrl
+  });
+  const { createNotificationEvent, sendTrackedNotificationEmail } = await import(
+    "@/lib/notifications/system"
+  );
+  const notificationEvent = await createNotificationEvent({
+    organizationId: scope.organizationId,
+    category: "communication",
+    severity: "neutral",
+    eventType: "portal_invite.email_requested",
+    subjectType: "customer",
+    subjectId: portalAccessGrant.customerId,
+    customerId: portalAccessGrant.customerId,
+    projectId: projectAccess.projectId,
+    actorType: "organization_user",
+    actorUserId: scope.userId,
+    title: "Portal invite email requested",
+    message: `Portal invite email requested for ${portalAccessGrant.customer?.name ?? "customer"}.`,
+    linkPath: `/customers/${portalAccessGrant.customerId}`,
+    groupKey: `portal_invite:${portalAccessGrant.id}`,
+    payload: {
+      portalAccessGrantId: portalAccessGrant.id,
+      customerContactId: portalAccessGrant.customerContactId,
+      projectId: projectAccess.projectId,
+      purpose: "portal_invite_email"
+    },
+    markReadUserIds: [scope.userId]
+  });
+
+  try {
+    await sendTrackedNotificationEmail({
+      organizationId: scope.organizationId,
+      notificationEventId: notificationEvent.id,
+      recipientEmail: invitedEmail,
+      recipientUserId: null,
+      subject: emailContent.subject,
+      htmlBody: emailContent.htmlBody,
+      textBody: emailContent.textBody,
+      payload: {
+        subjectType: "customer",
+        subjectId: portalAccessGrant.customerId,
+        portalAccessGrantId: portalAccessGrant.id,
+        customerContactId: portalAccessGrant.customerContactId,
+        projectId: projectAccess.projectId,
+        purpose: "portal_invite_email"
+      }
+    });
+
+    return {
+      portalAccessGrant,
+      invitedEmail,
+      inviteToken,
+      inviteExpiresAt,
+      emailStatus: "sent",
+      reason: "sent",
+      message: `Portal invite email sent to ${invitedEmail}.`
+    };
+  } catch {
+    return {
+      portalAccessGrant,
+      invitedEmail,
+      inviteToken,
+      inviteExpiresAt,
+      emailStatus: "failed",
+      reason: "provider_failed",
+      message:
+        "A fresh invite link was prepared, but the provider email send failed. The failed delivery attempt was recorded when possible."
+    };
+  }
 }
 
 export async function updatePortalAccessGrant(

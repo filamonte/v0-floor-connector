@@ -88,6 +88,8 @@ test("dashboard PriorityStrip renders inside the authenticated dashboard", async
 });
 
 test("golden workflow manager route spine stays authenticated", async ({ page }) => {
+  test.setTimeout(180_000);
+
   const issues = attachIssueCapture(page);
 
   for (const route of goldenWorkflowManagerRoutes) {

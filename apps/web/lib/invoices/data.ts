@@ -2358,6 +2358,31 @@ export const listInvoices = cache(async (): Promise<InvoiceListItem[]> => {
   return sortInvoices(data.map(mapInvoiceListItem));
 });
 
+export const listInvoicesByCustomer = cache(
+  async (customerId: string, next = "/invoices"): Promise<InvoiceListItem[]> => {
+    const scope = await requireInvoiceScope(next);
+    const supabase = await getSupabaseServerClient();
+    const response = await supabase
+      .from("invoices")
+      .select(invoiceSelect)
+      .eq("company_id", scope.organizationId)
+      .eq("customer_id", customerId)
+      .order("updated_at", { ascending: false });
+    const data: unknown = response.data;
+    const error = response.error;
+
+    if (error) {
+      throw new Error(`Unable to load customer invoices: ${error.message}`);
+    }
+
+    if (!isInvoiceRowArray(data)) {
+      return [];
+    }
+
+    return sortInvoices(data.map(mapInvoiceListItem));
+  }
+);
+
 export const listInvoiceSourceOptions = cache(async (): Promise<InvoiceSourceOptions> => {
   const scope = await requireInvoiceScope("/invoices");
   const supabase = await getSupabaseServerClient();

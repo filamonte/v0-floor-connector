@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AppEmptyState } from "@/components/app-empty-state";
 import { CustomerContactForm } from "@/components/customer-contact-form";
 import { PortalAccessGrantForm } from "@/components/portal-access-grant-form";
+import { PortalInviteEmailStatus } from "@/components/portal-invite-email-status";
 import { PortalProjectAccessForm } from "@/components/portal-project-access-form";
 import {
   createCustomerContactAction,
@@ -13,6 +14,7 @@ import type { DirectoryCustomerContactListItem } from "@/lib/contacts/data";
 import {
   createPortalAccessGrantAction,
   createPortalProjectAccessAction,
+  sendPortalInviteEmailAction,
   updateCustomerContactPortalPermissionAction,
   updatePortalAccessGrantLinkAction,
   updatePortalAccessGrantStatusAction,
@@ -72,6 +74,10 @@ function formatManagementSourceLabel(value: string) {
   }
 }
 
+function formatDateTime(value: string | null | undefined) {
+  return value ? new Date(value).toLocaleString() : null;
+}
+
 function buildCustomerContactOptions(
   customerContacts: DirectoryCustomerContactListItem[],
   customerId: string
@@ -86,6 +92,7 @@ function buildCustomerContactOptions(
 
       return {
         id: customerContact.id,
+        email: contactEmail || null,
         label: contactEmail
           ? `${contactName} (${contactEmail}) - ${primaryLabel}`
           : `${contactName} - ${primaryLabel}`
@@ -332,11 +339,13 @@ export function PeoplePortalAccessPanel({
 
                 <section className="border border-slate-200 bg-white px-4 py-4">
                   <p className="text-sm font-medium text-slate-950">
-                    Ensure portal access
+                    Grant contact portal access
                   </p>
                   <p className="mt-1 text-sm leading-6 text-slate-600">
-                    Use this when a workflow needs a customer contact to review, sign, or pay
-                    through the portal. Existing active access is reused.
+                    Select the customer contact that should authenticate through Supabase
+                    Auth and receive project-scoped portal access. Existing active access is
+                    reused; new pending invites send branded email when delivery is configured
+                    and unlocked, with a fresh app invite link shown as the copy-link fallback.
                   </p>
                   <div className="mt-4">
                     <PortalAccessGrantForm
@@ -411,6 +420,40 @@ export function PeoplePortalAccessPanel({
                                     {projectAccess.filter((access) => access.status === "active").length}
                                   </span>
                                 </p>
+                                {grant.status === "invited" ? (
+                                  <p>
+                                    Customer next step:{" "}
+                                    <span className="font-medium text-slate-950">
+                                      Open the invite link, create an account or log in,
+                                      then accept with the invited email
+                                    </span>
+                                  </p>
+                                ) : null}
+                                {formatDateTime(grant.inviteExpiresAt) &&
+                                grant.status === "invited" ? (
+                                  <p>
+                                    Invite expires:{" "}
+                                    <span className="font-medium text-slate-950">
+                                      {formatDateTime(grant.inviteExpiresAt)}
+                                    </span>
+                                  </p>
+                                ) : null}
+                                {formatDateTime(grant.inviteAcceptedAt) ? (
+                                  <p>
+                                    Invite accepted:{" "}
+                                    <span className="font-medium text-slate-950">
+                                      {formatDateTime(grant.inviteAcceptedAt)}
+                                    </span>
+                                  </p>
+                                ) : null}
+                                {formatDateTime(grant.revokedAt) ? (
+                                  <p>
+                                    Revoked:{" "}
+                                    <span className="font-medium text-slate-950">
+                                      {formatDateTime(grant.revokedAt)}
+                                    </span>
+                                  </p>
+                                ) : null}
                               </div>
                             </div>
                             {grant.status === "revoked" && !grant.userId ? (
@@ -448,6 +491,18 @@ export function PeoplePortalAccessPanel({
                             )}
                           </div>
 
+                          <div className="mt-4">
+                            <PortalInviteEmailStatus
+                              action={sendPortalInviteEmailAction}
+                              customerId={customer.id}
+                              portalAccessGrantId={grant.id}
+                              status={grant.status}
+                              delivery={grant.inviteEmailDelivery}
+                              returnTo={returnTo}
+                              compact
+                            />
+                          </div>
+
                           {grant.userId ? (
                             <form
                               action={updatePortalAccessGrantLinkAction}
@@ -472,7 +527,11 @@ export function PeoplePortalAccessPanel({
                                   defaultValue={grant.customerContactId ?? ""}
                                   className="w-full rounded-[4px] border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-brand-700"
                                 >
-                                  <option value="">Customer-level grant</option>
+                                  {!grant.customerContactId ? (
+                                    <option value="">
+                                      Legacy customer-level grant
+                                    </option>
+                                  ) : null}
                                   {customerContactOptions.map((customerContact) => (
                                     <option key={customerContact.id} value={customerContact.id}>
                                       {customerContact.label}

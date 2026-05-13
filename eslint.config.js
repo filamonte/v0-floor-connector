@@ -51,6 +51,10 @@ module.exports = tseslint.config(
   },
   {
     files: ["**/*.{js,mjs,cjs}"],
-    ...tseslint.configs.disableTypeChecked
+    ...tseslint.configs.disableTypeChecked,
+    rules: {
+      ...tseslint.configs.disableTypeChecked.rules,
+      "@typescript-eslint/no-require-imports": "off"
+    }
   }
 );

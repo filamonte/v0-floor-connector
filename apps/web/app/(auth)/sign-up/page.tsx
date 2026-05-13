@@ -5,6 +5,7 @@ type SignUpPageProps = {
     error?: string;
     message?: string;
     next?: string;
+    email?: string;
   }>;
 };
 
@@ -22,6 +23,10 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
 
   if (params.next) {
     search.set("next", params.next);
+  }
+
+  if (params.email) {
+    search.set("email", params.email);
   }
 
   redirect(search.size > 0 ? `/signup?${search.toString()}` : "/signup");

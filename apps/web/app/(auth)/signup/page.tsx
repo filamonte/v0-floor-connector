@@ -5,6 +5,7 @@ type SignupPageProps = {
     error?: string;
     message?: string;
     next?: string;
+    email?: string;
   }>;
 };
 

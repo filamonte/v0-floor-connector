@@ -6,6 +6,7 @@ type UpdatePasswordPageProps = {
   searchParams?: Promise<{
     error?: string;
     message?: string;
+    next?: string;
   }>;
 };
 
@@ -22,6 +23,7 @@ export default async function UpdatePasswordPage({
       message={params.message}
     >
       <form action={updatePasswordAction} className="space-y-4">
+        <input type="hidden" name="next" value={params.next ?? ""} />
         <label className="block">
           <span className="mb-2 block text-sm font-medium text-slate-700">
             New password

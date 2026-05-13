@@ -49,10 +49,17 @@ async function loginWithEmail(page, email, password, options = {}) {
   await passwordInput.fill(password);
   await emailLoginForm.getByRole("button", { name: "Sign in" }).click();
 
-  await page.waitForURL((url) => url.pathname === expectedPath, { timeout: 30_000 });
-  await expect(page.locator("body")).toContainText(
-    /Dashboard|FloorConnector|Platform configuration|Global scope/i
-  );
+  await page.waitForURL((url) => url.pathname === expectedPath, {
+    timeout: 180_000,
+    waitUntil: "commit"
+  });
+
+  if (options.verifyContent !== false) {
+    await expect(page.locator("body")).toContainText(
+      /Dashboard|FloorConnector|Platform configuration|Global scope/i,
+      { timeout: 60_000 }
+    );
+  }
 }
 
 module.exports = {

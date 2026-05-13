@@ -101,7 +101,7 @@ Shared estimate attachments and related documents now live in one tenant-safe `d
 
 What customers can do now:
 
-- access only the projects explicitly shared with them
+- access only the projects explicitly shared with their customer-contact portal grant
 - use a real portal shell and portal home workspace
 - open project-centered portal workspaces
 - review shared estimates
@@ -109,7 +109,7 @@ What customers can do now:
 - review shared invoices
 - initiate payment and see payment-state continuity
 
-The portal is not a duplicate product with duplicate records. It is a customer-facing surface on top of the same canonical records used by the contractor app.
+The portal is not a duplicate product with duplicate records. It is a customer-facing surface on top of the same canonical records used by the contractor app. Supabase Auth proves the portal user's identity, while FloorConnector portal grants and project access records authorize what that customer contact can see.
 
 ### Workforce And Time
 
@@ -254,6 +254,9 @@ One simple visual summary of the shared customer-facing operating chain is:
 In practical terms:
 
 - the customer enters through project-scoped portal access
+- contact-centered portal invites can be delivered by branded provider email when configuration and activation guard allow it, with app invite copy-link fallback when delivery is locked or unavailable
+- app-managed invite links guide unauthenticated contacts into Supabase-backed signup, sign-in, or password reset, then return to invite acceptance so the grant activates only after the invited email is authenticated
+- portal-only customer auth returns do not bootstrap a contractor company membership; the portal account remains authorized by explicit portal grants and project access
 - the portal shows only the projects explicitly shared with that customer
 - inside each project, the customer can open the connected contract and invoice records
 - contract actions happen on the same canonical contract the contractor uses

@@ -36,6 +36,11 @@ PLAYWRIGHT_BASE_URL=http://localhost:3001
 PLAYWRIGHT_STORAGE_STATE=playwright/.auth/local-user.json
 ```
 
+Playwright starts the web app with the port parsed from `PLAYWRIGHT_BASE_URL`.
+With the default base URL, the webServer command starts `@floorconnector/web` on
+port `3001`. If `PLAYWRIGHT_BASE_URL` is changed to `http://localhost:3000`,
+Playwright starts or reuses port `3000` instead.
+
 If your local Next dev server is already running on `localhost:3000`, set the base URL explicitly for auth and smoke commands:
 
 ```bash
@@ -51,6 +56,25 @@ netstat -ano | Select-String ":3000|:3001"
 ```
 
 If Playwright times out waiting for `localhost:3001` while the app is on `localhost:3000`, that is a local dev-server/base-URL mismatch. Rerun with `PLAYWRIGHT_BASE_URL=http://localhost:3000` or stop the stray server and let Playwright start its configured server.
+
+Use `PLAYWRIGHT_SKIP_WEB_SERVER=1` only when an already-running server is
+listening on the exact `PLAYWRIGHT_BASE_URL`. If the variable is set and that
+server is not running, auth setup and protected specs will fail with connection
+refused. Do not run multiple Playwright commands in parallel unless each uses a
+separate base URL/port; the shared webServer is intended for one command at a
+time.
+
+If protected storage state redirects to `/login`, refresh it with
+`pnpm e2e:auth` using the same `PLAYWRIGHT_BASE_URL` as the protected smoke
+command. Common causes are a missing storage-state file, stale cookies, a
+server running on a different port than the storage state was created against,
+or an account that has not completed the real company setup gate.
+
+Full lint can be slow on cold local caches because the repo uses type-aware
+ESLint. When investigating a local timeout, first run targeted lint against the
+touched files, then rerun `pnpm lint` once system load and dev-server processes
+are quiet. Do not suppress lint failures; document the exact file/rule if full
+lint remains blocked.
 
 The public `chromium-public` project also includes the marketing entry-point regression spec:
 
@@ -161,6 +185,8 @@ Contractor route-continuity checks assume the contractor E2E account has complet
 
 Portal/customer QA uses a separate customer session because portal users are not contractor organization members. The portal smoke path must authenticate a real Supabase Auth user whose portal access is backed by canonical `portal_access_grants` and `portal_project_access` rows. Do not count `/login`, an accidental 404, an access-denied page, or a missing shared project as successful portal QA unless the test is intentionally checking unauthorized access.
 
+Portal invite QA should distinguish pending invite records from Auth delivery. The current app-managed portal invite creates or reuses canonical contact-linked portal access records and may return a fresh `/portal/invite?token=...` copy-link fallback, but it does not create a Supabase Auth user or call Supabase admin invite. Branded provider email is attempted only when Postmark delivery is configured and activation guard allows external sends; otherwise the UI should show truthful no-send status. New contractor-created invites should select a `customer_contacts` row; null-contact grants are legacy compatibility records. The unauthenticated invite page should show customer-safe context plus signup, sign-in, and password-reset actions that preserve the invite return path and use the invited contact email.
+
 Phase 1.2 adds a stable portal customer fixture helper. The helper validates by default and only writes when the operator explicitly enables local E2E fixture writes. It creates or repairs canonical customer, contact, project, portal grant, project visibility, estimate, contract, invoice, and signer rows for the contractor E2E organization; it does not create portal-only records, fake signatures, fake payments, or checkout success.
 
 Required local environment variables for generating the portal storage state:
@@ -247,7 +273,9 @@ Fixture requirements:
 
 - the portal user must be a real authenticated user
 - the portal user should be created through Supabase Auth or by the local fixture helper in explicit write mode
+- invite acceptance should occur after signup/sign-in/password reset returns to `/portal/invite?token=...`
 - the canonical `public.users` profile must exist for that portal auth account
+- portal-only authentication should not create a contractor company owner membership for the portal customer
 - the fixture customer/contact must remain canonical contractor-owned records
 - the portal user must have an active customer-anchored portal access grant
 - at least one active project access row is required for project workspace smoke
@@ -431,10 +459,23 @@ Focused smoke command:
 pnpm exec playwright test e2e/detail-workspace-ui.spec.js --project=chromium-protected
 ```
 
+Customer detail has a dedicated protected smoke for the contact-centered portal access surface:
+
+```bash
+pnpm exec playwright test e2e/customer-detail-ui.spec.js --project=chromium-protected
+```
+
+The customer detail smoke discovers a real customer from `/customers` unless
+`FLOORCONNECTOR_E2E_CUSTOMER_DETAIL_PATH` is configured. It verifies the
+Customer Workspace renders past the loading shell, shows Contacts and Portal
+Access, and inspects invite email delivery status when the selected customer
+fixture has a pending/active portal invite block.
+
 The protected smoke coverage verifies:
 
 - manager routes in the demo spine load authenticated instead of stopping at `/login`
 - core Project, Estimate, Contract, Invoice, and Job Workspaces still render their decision-first regions
+- Customer Workspace renders contact-centered portal access without stalling on `Preparing your workspace`
 - route checks do not seed fake data or create demo-only workflow state
 
 For full manual QA, pair that smoke run with the route-by-route checklist in `docs/golden-workflow-demo-path.md` and record missing fixtures, missing portal/customer auth, or skipped detail routes explicitly.

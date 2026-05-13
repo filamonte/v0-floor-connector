@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { ensureAuthenticatedUserBootstrap } from "@/lib/auth/bootstrap";
-import { getSafeInternalRedirectPath } from "@/lib/auth/paths";
+import { getSafeInternalRedirectPath, isPortalAuthPath } from "@/lib/auth/paths";
 import { resolvePostLoginRedirect } from "@/lib/auth/post-login";
 import { createRouteHandlerSupabaseClient } from "@/lib/supabase/route-handler";
 
@@ -37,11 +37,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(failureUrl);
   }
 
-  const bootstrap = await ensureAuthenticatedUserBootstrap(supabase);
-  const destinationPath = await resolvePostLoginRedirect({
-    userId: bootstrap.user_id,
-    requestedNext
-  });
+  const portalNext = isPortalAuthPath(requestedNext) ? requestedNext : null;
+  const destinationPath = portalNext
+    ? portalNext
+    : await (async () => {
+        const bootstrap = await ensureAuthenticatedUserBootstrap(supabase);
+
+        return resolvePostLoginRedirect({
+          userId: bootstrap.user_id,
+          requestedNext
+        });
+      })();
 
   const destination = new URL(destinationPath, request.url);
   const redirectResponse = NextResponse.redirect(destination);

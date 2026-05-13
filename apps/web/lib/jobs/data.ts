@@ -455,6 +455,30 @@ export const listJobs = cache(async (): Promise<JobListItem[]> => {
   return sortJobs(data.map(mapJobListItem));
 });
 
+export const listJobsByCustomer = cache(
+  async (customerId: string, next = "/jobs"): Promise<JobListItem[]> => {
+    const scope = await requireJobScope(next);
+    const supabase = await getSupabaseServerClient();
+    const response = await supabase
+      .from("jobs")
+      .select(jobSelect)
+      .eq("company_id", scope.organizationId)
+      .eq("customer_id", customerId)
+      .order("updated_at", { ascending: false });
+    const data: unknown = response.data;
+
+    if (response.error) {
+      throw new Error(`Unable to load customer jobs: ${response.error.message}`);
+    }
+
+    if (!isJobRowArray(data)) {
+      return [];
+    }
+
+    return sortJobs(data.map(mapJobListItem));
+  }
+);
+
 export async function listScheduledJobsByDate(workDate: string, next = "/jobs") {
   const scope = await requireJobScope(next);
   const supabase = await getSupabaseServerClient();

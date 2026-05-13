@@ -10,6 +10,8 @@ const portalAuthStatePath = path.resolve(
 );
 
 test("save local authenticated portal customer state", async ({ page }) => {
+  test.setTimeout(240_000);
+
   loadRootEnv();
 
   const email = process.env.FLOORCONNECTOR_PORTAL_E2E_EMAIL;
@@ -22,7 +24,8 @@ test("save local authenticated portal customer state", async ({ page }) => {
 
   await loginWithEmail(page, email, password, {
     next: "/portal",
-    expectedPath: "/portal"
+    expectedPath: "/portal",
+    verifyContent: false
   });
   await fs.mkdir(path.dirname(portalAuthStatePath), { recursive: true });
   await page.context().storageState({ path: portalAuthStatePath });

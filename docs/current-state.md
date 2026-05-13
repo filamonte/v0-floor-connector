@@ -502,7 +502,7 @@ Implemented:
 - protected customers list page
 - customer detail page
 - customer detail now includes a compact `Contacts` management section over canonical `contacts` and `customer_contacts`
-- contractor admins can now add related customer contacts, edit their basic contact details, and designate one main contact through the shared customer-contact actions; People is the intended management home for this relationship/portal access work, while customer detail keeps contextual visibility
+- contractor admins can now add related customer contacts, edit their basic contact details, and designate one main contact through the shared customer-contact actions; customer detail is the customer-specific home for contact and portal access setup, while People remains the cross-customer identity/access administration view
 - `/directory` now also surfaces those related customer contacts as read-only `Customer Contact` entries that route back to the parent customer detail page
 - customer detail and Directory now also show portal-readiness and permission context for related customer contacts:
   - whether the contact has an email
@@ -586,9 +586,14 @@ Implemented:
 - authenticated-user portal access lookup foundation for customer-facing record loaders
 - tenant-safe portal record loaders for canonical project, estimate, contract, invoice, change-order, and customer-visible appointment review data
 - lightweight `portal_record_views` audit foundation for customer-facing record visibility events
-- contractor-side portal access management is intended to live in People for granting, linking, reviewing, revoking, and project-scoping customer portal access, while customer detail keeps a contextual access snapshot and handoff
-- contractor-side portal invite creation from customer detail now supports pending project-scoped invites for customer/contact emails that do not yet belong to an authenticated FloorConnector user
-- `/portal/invite?token=...` validates a hashed invite token, shows customer-safe customer/project context, sends users through the existing login/signup flow, and activates the canonical portal grant only when the authenticated email matches the invite
+- contractor-side portal access management is contact-centered on the customer record and also visible in the People cross-customer administration view for granting, linking, reviewing, revoking, and project-scoping customer portal access
+- contractor-side portal invite creation now requires a selected customer contact for new invites and supports pending project-scoped invites for customer/contact emails that do not yet belong to an authenticated FloorConnector user
+- `/portal/invite?token=...` validates a hashed invite token, shows customer-safe customer/project context, and guides unauthenticated contacts into signup, sign-in, or password reset with the invited email and safe `next` return path preserved
+- accepting the invite activates the canonical portal grant only when the authenticated email matches the invite; the activated user can return to `/portal` later through normal Supabase Auth
+- portal-bound auth redirects avoid contractor tenant bootstrap so portal-only customer contacts do not receive accidental contractor company owner memberships
+- current portal invite creation and resend use app-managed invite links, do not call Supabase Auth admin invite, do not create a Supabase Auth user for the customer, and send branded provider-backed email only when Postmark delivery is configured and activation guard allows external sends
+- pending portal invite send/resend prepares a fresh token/hash, returns the fresh copy-link fallback immediately, and records successful or failed provider attempts through `notification_events` plus `notification_deliveries` without storing raw invite tokens
+- if the invited email already belongs to an existing canonical app user, portal access activates immediately and no invite token is created
 - customer detail now also shows stored linked-contact permission readiness, including the supported customer-facing permission set
 - customer detail now also stores and edits linked-contact portal permissions, with first-pass enforcement active for estimate approve/reject, change-order approve/reject, and contract sign/decline actions
 - customer detail now clearly labels customer-level grants versus linked contact grants and provides cleanup guidance for gradually attaching legacy customer-level grants to existing related customer contacts
@@ -608,9 +613,11 @@ Current portal access design notes:
 
 - portal access is anchored to the canonical customer record instead of inventing a separate portal-customer model
 - normal contractor workflow now starts customer portal access from a contractor-created customer/project invite, not from customer self-registration before anything is shared
-- null `customer_contact_id` still represents the existing customer-level portal grant behavior
+- portal users set passwords through the normal Supabase-backed signup/password-reset routes; invite-driven signup, login, and reset keep the customer on the app-managed invite path, and contractors do not set or see portal passwords
+- portal invite email delivery is activation-gated and configuration-aware; if provider email is locked or missing configuration, the UI says no email was sent and preserves the fresh copy-link fallback
+- null `customer_contact_id` still represents the existing customer-level portal grant behavior as a legacy compatibility fallback, not the preferred create path
 - existing customer-level grants are not migrated, revoked, or altered automatically; they continue to work as legacy account-level portal access
-- contractor admins can attach an existing customer-level grant to an existing related customer contact from People when they are ready to use contact-level permissions
+- contractor admins can attach an existing customer-level grant to an existing related customer contact from customer detail or People when they are ready to use contact-level permissions, and the create path now auto-links a reused same-email legacy grant to the selected contact when safe
 - linked-contact grants now identify which canonical related customer contact a login represents without changing project visibility behavior
 - linked-contact grants now also show stored permission readiness in People and contextual customer surfaces
 - linked-contact grants now also persist stored permission flags for estimate visibility/approval, contract signing, change-order approval, invoice view/pay, and quote-request readiness
@@ -624,6 +631,8 @@ Current portal access design notes:
 - customer-facing estimate, contract, and invoice review pages now exist inside the portal on top of the same tenant-safe canonical record loaders
 - portal home and project workspaces now show customer-visible project appointments from canonical `appointments` when `customer_visible = true`, using only customer-safe appointment fields: title/type, date/time, status, location, and `customer_notes`
 - portal review remains customer-safe and canonical-record-based in this pass, with contract signing now live on the shared contract record and portal invoice review now able to start customer payment activity on the same canonical invoice and payment chain without introducing a duplicate portal billing model
+
+See [docs/portal-identity-review.md](C:/FloorConnector/docs/portal-identity-review.md) for the current identity/contact/access map, invite behavior trace, and enterprise repair path.
 - portal home and Project Workspaces now reflect payment-requested, payment-in-progress, partially-paid, and paid outcomes as part of the same shared project workflow guidance
 
 ### Change Orders

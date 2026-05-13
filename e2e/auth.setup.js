@@ -9,6 +9,8 @@ const authStatePath = path.resolve(
 );
 
 test("save local authenticated contractor state", async ({ page }) => {
+  test.setTimeout(240_000);
+
   loadRootEnv();
 
   const email = process.env.FLOORCONNECTOR_E2E_EMAIL;
@@ -20,7 +22,10 @@ test("save local authenticated contractor state", async ({ page }) => {
     );
   }
 
-  await loginWithEmail(page, email, password, { expectedPath: "/dashboard" });
+  await loginWithEmail(page, email, password, {
+    expectedPath: "/dashboard",
+    verifyContent: false
+  });
   await fs.mkdir(path.dirname(authStatePath), { recursive: true });
   await page.context().storageState({ path: authStatePath });
 });

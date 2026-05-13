@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import {
   acceptPortalInvite,
   createPortalInvite,
+  sendPortalInviteEmail,
   updateCustomerContactPortalPermission,
   createPortalProjectAccess,
   updatePortalAccessGrant,
@@ -71,6 +72,25 @@ function getPortalProjectStatus(formData: FormData) {
   return status === "revoked" ? "revoked" : "active";
 }
 
+function getSafePortalInviteEmailError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return "Unable to send portal invite email. No invite token or secret was exposed.";
+  }
+
+  if (
+    error.message.includes("pending") ||
+    error.message.includes("authenticated portal account") ||
+    error.message.includes("invited email") ||
+    error.message.includes("project visibility") ||
+    error.message.includes("locked during early access") ||
+    error.message.includes("not configured")
+  ) {
+    return error.message;
+  }
+
+  return "Unable to send portal invite email. The provider attempt was recorded when possible.";
+}
+
 function getCheckboxValue(formData: FormData, key: string) {
   return formData.get(key) === "on";
 }
@@ -94,6 +114,14 @@ export async function createPortalAccessGrantAction(formData: FormData) {
     redirect(
       buildRedirect(getCustomerPath(customerId), {
         error: "Portal user email is required."
+      })
+    );
+  }
+
+  if (!customerContactId) {
+    redirect(
+      buildRedirect(getCustomerPath(customerId), {
+        error: "Select the customer contact receiving portal access."
       })
     );
   }
@@ -129,25 +157,90 @@ export async function createPortalAccessGrantAction(formData: FormData) {
   revalidatePath(getCustomerPath(customerId));
   revalidatePath(managementPath);
   revalidatePath("/people");
+  revalidatePath("/communications");
+  revalidatePath("/dashboard");
   revalidatePath("/portal");
 
   const requestHeaders = await headers();
   const origin = getRequestOrigin(requestHeaders);
-  const inviteUrl = inviteResult.inviteToken
+  let inviteUrl = inviteResult.inviteToken
     ? `${origin}/portal/invite?token=${encodeURIComponent(inviteResult.inviteToken)}`
     : undefined;
+  let message = inviteResult.reusedExistingGrant
+    ? inviteResult.activatedImmediately
+      ? `Portal access for ${portalUserEmail} is already active and scoped to the selected project.`
+      : `A pending portal invite already exists for ${portalUserEmail}.`
+    : inviteResult.activatedImmediately
+      ? `Portal access granted for ${portalUserEmail}. The existing FloorConnector account can now open the selected project.`
+      : `Portal invite created for ${portalUserEmail}.`;
+
+  if (!inviteResult.activatedImmediately) {
+    try {
+      const emailResult = await sendPortalInviteEmail({
+        portalAccessGrantId: inviteResult.portalAccessGrant.id,
+        inviteOrigin: origin,
+        next: managementPath
+      });
+
+      inviteUrl = `${origin}/portal/invite?token=${encodeURIComponent(emailResult.inviteToken)}`;
+      message = emailResult.message;
+    } catch (error) {
+      message = getSafePortalInviteEmailError(error);
+    }
+  }
 
   redirect(
     buildRedirect(managementPath, {
-      message: inviteResult.reusedExistingGrant
-        ? inviteResult.activatedImmediately
-          ? `Sent to ${portalUserEmail}. Portal access already active and scoped to the selected project.`
-          : `A pending portal invite already exists for ${portalUserEmail}. Revoke it and create a fresh invite if the original link is no longer available.`
-        : inviteResult.activatedImmediately
-          ? `Sent to ${portalUserEmail}. Portal access granted for the selected project.`
-          : `Sent to ${portalUserEmail}. Portal invite was created; copy the invite link from this page.`,
+      message,
       inviteUrl,
       inviteEmail: inviteResult.invitedEmail
+    })
+  );
+}
+
+export async function sendPortalInviteEmailAction(formData: FormData) {
+  const portalAccessGrantId = getFieldValue(formData, "portalAccessGrantId");
+  const customerId = getFieldValue(formData, "customerId");
+  const managementPath = customerId ? getManagementPath(formData, customerId) : "/customers";
+
+  if (!portalAccessGrantId || !customerId) {
+    redirect(
+      buildRedirect("/customers", {
+        error: "Portal invite email is missing required identifiers."
+      })
+    );
+  }
+
+  const requestHeaders = await headers();
+  const origin = getRequestOrigin(requestHeaders);
+
+  let result;
+  try {
+    result = await sendPortalInviteEmail({
+      portalAccessGrantId,
+      inviteOrigin: origin,
+      next: managementPath
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect(managementPath, {
+        error: getSafePortalInviteEmailError(error)
+      })
+    );
+  }
+
+  revalidatePath("/customers");
+  revalidatePath(getCustomerPath(customerId));
+  revalidatePath(managementPath);
+  revalidatePath("/people");
+  revalidatePath("/communications");
+  revalidatePath("/dashboard");
+
+  redirect(
+    buildRedirect(managementPath, {
+      message: result.message,
+      inviteUrl: `${origin}/portal/invite?token=${encodeURIComponent(result.inviteToken)}`,
+      inviteEmail: result.invitedEmail
     })
   );
 }

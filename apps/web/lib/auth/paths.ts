@@ -37,6 +37,14 @@ export function isProtectedPath(pathname: string) {
   );
 }
 
+export function isPortalAuthPath(pathname: string | null | undefined) {
+  if (!pathname) {
+    return false;
+  }
+
+  return pathname === "/portal" || pathname.startsWith("/portal/");
+}
+
 export function sanitizeRedirectPath(next: string | null | undefined) {
   if (!next || !next.startsWith("/") || next.startsWith("//")) {
     return defaultAuthenticatedPath;
@@ -51,6 +59,21 @@ export function getSafeInternalRedirectPath(next: string | null | undefined) {
   }
 
   return next;
+}
+
+export function buildInternalRedirectPath(
+  pathname: string,
+  params: Record<string, string | undefined>
+) {
+  const destination = new URL(pathname, "http://floorconnector.local");
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value) {
+      destination.searchParams.set(key, value);
+    }
+  }
+
+  return `${destination.pathname}${destination.search}`;
 }
 
 export function toSafeNextPath(pathname: string, search = "") {

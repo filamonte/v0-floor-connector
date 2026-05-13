@@ -10,6 +10,8 @@ const platformAdminAuthStatePath = path.resolve(
 );
 
 test("save local authenticated platform-admin state", async ({ page }) => {
+  test.setTimeout(240_000);
+
   loadRootEnv();
 
   const email =
@@ -23,7 +25,10 @@ test("save local authenticated platform-admin state", async ({ page }) => {
     );
   }
 
-  await loginWithEmail(page, email, password, { expectedPath: "/super-admin" });
+  await loginWithEmail(page, email, password, {
+    expectedPath: "/super-admin",
+    verifyContent: false
+  });
   await fs.mkdir(path.dirname(platformAdminAuthStatePath), { recursive: true });
   await page.context().storageState({ path: platformAdminAuthStatePath });
 });

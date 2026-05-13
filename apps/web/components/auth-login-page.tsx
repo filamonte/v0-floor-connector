@@ -21,6 +21,7 @@ type AuthLoginPageProps = {
     error?: string;
     message?: string;
     next?: string;
+    email?: string;
   }>;
 };
 
@@ -39,7 +40,20 @@ export async function AuthLoginPage({ searchParams }: AuthLoginPageProps) {
   const params = (await searchParams) ?? {};
   const next = sanitizeRedirectPath(params.next);
   const formNext = getSafeInternalRedirectPath(params.next) ?? "";
-  const nextQuery = formNext ? `?next=${encodeURIComponent(formNext)}` : "";
+  const initialEmail = params.email?.trim() ?? "";
+  const linkedSearchParams = new URLSearchParams();
+
+  if (formNext) {
+    linkedSearchParams.set("next", formNext);
+  }
+
+  if (initialEmail) {
+    linkedSearchParams.set("email", initialEmail);
+  }
+
+  const linkedQuery = linkedSearchParams.size
+    ? `?${linkedSearchParams.toString()}`
+    : "";
   const surfaceContext = getAuthSurfaceContext(next);
 
   await redirectIfAuthenticated(formNext);
@@ -56,7 +70,7 @@ export async function AuthLoginPage({ searchParams }: AuthLoginPageProps) {
         <>
           Don&apos;t have an account?{" "}
           <Link
-            href={`${signUpPath}${nextQuery}`}
+            href={`${signUpPath}${linkedQuery}`}
             className="font-semibold text-[var(--copper)] transition hover:text-[var(--copper-light)]"
           >
             Create one for free
@@ -110,6 +124,7 @@ export async function AuthLoginPage({ searchParams }: AuthLoginPageProps) {
               name="email"
               autoComplete="email"
               placeholder="you@company.com"
+              defaultValue={initialEmail}
               icon="email"
               required
             />
@@ -136,7 +151,7 @@ export async function AuthLoginPage({ searchParams }: AuthLoginPageProps) {
               <span>Sign in</span>
             </AuthSubmitButton>
             <Link
-              href={forgotPasswordPath}
+              href={`${forgotPasswordPath}${linkedQuery}`}
               className="text-sm font-medium text-[var(--copper)] transition hover:text-[var(--copper-light)]"
             >
               Forgot password?

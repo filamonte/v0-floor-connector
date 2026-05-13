@@ -2155,6 +2155,61 @@ export const listEstimates = cache(async (): Promise<EstimateListItem[]> => {
   );
 });
 
+export const listEstimatesByProjectIds = cache(
+  async (projectIds: string[], next = "/estimates"): Promise<EstimateListItem[]> => {
+    const scope = await requireEstimateScope(next);
+    const scopedProjectIds = [...new Set(projectIds.filter(Boolean))];
+
+    if (scopedProjectIds.length === 0) {
+      return [];
+    }
+
+    const supabase = await getSupabaseServerClient();
+    const response = await supabase
+      .from("estimates")
+      .select(estimateSelect)
+      .eq("company_id", scope.organizationId)
+      .in("project_id", scopedProjectIds)
+      .order("updated_at", { ascending: false });
+    const data: unknown = response.data;
+    const error = response.error;
+
+    if (error) {
+      throw new Error(`Unable to load customer estimates: ${error.message}`);
+    }
+
+    if (!isEstimateRowArray(data)) {
+      return [];
+    }
+
+    return sortEstimates(
+      data.map((row) => ({
+        ...mapEstimate(row),
+        opportunity: row.opportunities
+          ? {
+              id: row.opportunities.id,
+              title: row.opportunities.title,
+              status: row.opportunities.status
+            }
+          : null,
+        customer: row.customers
+          ? {
+              id: row.customers.id,
+              name: row.customers.name,
+              companyName: row.customers.company_name
+            }
+          : null,
+        project: row.projects
+          ? {
+              id: row.projects.id,
+              name: row.projects.name
+            }
+          : null
+      }))
+    );
+  }
+);
+
 export async function getEstimateById(
   estimateId: string,
   next = "/estimates"

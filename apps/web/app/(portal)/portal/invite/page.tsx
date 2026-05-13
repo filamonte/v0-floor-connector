@@ -13,10 +13,19 @@ type PortalInvitePageProps = {
   }>;
 };
 
-function buildAuthHref(pathname: "/login" | "/signup", token: string) {
+function buildAuthHref(
+  pathname: "/login" | "/signup" | "/forgot-password",
+  token: string,
+  invitedEmail?: string | null
+) {
   const next = `/portal/invite?token=${encodeURIComponent(token)}`;
+  const search = new URLSearchParams({ next });
 
-  return `${pathname}?next=${encodeURIComponent(next)}`;
+  if (invitedEmail) {
+    search.set("email", invitedEmail);
+  }
+
+  return `${pathname}?${search.toString()}`;
 }
 
 export default async function PortalInvitePage({ searchParams }: PortalInvitePageProps) {
@@ -107,19 +116,39 @@ export default async function PortalInvitePage({ searchParams }: PortalInvitePag
         ) : null}
 
         {invite && canAccept && !user ? (
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href={buildAuthHref("/signup", token)}
-              className="inline-flex items-center justify-center rounded-full bg-brand-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-900"
-            >
-              Create portal account
-            </Link>
-            <Link
-              href={buildAuthHref("/login", token)}
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
-            >
-              Log in
-            </Link>
+          <div className="mt-6 rounded-2xl border border-brand-100 bg-brand-50/70 px-4 py-4">
+            <p className="text-sm font-semibold text-slate-950">
+              Create or sign in to your portal account
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Use the invited email address shown above. After you sign up or sign in,
+              FloorConnector will bring you back here to verify the invite and activate
+              ongoing portal access for the shared project records.
+            </p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href={buildAuthHref("/signup", token, invite.invitedEmail)}
+                className="inline-flex items-center justify-center rounded-full bg-brand-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-900"
+              >
+                Create portal account
+              </Link>
+              <Link
+                href={buildAuthHref("/login", token, invite.invitedEmail)}
+                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+              >
+                Sign in
+              </Link>
+            </div>
+            <p className="mt-3 text-xs leading-5 text-slate-500">
+              Already have an account but forgot your password?{" "}
+              <Link
+                href={buildAuthHref("/forgot-password", token, invite.invitedEmail)}
+                className="font-semibold text-brand-700 underline-offset-4 hover:underline"
+              >
+                Reset it using the invited email
+              </Link>
+              .
+            </p>
           </div>
         ) : null}
 

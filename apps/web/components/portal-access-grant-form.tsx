@@ -5,6 +5,7 @@ type PortalAccessGrantFormProps = {
   customerContacts?: Array<{
     id: string;
     label: string;
+    email?: string | null;
   }>;
   projects?: Array<{
     id: string;
@@ -25,6 +26,12 @@ export function PortalAccessGrantForm({
   returnTo
 }: PortalAccessGrantFormProps) {
   const defaultProjectId = projects.length === 1 ? projects[0]?.id : "";
+  const defaultContactId =
+    defaultCustomerContactId ?? (customerContacts.length === 1 ? customerContacts[0]?.id : "") ?? "";
+  const defaultContact = customerContacts.find(
+    (customerContact) => customerContact.id === defaultContactId
+  );
+  const defaultInviteEmail = defaultEmail ?? defaultContact?.email ?? "";
 
   return (
     <form action={action} className="space-y-4">
@@ -37,13 +44,13 @@ export function PortalAccessGrantForm({
             htmlFor="portal-invite-email"
             className="mb-2 block text-sm font-medium text-slate-800"
           >
-            Send to contact
+            Invite email
           </label>
           <input
             id="portal-invite-email"
             name="portalUserEmail"
             type="email"
-            defaultValue={defaultEmail ?? ""}
+            defaultValue={defaultInviteEmail}
             required
             className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
             placeholder="customer@example.com"
@@ -79,15 +86,16 @@ export function PortalAccessGrantForm({
           htmlFor="portal-invite-contact"
           className="mb-2 block text-sm font-medium text-slate-800"
         >
-            Canonical contact relationship
+          Customer contact
         </label>
         <select
           id="portal-invite-contact"
           name="customerContactId"
-          defaultValue={defaultCustomerContactId ?? ""}
+          defaultValue={defaultContactId}
+          required
           className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
         >
-          <option value="">Customer-level grant</option>
+          <option value="">Select a customer contact</option>
           {customerContacts.map((customerContact) => (
             <option key={customerContact.id} value={customerContact.id}>
               {customerContact.label}
@@ -101,11 +109,11 @@ export function PortalAccessGrantForm({
           type="submit"
           className="inline-flex h-9 w-full items-center justify-center gap-2 border border-[#d8731f] bg-[#d8731f] px-3 text-sm font-medium text-white transition hover:bg-[#bf6519] sm:w-auto sm:min-w-[220px]"
         >
-          Ensure portal access to this project
+          Create or reuse portal access
         </button>
         <p className="text-sm leading-6 text-slate-500">
-          People remains the management home. This action only ensures the selected
-          contact can reach the selected project when a workflow needs portal access.
+          This creates or reuses contact-level access, project visibility, and
+          sends a branded invite email when delivery is configured and unlocked.
         </p>
       </div>
     </form>

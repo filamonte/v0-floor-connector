@@ -24,6 +24,8 @@ type PeoplePageProps = {
   searchParams?: Promise<{
     compose?: string;
     error?: string;
+    inviteEmail?: string;
+    inviteUrl?: string;
     message?: string;
     q?: string;
     view?: "all" | "employees" | "subcontractors" | "active";
@@ -181,7 +183,7 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
     <ContractorWorkspacePage
       eyebrow="People"
       title={`People for ${organizationContext.organization.displayName}`}
-      description="Manage canonical people identity across workforce participants, customer contacts, login linkage, and portal access administration. Workflow pages can trigger access, but People is the management home."
+      description="Manage canonical people identity across workforce participants, customer contacts, login linkage, and portal access administration. Customer detail owns customer-specific contact setup; People is the cross-customer access view."
       summary={
         <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-3">
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
@@ -278,6 +280,24 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
           {resolvedSearchParams.message ? (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
               {resolvedSearchParams.message}
+            </div>
+          ) : null}
+
+          {resolvedSearchParams.inviteUrl ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-950">
+              <p className="font-semibold">Portal invite link</p>
+              <p className="mt-1">
+                Use this fresh app invite link as the copy-link fallback for{" "}
+                <span className="font-medium">
+                  {resolvedSearchParams.inviteEmail ?? "the invited customer"}
+                </span>
+                . If provider delivery was configured and unlocked, the branded email was
+                attempted separately. The raw token is shown only after creation or resend;
+                the database stores only the token hash.
+              </p>
+              <p className="mt-3 break-all rounded-xl border border-amber-200 bg-white/80 px-3 py-2 font-mono text-xs text-slate-900">
+                {resolvedSearchParams.inviteUrl}
+              </p>
             </div>
           ) : null}
 

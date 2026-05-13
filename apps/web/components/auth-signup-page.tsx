@@ -17,6 +17,7 @@ type AuthSignupPageProps = {
     error?: string;
     message?: string;
     next?: string;
+    email?: string;
   }>;
 };
 
@@ -35,7 +36,20 @@ export async function AuthSignupPage({ searchParams }: AuthSignupPageProps) {
   const params = (await searchParams) ?? {};
   const next = sanitizeRedirectPath(params.next);
   const formNext = getSafeInternalRedirectPath(params.next) ?? "";
-  const nextQuery = formNext ? `?next=${encodeURIComponent(formNext)}` : "";
+  const initialEmail = params.email?.trim() ?? "";
+  const linkedSearchParams = new URLSearchParams();
+
+  if (formNext) {
+    linkedSearchParams.set("next", formNext);
+  }
+
+  if (initialEmail) {
+    linkedSearchParams.set("email", initialEmail);
+  }
+
+  const linkedQuery = linkedSearchParams.size
+    ? `?${linkedSearchParams.toString()}`
+    : "";
   const surfaceContext = getAuthSurfaceContext(next);
 
   await redirectIfAuthenticated(formNext);
@@ -52,7 +66,7 @@ export async function AuthSignupPage({ searchParams }: AuthSignupPageProps) {
         <>
           Already have an account?{" "}
           <Link
-            href={`${signInPath}${nextQuery}`}
+            href={`${signInPath}${linkedQuery}`}
             className="font-semibold text-[var(--copper)] transition hover:text-[var(--copper-light)]"
           >
             Sign in instead
@@ -106,6 +120,7 @@ export async function AuthSignupPage({ searchParams }: AuthSignupPageProps) {
               name="email"
               autoComplete="email"
               placeholder="you@company.com"
+              defaultValue={initialEmail}
               icon="email"
               hint="Use an email you can verify if confirmation is required."
               required

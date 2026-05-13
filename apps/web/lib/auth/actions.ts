@@ -7,7 +7,9 @@ import { redirect } from "next/navigation";
 import {
   defaultAuthenticatedPath,
   forgotPasswordPath,
+  buildInternalRedirectPath,
   getSafeInternalRedirectPath,
+  isPortalAuthPath,
   signInPath,
   signUpPath,
   updatePasswordPath
@@ -27,17 +29,7 @@ function buildRedirect(
   pathname: string,
   params: Record<string, string | undefined>
 ) {
-  const search = new URLSearchParams();
-
-  for (const [key, value] of Object.entries(params)) {
-    if (value) {
-      search.set(key, value);
-    }
-  }
-
-  const query = search.toString();
-
-  return query ? `${pathname}?${query}` : pathname;
+  return buildInternalRedirectPath(pathname, params);
 }
 
 export async function signInWithPasswordAction(formData: FormData) {
@@ -49,6 +41,7 @@ export async function signInWithPasswordAction(formData: FormData) {
     redirect(
       buildRedirect(signInPath, {
         error: "Email and password are required.",
+        email,
         next: requestedNext ?? undefined
       })
     );
@@ -64,16 +57,23 @@ export async function signInWithPasswordAction(formData: FormData) {
     redirect(
       buildRedirect(signInPath, {
         error: error.message,
+        email,
         next: requestedNext ?? undefined
       })
     );
   }
 
-  const bootstrap = await ensureAuthenticatedUserBootstrap(supabase);
-  const destination = await resolvePostLoginRedirect({
-    userId: bootstrap.user_id,
-    requestedNext
-  });
+  const portalNext = isPortalAuthPath(requestedNext) ? requestedNext : null;
+  const destination = portalNext
+    ? portalNext
+    : await (async () => {
+        const bootstrap = await ensureAuthenticatedUserBootstrap(supabase);
+
+        return resolvePostLoginRedirect({
+          userId: bootstrap.user_id,
+          requestedNext
+        });
+      })();
 
   revalidatePath("/", "layout");
   redirect(destination);
@@ -114,6 +114,7 @@ export async function signUpAction(formData: FormData) {
     redirect(
       buildRedirect(signUpPath, {
         error: "Email and password are required.",
+        email,
         next: requestedNext ?? undefined
       })
     );
@@ -132,6 +133,7 @@ export async function signUpAction(formData: FormData) {
     redirect(
       buildRedirect(signUpPath, {
         error: error.message,
+        email,
         next: requestedNext ?? undefined
       })
     );
@@ -140,11 +142,17 @@ export async function signUpAction(formData: FormData) {
   revalidatePath("/", "layout");
 
   if (data.session) {
-    const bootstrap = await ensureAuthenticatedUserBootstrap(supabase);
-    const destination = await resolvePostLoginRedirect({
-      userId: bootstrap.user_id,
-      requestedNext
-    });
+    const portalNext = isPortalAuthPath(requestedNext) ? requestedNext : null;
+    const destination = portalNext
+      ? portalNext
+      : await (async () => {
+          const bootstrap = await ensureAuthenticatedUserBootstrap(supabase);
+
+          return resolvePostLoginRedirect({
+            userId: bootstrap.user_id,
+            requestedNext
+          });
+        })();
 
     redirect(destination);
   }
@@ -152,6 +160,7 @@ export async function signUpAction(formData: FormData) {
   redirect(
     buildRedirect(signInPath, {
       message: "Check your email to confirm your account before signing in.",
+      email,
       next: requestedNext ?? undefined
     })
   );
@@ -159,44 +168,57 @@ export async function signUpAction(formData: FormData) {
 
 export async function requestPasswordResetAction(formData: FormData) {
   const email = getFieldValue(formData, "email");
+  const requestedNext = getSafeInternalRedirectPath(getFieldValue(formData, "next"));
   const requestHeaders = await headers();
   const origin = getRequestOrigin(requestHeaders);
 
   if (!email) {
     redirect(
       buildRedirect(forgotPasswordPath, {
-        error: "Email is required."
+        error: "Email is required.",
+        next: requestedNext ?? undefined
       })
     );
   }
 
   const supabase = await getSupabaseServerClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: getAuthCallbackUrl(updatePasswordPath, origin)
+    redirectTo: getAuthCallbackUrl(
+      requestedNext
+        ? buildRedirect(updatePasswordPath, { next: requestedNext })
+        : updatePasswordPath,
+      origin
+    )
   });
 
   if (error) {
     redirect(
       buildRedirect(forgotPasswordPath, {
-        error: error.message
+        error: error.message,
+        email,
+        next: requestedNext ?? undefined
       })
     );
   }
 
   redirect(
     buildRedirect(forgotPasswordPath, {
-      message: "If an account exists for that email, a reset link has been sent."
+      message: "If an account exists for that email, a reset link has been sent.",
+      email,
+      next: requestedNext ?? undefined
     })
   );
 }
 
 export async function updatePasswordAction(formData: FormData) {
   const password = getFieldValue(formData, "password");
+  const requestedNext = getSafeInternalRedirectPath(getFieldValue(formData, "next"));
 
   if (!password) {
     redirect(
       buildRedirect(updatePasswordPath, {
-        error: "A new password is required."
+        error: "A new password is required.",
+        next: requestedNext ?? undefined
       })
     );
   }
@@ -209,13 +231,14 @@ export async function updatePasswordAction(formData: FormData) {
   if (error) {
     redirect(
       buildRedirect(updatePasswordPath, {
-        error: error.message
+        error: error.message,
+        next: requestedNext ?? undefined
       })
     );
   }
 
   redirect(
-    buildRedirect(defaultAuthenticatedPath, {
+    buildRedirect(requestedNext ?? defaultAuthenticatedPath, {
       message: "Your password has been updated."
     })
   );
