@@ -36,6 +36,21 @@ const measurementTypeOptions = [
   { value: "count", label: "Count", unit: "ea" }
 ] as const;
 
+const roomTypeOptions = [
+  "Garage",
+  "Basement",
+  "Kitchen",
+  "Bathroom",
+  "Commercial Floor",
+  "Warehouse",
+  "Showroom",
+  "Patio",
+  "Pool Deck",
+  "Stairs",
+  "Hallway",
+  "Other"
+] as const;
+
 const observationTypeOptions = [
   { value: "general", label: "General" },
   { value: "existing_floor", label: "Existing Floor" },
@@ -205,6 +220,17 @@ function formatUnitLabel(unit: string) {
   return "Select a measurement type";
 }
 
+function getRoomTypeValue(areaLabel: string) {
+  if (
+    roomTypeOptions.some((option) => option === areaLabel) &&
+    areaLabel !== "Other"
+  ) {
+    return areaLabel;
+  }
+
+  return areaLabel.trim().length > 0 ? "Other" : "";
+}
+
 function SelectField({
   label,
   name,
@@ -322,7 +348,7 @@ export function OpportunityStructuredIntakeFields({
                   value={derivedUnit}
                 />
                 <TextField
-                  label="Room / Area"
+                  label="Room / Area name"
                   name="measurementAreaLabel"
                   value={measurement.areaLabel}
                   onChange={(value) =>
@@ -334,6 +360,30 @@ export function OpportunityStructuredIntakeFields({
                   }
                   placeholder="Garage, Warehouse Bay 1, Kitchen"
                 />
+                <SelectField
+                  label="Room type"
+                  name="measurementRoomTypePreset"
+                  value={getRoomTypeValue(measurement.areaLabel)}
+                  onChange={(value) =>
+                    setMeasurementRows((current) =>
+                      current.map((row, rowIndex) =>
+                        rowIndex === index
+                          ? {
+                              ...row,
+                              areaLabel: value === "Other" ? row.areaLabel : value
+                            }
+                          : row
+                      )
+                    )
+                  }
+                >
+                  <option value="">Choose room type</option>
+                  {roomTypeOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </SelectField>
                 <SelectField
                   label="Measurement type"
                   name="measurementType"

@@ -106,25 +106,25 @@ function getPaymentProgressSummary(input: {
   }
 
   if (input.latestPaymentEventType === "checkout_started") {
-    return "Payment is currently in progress on this shared invoice, but the invoice is not complete until a canonical payment succeeds.";
+    return "Payment is currently in progress. This invoice is complete only after payment succeeds.";
   }
 
   if (input.latestPaymentEventType === "payment_succeeded") {
     return input.status === "paid"
       ? input.workflowRole === "deposit"
-        ? "A provider-backed deposit payment completed and this invoice is fully paid."
-        : "A provider-backed payment completed and this invoice is fully paid."
+        ? "A deposit payment completed and this invoice is fully paid."
+        : "A payment completed and this invoice is fully paid."
       : input.workflowRole === "deposit"
-        ? `A provider-backed deposit payment completed, but ${formatMoney(input.balanceDueAmount)} still remains.`
-        : `A provider-backed payment completed, but ${formatMoney(input.balanceDueAmount)} still remains due.`;
+        ? `A deposit payment completed, but ${formatMoney(input.balanceDueAmount)} still remains.`
+        : `A payment completed, but ${formatMoney(input.balanceDueAmount)} still remains due.`;
   }
 
   if (input.latestPaymentEventType === "payment_requested") {
-    return "Payment has been requested on this shared invoice and is now waiting for the next payment step.";
+    return "Payment has been requested and is now waiting for the next payment step.";
   }
 
   if (input.latestPaymentEventType === "payment_voided") {
-    return "The latest provider-backed payment was voided, so this invoice has returned to an open balance state.";
+    return "The latest payment was voided, so this invoice has returned to an open balance state.";
   }
 
   if (input.status === "paid") {
@@ -170,7 +170,7 @@ function getNextAction(input: {
     return {
       title: "Payment is already in progress",
       description:
-        "A checkout session has already started on this shared invoice, so use this page to confirm progress rather than starting a second payment request.",
+        "Checkout has already started, so use this page to confirm progress rather than starting a second payment request.",
       label: "Return to project workspace",
       href: `/portal/projects/${input.projectId}`
     };
@@ -196,8 +196,8 @@ function getNextAction(input: {
           : "Billing is current",
       description:
         input.status === "partially_paid"
-          ? "A provider-backed payment has already been applied to this shared invoice, but there is still an outstanding balance to review."
-          : "The latest provider-backed payment completed successfully on this shared invoice.",
+          ? "A payment has already been applied, but there is still an outstanding balance to review."
+          : "The latest payment completed successfully.",
       label: "Return to project workspace",
       href: `/portal/projects/${input.projectId}`
     };
@@ -217,7 +217,7 @@ function getNextAction(input: {
     return {
       title: "Review the reopened billing state",
       description:
-        "The latest provider-backed payment was voided, so this invoice has returned to an open billing step on the shared project chain.",
+        "The latest payment was voided, so this invoice has returned to an open balance.",
       label: "Return to project workspace",
       href: `/portal/projects/${input.projectId}`
     };
@@ -231,7 +231,7 @@ function getNextAction(input: {
           : "Review the remaining invoice balance",
       description:
         input.workflowRole === "deposit"
-          ? "A deposit payment has already been recorded, but the remaining balance still matters to the shared project workflow."
+          ? "A deposit payment has already been recorded, but there is still a remaining balance."
           : "A payment has already been recorded, but there is still an outstanding balance on this invoice.",
       label: "Return to project workspace",
       href: `/portal/projects/${input.projectId}`
@@ -242,7 +242,7 @@ function getNextAction(input: {
     return {
       title: "Continue to secure checkout",
       description:
-        "This page can now open a real checkout session on the same canonical invoice and payment chain.",
+        "This page can now open secure checkout for this invoice.",
       label: "Return to project workspace",
       href: `/portal/projects/${input.projectId}`
     };
@@ -251,7 +251,7 @@ function getNextAction(input: {
   return {
     title: "Review the current billing state",
     description:
-      "This invoice still shows an outstanding balance, but customer payment cannot start from its current shared workflow state yet.",
+      "This invoice still shows an outstanding balance, but payment cannot start from its current state yet.",
     label: "Return to project workspace",
     href: `/portal/projects/${input.projectId}`
   };
@@ -292,13 +292,18 @@ export default async function PortalInvoiceReviewPage({
           <DetailPageHeader
             eyebrow="Invoice Review"
             title={invoice.referenceNumber}
-            description="Review the invoice, confirm the current payment state, and continue with the next billing step on this same shared record."
+            description="Review your invoice, check what has been paid, and continue with the next payment step when it is available."
             backHref={`/portal/projects/${invoice.projectId}`}
             backLabel="Back to project workspace"
             actions={
-              <PortalStatusBadge status={invoice.status} className="px-4 py-2 text-sm">
-                {formatStatusLabel(invoice.status)}
-              </PortalStatusBadge>
+              <div className="flex flex-wrap items-center gap-3">
+                <PortalSecondaryLink href={`/portal/invoices/${invoice.id}/pdf`}>
+                  Print / save PDF
+                </PortalSecondaryLink>
+                <PortalStatusBadge status={invoice.status} className="px-4 py-2 text-sm">
+                  {formatStatusLabel(invoice.status)}
+                </PortalStatusBadge>
+              </div>
             }
           />
 
@@ -384,7 +389,7 @@ export default async function PortalInvoiceReviewPage({
                     content: (
                       <p className="text-sm text-slate-600">
                         {invoice.paymentWorkflow.canRequestPayment
-                          ? "Payment can start from this shared invoice now."
+                          ? "Payment can start from this invoice now."
                           : invoice.paymentWorkflow.requestBlockers[0]
                             ? formatPaymentBlocker(invoice.paymentWorkflow.requestBlockers[0])
                             : "Payment is not currently available from this invoice."}
@@ -399,7 +404,7 @@ export default async function PortalInvoiceReviewPage({
 
         <DetailPanel
           title="Invoice Body"
-          description="Review the shared billing record here first, including line items, totals, and notes."
+          description="Review the bill, line items, totals, and notes before taking any payment action."
         >
           <div className="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
             <div className="space-y-6">
@@ -407,7 +412,7 @@ export default async function PortalInvoiceReviewPage({
                 <div>
                   <p className="text-sm font-medium text-slate-950">Line items</p>
                   <p className="mt-1 text-sm leading-6 text-slate-600">
-                    Shared invoice scope tied to the same canonical project workflow.
+                    The work and charges included on this invoice.
                   </p>
                 </div>
                 {invoice.lineItems.length > 0 ? (
@@ -567,14 +572,14 @@ export default async function PortalInvoiceReviewPage({
       <aside className="space-y-6">
         <DetailPanel
           title="Payment Actions"
-          description="Customer checkout on this shared invoice and payment chain."
+          description="Continue to secure checkout when payment is available."
         >
           <div className="space-y-4 text-sm leading-6 text-slate-600">
             <p className="max-w-[34ch]">
               {isProductionActionLocked
-                ? "Checkout is locked during early access. You can still review this real invoice and its payment state."
+                ? "Checkout is locked during early access. You can still review this invoice and its payment state."
                 : invoice.paymentWorkflow.canRequestPayment
-                ? "Continue from here into secure checkout on this invoice. The checkout session stays attached to the same canonical invoice and payment chain the contractor sees."
+                ? "Continue to secure checkout for this invoice."
                 : invoice.paymentWorkflow.requestBlockers[0]
                   ? formatPaymentBlocker(invoice.paymentWorkflow.requestBlockers[0])
                   : "Customer payment is not currently available from this invoice."}
@@ -611,7 +616,7 @@ export default async function PortalInvoiceReviewPage({
               <EarlyAccessLockNotice showLink={false} />
             ) : (
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                Payment initiation is currently blocked by this invoice's shared workflow state.
+                Payment is currently blocked by this invoice's current state.
               </div>
             )}
           </div>
@@ -619,7 +624,7 @@ export default async function PortalInvoiceReviewPage({
 
         <DetailPanel
           title="Invoice Context"
-          description="Compact shared record context without contractor-only edit or workflow controls."
+          description="Project and invoice details for reference."
         >
           <ContextFactsList
             items={[
@@ -659,7 +664,7 @@ export default async function PortalInvoiceReviewPage({
 
         <DetailPanel
           title="Payment Activity"
-          description="Recent customer-facing payment workflow activity on this invoice."
+          description="Recent payment activity on this invoice."
         >
           <div className="space-y-3">
             {invoice.paymentEvents.length > 0 ? (
@@ -689,7 +694,7 @@ export default async function PortalInvoiceReviewPage({
               ))
             ) : (
               <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
-                No customer-facing payment activity has been recorded on this invoice yet.
+                No payment activity has been recorded on this invoice yet.
               </div>
             )}
           </div>

@@ -17,6 +17,7 @@ import {
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { listPeople } from "@/lib/people/data";
+import { listOpportunities } from "@/lib/opportunities/data";
 import {
   buildScheduleHref,
   type CrewViewKey,
@@ -282,7 +283,7 @@ function getScheduleListEmptyState(input: {
       eyebrow: "No jobs yet",
       title: "Jobs will feed this schedule surface",
       description:
-        "The schedule dashboard reads from canonical jobs and their crew assignments once work starts moving into downstream execution."
+        "The schedule dashboard reads from saved jobs and their crew assignments once work starts moving into downstream execution."
     };
   }
 
@@ -300,7 +301,7 @@ function getScheduleListEmptyState(input: {
       eyebrow: "No matching project work",
       title: `No jobs match ${input.projectName} right now`,
       description:
-        "This project filter only reads canonical jobs already attached to that project. Clear the project filter or switch schedule and crew views to return to the broader queue."
+        "This project filter only reads jobs already attached to that project. Clear the project filter or switch schedule and crew views to return to the broader queue."
     };
   }
 
@@ -345,7 +346,7 @@ function getScheduleListEmptyState(input: {
       eyebrow: "No scheduled work",
       title: "No jobs have a schedule commitment yet",
       description:
-        "Jobs will appear here once their canonical schedule fields carry a real date commitment."
+        "Jobs will appear here once their schedule fields carry a real date commitment."
     };
   }
 
@@ -354,7 +355,7 @@ function getScheduleListEmptyState(input: {
       eyebrow: "No upcoming work",
       title: "Nothing is queued beyond today yet",
       description:
-        "Future date commitments will show up here once the next scheduled work is captured on the same canonical job records."
+        "Future date commitments will show up here once the next scheduled work is captured on the same job records."
     };
   }
 
@@ -850,7 +851,7 @@ function getPlannerEmptyState(input: {
       input.layout === "day"
         ? "The selected day is open"
         : "The selected planner window is open",
-    description: `Once jobs carry scheduled dates in ${input.rangeLabel}, they will appear here on top of the same canonical job schedule fields.`
+    description: `Once jobs carry scheduled dates in ${input.rangeLabel}, they will appear here on top of the same job schedule fields.`
   };
 }
 
@@ -887,7 +888,7 @@ function getProjectFilterSummary(input: {
   if (input.project) {
     return {
       title: input.project.name,
-      detail: "Only canonical jobs attached to this project are shown."
+      detail: "Only jobs attached to this project are shown."
     };
   }
 
@@ -961,9 +962,10 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
     );
   }
 
-  const [jobs, appointments, people, vendors] = await Promise.all([
+  const [jobs, appointments, opportunities, people, vendors] = await Promise.all([
     listJobs(),
     listAppointments(),
+    listOpportunities(),
     listPeople(),
     listVendors()
   ]);
@@ -1052,6 +1054,18 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
   const scheduledJobs = jobsWithAssignments.filter((job) => job.scheduledDate !== null);
   const scheduledAppointments = appointments.filter(
     (appointment) => appointment.status === "scheduled"
+  );
+  const appointmentOpportunityIds = new Set(
+    scheduledAppointments
+      .filter((appointment) => appointment.appointmentType === "site_visit")
+      .map((appointment) => appointment.opportunityId)
+      .filter(Boolean)
+  );
+  const opportunityAssessments = opportunities.filter(
+    (opportunity) =>
+      opportunity.status === "site_assessment_scheduled" &&
+      opportunity.siteAssessmentScheduledAt &&
+      !appointmentOpportunityIds.has(opportunity.id)
   );
   const todayAppointments = scheduledAppointments.filter(
     (appointment) => new Date(appointment.startsAt).toISOString().slice(0, 10) === todayDateKey
@@ -1191,9 +1205,47 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
 
     return matchesProject && matchesView && matchesCrew && matchesQuery;
   });
+  const visibleOpportunityAssessments = opportunityAssessments.filter((opportunity) => {
+    const assessmentDateKey = opportunity.siteAssessmentScheduledAt
+      ? new Date(opportunity.siteAssessmentScheduledAt).toISOString().slice(0, 10)
+      : null;
+    const matchesProject = projectFilterId ? opportunity.projectId === projectFilterId : true;
+    const matchesView =
+      view === "all"
+        ? true
+        : view === "scheduled"
+          ? true
+          : view === "today"
+            ? assessmentDateKey === todayDateKey
+            : view === "upcoming"
+              ? Boolean(
+                  assessmentDateKey &&
+                    assessmentDateKey > todayDateKey &&
+                    assessmentDateKey < toDateKey(upcomingHorizon)
+                )
+              : false;
+    const matchesCrew = crewFilter === "all" || crewFilter === "unassigned";
+    const matchesQuery =
+      normalizedQuery.length === 0
+        ? true
+        : [
+            opportunity.title,
+            opportunity.status,
+            opportunity.siteName ?? "",
+            opportunity.customer?.name ?? "",
+            opportunity.project?.name ?? "",
+            opportunity.primaryContact?.displayName ?? ""
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(normalizedQuery);
+
+    return matchesProject && matchesView && matchesCrew && matchesQuery;
+  });
   const visibleScheduleItems = buildScheduleItems({
     jobs: visibleJobs,
     appointments: visibleAppointments,
+    opportunityAssessments: visibleOpportunityAssessments,
     rangeStart: plannerRangeStart,
     rangeEnd: plannerRangeEnd,
     itemFilter
@@ -1201,6 +1253,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
   const visibleListItems = buildScheduleItems({
     jobs: visibleJobs,
     appointments: visibleAppointments,
+    opportunityAssessments: visibleOpportunityAssessments,
     rangeStart: addDays(today, -3650),
     rangeEnd: addDays(today, 365),
     itemFilter,
@@ -1239,7 +1292,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
       key: "unscheduled-ready",
       title: "Unscheduled / Ready",
       description:
-        "These jobs already exist on the canonical project chain, but operations still needs to set the first real date commitment.",
+        "These jobs already exist on the project chain, but operations still needs to set the first real date commitment.",
       jobs: unscheduledReadyBoardJobs,
       emptyTitle: "No ready work is waiting on scheduling.",
       emptyDescription:
@@ -1254,7 +1307,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
       jobs: todayBoardJobs,
       emptyTitle: "No jobs are scheduled for today.",
       emptyDescription:
-        "Today's committed work will appear here once the canonical job schedule fields are set.",
+        "Today's committed work will appear here once the job schedule fields are set.",
       surfaceClass: "border-[#d6d6d6] bg-[#f8f8f8]"
     },
     {
@@ -1298,7 +1351,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
       jobs: inProgressBoardJobs,
       emptyTitle: "No jobs are marked in progress.",
       emptyDescription:
-        "Once crews are actively executing work on canonical jobs, those records will surface here.",
+        "Once crews are actively executing work on jobs, those records will surface here.",
       surfaceClass: "border-[#d6d6d6] bg-[#f8f8f8]"
     }
   ] as const;
@@ -1454,14 +1507,14 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
     ...option,
     count:
       option.value === "all"
-        ? visibleJobs.length + visibleAppointments.length
+        ? visibleJobs.length + visibleAppointments.length + visibleOpportunityAssessments.length
         : option.value === "jobs"
           ? visibleJobs.length
-          : visibleAppointments.length
+          : visibleAppointments.length + visibleOpportunityAssessments.length
   }));
   const crewViews = CREW_VIEW_OPTIONS;
   const listEmptyState = getScheduleListEmptyState({
-    jobCount: jobs.length + appointments.length,
+    jobCount: jobs.length + appointments.length + opportunityAssessments.length,
     query,
     projectName: activeProjectFilter?.name ?? null,
     view,
@@ -1551,7 +1604,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
         `${unscheduledJobs.length} jobs are waiting on a date commitment.`
       ),
       description:
-        "Keep ready work moving by setting a day and time on the canonical job record.",
+        "Keep ready work moving by setting a day and time on the job record.",
       href: buildScheduleHref({
         q: query,
         projectId: projectFilterId ?? undefined,
@@ -1908,7 +1961,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                 ) : null}
                 {selectedAction && selectedJobId ? (
                   <p>
-                    The selected job context keeps the composer tied to the same canonical job
+                    The selected job context keeps the composer tied to the same job
                     record until you clear it.
                   </p>
                 ) : null}
@@ -1921,8 +1974,11 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    Next actions
+                    Schedule control
                   </p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
+                    Scheduling command center
+                  </h2>
                   <p className="mt-1 text-sm leading-6 text-slate-500">
                     Use the current loaded schedule state to move the next obvious jobs forward without leaving the shared project and job chain.
                   </p>
@@ -2020,7 +2076,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
           <section className="grid gap-4 xl:auto-rows-fr xl:grid-cols-2">
             <ManagerDashboardCard
               eyebrow="Needs commitment"
-              title="Unscheduled queue"
+              title="Ready work queue"
               description="These jobs are commercially ready enough to exist, but still need a real day and time commitment before field work can move."
               actionHref={buildCurrentScheduleHref({ view: "unscheduled" })}
               actionLabel="Review queue"
@@ -2139,8 +2195,11 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                     Calendar planner
                   </p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
+                    Scheduled timeline
+                  </h2>
                   <p className="mt-1 text-sm leading-6 text-slate-500">
-                    Run the shared schedule as a bounded planner on top of canonical jobs. Keep unscheduled work separate, review dated work by day or week, and reschedule through the same job action path.
+                    Run the shared schedule as a bounded planner on top of jobs. Keep unscheduled work separate, review dated work by day or week, and reschedule through the same job action path.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 lg:justify-end">
@@ -2739,7 +2798,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                             </p>
                             {group.key === "unscheduled-ready" ? (
                               <div className="mt-3 text-sm leading-6 text-slate-500">
-                                If work is missing here entirely, confirm upstream project readiness first and then create the canonical job.
+                                If work is missing here entirely, confirm upstream project readiness first and then create the job.
                               </div>
                             ) : null}
                             {group.key === "in-progress" ? (
@@ -3022,7 +3081,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
           }
           description={
             selectedJob
-              ? `Working from ${selectedJob.project?.name ?? "this job"} keeps the schedule surface tied to the same canonical project and job chain.`
+              ? `Working from ${selectedJob.project?.name ?? "this job"} keeps the schedule surface tied to the same project and job chain.`
               : "Pick a job from the schedule surface to adjust date commitment or crew assignment."
           }
           open={showComposer}
@@ -3039,6 +3098,14 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
         >
           {selectedJob ? (
             <div className="space-y-4">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  Selected job
+                </p>
+                <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
+                  Selected job action panel
+                </h2>
+              </div>
               <div className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-4 py-3 text-sm leading-6 text-slate-600">
                 <p className="font-semibold text-slate-950">
                   {selectedJob.project?.name ?? "Untitled job"}
@@ -3089,7 +3156,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                   <div className="space-y-4">
                     <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
                       Set the schedule commitment first. Crew assignment stays on the same
-                      canonical job, but it only becomes actionable after the job has a real date
+                      job, but it only becomes actionable after the job has a real date
                       on the board.
                     </div>
                     <div className="flex flex-wrap gap-2">

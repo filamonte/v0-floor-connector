@@ -35,11 +35,11 @@ export function AuthField({
   const hasIcon = icon === "email" || icon === "password";
 
   return (
-    <label className="block">
+    <label className="block min-w-0">
       <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
         {label}
       </span>
-      <div className="relative">
+      <div className="relative min-w-0">
         {hasIcon ? (
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
             {icon === "email" ? <EmailIcon /> : <LockIcon />}
@@ -48,7 +48,7 @@ export function AuthField({
         <input
           id={inputId}
           aria-describedby={hintId}
-          className={`h-11 w-full rounded-xl border border-[var(--border-warm)] bg-white text-sm text-[var(--text-primary)] shadow-sm outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)] focus:ring-2 focus:ring-[var(--copper)]/10 ${hasIcon ? "pl-10 pr-3" : "px-3"} ${className ?? ""}`.trim()}
+          className={`h-11 w-full min-w-0 rounded-xl border border-[var(--border-warm)] bg-white text-sm text-[var(--text-primary)] shadow-sm outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)] focus:ring-2 focus:ring-[var(--copper)]/10 ${hasIcon ? "pl-10 pr-3" : "px-3"} ${className ?? ""}`.trim()}
           {...props}
         />
       </div>

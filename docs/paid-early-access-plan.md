@@ -1,6 +1,6 @@
 # Paid Early Access Plan
 
-Status: Phase 2.2 test-mode Stripe Billing checkout foundation implemented; live billing deferred
+Status: Phase 2.3 signed SaaS billing webhook reconciliation implemented; test-mode operator runbook added; live billing launch deferred
 Doc Type: Implementation Plan
 
 This plan prepares Phase 2: Paid Early Access Infrastructure. It documents the current implemented onboarding and billing setup state, the safe next implementation path, and the boundaries that must stay intact before any live billing or activation workflow is released.
@@ -10,6 +10,7 @@ Use this with:
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md)
 - [docs/e2e-browser-qa.md](C:/FloorConnector/docs/e2e-browser-qa.md)
+- [docs/stripe-saas-billing-runbook.md](C:/FloorConnector/docs/stripe-saas-billing-runbook.md)
 
 ## Current Implemented State
 
@@ -21,7 +22,9 @@ Implemented today:
 - `/setup/billing` does not create a subscription, charge a card, or store raw card data
 - `/setup/billing` also exposes a FloorConnector SaaS founder subscription checkout launcher only when matching Stripe test-mode keys and `STRIPE_FOUNDER_PLAN_PRICE_ID` are configured
 - SaaS subscription checkout is server-side, uses Stripe Checkout Sessions in `subscription` mode, attaches `company_id`, `billing_domain=floorconnector_saas`, and environment metadata to the Checkout Session and Subscription, and returns to `/setup/billing`
-- checkout return copy stays pending/review-oriented; it does not activate the tenant, create contractor-customer invoice payments, or claim webhook-confirmed subscription truth
+- `/api/stripe/saas-billing-webhook` verifies the Stripe signature with `STRIPE_WEBHOOK_SECRET`, processes only events marked `billing_domain=floorconnector_saas`, and reconciles subscription references/status onto `companies` / `company_subscriptions`
+- SaaS webhook reconciliation covers `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, and `invoice.payment_failed`
+- checkout return copy stays pending/review-oriented; webhook-confirmed subscription status may appear in super admin after reconciliation, but it does not activate the tenant, create contractor-customer invoice payments, or change portal payment state
 - `/setup/pending-activation` displays the existing `companies.tenant_status` and `companies.lifecycle_state`
 - pending and trial organizations can enter the contractor app and create canonical records, but irreversible external actions remain guarded
 - the activation guard blocks external sends, provider-backed email delivery, and portal checkout/payment processing for pending or trial organizations
@@ -73,7 +76,7 @@ Partially implemented:
 
 Not implemented:
 - live app-created Stripe Billing subscriptions
-- webhook-confirmed Stripe subscription reconciliation
+- public/live webhook release runbook and rollback gates
 - app-created Stripe Payment Links or SaaS invoices
 - automatic tenant activation from payment or SetupIntent state
 - cancellation, past-due, renewal, dunning, or entitlement mapping
@@ -154,7 +157,7 @@ Existing setup/billing env names:
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_FOUNDER_PLAN_PRICE_ID`
-- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_WEBHOOK_SECRET` for signed SaaS billing webhook verification and existing Stripe payment webhook verification
 - `STRIPE_CONNECT_WEBHOOK_SECRET`
 - `STRIPE_PRICE_ID_BASE`
 
@@ -187,6 +190,16 @@ Implemented Phase 2.2 slice:
 - `/setup/billing` shows subscription checkout as a separate founder SaaS billing bridge beside the no-charge SetupIntent card setup
 - `/super-admin/early-access` shows stored Stripe customer/subscription/status references separately from founder billing evidence
 - no webhook subscription-status mutation is implemented in this slice
+
+Implemented Phase 2.3 slice:
+- `/api/stripe/saas-billing-webhook` is a separate signed webhook route from the contractor-customer invoice payment webhook route
+- the route reads the raw request body, verifies `stripe-signature` with `STRIPE_WEBHOOK_SECRET`, and rejects unsigned or invalid events before parsing trusted state
+- the SaaS webhook core ignores events without `billing_domain=floorconnector_saas`, without a valid `company_id`, or with a mismatched environment marker
+- subscription state reconciliation updates existing safe Stripe references on `companies` and `company_subscriptions`, including subscription status, subscription id, price id, checkout session id, current period end, last event id, and last webhook time
+- processed event ids are recorded in the SaaS-only `stripe_saas_billing_webhook_events` idempotency ledger without storing raw provider payloads, signatures, secrets, card data, or customer payment details
+- `invoice.paid` and `invoice.payment_failed` are treated as SaaS billing status signals only; they do not create or update canonical contractor invoice payments or `payment_events`
+- platform-admin activation remains separate and manual
+- [docs/stripe-saas-billing-runbook.md](C:/FloorConnector/docs/stripe-saas-billing-runbook.md) now documents test-mode endpoint setup, Stripe CLI forwarding/replay command patterns, metadata requirements, schema/state inspection queries, and recovery boundaries for the SaaS webhook domain
 
 ## Production Readiness Gates
 
@@ -225,6 +238,8 @@ Paid early access must not:
 
 ## Current Decision
 
-This Phase 2.2 batch implements a test-mode-only Stripe Billing Checkout Session bridge for FloorConnector SaaS subscriptions. It does not implement live billing, automatic activation, entitlement enforcement, Stripe Customer Portal, or webhook-confirmed subscription reconciliation. Manual founder billing evidence and platform-admin activation remain separate controls.
+This Phase 2.3 batch implements a test-mode-safe signed Stripe webhook reconciliation bridge for FloorConnector SaaS subscriptions. It does not implement automatic activation, entitlement enforcement, Stripe Customer Portal, public live billing launch, refunds, disputes, cancellation self-service, or package/module gating. Manual founder billing evidence and platform-admin activation remain separate controls.
 
-The recommended next prompt is Phase 2.3: implement signed Stripe webhook handling for the `floorconnector_saas` billing domain, idempotently map subscription status into existing subscription references, and keep activation manual until a separate release gate approves automation.
+Enterprise UX consolidation note: the customer/contact/access/review cleanup does not change paid early-access billing, Stripe setup, checkout, tenant activation, entitlement, webhook, or portal payment behavior. Portal invoice copy may become simpler for customers, but the checkout and activation guards above remain unchanged.
+
+The recommended next prompt is either a Stripe SaaS Billing live test-mode replay slice using the runbook above, or a return to product data hygiene through lead/customer primary contact normalization. Any live billing launch, activation automation, entitlement enforcement, or Stripe Customer Portal work still requires a separate approved release gate.

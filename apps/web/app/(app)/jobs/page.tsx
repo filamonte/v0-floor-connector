@@ -359,7 +359,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           <ManagerDashboardCard
             eyebrow="Workflow queue"
             title="Unscheduled"
-            description="Jobs that exist canonically but still need scheduling follow-through."
+            description="Jobs that still need scheduling follow-through."
             actionHref={buildJobsHref({
               q: query,
               view: "unscheduled",
@@ -382,7 +382,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           <ManagerDashboardCard
             eyebrow="Workflow queue"
             title="Scheduled without crew vendor"
-            description="Scheduled jobs that still do not have a crew vendor attached on the canonical job record."
+            description="Scheduled jobs that still do not have a crew vendor attached on the job record."
             actionHref={buildJobsHref({
               q: query,
               view: "scheduled",
@@ -567,7 +567,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                   scopedJobs.length > 0
                     ? "Try a broader search, clear the project filter, or switch to another real job status."
                     : projectFilterId
-                      ? "This selected project does not have a canonical job yet. Create one from ready project context, then finish scheduling in the job workspace."
+                      ? "This selected project does not have a job yet. Create one from ready project context, then finish scheduling in the job workspace."
                       : "Jobs move approved project work into execution. Create them from ready project context and then finish scheduling in the full job workspace."
                 }
               />
@@ -579,7 +579,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
       <WorkspaceComposerSheet
         id="job-create"
         title="Quick create job"
-        description="Choose a ready project, create the canonical job, and then finish schedule, crew, and execution detail in the full job workspace."
+        description="Choose a ready project, create the job, and then finish schedule, crew, and execution detail in the full job workspace."
         open={showComposer}
         openHref={buildJobsHref({
           q: query,

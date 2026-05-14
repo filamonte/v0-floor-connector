@@ -4,6 +4,10 @@ import { AuthField } from "@/components/auth-field";
 import { AuthSubmitButton } from "@/components/auth-submit-button";
 import { CountryComboboxField } from "@/components/country-combobox-field";
 import { QuickCreateFormShell } from "@/components/quick-create-form-shell";
+import {
+  leadSourceOptions,
+  serviceTypeOptions
+} from "@/lib/opportunities/schemas";
 
 type OpportunityQuickCreateFormProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -107,6 +111,45 @@ export function OpportunityQuickCreateForm({
           />
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-800">
+              Lead source
+            </span>
+            <input
+              list="quick-lead-source-options"
+              name="source"
+              placeholder="Choose or type a source"
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            />
+            <datalist id="quick-lead-source-options">
+              {leadSourceOptions.map((option) => (
+                <option key={option} value={option} />
+              ))}
+            </datalist>
+          </label>
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-800">
+              Service type
+            </span>
+            <input
+              list="quick-service-type-options"
+              name="serviceType"
+              placeholder="Choose or type a service"
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            />
+            <datalist id="quick-service-type-options">
+              {serviceTypeOptions.map((option) => (
+                <option key={option} value={option} />
+              ))}
+            </datalist>
+          </label>
+          <div className="md:col-span-2">
+            <AuthField
+              label="Source detail"
+              name="sourceDetail"
+              placeholder="Google Ads, Smith referral, showroom event"
+            />
+          </div>
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-800">
               Lead Stage
             </span>
             <select
@@ -122,6 +165,18 @@ export function OpportunityQuickCreateForm({
               ))}
             </select>
           </label>
+          <AuthField
+            label="Assessment date"
+            name="siteAssessmentScheduledOn"
+            type="date"
+            hint="Required with time when lead stage is Site Assessment Scheduled."
+          />
+          <AuthField
+            label="Assessment time"
+            name="siteAssessmentScheduledTime"
+            type="time"
+            hint="Required when lead stage is Site Assessment Scheduled."
+          />
         </div>
       </QuickCreateFormShell>
 

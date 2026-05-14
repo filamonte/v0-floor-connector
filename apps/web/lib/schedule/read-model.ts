@@ -10,6 +10,17 @@ export type ScheduleJobSource = JobListItem & {
 export type ScheduleItemKind = "job" | "appointment";
 export type ScheduleItemFilter = "all" | "jobs" | "appointments";
 
+export type ScheduleOpportunityAssessmentSource = {
+  id: string;
+  title: string;
+  siteName: string | null;
+  siteAssessmentScheduledAt: string | null;
+  status: string;
+  primaryContact?: {
+    displayName: string | null;
+  } | null;
+};
+
 export type ScheduleJobItem = {
   type: "job";
   id: string;
@@ -82,6 +93,7 @@ function getJobAssigneeLabel(job: ScheduleJobSource) {
 export function buildScheduleItems(input: {
   jobs: ScheduleJobSource[];
   appointments: AppointmentListItem[];
+  opportunityAssessments?: ScheduleOpportunityAssessmentSource[];
   rangeStart: Date;
   rangeEnd: Date;
   itemFilter?: ScheduleItemFilter;
@@ -122,6 +134,42 @@ export function buildScheduleItems(input: {
   }
 
   if (itemFilter === "all" || itemFilter === "appointments") {
+    for (const opportunity of input.opportunityAssessments ?? []) {
+      if (!opportunity.siteAssessmentScheduledAt) {
+        continue;
+      }
+
+      const dateKey = formatDateKeyFromIso(opportunity.siteAssessmentScheduledAt);
+
+      if (dateKey < rangeStartKey || dateKey > rangeEndKey) {
+        continue;
+      }
+
+      items.push({
+        type: "appointment",
+        id: `opportunity-assessment:${opportunity.id}`,
+        href: `/leads/${opportunity.id}`,
+        contextHref: `/leads/${opportunity.id}`,
+        contextLabel: "Open lead",
+        title: `${opportunity.title} site assessment`,
+        subtitle:
+          opportunity.primaryContact?.displayName ??
+          opportunity.siteName ??
+          "Lead assessment",
+        startsAt: opportunity.siteAssessmentScheduledAt,
+        endsAt: null,
+        dateKey,
+        status: opportunity.status,
+        appointmentType: "site_assessment",
+        assigneeLabel: "Opportunity workflow",
+        customerName: null,
+        projectName: null,
+        opportunityTitle: opportunity.title,
+        location: opportunity.siteName,
+        customerVisible: false
+      });
+    }
+
     for (const appointment of input.appointments) {
       const dateKey = formatDateKeyFromIso(appointment.startsAt);
 

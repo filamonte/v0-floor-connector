@@ -60,7 +60,7 @@ export function ProjectForm({
         value={project?.financingStatus ?? "not_applicable"}
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid min-w-0 gap-4 md:grid-cols-2">
         <AuthField
           label="Project name"
           name="name"
@@ -77,14 +77,14 @@ export function ProjectForm({
           required={!allowInlineCustomerCreate}
         />
 
-        <label className="block">
+        <label className="block min-w-0">
           <span className="mb-2 block text-sm font-medium text-slate-800">
             Status
           </span>
           <select
             name="status"
             defaultValue={project?.status ?? "lead"}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className="w-full min-w-0 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
             required
           >
             {availableStatuses.map((status) => (
@@ -137,7 +137,7 @@ export function ProjectForm({
         />
       </div>
 
-      <label className="block">
+      <label className="block min-w-0">
         <span className="mb-2 block text-sm font-medium text-slate-800">
           Scope notes
         </span>
@@ -145,7 +145,7 @@ export function ProjectForm({
           name="description"
           defaultValue={getValue(project?.description)}
           rows={5}
-          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+          className="w-full min-w-0 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
           placeholder="Optional project description or scope notes"
         />
       </label>

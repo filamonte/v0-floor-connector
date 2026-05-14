@@ -1419,6 +1419,10 @@ async function ensureActivePortalAccessGrant(
     inviteAcceptedAt: null,
     activatedAt: data.activated_at ?? null,
     revokedAt: data.revoked_at ?? null,
+    temporaryCredentialIssuedAt: null,
+    temporaryCredentialIssuedByUserId: null,
+    temporaryCredentialRequiresPasswordChange: false,
+    temporaryCredentialLastClearedAt: null,
     createdAt: data.created_at,
     updatedAt: data.updated_at
   };

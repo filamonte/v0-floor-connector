@@ -50,7 +50,7 @@ function getNextAction(status: string, projectId: string) {
     return {
       title: "Contract signing is complete",
       description:
-        "The shared contract record is signed. Return to the project workspace for the broader customer-facing commercial context.",
+        "The contract is signed. Return to the project page for the broader project context.",
       label: "Return to project workspace",
       href: `/portal/projects/${projectId}`
     };
@@ -69,7 +69,7 @@ function getNextAction(status: string, projectId: string) {
   return {
     title: "Review the shared agreement",
     description:
-      "This page exposes the contract body and current shared state without contractor-side editing or internal approval controls.",
+      "This page shows the contract and current signature state.",
     label: "Return to project workspace",
     href: `/portal/projects/${projectId}`
   };
@@ -166,9 +166,14 @@ export default async function PortalContractReviewPage({
             backHref={`/portal/projects/${contract.projectId}`}
             backLabel="Back to project workspace"
             actions={
-              <PortalStatusBadge status={contract.status} className="px-4 py-2 text-sm">
-                {formatStatusLabel(contract.status)}
-              </PortalStatusBadge>
+              <div className="flex flex-wrap items-center gap-3">
+                <PortalSecondaryLink href={`/portal/contracts/${contract.id}/pdf`}>
+                  Print / save PDF
+                </PortalSecondaryLink>
+                <PortalStatusBadge status={contract.status} className="px-4 py-2 text-sm">
+                  {formatStatusLabel(contract.status)}
+                </PortalStatusBadge>
+              </div>
             }
           />
 
@@ -214,7 +219,7 @@ export default async function PortalContractReviewPage({
                       : "not required"}
                   </p>
                   <div className={`${portalInsetPanelClassName} text-sm leading-6 text-slate-600`}>
-                    This contract stays attached to the same shared project and signature workflow your contractor sees.
+                    This contract stays attached to the same project your contractor sees.
                   </div>
                 </div>
               </section>
@@ -332,7 +337,7 @@ export default async function PortalContractReviewPage({
                     ? "A decline was already recorded from your signer assignment on this contract."
                     : contract.signatureSummary.requiresCountersign &&
                         contract.signatureSummary.allCustomerSignersSigned
-                      ? "Customer signing is complete. The contractor countersigner is the remaining shared workflow step."
+                      ? "Customer signing is complete. The contractor countersigner is the remaining step."
                       : "This page remains available for review even when no customer signature action is currently open to you."}
               </div>
             )}
@@ -341,7 +346,7 @@ export default async function PortalContractReviewPage({
 
         <DetailPanel
           title="Contract Context"
-          description="Compact shared record context without contractor-only workflow detail."
+          description="Project and contract details for reference."
         >
           <ContextFactsList
             items={[

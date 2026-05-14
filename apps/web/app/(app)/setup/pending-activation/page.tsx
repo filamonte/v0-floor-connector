@@ -54,13 +54,13 @@ export default async function PendingActivationPage() {
             <p className="text-sm font-semibold">What you can do now</p>
             <div className="mt-4 grid gap-3 text-sm leading-6 text-white/68 sm:grid-cols-2">
               <p>Create real projects and customers.</p>
-              <p>Build real estimates from canonical records.</p>
+              <p>Build real estimates from the same customer and project records.</p>
               <p>Generate and review contracts.</p>
               <p>Create invoices, jobs, and scheduling records for exploration.</p>
             </div>
             <p className="mt-5 text-xs leading-5 text-white/50">
-              External sends, customer-facing payment processing, and provider-backed
-              emails stay locked until activation.
+              External sends, customer-facing payment processing, and email delivery
+              stay locked until activation.
             </p>
           </div>
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo, useState } from "react";
+
 import {
   SaveStateForm,
   SaveStateSubmitButton
@@ -32,27 +34,66 @@ function toDateTimeLocalValue(value: string | null) {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
+function splitDateTimeLocalValue(value: string | null) {
+  const dateTimeValue = toDateTimeLocalValue(value);
+
+  if (!dateTimeValue) {
+    return { date: "", time: "" };
+  }
+
+  const [date, time] = dateTimeValue.split("T");
+  return { date: date ?? "", time: time ?? "" };
+}
+
 export function OpportunityFollowUpForm({
   action,
   opportunityId,
   nextFollowUpAt,
   nextFollowUpNote
 }: OpportunityFollowUpFormProps) {
+  const initialFollowUp = splitDateTimeLocalValue(nextFollowUpAt);
+  const [followUpDate, setFollowUpDate] = useState(initialFollowUp.date);
+  const [followUpTime, setFollowUpTime] = useState(initialFollowUp.time || "09:00");
+  const followUpValue = useMemo(() => {
+    if (!followUpDate) {
+      return "";
+    }
+
+    return `${followUpDate}T${followUpTime || "09:00"}`;
+  }, [followUpDate, followUpTime]);
+
   return (
     <SaveStateForm action={action} pendingLabel="Saving..." className="space-y-4">
       <input type="hidden" name="opportunityId" value={opportunityId} />
+      <input type="hidden" name="nextFollowUpAt" value={followUpValue} />
 
-      <label className="block">
-        <span className="mb-2 block text-sm font-medium text-slate-800">
-          Next follow-up
-        </span>
-        <input
-          type="datetime-local"
-          name="nextFollowUpAt"
-          defaultValue={toDateTimeLocalValue(nextFollowUpAt)}
-          className="h-9 w-full border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
-        />
-      </label>
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_160px]">
+        <label className="block">
+          <span className="mb-2 block text-sm font-medium text-slate-800">
+            Follow-up date
+          </span>
+          <input
+            type="date"
+            name="followUpDateInput"
+            value={followUpDate}
+            onChange={(event) => setFollowUpDate(event.target.value)}
+            className="h-11 w-full border border-[#d6d6d6] bg-white px-3 text-base text-slate-900 outline-none transition focus:border-[#d8731f] sm:text-sm"
+          />
+        </label>
+
+        <label className="block">
+          <span className="mb-2 block text-sm font-medium text-slate-800">
+            Time
+          </span>
+          <input
+            type="time"
+            name="followUpTimeInput"
+            value={followUpTime}
+            onChange={(event) => setFollowUpTime(event.target.value)}
+            className="h-11 w-full border border-[#d6d6d6] bg-white px-3 text-base text-slate-900 outline-none transition focus:border-[#d8731f] sm:text-sm"
+          />
+        </label>
+      </div>
 
       <label className="block">
         <span className="mb-2 block text-sm font-medium text-slate-800">
@@ -68,7 +109,7 @@ export function OpportunityFollowUpForm({
       </label>
 
       <p className="text-xs leading-5 text-slate-500">
-        Leave both fields blank and save to clear the follow-up.
+        Leave the date blank and save to clear the follow-up.
       </p>
 
       <SaveStateSubmitButton

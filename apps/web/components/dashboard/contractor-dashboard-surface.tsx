@@ -796,7 +796,7 @@ export function ContractorDashboardSurface({
                 </h2>
                 <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                   {selectedMyWorkQueueMode?.description ??
-                    "Derived attention items from canonical records."}
+                    "Derived attention items from saved records."}
                 </p>
               </div>
               {myWorkQueueModes ? (

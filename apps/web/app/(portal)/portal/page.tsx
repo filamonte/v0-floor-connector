@@ -113,7 +113,7 @@ function getPortalHomeNextAction(
       return {
         title: `Continue payment for ${invoiceProject.name}`,
         description:
-          "A checkout session has already started on the shared invoice, so this project is the clearest place to confirm payment progress.",
+          "Checkout has already started, so this project is the clearest place to confirm payment progress.",
         href: `/portal/projects/${invoiceProject.id}`,
         label: "Open payment context"
       };
@@ -133,7 +133,7 @@ function getPortalHomeNextAction(
       return {
         title: `Review the remaining balance for ${invoiceProject.name}`,
         description:
-          "A real provider-backed payment has already landed on the shared invoice, but the project still carries an open balance to review.",
+          "A payment has already landed, but the project still carries an open balance to review.",
         href: `/portal/projects/${invoiceProject.id}`,
         label: "Open payment context"
       };
@@ -143,7 +143,7 @@ function getPortalHomeNextAction(
       return {
         title: `Review reopened billing for ${invoiceProject.name}`,
         description:
-          "The latest provider-backed payment was voided, so the invoice has returned to an open billing state on this project.",
+          "The latest payment was voided, so the invoice has returned to an open balance on this project.",
         href: `/portal/projects/${invoiceProject.id}`,
         label: "Open payment context"
       };
@@ -153,7 +153,7 @@ function getPortalHomeNextAction(
       return {
         title: `Review the remaining balance for ${invoiceProject.name}`,
         description:
-          "A payment has already been recorded on the shared invoice, but there is still an outstanding balance to review.",
+          "A payment has already been recorded, but there is still an outstanding balance to review.",
         href: `/portal/projects/${invoiceProject.id}`,
         label: "Open project billing"
       };
@@ -174,7 +174,7 @@ function getPortalHomeNextAction(
     return {
       title: `Billing is current for ${paidInvoiceProject.name}`,
       description:
-        "The latest shared invoice is fully paid on this project, so the project workspace is the best place to confirm the broader shared context.",
+        "The latest invoice is fully paid on this project, so the project page is the best place to review what comes next.",
       href: `/portal/projects/${paidInvoiceProject.id}`,
       label: "Open paid billing context"
     };
@@ -247,7 +247,7 @@ export default async function PortalHomePage() {
                     This portal is organized around shared projects.
                   </p>
                   <p className="text-sm leading-6 text-slate-600">
-                    Each project holds the customer-facing estimate, contract, and invoice records your contractor has shared with you.
+                    Each project holds the estimates, contracts, and invoices your contractor has shared with you.
                   </p>
                   {primaryProject ? (
                     <div className={portalInsetPanelClassName}>
@@ -462,7 +462,7 @@ export default async function PortalHomePage() {
               {
                 label: "Commercial records",
                 value:
-                  "Estimates, contracts, and invoices stay on the same canonical project chain your contractor uses internally."
+                  "Estimates, contracts, and invoices stay connected to this same project."
               },
               {
                 label: "What is not here",

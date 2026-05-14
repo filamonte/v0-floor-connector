@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { FileText, GripVertical } from "lucide-react";
 import type { EstimateScopeItem } from "@floorconnector/types";
 
@@ -20,6 +21,8 @@ export function ScopeOfWork({
   onItemTextChange,
   onItemIncludeChange
 }: ScopeOfWorkProps) {
+  const itemInputRefs = useRef<Array<HTMLInputElement | null>>([]);
+
   return (
     <section className="border-t border-[#e6e9ef] bg-white">
       <div className="grid xl:grid-cols-[minmax(0,1.38fr)_480px]">
@@ -62,8 +65,26 @@ export function ScopeOfWork({
                   className="h-5 w-5 rounded-[3px] border-[#a9b5c8] text-[#2a2a2a]"
                 />
                 <input
+                  ref={(node) => {
+                    itemInputRefs.current[index] = node;
+                  }}
                   value={item.text}
                   onChange={(event) => onItemTextChange(item.id, event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter" || event.shiftKey) {
+                      return;
+                    }
+
+                    event.preventDefault();
+
+                    if (item.text.trim().length === 0) {
+                      return;
+                    }
+
+                    window.setTimeout(() => {
+                      itemInputRefs.current[index + 1]?.focus();
+                    }, 0);
+                  }}
                   placeholder="Add scope / SOW output item (max 2000 characters)."
                   className="h-8 border-0 bg-transparent px-0 text-[14px] text-[#2a2a2a] placeholder:text-[#a9b5c8] focus:outline-none"
                 />

@@ -86,6 +86,30 @@ Rules:
 - Do not make support metadata compete with the primary decision.
 - Keep lower-priority history, metadata, and connected-record details below the top stack.
 
+## Right Rails And Context Cards
+
+Record Workspace right rails are supporting surfaces, not parallel pages. Keep always-visible rail cards to the highest-signal context: current state, primary linked records, project/customer handoff, and the next useful gateway.
+
+Rules:
+- Show one primary linked record per record type when that is enough for orientation.
+- Collapse revision history, metadata, extra downstream records, and lower-frequency operational activity behind `<details>` or move it below the primary content.
+- Context cards should use a short label, current status, one key value, one link/action, and an optional short note.
+- Do not repeat the same project, customer, payment, schedule, or access fact in multiple visible cards on the same page.
+- Invoice payment forms and invoice editing forms should remain accessible, but they should not dominate the billing review unless the user is explicitly in an edit surface.
+
+## Responsive Detail Workspaces
+
+Contractor Record Workspaces must remain usable below desktop widths.
+
+Rules:
+- The page itself should not create horizontal overflow at common tablet and phone widths.
+- Use `min-w-0` on grid children, cards, headers, form fields, and linked-record blocks that sit inside constrained columns.
+- Let record titles, customer/project names, reference numbers, metadata, and action rows wrap safely. Use truncation only when the surrounding container cannot expand the page.
+- Right rails should stack below main content on smaller screens and keep secondary details collapsed.
+- Forms inside secondary sections should use one-column mobile layouts and should not force desktop input widths.
+- Tables are acceptable on manager/list pages when wrapped in an intentional inner scroll container. Detail pages should prefer compact cards, summaries, or collapsed sections over wide tables.
+- Portal pages should keep customer review actions visible without requiring horizontal scrolling.
+
 ## Status Color Semantics
 
 Use shared status helpers from `@floorconnector/ui` where practical:
@@ -163,6 +187,17 @@ Portal should not copy:
 - Contractor operational ActionBar/WorkflowBar patterns wholesale.
 - Universal Create or Quick-Create.
 - Contractor-only schedule, crew, readiness, or internal financial controls.
+
+## Customer / Access / Review Ownership
+
+Use [docs/enterprise-ux-consolidation.md](C:/FloorConnector/docs/enterprise-ux-consolidation.md) for the current customer/contact/access/review ownership map.
+
+Rules:
+- Customer Workspace should lead with account summary, primary contact, linked project history, open invoice state, and recent relationship context.
+- People should be the management home for customer contacts, portal grants, temporary credentials, stored contact permissions, and per-contact project visibility.
+- Project Workspace may show project-specific customer visibility, but should link to People for management.
+- Estimate, Contract, and Invoice Workspaces should keep their primary business review first and collapse internal follow-through forms when they are not the main job.
+- Portal pages should avoid internal implementation words such as canonical, provider-backed, workflow state, and contractor-only controls unless the customer needs that distinction to act safely.
 
 ## Super-Admin Differences
 

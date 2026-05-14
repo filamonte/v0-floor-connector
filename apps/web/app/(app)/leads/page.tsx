@@ -222,7 +222,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
     <ContractorWorkspacePage
       eyebrow="Leads"
       title={`Lead manager for ${organizationContext.organization.displayName}`}
-      description="Run intake and sales follow-up from one board: all leads, assigned leads, new leads to contact, upcoming tasks, and a real stage funnel grounded in canonical opportunities and appointments."
+      description="Run intake and sales follow-up from one board: all leads, assigned leads, new leads to contact, upcoming tasks, and a real stage funnel grounded in saved opportunities and appointments."
       summary={
         <div className="grid gap-px border border-[#d9cdc2] bg-[#d9cdc2] sm:grid-cols-2 xl:grid-cols-4">
           <div className="bg-white px-4 py-3">
@@ -378,7 +378,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
               trailing: opportunity.siteName ?? "Site pending"
             }))}
             emptyTitle="No new leads need first contact."
-            emptyDescription="New intake will surface here as soon as a canonical opportunity is created."
+            emptyDescription="New intake will surface here as soon as an opportunity is created."
           />
 
           <ManagerDashboardCard
@@ -395,7 +395,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
               trailing: "Scheduled"
             }))}
             emptyTitle="No upcoming lead tasks are scheduled."
-            emptyDescription="Scheduled follow-up and assessment work will show here once it is on the canonical calendar."
+            emptyDescription="Scheduled follow-up and assessment work will show here once it is on the shared calendar."
           />
 
           <ManagerDashboardCard
@@ -424,7 +424,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                 Lead stage funnel
               </h3>
               <p className="mt-1 text-xs leading-5 text-[#6f6256]">
-                Real opportunity stages only, so the sales view stays honest to the canonical workflow.
+                Real opportunity stages only, so the sales view stays honest to the current workflow.
               </p>
             </div>
             <div className="space-y-2 px-4 py-3">
@@ -629,7 +629,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
       <WorkspaceComposerSheet
         id="lead-create"
         title="Quick create lead"
-        description="Capture the minimum opportunity context here, create the canonical lead, and then qualify it in the full lead workspace before you start estimate."
+        description="Capture the minimum opportunity context here, create the lead, and then qualify it in the full lead workspace before you start an estimate."
         open={showComposer}
         openHref={buildLeadsHref({ q: query, view, followUp: followUpView, compose: "1" })}
         closeHref={buildLeadsHref({ q: query, view, followUp: followUpView })}

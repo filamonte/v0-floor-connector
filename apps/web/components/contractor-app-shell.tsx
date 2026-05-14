@@ -40,12 +40,14 @@ export async function ContractorAppShell({
   const notifications = await (organizationContext
     ? listContractorNotifications()
     : Promise.resolve({ totalCount: 0, sections: [], visibleItems: [] }));
-  const showDevTools = process.env.NODE_ENV !== "production";
+  const showDevTools =
+    process.env.NODE_ENV !== "production" &&
+    process.env.FLOORCONNECTOR_SHOW_DEV_QA_TOOLS === "1";
 
   return (
-    <div className="min-h-screen bg-[var(--cream)] text-[var(--text-primary)]">
+    <div className="min-h-screen bg-[var(--cream)] text-[var(--text-primary)] print:bg-white">
       <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-30 border-b border-[var(--border-warm)] bg-white">
+        <header className="sticky top-0 z-30 border-b border-[var(--border-warm)] bg-white print:hidden">
           <div className="hidden lg:block">
             <ProtectedAppTopNav
               currentRole={organizationContext?.membership.role}
@@ -89,8 +91,8 @@ export async function ContractorAppShell({
           </div>
         </header>
 
-        <main className="flex-1 px-3 py-3 sm:px-5 sm:py-4">
-          <div className="mx-auto w-full max-w-[1680px]">
+        <main className="flex-1 px-3 py-3 sm:px-5 sm:py-4 print:p-0">
+          <div className="mx-auto w-full max-w-[1680px] print:max-w-none">
             {!organizationContext ? (
               <section className="mb-4 rounded-[4px] border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
                 Your account is authenticated, but no active organization context is
@@ -100,12 +102,20 @@ export async function ContractorAppShell({
             ) : null}
 
             {children}
-            {organizationContext ? <EarlyAccessHelpButton /> : null}
-            {showDevTools ? <DevQaTools signOutAction={signOutAction} /> : null}
+            {organizationContext ? (
+              <div className="print:hidden">
+                <EarlyAccessHelpButton />
+              </div>
+            ) : null}
+            {showDevTools ? (
+              <div className="print:hidden">
+                <DevQaTools signOutAction={signOutAction} />
+              </div>
+            ) : null}
           </div>
         </main>
 
-        <footer className="border-t border-[var(--border-warm)] bg-white px-3 py-2 sm:px-5">
+        <footer className="border-t border-[var(--border-warm)] bg-white px-3 py-2 sm:px-5 print:hidden">
           <div className="mx-auto flex w-full max-w-[1680px] justify-end">
             <GlobalSearch
               compact

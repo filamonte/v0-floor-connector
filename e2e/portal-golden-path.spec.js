@@ -73,6 +73,18 @@ async function expectAuthenticatedPortalPage(page, headingPattern) {
   );
 }
 
+async function expectNoHorizontalPageOverflow(page, label) {
+  const metrics = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth)
+  }));
+
+  expect(
+    metrics.scrollWidth,
+    `${label} should not create page-level horizontal overflow`
+  ).toBeLessThanOrEqual(metrics.clientWidth + 2);
+}
+
 async function getGrantedProjectPath(page) {
   const configuredProjectPath =
     process.env.FLOORCONNECTOR_E2E_PORTAL_PROJECT_PATH;
@@ -249,6 +261,128 @@ test.describe("portal golden workflow smoke", () => {
       await page.goto(invoicePath);
       await expectAuthenticatedPortalPage(page, /Invoice Review/i);
       await expect(page.getByText(/Payment Actions/i)).toBeVisible();
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("portal shared records expose customer-safe print views", async ({
+    browser,
+    baseURL
+  }) => {
+    const { page, context } = await newPortalPage(browser, baseURL);
+
+    try {
+      const records = [
+        {
+          label: "estimate",
+          path: await getProjectRecordPath(
+            page,
+            "estimate",
+            process.env.FLOORCONNECTOR_E2E_PORTAL_ESTIMATE_PATH,
+            "FLOORCONNECTOR_E2E_PORTAL_ESTIMATE_PATH",
+            'a[href^="/portal/estimates/"]'
+          )
+        },
+        {
+          label: "contract",
+          path: await getProjectRecordPath(
+            page,
+            "contract",
+            process.env.FLOORCONNECTOR_E2E_PORTAL_CONTRACT_PATH,
+            "FLOORCONNECTOR_E2E_PORTAL_CONTRACT_PATH",
+            'a[href^="/portal/contracts/"]'
+          )
+        },
+        {
+          label: "invoice",
+          path: await getProjectRecordPath(
+            page,
+            "invoice",
+            process.env.FLOORCONNECTOR_E2E_PORTAL_INVOICE_PATH,
+            "FLOORCONNECTOR_E2E_PORTAL_INVOICE_PATH",
+            'a[href^="/portal/invoices/"]'
+          )
+        }
+      ];
+
+      for (const record of records) {
+        await page.goto(record.path);
+        await expect(
+          page.getByRole("link", { name: /print|save pdf/i }),
+          `Portal ${record.label} review should expose the print action`
+        ).toBeVisible();
+
+        const response = await page.goto(`${record.path}/pdf`, {
+          waitUntil: "domcontentloaded"
+        });
+        expect(response?.status(), `${record.path}/pdf should load`).toBeLessThan(400);
+        await expect(page.getByRole("main", { name: /customer document/i })).toBeVisible();
+        await expect(page.getByRole("button", { name: /print|save pdf/i })).toBeVisible();
+        const printView = page.getByTestId("customer-document-print-view");
+        await expect(printView).toContainText(/Customer document/i);
+        await expect(page.getByTestId("customer-document-brand-name")).not.toHaveText(
+          "Your contractor"
+        );
+      }
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("portal review routes stay readable at mobile width", async ({
+    browser,
+    baseURL
+  }) => {
+    const { page, context } = await newPortalPage(browser, baseURL);
+
+    try {
+      await page.setViewportSize({ width: 390, height: 844 });
+
+      await page.goto("/portal");
+      await expectAuthenticatedPortalPage(
+        page,
+        /Review the work your contractor has shared/i
+      );
+      await expectNoHorizontalPageOverflow(page, "Portal home mobile layout");
+
+      const projectPath = await getGrantedProjectPath(page);
+      await page.goto(projectPath);
+      await expectAuthenticatedPortalPage(page, /Shared Project Workspace/i);
+      await expectNoHorizontalPageOverflow(page, "Portal project mobile layout");
+
+      const estimatePath = await getProjectRecordPath(
+        page,
+        "estimate",
+        process.env.FLOORCONNECTOR_E2E_PORTAL_ESTIMATE_PATH,
+        "FLOORCONNECTOR_E2E_PORTAL_ESTIMATE_PATH",
+        'a[href^="/portal/estimates/"]'
+      );
+      await page.goto(estimatePath);
+      await expectAuthenticatedPortalPage(page, /Estimate Review/i);
+      await expectNoHorizontalPageOverflow(page, "Portal estimate mobile layout");
+
+      const contractPath = await getProjectRecordPath(
+        page,
+        "contract",
+        process.env.FLOORCONNECTOR_E2E_PORTAL_CONTRACT_PATH,
+        "FLOORCONNECTOR_E2E_PORTAL_CONTRACT_PATH",
+        'a[href^="/portal/contracts/"]'
+      );
+      await page.goto(contractPath);
+      await expectAuthenticatedPortalPage(page, /Contract Review/i);
+      await expectNoHorizontalPageOverflow(page, "Portal contract mobile layout");
+
+      const invoicePath = await getProjectRecordPath(
+        page,
+        "invoice",
+        process.env.FLOORCONNECTOR_E2E_PORTAL_INVOICE_PATH,
+        "FLOORCONNECTOR_E2E_PORTAL_INVOICE_PATH",
+        'a[href^="/portal/invoices/"]'
+      );
+      await page.goto(invoicePath);
+      await expectAuthenticatedPortalPage(page, /Invoice Review/i);
+      await expectNoHorizontalPageOverflow(page, "Portal invoice mobile layout");
     } finally {
       await context.close();
     }

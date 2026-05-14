@@ -56,6 +56,8 @@ Once work becomes real enough to deliver, the project should become the operatio
 - selected finish/spec context
 - shared files, evidence, communication history, delivery proof, and activity timeline views
 
+Near-term UI ownership for customer/contact/access/review workflows is captured in [docs/enterprise-ux-consolidation.md](C:/FloorConnector/docs/enterprise-ux-consolidation.md). Customer account pages should not become execution or access-management corridors; People owns contacts/access, Project owns project-specific operational state, and record workspaces stay focused on their immediate proposal, signature, or billing job.
+
 ### 3. Workflow Over Modules
 
 FloorConnector should behave like one connected contractor workflow, not a stack of disconnected modules.

@@ -51,10 +51,22 @@ async function resolveCustomerDetailPath(page) {
   return href;
 }
 
+async function expectNoHorizontalPageOverflow(page) {
+  const metrics = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth)
+  }));
+
+  expect(metrics.scrollWidth, "Customer detail should fit the mobile viewport").toBeLessThanOrEqual(
+    metrics.clientWidth + 2
+  );
+}
+
 test("customer detail renders contact-centered portal access without loading shell hang", async ({
   page
 }) => {
   test.setTimeout(120_000);
+  await page.setViewportSize({ width: 390, height: 844 });
   const issues = attachIssueCapture(page);
   const customerDetailPath = await resolveCustomerDetailPath(page);
 
@@ -70,11 +82,14 @@ test("customer detail renders contact-centered portal access without loading she
   }
 
   expect(response?.status(), `${customerDetailPath} should load successfully`).toBeLessThan(400);
-  await expect(page.getByText("Customer Review").first()).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByText("Customer Workspace").first()).toBeVisible({ timeout: 45_000 });
   await expect(page.getByText("Contacts").first()).toBeVisible();
   await expect(page.getByText("Portal Access").first()).toBeVisible();
+  await expect(page.getByText("Manage contacts/access").first()).toBeVisible();
+  await expect(page.getByText("Open People access management").first()).toBeVisible();
   await expect(page.locator("body")).toContainText(/Contact-level portal access|Portal access/i);
   await expect(page.locator("body")).not.toContainText(/Preparing your workspace|Application error/i);
+  await expectNoHorizontalPageOverflow(page);
 
   const inviteStatusVisible = await page
     .getByText("Invite email delivery")

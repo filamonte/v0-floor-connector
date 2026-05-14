@@ -22,6 +22,31 @@ const opportunityObservationSeverities = [
   "critical"
 ] as const;
 
+export const leadSourceOptions = [
+  "Website",
+  "Phone Call",
+  "Email",
+  "Referral",
+  "Walk-in",
+  "Social Media",
+  "Existing Customer",
+  "Contractor / Builder",
+  "Other"
+] as const;
+
+export const serviceTypeOptions = [
+  "Epoxy Flooring",
+  "Concrete Polishing",
+  "Grind and Seal",
+  "Decorative Flake",
+  "Metallic Epoxy",
+  "Quartz System",
+  "Solid Color Coating",
+  "Surface Prep",
+  "Repair / Recoat",
+  "Other"
+] as const;
+
 function optionalTrimmedString(maxLength: number) {
   return z
     .string()
@@ -65,6 +90,19 @@ function optionalDateField(label: string) {
     .optional()
     .refine((value) => value == null || /^\d{4}-\d{2}-\d{2}$/.test(value), {
       message: `${label} must be a valid date.`
+    })
+    .transform((value) => value ?? null);
+}
+
+function optionalTimeField(label: string) {
+  return z
+    .string()
+    .trim()
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .optional()
+    .refine((value) => value == null || /^\d{2}:\d{2}$/.test(value), {
+      message: `${label} must be a valid time.`
     })
     .transform((value) => value ?? null);
 }
@@ -184,6 +222,7 @@ export const opportunityInputSchema = z.object({
     value ? value.toUpperCase() : null
   ),
   siteAssessmentScheduledOn: optionalDateField("Site assessment scheduled date"),
+  siteAssessmentScheduledTime: optionalTimeField("Site assessment scheduled time"),
   siteAssessmentCompletedOn: optionalDateField("Site assessment completed date"),
   requirementsSummary: optionalTrimmedString(4000),
   notes: optionalTrimmedString(4000),
@@ -191,6 +230,24 @@ export const opportunityInputSchema = z.object({
   observations: z.array(opportunityObservationInputSchema).default([]),
   attachments: z.array(opportunityAttachmentInputSchema).default([])
 }).superRefine((value, ctx) => {
+  if (value.status === "site_assessment_scheduled") {
+    if (!value.siteAssessmentScheduledOn) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Site assessment date is required when assessment is scheduled.",
+        path: ["siteAssessmentScheduledOn"]
+      });
+    }
+
+    if (!value.siteAssessmentScheduledTime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Site assessment time is required when assessment is scheduled.",
+        path: ["siteAssessmentScheduledTime"]
+      });
+    }
+  }
+
   if (
     value.siteAssessmentScheduledOn &&
     value.siteAssessmentCompletedOn &&
@@ -242,7 +299,32 @@ export const opportunityQuickCreateInputSchema = z.object({
     }),
   cellPhone: z.string().trim().min(1, "Cell phone is required.").max(40),
   leadStage: opportunityStatusSchema,
-  companyName: optionalTrimmedString(120)
+  companyName: optionalTrimmedString(120),
+  source: optionalTrimmedString(120),
+  sourceDetail: optionalTrimmedString(160),
+  serviceType: optionalTrimmedString(120),
+  siteAssessmentScheduledOn: optionalDateField("Site assessment scheduled date"),
+  siteAssessmentScheduledTime: optionalTimeField("Site assessment scheduled time")
+}).superRefine((value, ctx) => {
+  if (value.leadStage !== "site_assessment_scheduled") {
+    return;
+  }
+
+  if (!value.siteAssessmentScheduledOn) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Site assessment date is required when assessment is scheduled.",
+      path: ["siteAssessmentScheduledOn"]
+    });
+  }
+
+  if (!value.siteAssessmentScheduledTime) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Site assessment time is required when assessment is scheduled.",
+      path: ["siteAssessmentScheduledTime"]
+    });
+  }
 });
 
 export type OpportunityQuickCreateInput = z.infer<typeof opportunityQuickCreateInputSchema>;

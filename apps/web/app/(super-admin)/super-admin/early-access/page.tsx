@@ -148,7 +148,7 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
       >
         <div className="mb-4 space-y-3">
           <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
-            Progress is derived from canonical company, project, estimate, contract, and invoice records. No analytics or duplicate tenant records are used here.
+            Progress is derived from existing company, project, estimate, contract, and invoice records. No analytics or duplicate tenant records are used here.
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3">
@@ -295,13 +295,34 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                         {formatOptionalStatus(tenant.stripeSubscriptionLifecycleState)}
                       </p>
                       <p>
+                        Price:{" "}
+                        {tenant.stripePriceId ? "Stored reference" : "Not recorded"}
+                      </p>
+                      <p>
+                        Checkout:{" "}
+                        {tenant.stripeCheckoutSessionId
+                          ? "Stored reference"
+                          : "Not recorded"}
+                      </p>
+                      <p>
                         Period end:{" "}
                         {tenant.stripeCurrentPeriodEnd
                           ? formatDateTime(tenant.stripeCurrentPeriodEnd)
                           : "Not recorded"}
                       </p>
+                      <p>
+                        Last billing event:{" "}
+                        {tenant.stripeLastEventId ? "Stored reference" : "Not recorded"}
+                      </p>
+                      <p>
+                        Last webhook:{" "}
+                        {tenant.stripeLastWebhookReceivedAt
+                          ? formatDateTime(tenant.stripeLastWebhookReceivedAt)
+                          : "Not recorded"}
+                      </p>
                       <p className="mt-2 text-[11px] text-[var(--text-tertiary)]">
-                        Display only; does not activate tenants or touch invoice payments.
+                        Stripe SaaS billing does not auto-activate tenants or touch
+                        contractor invoice payments.
                       </p>
                     </td>
                     <td className="min-w-[22rem] px-4 py-4">

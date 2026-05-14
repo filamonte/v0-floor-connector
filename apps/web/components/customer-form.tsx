@@ -41,7 +41,11 @@ export function CustomerForm({
           name="name"
           defaultValue={customer?.name ?? ""}
           placeholder="Jane Doe"
-          hint="Use the primary billing, project, or estimate-recipient contact name."
+          hint={
+            customer
+              ? "This remains the customer account name. Manage additional contacts in People."
+              : "This person becomes the primary customer contact. Additional contacts can be managed in People."
+          }
           required
         />
         <AuthField
@@ -65,7 +69,7 @@ export function CustomerForm({
           type="email"
           defaultValue={getValue(customer?.email)}
           placeholder="customer@example.com"
-          hint="Estimate send and customer-facing billing handoff use this customer email."
+          hint="Portal access is granted to contacts, not just customer accounts."
         />
         <AuthField
           label="Address line 1"

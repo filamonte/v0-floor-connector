@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import {
   ArrowDown,
@@ -31,6 +32,7 @@ import {
 } from "@/components/estimates/estimate-import-chooser";
 import { FinancialSummaryBar } from "@/components/estimates/financial-summary-bar";
 import type { ExpandedSystemPreview } from "@/lib/catalogs/system-expansion";
+import type { EstimateSourceAssessmentContext } from "@/lib/estimates/source-assessment";
 
 export type EstimateItemsDraft = {
   id: string | null;
@@ -88,9 +90,12 @@ type ItemsSectionProps = {
   systemCount: string;
   systemPreview: ExpandedSystemPreview | null;
   systemPreviewMessage?: string | null;
+  systemSourceLabel?: string | null;
   isPreviewPending?: boolean;
+  sourceAssessment?: EstimateSourceAssessmentContext | null;
   onSelectedSystemIdChange: (value: string) => void;
   onSystemMeasurementChange: (field: string, value: string) => void;
+  onUseSourceMeasurement: (groupKey: string) => void;
   onQuickAddCatalogItem: (
     catalogItemId: string,
     targetGroupId?: string | null
@@ -334,9 +339,12 @@ export function ItemsSection({
   systemCount,
   systemPreview,
   systemPreviewMessage,
+  systemSourceLabel,
   isPreviewPending = false,
+  sourceAssessment = null,
   onSelectedSystemIdChange,
   onSystemMeasurementChange,
+  onUseSourceMeasurement,
   onQuickAddCatalogItem,
   onAddPreviewCatalogItem,
   onImportLineItemsFromEstimate,
@@ -386,6 +394,16 @@ export function ItemsSection({
     itemGroups,
     showOnlyZeroItems
   );
+  const lineItemCountByGroupId = useMemo(() => {
+    const counts = new Map<string | null, number>();
+
+    for (const lineItem of lineItems) {
+      const key = lineItem.groupId ?? null;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+
+    return counts;
+  }, [lineItems]);
   const visibleItemCount = visibleGroups.reduce(
     (sum, group) => sum + group.rows.length,
     0
@@ -1112,6 +1130,91 @@ export function ItemsSection({
                 generate grouped proposal items for review.
               </p>
             </div>
+            {sourceAssessment &&
+            (sourceAssessment.measurementGroups.length > 0 ||
+              sourceAssessment.requirementsSummary ||
+              sourceAssessment.serviceType) ? (
+              <div className="mb-4 rounded-[10px] border border-[#dfe5ef] bg-[#f8fbff] p-3">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#48617f]">
+                        <FolderTree className="h-4 w-4" />
+                        Source assessment
+                      </span>
+                      <Link
+                        href={`/leads/${sourceAssessment.opportunityId}`}
+                        className="text-[12px] font-semibold text-[#a4581a] underline-offset-2 hover:underline"
+                      >
+                        Open lead
+                      </Link>
+                    </div>
+                    <p className="mt-1 text-[13px] leading-5 text-[#48617f]">
+                      {sourceAssessment.serviceType
+                        ? `${sourceAssessment.serviceType} context from ${sourceAssessment.opportunityTitle}.`
+                        : `Assessment context from ${sourceAssessment.opportunityTitle}.`}
+                    </p>
+                    {sourceAssessment.requirementsSummary ? (
+                      <p className="mt-2 max-h-10 overflow-hidden text-[12px] leading-5 text-[#6b7c96]">
+                        {sourceAssessment.requirementsSummary}
+                      </p>
+                    ) : null}
+                  </div>
+                  {systemSourceLabel ? (
+                    <span className="inline-flex w-fit rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-700">
+                      {systemSourceLabel}
+                    </span>
+                  ) : null}
+                </div>
+                {sourceAssessment.measurementGroups.length > 0 ? (
+                  <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                    {sourceAssessment.measurementGroups.map((group) => (
+                      <button
+                        key={group.key}
+                        type="button"
+                        onClick={() => onUseSourceMeasurement(group.key)}
+                        disabled={!group.squareFootage}
+                        className={[
+                          "rounded-[8px] border bg-white p-3 text-left transition",
+                          group.squareFootage
+                            ? "border-[#d6dfe8] hover:border-[#d8731f]"
+                            : "border-[#e5e7eb] text-[#9aa5b5]"
+                        ].join(" ")}
+                        title={
+                          group.squareFootage
+                            ? "Use these source assessment values as editable system inputs."
+                            : "This assessment group needs area before system generation can use it."
+                        }
+                      >
+                        <span className="block truncate text-[13px] font-semibold text-[#171717]">
+                          {group.areaLabel}
+                        </span>
+                        <span className="mt-2 grid grid-cols-3 gap-2 text-[12px] text-[#5d6f8a]">
+                          <span>
+                            <span className="block font-semibold text-[#2a2a2a]">
+                              {group.squareFootage ?? "-"}
+                            </span>
+                            sqft
+                          </span>
+                          <span>
+                            <span className="block font-semibold text-[#2a2a2a]">
+                              {group.linearFootage ?? "0"}
+                            </span>
+                            lf
+                          </span>
+                          <span>
+                            <span className="block font-semibold text-[#2a2a2a]">
+                              {group.count ?? "1"}
+                            </span>
+                            ea
+                          </span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             <div className="flex flex-wrap items-end gap-3">
               <label className="min-w-[220px] flex-1 text-[12px] font-medium text-[#5d6f8a]">
                 Catalog system
@@ -1243,24 +1346,26 @@ export function ItemsSection({
                 type="button"
                 onClick={onPreviewSystem}
                 disabled={
-                  !selectedSystemId || getNumericValue(systemSquareFootage) <= 0
+                  estimateStatus === "approved" ||
+                  !selectedSystemId ||
+                  getNumericValue(systemSquareFootage) <= 0
                 }
                 className="inline-flex h-11 items-center gap-2 rounded-[8px] border border-[#d8be9f] bg-white px-4 text-[14px] font-medium text-[#5f3b20] disabled:cursor-not-allowed disabled:text-[#b7a594]"
               >
                 <Search className="h-4 w-4" />
-                <span>
-                  {isPreviewPending ? "Previewing..." : "Preview system"}
-                </span>
-              </button>
+                  <span>
+                    {isPreviewPending ? "Previewing..." : "Preview system"}
+                  </span>
+                </button>
               <button
                 type="button"
                 onClick={onExpandSystem}
-                disabled={!systemPreview || isPreviewPending}
+                disabled={estimateStatus === "approved" || !systemPreview || isPreviewPending}
                 className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-[#ef7d32] px-5 text-[14px] font-semibold text-white disabled:cursor-not-allowed disabled:bg-[#e6b894]"
               >
                 <Plus className="h-4 w-4" />
-                <span>Generate items</span>
-              </button>
+                  <span>Generate items</span>
+                </button>
             </div>
             {systemPreviewMessage ? (
               <div className="mt-3 rounded-[8px] border border-[#d6d6d6] bg-white px-3 py-2 text-[13px] text-[#48617f]">
@@ -1504,11 +1609,37 @@ export function ItemsSection({
                   {group.id ? (
                     <button
                       type="button"
-                      onClick={() => onDeleteGroup(group.id as string)}
-                      className="inline-flex h-9 items-center gap-2 rounded-[6px] border border-[#ebd3d3] px-3 text-[13px] text-[#8f4b4b]"
+                      onClick={() => {
+                        if (estimateStatus === "approved") {
+                          return;
+                        }
+
+                        const affectedItemCount =
+                          lineItemCountByGroupId.get(group.id) ?? group.rows.length;
+                        const warning =
+                          affectedItemCount > 0
+                            ? `Delete "${group.label}"? Its ${affectedItemCount} item${affectedItemCount === 1 ? "" : "s"} will move to Ungrouped Items.`
+                            : `Delete "${group.label}"?`;
+
+                        if (window.confirm(warning)) {
+                          onDeleteGroup(group.id as string);
+                        }
+                      }}
+                      disabled={estimateStatus === "approved"}
+                      title={
+                        estimateStatus === "approved"
+                          ? "Approved estimates cannot have sections deleted."
+                          : "Delete section"
+                      }
+                      className={[
+                        "inline-flex h-9 items-center gap-2 rounded-[6px] border px-3 text-[13px]",
+                        estimateStatus === "approved"
+                          ? "cursor-not-allowed border-[#e5e7eb] text-[#a7b2c4]"
+                          : "border-[#ebd3d3] text-[#8f4b4b]"
+                      ].join(" ")}
                     >
                       <Trash2 className="h-4 w-4" />
-                      <span>Delete</span>
+                      <span>Delete section</span>
                     </button>
                   ) : null}
                 </div>

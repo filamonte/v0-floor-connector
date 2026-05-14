@@ -7,7 +7,9 @@ import type { Customer as CustomerRecord } from "@floorconnector/types";
 import type { CustomerInput } from "./schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { ensurePrimaryCustomerContact } from "./primary-contact";
 
 type CustomerRow = {
   id: string;
@@ -184,7 +186,10 @@ export async function getCustomerById(customerId: string, next = "/customers") {
   return mapCustomer(data);
 }
 
-export async function createCustomer(input: CustomerInput) {
+export async function createCustomer(
+  input: CustomerInput,
+  options?: { primaryContactSource?: "customer_create" | "project_inline_customer" }
+) {
   const scope = await requireCustomerScope("/customers");
   const supabase = await getSupabaseServerClient();
   const response = await supabase
@@ -223,7 +228,61 @@ export async function createCustomer(input: CustomerInput) {
     throw new Error("Unexpected customer response after create.");
   }
 
-  return mapCustomer(data);
+  const customer = mapCustomer(data);
+
+  await ensurePrimaryCustomerContact({
+    organizationId: scope.organizationId,
+    userId: scope.userId,
+    customerId: customer.id,
+    name: customer.name,
+    companyName: customer.companyName,
+    email: customer.email,
+    phone: customer.phone,
+    source: options?.primaryContactSource ?? "customer_create"
+  });
+
+  return customer;
+}
+
+export async function createCustomerFromPrimaryContact(input: {
+  name: string;
+  companyName: string | null;
+  email: string | null;
+  phone: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  city?: string | null;
+  stateRegion?: string | null;
+  postalCode?: string | null;
+  countryCode?: string | null;
+  source?: "project_inline_customer";
+}) {
+  const scope = await requireCustomerScope("/customers");
+  const financialSettings = await getOrganizationFinancialSettings(scope.organizationId);
+
+  return createCustomer(
+    {
+      name: input.name,
+      companyName: input.companyName,
+      phone: input.phone,
+      email: input.email,
+      addressLine1: input.addressLine1 ?? null,
+      addressLine2: input.addressLine2 ?? null,
+      city: input.city ?? null,
+      stateRegion: input.stateRegion ?? null,
+      postalCode: input.postalCode ?? null,
+      countryCode: input.countryCode ?? null,
+      isTaxExempt: false,
+      taxExemptionReason: null,
+      taxExemptionReference: null,
+      taxExemptionExpiresOn: null,
+      retainagePercentageDefault: financialSettings.defaultRetainagePercentage,
+      notes: null
+    },
+    {
+      primaryContactSource: input.source ?? "project_inline_customer"
+    }
+  );
 }
 
 export async function updateCustomer(customerId: string, input: CustomerInput) {

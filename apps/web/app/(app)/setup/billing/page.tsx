@@ -139,7 +139,7 @@ export default async function BillingSetupPage({ searchParams }: PageProps) {
               Founder subscription checkout
             </p>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#625a52]">
-              This starts FloorConnector SaaS subscription checkout in Stripe test mode only. Checkout does not activate the workspace and does not touch contractor-customer invoice payments.
+              This starts FloorConnector SaaS subscription checkout in Stripe test mode only. A signed Stripe webhook may take a moment to reconcile subscription status for platform review. Checkout does not activate the workspace and does not touch contractor-customer invoice payments.
             </p>
             <div className="mt-4">
               <SaasSubscriptionCheckoutButton

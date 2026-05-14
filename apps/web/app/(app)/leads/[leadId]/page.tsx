@@ -175,7 +175,7 @@ function getLeadNextAction(input: {
     return {
       title: "Continue to project / estimate when ready",
       description:
-        "Assessment context is ready. Starting the estimate creates or links the canonical customer and project records without duplicating the lead.",
+        "Assessment context is ready. Starting the estimate creates or links the customer and project records without duplicating the lead.",
       href: "#project-handoff",
       label: "Start estimate",
       kind: "estimate" as const
@@ -265,7 +265,7 @@ export default async function LeadDetailPage({
         eyebrow: "Lead Workspace",
         title: opportunity.title,
         description:
-          "Qualify the lead, schedule the site visit, capture inspection context, and only then move into the canonical customer, project, and estimate chain.",
+          "Qualify the lead, schedule the site visit, capture inspection context, and only then move into the customer, project, and estimate chain.",
         actions: (
           <div className="flex flex-wrap gap-2.5">
             <Link
@@ -429,7 +429,7 @@ export default async function LeadDetailPage({
               Primary Contact
             </p>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              This is the upstream lead contact. When a canonical customer is linked, safe email
+              This is the upstream lead contact. When a customer is linked, safe email
               updates can sync forward into that customer record, but downstream estimate send uses
               the linked customer email.
             </p>
@@ -536,7 +536,7 @@ export default async function LeadDetailPage({
                           {opportunity.customer.name}
                         </Link>
                         <p className="text-xs leading-5 text-slate-500">
-                          This linked customer becomes the canonical external recipient record for
+                          This linked customer becomes the external recipient record for
                           projects, estimates, invoices, and portal access.
                         </p>
                       </div>
@@ -609,7 +609,7 @@ export default async function LeadDetailPage({
                 Lead communication context
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                Log manual lead contact and keep the next contractor follow-up visible. Provider-backed SMS, email, chat, voice, and AI remain future work.
+                Log manual lead contact and keep the next contractor follow-up visible. Automated SMS, email, chat, voice, and AI remain future work.
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 md:w-72">
@@ -707,7 +707,7 @@ export default async function LeadDetailPage({
                   <AppEmptyState
                     eyebrow="No communication yet"
                     title="Manual logging is ready"
-                    description="Log calls, email notes, text notes, voicemails, appointment notes, or internal notes here. Provider-backed SMS, email, chat, voice, and AI summaries come later."
+                    description="Log calls, email notes, text notes, voicemails, appointment notes, or internal notes here. Automated SMS, email, chat, voice, and AI summaries come later."
                   />
                 )}
               </div>
@@ -881,7 +881,7 @@ export default async function LeadDetailPage({
         <DirectoryContextCard
           href={`/directory?view=leads&q=${encodeURIComponent(opportunity.title)}`}
           recordLabel="Lead opportunity"
-          description="Directory is the read-only scan-and-jump index. This lead page remains the canonical home for pre-customer commercial context and estimate handoff decisions."
+          description="Directory is the read-only scan-and-jump index. This lead page remains the home for pre-customer commercial context and estimate handoff decisions."
         />
 
         <section id="project-handoff" className="rounded-3xl border border-slate-200 bg-white/85 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
@@ -890,7 +890,7 @@ export default async function LeadDetailPage({
           </p>
           <p className="mt-4 text-sm leading-6 text-slate-600">
             {nextAction.description} Site visits stay lead-linked, while estimate creation links
-            the canonical customer and project before commercial scope is sent.
+            the customer and project before commercial scope is sent.
           </p>
           {canStartEstimate ? (
             <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-900">

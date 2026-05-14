@@ -56,6 +56,7 @@ export function FieldNoteForm({
     <SaveStateForm
       action={action}
       enabled={Boolean(fieldNote)}
+      resetOnSuccess={!fieldNote}
       pendingLabel={pendingLabel}
       className="space-y-4"
     >

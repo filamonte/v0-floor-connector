@@ -32,8 +32,8 @@ export function ManagerDashboardCard({
   emptyDescription
 }: ManagerDashboardCardProps) {
   return (
-    <section className="flex h-full flex-col rounded-lg border border-[var(--border-warm)] bg-white">
-      <div className="flex items-start justify-between gap-3 border-b border-[var(--border-warm)] px-3 py-2.5">
+    <section className="flex h-full min-w-0 flex-col rounded-lg border border-[var(--border-warm)] bg-white">
+      <div className="flex flex-col items-start gap-3 border-b border-[var(--border-warm)] px-3 py-2.5 sm:flex-row sm:justify-between">
         <div className="min-w-0">
           {eyebrow ? (
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
@@ -47,7 +47,7 @@ export function ManagerDashboardCard({
         </div>
         <Link
           href={actionHref}
-          className="inline-flex shrink-0 items-center rounded-md border border-[var(--border-warm)] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:border-[var(--copper)] hover:bg-[var(--highlight)] hover:text-[var(--text-primary)]"
+          className="inline-flex max-w-full items-center whitespace-normal rounded-md border border-[var(--border-warm)] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:border-[var(--copper)] hover:bg-[var(--highlight)] hover:text-[var(--text-primary)] [overflow-wrap:anywhere] sm:shrink-0"
         >
           {actionLabel}
         </Link>
@@ -59,7 +59,7 @@ export function ManagerDashboardCard({
             <Link
               key={`${item.href}:${item.title}`}
               href={item.href}
-              className="group flex items-start justify-between gap-3 px-3 py-2.5 transition hover:bg-[var(--highlight)]"
+              className="group flex min-w-0 flex-col gap-2 px-3 py-2.5 transition hover:bg-[var(--highlight)] sm:flex-row sm:items-start sm:justify-between sm:gap-3"
             >
               <div className="min-w-0">
                 <div className="flex min-w-0 items-center gap-2">
@@ -79,13 +79,13 @@ export function ManagerDashboardCard({
                 </div>
                 <p className="mt-1 text-sm leading-5 text-[var(--text-secondary)]">{item.subtitle}</p>
                 {item.meta ? (
-                  <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                  <p className="mt-1 whitespace-normal break-words text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--text-secondary)] [overflow-wrap:anywhere]">
                     {item.meta}
                   </p>
                 ) : null}
               </div>
               {item.trailing ? (
-                <p className="shrink-0 text-sm font-semibold text-[var(--text-primary)]">
+                <p className="text-sm font-semibold text-[var(--text-primary)] sm:shrink-0">
                   {item.trailing}
                 </p>
               ) : null}

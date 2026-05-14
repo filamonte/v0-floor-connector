@@ -22,6 +22,12 @@ import { listVendors } from "@/lib/vendors/data";
 
 type PeoplePageProps = {
   searchParams?: Promise<{
+    accessContactId?: string;
+    accessCustomerId?: string;
+    accessGrantId?: string;
+    accessQ?: string;
+    accessStatus?: "all" | "active" | "invited" | "revoked" | "missing_grant" | "temp_required";
+    authStatus?: "all" | "linked" | "not_linked" | "email_missing" | "temp_required";
     compose?: string;
     error?: string;
     inviteEmail?: string;
@@ -37,11 +43,41 @@ function formatPersonTypeLabel(value: string) {
 }
 
 function buildPeopleHref(input: {
+  accessContactId?: string;
+  accessCustomerId?: string;
+  accessGrantId?: string;
+  accessQ?: string;
+  accessStatus?: string;
+  authStatus?: string;
   q?: string;
   view?: string;
   compose?: string;
 }) {
   const searchParams = new URLSearchParams();
+
+  if (input.accessQ && input.accessQ.trim().length > 0) {
+    searchParams.set("accessQ", input.accessQ.trim());
+  }
+
+  if (input.accessCustomerId && input.accessCustomerId.trim().length > 0) {
+    searchParams.set("accessCustomerId", input.accessCustomerId.trim());
+  }
+
+  if (input.accessStatus && input.accessStatus !== "all") {
+    searchParams.set("accessStatus", input.accessStatus);
+  }
+
+  if (input.authStatus && input.authStatus !== "all") {
+    searchParams.set("authStatus", input.authStatus);
+  }
+
+  if (input.accessContactId && input.accessContactId.trim().length > 0) {
+    searchParams.set("accessContactId", input.accessContactId.trim());
+  }
+
+  if (input.accessGrantId && input.accessGrantId.trim().length > 0) {
+    searchParams.set("accessGrantId", input.accessGrantId.trim());
+  }
 
   if (input.q && input.q.trim().length > 0) {
     searchParams.set("q", input.q.trim());
@@ -86,6 +122,21 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
   const query = resolvedSearchParams.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
   const view = resolvedSearchParams.view ?? "all";
+  const accessQuery = resolvedSearchParams.accessQ?.trim() ?? "";
+  const accessCustomerId = resolvedSearchParams.accessCustomerId?.trim() ?? "";
+  const accessStatus = resolvedSearchParams.accessStatus ?? "all";
+  const authStatus = resolvedSearchParams.authStatus ?? "all";
+  const selectedAccessContactId = resolvedSearchParams.accessContactId?.trim() ?? "";
+  const selectedAccessGrantId = resolvedSearchParams.accessGrantId?.trim() ?? "";
+  const peopleAccessReturnTo =
+    buildPeopleHref({
+      accessQ: accessQuery,
+      accessCustomerId,
+      accessStatus,
+      authStatus,
+      accessContactId: selectedAccessContactId,
+      accessGrantId: selectedAccessGrantId
+    }) + "#customer-access";
   const showComposer =
     resolvedSearchParams.compose === "1" || Boolean(resolvedSearchParams.error);
   const employeeCount = people.filter((person) => person.personType === "employee").length;
@@ -183,7 +234,7 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
     <ContractorWorkspacePage
       eyebrow="People"
       title={`People for ${organizationContext.organization.displayName}`}
-      description="Manage canonical people identity across workforce participants, customer contacts, login linkage, and portal access administration. Customer detail owns customer-specific contact setup; People is the cross-customer access view."
+      description="Manage workforce participants, customer contacts, login linkage, and portal access administration. Customer detail owns customer-specific contact setup; People is the cross-customer access view."
       summary={
         <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-3">
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
@@ -374,7 +425,7 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
                     description={
                       people.length > 0
                         ? "Try a broader search or switch views to find the workforce record you need."
-                        : "People become the shared identity foundation for workforce records, customer contacts, portal access, and relationship continuity."
+                        : "People keeps workforce records, customer contacts, portal access, and relationship continuity in one place."
                     }
                   />
                 </div>
@@ -389,14 +440,22 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
             portalPermissionsByCustomerContactId={portalPermissionsByCustomerContactId}
             projectsByCustomerId={projectsByCustomerId}
             canManageCustomerContacts={canManageCustomerContacts}
-            returnTo="/people#customer-access"
+            filters={{
+              query: accessQuery,
+              customerId: accessCustomerId,
+              accessStatus,
+              authStatus,
+              selectedContactId: selectedAccessContactId,
+              selectedGrantId: selectedAccessGrantId
+            }}
+            returnTo={peopleAccessReturnTo}
           />
         </section>
 
         <WorkspaceComposerSheet
           id="person-create"
           title="Create workforce person"
-          description="Add an employee or subcontractor worker using the canonical workforce people model. Customer contacts and portal access are managed in the customer-access section above."
+          description="Add an employee or subcontractor worker. Customer contacts and portal access are managed in the customer-access section above."
           open={showComposer}
           openHref={buildPeopleHref({ q: query, view, compose: "1" }) + "#person-create"}
           closeHref={buildPeopleHref({ q: query, view })}

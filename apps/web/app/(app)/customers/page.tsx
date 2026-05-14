@@ -186,7 +186,7 @@ export default async function CustomersPage({
       commandBar={{
         supportSlot: (
           <p>
-            Review the canonical customer base, keep recipient contact details current here, and open quick create only when you are ready to route a new customer account into its full workspace.
+            Review the customer base, keep recipient contact details current here, and open quick create only when you are ready to route a new customer account into its full workspace.
           </p>
         ),
         searchSlot: (
@@ -242,7 +242,7 @@ export default async function CustomersPage({
           <ManagerDashboardCard
             eyebrow="Workflow queue"
             title="Tax exempt"
-            description="Customer accounts carrying tax-exempt treatment on the canonical record."
+            description="Customer accounts carrying tax-exempt treatment on their account record."
             actionHref={buildCustomersHref({ q: query })}
             actionLabel="Review accounts"
             items={taxExemptCustomers.slice(0, 4).map((customer) => ({
@@ -433,7 +433,7 @@ export default async function CustomersPage({
                 description={
                   customers.length > 0
                     ? "Try a broader search to find the customer account you need."
-                    : "Start here when you already know the account. Customer records need to exist before projects, estimates, and invoices can stay connected to the same canonical account."
+                    : "Start here when you already know the account. Customer records need to exist before projects, estimates, and invoices can stay connected to the same customer account."
                 }
                 actionHref={buildCustomersHref({ q: query, compose: "1" }) + "#customer-create"}
                 actionLabel="Create your first customer"
@@ -446,7 +446,7 @@ export default async function CustomersPage({
       <WorkspaceComposerSheet
         id="customer-create"
         title="Quick create customer"
-        description="Capture only the minimum customer context here, create the canonical account, and then finish the rest in the full customer workspace."
+        description="Capture only the minimum customer context here, create the customer account, and then finish the rest in the full customer workspace."
         open={showComposer}
         openHref={buildCustomersHref({ q: query, compose: "1" })}
         closeHref={buildCustomersHref({ q: query })}

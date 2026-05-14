@@ -64,6 +64,34 @@ refused. Do not run multiple Playwright commands in parallel unless each uses a
 separate base URL/port; the shared webServer is intended for one command at a
 time.
 
+Responsive UX consolidation checks now include mobile-width page-overflow
+assertions in the customer detail, People access, detail workspace, and portal
+golden-path specs. These checks assert page-level fit; manager/detail tables may
+still use intentional inner scroll regions when the route needs register-style
+data.
+
+Project detail smoke coverage now also asserts the Project Workspace hub layer:
+`Operational command center`, `Connected record lanes`, and the lane labels for
+Sales / Estimate, Contract / Signature, Change Orders, Billing / Payments,
+Job / Schedule, Field / Daily Logs, and Customer Access.
+
+Document delivery smoke coverage lives in:
+
+```bash
+pnpm exec playwright test e2e/estimate-document-pdf-delivery.spec.js --project=chromium-protected
+```
+
+The spec verifies protected estimate, contract, and invoice `/pdf` routes render
+customer-facing print/save views and that the detail workspaces expose
+`Print / save PDF` actions. These routes are browser print/save renderings of
+canonical records; the test should not require stored PDF files, separate
+document records, payment mutation, or signature mutation.
+
+Portal golden-path smoke also checks shared estimate, contract, and invoice
+print routes when portal fixture records exist. Those portal print views should
+show contractor organization branding rather than generic contractor copy while
+preserving portal access scoping and avoiding payment/signature mutations.
+
 If protected storage state redirects to `/login`, refresh it with
 `pnpm e2e:auth` using the same `PLAYWRIGHT_BASE_URL` as the protected smoke
 command. Common causes are a missing storage-state file, stale cookies, a
@@ -98,6 +126,20 @@ Do not use live keys for local QA. Do not print checkout URLs, because Stripe
 Checkout Session URLs can contain session tokens. Checkout return should land on
 `/setup/billing`, leave activation manual, and leave contractor-customer invoice
 payment records untouched.
+
+Stripe SaaS billing webhook QA must also stay test-mode only. Configure
+`STRIPE_WEBHOOK_SECRET` for the `/api/stripe/saas-billing-webhook` endpoint
+signing secret, send only signed Stripe test events with
+`billing_domain=floorconnector_saas` plus a valid `company_id`, and verify
+`/super-admin/early-access` shows the reconciled subscription references/status
+without marking the tenant active. Do not print raw webhook payloads, endpoint
+signing secrets, Checkout Session URLs, customer payment details, or Stripe keys.
+The contractor-customer payment webhook remains
+`/api/payments/stripe/webhook`; SaaS billing webhook QA must not create or update
+canonical invoice payments or `payment_events`.
+Use [docs/stripe-saas-billing-runbook.md](C:/FloorConnector/docs/stripe-saas-billing-runbook.md)
+for the Stripe CLI forwarding/replay command patterns, Dashboard endpoint setup,
+required metadata, and safe database inspection queries.
 
 ## Auth Strategy
 
@@ -201,6 +243,12 @@ Contractor route-continuity checks assume the contractor E2E account has complet
 Portal/customer QA uses a separate customer session because portal users are not contractor organization members. The portal smoke path must authenticate a real Supabase Auth user whose portal access is backed by canonical `portal_access_grants` and `portal_project_access` rows. Do not count `/login`, an accidental 404, an access-denied page, or a missing shared project as successful portal QA unless the test is intentionally checking unauthorized access.
 
 Portal invite QA should distinguish pending invite records from Auth delivery. The current app-managed portal invite creates or reuses canonical contact-linked portal access records and may return a fresh `/portal/invite?token=...` copy-link fallback, but it does not create a Supabase Auth user or call Supabase admin invite. Branded provider email is attempted only when Postmark delivery is configured and activation guard allows external sends; otherwise the UI should show truthful no-send status. New contractor-created invites should select a `customer_contacts` row; null-contact grants are legacy compatibility records. The unauthenticated invite page should show customer-safe context plus signup, sign-in, and password-reset actions that preserve the invite return path and use the invited contact email.
+
+Contractor-side portal access QA should verify contact-scoped project access rather than customer-account blanket access: People should open as a portal access console with filters, compact contact/grant rows, and no repeated full management panels by default; Manage access should open one selected contact/grant panel with invite status, temporary login help, stored permissions, and project visibility. Copy-from-primary-contact should remain an explicit operator action, and Project Workspace should show which customer contacts can currently see that project. Do not treat an inherited-looking access state as correct unless it is backed by explicit `portal_project_access` rows for that contact's active grant.
+
+Primary-contact intake QA should verify that creating a customer directly, creating a project with an inline new customer, or converting an opportunity into the customer/project/estimate chain creates or links a primary `customer_contacts` row when person details are present. Confirm Customer Workspace and People show the contact as a related/primary customer contact; do not use customer-level email/phone alone as proof that portal access will work.
+
+Temporary credential QA should treat the contractor action as a support fallback, not normal onboarding. Validate that only owner/admin users can create or reset the temporary portal login, the generated password is shown once, no raw password is stored in FloorConnector tables or logs, Supabase Auth `app_metadata` drives the password-change requirement, and password login redirects to `/update-password` before portal continuation. The local portal fixture helper may still create or update the E2E portal Auth user in explicit write mode for fixture repair.
 
 Phase 1.2 adds a stable portal customer fixture helper. The helper validates by default and only writes when the operator explicitly enables local E2E fixture writes. It creates or repairs the portal Supabase Auth user/password plus canonical customer, contact, customer-contact, project, opportunity, catalog item, portal grant, project visibility, estimate, contract, invoice, and signer rows for the contractor E2E organization; it does not create portal-only records, fake signatures, fake payments, or checkout success.
 
@@ -447,6 +495,8 @@ The fixture does not add schema, migrations, duplicate task models, external AI 
 
 The schedule ready handoff spec uses the same protected project and shared authenticated storage state. It verifies that Project Detail ready-to-schedule handoff URLs land on `/schedule` with the expected project/job context and do not save or mutate schedule data merely from loading the URL.
 
+The spec also asserts the good-enough scheduling landmarks so `/schedule` remains understandable as a contractor scheduling surface: `Scheduling command center`, `Ready work queue`, `Scheduled timeline`, and `Selected job action panel`.
+
 The protected regression command is:
 
 ```bash
@@ -471,6 +521,8 @@ It verifies:
 
 The Golden Workflow Demo Path is documented in [docs/golden-workflow-demo-path.md](C:/FloorConnector/docs/golden-workflow-demo-path.md). Protected route checks must use the same authenticated contractor storage-state setup described above.
 
+The founder-demo rehearsal script is documented in [docs/founder-demo-readiness.md](C:/FloorConnector/docs/founder-demo-readiness.md). Use it when QA needs to prove the full showable path from setup and early-access billing through contractor workflow, portal review, print/save documents, and super-admin early-access oversight.
+
 Focused smoke command:
 
 ```bash
@@ -486,14 +538,18 @@ pnpm exec playwright test e2e/customer-detail-ui.spec.js --project=chromium-prot
 The customer detail smoke discovers a real customer from `/customers` unless
 `FLOORCONNECTOR_E2E_CUSTOMER_DETAIL_PATH` is configured. It verifies the
 Customer Workspace renders past the loading shell, shows Contacts and Portal
-Access, and inspects invite email delivery status when the selected customer
-fixture has a pending/active portal invite block.
+Access, exposes the People handoff for access management, and inspects invite
+email delivery status when the selected customer fixture has a pending/active
+portal invite block.
 
 The protected smoke coverage verifies:
 
 - manager routes in the demo spine load authenticated instead of stopping at `/login`
 - core Project, Estimate, Contract, Invoice, and Job Workspaces still render their decision-first regions
+- Project, Estimate, Contract, and Invoice Workspaces remain stable after right-rail consolidation, even when secondary linked records, metadata, revision history, manual payment entry, or invoice editing are behind progressive disclosure
 - Customer Workspace renders contact-centered portal access without stalling on `Preparing your workspace`
 - route checks do not seed fake data or create demo-only workflow state
 
 For full manual QA, pair that smoke run with the route-by-route checklist in `docs/golden-workflow-demo-path.md` and record missing fixtures, missing portal/customer auth, or skipped detail routes explicitly.
+
+Founder-demo QA should additionally open `/setup/company`, `/setup/billing`, `/setup/pending-activation`, `/dashboard?fresh=true`, `/people`, `/portal`, the protected and portal print/save document routes for estimate/contract/invoice where fixture data exists, and `/super-admin/early-access` with platform-admin auth. Do not click live Checkout, customer payment checkout, activation, reset, temporary credential generation, or raw invite-link copy actions unless the run is explicitly scoped for that safe test action.

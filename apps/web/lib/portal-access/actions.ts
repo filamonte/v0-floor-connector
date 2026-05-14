@@ -6,7 +6,9 @@ import { redirect } from "next/navigation";
 
 import {
   acceptPortalInvite,
+  copyPortalProjectAccessFromPrimaryContact,
   createPortalInvite,
+  issueTemporaryPortalCredential,
   sendPortalInviteEmail,
   updateCustomerContactPortalPermission,
   createPortalProjectAccess,
@@ -19,6 +21,14 @@ import {
   portalInviteInputSchema
 } from "./schemas";
 import { getRequestOrigin } from "@/lib/auth/urls";
+
+export type TemporaryPortalCredentialActionState = {
+  status: "idle" | "success" | "error";
+  message: string | null;
+  email: string | null;
+  temporaryPassword: string | null;
+  createdAuthUser: boolean;
+};
 
 function getFieldValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -399,6 +409,106 @@ export async function createPortalProjectAccessAction(formData: FormData) {
       message: "Project portal visibility was added."
     })
   );
+}
+
+export async function copyPortalProjectAccessFromPrimaryContactAction(formData: FormData) {
+  const customerId = getFieldValue(formData, "customerId");
+  const portalAccessGrantId = getFieldValue(formData, "portalAccessGrantId");
+  const managementPath = customerId ? getManagementPath(formData, customerId) : "/customers";
+
+  if (!customerId || !portalAccessGrantId) {
+    redirect(
+      buildRedirect("/customers", {
+        error: "Copy project visibility is missing required identifiers."
+      })
+    );
+  }
+
+  let result;
+  try {
+    result = await copyPortalProjectAccessFromPrimaryContact({
+      targetPortalAccessGrantId: portalAccessGrantId
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect(managementPath, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to copy primary contact project visibility."
+      })
+    );
+  }
+
+  revalidatePath("/customers");
+  revalidatePath(getCustomerPath(customerId));
+  revalidatePath(managementPath);
+  revalidatePath("/people");
+  revalidatePath("/portal");
+
+  redirect(
+    buildRedirect(managementPath, {
+      message:
+        result.createdCount + result.reactivatedCount > 0
+          ? `Copied ${result.createdCount + result.reactivatedCount} project visibility ${
+              result.createdCount + result.reactivatedCount === 1 ? "record" : "records"
+            } from the primary contact.`
+          : "This contact already had the primary contact's active project visibility."
+    })
+  );
+}
+
+export async function issueTemporaryPortalCredentialAction(
+  _previousState: TemporaryPortalCredentialActionState,
+  formData: FormData
+): Promise<TemporaryPortalCredentialActionState> {
+  const portalAccessGrantId = getFieldValue(formData, "portalAccessGrantId");
+  const customerId = getFieldValue(formData, "customerId");
+  const managementPath = customerId ? getManagementPath(formData, customerId) : "/people";
+
+  if (!portalAccessGrantId || !customerId) {
+    return {
+      status: "error",
+      message: "Temporary credential setup is missing required identifiers.",
+      email: null,
+      temporaryPassword: null,
+      createdAuthUser: false
+    };
+  }
+
+  try {
+    const result = await issueTemporaryPortalCredential({
+      portalAccessGrantId
+    });
+
+    revalidatePath("/customers");
+    revalidatePath(getCustomerPath(customerId));
+    revalidatePath(managementPath);
+    revalidatePath("/people");
+    revalidatePath("/directory");
+    revalidatePath("/portal");
+
+    return {
+      status: "success",
+      message: result.createdAuthUser
+        ? "Temporary portal login created. The password is shown once and must be changed after login."
+        : "Temporary portal password set. The password is shown once and must be changed after login.",
+      email: result.email,
+      temporaryPassword: result.temporaryPassword,
+      createdAuthUser: result.createdAuthUser
+    };
+  } catch (error) {
+    return {
+      status: "error",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to create a temporary portal credential.",
+      email: null,
+      temporaryPassword: null,
+      createdAuthUser: false
+    };
+  }
 }
 
 export async function updatePortalProjectAccessStatusAction(formData: FormData) {

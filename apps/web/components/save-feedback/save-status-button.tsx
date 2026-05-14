@@ -10,6 +10,7 @@ type SaveStatusButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   status: SaveFeedbackState;
   isDirty?: boolean;
   statusMessage?: string;
+  labels?: Partial<Record<SaveFeedbackState, string>>;
 };
 
 const buttonLabels: Record<SaveFeedbackState, string> = {
@@ -23,12 +24,13 @@ export function SaveStatusButton({
   status,
   isDirty = false,
   statusMessage,
+  labels,
   className,
   disabled,
   ...props
 }: SaveStatusButtonProps) {
-  const isSaved = !isDirty && status !== "saving";
-  const label = isSaved ? "Saved" : buttonLabels[status];
+  const isSaved = status === "success" || (!isDirty && status !== "saving" && status !== "error");
+  const label = isSaved ? (labels?.success ?? "Saved") : (labels?.[status] ?? buttonLabels[status]);
   const liveMessage =
     status === "idle" && isDirty
       ? "Unsaved changes"

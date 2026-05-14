@@ -28,6 +28,7 @@ import {
 } from "@/lib/portal/appointment-visibility";
 import { listPortalAccessGrantsForCurrentUser } from "@/lib/portal-access/data";
 import { STORAGE_BUCKET_NAMES } from "@floorconnector/config";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 type PortalProjectRow = {
@@ -306,6 +307,27 @@ type ProjectStatusRow = {
   updated_at: string;
 };
 
+type PortalDocumentBrandRow = {
+  id: string;
+  slug: string;
+  legal_name: string;
+  display_name: string;
+  logo_url: string | null;
+  phone: string | null;
+  email: string | null;
+  website_url: string | null;
+  brand_accent_color: string | null;
+};
+
+export type PortalDocumentBrand = {
+  name: string;
+  logoUrl: string | null;
+  phone: string | null;
+  email: string | null;
+  websiteUrl: string | null;
+  accentColor: string | null;
+};
+
 export type PortalAccessibleProjectListItem = {
   id: string;
   organizationId: string;
@@ -485,6 +507,7 @@ export type PortalEstimateReviewDetail = {
     name: string;
     companyName: string | null;
   } | null;
+  contractorBrand: PortalDocumentBrand;
   project: {
     id: string;
     name: string;
@@ -571,6 +594,7 @@ export type PortalContractReviewDetail = {
     name: string;
     companyName: string | null;
   } | null;
+  contractorBrand: PortalDocumentBrand;
   project: {
     id: string;
     name: string;
@@ -610,6 +634,7 @@ export type PortalInvoiceReviewDetail = {
     name: string;
     companyName: string | null;
   } | null;
+  contractorBrand: PortalDocumentBrand;
   project: {
     id: string;
     name: string;
@@ -1110,6 +1135,39 @@ async function createPortalRecordView(
   return {
     portalUserId: user.id,
     isFirstView: !existingResponse.data
+  };
+}
+
+async function getPortalDocumentBrand(companyId: string): Promise<PortalDocumentBrand> {
+  const admin = getSupabaseAdminClient();
+  const response = await admin
+    .from("companies")
+    .select(
+      "id, slug, legal_name, display_name, logo_url, phone, email, website_url, brand_accent_color"
+    )
+    .eq("id", companyId)
+    .maybeSingle();
+
+  if (response.error) {
+    throw new Error(`Unable to load portal document branding: ${response.error.message}`);
+  }
+
+  const row = response.data as PortalDocumentBrandRow | null;
+  const nameCandidates = [row?.display_name, row?.legal_name, row?.slug]
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value));
+  const brandName =
+    nameCandidates.find((value) => value.toLowerCase() !== "your contractor") ??
+    nameCandidates[0] ??
+    "FloorConnector contractor";
+
+  return {
+    name: brandName,
+    logoUrl: row?.logo_url ?? null,
+    phone: row?.phone ?? null,
+    email: row?.email ?? null,
+    websiteUrl: row?.website_url ?? null,
+    accentColor: row?.brand_accent_color ?? null
   };
 }
 
@@ -1700,24 +1758,27 @@ export async function getPortalEstimateReviewData(
     return null;
   }
 
-  const lineItemsResponse = await supabase
-    .from("estimate_line_items")
-    .select(
-      `
-        id,
-        estimate_id,
-        name,
-        description,
-        quantity,
-        unit,
-        unit_price,
-        line_total,
-        group_name,
-        sort_order
-      `
-    )
-    .eq("estimate_id", estimateId)
-    .order("sort_order", { ascending: true });
+  const [lineItemsResponse, contractorBrand] = await Promise.all([
+    supabase
+      .from("estimate_line_items")
+      .select(
+        `
+          id,
+          estimate_id,
+          name,
+          description,
+          quantity,
+          unit,
+          unit_price,
+          line_total,
+          group_name,
+          sort_order
+        `
+      )
+      .eq("estimate_id", estimateId)
+      .order("sort_order", { ascending: true }),
+    getPortalDocumentBrand(row.company_id)
+  ]);
   const lineItemRows =
     (lineItemsResponse.data as PortalEstimateLineItemRow[] | null) ?? [];
 
@@ -1793,6 +1854,7 @@ export async function getPortalEstimateReviewData(
           companyName: row.customers.company_name
         }
       : null,
+    contractorBrand,
     project: row.projects
       ? {
           id: row.projects.id,
@@ -1873,6 +1935,8 @@ export async function getPortalContractReviewData(
       `Unable to load portal contract signer routing: ${contractSignerResponse.error.message}`
     );
   }
+
+  const contractorBrand = await getPortalDocumentBrand(row.company_id);
 
   await createPortalRecordView(
     {
@@ -1956,6 +2020,7 @@ export async function getPortalContractReviewData(
           companyName: row.customers.company_name
         }
       : null,
+    contractorBrand,
     project: row.projects
       ? {
           id: row.projects.id,
@@ -1998,7 +2063,7 @@ export async function getPortalInvoiceReviewData(
     return null;
   }
 
-  const [lineItemsResponse, paymentsResponse, paymentEventsResponse] = await Promise.all([
+  const [lineItemsResponse, paymentsResponse, paymentEventsResponse, contractorBrand] = await Promise.all([
     supabase
       .from("invoice_line_items")
       .select(
@@ -2047,7 +2112,8 @@ export async function getPortalInvoiceReviewData(
       )
       .eq("invoice_id", invoiceId)
       .order("occurred_at", { ascending: false })
-      .limit(6)
+      .limit(6),
+    getPortalDocumentBrand(row.company_id)
   ]);
 
   const lineItemRows =
@@ -2131,6 +2197,7 @@ export async function getPortalInvoiceReviewData(
           companyName: row.customers.company_name
         }
       : null,
+    contractorBrand,
     project: row.projects
       ? {
           id: row.projects.id,

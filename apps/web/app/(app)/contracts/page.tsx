@@ -246,7 +246,7 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
         supportSlot: (
           <p>
             Review signature readiness, follow the contract workflow by its real
-            canonical state, and open quick create only when you are ready to route
+            send-ready state, and open quick create only when you are ready to route
             into the full contract workspace.
           </p>
         ),
@@ -379,7 +379,7 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
           <ManagerDashboardCard
             eyebrow="Workflow queue"
             title="Ready to send"
-            description="Draft contracts that are already in a send-ready canonical state."
+            description="Draft contracts that are already in a send-ready state."
             actionHref={buildContractsHref({ q: query, status: "draft" })}
             actionLabel="Open drafts"
             items={readyToSendContracts.slice(0, 4).map((contract) => ({
@@ -582,7 +582,7 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
       <WorkspaceComposerSheet
         id="contract-create"
         title="Quick create contract"
-        description="Choose the approved estimate, create the canonical contract, and then finish review and signature setup in the full contract workspace."
+        description="Choose the approved estimate, create the contract, and then finish review and signature setup in the full contract workspace."
         open={showComposer}
         openHref={buildContractsHref({
           q: query,

@@ -49,6 +49,11 @@ type CustomerContactRow = {
     | null;
 };
 
+type CustomerContactLinkRow = {
+  id: string;
+  is_primary: boolean;
+};
+
 export type CustomerContactListItem = {
   id: string;
   organizationId: string;
@@ -494,11 +499,19 @@ export async function upsertCustomerContactLink(input: {
       {
         onConflict: "company_id,customer_id,contact_id"
       }
-    );
+    )
+    .select("id, is_primary")
+    .single();
+  const data = response.data as CustomerContactLinkRow | null;
 
   if (response.error) {
     throw new Error(`Unable to link customer and contact: ${response.error.message}`);
   }
+
+  return {
+    id: data?.id ?? null,
+    isPrimary: data?.is_primary ?? input.isPrimary ?? false
+  };
 }
 
 export async function createCustomerContactForCustomer(input: {

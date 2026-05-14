@@ -50,13 +50,29 @@ test.beforeAll(async () => {
         }
 
         return (
-          <SaveStateForm action={action} pendingLabel="Saving..." className="fixture-form">
-            <label>
-              Tracked value
-              <input name="trackedValue" defaultValue="baseline" aria-label="Tracked value" />
-            </label>
-            <SaveStateSubmitButton submitLabel="Save" pendingLabel="Saving..." />
-          </SaveStateForm>
+          <>
+            <SaveStateForm action={action} pendingLabel="Saving..." className="fixture-form">
+              <label>
+                Tracked value
+                <input name="trackedValue" defaultValue="baseline" aria-label="Tracked value" />
+              </label>
+              <SaveStateSubmitButton submitLabel="Save" pendingLabel="Saving..." />
+            </SaveStateForm>
+            <SaveStateForm
+              action={action}
+              enabled={false}
+              resetOnSuccess
+              pendingLabel="Logging..."
+              aria-label="Create note"
+              className="create-fixture-form"
+            >
+              <label>
+                Create note body
+                <textarea name="body" aria-label="Create note body" />
+              </label>
+              <SaveStateSubmitButton submitLabel="Log note" pendingLabel="Logging..." />
+            </SaveStateForm>
+          </>
         );
       }
 
@@ -135,7 +151,7 @@ test("tracks saved, dirty, reverted, saving, success, and failure states", async
   await page.goto(fixtureUrl);
 
   const input = page.getByLabel("Tracked value");
-  const saveButton = page.getByRole("button");
+  const saveButton = page.getByRole("button", { name: "Save" });
 
   await expect(saveButton).toHaveText("Saved");
   await expect(saveButton).toBeDisabled();
@@ -169,4 +185,21 @@ test("tracks saved, dirty, reverted, saving, success, and failure states", async
   await page.evaluate(() => window.rejectSave?.());
   await expect(saveButton).toHaveText("Save");
   await expect(saveButton).toBeEnabled();
+});
+
+test("resets create-style forms after a successful save and shows completion feedback", async ({ page }) => {
+  await page.goto(fixtureUrl);
+
+  const form = page.getByRole("form", { name: "Create note" });
+  const noteBody = form.getByLabel("Create note body");
+  const submitButton = form.getByRole("button", { name: "Log note" });
+
+  await noteBody.fill("This note should clear after save.");
+  await submitButton.click();
+  await expect(submitButton).toHaveText("Logging...");
+
+  await page.evaluate(() => window.resolveSave?.());
+
+  await expect(noteBody).toHaveValue("");
+  await expect(submitButton).toHaveText("Saved");
 });

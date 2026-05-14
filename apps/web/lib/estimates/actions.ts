@@ -44,6 +44,10 @@ import {
   estimateSendToCustomerInputSchema,
   estimateSystemInsertInputSchema
 } from "./schemas";
+import {
+  buildManualEstimateApprovalEvidence,
+  manualEstimateApprovalEvidenceSchema
+} from "./manual-approval";
 import { createCustomer } from "@/lib/customers/data";
 import { customerInputSchema } from "@/lib/customers/schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
@@ -558,6 +562,15 @@ export async function updateEstimateStatusSaveAction(formData: FormData) {
       ok: false,
       type: "error",
       message: `Estimate cannot move from ${currentStatus} to ${nextStatus}.`
+    } as const;
+  }
+
+  if (nextStatus === "approved") {
+    return {
+      ok: false,
+      type: "error",
+      message:
+        "Record manual approval from Estimate Review so approver, method, date/time, and evidence are captured."
     } as const;
   }
 
@@ -1184,9 +1197,35 @@ export async function updateEstimateStatusAction(formData: FormData) {
   }
 
   let estimate;
+  let manualDecisionEventNote: string | null = null;
+
+  if (nextStatus === "approved") {
+    const approvalEvidence = manualEstimateApprovalEvidenceSchema.safeParse({
+      approvedByName: getFieldValue(formData, "approvedByName"),
+      approvalMethod: getFieldValue(formData, "approvalMethod"),
+      approvalDate: getFieldValue(formData, "approvalDate"),
+      approvalTime: getFieldValue(formData, "approvalTime"),
+      approvalNotes: getFieldValue(formData, "approvalNotes"),
+      approvalEvidence: getFieldValue(formData, "approvalEvidence")
+    });
+
+    if (!approvalEvidence.success) {
+      redirect(
+        buildRedirect(`/estimates/${estimateId}`, {
+          error:
+            approvalEvidence.error.issues[0]?.message ??
+            "Manual approval evidence is required."
+        })
+      );
+    }
+
+    manualDecisionEventNote = buildManualEstimateApprovalEvidence(approvalEvidence.data);
+  }
 
   try {
-    estimate = await updateEstimateStatus(estimateId, nextStatus as EstimateStatus);
+    estimate = await updateEstimateStatus(estimateId, nextStatus as EstimateStatus, {
+      manualDecisionEventNote
+    });
   } catch (error) {
     redirect(
       buildRedirect(`/estimates/${estimateId}`, {

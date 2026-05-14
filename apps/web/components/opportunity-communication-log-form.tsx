@@ -28,6 +28,7 @@ export function OpportunityCommunicationLogForm({
       action={action}
       pendingLabel="Logging..."
       enabled={false}
+      resetOnSuccess
       className="space-y-4"
     >
       <input type="hidden" name="opportunityId" value={opportunityId} />

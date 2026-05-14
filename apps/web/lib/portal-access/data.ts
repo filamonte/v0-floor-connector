@@ -1,8 +1,10 @@
 import "server-only";
 
 import { createHash, randomBytes } from "node:crypto";
+import { setTimeout as sleep } from "node:timers/promises";
 import { cache } from "react";
 import { redirect } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
 import type {
   CustomerContactPortalPermission as CustomerContactPortalPermissionRecord,
   PortalAccessGrant as PortalAccessGrantRecord,
@@ -19,13 +21,20 @@ import { buildPortalInviteEmailContent } from "./email";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getOrganizationProductionActionLockState } from "@/lib/organizations/activation-guard";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { isPostmarkEmailConfigured } from "@floorconnector/integrations";
+import {
+  buildTemporaryPortalCredentialAppMetadata,
+  clearTemporaryPortalCredentialAppMetadata,
+  generateTemporaryPortalPassword
+} from "./temporary-credentials";
 
 type PortalAdminScope = {
   userId: string;
   organizationId: string;
   organizationName: string;
+  membershipRole: string;
 };
 
 type PortalAccessGrantRow = {
@@ -41,6 +50,10 @@ type PortalAccessGrantRow = {
   invite_accepted_at: string | null;
   activated_at: string | null;
   revoked_at: string | null;
+  temporary_credential_issued_at: string | null;
+  temporary_credential_issued_by: string | null;
+  temporary_credential_requires_password_change: boolean;
+  temporary_credential_last_cleared_at: string | null;
   created_at: string;
   updated_at: string;
   customers?:
@@ -204,6 +217,14 @@ export type PortalInviteEmailSendResult = {
   reason: "sent" | "activation_locked" | "not_configured" | "provider_failed";
 };
 
+export type TemporaryPortalCredentialResult = {
+  portalAccessGrantId: string;
+  email: string;
+  temporaryPassword: string;
+  createdAuthUser: boolean;
+  passwordChangeRequired: boolean;
+};
+
 export type PortalInvitePreview = {
   portalAccessGrantId: string;
   organizationId: string;
@@ -289,6 +310,10 @@ export async function resolvePortalScopedPermissionForGrantRecord(input: {
     inviteAcceptedAt: null,
     activatedAt: null,
     revokedAt: null,
+    temporaryCredentialIssuedAt: null,
+    temporaryCredentialIssuedByUserId: null,
+    temporaryCredentialRequiresPasswordChange: false,
+    temporaryCredentialLastClearedAt: null,
     createdAt: "",
     updatedAt: ""
   };
@@ -351,6 +376,10 @@ const portalAccessGrantSelect = `
   invite_accepted_at,
   activated_at,
   revoked_at,
+  temporary_credential_issued_at,
+  temporary_credential_issued_by,
+  temporary_credential_requires_password_change,
+  temporary_credential_last_cleared_at,
   created_at,
   updated_at,
   customers (
@@ -396,6 +425,10 @@ const portalAccessGrantWithoutCustomerContactSelect = `
   invite_accepted_at,
   activated_at,
   revoked_at,
+  temporary_credential_issued_at,
+  temporary_credential_issued_by,
+  temporary_credential_requires_password_change,
+  temporary_credential_last_cleared_at,
   created_at,
   updated_at,
   customers (
@@ -557,6 +590,11 @@ function mapPortalAccessGrant(row: PortalAccessGrantRow): PortalAccessGrantRecor
     inviteAcceptedAt: row.invite_accepted_at,
     activatedAt: row.activated_at,
     revokedAt: row.revoked_at,
+    temporaryCredentialIssuedAt: row.temporary_credential_issued_at,
+    temporaryCredentialIssuedByUserId: row.temporary_credential_issued_by,
+    temporaryCredentialRequiresPasswordChange:
+      row.temporary_credential_requires_password_change,
+    temporaryCredentialLastClearedAt: row.temporary_credential_last_cleared_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -818,7 +856,8 @@ async function getPortalAdminScope(next = "/settings"): Promise<PortalAdminScope
     organizationName:
       organizationContext.organization.displayName?.trim() ||
       organizationContext.organization.legalName?.trim() ||
-      "your contractor"
+      "your contractor",
+    membershipRole: organizationContext.membership.role
   };
 }
 
@@ -1199,6 +1238,262 @@ export async function findPortalUserByEmail(email: string) {
     email: row.email,
     fullName: row.full_name ?? null
   };
+}
+
+async function findAuthUserByEmail(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (!normalizedEmail) {
+    return null;
+  }
+
+  const supabaseAdmin = getSupabaseAdminClient();
+  let page = 1;
+
+  while (page < 50) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({
+      page,
+      perPage: 200
+    });
+
+    if (error) {
+      throw new Error(`Unable to inspect portal auth users: ${error.message}`);
+    }
+
+    const users = data?.users ?? [];
+    const matchedUser = users.find(
+      (user) => user.email?.trim().toLowerCase() === normalizedEmail
+    );
+
+    if (matchedUser) {
+      return matchedUser;
+    }
+
+    if (users.length < 200) {
+      return null;
+    }
+
+    page += 1;
+  }
+
+  throw new Error("Unable to finish scanning portal auth users.");
+}
+
+async function waitForCanonicalUserProfile(userId: string) {
+  const supabaseAdmin = getSupabaseAdminClient();
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const response = await supabaseAdmin
+      .from("users")
+      .select("id, email")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (response.error) {
+      throw new Error(
+        `Unable to load the canonical portal user profile: ${response.error.message}`
+      );
+    }
+
+    const row = response.data as { id?: string; email?: string | null } | null;
+
+    if (row?.id === userId) {
+      return row;
+    }
+
+    await sleep(500);
+  }
+
+  throw new Error(
+    "The Supabase Auth user was created, but the canonical user profile is not available yet."
+  );
+}
+
+function assertTemporaryPortalCredentialIssuerScope(scope: PortalAdminScope) {
+  if (scope.membershipRole === "owner" || scope.membershipRole === "admin") {
+    return;
+  }
+
+  throw new Error(
+    "Only contractor owners and admins can create temporary portal credentials."
+  );
+}
+
+function getPortalContactEmail(grant: PortalAccessGrantListItem) {
+  return (
+    grant.customerContact?.contact?.email?.trim().toLowerCase() ||
+    grant.invitedEmail?.trim().toLowerCase() ||
+    grant.portalUser?.email?.trim().toLowerCase() ||
+    ""
+  );
+}
+
+function getPortalContactDisplayName(grant: PortalAccessGrantListItem) {
+  return (
+    grant.customerContact?.contact?.displayName?.trim() ||
+    grant.portalUser?.fullName?.trim() ||
+    grant.customer?.name?.trim() ||
+    "Portal customer"
+  );
+}
+
+export async function issueTemporaryPortalCredential(input: {
+  portalAccessGrantId: string;
+}): Promise<TemporaryPortalCredentialResult> {
+  const scope = await requirePortalAdminScope(
+    `/settings?portalAccessGrantId=${input.portalAccessGrantId}`
+  );
+  assertTemporaryPortalCredentialIssuerScope(scope);
+
+  const portalAccessGrant = await ensureScopedPortalAccessGrant(
+    scope.organizationId,
+    input.portalAccessGrantId
+  );
+
+  if (portalAccessGrant.status === "revoked") {
+    throw new Error("Temporary credentials cannot be issued for revoked portal access.");
+  }
+
+  if (!portalAccessGrant.customerContactId) {
+    throw new Error(
+      "Temporary credentials can only be issued for linked customer contacts."
+    );
+  }
+
+  const email = getPortalContactEmail(portalAccessGrant);
+
+  if (!email) {
+    throw new Error(
+      "This customer contact needs an email address before a temporary portal login can be created."
+    );
+  }
+
+  const issuedAt = new Date().toISOString();
+  const temporaryPassword = generateTemporaryPortalPassword();
+  const displayName = getPortalContactDisplayName(portalAccessGrant);
+  const existingAuthUser = await findAuthUserByEmail(email);
+  const appMetadata = buildTemporaryPortalCredentialAppMetadata({
+    existingAppMetadata: existingAuthUser?.app_metadata,
+    organizationId: scope.organizationId,
+    customerId: portalAccessGrant.customerId,
+    customerContactId: portalAccessGrant.customerContactId,
+    portalAccessGrantId: portalAccessGrant.id,
+    issuedAt
+  });
+  const supabaseAdmin = getSupabaseAdminClient();
+  let authUser: User | null = null;
+
+  if (existingAuthUser) {
+    const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
+      existingAuthUser.id,
+      {
+        password: temporaryPassword,
+        email_confirm: true,
+        app_metadata: appMetadata,
+        user_metadata: {
+          ...(existingAuthUser.user_metadata ?? {}),
+          full_name: displayName
+        }
+      }
+    );
+
+    if (error) {
+      throw new Error(`Unable to update the portal auth user: ${error.message}`);
+    }
+
+    authUser = data.user ?? existingAuthUser;
+  } else {
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: temporaryPassword,
+      email_confirm: true,
+      app_metadata: appMetadata,
+      user_metadata: {
+        full_name: displayName
+      }
+    });
+
+    if (error) {
+      throw new Error(`Unable to create the portal auth user: ${error.message}`);
+    }
+
+    authUser = data.user;
+  }
+
+  if (!authUser?.id) {
+    throw new Error("Supabase Auth did not return the portal user after credential setup.");
+  }
+
+  await waitForCanonicalUserProfile(authUser.id);
+
+  const updateResponse = await supabaseAdmin
+    .from("portal_access_grants")
+    .update({
+      user_id: authUser.id,
+      invited_email: email,
+      status: "active",
+      activated_at: portalAccessGrant.activatedAt ?? issuedAt,
+      invite_accepted_at: portalAccessGrant.inviteAcceptedAt ?? issuedAt,
+      invite_expires_at: null,
+      invite_token_hash: null,
+      temporary_credential_issued_at: issuedAt,
+      temporary_credential_issued_by: scope.userId,
+      temporary_credential_requires_password_change: true,
+      temporary_credential_last_cleared_at: null
+    })
+    .eq("company_id", scope.organizationId)
+    .eq("id", portalAccessGrant.id);
+
+  if (updateResponse.error) {
+    throw new Error(
+      `Unable to link the temporary portal credential to the access grant: ${updateResponse.error.message}`
+    );
+  }
+
+  await synchronizePortalPermissionStateForGrant({
+    organizationId: scope.organizationId,
+    portalAccessGrantId: portalAccessGrant.id,
+    customerId: portalAccessGrant.customerId,
+    customerContactId: portalAccessGrant.customerContactId
+  });
+
+  return {
+    portalAccessGrantId: portalAccessGrant.id,
+    email,
+    temporaryPassword,
+    createdAuthUser: !existingAuthUser,
+    passwordChangeRequired: true
+  };
+}
+
+export async function clearTemporaryPortalCredentialRequirementForUser(user: User) {
+  const supabaseAdmin = getSupabaseAdminClient();
+  const appMetadata = clearTemporaryPortalCredentialAppMetadata(user.app_metadata);
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+    app_metadata: appMetadata
+  });
+
+  if (error) {
+    throw new Error(
+      `Unable to clear the temporary portal credential requirement: ${error.message}`
+    );
+  }
+
+  const clearedAt = new Date().toISOString();
+  const updateResponse = await supabaseAdmin
+    .from("portal_access_grants")
+    .update({
+      temporary_credential_requires_password_change: false,
+      temporary_credential_last_cleared_at: clearedAt
+    })
+    .eq("user_id", user.id)
+    .eq("temporary_credential_requires_password_change", true);
+
+  if (updateResponse.error) {
+    throw new Error(
+      `Unable to clear temporary credential status on portal grants: ${updateResponse.error.message}`
+    );
+  }
 }
 
 function isPortalInvitePreviewRow(value: unknown): value is {
@@ -2157,6 +2452,161 @@ export async function createPortalProjectAccess(input: PortalProjectAccessInput)
   }
 
   return mapPortalProjectAccessListItem(data);
+}
+
+export async function copyPortalProjectAccessFromPrimaryContact(input: {
+  targetPortalAccessGrantId: string;
+}) {
+  const scope = await requirePortalAdminScope(
+    `/settings?portalAccessGrantId=${input.targetPortalAccessGrantId}`
+  );
+  const targetGrant = await ensureScopedPortalAccessGrant(
+    scope.organizationId,
+    input.targetPortalAccessGrantId
+  );
+
+  if (!targetGrant.customerContactId) {
+    throw new Error("Copy access requires a contact-linked portal grant.");
+  }
+
+  if (targetGrant.customerContact?.isPrimary) {
+    throw new Error("This grant already belongs to the primary contact.");
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const primaryContactResponse = await supabase
+    .from("customer_contacts")
+    .select("id")
+    .eq("company_id", scope.organizationId)
+    .eq("customer_id", targetGrant.customerId)
+    .eq("is_primary", true)
+    .limit(1)
+    .maybeSingle();
+  const primaryContact = primaryContactResponse.data as { id?: string } | null;
+
+  if (primaryContactResponse.error) {
+    throw new Error(
+      `Unable to find the primary customer contact: ${primaryContactResponse.error.message}`
+    );
+  }
+
+  if (!primaryContact?.id) {
+    throw new Error("Set a primary customer contact before copying project access.");
+  }
+
+  const primaryGrantResponse = await supabase
+    .from("portal_access_grants")
+    .select(portalAccessGrantSelect)
+    .eq("company_id", scope.organizationId)
+    .eq("customer_id", targetGrant.customerId)
+    .eq("customer_contact_id", primaryContact.id)
+    .eq("status", "active")
+    .limit(1)
+    .maybeSingle();
+  const primaryGrantData: unknown = primaryGrantResponse.data;
+
+  if (primaryGrantResponse.error) {
+    throw new Error(
+      `Unable to find primary contact portal access: ${primaryGrantResponse.error.message}`
+    );
+  }
+
+  if (!isPortalAccessGrantRow(primaryGrantData)) {
+    throw new Error(
+      "Primary contact must have an active contact-linked portal grant before access can be copied."
+    );
+  }
+
+  const primaryGrant = mapPortalAccessGrantListItem(primaryGrantData);
+  const sourceProjectAccess = await listPortalProjectAccessByGrantId(
+    primaryGrant.id,
+    `/settings?portalAccessGrantId=${input.targetPortalAccessGrantId}`
+  );
+  const activeSourceProjectIds = sourceProjectAccess
+    .filter((access) => access.status === "active")
+    .map((access) => access.projectId);
+
+  if (activeSourceProjectIds.length === 0) {
+    throw new Error("Primary contact has no active project visibility to copy.");
+  }
+
+  const existingTargetAccessResponse = await supabase
+    .from("portal_project_access")
+    .select(portalProjectAccessSelect)
+    .eq("company_id", scope.organizationId)
+    .eq("portal_access_grant_id", targetGrant.id);
+  const existingTargetAccessData: unknown = existingTargetAccessResponse.data;
+
+  if (existingTargetAccessResponse.error) {
+    throw new Error(
+      `Unable to inspect existing target project visibility: ${existingTargetAccessResponse.error.message}`
+    );
+  }
+
+  const existingTargetAccess = isPortalProjectAccessRowArray(existingTargetAccessData)
+    ? existingTargetAccessData.map(mapPortalProjectAccessListItem)
+    : [];
+  const existingByProjectId = new Map(
+    existingTargetAccess.map((access) => [access.projectId, access])
+  );
+  const now = new Date().toISOString();
+  let createdCount = 0;
+  let reactivatedCount = 0;
+
+  for (const projectId of activeSourceProjectIds) {
+    const existing = existingByProjectId.get(projectId);
+
+    if (existing) {
+      if (existing.status === "revoked") {
+        const updateResponse = await supabase
+          .from("portal_project_access")
+          .update({
+            status: "active",
+            revoked_at: null
+          })
+          .eq("company_id", scope.organizationId)
+          .eq("id", existing.id);
+
+        if (updateResponse.error) {
+          throw new Error(
+            `Unable to reactivate copied project visibility: ${updateResponse.error.message}`
+          );
+        }
+
+        reactivatedCount += 1;
+      }
+
+      continue;
+    }
+
+    const insertResponse = await supabase.from("portal_project_access").insert({
+      company_id: scope.organizationId,
+      portal_access_grant_id: targetGrant.id,
+      project_id: projectId,
+      status: "active",
+      revoked_at: null,
+      created_at: now,
+      updated_at: now
+    });
+
+    if (insertResponse.error) {
+      if (isUniquePortalProjectAccessViolation(insertResponse.error.message)) {
+        continue;
+      }
+
+      throw new Error(
+        `Unable to create copied project visibility: ${insertResponse.error.message}`
+      );
+    }
+
+    createdCount += 1;
+  }
+
+  return {
+    copiedProjectCount: activeSourceProjectIds.length,
+    createdCount,
+    reactivatedCount
+  };
 }
 
 export async function updatePortalProjectAccess(

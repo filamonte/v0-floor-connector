@@ -186,6 +186,8 @@ This area should include:
 - employees
 - customer contacts and linked customer relationships
 - portal invite/access administration on canonical access records
+- explicit per-contact project visibility for repeat/commercial customers, with safe copy-from-primary-contact presets rather than silent inheritance
+- support-only temporary credential actions through server-side Supabase Auth Admin helpers and password-change enforcement
 - subcontractors/vendors
 - roles and assignments later
 - certifications and compliance later
@@ -194,6 +196,8 @@ This area should include:
 - future scoped subcontractor/vendor collaboration profiles where project or job workspace access may be granted intentionally
 
 People should support staffing and accountability, not project execution alone.
+
+Current implementation note: [docs/enterprise-ux-consolidation.md](C:/FloorConnector/docs/enterprise-ux-consolidation.md) clarifies the near-term ownership split for this area. Directory remains a read/index surface, while People is the active customer-contact and portal-access management home through a filtered access console with compact rows and one selected management panel.
 
 ## Field
 
@@ -276,7 +280,7 @@ Target AI intake behavior:
 
 ## Calendar / Schedule
 
-Calendar and schedule should become the cross-project time and capacity layer for contractor operations.
+Calendar and schedule should become the cross-project time and capacity layer for contractor operations. The current `/schedule` surface is the good-enough scheduling command center: summary counts, a Ready work queue, a Scheduled timeline, and a selected job action panel over canonical jobs and job assignments.
 
 This area may appear as part of Field, as a dedicated Calendar/Schedule navigation item, or both if the product needs a global calendar plus field-dispatch workspace. The route strategy should preserve the current `/schedule` direction until a specific refactor is approved.
 
@@ -301,6 +305,7 @@ Boundary:
 - production scheduling stays on canonical jobs and job assignments
 - appointments stay canonical visits/meetings on the opportunity/customer/project chain
 - do not create an AI-only calendar or disconnected dispatch model
+- drag-and-drop dispatch, route optimization, capacity planning, and conflict detection remain future scheduling depth
 
 ## AI Assistant
 
@@ -502,6 +507,7 @@ Current implementation note:
 
 - the first major contractor workspace UI polish pass is now complete enough to stop
 - project, estimate, contract, invoice, and job detail pages now broadly follow this shared pattern on the current branch
+- project detail now has a concrete hub layer: an operational command-center summary plus connected-record lanes for estimate, contract/signature, change orders, billing/payments, job/schedule, field/daily logs, and customer access, with full editing still handed off to the focused record surfaces
 - [docs/golden-workflow-demo-path.md](C:/FloorConnector/docs/golden-workflow-demo-path.md) now defines the route-by-route Phase 1 demo spine for validating that the current standalone Manager Pages and Record Workspaces behave like one connected sales-to-production workflow
 - further layout work should be treated as incremental polish unless a future structural break is introduced
 

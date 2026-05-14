@@ -469,9 +469,8 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
       commandBar={{
         supportSlot: (
           <p>
-            Directory is read-only in this phase. Open the linked canonical workspace when you need
-            to review or edit a customer account, related customer contact, workforce record,
-            vendor, or lead.
+            Directory is read-only in this phase. Create leads in Leads, create workforce people
+            in People, and invite customer portal contacts from People customer access.
           </p>
         ),
         searchSlot: (
@@ -525,9 +524,76 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
               </span>
             </Link>
           );
-        })
+        }),
+        actionSlot: (
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/leads?compose=1#lead-create"
+              className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
+            >
+              New lead
+            </Link>
+            <Link
+              href="/people?compose=1#person-create"
+              className="inline-flex items-center rounded-[4px] border border-[#d9cdc2] bg-white px-4 py-2.5 text-sm font-medium text-[#594839] transition hover:border-[#ef7d32] hover:bg-[#fbf7f2]"
+            >
+              New workforce person
+            </Link>
+            <Link
+              href="/people#customer-access"
+              className="inline-flex items-center rounded-[4px] border border-[#d9cdc2] bg-white px-4 py-2.5 text-sm font-medium text-[#594839] transition hover:border-[#ef7d32] hover:bg-[#fbf7f2]"
+            >
+              Invite portal contact
+            </Link>
+          </div>
+        )
       }}
     >
+      <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="border border-[#d9cdc2] bg-white px-5 py-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+            Directory job
+          </p>
+          <h2 className="mt-2 text-base font-semibold text-[#221a14]">
+            Find the right record fast
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-[#6f6256]">
+            This workspace is the read-only index. Open canonical records for editing instead of
+            turning Directory into another manager page.
+          </p>
+        </div>
+        <div className="border border-[#d9cdc2] bg-white px-5 py-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+            Access owner
+          </p>
+          <h2 className="mt-2 text-base font-semibold text-[#221a14]">
+            People owns contact access
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-[#6f6256]">
+            Customer contacts, portal invites, temporary credentials, and per-contact project
+            visibility are managed from People.
+          </p>
+          <Link
+            href="/people#customer-access"
+            className="mt-3 inline-flex items-center rounded-[4px] border border-[#d9cdc2] bg-[#fbf7f2] px-3 py-2 text-sm font-medium text-[#594839] transition hover:border-[#ef7d32]"
+          >
+            Invite portal contact in People
+          </Link>
+        </div>
+        <div className="border border-[#d9cdc2] bg-white px-5 py-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+            Record ownership
+          </p>
+          <h2 className="mt-2 text-base font-semibold text-[#221a14]">
+            Customers and projects stay separate
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-[#6f6256]">
+            Customers carry account context. Projects carry operational state. Directory links to
+            both without merging their responsibilities.
+          </p>
+        </div>
+      </section>
+
       <section className="border border-[#d9cdc2] bg-white">
         <div className="border-b border-[#e8ded5] bg-[#fffaf5] px-4 py-2.5 sm:px-5">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">

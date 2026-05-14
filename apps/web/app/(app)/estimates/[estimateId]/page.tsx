@@ -607,6 +607,12 @@ export default async function EstimateDetailPage({
             secondaryActions={
               <>
                 <Link
+                  href={`/estimates/${estimate.id}/pdf`}
+                  className={secondaryActionClassName}
+                >
+                  Print / save PDF
+                </Link>
+                <Link
                   href={`/estimates/${estimate.id}/edit`}
                   className={secondaryActionClassName}
                 >
@@ -1148,16 +1154,27 @@ export default async function EstimateDetailPage({
               </div>
 
               <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-                <section className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-4">
-                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Create internal work item
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {estimateWorkItemPrefill
-                      ? "Prefilled from a deterministic estimate cue. Review the owner, due date, and context; nothing is created until you submit."
-                      : "Use this form when estimate follow-through needs an owner, due date, and explicit completion state."}
-                  </p>
+                <details className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-4">
+                  <summary className="flex cursor-pointer list-none items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        Create internal work item
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        Internal follow-through is available when needed, but proposal review
+                        stays primary on this estimate.
+                      </p>
+                    </div>
+                    <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+                      Expand
+                    </span>
+                  </summary>
                   <div className="mt-4">
+                    <p className="mb-4 text-sm leading-6 text-slate-600">
+                      {estimateWorkItemPrefill
+                        ? "Prefilled from a deterministic estimate cue. Review the owner, due date, and context; nothing is created until you submit."
+                        : "Use this form when estimate follow-through needs an owner, due date, and explicit completion state."}
+                    </p>
                     <WorkItemCreateForm
                       action={createWorkItemAction}
                       returnTo={`/estimates/${estimate.id}`}
@@ -1182,7 +1199,7 @@ export default async function EstimateDetailPage({
                       boundaryCopy="Work items are internal-only and human-submitted. Creating, completing, or dismissing one does not change estimate status, customer-visible messages, contract generation, invoice state, project readiness, or financial calculations."
                     />
                   </div>
-                </section>
+                </details>
 
                 <section className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-4">
                   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -1207,7 +1224,19 @@ export default async function EstimateDetailPage({
           </div>
 
           <aside className="space-y-6">
-            <RevisionTimeline revisions={recordRevisions} />
+            <details className="rounded-lg border border-[var(--border-warm)] bg-white px-5 py-4 shadow-sm">
+              <summary className="cursor-pointer list-none">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--text-secondary)]">
+                  Revision History
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                  Latest proposal snapshots are available when needed; they stay secondary to the active proposal.
+                </p>
+              </summary>
+              <div className="mt-5">
+                <RevisionTimeline revisions={recordRevisions} />
+              </div>
+            </details>
 
             <NeedsAttentionPanel
               cues={estimateAttentionCues}
@@ -1224,7 +1253,7 @@ export default async function EstimateDetailPage({
 
             <DetailPanel
               title="Connected Workflow"
-              description="Project, contract, job, and invoice continuity stays visible here without displacing the proposal as the main review surface."
+              description="Primary handoff links stay visible; downstream activity expands only when needed."
             >
               <div className="grid gap-4">
                 {estimate.project ? (
@@ -1244,64 +1273,124 @@ export default async function EstimateDetailPage({
                     }
                   />
                 ) : null}
-                {estimateContracts.map((contract) => (
+                {estimateContracts[0] ? (
                   <LinkedRecordCard
-                    key={contract.id}
-                    href={`/contracts/${contract.id}`}
-                    title={contract.title}
-                    subtitle="Contract"
+                    href={`/contracts/${estimateContracts[0].id}`}
+                    title={estimateContracts[0].title}
+                    subtitle="Current contract"
                     meta={
-                      contract.template?.name
-                        ? `${contract.template.name} | return to the project hub for readiness`
-                        : "Return to the project hub for readiness"
+                      estimateContracts[0].template?.name
+                        ? `${estimateContracts[0].template.name} | project hub handles readiness`
+                        : "Project hub handles readiness"
                     }
                     badge={
                       <span
                         className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusBadgeClassName(
-                          contract.status
+                          estimateContracts[0].status
                         )}`}
                       >
-                        {formatStatusLabel(contract.status)}
+                        {formatStatusLabel(estimateContracts[0].status)}
                       </span>
                     }
                   />
-                ))}
-                {estimateJobs.map((job) => (
+                ) : null}
+                {estimateInvoices[0] ? (
                   <LinkedRecordCard
-                    key={job.id}
-                    href={`/jobs/${job.id}`}
-                    title={job.project?.name ?? "Job"}
-                    subtitle="Job"
-                    meta={job.scheduledDate ? `Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}` : "Unscheduled"}
+                    href={`/invoices/${estimateInvoices[0].id}`}
+                    title={estimateInvoices[0].referenceNumber}
+                    subtitle="Current invoice"
+                    meta={`Balance due ${formatMoney(estimateInvoices[0].balanceDueAmount)}`}
                     badge={
                       <span
                         className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusBadgeClassName(
-                          job.dispatchStatus
+                          estimateInvoices[0].status
                         )}`}
                       >
-                        {formatStatusLabel(job.dispatchStatus)}
+                        {formatStatusLabel(estimateInvoices[0].status)}
                       </span>
                     }
                   />
-                ))}
-                {estimateInvoices.map((invoice) => (
+                ) : null}
+                {estimateJobs[0] ? (
                   <LinkedRecordCard
-                    key={invoice.id}
-                    href={`/invoices/${invoice.id}`}
-                    title={invoice.referenceNumber}
-                    subtitle="Invoice"
-                    meta={`Balance due ${formatMoney(invoice.balanceDueAmount)} | project hub governs handoff`}
+                    href={`/jobs/${estimateJobs[0].id}`}
+                    title={estimateJobs[0].project?.name ?? "Job"}
+                    subtitle="Current job"
+                    meta={estimateJobs[0].scheduledDate ? `Scheduled ${new Date(`${estimateJobs[0].scheduledDate}T00:00:00`).toLocaleDateString()}` : "Unscheduled"}
                     badge={
                       <span
                         className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusBadgeClassName(
-                          invoice.status
+                          estimateJobs[0].dispatchStatus
                         )}`}
                       >
-                        {formatStatusLabel(invoice.status)}
+                        {formatStatusLabel(estimateJobs[0].dispatchStatus)}
                       </span>
                     }
                   />
-                ))}
+                ) : null}
+                {estimateContracts.length > 1 || estimateJobs.length > 1 || estimateInvoices.length > 1 ? (
+                  <details className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+                    <summary className="cursor-pointer list-none font-semibold text-[var(--text-primary)]">
+                      View all linked records
+                    </summary>
+                    <div className="mt-4 grid gap-4">
+                      {estimateContracts.slice(1).map((contract) => (
+                        <LinkedRecordCard
+                          key={contract.id}
+                          href={`/contracts/${contract.id}`}
+                          title={contract.title}
+                          subtitle="Contract"
+                          meta={contract.template?.name ?? "Contract"}
+                          badge={
+                            <span
+                              className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusBadgeClassName(
+                                contract.status
+                              )}`}
+                            >
+                              {formatStatusLabel(contract.status)}
+                            </span>
+                          }
+                        />
+                      ))}
+                      {estimateInvoices.slice(1).map((invoice) => (
+                        <LinkedRecordCard
+                          key={invoice.id}
+                          href={`/invoices/${invoice.id}`}
+                          title={invoice.referenceNumber}
+                          subtitle="Invoice"
+                          meta={`Balance due ${formatMoney(invoice.balanceDueAmount)}`}
+                          badge={
+                            <span
+                              className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusBadgeClassName(
+                                invoice.status
+                              )}`}
+                            >
+                              {formatStatusLabel(invoice.status)}
+                            </span>
+                          }
+                        />
+                      ))}
+                      {estimateJobs.slice(1).map((job) => (
+                        <LinkedRecordCard
+                          key={job.id}
+                          href={`/jobs/${job.id}`}
+                          title={job.project?.name ?? "Job"}
+                          subtitle="Job"
+                          meta={job.scheduledDate ? `Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}` : "Unscheduled"}
+                          badge={
+                            <span
+                              className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusBadgeClassName(
+                                job.dispatchStatus
+                              )}`}
+                            >
+                              {formatStatusLabel(job.dispatchStatus)}
+                            </span>
+                          }
+                        />
+                      ))}
+                    </div>
+                  </details>
+                ) : null}
                 {estimateContracts.length === 0 && estimateJobs.length === 0 && estimateInvoices.length === 0 ? (
                   <p className="rounded-2xl border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
                     No downstream contract, job, or invoice records are linked to this estimate yet. Use the project readiness hub once this estimate is approved.

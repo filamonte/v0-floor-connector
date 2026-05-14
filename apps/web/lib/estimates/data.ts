@@ -2452,7 +2452,10 @@ export async function updateEstimate(
 export async function updateEstimateStatus(
   estimateId: string,
   nextStatus: EstimateStatus,
-  options?: { expectedUpdatedAt?: string | null }
+  options?: {
+    expectedUpdatedAt?: string | null;
+    manualDecisionEventNote?: string | null;
+  }
 ) {
   const scope = await requireEstimateScope(`/estimates/${estimateId}`);
   const currentEstimate = await getEstimateRecordById(scope.organizationId, estimateId);
@@ -2470,6 +2473,19 @@ export async function updateEstimateStatus(
   if (nextStatus === "sent") {
     throw new Error(
       "Use Send to customer so FloorConnector can record the portal delivery event and email tracking."
+    );
+  }
+
+  if (
+    options?.expectedUpdatedAt &&
+    currentEstimate.updated_at !== options.expectedUpdatedAt
+  ) {
+    throw new EstimateVersionConflictError();
+  }
+
+  if (nextStatus === "approved" && !options?.manualDecisionEventNote?.trim()) {
+    throw new Error(
+      "Manual approval evidence is required before approving an estimate outside the portal."
     );
   }
 
@@ -2526,13 +2542,6 @@ export async function updateEstimateStatus(
   }
 
   if (
-    options?.expectedUpdatedAt &&
-    currentEstimate.updated_at !== options.expectedUpdatedAt
-  ) {
-    throw new EstimateVersionConflictError();
-  }
-
-  if (
     (nextStatus === "approved" || nextStatus === "rejected") &&
     !currentEstimate.customer_viewed_at
   ) {
@@ -2569,7 +2578,8 @@ export async function updateEstimateStatus(
       eventType: nextStatus,
       actorType: "organization_user",
       organizationUserId: scope.userId,
-      occurredAt: nowIso
+      occurredAt: nowIso,
+      eventNote: options?.manualDecisionEventNote ?? null
     });
     await recordEstimateNotificationEvent({
       organizationId: updatedEstimate.company_id,
@@ -2581,7 +2591,8 @@ export async function updateEstimateStatus(
       eventType: nextStatus,
       actorType: "organization_user",
       actorUserId: scope.userId,
-      occurredAt: nowIso
+      occurredAt: nowIso,
+      eventNote: options?.manualDecisionEventNote ?? null
     });
   }
 
@@ -3777,12 +3788,17 @@ export async function insertSystemToEstimate(input: {
   squareFootage: string;
   linearFootage?: string | null;
   count?: string | null;
+  groupName?: string | null;
 }) {
   const scope = await requireEstimateScope(`/estimates/${input.estimateId}/edit`);
   const estimate = await getEstimateRecordById(scope.organizationId, input.estimateId);
 
   if (!estimate) {
     throw new Error("Estimate not found for this organization.");
+  }
+
+  if (estimate.status === "approved") {
+    throw new Error("Approved estimates cannot insert system line items.");
   }
 
   const catalogItems = await listCatalogItems();
@@ -3800,7 +3816,9 @@ export async function insertSystemToEstimate(input: {
   const squareFootage = Number(input.squareFootage);
   const linearFootage = Number(input.linearFootage ?? 0);
   const count = Number(input.count ?? 1);
-  const groupName = `${systemCatalogItem.name} (${squareFootage.toFixed(2)} sqft / ${linearFootage.toFixed(2)} lf)`;
+  const groupName =
+    input.groupName?.trim() ||
+    `${systemCatalogItem.name} (${squareFootage.toFixed(2)} sqft / ${linearFootage.toFixed(2)} lf)`;
   const lineItemSnapshots = buildExpandedSystemLineItemSnapshots({
     systemCatalogItem,
     catalogItems,

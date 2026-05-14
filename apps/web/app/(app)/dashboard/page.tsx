@@ -169,7 +169,7 @@ function buildMyWorkDashboardWidgets(cues: OperationalCue[]) {
       eyebrow: "My Estimates",
       title: "Estimate follow-up",
       description:
-        "Sent estimates that crossed the tenant cue threshold. These are derived from canonical estimate records.",
+        "Sent estimates that crossed the tenant cue threshold. These are derived from saved estimate records.",
       href: "/estimates",
       actionLabel: "Open estimates",
       emptyTitle: "No estimate cues need attention.",
@@ -195,7 +195,7 @@ function buildMyWorkDashboardWidgets(cues: OperationalCue[]) {
       eyebrow: "My Invoices",
       title: "Collections follow-up",
       description:
-        "Overdue invoices and unpaid deposit invoices derived from the canonical billing chain.",
+        "Overdue invoices and unpaid deposit invoices from the shared billing chain.",
       href: "/invoices",
       actionLabel: "Open invoices",
       emptyTitle: "No invoice cues need attention.",
@@ -208,7 +208,7 @@ function buildMyWorkDashboardWidgets(cues: OperationalCue[]) {
       eyebrow: "My Jobs",
       title: "Schedule and crew follow-up",
       description:
-        "Ready unscheduled jobs and scheduled jobs missing crew from canonical job records.",
+        "Ready unscheduled jobs and scheduled jobs missing crew from saved job records.",
       href: "/jobs",
       actionLabel: "Open jobs",
       emptyTitle: "No job cues need attention.",
@@ -450,7 +450,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     ? "No upcoming company appointments are scheduled right now."
     : "No assigned appointments are scheduled right now.";
   const appointmentDashboardEmptyDescription = showingCompanyAppointments
-    ? "Lead visits and follow-up appointments will surface here once scheduled from the canonical appointment flow."
+    ? "Lead visits and follow-up appointments will surface here once they are scheduled."
     : "When appointments are assigned to your linked people record, they will surface here.";
   const openPunchlistCount = punchlistItems.filter(
     (item) => item.status === "open" || item.status === "in_progress"
@@ -983,7 +983,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           eyebrow: "Scheduling pressure",
           title: "Jobs needing scheduling",
           description:
-            "These jobs already exist on the canonical project chain, but the schedule and crew handoff still need to happen.",
+            "These jobs already exist on the project chain, but the schedule and crew handoff still need to happen.",
           href: "/schedule?view=unscheduled",
           actionLabel: "Open schedule",
           emptyTitle: "No jobs are waiting for scheduling.",
@@ -1174,7 +1174,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           actionLabel: "Open payments",
           emptyTitle: "No recent payment activity has posted yet.",
           emptyDescription:
-            "As recorded and pending payments move through the canonical payment chain, they will surface here.",
+            "As recorded and pending payments move through the payment chain, they will surface here.",
           items: recentPayments.map((payment) => ({
             id: payment.id,
             title: payment.invoice?.referenceNumber ?? "Payment activity",
@@ -1207,7 +1207,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           key: "cost-items-database",
           label: "Cost items database",
           description:
-            "Open the canonical catalog, systems, and optional inventory workspace that feeds estimates without changing pricing logic.",
+            "Open the catalog, systems, and optional inventory workspace that feeds estimates without changing pricing logic.",
           href: "/cost-items-database",
           metric: "Module"
         },
@@ -1215,7 +1215,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           key: "appointments",
           label: "Appointments",
           description:
-            "Run commercial and customer-facing visits from the same canonical lead, customer, and project chain.",
+            "Run commercial and customer-facing visits from the same lead, customer, and project chain.",
           href: "/appointments",
           metric: `${scheduledAppointments.length} scheduled`
         },
@@ -1263,7 +1263,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           key: "progress-billing",
           label: "Progress billing",
           description:
-            "Open progress billing from approved scope and turn billable progress into canonical invoices.",
+            "Open progress billing from approved scope and turn billable progress into invoices.",
           href: "/progress-billing",
           metric: `${progressBillingReadyCount} ready`
         },
@@ -1271,7 +1271,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           key: "customers",
           label: "Customers",
           description:
-            "Open the canonical account records that anchor projects and billing defaults.",
+            "Open the customer account records that anchor projects and billing defaults.",
           href: "/customers",
           metric: `${customers.length} records`
         }
@@ -1288,7 +1288,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           key: "time-clock-system",
           title: "Workforce approvals and management",
           description:
-            "The contractor-side time home is live on the canonical punch-event and time-card chain, but approvals, payroll-adjacent review, and broader workforce management are still intentionally out of scope.",
+            "The contractor-side time home is live on punch events and time cards, while approvals, payroll-adjacent review, and broader workforce management remain later depth.",
           priority: "High"
         }
       ]}

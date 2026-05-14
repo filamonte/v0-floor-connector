@@ -69,7 +69,25 @@ async function expectAuthenticatedDetail(page, path) {
     );
   }
 
-  expect(response?.status(), `${path} should load successfully`).toBeLessThan(400);
+  if (response) {
+    expect(response.status(), `${path} should load successfully`).toBeLessThan(400);
+  } else {
+    await expect(page.locator("body"), `${path} should render application content`).not.toContainText(
+      /Application error|Unhandled Runtime Error/i
+    );
+  }
+}
+
+async function expectNoHorizontalPageOverflow(page, label) {
+  const metrics = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth)
+  }));
+
+  expect(
+    metrics.scrollWidth,
+    `${label} should not create page-level horizontal overflow`
+  ).toBeLessThanOrEqual(metrics.clientWidth + 2);
 }
 
 test("dashboard PriorityStrip renders inside the authenticated dashboard", async ({ page }) => {
@@ -121,6 +139,22 @@ test("project and estimate detail render decision-first primitives", async ({ pa
   expect(issues).toEqual([]);
 });
 
+test("core detail workspaces stay within mobile viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  await expectAuthenticatedDetail(page, detailFixtures.project);
+  await expectNoHorizontalPageOverflow(page, "Project detail mobile layout");
+
+  await expectAuthenticatedDetail(page, detailFixtures.estimate);
+  await expectNoHorizontalPageOverflow(page, "Estimate detail mobile layout");
+
+  await expectAuthenticatedDetail(page, detailFixtures.contracts[0]);
+  await expectNoHorizontalPageOverflow(page, "Contract detail mobile layout");
+
+  await expectAuthenticatedDetail(page, detailFixtures.invoices[0]);
+  await expectNoHorizontalPageOverflow(page, "Invoice detail mobile layout");
+});
+
 for (const invoicePath of detailFixtures.invoices) {
   test(`invoice detail smoke: ${invoicePath}`, async ({ page }) => {
     const issues = attachIssueCapture(page);
@@ -129,7 +163,7 @@ for (const invoicePath of detailFixtures.invoices) {
     await expect(page.getByRole("region", { name: "Current state and next action" })).toBeVisible();
     await expect(page.getByRole("region", { name: "Billing workflow" })).toBeVisible();
     await expect(page.getByRole("region", { name: "Invoice state summary" })).toBeVisible();
-    await expect(page.locator("body")).toContainText(/Balance due|Payment Activity|Record payment/i);
+    await expect(page.locator("body")).toContainText(/Balance due|Payment Activity|Record a payment|Record payment/i);
 
     expect(issues).toEqual([]);
   });

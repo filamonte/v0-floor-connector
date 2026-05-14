@@ -21,12 +21,17 @@ import { listOpportunities } from "@/lib/opportunities/data";
 import { buildPerspectiveSearchParams, matchesPerspective } from "@/lib/perspectives/query";
 import { parsePerspectiveView, type PerspectiveView } from "@/lib/perspectives/types";
 import { listProjects } from "@/lib/projects/data";
+import {
+  parseEstimateListSort,
+  sortEstimateRecords
+} from "@/lib/records/list-sort";
 import { getStatusBadgeClassName } from "@floorconnector/ui";
 
 type EstimatesPageProps = {
   searchParams?: Promise<{
     compose?: string;
     q?: string;
+    sort?: string;
     status?: "all" | "draft" | "sent" | "approved" | "rejected";
     view?: PerspectiveView;
     creationMode?: "opportunity" | "customer" | "standalone";
@@ -64,6 +69,7 @@ function buildEstimatesHref(input: {
   customerId?: string;
   projectId?: string;
   view?: PerspectiveView;
+  sort?: string;
 }) {
   const searchParams = buildPerspectiveSearchParams(
     {
@@ -72,7 +78,8 @@ function buildEstimatesHref(input: {
       compose: input.compose === "1" ? "1" : undefined,
       opportunityId: input.opportunityId,
       customerId: input.customerId,
-      projectId: input.projectId
+      projectId: input.projectId,
+      sort: input.sort && input.sort !== "workflow" ? input.sort : undefined
     },
     input.view ?? "company"
   );
@@ -138,6 +145,7 @@ export default async function EstimatesPage({
   const query = resolvedSearchParams.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
   const statusFilter = resolvedSearchParams.status ?? "all";
+  const sort = parseEstimateListSort(resolvedSearchParams.sort);
   const perspective = parsePerspectiveView(resolvedSearchParams.view);
   const showComposer =
     resolvedSearchParams.compose === "1" ||
@@ -162,7 +170,7 @@ export default async function EstimatesPage({
   const totalPipelineValue = perspectiveEstimates
     .reduce((sum, estimate) => sum + Number(estimate.totalAmount), 0)
     .toFixed(2);
-  const filteredEstimates = perspectiveEstimates.filter((estimate) => {
+  const filteredEstimates = sortEstimateRecords(perspectiveEstimates.filter((estimate) => {
     const matchesStatus =
       statusFilter === "all" ? true : estimate.status === statusFilter;
     const matchesQuery =
@@ -180,7 +188,7 @@ export default async function EstimatesPage({
             .includes(normalizedQuery);
 
     return matchesStatus && matchesQuery;
-  });
+  }), sort);
   const estimateViews = [
     { key: "all", label: "All estimates", count: perspectiveEstimates.length },
     { key: "draft", label: "Build", count: draftCount },
@@ -258,6 +266,7 @@ export default async function EstimatesPage({
         searchSlot: (
           <form action="/estimates" className="flex flex-col gap-2 sm:flex-row">
             {statusFilter !== "all" ? <input type="hidden" name="status" value={statusFilter} /> : null}
+            {sort !== "workflow" ? <input type="hidden" name="sort" value={sort} /> : null}
             {perspective !== "company" ? <input type="hidden" name="view" value={perspective} /> : null}
             {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
             <input
@@ -295,7 +304,8 @@ export default async function EstimatesPage({
                   opportunityId: resolvedSearchParams.opportunityId,
                   customerId: resolvedSearchParams.customerId,
                   projectId: resolvedSearchParams.projectId,
-                  view
+                  view,
+                  sort
                 })
               }
             />
@@ -312,7 +322,8 @@ export default async function EstimatesPage({
                     opportunityId: resolvedSearchParams.opportunityId,
                     customerId: resolvedSearchParams.customerId,
                     projectId: resolvedSearchParams.projectId,
-                    view: perspective
+                    view: perspective,
+                    sort
                   })}
                   className={[
                     "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
@@ -337,6 +348,37 @@ export default async function EstimatesPage({
         ),
         actionSlot: (
           <>
+            <form action="/estimates" className="flex items-center gap-2">
+              {query ? <input type="hidden" name="q" value={query} /> : null}
+              {statusFilter !== "all" ? <input type="hidden" name="status" value={statusFilter} /> : null}
+              {perspective !== "company" ? <input type="hidden" name="view" value={perspective} /> : null}
+              {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
+              {resolvedSearchParams.opportunityId ? <input type="hidden" name="opportunityId" value={resolvedSearchParams.opportunityId} /> : null}
+              {resolvedSearchParams.customerId ? <input type="hidden" name="customerId" value={resolvedSearchParams.customerId} /> : null}
+              {resolvedSearchParams.projectId ? <input type="hidden" name="projectId" value={resolvedSearchParams.projectId} /> : null}
+              <label className="sr-only" htmlFor="estimate-sort">
+                Sort estimates
+              </label>
+              <select
+                id="estimate-sort"
+                name="sort"
+                defaultValue={sort}
+                className="rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] outline-none transition focus:border-[var(--copper)]"
+              >
+                <option value="workflow">Workflow priority</option>
+                <option value="recent">Recently updated</option>
+                <option value="oldest">Oldest updated</option>
+                <option value="amount_desc">Highest total</option>
+                <option value="amount_asc">Lowest total</option>
+                <option value="customer_asc">Customer A-Z</option>
+              </select>
+              <button
+                type="submit"
+                className="inline-flex items-center rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[var(--highlight)]"
+              >
+                Apply
+              </button>
+            </form>
             <RowsPerViewControl storageKey={ESTIMATES_ROWS_PER_VIEW_STORAGE_KEY} />
             <Link
               href={
@@ -347,7 +389,8 @@ export default async function EstimatesPage({
                   opportunityId: resolvedSearchParams.opportunityId,
                   customerId: resolvedSearchParams.customerId,
                   projectId: resolvedSearchParams.projectId,
-                  view: perspective
+                  view: perspective,
+                  sort
                 }) + "#estimate-create"
               }
               className="inline-flex items-center rounded-[3px] border border-[var(--copper)] bg-[var(--copper)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--copper-light)]"
@@ -372,8 +415,9 @@ export default async function EstimatesPage({
                   compose: "1",
                   opportunityId: resolvedSearchParams.opportunityId,
                   customerId: resolvedSearchParams.customerId,
-                  projectId: resolvedSearchParams.projectId,
-                  view: perspective
+                projectId: resolvedSearchParams.projectId,
+                  view: perspective,
+                  sort
                 }) + "#estimate-create"
               }
             />
@@ -383,7 +427,7 @@ export default async function EstimatesPage({
             <ManagerDashboardCard
               eyebrow="Responses"
               title="Recent client responses"
-              description="Portal views, approvals, and rejections from the canonical estimate record."
+              description="Portal views, approvals, and rejections from the estimate record."
               actionHref={buildEstimatesHref({
                 q: query,
                 status: "all",
@@ -445,7 +489,7 @@ export default async function EstimatesPage({
                   Estimates by status
                 </h3>
                 <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                  Current-state status mix from canonical estimate records.
+                  Current-state status mix from estimate records.
                 </p>
               </div>
               <div className="divide-y divide-[var(--border-warm)]">
@@ -592,11 +636,12 @@ export default async function EstimatesPage({
               compose: "1",
               opportunityId: resolvedSearchParams.opportunityId,
               customerId: resolvedSearchParams.customerId,
-              projectId: resolvedSearchParams.projectId,
-              view: perspective
-            }) + "#estimate-create"
+                  projectId: resolvedSearchParams.projectId,
+                view: perspective,
+                sort
+              }) + "#estimate-create"
           }
-          closeHref={buildEstimatesHref({ q: query, status: statusFilter, view: perspective })}
+          closeHref={buildEstimatesHref({ q: query, status: statusFilter, view: perspective, sort })}
           openLabel="Open estimate quick create"
         >
           <EstimateQuickCreateForm

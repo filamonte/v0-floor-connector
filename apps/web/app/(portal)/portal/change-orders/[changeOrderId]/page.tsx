@@ -124,7 +124,7 @@ export default async function PortalChangeOrderReviewPage({
           <DetailPageHeader
             eyebrow="Change Order Review"
             title={changeOrder.title}
-            description="Review the shared scope and price adjustment, then approve or reject this same canonical change order."
+            description="Review the shared scope and price adjustment, then approve or reject this change order."
             backHref={`/portal/projects/${changeOrder.projectId}`}
             backLabel="Back to project workspace"
             actions={

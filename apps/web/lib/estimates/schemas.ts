@@ -394,7 +394,8 @@ export const estimateSystemInsertInputSchema = z
     width: positiveQuantityField().nullable().optional(),
     squareFootage: positiveQuantityField(),
     linearFootage: currencyAmountField("Linear footage").nullable().optional(),
-    count: positiveQuantityField().nullable().optional()
+    count: positiveQuantityField().nullable().optional(),
+    groupName: optionalTrimmedString(160)
   })
   .strict()
   .superRefine(rejectClientOwnedEstimateInsertPayload);

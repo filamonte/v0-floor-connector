@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AppEmptyState } from "@/components/app-empty-state";
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { CustomerContactForm } from "@/components/customer-contact-form";
 import { CustomerCommunicationPreferencesPanel } from "@/components/customer-communication-preferences-panel";
 import { CustomerForm } from "@/components/customer-form";
@@ -13,6 +14,7 @@ import { PortalAccessGrantForm } from "@/components/portal-access-grant-form";
 import { PortalInviteEmailStatus } from "@/components/portal-invite-email-status";
 import { PortalProjectAccessForm } from "@/components/portal-project-access-form";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
+import { TemporaryPortalCredentialForm } from "@/components/temporary-portal-credential-form";
 import {
   ScheduleContextActions,
   ScheduleContextFocusCard,
@@ -51,6 +53,7 @@ import {
   updatePortalAccessGrantStatusAction,
   updatePortalProjectAccessStatusAction
 } from "@/lib/portal-access/actions";
+import { buildCustomerPortalAccessSummary } from "@/lib/portal-access/customer-access-summary";
 import {
   listCustomerContactPortalPermissionsByCustomer,
   listPortalAccessGrantsByCustomer,
@@ -241,20 +244,21 @@ export default async function CustomerDetailPage({
     ] as const)
   );
   const portalProjectAccessByGrantId = new Map(portalProjectAccessEntries);
-  const activePortalGrantCount = portalAccessGrants.filter(
-    (grant) => grant.status === "active"
-  ).length;
-  const invitedPortalGrantCount = portalAccessGrants.filter(
-    (grant) => grant.status === "invited"
-  ).length;
-  const revokedPortalGrantCount = portalAccessGrants.filter(
-    (grant) => grant.status === "revoked"
-  ).length;
+  const portalAccessSummary = buildCustomerPortalAccessSummary({
+    contacts: customerContacts,
+    grants: portalAccessGrants,
+    projectAccessByGrantId: portalProjectAccessByGrantId
+  });
+  const activePortalGrantCount = portalAccessSummary.activeGrantCount;
+  const invitedPortalGrantCount = portalAccessSummary.invitedGrantCount;
+  const revokedPortalGrantCount = portalAccessSummary.revokedGrantCount;
   const customerContactOptions = customerContacts.map((customerContact) => {
     const contactName = customerContact.contact?.displayName ?? "Linked contact";
     const contactEmail = customerContact.contact?.email?.trim() ?? "";
     const relationshipLabel = formatRelationshipLabel(customerContact.relationshipLabel);
-    const primaryLabel = customerContact.isPrimary ? "Main contact" : relationshipLabel;
+    const primaryLabel = customerContact.isPrimary
+      ? "Recommended portal contact"
+      : relationshipLabel;
 
     return {
       id: customerContact.id,
@@ -267,29 +271,34 @@ export default async function CustomerDetailPage({
   const portalPermissionsByCustomerContactId = new Map(
     customerContactPortalPermissions.map((permission) => [permission.customerContactId, permission])
   );
+  const primaryCustomerContact =
+    customerContacts.find((customerContact) => customerContact.isPrimary) ??
+    customerContacts[0] ??
+    null;
+  const openProjectCount = projects.filter((project) => project.status !== "completed").length;
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-      <section className="space-y-6">
-        <div className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+    <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <section className="min-w-0 space-y-6">
+        <div className="min-w-0 rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
           <DetailPageHeader
-            eyebrow="Customer Review"
+            eyebrow="Customer Workspace"
             title={customer.name}
-            description="Customers remain the canonical billing, project, and estimate-recipient record across projects, estimates, jobs, invoices, and tax-aware financial settings. Review and maintain the customer email and phone here before drilling into connected records."
+            description="Account summary, relationship context, and connected work for this customer. Contact identity and portal access remain managed through People."
             backHref="/customers"
             backLabel="Back to customers"
             actions={
               <div className="flex flex-wrap gap-3">
                 <Link
-                  href={`/estimates?customerId=${customer.id}#estimate-create`}
-                  className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                >
-                  Add estimate
-                </Link>
-                <Link
                   href={`/projects?customerId=${customer.id}`}
                   className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
                 >
                   Create project
+                </Link>
+                <Link
+                  href={`/people?accessCustomerId=${customer.id}#customer-access`}
+                  className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                >
+                  Manage contacts/access
                 </Link>
               </div>
             }
@@ -325,29 +334,42 @@ export default async function CustomerDetailPage({
             </div>
           ) : null}
 
-          <div className="mt-8 grid gap-4 md:grid-cols-4">
+          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4">
-              <p className="text-sm font-medium text-slate-950">Projects</p>
+              <p className="text-sm font-medium text-slate-950">Open projects</p>
               <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-                {projects.length}
+                {openProjectCount}
+              </p>
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                {projects.length} total project{projects.length === 1 ? "" : "s"}
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4">
-              <p className="text-sm font-medium text-slate-950">Estimates</p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-                {customerEstimates.length}
+              <p className="text-sm font-medium text-slate-950">Primary contact</p>
+              <p className="mt-3 truncate text-lg font-semibold tracking-tight text-slate-950">
+                {primaryCustomerContact?.contact?.displayName ?? "Not set"}
+              </p>
+              <p className="mt-2 truncate text-xs leading-5 text-slate-500">
+                {primaryCustomerContact?.contact?.email ?? customer.email ?? "No email on file"}
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4">
-              <p className="text-sm font-medium text-slate-950">Jobs</p>
+              <p className="text-sm font-medium text-slate-950">Contacts</p>
               <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-                {customerJobs.length}
+                {customerContacts.length}
+              </p>
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                {activePortalGrantCount} active portal grant
+                {activePortalGrantCount === 1 ? "" : "s"}
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4">
-              <p className="text-sm font-medium text-slate-950">Appointments</p>
+              <p className="text-sm font-medium text-slate-950">Open invoices</p>
               <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-                {customerAppointments.length}
+                {openInvoices.length}
+              </p>
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                {customerEstimates.length} estimate{customerEstimates.length === 1 ? "" : "s"} on linked projects
               </p>
             </div>
           </div>
@@ -453,22 +475,24 @@ export default async function CustomerDetailPage({
 
         <DetailPanel
           title="Contacts"
-          description="Manage related contacts beneath this canonical customer account so linked portal grants can use contact-level permissions without replacing the customer record."
+          description="Manage related contacts beneath this customer account so linked portal grants can use contact-level permissions without replacing the customer record."
         >
           <div className="space-y-8">
-            <div className="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
-              <div className="flex flex-col gap-2">
-                <p className="text-base font-semibold text-slate-950">
-                  {canManageCustomerContacts ? "Add related contact" : "Related contacts"}
-                </p>
-                <p className="text-sm leading-6 text-slate-600">
-                  Related contacts stay linked through canonical{" "}
-                  <span className="font-medium text-slate-950">contacts</span> and{" "}
-                  <span className="font-medium text-slate-950">customer_contacts</span>. The
-                  account-level customer email above still remains the estimate, contract, and
-                  invoice recipient source in this phase.
-                </p>
-              </div>
+            <details className="group rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
+              <summary className="flex cursor-pointer list-none flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex flex-col gap-2">
+                  <p className="text-base font-semibold text-slate-950">
+                    {canManageCustomerContacts ? "Add related contact" : "Related contacts"}
+                  </p>
+                  <p className="text-sm leading-6 text-slate-600">
+                    Related contacts stay linked to this customer account. Add or edit contact
+                    details only when the account summary above is not enough.
+                  </p>
+                </div>
+                <span className="inline-flex w-fit rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+                  Expand
+                </span>
+              </summary>
               <div className="mt-5">
                 {canManageCustomerContacts ? (
                   <CustomerContactForm
@@ -481,7 +505,7 @@ export default async function CustomerDetailPage({
                   </p>
                 )}
               </div>
-            </div>
+            </details>
 
             {customerContacts.length > 0 ? (
               <div className="grid gap-4">
@@ -582,8 +606,15 @@ export default async function CustomerDetailPage({
                     </div>
 
                     {canManageCustomerContacts ? (
-                      <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4">
-                        <p className="text-sm font-medium text-slate-950">Edit related contact</p>
+                      <details className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+                          <span className="text-sm font-medium text-slate-950">
+                            Edit related contact
+                          </span>
+                          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                            Expand
+                          </span>
+                        </summary>
                         <div className="mt-4">
                           <CustomerContactForm
                             action={updateCustomerContactAction}
@@ -591,7 +622,7 @@ export default async function CustomerDetailPage({
                             customerContact={customerContact}
                           />
                         </div>
-                      </div>
+                      </details>
                     ) : null}
                   </section>
                 ))}
@@ -600,7 +631,7 @@ export default async function CustomerDetailPage({
               <AppEmptyState
                 eyebrow="No related contacts"
                 title="Add the first customer contact"
-                description="Use related contacts for account-side participants without replacing the canonical customer record or changing the account-level estimate and billing recipient fields yet."
+                description="Use related contacts for account-side participants without replacing the customer record or changing the account-level estimate and billing recipient fields yet."
               />
             )}
           </div>
@@ -622,47 +653,144 @@ export default async function CustomerDetailPage({
 
         <DetailPanel
           title="Portal Access"
-          description="Manage customer contacts and contact-level portal access together on this customer account. People remains the cross-customer administration view."
+          description="Customer-specific portal invite, access, and project visibility summary. People remains the cross-customer access console."
         >
           <div className="space-y-8">
-            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
-              <p className="font-medium text-slate-950">Contact-level access model</p>
-              <p className="mt-1">
-                Portal access is granted to a customer contact, authenticated by Supabase
-                Auth, then scoped to the projects that contact can open. Legacy
-                customer-level grants remain visible for compatibility.
-              </p>
-              <Link
-                href="/people#customer-access"
-                className="mt-3 inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-              >
-                Open People access management
-              </Link>
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+                <p className="font-medium text-slate-950">Recommended contact</p>
+                {portalAccessSummary.recommendedContact ? (
+                  <div className="mt-3 space-y-1">
+                    <p className="font-semibold text-slate-950">
+                      {portalAccessSummary.recommendedContact.label}
+                    </p>
+                    <p className="break-words">
+                      {portalAccessSummary.recommendedContact.email}
+                    </p>
+                    <p className="text-xs leading-5 text-slate-500">
+                      {portalAccessSummary.recommendedContact.isPrimary
+                        ? "Primary customer contact, preselected for new portal invites."
+                        : "First customer contact with an email, preselected for new portal invites."}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="mt-2">
+                    Add an email to a related customer contact before inviting portal access.
+                    Customer account email is not treated as a separate portal-only contact.
+                  </p>
+                )}
+              </section>
+
+              <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+                <p className="font-medium text-slate-950">Portal access status</p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span
+                    className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${
+                      activePortalGrantCount > 0
+                        ? getPortalAccessStatusClasses("active")
+                        : invitedPortalGrantCount > 0
+                          ? getPortalAccessStatusClasses("invited")
+                          : revokedPortalGrantCount > 0
+                            ? getPortalAccessStatusClasses("revoked")
+                            : "border-slate-200 bg-white text-slate-700"
+                    }`}
+                  >
+                    {portalAccessSummary.statusLabel}
+                  </span>
+                  <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+                    {portalAccessSummary.activeSharedProjectCount} shared project
+                    {portalAccessSummary.activeSharedProjectCount === 1 ? "" : "s"}
+                  </span>
+                </div>
+                <p className="mt-3">{portalAccessSummary.statusDescription}</p>
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  Contact record, portal access grant, and login identity stay separate.
+                  Access only reaches projects explicitly shared below.
+                </p>
+                <Link
+                  href={`/people?accessCustomerId=${customer.id}#customer-access`}
+                  className="mt-3 inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                >
+                  Open People access management
+                </Link>
+              </section>
             </div>
-            <section className="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
-              <div className="flex flex-col gap-2">
-                <p className="text-base font-semibold text-slate-950">Invite contact to portal</p>
-                <p className="text-sm leading-6 text-slate-600">
-                  Select the customer contact and project first. The invite creates or
-                  reuses a contact-linked portal grant, scopes it to one project, and
-                  activates only when the invited email signs up or logs in. This action
-                  sends branded email when delivery is configured and unlocked, and returns
-                  a fresh app invite link as the copy-link fallback.
+
+            <div className="grid gap-3 md:grid-cols-4">
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Active
+                </p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">
+                  {activePortalGrantCount}
                 </p>
               </div>
-              <div className="mt-5">
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Invited
+                </p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">
+                  {invitedPortalGrantCount}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Revoked
+                </p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">
+                  {revokedPortalGrantCount}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Shared Projects
+                </p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">
+                  {portalAccessSummary.activeSharedProjectCount}
+                </p>
+              </div>
+            </div>
+
+            <details className="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
+              <summary className="flex cursor-pointer list-none flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex flex-col gap-2">
+                  <p className="text-base font-semibold text-slate-950">
+                    Invite portal contact or adjust access
+                  </p>
+                  <p className="text-sm leading-6 text-slate-600">
+                    Use this customer-local control when you are already in the account.
+                    The recommended contact is selected when an email is available.
+                  </p>
+                </div>
+                <span className="inline-flex w-fit rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+                  Expand management
+                </span>
+              </summary>
+              <section className="mt-5 rounded-[1.75rem] border border-slate-200 bg-white p-5 sm:p-6">
+                <div className="flex flex-col gap-2">
+                  <p className="text-base font-semibold text-slate-950">Invite contact to portal</p>
+                  <p className="text-sm leading-6 text-slate-600">
+                    Select the customer contact and first visible project. The invite creates or
+                    reuses a contact-linked grant; it does not create an auth login until the
+                    customer accepts or support issues a temporary credential.
+                  </p>
+                </div>
+                <div className="mt-5">
                 <PortalAccessGrantForm
                   action={createPortalAccessGrantAction}
                   customerId={customer.id}
                   customerContacts={customerContactOptions}
+                  defaultCustomerContactId={portalAccessSummary.recommendedContact?.id ?? undefined}
+                  defaultEmail={portalAccessSummary.recommendedContact?.email ?? undefined}
                   projects={projects.map((project) => ({
                     id: project.id,
                     label: project.name,
                     status: project.status
                   }))}
+                  returnTo={`/customers/${customer.id}`}
                 />
-              </div>
-            </section>
+                </div>
+              </section>
 
             {portalAccessGrants.length > 0 ? (
               <div className="space-y-6">
@@ -749,6 +877,14 @@ export default async function CustomerDetailPage({
                                 </span>
                               </p>
                             ) : null}
+                            {grant.temporaryCredentialRequiresPasswordChange ? (
+                              <p>
+                                Temporary credential:{" "}
+                                <span className="font-medium text-amber-800">
+                                  Password change required
+                                </span>
+                              </p>
+                            ) : null}
                             <p>
                               Granted projects:{" "}
                               <span className="font-medium text-slate-950">
@@ -788,12 +924,16 @@ export default async function CustomerDetailPage({
                               name="status"
                               value={grant.status === "revoked" ? "active" : "revoked"}
                             />
-                            <button
-                              type="submit"
+                            <ConfirmSubmitButton
+                              message={
+                                grant.status === "revoked"
+                                  ? "Reactivate this portal access grant?"
+                                  : "Revoke this portal access grant? The customer will lose access controlled by this grant until it is reactivated."
+                              }
                               className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
                             >
                               {grant.status === "revoked" ? "Reactivate access" : "Revoke access"}
-                            </button>
+                            </ConfirmSubmitButton>
                           </form>
                         )}
                       </div>
@@ -807,6 +947,19 @@ export default async function CustomerDetailPage({
                           delivery={grant.inviteEmailDelivery}
                         />
                       </div>
+
+                      {canManageCustomerContacts &&
+                      grant.status !== "revoked" &&
+                      grant.customerContact ? (
+                        <div className="mt-6">
+                          <TemporaryPortalCredentialForm
+                            customerId={customer.id}
+                            portalAccessGrantId={grant.id}
+                            returnTo={`/customers/${customer.id}`}
+                            hasPortalUser={Boolean(grant.userId)}
+                          />
+                        </div>
+                      ) : null}
 
                       <div className="mt-6 space-y-5">
                         <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
@@ -1146,14 +1299,18 @@ export default async function CustomerDetailPage({
                                           name="status"
                                           value={access.status === "revoked" ? "active" : "revoked"}
                                         />
-                                        <button
-                                          type="submit"
+                                        <ConfirmSubmitButton
+                                          message={
+                                            access.status === "revoked"
+                                              ? "Reactivate this project visibility for the portal contact?"
+                                              : "Revoke this project visibility? The portal contact will no longer see this project until visibility is reactivated."
+                                          }
                                           className="inline-flex items-center rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
                                         >
                                           {access.status === "revoked"
                                             ? "Reactivate"
                                             : "Revoke visibility"}
-                                        </button>
+                                        </ConfirmSubmitButton>
                                       </form>
                                     </div>
                                   </div>
@@ -1194,12 +1351,13 @@ export default async function CustomerDetailPage({
                 description="Portal access remains narrow in this pass: create or reuse one customer/contact grant, then explicitly grant the projects they should be able to review. Pending contacts need the app invite link to sign up or log in."
               />
             )}
+            </details>
           </div>
         </DetailPanel>
 
         <DetailPanel
           title="Edit Customer"
-          description="Keep the canonical customer recipient details editable here while the connected relationship context stays visible above."
+          description="Keep the customer recipient details editable here while the connected relationship context stays visible above."
         >
           <CustomerForm
             action={updateCustomerAction}
@@ -1210,22 +1368,21 @@ export default async function CustomerDetailPage({
         </DetailPanel>
       </section>
 
-      <aside className="space-y-6">
+      <aside className="min-w-0 space-y-6">
         <DirectoryContextCard
           href={`/directory?view=customers&q=${encodeURIComponent(customer.name)}`}
           recordLabel="Customer account"
-          description="Directory is the contractor-side scan-and-jump index. This customer page remains the canonical home for billing details, projects, and downstream workflow context; People owns contact identity and portal access administration."
+          description="Directory is the contractor-side scan-and-jump index. This customer page remains the home for billing details, projects, and downstream workflow context; People owns contact identity and portal access administration."
         />
 
         <DetailPanel title="Customer Summary">
           <div className="mb-4 rounded-2xl border border-[#d6d6d6] bg-[#f8f8f8] px-4 py-4 text-sm leading-6 text-[#2a2a2a]">
-            <p className="font-medium text-[#171717]">Canonical recipient details</p>
+            <p className="font-medium text-[#171717]">Recipient details</p>
             <p className="mt-2">
               This customer record owns the external billing and estimate-recipient contact
               details. Estimate send uses <span className="font-semibold">customer.email</span>,
-              while related customer contacts below stay linked through the canonical
-              customer account and do not replace that send/billing recipient lookup in this
-              phase.
+              while related customer contacts below stay linked through the customer account
+              and do not replace that send/billing recipient lookup in this phase.
             </p>
           </div>
           <dl className="space-y-4 text-sm leading-6 text-slate-600">
@@ -1357,7 +1514,7 @@ export default async function CustomerDetailPage({
               >
                 {customerJobs.length > 0
                   ? "Jobs already exist across this customer's projects, but they are still unscheduled. The next production handoff will appear here once a real date is attached."
-                  : "Schedule continuity will appear here after downstream project jobs are created on the canonical production chain."}
+                  : "Schedule continuity will appear here after downstream project jobs are created on the production chain."}
               </ScheduleContextNotice>
             )}
 
@@ -1393,9 +1550,9 @@ export default async function CustomerDetailPage({
 
         <RelatedConversationsCard
           source="customer"
-          description="Customer-scoped communication stays on canonical threads and routes back into the shared communications review workspace when this relationship needs follow-through."
+          description="Customer-scoped communication stays on shared threads and routes back into the communications review workspace when this relationship needs follow-through."
           countLabel="Customer threads"
-          emptyMessage="No customer-scoped communication threads are attached to this canonical customer yet."
+          emptyMessage="No customer-scoped communication threads are attached to this customer yet."
           actionClassName="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
           threads={communicationThreads}
         />

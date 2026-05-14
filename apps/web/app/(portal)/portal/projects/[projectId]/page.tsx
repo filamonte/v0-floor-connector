@@ -83,7 +83,7 @@ function getProjectNextAction(input: {
     return {
       title: `Payment is in progress for ${input.projectName}`,
       description:
-        "A checkout session has already started on the shared invoice, so billing is still the clearest customer-facing record to review on this project."
+        "Checkout has already started, so billing is still the clearest record to review on this project."
     };
   }
 
@@ -107,10 +107,10 @@ function getProjectNextAction(input: {
             ? `A real deposit payment has already landed, but ${formatMoney(
                 input.latestInvoiceBalanceDueAmount ?? "0"
               )} still remains before the shared commercial step is clear.`
-            : `A real payment has already landed on ${input.latestInvoiceReferenceNumber ?? "the shared invoice"}, but ${formatMoney(
+            : `A payment has already landed on ${input.latestInvoiceReferenceNumber ?? "the invoice"}, but ${formatMoney(
                 input.latestInvoiceBalanceDueAmount ?? "0"
               )} still remains due.`
-          : "A provider-backed payment completed on the shared invoice, so billing is no longer the active blocker on this project."
+          : "A payment completed, so billing is no longer the active blocker on this project."
     };
   }
 
@@ -126,7 +126,7 @@ function getProjectNextAction(input: {
     return {
       title: `Billing has reopened for ${input.projectName}`,
       description:
-        "The latest provider-backed payment was voided, so the invoice has returned to an open billing state on this shared project."
+        "The latest payment was voided, so the invoice has returned to an open balance on this project."
     };
   }
 
@@ -138,7 +138,7 @@ function getProjectNextAction(input: {
           ? `A deposit payment has already been recorded, but ${formatMoney(
               input.latestInvoiceBalanceDueAmount ?? "0"
             )} still remains before the shared commercial chain is clear.`
-          : `A payment has already been recorded on ${input.latestInvoiceReferenceNumber ?? "the shared invoice"}, but ${formatMoney(
+          : `A payment has already been recorded on ${input.latestInvoiceReferenceNumber ?? "the invoice"}, but ${formatMoney(
               input.latestInvoiceBalanceDueAmount ?? "0"
             )} still remains due.`
     };
@@ -152,7 +152,7 @@ function getProjectNextAction(input: {
     return {
       title: `Review the invoice shared for ${input.projectName}`,
       description:
-        "Billing is the clearest current customer-facing record on this project, so start there inside the commercial records below."
+        "Billing is the clearest current record on this project, so start there below."
     };
   }
 
@@ -173,7 +173,7 @@ function getProjectNextAction(input: {
       title: `Contract signing is complete for ${input.projectName}`,
       description:
         input.visibleInvoiceCount > 0
-          ? "The shared contract is fully signed. Review the invoice records below for the next customer-facing commercial step."
+          ? "The contract is fully signed. Review the invoice records below for the next billing step."
           : "The shared contract is fully signed. Billing or downstream project continuity will appear here as the next shared step."
     };
   }
@@ -384,7 +384,7 @@ export default async function PortalProjectDetailPage({
                   <p className="text-sm leading-6 text-slate-600">{nextAction.description}</p>
                   <div className={portalInsetPanelClassName}>
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                      Shared workflow
+                      Shared steps
                     </p>
                     <div className="mt-2 space-y-1 text-sm leading-6 text-slate-600">
                       <p>Estimate: {formatStatusLabel(project.latestEstimateStatus)}</p>
@@ -474,14 +474,14 @@ export default async function PortalProjectDetailPage({
 
         <DetailPanel
           title="Commercial Records"
-          description="Customer-facing records grouped by the current shared step on this project."
+          description="Records your contractor has shared for this project."
         >
           <div className="space-y-8">
             <section className="space-y-4">
               <div>
                 <p className="text-sm font-medium text-slate-950">Estimates and proposals</p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Shared proposal and pricing context tied to this project.
+                  Proposal and pricing details tied to this project.
                 </p>
               </div>
               {estimates.length > 0 ? (
@@ -514,7 +514,7 @@ export default async function PortalProjectDetailPage({
               <div>
                 <p className="text-sm font-medium text-slate-950">Contracts</p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Contract visibility stays tied to the same project chain as the proposal.
+                  Contracts shared for this project.
                 </p>
               </div>
               {contracts.length > 0 ? (
@@ -547,7 +547,7 @@ export default async function PortalProjectDetailPage({
               <div>
                 <p className="text-sm font-medium text-slate-950">Change orders</p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Approved or pending scope adjustments stay on this same project chain.
+                  Approved or pending scope adjustments for this project.
                 </p>
               </div>
               {changeOrders.length > 0 ? (
@@ -616,7 +616,7 @@ export default async function PortalProjectDetailPage({
       <aside className="space-y-6">
         <DetailPanel
           title="Project Context"
-          description="Compact project facts that support review without exposing contractor-only workflow internals."
+          description="Compact project facts for review."
         >
           <ContextFactsList
             items={[
@@ -661,7 +661,7 @@ export default async function PortalProjectDetailPage({
         >
           <div className="space-y-3 text-sm leading-6 text-slate-600">
             <p>
-              Contract signing and invoice payment progress feed back into this project workspace, so the next shared step changes here as the workflow moves.
+              Contract signing and invoice payment progress update this project, so the next shared step changes here as work moves forward.
             </p>
             <PortalSecondaryLink href="/portal">
               Return to portal home

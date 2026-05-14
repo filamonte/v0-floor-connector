@@ -119,7 +119,7 @@ export function EstimateRecordsPanel({
               Estimate records
             </p>
           </div>
-          <div className="hidden grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px_170px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)] lg:grid lg:flex-1">
+          <div className="hidden grid-cols-[112px_minmax(0,1.5fr)_minmax(0,1fr)_112px_120px_120px_180px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)] lg:grid lg:flex-1">
             <span>EST. #</span>
             <span>Title / customer</span>
             <span>Project</span>
@@ -151,18 +151,23 @@ export function EstimateRecordsPanel({
             return (
             <div
               key={estimate.id}
-              className="group block px-4 py-2.5 transition hover:bg-[var(--highlight)]"
+              className="group relative block px-4 py-2.5 transition hover:bg-[var(--highlight)] focus-within:bg-[var(--highlight)]"
             >
-              <div className="grid gap-3 lg:grid-cols-[120px_minmax(0,1.4fr)_minmax(0,1fr)_120px_130px_130px_170px] lg:items-center">
-                <div className="min-w-0">
+              <Link
+                href={`/estimates/${estimate.id}`}
+                className="absolute inset-0 z-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--copper)]"
+                aria-label={`Open estimate ${estimate.referenceNumber}`}
+              />
+              <div className="grid gap-3 lg:grid-cols-[112px_minmax(0,1.5fr)_minmax(0,1fr)_112px_120px_120px_180px] lg:items-center">
+                <div className="pointer-events-none relative z-0 min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] lg:hidden">
                     EST. #
                   </p>
                   <h3 className="text-sm font-semibold text-[var(--text-primary)] transition group-hover:text-[var(--copper)]">
-                    <Link href={`/estimates/${estimate.id}`}>{estimate.referenceNumber}</Link>
+                    {estimate.referenceNumber}
                   </h3>
                 </div>
-                <div className="min-w-0">
+                <div className="pointer-events-none relative z-0 min-w-0">
                   <p className="text-sm font-semibold text-[var(--text-primary)]">
                     {estimate.title ?? estimate.opportunity?.title ?? "Untitled estimate"}
                   </p>
@@ -178,7 +183,7 @@ export function EstimateRecordsPanel({
                     </p>
                   ) : null}
                 </div>
-                <div>
+                <div className="pointer-events-none relative z-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] lg:hidden">
                     Project
                   </p>
@@ -186,15 +191,15 @@ export function EstimateRecordsPanel({
                     {estimate.project?.name ?? "Unknown project"}
                   </p>
                 </div>
-                <div>
+                <div className="pointer-events-none relative z-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] lg:hidden">
                     Date
                   </p>
-                  <p className="text-sm font-medium text-[var(--text-primary)]">
+                  <p className="text-sm font-medium tabular-nums text-[var(--text-primary)]">
                     {formatShortDate(estimate.estimateDate ?? estimate.updatedAt)}
                   </p>
                 </div>
-                <div>
+                <div className="pointer-events-none relative z-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] lg:hidden">
                     Status
                   </p>
@@ -207,15 +212,15 @@ export function EstimateRecordsPanel({
                     {formatStatusLabel(estimate.status)}
                   </span>
                 </div>
-                <div className="lg:text-right">
+                <div className="pointer-events-none relative z-0 lg:text-right">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] lg:hidden">
                     Total
                   </p>
-                  <p className="text-sm font-semibold text-[var(--text-primary)]">
+                  <p className="text-sm font-semibold tabular-nums text-[var(--text-primary)]">
                     {formatMoney(estimate.totalAmount)}
                   </p>
                 </div>
-                <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
+                <div className="relative z-10 flex flex-wrap justify-start gap-2 lg:justify-end">
                   {primaryAction ? (
                     <Link href={primaryAction.href} className={primaryActionClassName}>
                       {primaryAction.label}

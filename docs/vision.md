@@ -72,6 +72,8 @@ In short:
 
 The long-term product direction can be described as a company brain: shared canonical data everywhere, no data silos, no fake or parallel records, and project-centered operational memory that makes the whole contractor workflow readable.
 
+The current enterprise UX consolidation direction supports that thesis at the page level: People owns contact/access administration, Customer summarizes the account relationship, Project owns operational state, Estimate/Contract/Invoice own proposal/signature/billing review, and Portal keeps customer-facing review simple. See [docs/enterprise-ux-consolidation.md](C:/FloorConnector/docs/enterprise-ux-consolidation.md).
+
 ## Long-Term Product Direction
 
 FloorConnector starts with contractor operations, but the long-term direction is broader than job tracking alone.

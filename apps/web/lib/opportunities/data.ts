@@ -14,9 +14,9 @@ import type {
 import {
   createContactForOrganization,
   listContactsByIds,
-  updateContactForOrganization,
-  upsertCustomerContactLink
+  updateContactForOrganization
 } from "@/lib/contacts/data";
+import { ensurePrimaryCustomerContact } from "@/lib/customers/primary-contact";
 import type { OpportunityFollowUpInput, OpportunityInput } from "./schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
@@ -512,14 +512,23 @@ function mapOpportunityObservation(
   };
 }
 
-function toStoredAssessmentTimestamp(date: string | null) {
-  return date ? `${date}T12:00:00.000Z` : null;
+function toStoredAssessmentTimestamp(date: string | null, time?: string | null) {
+  if (!date) {
+    return null;
+  }
+
+  if (!time) {
+    return `${date}T12:00:00.000Z`;
+  }
+
+  return new Date(`${date}T${time}:00`).toISOString();
 }
 
 function resolveSiteAssessmentState(
   status: OpportunityRecord["status"],
   input: {
     siteAssessmentScheduledOn: string | null;
+    siteAssessmentScheduledTime?: string | null;
     siteAssessmentCompletedOn: string | null;
   },
   current?: Pick<
@@ -530,7 +539,10 @@ function resolveSiteAssessmentState(
   >
 ) {
   const scheduledAt =
-    toStoredAssessmentTimestamp(input.siteAssessmentScheduledOn) ??
+    toStoredAssessmentTimestamp(
+      input.siteAssessmentScheduledOn,
+      input.siteAssessmentScheduledTime
+    ) ??
     current?.siteAssessmentScheduledAt ??
     null;
   const completedAt =
@@ -1078,13 +1090,16 @@ export async function updateOpportunity(opportunityId: string, input: Opportunit
       });
 
   if (currentOpportunity.customerId) {
-    await upsertCustomerContactLink({
+    await ensurePrimaryCustomerContact({
       organizationId: scope.organizationId,
       userId: scope.userId,
       customerId: currentOpportunity.customerId,
       contactId: primaryContact.id,
-      relationshipLabel: "primary_opportunity_contact",
-      isPrimary: true
+      name: primaryContact.displayName,
+      companyName: primaryContact.companyName,
+      email: primaryContact.email,
+      phone: primaryContact.phone,
+      source: "opportunity_conversion"
     });
 
     await syncCustomerDirectEmailFromOpportunityContact({
@@ -1301,13 +1316,16 @@ export async function ensureOpportunityEstimateFlow(opportunityId: string) {
     });
   }
 
-  await upsertCustomerContactLink({
+  await ensurePrimaryCustomerContact({
     organizationId: scope.organizationId,
     userId: scope.userId,
     customerId,
     contactId: opportunity.primaryContact.id,
-    relationshipLabel: "primary_opportunity_contact",
-    isPrimary: true
+    name: opportunity.primaryContact.displayName,
+    companyName: opportunity.primaryContact.companyName,
+    email: opportunity.primaryContact.email,
+    phone: opportunity.primaryContact.phone,
+    source: "opportunity_conversion"
   });
 
   if (!projectId) {
@@ -1544,27 +1562,44 @@ export async function ensureOpportunityEstimateFlowFromCustomer(input: {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
-    : await createContactForOrganization({
+    : null;
+
+  const primaryContactResult = primaryContact
+    ? await ensurePrimaryCustomerContact({
         organizationId: scope.organizationId,
         userId: scope.userId,
-        contact: {
-          displayName: customer.name,
-          companyName: customer.company_name,
-          email: customer.email,
-          phone: customer.phone,
-          contactKind: "customer_contact",
-          notes: null
-        }
+        customerId: customer.id,
+        contactId: primaryContact.id,
+        name: primaryContact.displayName,
+        companyName: primaryContact.companyName,
+        email: primaryContact.email,
+        phone: primaryContact.phone,
+        source: "estimate_customer_start"
+      })
+    : await ensurePrimaryCustomerContact({
+        organizationId: scope.organizationId,
+        userId: scope.userId,
+        customerId: customer.id,
+        name: customer.name,
+        companyName: customer.company_name,
+        email: customer.email,
+        phone: customer.phone,
+        source: "estimate_customer_start"
       });
 
-  await upsertCustomerContactLink({
-    organizationId: scope.organizationId,
-    userId: scope.userId,
-    customerId: customer.id,
-    contactId: primaryContact.id,
-    relationshipLabel: "primary_opportunity_contact",
-    isPrimary: true
-  });
+  if (primaryContactResult.outcome === "skipped") {
+    throw new Error(
+      "Selected customer needs a primary contact before starting the estimate."
+    );
+  }
+
+  const resolvedPrimaryContact = {
+    id: primaryContactResult.contactId,
+    displayName: primaryContactResult.displayName,
+    companyName: primaryContactResult.companyName,
+    email: primaryContactResult.email,
+    phone: primaryContactResult.phone
+  };
 
   let selectedProjectName: string | null = input.projectName?.trim() || null;
 
@@ -1589,7 +1624,7 @@ export async function ensureOpportunityEstimateFlowFromCustomer(input: {
 
   const generatedTitle = buildOpportunityDisplayTitle({
     title: input.title,
-    contactName: primaryContact.displayName,
+    contactName: resolvedPrimaryContact.displayName,
     siteName: selectedProjectName
   });
   const supabase = await getSupabaseServerClient();
@@ -1597,17 +1632,17 @@ export async function ensureOpportunityEstimateFlowFromCustomer(input: {
     .from("opportunities")
     .insert({
       company_id: scope.organizationId,
-      primary_contact_id: primaryContact.id,
+      primary_contact_id: resolvedPrimaryContact.id,
       customer_id: customer.id,
       project_id: input.projectId,
       status: "estimating",
       title: generatedTitle,
       job_type: null,
       site_name: selectedProjectName,
-      prospect_name: primaryContact.displayName,
-      prospect_company_name: primaryContact.companyName,
-      email: primaryContact.email,
-      phone: primaryContact.phone,
+      prospect_name: resolvedPrimaryContact.displayName,
+      prospect_company_name: resolvedPrimaryContact.companyName,
+      email: resolvedPrimaryContact.email,
+      phone: resolvedPrimaryContact.phone,
       address_line_1: customer.address_line_1,
       address_line_2: customer.address_line_2,
       city: customer.city,

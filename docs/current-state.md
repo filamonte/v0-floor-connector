@@ -35,7 +35,9 @@ Use these docs together:
 - [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): future/planned UI, directory/contact, tax, Estimate Editor, project-address, and workflow-guidance alignment backlog
 - [docs/ui-patterns.md](C:/FloorConnector/docs/ui-patterns.md): implemented decision-first UI patterns for contractor workspaces, Manager Pages, status color semantics, and portal/super-admin differences
 - [docs/golden-workflow-demo-path.md](C:/FloorConnector/docs/golden-workflow-demo-path.md): repeatable Phase 1 route-by-route demo and QA spine for the existing canonical workflow
+- [docs/founder-demo-readiness.md](C:/FloorConnector/docs/founder-demo-readiness.md): rehearsal script for the current founder-demo path from setup through portal and print/save documents
 - [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md): Phase 2 paid early-access readiness plan and billing/activation boundaries
+- [docs/stripe-saas-billing-runbook.md](C:/FloorConnector/docs/stripe-saas-billing-runbook.md): test-mode FloorConnector SaaS billing webhook setup, replay, verification, and recovery boundaries
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
 - [docs/documentation-standards.md](C:/FloorConnector/docs/documentation-standards.md): documentation layers, metadata, and AI-readability rules
 - [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md): mandatory UI and module implementation rules
@@ -67,6 +69,7 @@ These high-value route notes exist to prevent target-vs-current drift:
 
 - `/reports` is the current implemented reporting entry surface; no `/reports/tax` route exists today.
 - `/document-writer` is the current implemented document-writing route; `/documents` remains target IA language only and is not an implemented route today.
+- Good-enough customer-facing print/PDF views now exist for canonical estimate, contract, and invoice records at `/estimates/:id/pdf`, `/contracts/:id/pdf`, `/invoices/:id/pdf`, plus portal-scoped equivalents at `/portal/estimates/:id/pdf`, `/portal/contracts/:id/pdf`, and `/portal/invoices/:id/pdf`. These are browser print/save renderings of canonical records, not stored document records or a document source of truth. Portal print routes now use the same safe organization branding fields already stored on the contractor company after portal record access is scoped.
 - `/materials`, `/forms-checklists`, `/directory`, and `/cost-items-database` exist as current contractor routes/foundations, but their deeper production workflows are not complete.
 - package/billing governance lives under `/super-admin/packages`, including read-only detail routes for package definitions, assignments, provider mappings, and support reviews.
 
@@ -160,6 +163,7 @@ Implemented behavior:
 - `My Work` filters estimates and invoices using existing creator/updater/sender user fields only
 - `My Work` on leads uses the existing appointment assigned-person membership linkage
 - perspective filtering combines with existing search, status, source, and follow-up filters
+- estimates and invoices also expose URL-backed sorting controls on their Manager Pages, and their interactive row/card regions open the detail record while nested actions remain separate
 
 No new permissions model, saved views, AI prioritization, team routing, or broad dashboard redesign is implemented by this pass.
 
@@ -233,8 +237,12 @@ Implemented tenant foundation:
   - when Stripe is not configured or card collection fails, shows a safe fallback that lets the user continue to pending activation and finish billing later before activation
   - includes a separate FloorConnector SaaS subscription checkout launcher only when matching Stripe test-mode keys and `STRIPE_FOUNDER_PLAN_PRICE_ID` are configured
   - creates Stripe Checkout Sessions in `subscription` mode from the server with `company_id`, `billing_domain=floorconnector_saas`, and environment metadata for the Checkout Session and Subscription
+  - exposes a separate signed SaaS billing webhook endpoint at `/api/stripe/saas-billing-webhook` that verifies the Stripe signature with `STRIPE_WEBHOOK_SECRET`, processes only `floorconnector_saas` metadata events, and reconciles safe Stripe subscription references/status onto `companies` / `company_subscriptions`
+  - the SaaS webhook handles `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, and `invoice.payment_failed` for subscription-state reconciliation only
+  - SaaS webhook reconciliation stores only references such as Stripe customer id, subscription id, price id, checkout session id, current period end, last event id, and last webhook time, plus a safe `stripe_saas_billing_webhook_events` idempotency ledger for processed Stripe event ids; it does not store raw webhook payloads or payment details
   - requires the authenticated organization owner/admin role, returns to `/setup/billing`, and never activates the tenant from checkout return
-  - does not touch contractor-customer invoice/payment checkout, portal payment state, invoice rows, payment rows, signature rows, or activation state
+  - checkout return and webhook reconciliation do not activate the tenant
+  - does not touch contractor-customer invoice/payment checkout, portal payment state, invoice rows, payment rows, payment events, signature rows, or activation state
 - `/setup/pending-activation` reuses existing `companies.tenant_status` and `companies.lifecycle_state` as the pending/active activation state and lets early users enter the real dashboard for safe app exploration
 - founder billing evidence is stored on the existing `companies` row for platform-admin tracking only:
   - plan label, expected monthly amount, evidence status, collection method, external reference, notes, evidence timestamp, follow-up timestamp, and updater metadata
@@ -284,6 +292,7 @@ Current shell behavior:
 - dashboard, projects, leads, invoices, contracts, customers, estimates, appointments, daily logs, time, people, vendors, and jobs now follow the shared contractor manager rhythm closely enough that it should be treated as the active UI baseline
 - a first shared universal-create launcher now exists in the shell and dashboard, routing into the existing module Quick-Create managers so new canonical records can be started broadly without creating a second creation system
 - `/schedule` now surfaces canonical appointments beside scheduled jobs in internal contractor schedule views through a discriminated read model; jobs still read from canonical job/job-assignment scheduling data and appointments still read from canonical `appointments`
+- the good-enough `/schedule` release now presents scheduling as a cross-project command center with a Ready work queue, Scheduled timeline, and selected job action panel for schedule/reschedule context and crew assignment on canonical jobs; it does not create schedule-only records, duplicate jobs, route optimization, or automated dispatch behavior
 - schedule views can filter between all items, jobs, and appointments, and appointment entries link to appointment detail plus lead/customer/project context where present
 - dashboard appointment visibility now uses the existing `people.membership_user_id` linkage to show `My upcoming appointments` when the current user has an active person record, with a safe company-upcoming fallback when that mapping is unavailable or has no assigned upcoming appointments
 - dashboard now includes an internal lead follow-up queue derived from canonical `opportunities.next_follow_up_at`, recent opportunity communication thread timestamps, and existing lead status; it prioritizes overdue and due-today follow-ups without sending reminders or creating a task/reminder table
@@ -500,6 +509,7 @@ Current opportunity design notes:
 - site-assessment status and timestamps now live on the canonical opportunity record as upstream commercial-readiness foundation data
 - requirements capture now lives on the same canonical opportunity and can seed project estimating context during handoff
 - linked project readiness now refreshes when opportunity assessment state or requirements capture changes on an opportunity that is already connected to a project
+- opportunity-to-estimate and opportunity-to-customer/project handoff now links the opportunity's primary person to the resulting canonical customer as the primary `customer_contacts` relationship when person details exist
 
 ### Customers
 
@@ -509,6 +519,8 @@ Implemented:
 - create/list/read/update flows
 - protected customers list page
 - customer detail page
+- direct customer creation now preserves the canonical customer/account fields and also creates or links the first captured person as a primary customer contact through existing `contacts` and `customer_contacts`
+- project inline new-customer creation now creates the canonical customer account and primary customer contact together instead of leaving the person only in customer-level email/phone fields
 - customer detail now includes a compact `Contacts` management section over canonical `contacts` and `customer_contacts`
 - contractor admins can now add related customer contacts, edit their basic contact details, and designate one main contact through the shared customer-contact actions; customer detail is the customer-specific home for contact and portal access setup, while People remains the cross-customer identity/access administration view
 - `/directory` now also surfaces those related customer contacts as read-only `Customer Contact` entries that route back to the parent customer detail page
@@ -525,6 +537,7 @@ Current customer-account guardrails:
 
 - `customers` remain the canonical customer/account records for commercial and financial workflows
 - customer entries that later appear inside a unified contractor `Directory` should still be those full canonical customer/account records, not lightweight contact cards
+- the first person captured during lead, customer, or inline project customer intake should become the primary related customer contact when enough person detail exists; historical customer-level email/phone values remain fallback fields and may still need non-destructive cleanup reporting
 - estimate send, invoice recipient, contract customer context, payment/billing context, and project ownership should continue to use canonical customer/account context, with portal-ready related contacts selected where existing access data supports it
 - additional customer contacts are related contacts beneath the canonical customer/account and do not replace it
 - `customers.email` remains the account-level fallback for estimate, contract, and invoice recipient continuity when a more specific portal-ready related contact is not selected
@@ -555,6 +568,7 @@ Implemented:
 - project commercial-readiness sync foundation derived from contract, invoice, payment, financing, and workflow-setting state
 - stored project readiness fields now refresh from upstream opportunity and estimate mutations instead of waiting for later downstream changes to resync them
 - project detail now acts as the upstream sales-to-production readiness hub with blocker visibility, next-best-action guidance, and a derived ready-to-schedule handoff state
+- project detail now adds an `Operational command center` summary and compact `Connected record lanes` for Sales / Estimate, Contract / Signature, Change Orders, Billing / Payments, Job / Schedule, Field / Daily Logs, and Customer Access. These lanes summarize existing canonical records and link to the focused workspaces; they do not introduce a new project, activity, schedule, billing, contact, payment, or signature model.
 - project and signed contract detail now surface a ready-to-schedule action panel only when the existing project readiness snapshot is clear, guiding users from signed contract into canonical job Quick-Create and the shared project-filtered schedule surface; where an approved estimate is available, the handoff preserves that estimate context so the created job stays linked to the upstream commercial lineage, when exactly one unscheduled job exists the schedule handoff opens the focused scheduling action for that canonical job, and when project jobs already exist without unscheduled work the primary follow-through opens the shared schedule for review instead of pushing another job first
 - project readiness is now enforced server-side through a centralized readiness gate before job creation, scheduling, and execution workflows can proceed
 - project detail next-action guidance now distinguishes draft/sent/rejected/approved estimate states, contract draft/signature states, deposit readiness, pending change orders, job scheduling, completed-work invoicing, and open invoice/payment follow-up using existing canonical records only
@@ -594,7 +608,7 @@ Implemented:
 - authenticated-user portal access lookup foundation for customer-facing record loaders
 - tenant-safe portal record loaders for canonical project, estimate, contract, invoice, change-order, and customer-visible appointment review data
 - lightweight `portal_record_views` audit foundation for customer-facing record visibility events
-- contractor-side portal access management is contact-centered on the customer record and also visible in the People cross-customer administration view for granting, linking, reviewing, revoking, and project-scoping customer portal access
+- contractor-side portal access remains contact-centered: customer surfaces show recommended-contact and access-summary context, while People remains the cross-customer administration view for granting, linking, reviewing, revoking, and project-scoping customer portal access
 - contractor-side portal invite creation now requires a selected customer contact for new invites and supports pending project-scoped invites for customer/contact emails that do not yet belong to an authenticated FloorConnector user
 - `/portal/invite?token=...` validates a hashed invite token, shows customer-safe customer/project context, and guides unauthenticated contacts into signup, sign-in, or password reset with the invited email and safe `next` return path preserved
 - accepting the invite activates the canonical portal grant only when the authenticated email matches the invite; the activated user can return to `/portal` later through normal Supabase Auth
@@ -602,6 +616,9 @@ Implemented:
 - current portal invite creation and resend use app-managed invite links, do not call Supabase Auth admin invite, do not create a Supabase Auth user for the customer, and send branded provider-backed email only when Postmark delivery is configured and activation guard allows external sends
 - pending portal invite send/resend prepares a fresh token/hash, returns the fresh copy-link fallback immediately, and records successful or failed provider attempts through `notification_events` plus `notification_deliveries` without storing raw invite tokens
 - if the invited email already belongs to an existing canonical app user, portal access activates immediately and no invite token is created
+- People customer-access administration now uses a focused portal access console: access-state summaries, customer/contact/status filters, compact contact rows, and one selected contact/grant management panel for invite status, temporary login help, stored permissions, and per-project visibility
+- People exposes an explicit copy-access preset from the primary contact to another linked customer contact grant; it only adds or reactivates projects already active for the primary contact and does not silently grant all customer projects
+- Project Workspace shows read-only customer contact portal visibility for that project and links back to People for management
 - customer detail now also shows stored linked-contact permission readiness, including the supported customer-facing permission set
 - customer detail now also stores and edits linked-contact portal permissions, with first-pass enforcement active for estimate approve/reject, change-order approve/reject, and contract sign/decline actions
 - customer detail now clearly labels customer-level grants versus linked contact grants and provides cleanup guidance for gradually attaching legacy customer-level grants to existing related customer contacts
@@ -622,14 +639,16 @@ Current portal access design notes:
 - portal access is anchored to the canonical customer record instead of inventing a separate portal-customer model
 - normal contractor workflow now starts customer portal access from a contractor-created customer/project invite, not from customer self-registration before anything is shared
 - portal users set passwords through the normal Supabase-backed signup/password-reset routes; invite-driven signup, login, and reset keep the customer on the app-managed invite path, and contractors do not set or see portal passwords
+- contractor-side temporary portal credential issuance is now implemented as a support-only owner/admin action on linked customer-contact portal grants; it uses server-side Supabase Auth Admin APIs to create or update the real Auth user, shows the generated temporary password only once, stores only audit/status fields, and marks the account/grant so password login redirects to `/update-password` before portal continuation
 - portal invite email delivery is activation-gated and configuration-aware; if provider email is locked or missing configuration, the UI says no email was sent and preserves the fresh copy-link fallback
 - null `customer_contact_id` still represents the existing customer-level portal grant behavior as a legacy compatibility fallback, not the preferred create path
 - existing customer-level grants are not migrated, revoked, or altered automatically; they continue to work as legacy account-level portal access
 - contractor admins can attach an existing customer-level grant to an existing related customer contact from customer detail or People when they are ready to use contact-level permissions, and the create path now auto-links a reused same-email legacy grant to the selected contact when safe
 - linked-contact grants now identify which canonical related customer contact a login represents without changing project visibility behavior
-- linked-contact grants now also show stored permission readiness in People and contextual customer surfaces
+- linked-contact grants now also show stored permission readiness and temporary-credential change-required state in People and contextual customer surfaces
 - linked-contact grants now also persist stored permission flags for estimate visibility/approval, contract signing, change-order approval, invoice view/pay, and quote-request readiness
 - project visibility is explicitly granted beneath that customer access instead of exposing all tenant projects automatically
+- project visibility remains contact-scoped; additional customer contacts do not inherit the primary contact's project list unless a contractor admin intentionally uses an explicit preset/action
 - portal read access now flows through the same canonical project, appointment, estimate, contract, change-order, and invoice records instead of portal-specific copies
 - contractor admins now manage portal access from People on top of canonical customer, customer-contact, portal-grant, and project-access records rather than a disconnected portal-contact subsystem
 - contact-specific permission gating is now active for linked-contact estimate approval/rejection, change-order approval/rejection, and contract sign/decline actions only
@@ -1015,6 +1034,7 @@ Implemented:
 - contractor-side customer send flow for estimates
 - contractor-side estimate send can target an existing portal-ready customer contact when project-scoped portal access already exists, otherwise it clearly points recipient/access management back to People instead of owning that setup on the estimate page
 - customer-facing portal estimate review and approval or rejection
+- customer-facing estimate print/save PDF view from the canonical estimate record in contractor and portal scopes
 - immutable approved estimate commercial snapshot creation on approval
 - approved estimates that are missing their approval snapshot now show a recovery warning on estimate detail/edit and can rebuild the canonical approved commercial snapshot before contract generation
 - canonical `estimate_customer_events` audit trail for send, view, comment, approval, and rejection activity
@@ -1037,13 +1057,14 @@ Quick reference:
 - `estimate_line_items` is the only authoritative pricing truth; `estimates.content.itemRows` is legacy-only
 - approved estimates create immutable commercial snapshots for downstream contract, SOV, and invoice lineage
 - already-approved estimates with missing snapshot lineage can rebuild the canonical approval snapshot through the estimate recovery action; contract generation still refuses to read mutable/current estimate data
-- customer approval is canonical portal behavior, not a contractor-side override path
+- customer approval is canonical portal behavior for portal customers; contractor-side manual/offline approval requires approver, method, date/time, and evidence/notes, then uses the same canonical estimate status-transition and customer-event trail rather than a duplicate approval model
 - Estimate Editor users can create a new catalog/cost item inline and add it through the same catalog-to-estimate insertion flow
 - Estimate Editor users can add existing active non-system catalog items as current-estimate snapshots
 - catalog-backed estimate item names are clickable for editing the reusable catalog item from the estimate
 - editing from the Estimate Editor updates the reusable `catalog_items` row and only the current estimate line-item snapshot; other estimates do not silently update
 - approved estimate snapshot editing is blocked
-- systems expand by sqft using shared logic before becoming canonical estimate line items
+- systems expand from reviewable area, perimeter, count, or fixed-quantity inputs using shared logic before becoming canonical estimate line items
+- linked lead Scope Intake measurements can prefill those reviewable system inputs as Source assessment context, but generated output still requires contractor review before save
 - defaults apply only on initial load when estimate content is effectively empty
 - explicit Estimate Editor save submission validates before persisting and includes conflict protection against stale overwrites
 - estimate attachments use one shared `documents` bucket with organization-first pathing
@@ -1051,7 +1072,7 @@ Quick reference:
 
 Planned but not implemented in the current estimate system:
 
-- manual measurement-driven estimate generation from length x width, direct floor area, direct linear footage, counts, or room/zone measurements
+- advanced measurement-driven estimate generation beyond the current reviewable V1 Source assessment prefill, including multiple rooms/zones, irregular geometry, optional component rules, and advanced quantity review
 - full System Template estimate generation with formulas, grouping rules, optional components, required inputs, and quick/detailed build modes
 - AI Capture or AI-generated estimate draft workflows
 - plan/PDF/drawing-based takeoff
@@ -1131,7 +1152,7 @@ Implemented:
 - create-invoice flow from project
 - create-invoice flow from approved estimate
 - create-invoice flow from job
-- line-item-based Invoice Editoror
+- line-item-based Invoice Editor
 - invoice-linked payment recording foundation
 - org financial setting aware tax and retainage scaffolding
 - reporting-ready taxable/exempt/tax-collected foundations
@@ -1281,6 +1302,7 @@ Implemented:
 - contractor-side project detail now reflects deposit and invoice payment outcomes more clearly in readiness guidance and linked invoice summaries
 - portal invoice review now surfaces customer-safe payment state, recent immutable payment activity, and a real customer-facing checkout-session handoff on the same canonical invoice/payment chain
 - portal home and portal Project Workspaces now carry forward the latest canonical invoice payment progress so payment requests, in-progress checkout, partial payment, and settled outcomes read as part of one connected customer-facing workflow
+- customer-facing invoice print/save PDF view now renders canonical invoice line items, totals, balance, and safe payment activity in contractor and portal scopes without mutating invoice/payment state
 - contractor and portal payment guidance now distinguish real provider-backed completion, failure, void, pending, partial, and paid outcomes without introducing any separate billing model or checkout record
 
 Payment design notes:
@@ -1558,6 +1580,7 @@ Current contract design notes:
 - contractor-side contract detail now surfaces canonical signature-state timestamps, signer routing/status visibility, and recent immutable signature events inside the existing Contract Workspace
 - contractor-side countersign now has a dedicated workspace action when the signed customer contract is waiting on the assigned organization signer
 - portal contract review now supports customer-facing signature-state visibility, signer visibility, and customer sign/decline actions on the same canonical contract record through tenant-safe portal scope
+- customer-facing contract print/save PDF view now renders the canonical contract body and signer summary in contractor and portal scopes without replacing the signature workflow or creating a second signed-document model
 - linked-contact customer-contact portal permissions now enforce estimate, change-order, and contract decision authority in the following limited first-pass ways:
   - estimate approve/reject requires stored `can_approve_estimates`
   - change-order approve/reject requires stored `can_approve_change_orders`
@@ -1593,6 +1616,7 @@ The current implemented workflow foundation supports:
 - estimate line items are now the authoritative estimate item-row source of truth; `estimates.content.itemRows` remains legacy read/migration-only
 - Estimate Workspace item sourcing is now catalog/cost-item-first, using active catalog items and sqft-scaled system expansion into canonical estimate line items
 - Estimate Builder V1 quick system generation is now implemented inside the existing Estimate Editor:
+  - linked lead Scope Intake measurements and requirements surface as Source assessment context inside the Estimate Editor; contractors can prefill reviewable direct system inputs from captured area, linear footage, and count values before previewing or generating system rows
   - contractors can add active non-system catalog items from the Estimate Editor Catalog Items panel; insertion uses the existing server action path to create immutable estimate line-item snapshots for name, description, unit, pricing, taxability, source metadata, and supported cost fields
   - contractors can create a new catalog/cost item inline from the Estimate Editor; saving first creates the organization-scoped `catalog_items` record, then inserts the current estimate line through the same catalog insertion flow
   - catalog-backed estimate item names are clickable in the Estimate Editor; saving an edit updates the reusable `catalog_items` row and the current estimate line-item snapshot only
@@ -1618,7 +1642,7 @@ The current implemented workflow foundation supports:
 - contractor workflow settings now explain estimate defaults more explicitly: Scope / SOW, Terms, Inclusions, and Exclusions are organization-owned starting defaults for empty estimates only, while reusable blocks append on demand and estimate import copies from a selected prior estimate
 - estimate customer send, email tracking, portal review, contractor-side supported manual/offline decision actions, and status progression
 - estimate detail, customer portal-access setup, portal project visibility, portal estimate approval, contractor-side supported manual/offline estimate decision actions, and contract Quick-Create now include compact prerequisite guidance for the current send -> approval -> approved-snapshot -> contract generation path without weakening canonical guards
-- contractor-side manual estimate approval can be recorded from draft or sent estimates and is intended for paper signature, verbal customer approval, fake email during testing, non-portal customers, and workflow testing before send-mail and portal delivery are complete; it uses the shared canonical estimate status-transition path rather than a duplicate approval model
+- contractor-side manual estimate approval can be recorded from draft or sent estimates and is intended for paper signature, verbal customer approval, fake email during testing, non-portal customers, and workflow testing before send-mail and portal delivery are complete; it requires who approved, how approval happened, approval date/time, notes/evidence, and stores that evidence on the canonical estimate customer-event trail while using the shared canonical estimate status-transition path rather than a duplicate approval model
 - estimate create, update, and status transitions now refresh the linked project's stored commercial-readiness fields, including project reassignment during estimate updates
 - approved estimate commercial snapshot creation on approval for downstream lineage
 - approved-estimate-to-contract generation and pre-sign contract editing
@@ -1833,7 +1857,7 @@ Implemented:
   - SetupIntent billing labels on this page mean saved payment-method reference presence only; founder billing evidence fields are platform-admin notes/references only; stored Stripe customer/subscription/status references are displayed separately and do not indicate verified live subscription state, entitlement state, or automatic activation
   - in non-production environments only, platform admins can run a clearly labeled `DEV / TEST ONLY` onboarding reset for a selected company; the reset is tenant-scoped, clears project/estimate/contract/invoice workflow test records and related dependent workflow rows, clears `companies.stripe_payment_method_id`, and returns the company to `tenant_status = trialing` / `lifecycle_state = trial`
   - the dev reset intentionally keeps `companies.stripe_customer_id` in place and fails safely if insert-only binding system snapshots exist, because those records are canonical and cannot be deleted through a lightweight QA utility
-- non-production contractor app sessions show a subtle `DEV MODE` badge with `Reset session`, which signs out through the real auth action after clearing browser local/session storage
+- non-production contractor app sessions can show a subtle `DEV MODE` badge with `Reset session` when `FLOORCONNECTOR_SHOW_DEV_QA_TOOLS=1`; the reset action signs out through the real auth action after clearing browser local/session storage
 - non-production `/dashboard?fresh=true` forces the existing Start Here onboarding card visible and ignores the localStorage dismissal state without creating fake data or bypassing canonical record reads
 - non-production `/setup/billing` shows a small Stripe status indicator for test-mode, missing, mixed, or live key configuration
 
@@ -1855,7 +1879,7 @@ Current design notes:
 
 Not implemented yet:
 
-- full scheduling/dispatch system
+- full dispatch-grade scheduling system
 - drag-and-drop rescheduling, dispatch optimization, and deeper crew-calendar coordination
 - automated dispatching and external notifications
 - automated work-item generation, customer-facing reminders, provider-backed reminder delivery, and portal task visibility
@@ -1885,13 +1909,13 @@ Not implemented yet:
 - scoped external project/job workrooms for subcontractors, vendors, or partner contractors
 - broad module-dashboard coverage across the contractor app
 - external e-sign provider integration
-- deeper PDF/email delivery and external e-sign provider lifecycle integration
+- deeper PDF/email delivery, stored document/version management, and external e-sign provider lifecycle integration
 - deeper gateway-backed reconciliation, retry, and provider-sync workflows
 - live billing/subscriptions
 - Stripe Customer Portal for FloorConnector SaaS subscription management
-- webhook-confirmed FloorConnector SaaS subscription reconciliation
 - deeper gateway-backed customer-facing payment completion and reconciliation workflows
-- advanced permissions UI
+- advanced permissions UI, including broader project-by-project role enforcement beyond the currently stored linked-contact flags
+- platform-admin temporary portal credential issuance beyond the active-tenant contractor owner/admin UI
 - deeper AIA/pay-application UX, export/reporting forms, and richer SOV draw management
 - external tax provider integration
 - rich template editing UI
@@ -1903,8 +1927,8 @@ Future-looking note:
 - the public homepage and early-access intake are implemented for FloorConnector onboarding, but contractor-owned websites, tenant-owned domains, SEO/service/location pages, landing pages, marketing attribution, generated marketing content, public AI intake, reviews/reputation, testimonials, and before/after galleries are target platform direction only; they should eventually feed the same canonical opportunity/customer/project workflow rather than becoming a separate website, CRM, marketing-contact, or AI knowledge system.
 - the current vendors, people, compliance, jobs, daily logs, time, communication, notification, and portal access foundations could support future scoped collaboration, but no contractor network, marketplace, open contractor chat, or external subcontractor/vendor collaboration surface is implemented today.
 - the current projects, estimates, estimate line items, reusable catalog item foundations, platform starter catalog foundations, organization-owned catalog items, document-template/settings foundations, selected-system schema foundation, files/attachments foundations, site-assessment fields, communication/notification foundations, and customer/project workflow could support future visual/product/finish selection, selected-system/spec workflows, shared file/evidence linking, delivery proof, activity timelines, measurement-driven estimating, System Template generation, add-ons/options, Templates & Systems administration, Takeoff & Scope Intelligence, and AI Capture.
-- the current lead Scope Intake fields can support future reviewed estimate planning, but they do not currently generate estimate lines, SOW, labor plans, material plans, takeoff records, AI suggestions, invoices, or customer-facing commercial scope automatically.
-- no `visualizer_sessions` table, pre-lead visualizer handoff, estimate/contract selected-system integration, UI/server-action writes into system snapshots, shared multi-record file/evidence layer, delivery-proof lifecycle for commercial sends, company-brain timeline, manual measurement-driven estimate generation, full System Template estimate generation, System Template sharing, dedicated Templates & Systems admin module, add-on/option management workflow, on-screen takeoff, AI Capture, AI takeoff, plan measurement, takeoff-to-cost-item mapping, source traceability, out-of-sync review state, or automated estimate generation exists today.
+- the current lead Scope Intake fields can now prefill reviewable Estimate Editor system inputs from captured measurements, but they do not automatically generate estimate lines, SOW, labor plans, material plans, takeoff records, AI suggestions, invoices, or customer-facing commercial scope.
+- no `visualizer_sessions` table, pre-lead visualizer handoff, estimate/contract selected-system integration, UI/server-action writes into system snapshots, shared multi-record file/evidence layer, delivery-proof lifecycle for commercial sends, company-brain timeline, advanced measurement-driven estimate generation beyond the current reviewable V1 Source assessment prefill, full System Template estimate generation, System Template sharing, dedicated Templates & Systems admin module, add-on/option management workflow, on-screen takeoff, AI Capture, AI takeoff, plan measurement, takeoff-to-cost-item mapping, source traceability, out-of-sync review state, or automated estimate generation exists today.
 - future takeoff must stay separate from implemented truth: Measurements are manual quantity inputs; Takeoff means plan/PDF/drawing-based measurement; AI Capture is a future photo/app/AI-derived input method. Takeoff and measurements would produce quantities, catalog/cost items would define reusable cost, pricing, production, markup, and tax behavior, System Templates would map quantities to grouped estimate content, and estimates would define customer-facing pricing and commercial scope.
 
 ## UI Direction Update (Latest)
@@ -1912,8 +1936,9 @@ Future-looking note:
 The decision-first contractor UI refactor is implemented across the main contractor dashboard, Manager Pages, and core Record Workspaces.
 Estimates now serve as the contractor app's UI/workflow reference pattern because they concentrate proposal review, commercial context, customer trust, and downstream handoff in one workspace.
 The Phase 1 Golden Workflow Demo Path is now documented as the repeatable QA spine through the existing route chain from dashboard and opportunity review into customer, project, estimate, contract, invoice/payment, job, schedule, and daily-log surfaces.
+The Founder Demo Readiness script is now documented in [docs/founder-demo-readiness.md](C:/FloorConnector/docs/founder-demo-readiness.md). It packages the current setup, billing, operating workflow, portal, print/save document, and super-admin early-access checkpoints into one rehearsal path without adding demo-only data, stored PDFs, live billing launch, payment mutation, signature mutation, schema changes, or workflow changes.
 Phase 1.1 adds portal/customer Playwright fixture infrastructure for that same spine: `pnpm e2e:portal-auth` can create a local portal customer storage state from real portal E2E credentials, and `pnpm e2e:portal` smokes the customer-facing portal home, project workspace, and shared estimate/contract/invoice review routes where canonical portal access grants and fixture records exist. Phase 1.2 adds `pnpm e2e:portal-fixture` as a validation-first helper for that customer-side fixture; write mode is explicitly gated by `FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1` and creates only canonical dev/test customer, contact, project, access-grant, estimate, contract, signer, and invoice records for the contractor E2E organization.
-The paid early-access planning boundary is documented in [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md). The current branch implements no-charge billing setup, a test-mode-only FloorConnector SaaS subscription Checkout Session bridge, manual/platform-admin activation controls, the Phase 2.1 early-access operating/evidence layer, and read-only package/provider governance only; live SaaS subscription creation, automatic activation, entitlement enforcement, Stripe Customer Portal, and webhook-confirmed subscription reconciliation remain future focused work.
+The paid early-access planning boundary is documented in [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md). The current branch implements no-charge billing setup, a test-mode-only FloorConnector SaaS subscription Checkout Session bridge, signed SaaS-only webhook reconciliation for `floorconnector_saas` subscription status/reference updates, manual/platform-admin activation controls, the Phase 2.1 early-access operating/evidence layer, and read-only package/provider governance only; live SaaS subscription launch, automatic activation, entitlement enforcement, and Stripe Customer Portal remain future focused work.
 
 Implemented UI behavior now:
 
@@ -1924,6 +1949,10 @@ Implemented UI behavior now:
 - Projects, Estimates, Invoices, Jobs, Contracts, and Customers Manager Pages use the shared Manager Page rhythm with clearer status scanning, primary create actions, and compact continuity cues.
 - Portal and super-admin received only safe consistency cleanup; they do not copy contractor operational patterns wholesale.
 - Portal/customer smoke coverage is test infrastructure only. It does not create portal-only records, fake payments, fake signatures, new portal access rules, or duplicate customer/project/commercial records.
+- The enterprise UX consolidation pass records the customer/contact/access/review ownership map in [docs/enterprise-ux-consolidation.md](C:/FloorConnector/docs/enterprise-ux-consolidation.md). Current implementation now uses summary-first Customer Workspace framing, People-owned access administration, compact project-specific contact visibility, collapsed secondary management forms, and customer-safe portal review copy without changing schema, RLS, financial calculations, payment state, signature state, or portal access rules.
+- Customer Workspace portal access now shows a recommended portal contact from the existing primary customer contact when an email is available, summarizes no-invite/pending/active/revoked grant state plus shared project counts, preselects the recommended contact for explicit portal invites, and requires confirmation before revoking grant or project visibility. This is UI/read-model cleanup over existing `portal_access_grants` and `portal_project_access`; it does not add a contractor default-access setting, customer-admin portal management, schema, RLS, auth identity creation, or new access rules.
+- The second enterprise UX consolidation pass narrows the record-workspace right rails: Project, Estimate, Contract, and Invoice Workspaces keep primary context visible while extra linked records, revision history, invoice editing, payment recording, metadata, and lower-frequency activity use progressive disclosure. Portal copy was further simplified for customer review without changing checkout, signature, payment, billing, access, schema, RLS, or tenant behavior.
+- The third enterprise UX consolidation pass adds responsive QA and mobile-density polish: shared detail headers, linked-record cards, detail panels, manager cards, project forms, and customer pickers wrap safely at mobile widths so contractor detail pages and portal review routes avoid page-level horizontal overflow. This remains presentation-only and does not change workflow, access, payment, billing, signature, schema, RLS, or tenant behavior.
 
 Context-aware creation remains unchanged:
 

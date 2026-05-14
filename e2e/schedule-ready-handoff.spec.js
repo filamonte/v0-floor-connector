@@ -53,6 +53,9 @@ async function expectAuthenticatedSchedulePage(page) {
   await expect(
     page.getByText("Run the operational schedule from one shared job surface")
   ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Scheduling command center" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ready work queue" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Scheduled timeline" })).toBeVisible();
 }
 
 async function getScheduleUpdateForm(page) {
@@ -875,13 +878,14 @@ test("schedule handoff opens one unscheduled job in the focused scheduling compo
   expect(new URL(page.url()).searchParams.get("action")).toBe("schedule");
 
   await expect(page.getByText("Schedule handoff context is active")).toBeVisible();
-  await expect(page.getByText("Only canonical jobs attached to this project are shown.")).toBeVisible();
+  await expect(page.getByText("Only jobs attached to this project are shown.")).toBeVisible();
   await expect(page.getByText("Schedule view")).toBeVisible();
   await expect(page.getByRole("link", { name: /Unscheduled \d+/ })).toBeVisible();
   await expect(page.locator("#schedule-action")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Selected job action panel" })).toBeVisible();
   await expect(page.locator("#schedule-action")).toContainText("Refine schedule");
   await expect(page.locator("#schedule-action")).toContainText(
-    "keeps the schedule surface tied to the same canonical project and job chain"
+    "keeps the schedule surface tied to the same project and job chain"
   );
   await expect(page.locator("#schedule-action")).toContainText("Update schedule");
   await expect(page.locator("#schedule-action")).toContainText("Unscheduled");
@@ -1137,7 +1141,7 @@ test("schedule project-only handoff for scheduled jobs stays project-scoped with
   expect(new URL(page.url()).searchParams.get("action")).toBeNull();
 
   await expect(page.getByText("Schedule handoff context is active")).toBeVisible();
-  await expect(page.getByText("Only canonical jobs attached to this project are shown.")).toBeVisible();
+  await expect(page.getByText("Only jobs attached to this project are shown.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Open project" }).first()).toBeVisible();
   await expect(page.locator("#schedule-action")).toHaveCount(0);
   await expect(page.getByText("Update schedule")).toHaveCount(0);

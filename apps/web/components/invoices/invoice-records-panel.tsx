@@ -120,9 +120,10 @@ export function InvoiceRecordsPanel({
               Invoice records
             </p>
           </div>
-          <div className="hidden grid-cols-[minmax(0,1.35fr)_1fr_160px_140px_180px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)] md:grid md:flex-1">
+          <div className="hidden grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_112px_132px_132px_180px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)] md:grid md:flex-1">
             <span>Invoice</span>
             <span>Project</span>
+            <span>Due</span>
             <span>Status</span>
             <span className="text-right">Balance due</span>
             <span className="text-right">Actions</span>
@@ -150,12 +151,17 @@ export function InvoiceRecordsPanel({
             return (
             <div
               key={invoice.id}
-              className="group block px-4 py-2.5 transition hover:bg-[var(--highlight)]"
+              className="group relative block px-4 py-2.5 transition hover:bg-[var(--highlight)] focus-within:bg-[var(--highlight)]"
             >
-              <div className="grid gap-3 md:grid-cols-[minmax(0,1.35fr)_1fr_160px_140px_180px] md:items-center">
-                <div className="min-w-0">
+              <Link
+                href={`/invoices/${invoice.id}`}
+                className="absolute inset-0 z-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--copper)]"
+                aria-label={`Open invoice ${invoice.referenceNumber}`}
+              />
+              <div className="grid gap-3 md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_112px_132px_132px_180px] md:items-center">
+                <div className="pointer-events-none relative z-0 min-w-0">
                   <h3 className="text-sm font-semibold text-[var(--text-primary)] transition group-hover:text-[var(--copper)]">
-                    <Link href={`/invoices/${invoice.id}`}>{invoice.referenceNumber}</Link>
+                    {invoice.referenceNumber}
                   </h3>
                   <p className="mt-0.5 text-sm leading-5 text-[var(--text-secondary)]">
                     {invoice.customer?.name ?? "Unknown customer"}
@@ -164,7 +170,7 @@ export function InvoiceRecordsPanel({
                     {getInvoiceContinuityCue(invoice)}
                   </p>
                 </div>
-                <div>
+                <div className="pointer-events-none relative z-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] md:hidden">
                     Project
                   </p>
@@ -177,7 +183,15 @@ export function InvoiceRecordsPanel({
                       : `Tax collected ${formatMoney(invoice.taxCollectedAmount)}`}
                   </p>
                 </div>
-                <div>
+                <div className="pointer-events-none relative z-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] md:hidden">
+                    Due
+                  </p>
+                  <p className="text-sm font-medium tabular-nums text-[var(--text-primary)]">
+                    {invoice.dueDate ? formatShortDate(invoice.dueDate) : "No date"}
+                  </p>
+                </div>
+                <div className="pointer-events-none relative z-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] md:hidden">
                     Status
                   </p>
@@ -190,15 +204,15 @@ export function InvoiceRecordsPanel({
                     {formatStatusLabel(invoice.status)}
                   </span>
                 </div>
-                <div className="md:text-right">
+                <div className="pointer-events-none relative z-0 md:text-right">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] md:hidden">
                     Balance due
                   </p>
-                  <p className="text-sm font-semibold text-[var(--text-primary)]">
+                  <p className="text-sm font-semibold tabular-nums text-[var(--text-primary)]">
                     {formatMoney(invoice.balanceDueAmount)}
                   </p>
                 </div>
-                <div className="flex flex-wrap justify-start gap-2 md:justify-end">
+                <div className="relative z-10 flex flex-wrap justify-start gap-2 md:justify-end">
                   {primaryAction ? (
                     <Link href={primaryAction.href} className={primaryActionClassName}>
                       {primaryAction.label}

@@ -191,6 +191,7 @@ function parseOpportunityInput(formData: FormData) {
     postalCode: getFieldValue(formData, "postalCode"),
     countryCode: getFieldValue(formData, "countryCode"),
     siteAssessmentScheduledOn: getFieldValue(formData, "siteAssessmentScheduledOn"),
+    siteAssessmentScheduledTime: getFieldValue(formData, "siteAssessmentScheduledTime"),
     siteAssessmentCompletedOn: getFieldValue(formData, "siteAssessmentCompletedOn"),
     requirementsSummary: getFieldValue(formData, "requirementsSummary"),
     notes: getFieldValue(formData, "notes"),
@@ -214,7 +215,12 @@ function parseOpportunityQuickCreateInput(formData: FormData) {
     email: getFieldValue(formData, "email"),
     cellPhone: getFieldValue(formData, "cellPhone"),
     leadStage: getFieldValue(formData, "leadStage"),
-    companyName: getFieldValue(formData, "companyName")
+    companyName: getFieldValue(formData, "companyName"),
+    source: getFieldValue(formData, "source"),
+    sourceDetail: getFieldValue(formData, "sourceDetail"),
+    serviceType: getFieldValue(formData, "serviceType"),
+    siteAssessmentScheduledOn: getFieldValue(formData, "siteAssessmentScheduledOn"),
+    siteAssessmentScheduledTime: getFieldValue(formData, "siteAssessmentScheduledTime")
   });
 }
 
@@ -283,9 +289,9 @@ export async function quickCreateOpportunityAction(formData: FormData) {
     opportunity = await createOpportunity({
       title: null,
       status: result.data.leadStage,
-      source: null,
-      sourceDetail: null,
-      serviceType: null,
+      source: result.data.source,
+      sourceDetail: result.data.sourceDetail,
+      serviceType: result.data.serviceType,
       jobType: "Lead intake",
       siteName: result.data.addressLine1,
       contactName,
@@ -298,7 +304,8 @@ export async function quickCreateOpportunityAction(formData: FormData) {
       stateRegion: result.data.stateRegion,
       postalCode: result.data.postalCode,
       countryCode: result.data.countryCode,
-      siteAssessmentScheduledOn: null,
+      siteAssessmentScheduledOn: result.data.siteAssessmentScheduledOn,
+      siteAssessmentScheduledTime: result.data.siteAssessmentScheduledTime,
       siteAssessmentCompletedOn: null,
       requirementsSummary: null,
       notes: phoneSummary,

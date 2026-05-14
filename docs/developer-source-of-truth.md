@@ -122,13 +122,15 @@ Execution:
 - Treat Estimates as the contractor app's UI/workflow reference pattern for proposal-first record workspaces
 - Treat Guided/Flexible/Manual workflow guidance as configurable presentation, not a data-model or enforcement escape hatch
 - Treat the Golden Workflow Demo Path as the repeatable QA spine through the existing canonical chain, not as permission for demo-only records or disconnected shortcuts
+- Treat [docs/enterprise-ux-consolidation.md](C:/FloorConnector/docs/enterprise-ux-consolidation.md) as the ownership and density guide for customer/contact/access/review surfaces: People owns access management through a filtered access console with one selected management panel, Customer owns account summary, Project owns operational state, Estimate/Contract/Invoice own their immediate business review, Portal stays customer-safe, and record right rails must stay supportive instead of becoming a second full page
 - Treat portal/customer Golden Workflow QA as a real-auth, real-grant smoke path. Portal checks must use a valid portal customer session backed by canonical `portal_access_grants` and `portal_project_access`; `/login`, accidental 404s, access-denied pages, or missing fixtures are not successful portal QA unless intentionally asserted as the expected unauthorized result
-- Treat customer portal access as contact-centered for new contractor-created invites: the customer account is the business relationship, the customer contact is the person, Supabase Auth proves identity, `portal_access_grants` authorize access, and `portal_project_access` scopes visible projects. Null-contact grants are legacy compatibility only.
+- Treat customer portal access as contact-centered for new contractor-created invites: the customer account is the business relationship, the customer contact is the person, Supabase Auth proves identity, `portal_access_grants` authorize access, and `portal_project_access` scopes visible projects. Project visibility is explicit per customer contact; do not silently grant every contact the primary contact's projects. Null-contact grants are legacy compatibility only.
+- Treat lead/customer intake as the source of the primary customer contact: when a flow captures the first customer person with a customer, project, or opportunity, it should create or link the canonical `contacts` and `customer_contacts` rows and mark that relationship primary where existing schema supports it. Do not treat `customers.email` or `customers.phone` as a replacement person model; those account fields remain compatibility and commercial fallback fields.
 - Treat portal invite email as delivery only: app-managed invite tokens remain the portal acceptance path, Supabase Auth remains the identity layer, and branded provider email is sent or resent only when configuration and activation guard allow it. Missing/locked provider email must show truthful no-send status plus copy-link fallback.
-- Treat portal account onboarding as Supabase-authenticated and customer-owned: invite links should guide the invited contact to signup, sign-in, or password reset with a safe return path, and contractors must not set or see customer portal passwords.
+- Treat portal account onboarding as Supabase-authenticated and customer-owned: invite links should guide the invited contact to signup, sign-in, or password reset with a safe return path, and contractors must not set permanent customer portal passwords. The implemented temporary credential support is a server-side, owner/admin-only fallback that creates or updates a real Supabase Auth user, shows the generated temporary password once, stores only audit/status fields, and forces the portal customer through `/update-password` before continuing.
 - Do not let portal-only customer auth returns bootstrap contractor tenant ownership. Contractor app users use the company setup/bootstrap path; portal customers use Supabase Auth plus explicit `portal_access_grants` and `portal_project_access`.
 - Use `pnpm e2e:portal-fixture` to validate the stable portal customer fixture. Write mode requires `FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1` plus `-- --write` and may only create canonical dev/test fixture records; it must not create portal-only records, print secrets, fake signature/payment success, or bypass portal access grants
-- Use [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md) before paid early-access work. The Phase 2.1 operating layer surfaces founder tenant setup/activation state and platform-admin-entered billing evidence in `/super-admin/early-access`; Phase 2.2 adds a test-mode-only FloorConnector SaaS subscription Checkout Session bridge from `/setup/billing`. Live subscriptions, automatic activation, entitlement enforcement, Stripe Customer Portal, and webhook-confirmed subscription reconciliation require dedicated approved implementation slices.
+- Use [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md) before paid early-access work. The Phase 2.1 operating layer surfaces founder tenant setup/activation state and platform-admin-entered billing evidence in `/super-admin/early-access`; Phase 2.2 adds a test-mode-only FloorConnector SaaS subscription Checkout Session bridge from `/setup/billing`; Phase 2.3 adds a signed SaaS-only Stripe webhook reconciliation route for `billing_domain=floorconnector_saas` events. Use [docs/stripe-saas-billing-runbook.md](C:/FloorConnector/docs/stripe-saas-billing-runbook.md) for test-mode webhook endpoint setup and replay. Live subscription launch, automatic activation, entitlement enforcement, and Stripe Customer Portal still require dedicated approved implementation slices.
 - Keep AI-assistance preferences separate from workflow guidance; AI must not own source of truth or take autonomous customer-facing, financial, legal, scheduling, permission, or signature actions
 - Enforce context-aware creation
 - Strengthen project-centered operational continuity
@@ -187,6 +189,7 @@ Use these docs together:
 - [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md): canonical UI standardization and interaction guardrails
 - [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): planning backlog for UI, directory/contact, tax, Estimate Editor, project-address, and workflow-guidance alignment
 - [docs/golden-workflow-demo-path.md](C:/FloorConnector/docs/golden-workflow-demo-path.md): Phase 1 demo/QA spine for the existing canonical sales-to-production path
+- [docs/enterprise-ux-consolidation.md](C:/FloorConnector/docs/enterprise-ux-consolidation.md): customer/contact/access/review ownership and progressive-disclosure cleanup map
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): doc maintenance and archival rules
 
 ## What Is Implemented Now
@@ -212,7 +215,7 @@ The current branch already includes a real multi-tenant contractor app with:
 - customer-facing payment foundation on the canonical invoice/payment chain
 - dedicated contractor-side payments manager surface on the shared Manager Page system
 - dedicated contractor-side schedule manager surface on the shared Manager Page system
-  - review-first summary, next actions, crew-state continuity, week/day planner views, and a retained date-grouped board all stay on the same canonical job chain
+  - review-first summary, Scheduling command center, Ready work queue, Scheduled timeline, selected job action panel, crew-state continuity, week/day planner views, and a retained date-grouped board all stay on the same canonical job chain
 - shared contractor-side global search at the shell level
   - searches canonical tenant-scoped records including appointments, routes back into real workspaces, and is rendered in the shared shell footer rather than the top header
 - first real contractor-side notifications in the shared shell and dashboard
@@ -264,7 +267,7 @@ Important workflow rules:
 - contracts, invoices, and estimates must stay connected through the shared canonical model
 - canonical `customers` remain the commercial and financial customer/account record even if a broader contractor `Directory` view is introduced later
 - estimate send, invoice recipient, contract customer context, payment customer context, and project ownership must continue to read from canonical customer/account fields unless a later approved customer-contact permission model explicitly changes a specific flow
-- People is the contractor-side management home for identity/contact/workforce/relationship administration, including related customer contacts, portal invite status, contact-permission readiness, and project visibility
+- People is the contractor-side management home for identity/contact/workforce/relationship administration, including related customer contacts, portal invite status, contact-permission readiness, and per-contact project visibility
 - estimate, contract, and invoice workflows may trigger or verify portal access when sending, signing, reviewing, or paying, but they must not become separate portal identity or permissions management surfaces
 - portal access remains canonical through `portal_access_grants` and `portal_project_access`; do not introduce portal-only contacts, duplicate customer models, or module-specific invite/access tables
 - additional customer contacts remain related contacts beneath a canonical customer account; they do not replace the account record
@@ -280,6 +283,7 @@ Important workflow rules:
 - templates are shared infrastructure across estimates, contracts, and invoices
 - future Templates & Systems administration should centralize document templates, System Templates, add-ons/options, and sharing/review settings instead of scattering those controls across estimate, invoice, contract, and catalog surfaces
 - document template defaults should be copied into contractor-owned templates; platform defaults must not silently mutate contractor local copies
+- customer-facing estimate, contract, and invoice print/save PDF views must remain renderings of canonical records; do not turn them into duplicate estimate, contract, invoice, signature, payment, or portal-only document records
 - records should flow forward instead of being recreated downstream
 - future Takeoff & Scope Intelligence must be project-scoped and feed the canonical estimate workflow; it must not become a separate estimating silo
 - Scope Intake is the lead/site-visit support stage for measurements, conditions, observations, photos/files, logistics, and notes; it must feed reviewed estimate planning rather than creating direct intake-to-invoice behavior
@@ -294,6 +298,7 @@ Important workflow rules:
 - future contractor network collaboration must extend canonical projects, jobs, vendors, people, invoices, and payments rather than creating a separate social, marketplace, or partner-work data silo
 - contractor network communication should be record-based over free-floating chat, with messages tied to projects, jobs, change orders, invoices, daily logs, field notes, or other canonical workflow records
 - project detail is the primary workflow/readiness hub for the connected contractor flow
+- project detail should lead with a command-center summary and connected-record lanes that summarize existing canonical records and route editing to the appropriate estimate, contract, change-order, invoice, job/schedule, daily-log, or People workspace
 - Estimate Workspace, Contract Workspace, Invoice Workspace, and Job Workspace surfaces should use one shared Record Workspace pattern and point back to the project hub when broader workflow state matters
 - invoice detail should be treated as review-first in layout direction, even when edit controls remain available
 - the first major contractor workspace UI normalization pass is complete enough to stop; remaining issues should be treated as normal iterative polish rather than structural layout-system repair
@@ -304,7 +309,7 @@ Important workflow rules:
 - Quick-Create must create canonical records first and then route into the relevant `<Resource> Workspace`
 - creation must remain context-aware: project-launched creation auto-links the project, customer-launched creation requires project selection or creation, and global creation requires explicit customer and project selection
 - global search should stay shell-level, tenant-safe, and canonical-record-based; do not invent search-only records, search-only summaries, or disconnected module search systems
-- scheduling depth should stay on the canonical job model; add planner or calendar UI on `/schedule`, but do not invent schedule-only records or a disconnected dispatch subsystem
+- scheduling depth should stay on the canonical job model; add planner, command-center, action-panel, or calendar UI on `/schedule`, but do not invent schedule-only records or a disconnected dispatch subsystem
 - appointments should stay as canonical visit and meeting records linked to the same opportunity/customer/project chain; do not turn them into duplicate jobs or a second dispatch model
 - punchlists should stay on the canonical project/job execution chain; do not overload daily-log narrative records with durable closeout work, and do not invent a separate field-quality subsystem
 - progress billing should stay on the canonical approved-estimate -> schedule-of-values -> invoice chain; do not invent a detached pay-app subsystem, spreadsheet shadow model, or invoice-replacement billing record
@@ -327,6 +332,7 @@ Important workflow rules:
 - add-ons/options should be catalog-backed optional scope modifiers, not separate mini-workflows; cove base is a hybrid catalog item plus optional system/add-on component, not a standalone floor system
 - future labor modeling should live as internal catalog/cost item behavior with production assumptions and multipliers hidden from customer-facing output unless intentionally surfaced as scope language
 - estimate attachments should stay on the shared `documents` bucket using organization-first storage paths
+- general print/save PDF routes currently render canonical estimate, contract, and invoice data on demand. Portal print routes may show safe contractor organization branding only after portal record access is scoped. Stored document/version management, provider delivery, and a full document manager remain future work unless explicitly scoped.
 - future UI/data-model alignment work should follow [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): standardize module-page defaults before customizable views, avoid duplicate contact models, keep project/service address distinct from customer billing/contact address, manage tax rates from settings/super admin rather than project detail, and keep customer-facing estimate output free of internal cost, markup, margin, and profitability controls
 
 ## Current Contractor UI Guardrails

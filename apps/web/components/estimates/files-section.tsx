@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { Download, FileImage, FileText, FolderOpen, Plus, Trash2 } from "lucide-react";
+import { Check, Download, FileImage, FileText, FolderOpen, Plus, Trash2 } from "lucide-react";
 
 type ExistingAttachment = {
   id: string;
@@ -72,6 +72,27 @@ export function FilesSection({
     [existingAttachments, retainedAttachmentIds]
   );
 
+  function handleFileSelection(files: File[]) {
+    const existingKeys = new Set(
+      pendingAttachments.map(
+        (attachment) =>
+          `${attachment.file.name}:${attachment.file.size}:${attachment.file.type}`
+      )
+    );
+    const uniqueFiles = files.filter((file) => {
+      const key = `${file.name}:${file.size}:${file.type}`;
+
+      if (existingKeys.has(key)) {
+        return false;
+      }
+
+      existingKeys.add(key);
+      return true;
+    });
+
+    onAddFiles(uniqueFiles);
+  }
+
   return (
     <section className="border-t border-[#e6e9ef] bg-white">
       <div className="border-b border-[#e6e9ef] bg-[#f8f8f8] px-4 py-3">
@@ -82,26 +103,37 @@ export function FilesSection({
       </div>
 
       <div className="p-4">
-        <label className="flex h-[102px] w-[130px] cursor-pointer items-center justify-center border border-dashed border-[#d4dae5] bg-[#f8f8f8] text-[#b8c1d2] transition hover:border-[#f4812a] hover:text-[#f4812a]">
-          <Plus className="h-8 w-8" />
-          <input
-            ref={fileInputRef}
-            name="newAttachments"
-            type="file"
-            multiple
-            className="sr-only"
-            onChange={(event) => {
-              onAddFiles(Array.from(event.target.files ?? []));
-              event.currentTarget.value = "";
-            }}
-          />
-        </label>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex h-[102px] w-[130px] cursor-pointer flex-col items-center justify-center gap-2 border border-dashed border-[#d4dae5] bg-[#f8f8f8] text-[#7f8ca4] transition hover:border-[#f4812a] hover:text-[#f4812a]">
+            <Plus className="h-7 w-7" />
+            <span className="text-xs font-semibold">Add files</span>
+            <input
+              ref={fileInputRef}
+              name="newAttachments"
+              type="file"
+              multiple
+              className="sr-only"
+              onChange={(event) => {
+                handleFileSelection(Array.from(event.target.files ?? []));
+                event.currentTarget.value = "";
+              }}
+            />
+          </label>
+          <div className="text-sm leading-6 text-[#5f5f5f]">
+            <p className="font-medium text-[#171717]">
+              {pendingAttachments.length > 0
+                ? `${pendingAttachments.length} ready to attach`
+                : "No new files selected"}
+            </p>
+            <p>Selected files save once with the estimate. Existing files below are already attached.</p>
+          </div>
+        </div>
 
         <div className="mt-4 flex flex-wrap gap-3">
           {visibleExistingAttachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="relative flex h-[110px] w-[140px] flex-col justify-between border border-[#d6d6d6] bg-white p-3 text-xs text-slate-500"
+              className="relative flex h-[132px] w-[150px] flex-col justify-between border border-[#d6d6d6] bg-white p-3 text-xs text-slate-500"
             >
               <div className="flex items-start justify-between gap-2">
                 {isImageMimeType(attachment.mimeType) ? (
@@ -132,13 +164,17 @@ export function FilesSection({
               ) : (
                 <span className="text-[#a1acbe]">Unavailable</span>
               )}
+              <span className="inline-flex items-center gap-1 text-emerald-700">
+                <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                Attached
+              </span>
             </div>
           ))}
 
           {pendingAttachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="relative flex h-[110px] w-[140px] flex-col justify-between border border-[#d9e6ff] bg-[#f8f8f8] p-3 text-xs text-slate-500"
+              className="relative flex h-[132px] w-[150px] flex-col justify-between border border-[#d9e6ff] bg-[#f8f8f8] p-3 text-xs text-slate-500"
             >
               <div className="flex items-start justify-between gap-2">
                 {isImageMimeType(attachment.file.type) ? (
@@ -157,6 +193,7 @@ export function FilesSection({
               </div>
               <span className="line-clamp-3 text-[#4a5e80]">{attachment.file.name}</span>
               <span className="text-[#7f8ca4]">{formatFileSize(attachment.file.size)}</span>
+              <span className="font-medium text-[#4a5e80]">Ready to save</span>
             </div>
           ))}
         </div>

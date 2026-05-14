@@ -206,7 +206,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
         supportSlot: (
           <p>
             Use this page to review collections pressure and recent payment activity,
-            then route into the canonical invoice workspace when a payment needs to be
+            then route into the invoice workspace when a payment needs to be
             recorded or collections follow-through needs action.
           </p>
         ),
@@ -291,7 +291,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
           <ManagerDashboardCard
             eyebrow="Collections queue"
             title="Open receivables"
-            description="Invoices that still carry balance due and need follow-through on the canonical billing chain."
+            description="Invoices that still carry balance due and need follow-through on the billing chain."
             actionHref="/invoices?status=open"
             actionLabel="Open invoices"
             items={recentOpenInvoices.map((invoice) => ({
@@ -438,7 +438,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
                 description={
                   payments.length > 0
                     ? "Try a broader search or switch to another payment status."
-                    : "Payments remain canonical records tied to invoices, customers, projects, and the wider collections chain."
+                    : "Payments stay tied to invoices, customers, projects, and the wider collections chain."
                 }
               />
             </div>

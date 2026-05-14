@@ -75,11 +75,11 @@ export function CustomerPickerField({
     buttonTitle = draftCustomer.name.trim() || "New customer draft";
     buttonMeta =
       draftCustomer.companyName.trim() ||
-      "A new canonical customer will be created and linked to this project.";
+      "A new customer and primary contact will be created with this project.";
   }
 
   return (
-    <div className="block">
+    <div className="block min-w-0">
       <div className="mb-2 flex items-center justify-between gap-3">
         <span className="block text-sm font-medium text-slate-800">Customer</span>
         <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
@@ -118,14 +118,14 @@ export function CustomerPickerField({
         onClick={() => setIsOpen((value) => !value)}
         aria-expanded={isOpen}
         aria-controls={panelId}
-        className="w-full rounded-[1.75rem] border border-slate-300 bg-white px-4 py-4 text-left shadow-sm transition hover:border-slate-400 focus:border-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-100"
+        className="w-full min-w-0 rounded-[1.75rem] border border-slate-300 bg-white px-4 py-4 text-left shadow-sm transition hover:border-slate-400 focus:border-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-100"
       >
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-slate-950">{buttonTitle}</p>
             <p className="mt-1 text-sm leading-6 text-slate-500">{buttonMeta}</p>
           </div>
-          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+          <span className="w-fit rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
             {isOpen ? "Close" : "Change"}
           </span>
         </div>
@@ -140,7 +140,7 @@ export function CustomerPickerField({
       {isOpen ? (
         <div
           id={panelId}
-          className="mt-4 space-y-4 rounded-[1.75rem] border border-slate-200 bg-slate-50/80 p-5 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.35)]"
+          className="mt-4 min-w-0 space-y-4 rounded-[1.75rem] border border-slate-200 bg-slate-50/80 p-4 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.35)] sm:p-5"
         >
           {allowCreate ? (
             <div className="flex flex-wrap items-center gap-3">
@@ -179,7 +179,7 @@ export function CustomerPickerField({
           {isCreatingNew ? (
             <div className="space-y-4">
               <div className="rounded-[1.5rem] border border-slate-200 bg-white px-4 py-4 text-sm leading-6 text-slate-600">
-                This new customer draft will be created on the canonical customer model when you save the project.
+                This person will become the primary customer contact. Additional contacts and portal access are managed in People after save.
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <AuthField

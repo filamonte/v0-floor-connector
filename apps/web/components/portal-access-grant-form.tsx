@@ -32,6 +32,8 @@ export function PortalAccessGrantForm({
     (customerContact) => customerContact.id === defaultContactId
   );
   const defaultInviteEmail = defaultEmail ?? defaultContact?.email ?? "";
+  const defaultContactIsRecommended =
+    defaultContact?.label.toLowerCase().includes("recommended portal contact") ?? false;
 
   return (
     <form action={action} className="space-y-4">
@@ -52,7 +54,7 @@ export function PortalAccessGrantForm({
             type="email"
             defaultValue={defaultInviteEmail}
             required
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className="w-full rounded-[4px] border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-2 focus:ring-brand-100"
             placeholder="customer@example.com"
           />
         </div>
@@ -69,7 +71,7 @@ export function PortalAccessGrantForm({
             name="projectId"
             defaultValue={defaultProjectId}
             required
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className="w-full rounded-[4px] border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-2 focus:ring-brand-100"
           >
             <option value="">Select a project</option>
             {projects.map((project) => (
@@ -93,7 +95,7 @@ export function PortalAccessGrantForm({
           name="customerContactId"
           defaultValue={defaultContactId}
           required
-          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+          className="w-full rounded-[4px] border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-2 focus:ring-brand-100"
         >
           <option value="">Select a customer contact</option>
           {customerContacts.map((customerContact) => (
@@ -102,6 +104,13 @@ export function PortalAccessGrantForm({
             </option>
           ))}
         </select>
+        {defaultContact ? (
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            {defaultContactIsRecommended
+              ? "The main customer contact is selected as the recommended portal invite candidate."
+              : "The selected customer contact anchors this portal access grant."}
+          </p>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
@@ -109,11 +118,11 @@ export function PortalAccessGrantForm({
           type="submit"
           className="inline-flex h-9 w-full items-center justify-center gap-2 border border-[#d8731f] bg-[#d8731f] px-3 text-sm font-medium text-white transition hover:bg-[#bf6519] sm:w-auto sm:min-w-[220px]"
         >
-          Create or reuse portal access
+          Invite portal contact
         </button>
         <p className="text-sm leading-6 text-slate-500">
-          This creates or reuses contact-level access, project visibility, and
-          sends a branded invite email when delivery is configured and unlocked.
+          Creates or reuses contact-level access, adds project visibility, and sends the
+          invite email when delivery is available.
         </p>
       </div>
     </form>

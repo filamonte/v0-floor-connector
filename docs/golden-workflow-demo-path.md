@@ -3,7 +3,7 @@
 Status: Active
 Doc Type: QA / Workflow
 
-This document defines the repeatable Phase 1 demo spine for FloorConnector. It should be read with [docs/current-state.md](C:/FloorConnector/docs/current-state.md), [docs/workflows.md](C:/FloorConnector/docs/workflows.md), [docs/ui-patterns.md](C:/FloorConnector/docs/ui-patterns.md), and [docs/e2e-browser-qa.md](C:/FloorConnector/docs/e2e-browser-qa.md).
+This document defines the repeatable Phase 1 demo spine for FloorConnector. It should be read with [docs/founder-demo-readiness.md](C:/FloorConnector/docs/founder-demo-readiness.md), [docs/current-state.md](C:/FloorConnector/docs/current-state.md), [docs/workflows.md](C:/FloorConnector/docs/workflows.md), [docs/ui-patterns.md](C:/FloorConnector/docs/ui-patterns.md), and [docs/e2e-browser-qa.md](C:/FloorConnector/docs/e2e-browser-qa.md).
 
 The goal is a polished, reliable sales-to-production walkthrough using the existing canonical chain:
 
@@ -15,7 +15,13 @@ This path is a demo and QA route through real app capabilities. It does not crea
 
 Use this checklist when validating that the contractor app feels like one guided workflow rather than separate modules. Guided mode is the primary demo mode. Flexible and Manual mode checks confirm that reduced coaching does not hide non-negotiable financial, signature, payment, portal, readiness, or security facts.
 
+For founder-customer rehearsals, use [docs/founder-demo-readiness.md](C:/FloorConnector/docs/founder-demo-readiness.md) as the operator script. It extends this route spine with setup, billing, portal print/save document, and super-admin early-access checkpoints.
+
 ## Canonical Route Sequence
+
+0. `/setup/company`, `/setup/billing`, and `/setup/pending-activation`
+   - Outcome: contractor onboarding, paid early-access setup, and activation boundaries are visible before the operating workflow starts.
+   - Relationship expectation: setup and SaaS billing remain separate from contractor-customer records, invoice payments, portal payment state, and activation decisions.
 
 1. `/dashboard`
    - Outcome: contractor starts from the operational command center and can see commercial, operations, and finance queues.
@@ -30,7 +36,7 @@ Use this checklist when validating that the contractor app feels like one guided
    - Relationship expectation: customer remains the commercial/financial account record; project remains the execution root.
 
 4. `/projects` and `/projects/[projectId]`
-   - Outcome: project detail acts as the continuity hub with current stage, next best action, readiness state, linked estimate/contract/invoice/job/payment context, schedule context, and field-execution context.
+   - Outcome: project detail acts as the continuity hub with current stage, next best action, readiness state, an operational command-center summary, connected record lanes, linked estimate/contract/invoice/job/payment context, schedule context, project-specific customer access context, and field-execution context.
    - Relationship expectation: all downstream records stay linked to this project and customer.
 
 5. `/estimates` and `/estimates/[estimateId]`
@@ -60,13 +66,18 @@ Use this checklist when validating that the contractor app feels like one guided
 
 11. `/schedule`
 
-- Outcome: scheduling opens from project/job context where possible and stays tied to canonical jobs and job assignments.
+- Outcome: scheduling opens from project/job context where possible, shows the Scheduling command center, Ready work queue, Scheduled timeline, and selected job action panel, and stays tied to canonical jobs and job assignments.
 - Relationship expectation: schedule filters and action panels do not create schedule-only records or duplicate jobs.
 
 12. `/daily-logs` and `/daily-logs/[dailyLogId]`
 
 - Outcome: field notes, project-day narrative, time/labor context, and execution attachments are easy enough to inspect for the demo path.
 - Relationship expectation: daily logs and field notes stay on the project/job execution chain and do not replace punchlist, invoice, or project readiness records.
+
+13. `/people`, `/portal`, document print/save routes, and `/super-admin/early-access`
+
+- Outcome: the operator can show contact-centered portal access, customer-scoped portal review, branded browser print/save documents, and platform-admin early-access oversight after the core workflow is understood.
+- Relationship expectation: People owns access management, portal routes stay customer-scoped, document views remain renderings of existing records, and super-admin early-access controls remain platform-only.
 
 ## Fixture And Data Assumptions
 
@@ -92,7 +103,7 @@ Use this checklist when validating that the contractor app feels like one guided
 
 ## Portal And Customer-Facing Checkpoints
 
-The golden path includes customer-facing checkpoints for estimate review, contract signing, invoice review, and payment where the current portal data and auth setup supports them.
+The golden path includes customer-facing checkpoints for estimate review, contract signing, invoice review, and payment where the current portal data and auth setup supports them. It also includes customer-safe print/save PDF checkpoints for shared estimate, contract, and invoice records where the fixture exposes those records. These document views must be treated as renderings of the canonical records, not separate demo documents or portal-only copies.
 
 Portal QA must use a valid portal/customer session or valid scoped portal route. A portal login, access-denied page, missing invite, or missing project visibility is not a successful customer-facing check unless the expected result is specifically access denied.
 
@@ -121,14 +132,17 @@ Use this checklist after running validation:
 2. Open `/dashboard`, `/leads`, `/customers`, `/projects`, `/estimates`, `/contracts`, `/invoices`, `/payments`, `/jobs`, `/schedule`, and `/daily-logs`.
 3. Confirm no protected route stops at `/login`.
 4. Open one linked detail record for project, estimate, contract, invoice, job, and daily log where fixture data exists.
-5. Confirm project detail shows current state, linked records, readiness facts, and a clear next step in Guided mode.
+5. Confirm project detail shows current state, the `Operational command center`, `Connected record lanes`, linked records, readiness facts, and a clear next step in Guided mode.
 6. Confirm estimate detail and edit remain proposal-first and functional.
 7. Confirm contract, invoice, and job detail each link back to project context.
-8. Confirm `/schedule` respects project/job handoff query parameters where fixture data exists.
+8. Confirm `/schedule` respects project/job handoff query parameters where fixture data exists and still shows the Scheduling command center, Ready work queue, Scheduled timeline, and selected job action panel.
 9. Switch workflow settings to Flexible and Manual, then confirm critical record facts remain visible on project detail.
 10. Restore workflow settings to Guided after the run.
-11. Run `pnpm e2e:portal-fixture` to validate portal fixture state, then `pnpm e2e:portal-auth` and `pnpm e2e:portal` when portal/customer credentials are available.
-12. Record any missing fixture, portal auth, portal project access grant, shared portal record, or protected-route blocker exactly.
+11. Open the estimate, contract, and invoice print/save routes in contractor scope where fixture data exists.
+12. Run `pnpm e2e:portal-fixture` to validate portal fixture state, then `pnpm e2e:portal-auth` and `pnpm e2e:portal` when portal/customer credentials are available.
+13. Open the portal estimate, contract, and invoice print/save routes where fixture data exists.
+14. Open `/super-admin/early-access` with platform-admin auth only.
+15. Record any missing fixture, portal auth, portal project access grant, shared portal record, platform-admin prerequisite, or protected-route blocker exactly.
 
 ## Known Follow-Ups
 

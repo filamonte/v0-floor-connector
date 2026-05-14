@@ -21,7 +21,7 @@ export function DetailPanel({
     <section
       id={id}
       className={[
-        "border p-5 sm:p-6",
+        "min-w-0 border p-4 sm:p-6",
         neutral
           ? "rounded-lg border-[var(--border-warm)] bg-white shadow-sm"
           : "rounded-lg border-[var(--border-warm)] bg-white shadow-sm"

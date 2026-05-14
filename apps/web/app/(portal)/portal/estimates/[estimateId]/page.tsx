@@ -72,7 +72,7 @@ function getNextAction(status: string, projectId: string) {
     return {
       title: "Proposal approval is complete",
       description:
-        "Your contractor can now keep moving the shared workflow forward through contract and billing steps from the same project.",
+        "Your contractor can now keep moving this project forward through contract and billing steps.",
       label: "Return to project workspace",
       href: `/portal/projects/${projectId}`
     };
@@ -92,7 +92,7 @@ function getNextAction(status: string, projectId: string) {
     return {
       title: "Revision feedback is complete",
       description:
-        "Your contractor can revise this same estimate and resend it through the portal if the shared scope needs another pass.",
+        "Your contractor can revise this estimate and resend it if the scope needs another pass.",
       label: "Return to project workspace",
       href: `/portal/projects/${projectId}`
     };
@@ -193,13 +193,21 @@ export default async function PortalEstimateReviewPage({
           <DetailPageHeader
             eyebrow="Estimate Review"
             title={estimate.title ?? estimate.referenceNumber}
-            description="Review the scope, pricing, and shared notes for this proposal. This page stays focused on the customer-facing estimate itself, not contractor-side workflow controls."
+            description="Review the scope, pricing, and notes for this proposal."
             backHref={`/portal/projects/${estimate.projectId}`}
             backLabel="Back to project workspace"
             actions={
-              <PortalStatusBadge status={estimate.status} className="px-4 py-2 text-sm">
-                {formatStatusLabel(estimate.status)}
-              </PortalStatusBadge>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  href={`/portal/estimates/${estimate.id}/pdf`}
+                  className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                >
+                  Print / save PDF
+                </Link>
+                <PortalStatusBadge status={estimate.status} className="px-4 py-2 text-sm">
+                  {formatStatusLabel(estimate.status)}
+                </PortalStatusBadge>
+              </div>
             }
           />
 
@@ -550,7 +558,7 @@ export default async function PortalEstimateReviewPage({
 
         <DetailPanel
           title="Proposal Context"
-          description="Compact record context that keeps the estimate tied to its project without exposing contractor-only controls."
+          description="Project and estimate details for reference."
         >
           <ContextFactsList
             items={[
@@ -595,17 +603,16 @@ export default async function PortalEstimateReviewPage({
         </DetailPanel>
 
         <DetailPanel
-          title="Later workflow hooks"
-          description="This page prepares for later portal actions without implementing them yet."
+          title="What Happens Next"
+          description="A simple view of what this estimate can lead to."
         >
           <div className="space-y-3 text-sm leading-6 text-slate-600">
             <p>
-              Customer-facing acceptance, signature, and payment actions are intentionally outside
-              this first portal foundation.
+              Your contractor will guide the next step after review. That may be an updated estimate,
+              a contract to sign, or an invoice when billing is ready.
             </p>
             <p>
-              When those actions are added later, they will extend this same canonical estimate to
-              project workflow rather than introducing a parallel portal record.
+              Use the project link to return to the rest of the shared project information.
             </p>
           </div>
         </DetailPanel>

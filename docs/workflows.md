@@ -118,6 +118,12 @@ Future Templates & Systems administration:
 - customer-facing estimate, invoice, and contract display should default to a clean grouped view while allowing detailed line-item and SOW-plus-price views; custom display templates are a later direction
 - internal cost, markup, margin, private notes, and production math should stay internal unless intentionally configured as customer-facing language
 
+Implemented good-enough document delivery:
+- contractor estimate, contract, and invoice workspaces expose customer-facing `Print / save PDF` actions
+- portal estimate, contract, and invoice review pages expose customer-safe `Print / save PDF` actions
+- these routes render the existing canonical estimate, contract, and invoice data for browser print/save; portal print views use safe contractor organization branding after portal access is scoped; they do not create a second document source of truth, portal-only copies, financial mutations, signature mutations, payment mutations, or stored PDF versioning
+- the existing sent-contract PDF snapshot foundation remains separate workflow evidence for contract send behavior; the print/save views are current renderings of canonical records
+
 Future Visual/Product/Finish Selection:
 - a room visualizer or finish selector may start before lead intake
 - supported future finish families include decorative flake, metallic epoxy, decorative quartz, solid color, and future surface systems
@@ -263,7 +269,7 @@ When the existing readiness snapshot is clear after contract signature, contract
 - create the canonical project job
 - schedule that job through the shared schedule surface
 
-This is a Sign -> Schedule -> Execute UI handoff only. It must continue to use the centralized readiness gate and canonical `jobs` scheduling fields rather than introducing a contract-specific scheduling model. When the handoff starts from signed contract or project readiness context and an approved estimate is available, job Quick-Create should preserve that estimate lineage on the canonical job. When exactly one unscheduled canonical job already exists for the project, the `/schedule` handoff may carry `jobId` and `action=schedule` so the existing schedule action panel opens in that job context.
+This is a Sign -> Schedule -> Execute UI handoff only. It must continue to use the centralized readiness gate and canonical `jobs` scheduling fields rather than introducing a contract-specific scheduling model. When the handoff starts from signed contract or project readiness context and an approved estimate is available, job Quick-Create should preserve that estimate lineage on the canonical job. When exactly one unscheduled canonical job already exists for the project, the `/schedule` handoff may carry `jobId` and `action=schedule` so the existing schedule action panel opens in that job context. `/schedule` is the cross-project scheduling receiver: it shows the command-center summary, Ready work queue, Scheduled timeline, and selected job action panel over canonical jobs/job assignments, not a schedule-only record set.
 
 ## Configurable Workflow Guidance
 
@@ -276,7 +282,7 @@ Implemented guidance modes:
 
 Workflow guidance and AI assistance are separate settings groups. Disabling guidance does not enable AI, and enabling AI-assistance intent flags does not permit autonomous actions. Any future AI-prepared customer-facing, commercial, legal, billing, scheduling, permission, or compliance action must still require human confirmation and must route through canonical server-side workflows.
 
-Project Workspace is the first high-value surface wired to these preferences: next-best-action and readiness guidance panels can be shown or reduced according to organization settings, while the underlying readiness gate still runs through the centralized server-side project readiness helpers.
+Project Workspace is the first high-value surface wired to these preferences: next-best-action and readiness guidance panels can be shown or reduced according to organization settings, while the underlying readiness gate still runs through the centralized server-side project readiness helpers. The command-center summary and connected-record lanes stay factual and visible as project state/context even when coaching panels are reduced.
 
 One-off/direct invoice shortcuts are still planned only. A future shortcut may allow a contractor to start a simple invoice path, but it must still create or use canonical customer and project context and write canonical invoice/payment records. There is no disconnected invoice model and no active direct-invoice shortcut in this phase.
 
@@ -579,12 +585,16 @@ Implemented flow:
 - projects are created under canonical customers
 - project detail acts as the current bridge into estimating and downstream work
 - contractor admins manage customer contact identity, portal invite state, and project-scoped portal visibility from the customer account, with People remaining the cross-customer administration view
+- when lead, customer, project inline-customer, or estimate-start flows capture the first customer person, that person should be created or linked as the primary canonical `customer_contacts` relationship for the customer account when sufficient details exist
 - estimate, contract, and invoice workflows may trigger or verify portal access contextually, but they do not own portal identity or permissions management
 - new contractor-created portal invites require selecting the customer contact who will authenticate through Supabase Auth; legacy null-contact grants remain compatibility records
 - invited customers use `/portal/invite?token=...` to sign up or log in, and the invite activates only when the authenticated email matches the contractor-created invite
 - portal invite creation and resend use FloorConnector app-managed invite links, do not send Supabase Auth admin invites, and send branded provider-backed email only when email delivery is configured and the organization is allowed to send externally
 - when provider email is activation-locked or not configured, the contractor UI shows truthful no-send status and preserves a fresh copy-link fallback rather than claiming delivery
-- customer password setup happens through normal Supabase-backed signup, login, forgot-password, and update-password routes, not through a contractor-side password setter; invite links preserve a safe return path so the customer can authenticate and then accept the pending contact-level grant
+- customer password setup normally happens through Supabase-backed signup, login, forgot-password, and update-password routes; invite links preserve a safe return path so the customer can authenticate and then accept the pending contact-level grant
+- customer contact project visibility is explicit per contact; People shows customer contacts against shared projects, and any "same as primary" behavior must be an intentional copy-access action rather than silent inheritance
+- Project detail can show which customer contacts currently have active portal visibility for that project, while People/customer-contact administration remains the management home
+- contractor-side temporary portal credentials are implemented as a support-only owner/admin fallback, not the normal onboarding path; the action stays server-only, uses Supabase Auth Admin APIs, avoids storing or logging raw passwords, shows generated values once, and forces password change after login
 - portal-bound auth returns do not run contractor tenant bootstrap for portal-only customers; contractor workspace bootstrap remains for contractor app users
 - portal customers can see read-only, project-linked appointments only when a contractor explicitly marks the canonical appointment `customer_visible = true`
 - customer-facing appointment display uses customer-safe fields only: appointment title/type, date/time, status, location, and `customer_notes`; it does not expose internal notes, legacy appointment notes, assignment internals, or internal communication
@@ -601,6 +611,7 @@ Current canonical records involved:
 Current customer-account interpretation:
 - the customer is the full canonical customer/account record, not a lightweight contact card
 - additional customer contacts sit beneath that account and are managed from the customer account and People for identity, relationship, and portal access administration, but the account remains the commercial and financial source of truth
+- customer-level email and phone stay as account/commercial fallback fields; they should not be the only place a captured customer person lives once a customer/contact intake flow has enough person detail to create or link a primary contact
 - normal portal onboarding is contractor-initiated from the shared customer/project workflow; customers do not self-register first unless a later customer-led quote/intake surface explicitly supports that path
 - the current portal identity architecture is mapped in [docs/portal-identity-review.md](C:/FloorConnector/docs/portal-identity-review.md)
 
@@ -678,6 +689,7 @@ Customer-account guardrail for downstream commercial flows:
 Implemented approval rules:
 - customer-facing estimate approval happens through the portal on the same canonical estimate record
 - contractor-side Estimate Review can also record a supported manual/offline approval or rejection decision from draft or sent estimates through the shared estimate status-transition action for cases such as paper signature, verbal customer approval, fake email during testing, non-portal customers, or workflow testing before send-mail and portal delivery are complete
+- manual/offline approval requires approver, approval method, approval date/time, and supporting notes/evidence before the status transition is recorded; this evidence is written into the existing estimate customer-event trail instead of a separate approval model
 - approval does not execute downstream financial actions automatically
 - approval creates an immutable commercial snapshot used for downstream contract, SOV, and invoice lineage
 
@@ -940,7 +952,7 @@ Implemented flow:
 - Derived cue results include user-facing explanation/source fields so `My Work` and record-level panels can show which canonical date/status triggered the cue, which threshold was used, and whether a conservative fallback timestamp was used.
 - Derived cue results include read-only responsible role strategy fields for the starter role set: `estimator`, `project_manager`, `billing_owner`, and `scheduler`. Current cue mapping is estimate follow-up -> estimator, contract signature follow-up -> project manager, invoice/deposit follow-up -> billing owner, and job schedule/crew follow-up -> scheduler.
 - Derived cue results include a responsibility resolution object for display and future filtering. Starter strategies first resolve through organization responsibility defaults when a mapped person is active and assignable; if that person has `people.membership_user_id`, the linked app user id is derived for future filtering. Without a mapping, starter strategies fall back to the role label. `organization` resolves to the organization queue, and legacy `record_owner` resolves to an unavailable record-owner fallback.
-- Project, estimate, contract, invoice, and job detail workspaces show compact `Needs Attention` panels using the same derived cue results and explanation/source details. Estimate, contract, invoice, and job detail panels filter to the current canonical record; project detail aggregates linked child-record cues by project id. Project Workspace guidance separates canonical workflow actions from human follow-up so users can distinguish existing record handoffs from user-confirmed work-item drafts. Project detail also shows a compact linked-record recency summary from existing canonical timestamps/statuses so the driving record and recent linked-record changes are easier to scan without introducing a separate activity feed. Supported cues can be dismissed or snoozed for the current user from these contextual surfaces only.
+- Project, estimate, contract, invoice, and job detail workspaces show compact `Needs Attention` panels using the same derived cue results and explanation/source details. Estimate, contract, invoice, and job detail panels filter to the current canonical record; project detail aggregates linked child-record cues by project id. Project Workspace guidance separates canonical workflow actions from human follow-up so users can distinguish existing record handoffs from user-confirmed work-item drafts. Project detail also shows an `Operational command center`, compact `Connected record lanes`, and a linked-record recency summary from existing canonical timestamps/statuses so the driving record, blockers, attached records, project-specific access, and recent linked-record changes are easier to scan without introducing a separate activity feed. Supported cues can be dismissed or snoozed for the current user from these contextual surfaces only.
 - Cue rows link back to the canonical estimate, contract, invoice, job, or schedule action rather than creating a separate task surface. In record workspace contexts only, stale sent-estimate and past-due invoice cues can also open the existing internal work-item form with source-locked prefill; dashboard cues remain awareness and workflow-link surfaces in this pass.
 - Disabled rules are suppressed during derivation; threshold and urgency changes affect the query-time cue results without persisting cue instances. Dismissed or snoozed rows suppress only matching fingerprints, so a material cue change reappears and expired snoozes become visible again.
 - Company cue visibility remains organization-wide even when cues resolve to a responsible person or linked app user, and unresolved cues remain visible in Company. My Work queue modes do not add permissions or persisted selection. Project-level overrides and record-level overrides are deferred. `sales_owner` and `field_lead` are intentionally deferred.
@@ -981,6 +993,10 @@ The preferred contractor journey is:
 
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
+Customer/contact/access/review ownership is documented in [docs/enterprise-ux-consolidation.md](C:/FloorConnector/docs/enterprise-ux-consolidation.md). In workflow terms, People owns contact identity, portal grants, temporary credential support, and project visibility administration through a focused access console; Customer Workspace summarizes the account relationship and links to People with customer context; Project Workspace summarizes project-specific visibility and readiness; Estimate, Contract, and Invoice Workspaces stay focused on proposal, signature, and billing review respectively; Portal pages stay customer-safe and action-oriented.
+
+Record Workspace right rails should stay short and supportive. Primary project/customer/record context may stay visible, while revision history, metadata, extra linked records, manual payment entry, invoice editing, and lower-frequency operational context should be collapsed or linked unless that material is the current page's main job.
+
 With supporting readiness stages between those records:
 - future public acquisition
 - future pre-lead visual/product/finish selection
@@ -1003,7 +1019,7 @@ In UX terms, the near-term direction is:
 - `Project` should become the operational hub
 - estimates, contracts, jobs, invoices, files, selected systems/specs, delivery proof, communication history, and activity should feel like connected parts of one project
 - standalone module routes should continue to exist as global queues and work surfaces, not as separate mental models
-- current Project Workspace recency breadcrumbs are derived from existing linked-record timestamps and statuses only; a full project activity/event timeline remains future work
+- current Project Workspace command-center, lane, and recency breadcrumbs are derived from existing linked records, timestamps, statuses, and project-specific portal visibility only; a full project activity/event timeline remains future work
 
 ### Workflow Tightening Still Needed
 

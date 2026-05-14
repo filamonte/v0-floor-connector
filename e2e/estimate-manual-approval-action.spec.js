@@ -61,11 +61,24 @@ test("contractor can record real manual customer approval from estimate review",
     "paper signature, verbal approval, fake email during testing, or a non-portal customer"
   );
   await expect(decisionActions).toContainText(
-    "canonical estimate so downstream contract, job, and invoice workflows can continue without waiting for send-mail or portal delivery"
+    "canonical estimate so downstream contract, job, and invoice workflows can continue from customer-confirmed scope"
+  );
+  await expect(decisionActions).toContainText("Record approval evidence");
+  await expect(decisionActions).toContainText(
+    "Capture who approved, how they approved, when it happened, and the supporting note or evidence."
   );
 
+  await decisionActions.getByLabel("Approved by").fill("Playwright Customer");
+  await decisionActions.getByLabel("Approval method").selectOption("verbal");
+  await decisionActions.getByLabel("Approval date").fill("2026-05-14");
+  await decisionActions.getByLabel("Approval time").fill("09:30");
+  await decisionActions.getByLabel("Notes").fill("Manual approval captured during QA.");
+  await decisionActions
+    .getByLabel("Evidence / reference")
+    .fill("QA call log reference for manual approval.");
+
   const approveButton = decisionActions.getByRole("button", {
-    name: "Record customer approval"
+    name: "Record customer approval with evidence"
   });
   await expect(approveButton).toBeVisible();
   await approveButton.click();
@@ -73,4 +86,6 @@ test("contractor can record real manual customer approval from estimate review",
   await expect(page).toHaveURL(/\/estimates\/[0-9a-f-]+.*message=/i);
   await expect(page.locator("body")).toContainText("marked as approved");
   await expect(page.locator("body")).toContainText("approved");
+  await expect(page.locator("body")).toContainText("Approved by: Playwright Customer");
+  await expect(page.locator("body")).toContainText("How approved: Verbal approval");
 });

@@ -87,6 +87,7 @@ What contractor teams can do now:
 - work inside a protected multi-tenant app shell
 - navigate organization-aware modules
 - use project detail as the main readiness and workflow hub
+- use the Project Workspace command-center summary and connected-record lanes to see customer context, blockers, estimate/contract/change-order/billing/job/field/access signals, and links to the focused record workspaces without duplicating those modules
 - use estimate, contract, invoice, and job detail pages as connected workspaces
 - configure workflow guidance intensity separately from AI assistance intent, with Project Workspace respecting next-best-action and readiness-guidance visibility while server-side readiness gates remain unchanged
 - rely on server-side readiness enforcement before scheduling and execution workflows proceed
@@ -96,6 +97,8 @@ What contractor teams can do now:
 The contractor app is no longer just a data shell. It supports connected operating workflows across commercial, billing, and execution contexts.
 
 Shared estimate attachments and related documents now live in one tenant-safe `documents` storage bucket using organization-first paths rather than module-specific buckets.
+
+Good-enough document delivery is implemented as customer-facing print/save views on the shared records. Contractor routes `/estimates/:id/pdf`, `/contracts/:id/pdf`, and `/invoices/:id/pdf`, plus portal-scoped equivalents, render canonical estimate, contract, and invoice data for browser print/save. Portal print views use safe contractor organization branding after portal record access has already been scoped. These views are not a separate document model, do not store new PDFs as source-of-truth records, and do not mutate payment or signature state.
 
 ### Customer Portal
 
@@ -111,6 +114,10 @@ What customers can do now:
 
 The portal is not a duplicate product with duplicate records. It is a customer-facing surface on top of the same canonical records used by the contractor app. Supabase Auth proves the portal user's identity, while FloorConnector portal grants and project access records authorize what that customer contact can see.
 
+The current enterprise UX consolidation map is documented in [docs/enterprise-ux-consolidation.md](C:/FloorConnector/docs/enterprise-ux-consolidation.md): People owns contact/access administration through a focused portal access console, Customer Workspace owns customer account summary, Project Workspace owns operational state and project-specific visibility, Estimate/Contract/Invoice Workspaces own their immediate business review, and Portal keeps customer-facing screens simple and action-oriented.
+
+The right-rail consolidation pass keeps contractor record workspaces from becoming two full pages side by side: primary context stays visible, while extra linked records, metadata, revision history, manual payment entry, invoice editing, and lower-frequency activity are collapsed or linked.
+
 ### Workforce And Time
 
 What teams can do now:
@@ -124,6 +131,8 @@ What teams can do now:
 - connect labor/time continuity back to projects and jobs
 
 This is a real workforce and time foundation, even though deeper scheduling, dispatch, and payroll layers are still later work.
+
+The current `/schedule` surface is good-enough for early scheduling work: it summarizes unscheduled, today, upcoming, in-progress, and blocked/not-ready work; separates a Ready work queue from a Scheduled timeline; and opens a selected job action panel for schedule/reschedule context and crew assignment. It remains backed by canonical jobs and job assignments rather than a separate dispatch model.
 
 ### Field Execution
 
@@ -232,6 +241,7 @@ In practical terms:
 
 - a contractor starts with opportunity or lead intake
 - the system creates or links the canonical customer and project
+- the first customer person captured during intake is created or linked as the primary customer contact on the canonical customer account when sufficient person detail exists
 - estimating happens on that shared project chain
 - approved scope feeds the canonical contract
 - signature happens on that same contract
@@ -258,6 +268,10 @@ In practical terms:
 - app-managed invite links guide unauthenticated contacts into Supabase-backed signup, sign-in, or password reset, then return to invite acceptance so the grant activates only after the invited email is authenticated
 - portal-only customer auth returns do not bootstrap a contractor company membership; the portal account remains authorized by explicit portal grants and project access
 - the portal shows only the projects explicitly shared with that customer
+- project sharing is explicit per customer contact, so contacts under the same repeat/commercial customer account may see different project sets
+- People/Directory is the management home for customer contacts and portal access; Project Workspace can show project-specific contact visibility without becoming the global identity-management surface
+- customer account email/phone fields remain compatibility and commercial fallback fields; portal identity and project visibility should flow through canonical customer contacts
+- temporary portal credentials are a support-only owner/admin fallback backed by server-side Supabase Auth Admin APIs; the raw password is shown once, never stored in FloorConnector tables, and must be changed before portal continuation
 - inside each project, the customer can open the connected contract and invoice records
 - contract actions happen on the same canonical contract the contractor uses
 - payment actions happen on the same canonical invoice/payment chain the contractor uses
@@ -356,7 +370,7 @@ There is no separate checkout-payment model and no separate portal billing model
 
 The right way to describe the current product is not "unfinished in general." The operating backbone is implemented: the shared commercial, contract, billing, payment, portal, workforce, and field-execution chain is real. The remaining items below are intentionally not yet built or are only partially implemented as later-depth layers.
 
-Early-access operations are controlled rather than public self-serve. Founder onboarding uses the real company/setup path, no-charge SetupIntent billing setup where configured, a test-mode-only FloorConnector SaaS subscription Checkout Session bridge where explicitly configured, manual platform-admin activation, and `/super-admin/early-access` operating buckets for pending setup, pending activation, active founder access, and suspended/blocked tenants. The same surface records platform-admin-entered founder billing evidence on `companies` for plan label, expected amount, collection method, external reference, evidence timestamp, follow-up timestamp, and notes, while displaying stored Stripe customer/subscription references separately. These buckets, evidence fields, and test-mode checkout references are derived from or attached to existing company/subscription records and do not create live subscriptions, charges, entitlements, automatic activation, provider reconciliation, or a second tenant model.
+Early-access operations are controlled rather than public self-serve. Founder onboarding uses the real company/setup path, no-charge SetupIntent billing setup where configured, a test-mode-only FloorConnector SaaS subscription Checkout Session bridge where explicitly configured, signed SaaS-only Stripe webhook reconciliation for `billing_domain=floorconnector_saas`, manual platform-admin activation, and `/super-admin/early-access` operating buckets for pending setup, pending activation, active founder access, and suspended/blocked tenants. The same surface records platform-admin-entered founder billing evidence on `companies` for plan label, expected amount, collection method, external reference, evidence timestamp, follow-up timestamp, and notes, while displaying stored Stripe customer/subscription references separately. These buckets, evidence fields, test-mode checkout references, and webhook-reconciled subscription status references are derived from or attached to existing company/subscription records and do not create live charges, entitlements, automatic activation, contractor-customer invoice payments, or a second tenant model.
 
 ### Not Built Yet
 
@@ -371,7 +385,7 @@ These are still later layers:
 
 #### Scheduling And Dispatch
 
-- full dispatch-grade scheduling workflows beyond the current first-pass `/schedule` planner and board
+- full dispatch-grade scheduling workflows beyond the current good-enough `/schedule` command center
 - drag-and-drop rescheduling, route optimization, and deeper crew-calendar coordination
 - broader crew assignment automation beyond the current canonical `job_assignments` review/assignment foundation
 - deeper operational scheduling controls
@@ -426,7 +440,7 @@ The next layers should follow the current roadmap direction in a disciplined ord
 
 - deeper e-sign provider integration
 - deeper payment-provider and reconciliation tooling
-- deeper PDF and document delivery beyond the current contract PDF snapshot foundation
+- deeper stored PDF/version management, provider delivery, and document-management workflows beyond current canonical print/save views and the contract send snapshot foundation
 - tax and accounting adapters
 
 5. Broader portal and communication expansion

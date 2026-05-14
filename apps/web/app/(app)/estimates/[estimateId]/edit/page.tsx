@@ -19,7 +19,9 @@ import {
 import { resolveEstimateApprovalOrchestration } from "@/lib/estimates/approval-orchestration";
 import { quickCreateContractFromEstimateAction } from "@/lib/contracts/actions";
 import { getEstimateById, listEstimates } from "@/lib/estimates/data";
+import { buildEstimateSourceAssessmentContext } from "@/lib/estimates/source-assessment";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
+import { getOpportunityById } from "@/lib/opportunities/data";
 
 type EstimateEditPageProps = {
   params: Promise<{
@@ -49,6 +51,13 @@ export default async function EstimateEditPage({
     getOrganizationFinancialSettings(estimate.organizationId),
     listEstimates()
   ]);
+  const sourceOpportunity = estimate.opportunityId
+    ? await getOpportunityById(
+        estimate.opportunityId,
+        `/estimates/${estimate.id}/edit`
+      )
+    : null;
+  const sourceAssessment = buildEstimateSourceAssessmentContext(sourceOpportunity);
   const importSourceEstimates = estimates
     .filter((sourceEstimate) => sourceEstimate.id !== estimate.id)
     .map((sourceEstimate) => ({
@@ -119,6 +128,7 @@ export default async function EstimateEditPage({
         quickCreateCatalogItemAction={quickCreateEstimateCatalogItemAction}
         updateCatalogItemFromEstimateAction={updateCatalogItemFromEstimateAction}
         importSourceEstimates={importSourceEstimates}
+        sourceAssessment={sourceAssessment}
         approvalOrchestration={approvalOrchestration}
         contractAction={quickCreateContractFromEstimateAction}
         scheduleOfValuesAction={openOrCreateScheduleOfValuesAction}

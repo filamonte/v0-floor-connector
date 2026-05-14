@@ -19,6 +19,10 @@ import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-
 import { buildPerspectiveSearchParams, matchesPerspective } from "@/lib/perspectives/query";
 import { parsePerspectiveView, type PerspectiveView } from "@/lib/perspectives/types";
 import { listProjects } from "@/lib/projects/data";
+import {
+  parseInvoiceListSort,
+  sortInvoiceRecords
+} from "@/lib/records/list-sort";
 
 type InvoicesPageProps = {
   searchParams?: Promise<{
@@ -29,6 +33,7 @@ type InvoicesPageProps = {
     workflowRole?: string;
     compose?: string;
     q?: string;
+    sort?: string;
     status?: "all" | "draft" | "sent" | "open" | "paid" | "void";
     view?: PerspectiveView;
     error?: string;
@@ -91,6 +96,7 @@ function buildInvoicesHref(input: {
   changeOrderId?: string;
   workflowRole?: string;
   view?: PerspectiveView;
+  sort?: string;
 }) {
   const searchParams = buildPerspectiveSearchParams(
     {
@@ -104,7 +110,8 @@ function buildInvoicesHref(input: {
       workflowRole:
         input.workflowRole && input.workflowRole !== "standard"
           ? input.workflowRole
-          : undefined
+          : undefined,
+      sort: input.sort && input.sort !== "workflow" ? input.sort : undefined
     },
     input.view ?? "company"
   );
@@ -226,6 +233,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
   const query = resolvedSearchParams.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
   const statusFilter = resolvedSearchParams.status ?? "all";
+  const sort = parseInvoiceListSort(resolvedSearchParams.sort);
   const perspective = parsePerspectiveView(resolvedSearchParams.view);
   const projectFilterId = resolvedSearchParams.projectId?.trim() ?? initialState.projectId ?? "";
   const estimateFilterId = resolvedSearchParams.estimateId?.trim() ?? initialState.estimateId ?? "";
@@ -279,7 +287,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       invoice.status !== "void" &&
       invoice.dueDate < todayIso
   ).length;
-  const filteredInvoices = scopedInvoices.filter((invoice) => {
+  const filteredInvoices = sortInvoiceRecords(scopedInvoices.filter((invoice) => {
     const matchesStatus =
       statusFilter === "all"
         ? true
@@ -300,7 +308,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             .includes(normalizedQuery);
 
     return matchesStatus && matchesQuery;
-  });
+  }), sort);
   const invoiceViews = [
     { key: "all", label: "All invoices", count: scopedInvoices.length },
     { key: "draft", label: "Draft", count: scopedInvoices.filter((invoice) => invoice.status === "draft").length },
@@ -368,6 +376,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         searchSlot: (
           <form action="/invoices" className="flex flex-col gap-2 sm:flex-row">
             {statusFilter !== "all" ? <input type="hidden" name="status" value={statusFilter} /> : null}
+            {sort !== "workflow" ? <input type="hidden" name="sort" value={sort} /> : null}
             {perspective !== "company" ? <input type="hidden" name="view" value={perspective} /> : null}
             {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
             {projectFilterId ? <input type="hidden" name="projectId" value={projectFilterId} /> : null}
@@ -412,7 +421,8 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                   jobId: jobFilterId || undefined,
                   changeOrderId: changeOrderFilterId || undefined,
                   workflowRole: workflowRoleFilter,
-                  view
+                  view,
+                  sort
                 })
               }
             />
@@ -431,7 +441,8 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                     jobId: jobFilterId || undefined,
                     changeOrderId: changeOrderFilterId || undefined,
                     workflowRole: workflowRoleFilter,
-                    view: perspective
+                    view: perspective,
+                    sort
                   })}
                   className={[
                     "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
@@ -456,6 +467,40 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         ),
         actionSlot: (
           <>
+            <form action="/invoices" className="flex items-center gap-2">
+              {query ? <input type="hidden" name="q" value={query} /> : null}
+              {statusFilter !== "all" ? <input type="hidden" name="status" value={statusFilter} /> : null}
+              {perspective !== "company" ? <input type="hidden" name="view" value={perspective} /> : null}
+              {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
+              {projectFilterId ? <input type="hidden" name="projectId" value={projectFilterId} /> : null}
+              {estimateFilterId ? <input type="hidden" name="estimateId" value={estimateFilterId} /> : null}
+              {jobFilterId ? <input type="hidden" name="jobId" value={jobFilterId} /> : null}
+              {changeOrderFilterId ? <input type="hidden" name="changeOrderId" value={changeOrderFilterId} /> : null}
+              {workflowRoleFilter ? <input type="hidden" name="workflowRole" value={workflowRoleFilter} /> : null}
+              <label className="sr-only" htmlFor="invoice-sort">
+                Sort invoices
+              </label>
+              <select
+                id="invoice-sort"
+                name="sort"
+                defaultValue={sort}
+                className="rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] outline-none transition focus:border-[var(--copper)]"
+              >
+                <option value="workflow">Workflow priority</option>
+                <option value="recent">Recently updated</option>
+                <option value="oldest">Oldest updated</option>
+                <option value="due_soon">Due soon</option>
+                <option value="balance_desc">Highest balance</option>
+                <option value="balance_asc">Lowest balance</option>
+                <option value="customer_asc">Customer A-Z</option>
+              </select>
+              <button
+                type="submit"
+                className="inline-flex items-center rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[var(--highlight)]"
+              >
+                Apply
+              </button>
+            </form>
             <RowsPerViewControl storageKey={INVOICES_ROWS_PER_VIEW_STORAGE_KEY} />
             <Link
               href={
@@ -468,7 +513,8 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                   jobId: jobFilterId || undefined,
                   changeOrderId: changeOrderFilterId || undefined,
                   workflowRole: workflowRoleFilter,
-                  view: perspective
+                  view: perspective,
+                  sort
                 }) + "#invoice-create"
               }
               className="inline-flex items-center rounded-[3px] border border-[var(--copper)] bg-[var(--copper)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--copper-light)]"
@@ -496,7 +542,8 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                 jobId: jobFilterId || undefined,
                 changeOrderId: changeOrderFilterId || undefined,
                 workflowRole: workflowRoleFilter,
-                view: perspective
+                view: perspective,
+                sort
               }) + "#invoice-create"
             }
           />
@@ -692,7 +739,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             <p>
               Billing context is scoped to{" "}
               <span className="font-semibold text-slate-900">
-                {projectFilter?.name ?? "the selected canonical source"}
+                {projectFilter?.name ?? "the selected source"}
               </span>
               . Quick create will keep the same project, estimate, job, change order, and workflow
               role where those were provided.
@@ -710,7 +757,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         <WorkspaceComposerSheet
           id="invoice-create"
           title="Quick create invoice"
-          description="Create the canonical invoice first, then finish line items, review, send, and payment readiness inside the invoice workspace."
+          description="Create the invoice first, then finish line items, review, send, and payment readiness inside the invoice workspace."
         open={showComposer}
         openHref={
           buildInvoicesHref({
@@ -721,7 +768,8 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             estimateId: estimateFilterId || undefined,
             jobId: jobFilterId || undefined,
             changeOrderId: changeOrderFilterId || undefined,
-            workflowRole: workflowRoleFilter
+            workflowRole: workflowRoleFilter,
+            sort
           }) + "#invoice-create"
         }
         closeHref={buildInvoicesHref({
@@ -731,7 +779,8 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           estimateId: estimateFilterId || undefined,
           jobId: jobFilterId || undefined,
           changeOrderId: changeOrderFilterId || undefined,
-          workflowRole: workflowRoleFilter
+          workflowRole: workflowRoleFilter,
+          sort
         })}
         openLabel="Open invoice quick create"
       >

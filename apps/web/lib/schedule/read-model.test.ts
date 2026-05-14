@@ -103,6 +103,34 @@ void test("schedule read model can filter appointments without dropping canonica
   assert.equal(items[0].type, "appointment");
 });
 
+void test("schedule read model surfaces opportunity-level scheduled assessments", () => {
+  const items = buildScheduleItems({
+    jobs: [],
+    appointments: [],
+    opportunityAssessments: [
+      {
+        id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        title: "Garage refinish lead",
+        siteName: "Main garage",
+        siteAssessmentScheduledAt: "2026-05-08T14:30:00.000Z",
+        status: "site_assessment_scheduled",
+        primaryContact: {
+          displayName: "Jordan Customer"
+        }
+      }
+    ],
+    rangeStart: new Date("2026-05-08T00:00:00.000Z"),
+    rangeEnd: new Date("2026-05-08T00:00:00.000Z"),
+    itemFilter: "appointments"
+  });
+
+  assert.equal(items.length, 1);
+  assert.equal(items[0].type, "appointment");
+  assert.equal(items[0].href, "/leads/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  assert.equal(items[0].title, "Garage refinish lead site assessment");
+  assert.equal(items[0].appointmentType, "site_assessment");
+});
+
 void test("upcoming appointment helper respects assigned person when mapping exists", () => {
   const appointments = filterUpcomingAssignedAppointments({
     appointments: [

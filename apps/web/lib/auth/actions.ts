@@ -17,6 +17,8 @@ import {
 import { ensureAuthenticatedUserBootstrap } from "./bootstrap";
 import { resolvePostLoginRedirect } from "./post-login";
 import { getAuthCallbackUrl, getRequestOrigin } from "./urls";
+import { clearTemporaryPortalCredentialRequirementForUser } from "@/lib/portal-access/data";
+import { shouldRequireTemporaryPortalCredentialChange } from "@/lib/portal-access/temporary-credentials";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 function getFieldValue(formData: FormData, key: string) {
@@ -63,7 +65,19 @@ export async function signInWithPasswordAction(formData: FormData) {
     );
   }
 
+  const { data: authUserData } = await supabase.auth.getUser();
+  const authenticatedUser = authUserData.user;
   const portalNext = isPortalAuthPath(requestedNext) ? requestedNext : null;
+
+  if (authenticatedUser && shouldRequireTemporaryPortalCredentialChange(authenticatedUser)) {
+    redirect(
+      buildRedirect(updatePasswordPath, {
+        message: "Temporary portal passwords must be changed before continuing.",
+        next: portalNext ?? requestedNext ?? "/portal"
+      })
+    );
+  }
+
   const destination = portalNext
     ? portalNext
     : await (async () => {
@@ -235,6 +249,15 @@ export async function updatePasswordAction(formData: FormData) {
         next: requestedNext ?? undefined
       })
     );
+  }
+
+  const { data: authUserData } = await supabase.auth.getUser();
+
+  if (
+    authUserData.user &&
+    shouldRequireTemporaryPortalCredentialChange(authUserData.user)
+  ) {
+    await clearTemporaryPortalCredentialRequirementForUser(authUserData.user);
   }
 
   redirect(

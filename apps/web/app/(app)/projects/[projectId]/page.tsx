@@ -53,6 +53,10 @@ import { getOpportunityByProjectId } from "@/lib/opportunities/data";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { listPeople } from "@/lib/people/data";
 import { listPunchlistItemsByProject } from "@/lib/punchlists/data";
+import {
+  listPortalAccessGrantsByCustomer,
+  listPortalProjectAccessByGrantId
+} from "@/lib/portal-access/data";
 import { listProgressBillingByProject } from "@/lib/progress-billing/data";
 import { updateProjectAction } from "@/lib/projects/actions";
 import { buildProjectCues, type ProjectCue } from "@/lib/projects/cues";
@@ -122,6 +126,21 @@ type WorkspaceActionItem = {
   label?: string;
   href?: string;
   tone?: "primary" | "secondary" | "warning";
+};
+type CommandSummaryItem = {
+  label: string;
+  value: string;
+  detail: string;
+  tone?: WorkspaceStateTone;
+};
+type ConnectedRecordLane = {
+  title: string;
+  status: string;
+  keyFact: string;
+  href?: string;
+  actionLabel?: string;
+  note?: string;
+  blocker?: string;
 };
 type LifecycleStepId = "lead" | "project" | "estimate" | "contract" | "job" | "invoice" | "payment";
 
@@ -388,6 +407,198 @@ function LinkedRecordRecencyPanel({ items }: { items: LinkedRecordRecencyItem[] 
           No timestamped linked records are available for this project yet.
         </div>
       )}
+    </section>
+  );
+}
+
+function getCommandSummaryToneClassName(tone: WorkspaceStateTone = "neutral") {
+  switch (tone) {
+    case "positive":
+      return "border-emerald-200 bg-emerald-50 text-emerald-950";
+    case "warning":
+      return "border-amber-200 bg-amber-50 text-amber-950";
+    case "critical":
+      return "border-rose-200 bg-rose-50 text-rose-950";
+    case "neutral":
+      return "border-slate-200 bg-slate-50 text-slate-900";
+  }
+}
+
+function OperationalCommandCenter({
+  customerName,
+  projectLocation,
+  nextAction,
+  blockerCount,
+  readinessLabel,
+  readinessDetail,
+  summaryItems
+}: {
+  customerName: string;
+  projectLocation: string;
+  nextAction: NextAction;
+  blockerCount: number;
+  readinessLabel: string;
+  readinessDetail: string;
+  summaryItems: CommandSummaryItem[];
+}) {
+  return (
+    <section
+      aria-labelledby="project-command-center-title"
+      className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5"
+    >
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+            Project command
+          </p>
+          <h2 id="project-command-center-title" className="mt-1 text-lg font-semibold text-slate-950">
+            Operational command center
+          </h2>
+          <p className="mt-2 max-w-[76ch] text-sm leading-6 text-slate-600">
+            {customerName} / {projectLocation}
+          </p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 lg:w-72">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Readiness
+          </p>
+          <p className="mt-1 font-semibold text-slate-950">{readinessLabel}</p>
+          <p className="mt-1">{readinessDetail}</p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+        <div className="rounded-lg border border-[#e3d6c7] bg-[#fbf4ea] px-4 py-3 text-sm leading-6 text-[#5f4d3d]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7a614a]">
+            Next move
+          </p>
+          <p className="mt-1 text-base font-semibold text-[#2b2118]">{nextAction.title}</p>
+          <p className="mt-1">{nextAction.description}</p>
+          {nextAction.blockerCopy ? (
+            <p className="mt-2 font-medium text-amber-900">{nextAction.blockerCopy}</p>
+          ) : null}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {nextAction.primaryHref && nextAction.primaryLabel ? (
+              <Link
+                href={nextAction.primaryHref}
+                className={getWorkspaceActionLinkClassName("primary")}
+              >
+                {nextAction.primaryLabel}
+              </Link>
+            ) : null}
+            {nextAction.secondaryHref && nextAction.secondaryLabel ? (
+              <Link
+                href={nextAction.secondaryHref}
+                className={getWorkspaceActionLinkClassName("secondary")}
+              >
+                {nextAction.secondaryLabel}
+              </Link>
+            ) : null}
+          </div>
+        </div>
+
+        <div
+          className={[
+            "rounded-lg border px-4 py-3 text-sm leading-6",
+            blockerCount > 0
+              ? "border-amber-200 bg-amber-50 text-amber-950"
+              : "border-emerald-200 bg-emerald-50 text-emerald-950"
+          ].join(" ")}
+        >
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em]">
+            Attention
+          </p>
+          <p className="mt-1 text-base font-semibold">
+            {blockerCount > 0
+              ? `${blockerCount} ${blockerCount === 1 ? "blocker" : "blockers"} to clear`
+              : "No active blockers"}
+          </p>
+          <p className="mt-1">
+            {blockerCount > 0
+              ? "Use the lanes below to open the record that owns the next fix."
+              : "Commercial, scheduling, and closeout signals are currently clear."}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {summaryItems.map((item) => (
+          <div
+            key={item.label}
+            className={[
+              "rounded-lg border px-4 py-3 text-sm leading-6",
+              getCommandSummaryToneClassName(item.tone)
+            ].join(" ")}
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-75">
+              {item.label}
+            </p>
+            <p className="mt-1 font-semibold">{item.value}</p>
+            <p className="mt-1 opacity-80">{item.detail}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ProjectConnectedRecordLanes({ lanes }: { lanes: ConnectedRecordLane[] }) {
+  return (
+    <section
+      aria-labelledby="connected-record-lanes-title"
+      className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5"
+    >
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+            Connected records
+          </p>
+          <h2 id="connected-record-lanes-title" className="mt-1 text-lg font-semibold text-slate-950">
+            Connected record lanes
+          </h2>
+          <p className="mt-1 max-w-[72ch] text-sm leading-6 text-slate-600">
+            Each lane shows the current project-owned signal and sends full editing back to the
+            focused record workspace.
+          </p>
+        </div>
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+          {lanes.length} lanes
+        </span>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {lanes.map((lane) => (
+          <article
+            key={lane.title}
+            className="flex min-h-[176px] flex-col rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm leading-6"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold text-slate-950">{lane.title}</h3>
+                <p className="mt-1 text-slate-600">{lane.keyFact}</p>
+              </div>
+              {renderStatusBadge(lane.status)}
+            </div>
+            {lane.blocker ? (
+              <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium leading-5 text-amber-950">
+                {lane.blocker}
+              </p>
+            ) : null}
+            {lane.note ? <p className="mt-3 text-xs leading-5 text-slate-500">{lane.note}</p> : null}
+            <div className="mt-auto pt-4">
+              {lane.href && lane.actionLabel ? (
+                <Link href={lane.href} className={getWorkspaceActionLinkClassName("secondary")}>
+                  {lane.actionLabel}
+                </Link>
+              ) : (
+                <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-500">
+                  No action yet
+                </span>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
     </section>
   );
 }
@@ -1745,6 +1956,24 @@ export default async function ProjectDetailPage({
     notFound();
   }
 
+  const customerPortalAccessGrants = project.customerId
+    ? await listPortalAccessGrantsByCustomer(project.customerId, `/projects/${projectId}`)
+    : [];
+  const projectPortalAccessEntries = await Promise.all(
+    customerPortalAccessGrants.map(async (grant) => [
+      grant.id,
+      await listPortalProjectAccessByGrantId(grant.id, `/projects/${projectId}`)
+    ] as const)
+  );
+  const projectVisiblePortalGrants = customerPortalAccessGrants
+    .map((grant) => ({
+      grant,
+      access: projectPortalAccessEntries
+        .find(([grantId]) => grantId === grant.id)?.[1]
+        .find((access) => access.projectId === project.id) ?? null
+    }))
+    .filter(({ access }) => access?.status === "active");
+
   const readinessSnapshot = await getProjectFinancialReadinessSnapshot({
     organizationId: project.organizationId,
     projectId: project.id
@@ -2189,10 +2418,198 @@ export default async function ProjectDetailPage({
     fieldNotes: projectFieldNotes,
     drivingRecordKey
   });
+  const commandSummaryItems: CommandSummaryItem[] = [
+    {
+      label: "Customer",
+      value: project.customer?.name ?? "Unknown customer",
+      detail:
+        projectVisiblePortalGrants.length > 0
+          ? `${projectVisiblePortalGrants.length} contact${
+              projectVisiblePortalGrants.length === 1 ? "" : "s"
+            } can see this project`
+          : "No active portal visibility on this project",
+      tone: projectVisiblePortalGrants.length > 0 ? "positive" : "neutral"
+    },
+    {
+      label: "Commercial",
+      value: readinessSnapshot?.isReadyToSchedule
+        ? "Ready to schedule"
+        : formatStatusLabel(readinessStatus),
+      detail:
+        workspaceBlockers.length > 0
+          ? "Commercial handoff still has blockers."
+          : "Commercial signals are currently clear.",
+      tone: readinessSnapshot?.isReadyToSchedule
+        ? "positive"
+        : workspaceBlockers.length > 0
+          ? "warning"
+          : "neutral"
+    },
+    {
+      label: "Records",
+      value: `${projectEstimates.length + projectContracts.length + projectInvoices.length + projectJobs.length} linked`,
+      detail: `${projectEstimates.length} estimates / ${projectContracts.length} contracts / ${projectJobs.length} jobs / ${projectInvoices.length} invoices`,
+      tone: projectEstimates.length + projectContracts.length + projectInvoices.length + projectJobs.length > 0
+        ? "positive"
+        : "neutral"
+    },
+    {
+      label: "Field",
+      value:
+        activeJobs.length > 0
+          ? `${activeJobs.length} active`
+          : projectDailyLogs.length > 0
+            ? `${projectDailyLogs.length} daily logs`
+            : "No field activity",
+      detail:
+        projectDailyLogs[0]?.summary?.trim() ??
+        (projectJobs.length > 0
+          ? `${projectJobs.length} job${projectJobs.length === 1 ? "" : "s"} on the chain`
+          : "Field execution has not started yet."),
+      tone: activeJobs.length > 0 || projectDailyLogs.length > 0 ? "positive" : "neutral"
+    }
+  ];
+  const connectedRecordLanes: ConnectedRecordLane[] = [
+    {
+      title: "Sales / Estimate",
+      status: latestEstimate ? formatStatusLabel(latestEstimate.status) : "not started",
+      keyFact: latestEstimate
+        ? `${latestEstimate.referenceNumber} / ${formatMoney(latestEstimate.totalAmount)}`
+        : "No estimate is connected yet.",
+      href: latestEstimate
+        ? `/estimates/${latestEstimate.id}`
+        : buildProjectEstimateCreateHref(project.id, project.customerId, projectOpportunity?.id),
+      actionLabel: latestEstimate ? "Open estimate" : "Create estimate",
+      note: approvedEstimate
+        ? "Approved scope can feed the canonical contract."
+        : "Estimate approval is the first commercial gate.",
+      blocker: projectEstimates.length === 0 ? "Contract, job, and billing work should wait." : undefined
+    },
+    {
+      title: "Contract / Signature",
+      status: latestContract ? formatStatusLabel(latestContract.status) : "not started",
+      keyFact: latestContract
+        ? getProjectContractSummary({ contract: latestContract, readinessSnapshot })
+        : "No contract has been generated yet.",
+      href: latestContract
+        ? `/contracts/${latestContract.id}`
+        : approvedEstimateId
+          ? `/contracts?estimateId=${approvedEstimateId}`
+          : undefined,
+      actionLabel: latestContract
+        ? "Open contract"
+        : approvedEstimateId
+          ? "Generate contract"
+          : undefined,
+      note: "Signature workflow stays on the contract workspace.",
+      blocker:
+        !latestContract && approvedEstimateId
+          ? "Approved scope is waiting for contract generation."
+          : readinessSnapshot?.contractStatus && readinessSnapshot.contractStatus !== "signed"
+            ? "Signature readiness is still open."
+            : undefined
+    },
+    {
+      title: "Change Orders",
+      status: pendingChangeOrder ? formatStatusLabel(pendingChangeOrder.status) : "clear",
+      keyFact:
+        projectChangeOrders.length > 0
+          ? `${projectChangeOrders.length} change order${
+              projectChangeOrders.length === 1 ? "" : "s"
+            } on this project`
+          : "No project change orders yet.",
+      href: pendingChangeOrder
+        ? `/change-orders/${pendingChangeOrder.id}`
+        : `/change-orders?projectId=${project.id}`,
+      actionLabel: pendingChangeOrder ? "Open change order" : "Open change orders",
+      note: "Scope changes stay in the canonical change-order lane.",
+      blocker: pendingChangeOrder ? "Resolve pending scope before relying on billing or closeout." : undefined
+    },
+    {
+      title: "Billing / Payments",
+      status:
+        openInvoices.length > 0
+          ? "open"
+          : projectInvoices.length > 0
+            ? "current"
+            : "not started",
+      keyFact: paymentFocusSummary,
+      href: paymentFocusInvoiceId ? `/invoices/${paymentFocusInvoiceId}` : "/invoices",
+      actionLabel: paymentFocusInvoiceId ? "Open invoice" : "Open invoices",
+      note: "Payment records remain attached to canonical invoices.",
+      blocker:
+        openInvoices.length > 0
+          ? `${formatMoney(
+              openInvoices.reduce((sum, invoice) => sum + Number(invoice.balanceDueAmount), 0)
+            )} still open.`
+          : undefined
+    },
+    {
+      title: "Job / Schedule",
+      status: formatStatusLabel(schedulingState.value),
+      keyFact: schedulingState.detail,
+      href: buildProjectScheduleHref({
+        projectId: project.id,
+        view:
+          unscheduledJobs.length > 0
+            ? "unscheduled"
+            : activeJobs.length > 0
+              ? "in_progress"
+              : "all",
+        crew: jobsWithoutAssignments.length > 0 ? "unassigned" : "all"
+      }),
+      actionLabel: projectJobs.length > 0 ? "Open schedule" : "Open scheduling",
+      note:
+        projectJobs.length > 0
+          ? `${projectJobs.length} job${projectJobs.length === 1 ? "" : "s"} connected.`
+          : "Create jobs only after readiness clears.",
+      blocker:
+        readinessSnapshot?.isReadyToSchedule && projectJobs.length === 0
+          ? "Commercial handoff is ready, but no job exists yet."
+          : unscheduledJobs.length > 0
+            ? "One or more jobs still need schedule placement."
+            : undefined
+    },
+    {
+      title: "Field / Daily Logs",
+      status: projectDailyLogs.length > 0 ? formatStatusLabel(projectDailyLogs[0].status) : "not started",
+      keyFact:
+        projectDailyLogs[0]?.summary?.trim() ??
+        (projectFieldNotes.length > 0
+          ? `${projectFieldNotes.length} field note${
+              projectFieldNotes.length === 1 ? "" : "s"
+            } connected`
+          : "No daily logs or field notes yet."),
+      href: projectDailyLogs[0] ? `/daily-logs/${projectDailyLogs[0].id}` : "/daily-logs",
+      actionLabel: projectDailyLogs[0] ? "Open daily log" : "Open daily logs",
+      note: "Field detail remains in daily logs, jobs, punchlists, and time.",
+      blocker:
+        projectFieldNotes.some((note) => note.status === "open" && note.noteType === "blocker")
+          ? "Open blocker field notes need review."
+          : undefined
+    },
+    {
+      title: "Customer Access",
+      status: projectVisiblePortalGrants.length > 0 ? "visible" : "not shared",
+      keyFact:
+        projectVisiblePortalGrants.length > 0
+          ? `${projectVisiblePortalGrants.length} contact${
+              projectVisiblePortalGrants.length === 1 ? "" : "s"
+            } can access this project`
+          : "No customer contacts currently have this project shared.",
+      href: `/people?accessCustomerId=${project.customerId}#customer-access`,
+      actionLabel: "Manage in People",
+      note: "Project shows visibility context; People owns account and credential management.",
+      blocker:
+        projectVisiblePortalGrants.length === 0
+          ? "Share the project from People when the customer should have portal visibility."
+          : undefined
+    }
+  ];
 
   return (
-    <div className="grid gap-8 xl:grid-cols-[minmax(0,1.12fr)_320px]">
-      <section className="space-y-10">
+    <div className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,1.12fr)_320px]">
+      <section className="min-w-0 space-y-10">
         <div className="rounded-lg border border-[var(--border-warm)] bg-white p-5 shadow-sm sm:p-6">
           <DetailPageHeader
             eyebrow="Project Workspace"
@@ -2323,6 +2740,31 @@ export default async function ProjectDetailPage({
             ) : null}
 
             <ProjectStateSummary title="Project state summary" items={projectStateItems} />
+
+            <OperationalCommandCenter
+              customerName={project.customer?.name ?? "Unknown customer"}
+              projectLocation={formatLocation([
+                project.addressLine1,
+                project.city,
+                project.stateRegion,
+                project.postalCode
+              ])}
+              nextAction={nextAction}
+              blockerCount={workspaceBlockers.length}
+              readinessLabel={
+                readinessSnapshot?.isReadyToSchedule
+                  ? "Ready to schedule"
+                  : formatStatusLabel(readinessStatus)
+              }
+              readinessDetail={
+                readinessSnapshot?.isReadyToSchedule
+                  ? "Commercial handoff is complete."
+                  : "Clear the current gate before operations moves forward."
+              }
+              summaryItems={commandSummaryItems}
+            />
+
+            <ProjectConnectedRecordLanes lanes={connectedRecordLanes} />
 
             <LinkedRecordRecencyPanel items={linkedRecordRecencyItems} />
 
@@ -3324,10 +3766,10 @@ export default async function ProjectDetailPage({
         </DetailPanel>
       </section>
 
-      <aside className="space-y-6">
+      <aside className="min-w-0 space-y-6">
         <DetailPanel
           title="Project Context"
-          description="Compact project facts and commercial settings supporting the main readiness view."
+          description="The few facts that help interpret the readiness workspace without recreating the project form."
         >
           <ContextFactsList
             items={[
@@ -3400,10 +3842,6 @@ export default async function ProjectDetailPage({
                 )
               },
               {
-                label: "Customer company",
-                value: project.customer?.companyName ?? "Not provided"
-              },
-              {
                 label: "Status",
                 value: <span className="capitalize">{formatStatusLabel(project.status)}</span>
               },
@@ -3421,40 +3859,100 @@ export default async function ProjectDetailPage({
                   project.postalCode,
                   project.countryCode
                 ])
-              },
-              {
-                label: "Service address line 1",
-                value: project.addressLine1 ?? "Not provided"
-              },
-              {
-                label: "Service address line 2",
-                value: project.addressLine2 ?? "Not provided"
-              },
-              {
-                label: "Service city",
-                value: project.city ?? "Not provided"
-              },
-              {
-                label: "Service state / postal",
-                value:
-                  [project.stateRegion, project.postalCode].filter(Boolean).join(" ") ||
-                  "Not provided"
-              },
-              {
-                label: "Created",
-                value: new Date(project.createdAt).toLocaleString()
-              },
-              {
-                label: "Updated",
-                value: new Date(project.updatedAt).toLocaleString()
               }
             ]}
           />
+          <details className="mt-4 rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm leading-6 text-slate-600">
+            <summary className="cursor-pointer list-none font-semibold text-slate-950">
+              More project facts
+            </summary>
+            <div className="mt-4">
+              <ContextFactsList
+                items={[
+                  {
+                    label: "Customer company",
+                    value: project.customer?.companyName ?? "Not provided"
+                  },
+                  {
+                    label: "Service address line 1",
+                    value: project.addressLine1 ?? "Not provided"
+                  },
+                  {
+                    label: "Service address line 2",
+                    value: project.addressLine2 ?? "Not provided"
+                  },
+                  {
+                    label: "Service city",
+                    value: project.city ?? "Not provided"
+                  },
+                  {
+                    label: "Service state / postal",
+                    value:
+                      [project.stateRegion, project.postalCode].filter(Boolean).join(" ") ||
+                      "Not provided"
+                  },
+                  {
+                    label: "Created",
+                    value: new Date(project.createdAt).toLocaleString()
+                  },
+                  {
+                    label: "Updated",
+                    value: new Date(project.updatedAt).toLocaleString()
+                  }
+                ]}
+              />
+            </div>
+          </details>
+        </DetailPanel>
+
+        <DetailPanel
+          title="Customer Contact Access"
+          description="Project-specific portal visibility for this project. Full contact and account administration stays in People."
+        >
+          <div className="space-y-4 text-sm leading-6 text-slate-600">
+            {projectVisiblePortalGrants.length > 0 ? (
+              <div className="space-y-3">
+                {projectVisiblePortalGrants.map(({ grant }) => (
+                  <div
+                    key={grant.id}
+                    className="rounded-[6px] border border-slate-200 bg-slate-50/80 px-4 py-3"
+                  >
+                    <p className="font-semibold text-slate-950">
+                      {grant.customerContact?.contact?.displayName ??
+                        grant.portalUser?.fullName ??
+                        grant.portalUser?.email ??
+                        grant.invitedEmail ??
+                        "Portal contact"}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      {grant.customerContact?.isPrimary
+                        ? "Primary contact"
+                        : grant.customerContact?.relationshipLabel?.replaceAll("_", " ") ??
+                          "Customer contact"}
+                    </p>
+                    <p className="mt-2">
+                      {grant.portalUser?.email ?? grant.invitedEmail ?? "Email not captured"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-[6px] border border-dashed border-slate-300 bg-slate-50 px-4 py-4">
+                No customer contacts currently have active portal visibility for this project.
+              </div>
+            )}
+            <Link
+              href={`/people?accessCustomerId=${project.customerId}#customer-access`}
+              className={getWorkspaceActionLinkClassName("secondary")}
+            >
+              Manage in People
+            </Link>
+          </div>
         </DetailPanel>
 
         <DetailPanel
           title="Project Continuity"
-          description="Compact record links and shared context supporting the project workspace without turning the sidebar into a second dashboard."
+          description="Primary linked records stay visible; lower-frequency activity is tucked away."
         >
           <div className="grid gap-4">
             {projectEstimates[0] ? (
@@ -3514,56 +4012,68 @@ export default async function ProjectDetailPage({
                 badge={renderStatusBadge(formatStatusLabel(projectInvoices[0].status))}
               />
             ) : null}
-            {projectChangeOrders[0] ? (
-              <LinkedRecordCard
-                href={`/change-orders/${projectChangeOrders[0].id}`}
-                title={projectChangeOrders[0].title}
-                subtitle="Current change order"
-                meta={joinMetaParts([
-                  formatMoney(projectChangeOrders[0].priceAdjustment),
-                  projectChangeOrders[0].invoice
-                    ? `Invoice ${projectChangeOrders[0].invoice.referenceNumber}`
-                    : "Project-linked scope change",
-                  formatUpdatedActivity(projectChangeOrders[0].updatedAt)
-                ])}
-                badge={renderStatusBadge(formatStatusLabel(projectChangeOrders[0].status))}
-              />
-            ) : null}
-            {projectAppointments[0] ? (
-              <LinkedRecordCard
-                href={`/appointments/${projectAppointments[0].id}`}
-                title={projectAppointments[0].title}
-                subtitle="Current appointment"
-                meta={`${projectAppointments[0].appointmentType.replaceAll("_", " ")} / ${new Date(projectAppointments[0].startsAt).toLocaleString()}`}
-                badge={renderStatusBadge(formatStatusLabel(projectAppointments[0].status))}
-              />
-            ) : null}
-            {projectPunchlistItems[0] ? (
-              <LinkedRecordCard
-                href={`/punchlists/${projectPunchlistItems[0].id}`}
-                title={projectPunchlistItems[0].title}
-                subtitle="Current punchlist item"
-                meta={
-                  projectPunchlistItems[0].assignee?.displayName ??
-                  "Unassigned closeout item"
-                }
-                badge={renderStatusBadge(formatStatusLabel(projectPunchlistItems[0].status))}
-              />
-            ) : null}
-            {projectDailyLogs[0] ? (
-              <LinkedRecordCard
-                href={`/daily-logs/${projectDailyLogs[0].id}`}
-                title={
-                  projectDailyLogs[0].summary?.trim() ||
-                  new Date(`${projectDailyLogs[0].logDate}T00:00:00`).toLocaleDateString()
-                }
-                subtitle="Current daily log"
-                meta={joinMetaParts([
-                  projectDailyLogs[0].weatherSummary ?? "Recent field execution record",
-                  formatUpdatedActivity(projectDailyLogs[0].updatedAt)
-                ])}
-                badge={renderStatusBadge(formatStatusLabel(projectDailyLogs[0].status))}
-              />
+            {projectChangeOrders[0] ||
+            projectAppointments[0] ||
+            projectPunchlistItems[0] ||
+            projectDailyLogs[0] ? (
+              <details className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm leading-6 text-slate-600">
+                <summary className="cursor-pointer list-none font-semibold text-slate-950">
+                  More linked activity
+                </summary>
+                <div className="mt-4 grid gap-4">
+                  {projectChangeOrders[0] ? (
+                    <LinkedRecordCard
+                      href={`/change-orders/${projectChangeOrders[0].id}`}
+                      title={projectChangeOrders[0].title}
+                      subtitle="Current change order"
+                      meta={joinMetaParts([
+                        formatMoney(projectChangeOrders[0].priceAdjustment),
+                        projectChangeOrders[0].invoice
+                          ? `Invoice ${projectChangeOrders[0].invoice.referenceNumber}`
+                          : "Project-linked scope change",
+                        formatUpdatedActivity(projectChangeOrders[0].updatedAt)
+                      ])}
+                      badge={renderStatusBadge(formatStatusLabel(projectChangeOrders[0].status))}
+                    />
+                  ) : null}
+                  {projectAppointments[0] ? (
+                    <LinkedRecordCard
+                      href={`/appointments/${projectAppointments[0].id}`}
+                      title={projectAppointments[0].title}
+                      subtitle="Current appointment"
+                      meta={`${projectAppointments[0].appointmentType.replaceAll("_", " ")} / ${new Date(projectAppointments[0].startsAt).toLocaleString()}`}
+                      badge={renderStatusBadge(formatStatusLabel(projectAppointments[0].status))}
+                    />
+                  ) : null}
+                  {projectPunchlistItems[0] ? (
+                    <LinkedRecordCard
+                      href={`/punchlists/${projectPunchlistItems[0].id}`}
+                      title={projectPunchlistItems[0].title}
+                      subtitle="Current punchlist item"
+                      meta={
+                        projectPunchlistItems[0].assignee?.displayName ??
+                        "Unassigned closeout item"
+                      }
+                      badge={renderStatusBadge(formatStatusLabel(projectPunchlistItems[0].status))}
+                    />
+                  ) : null}
+                  {projectDailyLogs[0] ? (
+                    <LinkedRecordCard
+                      href={`/daily-logs/${projectDailyLogs[0].id}`}
+                      title={
+                        projectDailyLogs[0].summary?.trim() ||
+                        new Date(`${projectDailyLogs[0].logDate}T00:00:00`).toLocaleDateString()
+                      }
+                      subtitle="Current daily log"
+                      meta={joinMetaParts([
+                        projectDailyLogs[0].weatherSummary ?? "Recent field execution record",
+                        formatUpdatedActivity(projectDailyLogs[0].updatedAt)
+                      ])}
+                      badge={renderStatusBadge(formatStatusLabel(projectDailyLogs[0].status))}
+                    />
+                  ) : null}
+                </div>
+              </details>
             ) : null}
             {!projectEstimates[0] &&
             !projectContracts[0] &&

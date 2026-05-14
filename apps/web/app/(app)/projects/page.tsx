@@ -326,7 +326,7 @@ export default async function ProjectsPage({
           <ManagerDashboardCard
             eyebrow="Workflow queue"
             title="Lead"
-            description="Projects that exist canonically but are still sitting in the earliest commercial stage."
+            description="Projects that are still sitting in the earliest commercial stage."
             actionHref={buildProjectsHref({ q: query, status: "lead" })}
             actionLabel="View lead"
             items={leadProjects.slice(0, 4).map((project) => ({
@@ -377,7 +377,7 @@ export default async function ProjectsPage({
           <ManagerDashboardCard
             eyebrow="Workflow queue"
             title="Ready to schedule"
-            description="Projects carrying a canonical ready-to-schedule timestamp."
+            description="Projects carrying a ready-to-schedule marker."
             actionHref={buildProjectsHref({ q: query })}
             actionLabel="Open projects"
             items={readyToScheduleProjects.slice(0, 4).map((project) => ({
@@ -500,7 +500,7 @@ export default async function ProjectsPage({
       <WorkspaceComposerSheet
         id="project-create"
         title="Quick create project"
-        description="Capture only the minimum project context here, create the canonical project, and then finish setup in the full project workspace."
+        description="Capture only the minimum project context here, create the project, and then finish setup in the full project workspace."
         open={showComposer}
         openHref={buildProjectsHref({
           q: query,

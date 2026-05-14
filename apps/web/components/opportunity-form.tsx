@@ -14,7 +14,11 @@ import {
   SaveStateForm,
   SaveStateSubmitButton
 } from "@/components/save-feedback/save-state-form";
-import { opportunityStatusesList } from "@/lib/opportunities/schemas";
+import {
+  leadSourceOptions,
+  opportunityStatusesList,
+  serviceTypeOptions
+} from "@/lib/opportunities/schemas";
 
 type OpportunityFormOpportunity = Opportunity & {
   primaryContact?: Contact | null;
@@ -45,6 +49,10 @@ function getValue(value: string | null | undefined) {
 
 function getDateValue(value: string | null | undefined) {
   return value ? value.slice(0, 10) : "";
+}
+
+function getTimeValue(value: string | null | undefined) {
+  return value ? value.slice(11, 16) : "";
 }
 
 function formatStatusLabel(status: OpportunityStatus) {
@@ -131,7 +139,7 @@ export function OpportunityForm({
           </p>
           <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
             The opportunity links to a real contact record. Once this lead creates or links a
-            canonical customer, safe email updates can sync forward there, and downstream estimate
+            customer, safe email updates can sync forward there, and downstream estimate
             send uses the customer record instead of a workforce person.
           </p>
         </div>
@@ -190,17 +198,52 @@ export function OpportunityForm({
           </p>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
+              Lead source
+            </span>
+            <input
+              list="lead-source-options"
+              name="source"
+              defaultValue={getValue(opportunity?.source)}
+              placeholder="Choose or type a source"
+              className="w-full rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)] focus:ring-4 focus:ring-[var(--copper)]/10"
+            />
+            <datalist id="lead-source-options">
+              {leadSourceOptions.map((option) => (
+                <option key={option} value={option} />
+              ))}
+            </datalist>
+            <span className="mt-2 block text-xs leading-5 text-[var(--text-secondary)]">
+              Pick a common source or type the existing custom source.
+            </span>
+          </label>
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
+              Service type
+            </span>
+            <input
+              list="service-type-options"
+              name="serviceType"
+              defaultValue={getValue(opportunity?.serviceType)}
+              placeholder="Choose or type a service"
+              className="w-full rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)] focus:ring-4 focus:ring-[var(--copper)]/10"
+            />
+            <datalist id="service-type-options">
+              {serviceTypeOptions.map((option) => (
+                <option key={option} value={option} />
+              ))}
+            </datalist>
+            <span className="mt-2 block text-xs leading-5 text-[var(--text-secondary)]">
+              Structured for future estimating, without changing estimate generation.
+            </span>
+          </label>
           <AuthField
-            label="Lead source"
-            name="source"
-            defaultValue={getValue(opportunity?.source)}
-            placeholder="Referral, website, repeat customer"
-          />
-          <AuthField
-            label="Service type"
-            name="serviceType"
-            defaultValue={getValue(opportunity?.serviceType)}
-            placeholder="Epoxy, polish, prep, coating"
+            label="Source detail"
+            name="sourceDetail"
+            defaultValue={getValue(opportunity?.sourceDetail)}
+            placeholder="Google Ads, Smith referral, showroom event"
+            hint="Use this for Other or extra attribution detail."
           />
           <AuthField
             label="Job type"
@@ -257,6 +300,14 @@ export function OpportunityForm({
             name="siteAssessmentScheduledOn"
             type="date"
             defaultValue={getDateValue(opportunity?.siteAssessmentScheduledAt)}
+            hint="Required with time when status is Site Assessment Scheduled."
+          />
+          <AuthField
+            label="Assessment time"
+            name="siteAssessmentScheduledTime"
+            type="time"
+            defaultValue={getTimeValue(opportunity?.siteAssessmentScheduledAt)}
+            hint="Required when status is Site Assessment Scheduled."
           />
           <AuthField
             label="Assessment completed"

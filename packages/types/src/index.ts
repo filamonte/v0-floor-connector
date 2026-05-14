@@ -2329,6 +2329,10 @@ export interface PortalAccessGrant {
   inviteAcceptedAt: string | null;
   activatedAt: string | null;
   revokedAt: string | null;
+  temporaryCredentialIssuedAt: string | null;
+  temporaryCredentialIssuedByUserId: ProfileId | null;
+  temporaryCredentialRequiresPasswordChange: boolean;
+  temporaryCredentialLastClearedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

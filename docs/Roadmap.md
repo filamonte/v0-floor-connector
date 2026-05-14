@@ -46,10 +46,18 @@ Next maturity focus:
 - deepen module dashboards without turning them into separate module apps
 - continue context-aware creation and canonical full-workspace handoff
 - preserve top-nav-first contractor shell and current UI baseline
+- continue the customer/contact/access/review ownership cleanup in [docs/enterprise-ux-consolidation.md](C:/FloorConnector/docs/enterprise-ux-consolidation.md): People owns access management, Customer summarizes account context, Project owns operational state, and Portal stays customer-safe
 
 ## 3. Scheduling And Dispatch Expansion
 
-Current status: Foundation.
+Current status: Good-enough release on the canonical job/job-assignment foundation.
+
+Implemented good-enough scope:
+
+- `/schedule` command-center summary for unscheduled, today, upcoming, in-progress, and blocked/not-ready work
+- Ready work queue and Scheduled timeline over canonical jobs plus appointment read-model context
+- selected job action panel for schedule/reschedule context and crew assignment
+- project/job handoff query parameters into the schedule action panel where safe
 
 Future depth:
 
@@ -77,7 +85,7 @@ Future depth:
 - shared file/evidence layer with multi-record links
 - Takeoff & Scope Intelligence as project-scoped, human-reviewed estimate input
 
-Catalog, materials, systems, takeoff, and documents must feed canonical estimates, contracts, jobs, invoices, and closeout evidence rather than become separate estimating or file silos.
+Catalog, materials, systems, takeoff, and documents must feed canonical estimates, contracts, jobs, invoices, and closeout evidence rather than become separate estimating or file silos. The founder-demo rehearsal path now lives in [docs/founder-demo-readiness.md](C:/FloorConnector/docs/founder-demo-readiness.md); use that path to decide whether the next product slice should be deeper materials/catalog work, live Stripe test-mode replay, deeper scheduling/dispatch, or founder onboarding/marketing polish.
 
 ## 5. Financial, Reporting, And Integration Expansion
 
@@ -89,7 +97,7 @@ Future depth:
 - AIA/progress billing UX, exports, and draw-management depth
 - deeper payment reconciliation, retries, refunds, disputes, and provider sync
 - subscription/billing governance only after explicit security and release gates
-- paid early-access infrastructure should follow [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md); the current Phase 2.2 foundation covers founder setup/activation visibility, platform-admin-entered billing evidence, and a test-mode-only FloorConnector SaaS subscription Checkout Session bridge, while live Stripe Billing, webhook reconciliation, entitlement enforcement, public self-serve launch, and provider mutation remain separate approved phases
+- paid early-access infrastructure should follow [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md); the current Phase 2.3 foundation covers founder setup/activation visibility, platform-admin-entered billing evidence, a test-mode-only FloorConnector SaaS subscription Checkout Session bridge, and signed SaaS-only webhook reconciliation, while live Stripe Billing launch, entitlement enforcement, public self-serve launch, and provider mutation remain separate approved phases
 - external e-sign provider integration on canonical contracts
 - tax and accounting adapters
 - package/billing governance beyond current read-only foundations

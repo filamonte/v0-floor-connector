@@ -33,6 +33,7 @@ type SaveStateFormProps = Omit<FormHTMLAttributes<HTMLFormElement>, "action"> & 
   action: (formData: FormData) => void | Promise<void>;
   enabled?: boolean;
   pendingLabel?: string;
+  resetOnSuccess?: boolean;
   children: ReactNode;
 };
 
@@ -59,6 +60,7 @@ export function SaveStateForm({
   action,
   enabled = true,
   pendingLabel = "Saving...",
+  resetOnSuccess = false,
   children,
   onSubmit,
   onChange,
@@ -105,11 +107,19 @@ export function SaveStateForm({
 
   async function handleAction(formData: FormData) {
     if (!enabled) {
+      const saveVersion = beginSave();
       setIsSubmitting(true);
 
       try {
         await action(formData);
+        if (resetOnSuccess) {
+          formRef.current?.reset();
+        }
+        markSaved(saveVersion);
         return;
+      } catch (error) {
+        markSaveFailed();
+        throw error;
       } finally {
         setIsSubmitting(false);
       }
@@ -120,6 +130,10 @@ export function SaveStateForm({
 
     try {
       await action(formData);
+
+      if (resetOnSuccess) {
+        formRef.current?.reset();
+      }
 
       if (formRef.current) {
         savedSnapshotRef.current = normalizeFormData(formRef.current);
@@ -204,26 +218,26 @@ export function SaveStateSubmitButton({
         status={context.status}
         isDirty={context.isDirty}
         statusMessage={context.message}
+        labels={{ idle: submitLabel, saving: pendingLabel }}
         className={className}
       />
     );
   }
 
-  const isSaving = context.status === "saving";
   const buttonClassName =
     variant === "secondary"
       ? "inline-flex h-9 w-full items-center justify-center gap-2 border border-[#d6d6d6] bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
       : "inline-flex h-9 w-full items-center justify-center gap-2 border border-[#d8731f] bg-[#d8731f] px-3 text-sm font-medium text-white transition hover:bg-[#bf6519] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
 
   return (
-    <button
+    <SaveStatusButton
       type="submit"
-      className={cn(buttonClassName, className)}
-      disabled={isSaving}
-      aria-disabled={isSaving}
       aria-label={ariaLabel ?? submitLabel}
-    >
-      {isSaving ? pendingLabel : submitLabel}
-    </button>
+      status={context.status}
+      isDirty={context.status !== "success"}
+      statusMessage={context.message}
+      labels={{ idle: submitLabel, saving: pendingLabel }}
+      className={cn(buttonClassName, className)}
+    />
   );
 }

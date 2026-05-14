@@ -48,6 +48,11 @@ import type {
   EstimateStatusTransitionResult
 } from "@/lib/estimates/actions";
 import type { EstimateApprovalOrchestrationState } from "@/lib/estimates/approval-orchestration";
+import { deleteEstimateGroupDraft } from "@/lib/estimates/group-draft";
+import {
+  getSystemMeasurementPrefillFromAssessment,
+  type EstimateSourceAssessmentContext
+} from "@/lib/estimates/source-assessment";
 import { stripHtmlToPlainText } from "@/lib/estimates/workspace";
 import { useDirtySaveState } from "@/lib/save-feedback/use-dirty-save-state";
 
@@ -105,6 +110,7 @@ type EstimateFormProps = {
     squareFootage: string;
     linearFootage: string;
     count: string;
+    groupName?: string | null;
   }) => Promise<EstimateInsertResult>;
   importLineItemsFromEstimateAction: (input: {
     destinationEstimateId: string;
@@ -142,6 +148,7 @@ type EstimateFormProps = {
     hasInclusionsContent: boolean;
     hasExclusionsContent: boolean;
   }>;
+  sourceAssessment?: EstimateSourceAssessmentContext | null;
   approvalOrchestration?: EstimateApprovalOrchestrationState | null;
   contractAction: (formData: FormData) => void | Promise<void>;
   scheduleOfValuesAction: (formData: FormData) => void | Promise<void>;
@@ -685,6 +692,7 @@ export function EstimateForm({
   quickCreateCatalogItemAction,
   updateCatalogItemFromEstimateAction,
   importSourceEstimates = [],
+  sourceAssessment = null,
   approvalOrchestration = null,
   contractAction,
   scheduleOfValuesAction,
@@ -743,6 +751,8 @@ export function EstimateForm({
   const [systemSquareFootage, setSystemSquareFootage] = useState("");
   const [systemLinearFootage, setSystemLinearFootage] = useState("");
   const [systemCount, setSystemCount] = useState("1");
+  const [systemSourceLabel, setSystemSourceLabel] = useState<string | null>(null);
+  const [systemGroupName, setSystemGroupName] = useState<string | null>(null);
   const [systemPreviewResult, setSystemPreviewResult] =
     useState<ExpandedSystemPreviewResult | null>(null);
   const [systemPreviewMessage, setSystemPreviewMessage] = useState<string | null>(null);
@@ -1134,6 +1144,9 @@ export function EstimateForm({
   }
 
   function handleSystemMeasurementChange(field: string, value: string) {
+    setSystemSourceLabel(null);
+    setSystemGroupName(null);
+
     if (field === "inputMode") {
       setSystemInputMode(value === "direct" ? "direct" : "dimensions");
     } else if (field === "length") {
@@ -1157,6 +1170,27 @@ export function EstimateForm({
     }
 
     resetSystemPreview();
+  }
+
+  function handleUseSourceMeasurement(groupKey: string) {
+    const prefill = getSystemMeasurementPrefillFromAssessment(sourceAssessment, groupKey);
+
+    if (!prefill) {
+      setSystemPreviewResult(null);
+      setSystemPreviewMessage("This source assessment area does not have an area value for system generation.");
+      return;
+    }
+
+    setSystemInputMode(prefill.inputMode);
+    setSystemLength("");
+    setSystemWidth("");
+    setSystemSquareFootage(prefill.squareFootage);
+    setSystemLinearFootage(prefill.linearFootage);
+    setSystemCount(prefill.count);
+    setSystemSourceLabel(prefill.sourceLabel);
+    setSystemGroupName(prefill.groupLabel);
+    setSystemPreviewResult(null);
+    setSystemPreviewMessage(`${prefill.sourceLabel} loaded. Review the values, then preview the system before generating items.`);
   }
 
   function handlePreviewSystem() {
@@ -1225,7 +1259,10 @@ export function EstimateForm({
         systemCatalogItemId: selectedSystemId,
         squareFootage: squareFootage.toFixed(2),
         linearFootage: linearFootage.toFixed(2),
-        count: count.toFixed(2)
+        count: count.toFixed(2),
+        groupName: systemGroupName
+          ? `${systemGroupName} - ${systemPreviewResult.systemName} (${squareFootage.toFixed(2)} sqft / ${linearFootage.toFixed(2)} lf)`
+          : null
       });
 
       if (!result.ok) {
@@ -1240,6 +1277,8 @@ export function EstimateForm({
       setSystemSquareFootage("");
       setSystemLinearFootage("");
       setSystemCount("1");
+      setSystemSourceLabel(null);
+      setSystemGroupName(null);
       resetSystemPreview();
     });
   }
@@ -1405,20 +1444,19 @@ export function EstimateForm({
   }
 
   function handleDeleteGroup(groupId: string) {
+    if (status === "approved") {
+      return;
+    }
+
+    const result = deleteEstimateGroupDraft({
+      groupId,
+      groups: itemGroups,
+      lineItems
+    });
+
     markDirty();
-    setItemGroups((currentGroups) =>
-      currentGroups
-        .filter((group) => group.id !== groupId)
-        .map((group, index) => ({
-          ...group,
-          sortOrder: index
-        }))
-    );
-    setLineItems((currentLineItems) =>
-      currentLineItems.map((lineItem) =>
-        lineItem.groupId === groupId ? { ...lineItem, groupId: null } : lineItem
-      )
-    );
+    setItemGroups(result.groups);
+    setLineItems(result.lineItems);
   }
 
   function handleScopeItemTextChange(id: string, value: string) {
@@ -1531,7 +1569,10 @@ export function EstimateForm({
     <div className="flex items-start gap-4">
       {(["draft", "sent", "approved", "rejected"] as const).map((candidateStatus, index, statuses) => {
         const isCurrent = status === candidateStatus;
-        const canSelect = allowedTransitions.includes(candidateStatus);
+        const requiresApprovalEvidence =
+          candidateStatus === "approved" && status !== "approved";
+        const canSelect =
+          allowedTransitions.includes(candidateStatus) && !requiresApprovalEvidence;
         const label = statusDisplayLabels[candidateStatus];
 
         return (
@@ -1571,9 +1612,11 @@ export function EstimateForm({
               className="flex flex-col items-center gap-2"
               disabled={!canSelect}
               title={
-                canSelect
-                  ? `Set status to ${label}`
-                  : `Cannot move from ${status} to ${candidateStatus}`
+                requiresApprovalEvidence
+                  ? "Record approval from Estimate Review so approval evidence is captured."
+                  : canSelect
+                    ? `Set status to ${label}`
+                    : `Cannot move from ${status} to ${candidateStatus}`
               }
             >
               <div
@@ -1825,9 +1868,12 @@ export function EstimateForm({
             systemCount={systemCount}
             systemPreview={selectedSystemPreview}
             systemPreviewMessage={systemPreviewMessage}
+            systemSourceLabel={systemSourceLabel}
             isPreviewPending={isPreviewPending}
+            sourceAssessment={sourceAssessment}
             onSelectedSystemIdChange={handleSelectedSystemIdChange}
             onSystemMeasurementChange={handleSystemMeasurementChange}
+            onUseSourceMeasurement={handleUseSourceMeasurement}
             onQuickAddCatalogItem={handleQuickAddCatalogItem}
             onAddPreviewCatalogItem={handleAddPreviewCatalogItem}
             onImportLineItemsFromEstimate={handleImportLineItemsFromEstimate}

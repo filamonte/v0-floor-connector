@@ -876,6 +876,10 @@ type EarlyAccessTenantRow = {
         status: string;
         lifecycle_state: string;
         stripe_subscription_id: string | null;
+        stripe_price_id: string | null;
+        stripe_checkout_session_id: string | null;
+        stripe_last_event_id: string | null;
+        stripe_last_webhook_received_at: string | null;
         current_period_end: string | null;
       }>
     | null;
@@ -5985,7 +5989,7 @@ export async function listEarlyAccessTenantsForPlatformAdmin() {
       supabase
         .from("companies")
         .select(
-          "id, slug, legal_name, display_name, logo_url, phone, email, website_url, primary_trade, brand_accent_color, time_zone, tenant_status, lifecycle_state, stripe_customer_id, stripe_payment_method_id, founder_plan_label, founder_monthly_amount_cents, founder_billing_status, founder_billing_method, founder_billing_reference, founder_billing_notes, founder_billing_follow_up_at, founder_billing_evidence_received_at, founder_billing_updated_by, founder_billing_updated_at, created_at, company_subscriptions (id, status, lifecycle_state, stripe_subscription_id, current_period_end)"
+          "id, slug, legal_name, display_name, logo_url, phone, email, website_url, primary_trade, brand_accent_color, time_zone, tenant_status, lifecycle_state, stripe_customer_id, stripe_payment_method_id, founder_plan_label, founder_monthly_amount_cents, founder_billing_status, founder_billing_method, founder_billing_reference, founder_billing_notes, founder_billing_follow_up_at, founder_billing_evidence_received_at, founder_billing_updated_by, founder_billing_updated_at, created_at, company_subscriptions (id, status, lifecycle_state, stripe_subscription_id, stripe_price_id, stripe_checkout_session_id, stripe_last_event_id, stripe_last_webhook_received_at, current_period_end)"
         )
         .order("created_at", { ascending: false }),
       supabase.from("projects").select("company_id"),
@@ -6091,6 +6095,12 @@ export async function listEarlyAccessTenantsForPlatformAdmin() {
         createdAt: tenant.created_at,
         stripeCustomerId: tenant.stripe_customer_id,
         stripeSubscriptionId: currentSubscription?.stripe_subscription_id ?? null,
+        stripePriceId: currentSubscription?.stripe_price_id ?? null,
+        stripeCheckoutSessionId:
+          currentSubscription?.stripe_checkout_session_id ?? null,
+        stripeLastEventId: currentSubscription?.stripe_last_event_id ?? null,
+        stripeLastWebhookReceivedAt:
+          currentSubscription?.stripe_last_webhook_received_at ?? null,
         stripeSubscriptionStatus: currentSubscription?.status ?? null,
         stripeSubscriptionLifecycleState:
           currentSubscription?.lifecycle_state ?? null,

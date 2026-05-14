@@ -24,14 +24,14 @@ export function CustomerQuickCreateForm({
       <QuickCreateFormShell
         eyebrow="Quick create"
         title="Create customer"
-        description="Create the canonical customer recipient account first with just the primary name. Contact details, financial defaults, and notes can be completed in the full customer workspace."
+        description="Create the canonical customer account and primary customer contact first. Contact details, financial defaults, and notes can be completed in the full customer workspace."
         footer="This creates a real customer record and takes you straight into the full customer workspace."
       >
         <AuthField
           label="Customer name"
           name="name"
           placeholder="Jane Doe"
-          hint="Use the primary billing, project, or estimate-recipient contact name."
+          hint="This person becomes the primary customer contact."
           required
         />
       </QuickCreateFormShell>

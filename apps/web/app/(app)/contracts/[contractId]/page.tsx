@@ -774,6 +774,12 @@ export default async function ContractDetailPage({
             }
             secondaryActions={
               <>
+                <Link
+                  href={`/contracts/${contract.id}/pdf`}
+                  className={secondaryActionClassName}
+                >
+                  Print / save PDF
+                </Link>
                 {contract.isEditable ? (
                   <Link
                     href={`/contracts/${contract.id}/edit`}
@@ -1172,7 +1178,7 @@ export default async function ContractDetailPage({
 
             <DetailPanel
               title="Connected Workflow"
-              description="Nearby project, estimate, job, and invoice shortcuts that support the contract workflow without replacing the agreement as the main review surface."
+              description="Primary agreement context stays visible; downstream activity expands only when needed."
             >
               <div className="grid gap-4">
                 {contract.project ? (
@@ -1201,34 +1207,69 @@ export default async function ContractDetailPage({
                     }
                   />
                 ) : null}
-                {relatedJobs.map((job) => (
+                {relatedJobs[0] ? (
                   <LinkedRecordCard
-                    key={job.id}
-                    href={`/jobs/${job.id}`}
-                    title={job.project?.name ?? "Job"}
-                    subtitle="Job"
-                    meta={job.scheduledDate ? `Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}` : "Unscheduled"}
+                    href={`/jobs/${relatedJobs[0].id}`}
+                    title={relatedJobs[0].project?.name ?? "Job"}
+                    subtitle="Current job"
+                    meta={relatedJobs[0].scheduledDate ? `Scheduled ${new Date(`${relatedJobs[0].scheduledDate}T00:00:00`).toLocaleDateString()}` : "Unscheduled"}
                     badge={
                       <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
-                        {formatStatusLabel(job.dispatchStatus)}
+                        {formatStatusLabel(relatedJobs[0].dispatchStatus)}
                       </span>
                     }
                   />
-                ))}
-                {relatedInvoices.map((invoice) => (
+                ) : null}
+                {relatedInvoices[0] ? (
                   <LinkedRecordCard
-                    key={invoice.id}
-                    href={`/invoices/${invoice.id}`}
-                    title={invoice.referenceNumber}
-                    subtitle="Invoice"
-                    meta={`Balance due ${formatMoney(invoice.balanceDueAmount)}`}
+                    href={`/invoices/${relatedInvoices[0].id}`}
+                    title={relatedInvoices[0].referenceNumber}
+                    subtitle="Current invoice"
+                    meta={`Balance due ${formatMoney(relatedInvoices[0].balanceDueAmount)}`}
                     badge={
                       <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
-                        {formatStatusLabel(invoice.status)}
+                        {formatStatusLabel(relatedInvoices[0].status)}
                       </span>
                     }
                   />
-                ))}
+                ) : null}
+                {relatedJobs.length > 1 || relatedInvoices.length > 1 ? (
+                  <details className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+                    <summary className="cursor-pointer list-none font-semibold text-slate-950">
+                      View all downstream records
+                    </summary>
+                    <div className="mt-4 grid gap-4">
+                      {relatedJobs.slice(1).map((job) => (
+                        <LinkedRecordCard
+                          key={job.id}
+                          href={`/jobs/${job.id}`}
+                          title={job.project?.name ?? "Job"}
+                          subtitle="Job"
+                          meta={job.scheduledDate ? `Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}` : "Unscheduled"}
+                          badge={
+                            <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                              {formatStatusLabel(job.dispatchStatus)}
+                            </span>
+                          }
+                        />
+                      ))}
+                      {relatedInvoices.slice(1).map((invoice) => (
+                        <LinkedRecordCard
+                          key={invoice.id}
+                          href={`/invoices/${invoice.id}`}
+                          title={invoice.referenceNumber}
+                          subtitle="Invoice"
+                          meta={`Balance due ${formatMoney(invoice.balanceDueAmount)}`}
+                          badge={
+                            <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                              {formatStatusLabel(invoice.status)}
+                            </span>
+                          }
+                        />
+                      ))}
+                    </div>
+                  </details>
+                ) : null}
                 {relatedJobs.length === 0 && relatedInvoices.length === 0 ? (
                   <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
                     No jobs or invoices are connected to this contract's project yet.
@@ -1327,26 +1368,32 @@ export default async function ContractDetailPage({
               </div>
             </DetailPanel>
 
-            <DetailPanel
-              title="Revision History"
-              description="Prior draft snapshots and revision notes."
-            >
-              <div className="space-y-3 text-sm leading-6 text-slate-600">
-                {contract.revisions.length > 0 ? (
-                  contract.revisions.map((revision) => (
-                    <div key={revision.id} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                      <p className="font-medium text-slate-950">Revision {revision.revisionNumber}</p>
-                      <p>{formatDateTime(revision.createdAt)}</p>
-                      {revision.editSummary ? <p>{revision.editSummary}</p> : <p>Draft snapshot before edit</p>}
-                    </div>
-                  ))
-                ) : (
-                  <p>No draft revisions have been saved yet.</p>
-                )}
+            <details className="rounded-lg border border-slate-200 bg-white px-5 py-4 shadow-sm">
+              <summary className="cursor-pointer list-none">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                  Revision History
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Draft snapshots and revision notes are available when needed.
+                </p>
+              </summary>
+              <div className="mt-5 space-y-5">
+                <div className="space-y-3 text-sm leading-6 text-slate-600">
+                  {contract.revisions.length > 0 ? (
+                    contract.revisions.map((revision) => (
+                      <div key={revision.id} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                        <p className="font-medium text-slate-950">Revision {revision.revisionNumber}</p>
+                        <p>{formatDateTime(revision.createdAt)}</p>
+                        {revision.editSummary ? <p>{revision.editSummary}</p> : <p>Draft snapshot before edit</p>}
+                      </div>
+                    ))
+                  ) : (
+                    <p>No draft revisions have been saved yet.</p>
+                  )}
+                </div>
+                <RevisionTimeline revisions={recordRevisions} />
               </div>
-            </DetailPanel>
-
-            <RevisionTimeline revisions={recordRevisions} />
+            </details>
           </aside>
         </div>
       </PrimarySection>

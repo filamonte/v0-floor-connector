@@ -4,7 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createProject, updateProject } from "./data";
-import { projectInputSchema, projectQuickCreateInputSchema } from "./schemas";
+import { createCustomerFromPrimaryContact } from "@/lib/customers/data";
+import {
+  projectCreateInputSchema,
+  projectInputSchema,
+  projectQuickCreateInputSchema,
+  type ProjectCreateInput
+} from "./schemas";
 
 function getFieldValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -45,6 +51,52 @@ function parseProjectInput(formData: FormData) {
   });
 }
 
+function parseProjectCreateInput(formData: FormData) {
+  return projectCreateInputSchema.safeParse({
+    name: getFieldValue(formData, "name"),
+    customerId: getFieldValue(formData, "customerId"),
+    newCustomerName: getFieldValue(formData, "newCustomerName"),
+    newCustomerCompanyName: getFieldValue(formData, "newCustomerCompanyName"),
+    newCustomerEmail: getFieldValue(formData, "newCustomerEmail"),
+    newCustomerPhone: getFieldValue(formData, "newCustomerPhone"),
+    status: getFieldValue(formData, "status"),
+    financingStatus: getFieldValue(formData, "financingStatus"),
+    description: getFieldValue(formData, "description"),
+    addressLine1: getFieldValue(formData, "addressLine1"),
+    addressLine2: getFieldValue(formData, "addressLine2"),
+    city: getFieldValue(formData, "city"),
+    stateRegion: getFieldValue(formData, "stateRegion"),
+    postalCode: getFieldValue(formData, "postalCode"),
+    countryCode: getFieldValue(formData, "countryCode")
+  });
+}
+
+async function resolveProjectCustomerId(input: ProjectCreateInput) {
+  if (input.customerId) {
+    return input.customerId;
+  }
+
+  if (!input.newCustomerName) {
+    throw new Error("Select an existing customer or create a new customer.");
+  }
+
+  const customer = await createCustomerFromPrimaryContact({
+    name: input.newCustomerName,
+    companyName: input.newCustomerCompanyName,
+    email: input.newCustomerEmail,
+    phone: input.newCustomerPhone,
+    addressLine1: input.addressLine1,
+    addressLine2: input.addressLine2,
+    city: input.city,
+    stateRegion: input.stateRegion,
+    postalCode: input.postalCode,
+    countryCode: input.countryCode,
+    source: "project_inline_customer"
+  });
+
+  return customer.id;
+}
+
 function parseProjectQuickCreateInput(formData: FormData) {
   return projectQuickCreateInputSchema.safeParse({
     name: getFieldValue(formData, "name"),
@@ -53,7 +105,7 @@ function parseProjectQuickCreateInput(formData: FormData) {
 }
 
 export async function createProjectAction(formData: FormData) {
-  const result = parseProjectInput(formData);
+  const result = parseProjectCreateInput(formData);
 
   if (!result.success) {
     redirect(
@@ -66,7 +118,21 @@ export async function createProjectAction(formData: FormData) {
   let project;
 
   try {
-    project = await createProject(result.data);
+    const customerId = await resolveProjectCustomerId(result.data);
+
+    project = await createProject({
+      name: result.data.name,
+      customerId,
+      status: result.data.status,
+      financingStatus: result.data.financingStatus,
+      description: result.data.description,
+      addressLine1: result.data.addressLine1,
+      addressLine2: result.data.addressLine2,
+      city: result.data.city,
+      stateRegion: result.data.stateRegion,
+      postalCode: result.data.postalCode,
+      countryCode: result.data.countryCode
+    });
   } catch (error) {
     redirect(
       buildRedirect("/projects", {

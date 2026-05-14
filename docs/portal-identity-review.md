@@ -53,6 +53,7 @@ Portal project access:
 - Stored in `portal_project_access`.
 - Explicit project visibility beneath a portal access grant.
 - A portal user can only see projects with active project access under an active grant.
+- Access is scoped to the contact/grant. Additional customer contacts do not receive blanket access to every project under the customer account, and they do not silently inherit the primary contact's project visibility.
 
 Customer-contact portal permissions:
 - Stored in `customer_contact_portal_permissions`.
@@ -98,8 +99,11 @@ Password setup today:
 - New customers use the normal `/signup?next=/portal/invite?...` flow to create a password.
 - Existing customers use `/login?next=/portal/invite?...`.
 - Forgotten passwords use `/forgot-password?next=/portal/invite?...` and `/update-password`, preserving the safe invite return path.
-- There is no contractor-side password setter, no direct password exposure, and no admin-created password in the contractor app.
+- Contractor owners/admins can issue a support-only temporary portal credential for a linked customer-contact grant. This creates or updates the real Supabase Auth user from server-side privileged code, shows the generated temporary password once, and marks the account/grant for required password change.
+- There is no contractor-side permanent password setter and no stored raw password in FloorConnector tables.
 - Portal-bound signup/login/callback paths intentionally avoid contractor tenant bootstrap so a customer portal account does not accidentally become a contractor owner account.
+
+Temporary credential support is intentionally a fallback, not normal onboarding. The generated password is passed only through the server action response for one-time display, while `portal_access_grants` stores only audit/status fields (`temporary_credential_issued_at`, `temporary_credential_issued_by`, `temporary_credential_requires_password_change`, and clear timestamp). Supabase Auth `app_metadata` carries the password-change-required flag, and `/login` redirects flagged portal users to `/update-password`; successful password update clears both Auth metadata and grant status.
 
 Email delivery today:
 
@@ -110,7 +114,7 @@ Email delivery today:
 - If provider-backed email is activation-locked or missing configuration, the app does not pretend an email was sent. It prepares a fresh copy-link fallback and shows truthful no-send status.
 - Pending invites expose a send/resend action from customer detail and People. Resend prepares a fresh token/hash and leaves authorization on the same canonical `portal_access_grants` row.
 
-This explains the original observed gap and the current repair boundary: granting portal access still does not create a Supabase Auth user or Supabase Auth invite, but it now attempts branded provider email only when delivery is configured and allowed, with copy-link fallback otherwise.
+This explains the original observed gap and the current repair boundary: normal portal access still uses app-managed invites rather than Supabase Auth invites, but owner/admin support can now create or update the real Auth user through the temporary credential fallback when invite/signup delivery is blocked.
 
 ## Target Enterprise Flow
 
@@ -126,6 +130,8 @@ Recommended target:
 8. Authenticated email must match the invited email unless a future explicit linking workflow is approved.
 9. Grant becomes active only after acceptance.
 10. Contractor can revoke access, adjust project visibility, inspect status, and create a fresh invite when needed.
+11. For repeat/commercial customers, each customer contact can have a different explicit project list. "Copy access from primary contact" is a safe preset/action, not automatic inheritance.
+12. If invite delivery fails in practice, a contractor owner/admin can issue a temporary support credential for a linked contact; the customer must replace it before continuing.
 
 The app-managed invite-token approach best fits the current architecture because it preserves `portal_access_grants`, branded UX, project-scoped visibility, E2E fixture control, and tenant-safe acceptance rules. Supabase Auth remains the authentication provider; FloorConnector remains the portal access authority.
 
@@ -142,13 +148,53 @@ Keep the models separate:
 
 Do not merge workforce people and customer contacts into one broad party model in the current phase. A future Directory can be a unified read/management surface over separate canonical models, not a replacement data model.
 
+The current enterprise UX consolidation pass keeps Directory as a read/index workspace and People as the active access command center. Customer detail may summarize contacts and portal grants, and Project detail may show project-specific visibility, but both should link back to People for full customer-contact, portal-grant, temporary-credential, and project-visibility management. See [docs/enterprise-ux-consolidation.md](C:/FloorConnector/docs/enterprise-ux-consolidation.md).
+
 Next safe data-model step:
 
 - Keep using existing `contacts` and `customer_contacts`.
+- Lead/customer intake now treats the first captured customer person as the primary related contact where possible: direct customer creation, project inline new-customer creation, and opportunity/estimate handoff should create or link the canonical `contacts` and `customer_contacts` rows instead of leaving the person only on `customers.email` or `customers.phone`.
 - Gradually attach legacy customer-level portal grants to related contacts when known.
 - Keep new portal invite creation contact-centered; do not create new null-contact grants from contractor UI.
+- Keep People/Directory as the customer-contact and portal-access management surface. People should present portal access as a filtered console with compact contact/grant rows and one selected management panel, not as repeated full panels for every contact. Project Workspace may show project-specific contact visibility and link back to People, but estimates, contracts, and invoices should stay contextual business surfaces rather than identity-management islands.
 - Do not add another customer-contact table.
 - Add resend/email delivery only as a focused provider-delivery slice with activation guard behavior, delivery events, and no raw token exposure.
+
+Non-destructive primary-contact cleanup report:
+
+```sql
+-- Customers that have account-level contact fields but no related customer contact.
+select c.company_id, c.id as customer_id, c.name, c.email, c.phone
+from public.customers c
+left join public.customer_contacts cc
+  on cc.company_id = c.company_id
+ and cc.customer_id = c.id
+where cc.id is null
+  and (c.email is not null or c.phone is not null);
+
+-- Customers that have related contacts but no primary contact relationship.
+select cc.company_id, cc.customer_id, count(*) as contact_count
+from public.customer_contacts cc
+group by cc.company_id, cc.customer_id
+having bool_or(cc.is_primary) = false;
+
+-- Duplicate contact candidates by lower-cased email within the same customer.
+select cc.company_id, cc.customer_id, lower(ct.email) as email, count(*) as contact_count
+from public.customer_contacts cc
+join public.contacts ct
+  on ct.company_id = cc.company_id
+ and ct.id = cc.contact_id
+where ct.email is not null
+group by cc.company_id, cc.customer_id, lower(ct.email)
+having count(*) > 1;
+
+-- Legacy portal grants that still are not linked to a customer contact.
+select company_id, id, customer_id, invited_email, status
+from public.portal_access_grants
+where customer_contact_id is null;
+```
+
+These queries are reporting aids only. Do not run an automatic destructive or blanket backfill without a dedicated data-cleanup prompt and tenant-scoped review.
 
 ## Portal E2E Fixture Impact
 
@@ -181,3 +227,8 @@ Do not treat skipped portal auth/smoke tests as live customer portal QA.
 2. Customer-contact consistency:
    - Continue moving contextual send/sign/pay flows toward eligible customer contacts.
    - Preserve canonical customer/account fields as financial/commercial fallback until each workflow explicitly supports contact-level routing.
+
+3. Temporary support credentials:
+   - Add focused E2E coverage for the owner/admin action and password-change redirect once the seeded portal fixture includes a disposable linked contact for credential issuance.
+   - Consider platform-admin support issuance separately; the current contractor UI path is owner/admin-scoped within the active tenant.
+   - Keep normal onboarding on invite/signup/reset so temporary credentials remain a support bridge.
