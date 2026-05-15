@@ -94,11 +94,12 @@ Current status: Active core with foundation-level depth in several areas.
 Future depth:
 
 - broader Sales Tax Summary/reporting and analytics
+- export-first data portability is now started through `/settings/export`, with small metadata-only export history; future reporting/export depth should build on canonical tenant-scoped exports rather than raw database dumps
 - AIA/progress billing UX, exports, and draw-management depth
 - deeper payment reconciliation, retries, refunds, disputes, and provider sync
 - subscription/billing governance only after explicit security and release gates
 - paid early-access infrastructure should follow [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md); the current Phase 2.5 foundation covers founder setup/activation visibility, platform-admin-entered billing evidence, a durable `/super-admin/billing` Billing Operations console, test-mode-only Product/recurring Price setup, a test-mode-only FloorConnector SaaS subscription Checkout Session bridge, and signed SaaS-only webhook reconciliation, while live Stripe Billing launch, entitlement enforcement, public self-serve launch, Customer Portal, and live provider mutation remain separate approved phases
-- live SaaS billing launch policy should follow [docs/saas-billing-live-launch-plan.md](C:/FloorConnector/docs/saas-billing-live-launch-plan.md) before any live Stripe resource creation, Customer Portal work, dunning/cancellation automation, entitlement enforcement, waiver controls, or production release gate implementation
+- live SaaS billing launch policy should follow [docs/saas-billing-live-launch-plan.md](C:/FloorConnector/docs/saas-billing-live-launch-plan.md) before any live Stripe resource creation, Customer Portal work, dunning/cancellation automation, entitlement enforcement, waiver controls, or production release gate implementation; the next safe implementation slice is read-only live-mode readiness indicators, not live provider mutation
 - external e-sign provider integration on canonical contracts
 - tax and accounting adapters
 - package/billing governance beyond current read-only foundations

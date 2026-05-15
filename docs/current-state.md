@@ -39,7 +39,8 @@ Use these docs together:
 - [docs/founder-demo-readiness.md](C:/FloorConnector/docs/founder-demo-readiness.md): rehearsal script for the current founder-demo path from setup through portal and print/save documents
 - [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md): Phase 2 paid early-access readiness plan and billing/activation boundaries
 - [docs/stripe-saas-billing-runbook.md](C:/FloorConnector/docs/stripe-saas-billing-runbook.md): test-mode FloorConnector SaaS billing webhook setup, replay, verification, and recovery boundaries
-- [docs/saas-billing-live-launch-plan.md](C:/FloorConnector/docs/saas-billing-live-launch-plan.md): live SaaS billing policy, entitlement, Customer Portal, dunning/support, rollback, and release-gate planning before live controls
+- [docs/saas-billing-live-launch-plan.md](C:/FloorConnector/docs/saas-billing-live-launch-plan.md): live SaaS billing policy, entitlement, Customer Portal, dunning/support, rollback, and release-gate planning before live controls; this is planning only and does not implement live billing, automatic activation, Customer Portal, entitlement enforcement, or billing-state runtime gates
+- [docs/import-export-readiness.md](C:/FloorConnector/docs/import-export-readiness.md): implemented export-first data portability foundation plus import-readiness/no-mutation boundaries
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
 - [docs/documentation-standards.md](C:/FloorConnector/docs/documentation-standards.md): documentation layers, metadata, and AI-readability rules
 - [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md): mandatory UI and module implementation rules
@@ -453,6 +454,17 @@ Implemented now:
 - the route uses server-side tenant-scoped loaders over `opportunities`, `estimates`, `invoices`, `payments`, `projects`, and `invoice_tax_reporting_entries`
 - Sales Tax Summary uses invoice issue-date filtering, reports taxable sales, exempt sales, tax collected, invoice count, invoice/payment status context, and customer exemption snapshot visibility, with every row linking back to the canonical invoice
 - `/reports` does not create reporting tables, snapshots, exports, charts, mutations, filing workflows, tax-provider integrations, or a separate analytics model
+- `/settings/export` now provides the first tenant-scoped Data Export surface for organization owners/admins:
+  - exports are read-only downloads over canonical records for customers, customer contacts, projects, estimates, estimate line items, invoices, invoice line items, payments, jobs, and job assignments
+  - downloads are module-by-module through `/settings/export/[module]?format=csv|json`
+  - CSV exports use contractor-readable field names, stable ids, and relationship labels where safe
+  - JSON exports include export metadata, tenant/company context, schema version, field definitions, relationship notes, row count, and rows
+  - export data comes from the active authenticated organization membership plus explicit `company_id` filters; there is no raw unrestricted Supabase export
+  - payment exports include canonical payment rows only and exclude card/bank details, gateway payment intent references, checkout session references, raw provider payloads, webhook data, and payment secrets
+  - portal invite tokens, token hashes, auth sessions, temporary passwords, raw invite links, service-role keys, Stripe keys, webhook secrets, Checkout URLs, and Customer Portal URLs are not exported
+  - estimate and invoice line-item exports include customer-facing commercial fields and exclude internal cost, hidden markup, and markup fields in this first foundation
+  - export attempts write small `data_export_events` metadata rows after the audit migration is applied, recording who exported, when, module, format, status, record count, schema version, and filename; no exported rows or file contents are stored
+  - import remains planning/no-mutation only: there is no upload control, dry-run parser, import write path, background job, rollback tool, or broad import schema
 
 Defined but still foundation-only:
 

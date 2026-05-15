@@ -43,13 +43,13 @@ module.exports = defineConfig({
     },
     {
       name: "chromium-public",
-      testMatch: /(?:marketing-login|save-state-form|ui-primitives)\.spec\.js/,
+      testMatch: /(?:marketing-login|save-state-form|ui-primitives|data-export)\.spec\.js/,
       use: { ...devices["Desktop Chrome"] }
     },
     {
       name: "chromium-protected",
       dependencies: ["setup"],
-      testMatch: /(?:estimate-.*|project-detail-ui|customer-detail-ui|people-directory-access|project-ai-cue-work-item-bridge|operational-cues-record-panels|schedule-ready-handoff|dashboard-ui|dashboard-ui-my-work-queue-modes|detail-workspace-ui)\.spec\.js/,
+      testMatch: /(?:estimate-.*|project-detail-ui|customer-detail-ui|people-directory-access|project-ai-cue-work-item-bridge|operational-cues-record-panels|schedule-ready-handoff|dashboard-ui|dashboard-ui-my-work-queue-modes|detail-workspace-ui|data-export)\.spec\.js/,
       use: {
         ...devices["Desktop Chrome"],
         storageState: authStatePath
@@ -67,7 +67,7 @@ module.exports = defineConfig({
     },
     {
       name: "chromium-portal",
-      testMatch: /portal-(?:golden-path|invite-acceptance)\.spec\.js/,
+      testMatch: /(?:portal-(?:golden-path|invite-acceptance)|data-export)\.spec\.js/,
       use: {
         ...devices["Desktop Chrome"]
       }

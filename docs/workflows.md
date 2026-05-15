@@ -171,6 +171,21 @@ Implemented Perspective Views:
 
 ## Financial Workflow Rules
 
+## Import / Export Workflow
+
+Implemented export-first foundation:
+
+- Contractor organization owners/admins can open `/settings/export` and download tenant-scoped module exports for customers, customer contacts, projects, estimates, estimate line items, invoices, invoice line items, payments, jobs, and job assignments.
+- Exports are read-only views over canonical FloorConnector records. They do not create snapshots, alternate data models, reporting tables, backup records, import records, or workflow mutations.
+- CSV exports are intended for contractor-readable tabular review. JSON manifests include tenant metadata, export timestamp, schema version, field definitions, relationship notes, row count, and rows.
+- Export scope comes from the authenticated active organization membership and explicit `company_id` filters. Portal customers, unauthenticated users, contractor members without owner/admin permissions, and platform-only billing data are not part of tenant export access.
+- Payment exports preserve canonical invoice/payment relationships but exclude card/bank details, gateway references, raw provider payloads, webhook data, Checkout URLs, Stripe secrets, and payment secrets.
+- Export history records metadata only in `data_export_events`: who requested the export, tenant, module, format, status, approximate row count, schema version, filename, and a safe failure summary if needed. It does not store exported rows, files, raw SQL, provider payloads, tokens, or payment details.
+- Portal access export is not implemented yet. Future portal access exports may include safe grant/project-access metadata only, never invite tokens, token hashes, raw invite links, sessions, temporary passwords, or auth secrets.
+- Import remains validation-planning only. Future import must start with dry-run mapping, duplicate detection, tenant-scoped preview, audit trail, rollback/undo plan, and explicit approval before any canonical record writes.
+
+This workflow preserves the canonical lifecycle and exists to support data portability without weakening tenant isolation or creating detached data truth.
+
 ### Billing Trigger Rule
 
 An invoice may only be created when a valid billing trigger exists:

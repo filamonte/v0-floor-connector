@@ -33,6 +33,6 @@ Status vocabulary: Stable, Active, Foundation, Planned, Deferred.
 | Super admin | Active | Platform role boundary, defaults, starter packs, groups, package governance, and operations foundations exist. |
 | Materials / catalogs | Foundation | `catalog_items`, cost item database, inventory links, materials route, and estimate sourcing exist; execution materials workflows remain future. |
 | Communications | Foundation | Communication threads/messages, filters, safe replies, and notification triage foundations exist; provider-backed depth remains future. |
-| Reporting | Foundation | `/reports` and Sales Tax Summary exist; broad analytics, exports, and report builders remain future. |
-| Import / export | Planned | Internal estimate reuse/import helpers exist, but broad tenant-scoped import/export readiness for core records is not implemented. |
+| Reporting | Foundation | `/reports` and Sales Tax Summary exist; broad analytics and report builders remain future. |
+| Import / export | Foundation | `/settings/export` now provides owner/admin tenant-scoped CSV and JSON exports for core canonical records plus metadata-only export history; broad import remains validation/no-mutation planning only. |
 | AI / intelligence layer | Foundation | Operational cues exist as deterministic/read-only guidance; broad AI assistance remains future. |

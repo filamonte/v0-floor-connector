@@ -76,6 +76,12 @@ export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
     adminOnly: true
   },
   {
+    href: "/settings/export",
+    label: "Data Export",
+    description: "Tenant-scoped CSV and JSON exports for canonical records.",
+    adminOnly: true
+  },
+  {
     href: "/settings/admin",
     label: "Admin",
     description: "Organization members, roles, and admin-facing controls.",

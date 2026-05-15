@@ -16,6 +16,19 @@ Use with:
 - [docs/stripe-saas-billing-runbook.md](C:/FloorConnector/docs/stripe-saas-billing-runbook.md)
 - [docs/e2e-browser-qa.md](C:/FloorConnector/docs/e2e-browser-qa.md)
 
+## Stripe References Reviewed
+
+Use official Stripe documentation as the external source of truth when this plan becomes implementation work:
+
+- [Stripe API keys](https://docs.stripe.com/keys): test and live mode keys are separate; live keys must be configured only for approved production work.
+- [Stripe Products](https://docs.stripe.com/api/products) and [Stripe Prices](https://docs.stripe.com/api/prices): recurring SaaS billing must use live-mode Product/Price references that are separate from test-mode proof resources.
+- [Build subscriptions](https://docs.stripe.com/billing/subscriptions/build-subscriptions): subscription provisioning must be webhook-backed; do not rely on Checkout return URLs as proof of paid access.
+- [Subscription statuses](https://docs.stripe.com/billing/subscriptions/overview#subscription-statuses): `incomplete`, `trialing`, `active`, `past_due`, `canceled`, `unpaid`, and `paused` need explicit FloorConnector policy before enforcement.
+- [Customer Portal](https://docs.stripe.com/customer-management/integrate-customer-portal): Portal sessions should be created server-side for the SaaS Stripe Customer only after Portal boundaries are approved.
+- [Webhooks](https://docs.stripe.com/webhooks): webhook endpoints, signing secrets, retries, idempotency, and event-mode separation must be treated as production release gates.
+- [Smart Retries](https://docs.stripe.com/billing/revenue-recovery/smart-retries): dunning behavior depends on Stripe retry settings and the configured final action after retries are exhausted.
+- [Cancel subscriptions](https://docs.stripe.com/billing/subscriptions/cancel): cancellation timing and post-cancel access must be an app policy, not an accidental provider default.
+
 ## Current Proven Baseline
 
 Implemented and proven in test mode:
@@ -30,6 +43,17 @@ Implemented and proven in test mode:
 - Contractor-customer `payments` and `payment_events` remained unchanged.
 - Signed wrong-domain events were ignored.
 - SaaS billing and contractor-customer invoice payments remain separate Stripe domains.
+
+Implemented code baselines to preserve:
+
+- `/super-admin/billing` is the durable Billing Operations console and currently exposes names-only config health, test-mode Product/Price setup, Checkout/webhook readiness, tenant SaaS subscription references, manual billing evidence, and activation separation.
+- `/super-admin/early-access` owns founder setup/readiness review, manual founder billing evidence, and manual activation. It is not the long-term billing command center.
+- `/setup/billing` keeps no-charge card setup and FloorConnector SaaS subscription Checkout as separate lanes, with activation copy remaining review-oriented.
+- SaaS Checkout is server-side, subscription-mode, metadata-backed, owner/admin gated, and uses the FloorConnector SaaS billing domain.
+- SaaS webhooks verify signatures, filter by SaaS metadata/domain/environment, record processed event ids, update safe subscription references/status, and do not auto-activate tenants.
+- The activation guard already protects irreversible external actions using `companies.tenant_status` and `companies.lifecycle_state`.
+- Current module/feature settings are not billing entitlements and must not become a hidden entitlement model.
+- Contractor-customer Stripe payments remain on the separate invoice-payment endpoint and canonical payment rows.
 
 Still not implemented:
 
@@ -57,6 +81,9 @@ Recommended launch policy:
 - `unpaid`, `canceled`, and `incomplete_expired` should block irreversible external-production actions until an operator resolves billing, waives the tenant, or reactivates a valid subscription path.
 - Grace periods must be explicit before launch. Recommended default: one short operator-reviewed grace period for `past_due`, no automatic grace for `unpaid` or `canceled`.
 - Billing failures should route to a platform-admin support playbook before customer-facing lockout copy expands.
+- Subscription status should not limit internal drafting by itself in the first entitlement slice.
+- Subscription status may become a prerequisite for irreversible external-production actions only through an explicit server-side entitlement helper.
+- Manual founder evidence, waivers, internal/demo status, and Stripe subscription state must be visible as separate evidence sources until a future policy defines precedence.
 
 Open policy questions:
 
@@ -64,6 +91,8 @@ Open policy questions:
 - Should `past_due` block new external sends immediately, or only after the grace period?
 - Should already-scheduled jobs stay visible/executable if SaaS billing becomes `unpaid`?
 - Who besides platform admins may grant a waiver, and should waiver require a reason plus expiration?
+- Should waiver scope be action-specific, tenant-wide, or both?
+- Which support role owns customer contact for billing failures before a broader support console exists?
 - What public terms, privacy, cancellation, refund, and billing-support copy must be published before the first live founder charge?
 - Should first live tenants use manual founder evidence plus Dashboard-created Stripe subscriptions, or app-created live Checkout only after live controls are built?
 
@@ -71,18 +100,20 @@ Open policy questions:
 
 Initial entitlement principle: do not block internal contractor work immediately for billing state. Gate irreversible external-production actions first, similar to the existing early-access activation guard.
 
+Important distinction: the table below is a policy plan, not implemented runtime behavior. Future enforcement should evaluate billing state and the existing activation guard together.
+
 | Billing state | Internal drafting | Portal access | Estimate send | Contract send-for-signature | Portal checkout/customer payments | Provider-backed email | Scheduling | Data export | Super-admin override |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| no subscription | Allowed | Allowed for existing grants | Block until activated/waived | Block until activated/waived | Block until activated/waived | Block until activated/waived | Allowed if readiness passes | Allowed | Yes |
-| trialing | Allowed | Allowed | Allowed only if tenant is manually activated or explicitly waived | Allowed only if tenant is manually activated or explicitly waived | Allowed only if tenant is manually activated or explicitly waived | Allowed only if tenant is manually activated or explicitly waived | Allowed if readiness passes | Allowed | Yes |
-| active | Allowed | Allowed | Allowed if tenant activation guard passes | Allowed if tenant activation guard passes | Allowed if tenant activation guard passes | Allowed if tenant activation guard passes | Allowed if readiness passes | Allowed | Yes |
+| no subscription | Allowed | Allowed for existing grants | Block until activated and entitled or waived | Block until activated and entitled or waived | Block until activated and entitled or waived | Block until activated and entitled or waived | Allowed if readiness passes | Allowed | Yes |
+| trialing | Allowed | Allowed | Allowed only if tenant is manually activated and trial entitlement is approved | Allowed only if tenant is manually activated and trial entitlement is approved | Allowed only if tenant is manually activated and trial entitlement is approved | Allowed only if tenant is manually activated and trial entitlement is approved | Allowed if readiness passes | Allowed | Yes |
+| active | Allowed | Allowed | Allowed if activation guard and entitlement helper pass | Allowed if activation guard and entitlement helper pass | Allowed if activation guard and entitlement helper pass | Allowed if activation guard and entitlement helper pass | Allowed if readiness passes | Allowed | Yes |
 | past_due | Allowed | Allowed | Open: allow during grace or block after grace | Open: allow during grace or block after grace | Open: allow during grace or block after grace | Open: allow during grace or block after grace | Allowed if readiness passes | Allowed | Yes |
 | unpaid | Allowed | Allowed read/review | Block | Block | Block | Block | Allowed for internal planning; no external dispatch messages | Allowed | Yes |
 | canceled | Allowed | Allowed read/review | Block unless manually waived | Block unless manually waived | Block unless manually waived | Block unless manually waived | Allowed for internal planning; no external dispatch messages | Allowed | Yes |
 | incomplete | Allowed | Allowed read/review | Block | Block | Block | Block | Allowed for internal planning | Allowed | Yes |
 | incomplete_expired | Allowed | Allowed read/review | Block | Block | Block | Block | Allowed for internal planning | Allowed | Yes |
 | paused | Allowed | Allowed read/review | Block unless manually waived | Block unless manually waived | Block unless manually waived | Block unless manually waived | Allowed for internal planning | Allowed | Yes |
-| manual founder evidence | Allowed | Allowed | Allowed only after manual activation/waiver | Allowed only after manual activation/waiver | Allowed only after manual activation/waiver | Allowed only after manual activation/waiver | Allowed if readiness passes | Allowed | Yes |
+| manual founder evidence | Allowed | Allowed | Allowed only after manual activation and evidence policy approval or waiver | Allowed only after manual activation and evidence policy approval or waiver | Allowed only after manual activation and evidence policy approval or waiver | Allowed only after manual activation and evidence policy approval or waiver | Allowed if readiness passes | Allowed | Yes |
 | waived/internal/demo account | Allowed | Allowed | Allowed according to waiver scope | Allowed according to waiver scope | Allowed according to waiver scope | Allowed according to waiver scope | Allowed if readiness passes | Allowed | Yes |
 
 Implementation shape for a future slice:
@@ -92,6 +123,7 @@ Implementation shape for a future slice:
 - Keep the helper separate from package definitions and read-only package assignment foundations until an explicit package-assignment lifecycle is implemented.
 - Start with the same irreversible-action boundaries the activation guard already protects.
 - Add tests proving internal drafting stays allowed while external production actions remain blocked for unsafe billing states.
+- Log or expose entitlement decisions with safe reason codes only; never expose payment details, webhook payloads, secrets, or raw provider evidence in contractor-facing UI.
 
 ## Stripe Customer Portal Boundaries
 
@@ -104,6 +136,7 @@ Recommended boundaries:
 - Super admins may view readiness and references, but should not impersonate a tenant into Customer Portal in the first slice.
 - Customer Portal must not appear in the customer-facing project portal and must not be labeled in a way that sounds like contractor-customer invoice payment.
 - Customer Portal must use the FloorConnector SaaS Stripe Customer associated with the contractor tenant, not contractor-customer invoice payment customers.
+- The Customer Portal entry label should say "FloorConnector subscription billing" or equivalent, never "customer payments" or "project payments."
 - Allowed first actions: update payment method, view invoices, download invoices/receipts.
 - Cancellation may be allowed only after a cancellation policy is approved and webhook handling maps the result back into support review and entitlement decisions.
 - Plan changes should remain disabled initially; change-plan UX belongs after package assignment, entitlement mapping, and pricing governance are implemented.
@@ -122,6 +155,7 @@ Open Customer Portal questions:
 - Should cancellation require the contractor to contact support during founder access?
 - What should the in-app return URL be after Customer Portal exits?
 - Should portal invoice history include all SaaS invoices or only the current subscription's invoices?
+- Should Customer Portal access require the tenant to be active, or can pending/trialing owners update billing before activation?
 
 ## Dunning, Rollback, And Support Playbook
 
@@ -140,6 +174,7 @@ Operator playbook:
 - Refund/cancel founder customer: Use Stripe Dashboard until app refund/cancel controls are explicitly built; record only non-secret support evidence in FloorConnector.
 - Manual override/waiver: Require platform-admin access, operator reason, expiration/review date, affected actions, and audit evidence before any runtime waiver is honored.
 - Rollback from live launch: Disable live Checkout entry, remove/disable live price reference from app settings, keep webhook endpoint available to receive late provider events, mark affected tenants for manual review, and preserve all provider references/audit rows.
+- Post-rollback review: Confirm no contractor-customer `payments`, `payment_events`, invoice status, signature status, portal access, RLS policy, or tenant isolation behavior changed.
 
 ## Production Release Gates
 
@@ -162,6 +197,8 @@ Live billing cannot be enabled until all gates below are true:
 - privacy, terms, billing, cancellation, and support copy updated
 - backup and rollback plan approved
 - first founder tenant selected by id/name in an operator checklist
+- support owner and escalation contact selected
+- production monitoring/log-review path identified without exposing secrets or raw provider payloads
 - no live Checkout/Customer Portal links exposed until the above is reviewed
 
 ## Billing Operations Future Implementation Plan
@@ -169,7 +206,7 @@ Live billing cannot be enabled until all gates below are true:
 Phase 1: Live-mode readiness indicators only
 
 - Add live names-only readiness rows to `/super-admin/billing`.
-- Show live/test separation, configured live Product/Price reference presence, live webhook endpoint checklist status, and blocked next actions.
+- Show live/test separation, configured live Product/Price reference presence, live webhook endpoint checklist status, Customer Portal policy status, entitlement policy status, support playbook status, and blocked next actions.
 - No live Stripe mutations.
 
 Phase 2: Live Product/Price sync/create controls
@@ -204,6 +241,8 @@ Phase 7: Live launch checklist gating
 
 - Add an operator checklist that must be complete before exposing live Checkout/Customer Portal controls.
 - Checklist should reference the exact tenant, live price, live webhook endpoint, support owner, and rollback plan.
+
+Each phase should update this plan, [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md), [docs/current-state.md](C:/FloorConnector/docs/current-state.md), and [docs/stripe-saas-billing-runbook.md](C:/FloorConnector/docs/stripe-saas-billing-runbook.md) when the implementation boundary changes.
 
 ## Recommended Next Prompt
 

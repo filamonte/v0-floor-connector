@@ -92,6 +92,7 @@ What contractor teams can do now:
 - configure workflow guidance intensity separately from AI assistance intent, with Project Workspace respecting next-best-action and readiness-guidance visibility while server-side readiness gates remain unchanged
 - rely on server-side readiness enforcement before scheduling and execution workflows proceed
 - manage organization-level settings and admin foundations
+- export core tenant-scoped business records from `/settings/export` as CSV or JSON manifests for data portability, with sensitive tokens, provider payloads, payment secrets, and auth material excluded; export history stores metadata only and never stores downloaded file contents
 - use super-admin configuration foundations at the platform layer
 
 The contractor app is no longer just a data shell. It supports connected operating workflows across commercial, billing, and execution contexts.

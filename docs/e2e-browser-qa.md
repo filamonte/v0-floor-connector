@@ -112,6 +112,23 @@ pnpm exec playwright test --project=chromium-public e2e/marketing-login.spec.js
 
 That spec verifies the public homepage exposes `Log in -> /login` and preserves `Start early access -> /signup?next=/setup/company`.
 
+Data Export QA lives in:
+
+```bash
+pnpm exec playwright test e2e/data-export.spec.js --project=chromium-protected
+pnpm exec playwright test e2e/data-export.spec.js --project=chromium-portal
+```
+
+The protected project verifies an authenticated contractor owner/admin can open
+`/settings/export`, receive tenant-scoped CSV responses, and see recent export
+history when the audit-table migration is present. If the active QA database has
+not applied `data_export_events` yet, the page shows the pending-migration audit
+notice while keeping exports usable. The portal project verifies a portal
+customer cannot open the contractor Data Export route. Do not print downloaded
+export contents in tickets, docs, chats, or test summaries.
+Exports may contain customer PII and commercial data even though they exclude
+tokens, secrets, raw provider payloads, payment secrets, and raw invite links.
+
 Stripe Billing checkout QA must stay test-mode only. To verify the `/setup/billing`
 subscription launcher, configure names-only prerequisites locally, restart the dev
 server, and use contractor owner/admin auth:

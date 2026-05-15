@@ -263,6 +263,24 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
         </SettingsOverviewCard>
 
         <SettingsOverviewCard
+          title="Data export"
+          description="Export tenant-scoped CSV and JSON manifests for canonical customers, projects, estimates, invoices, payments, jobs, and related detail rows."
+          href="/settings/export"
+          ctaLabel="Open data export"
+        >
+          <div className="space-y-2 border border-[#d9cdc2] bg-[#fbf7f2] px-4 py-4 text-sm leading-6 text-[#6f6256]">
+            <p>
+              Export is read-only and owner/admin scoped. Import remains
+              validation planning only with no upload or write path enabled.
+            </p>
+            <p>
+              Portal invite tokens, payment secrets, webhook payloads, and raw
+              provider data are excluded.
+            </p>
+          </div>
+        </SettingsOverviewCard>
+
+        <SettingsOverviewCard
           title="Operational Intelligence"
           description="Configure deterministic cues, responsibility defaults, and user-scoped dismiss/snooze behavior without creating task records or custom automation logic."
           href="/settings/operational-intelligence"

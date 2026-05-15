@@ -111,6 +111,8 @@ Live-launch planning:
 
 - [docs/saas-billing-live-launch-plan.md](C:/FloorConnector/docs/saas-billing-live-launch-plan.md) now defines the policy draft, entitlement map, Customer Portal boundaries, dunning/support/rollback playbook, production release gates, and future Billing Operations build phases required before any live billing controls are built.
 - The default launch policy remains conservative: subscription/payment success should not auto-activate tenants; platform-admin activation stays manual; billing status informs activation and support decisions; and initial billing-state gating should target irreversible external-production actions before internal drafting.
+- Live billing policy must preserve the current test-mode proof: Billing Operations may create/discover only test-mode Product/Price resources today, SaaS Checkout/webhook reconciliation stays separate from contractor-customer invoice payments, and `company_subscriptions` status is evidence for support/activation review rather than activation truth.
+- Future entitlement work should add an explicit server-side helper before runtime gating. Until that helper is approved and built, subscription statuses such as `active`, `past_due`, `unpaid`, `canceled`, `incomplete`, `incomplete_expired`, or `paused` are not module gates by themselves.
 - This planning document does not approve live Stripe resource creation, live charges, Customer Portal sessions, automatic activation, entitlement enforcement, contractor-customer payment changes, portal payment changes, RLS changes, tenant-isolation changes, invoice/signature/payment state changes, or fake subscription state.
 
 Recommended Phase 2 implementation choices:

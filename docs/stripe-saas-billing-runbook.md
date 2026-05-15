@@ -179,6 +179,14 @@ flow, or waiver control is built or enabled, use
 [docs/saas-billing-live-launch-plan.md](C:/FloorConnector/docs/saas-billing-live-launch-plan.md)
 and complete the release gates there.
 
+The live-launch plan should remain the handoff from this test-mode runbook into
+production readiness. It documents the required official Stripe reference areas,
+keeps test/live Product and Price references separate, requires a production
+webhook endpoint and endpoint-specific signing secret, preserves manual
+activation, and treats Customer Portal, dunning, cancellation, rollback, waiver,
+and entitlement enforcement as future approved slices rather than behavior this
+runbook unlocks.
+
 ## Required Environment Variable Names
 
 Configure names only. Never paste or print values in tickets, logs, docs, chat,
