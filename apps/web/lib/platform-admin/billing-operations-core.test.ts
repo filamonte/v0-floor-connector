@@ -4,6 +4,9 @@ import test from "node:test";
 import {
   buildBillingOperationsSummary,
   buildStripeBillingConfigurationHealth,
+  classifyStripePublishableKeyMode,
+  classifyStripeSecretKeyMode,
+  getSafeStripeTestPlanSetupErrorMessage,
   getStripeTestSecretKeyReadiness,
   getTenantBillingNextAction,
   normalizeBillingPlanSetupInput,
@@ -75,6 +78,22 @@ void test("reports Stripe SaaS billing env status without exposing values", () =
   );
 });
 
+void test("classifies Stripe credential modes by expected key type only", () => {
+  assert.equal(classifyStripeSecretKeyMode(null), "missing");
+  assert.equal(classifyStripeSecretKeyMode("sk_test_redacted"), "test");
+  assert.equal(classifyStripeSecretKeyMode("sk_live_redacted"), "live");
+  assert.equal(classifyStripeSecretKeyMode("rk_test_redacted"), "unknown");
+  assert.equal(classifyStripeSecretKeyMode("pk_test_redacted"), "unknown");
+
+  assert.equal(classifyStripePublishableKeyMode(""), "missing");
+  assert.equal(classifyStripePublishableKeyMode("pk_test_redacted"), "test");
+  assert.equal(classifyStripePublishableKeyMode("pk_live_redacted"), "live");
+  assert.equal(
+    classifyStripePublishableKeyMode("sk_test_redacted"),
+    "unknown"
+  );
+});
+
 void test("blocks test checkout when config is missing or live mode appears", () => {
   const missing = buildStripeBillingConfigurationHealth({
     stripeSecretKey: "sk_test_redacted",
@@ -94,10 +113,45 @@ void test("blocks test checkout when config is missing or live mode appears", ()
   assert.equal(missing.checkoutReady, false);
   assert.equal(missing.webhookReady, false);
   assert.equal(missing.testCheckoutReady, false);
+  assert.equal(missing.webhookReplayReady, false);
   assert.match(missing.warnings.join(" "), /SaaS Checkout is unavailable/);
   assert.equal(live.checkoutReady, true);
   assert.equal(live.testCheckoutReady, false);
+  assert.equal(live.productPriceSetupReady, false);
   assert.match(live.warnings.join(" "), /live-mode Stripe key/);
+});
+
+void test("explains unknown credential and missing webhook recovery", () => {
+  const health = buildStripeBillingConfigurationHealth({
+    stripeSecretKey: "configured-but-opaque",
+    stripePublishableKey: "another-opaque-value",
+    stripeFounderPlanPriceId: "",
+    platformStripePriceId: null,
+    stripeWebhookSecret: ""
+  });
+
+  const secret = health.items.find((item) => item.name === "STRIPE_SECRET_KEY");
+  const publishable = health.items.find(
+    (item) => item.name === "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"
+  );
+  const webhook = health.items.find(
+    (item) => item.name === "STRIPE_WEBHOOK_SECRET"
+  );
+
+  assert.equal(secret?.statusLabel, "Configured, mode not verified");
+  assert.equal(publishable?.statusLabel, "Configured, mode not verified");
+  assert.match(secret?.recoveryHint ?? "", /sk_test_/);
+  assert.match(publishable?.recoveryHint ?? "", /pk_test_/);
+  assert.match(webhook?.recoveryHint ?? "", /STRIPE_WEBHOOK_SECRET/);
+  assert.equal(health.productPriceSetupReady, false);
+  assert.match(
+    health.productPriceSetupBlockedReason ?? "",
+    /mode could not be verified/
+  );
+  assert.match(
+    health.webhookReplayBlockedReason ?? "",
+    /STRIPE_WEBHOOK_SECRET/
+  );
 });
 
 void test("prefers platform price reference over env fallback for checkout readiness", () => {
@@ -135,6 +189,10 @@ void test("guards Stripe product and price setup to test-mode secret keys", () =
     getStripeTestSecretKeyReadiness("not-a-key").canManageTestResources,
     false
   );
+  assert.equal(
+    getStripeTestSecretKeyReadiness("rk_test_redacted").canManageTestResources,
+    false
+  );
 });
 
 void test("normalizes test billing plan setup without exposing Stripe values", () => {
@@ -162,6 +220,21 @@ void test("normalizes test billing plan setup without exposing Stripe values", (
         interval: "month"
       }),
     /Live-mode Stripe keys/
+  );
+});
+
+void test("keeps Stripe setup action errors safe for redirects", () => {
+  assert.equal(
+    getSafeStripeTestPlanSetupErrorMessage(
+      new Error("Live-mode Stripe keys cannot create Billing Operations test plans.")
+    ),
+    "Live-mode Stripe keys cannot create Billing Operations test plans."
+  );
+  assert.equal(
+    getSafeStripeTestPlanSetupErrorMessage(
+      new Error("Your API key revealed a provider-specific account message.")
+    ),
+    "Unable to create or discover the Stripe test plan. Review Stripe test-mode credentials and try again."
   );
 });
 

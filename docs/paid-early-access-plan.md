@@ -52,7 +52,7 @@ Latest local SaaS billing QA result:
 
 - 2026-05-14 names-only env check found `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` present but mode-unknown from local value format, no app-managed platform billing price reference, `STRIPE_FOUNDER_PLAN_PRICE_ID` missing, and `STRIPE_WEBHOOK_SECRET` missing
 - because that configuration cannot safely prove test-mode Product/Price setup, subscription Checkout, Checkout completion, or signed webhook replay, no Product/Price action, Checkout Session, Stripe CLI forwarding, or webhook replay was run
-- Billing Operations can create or discover the test-mode FloorConnector SaaS Product and recurring Price only after `STRIPE_SECRET_KEY` is clearly test-mode, then store only non-secret references in `platform_billing_settings`
+- Billing Operations can create or discover the test-mode FloorConnector SaaS Product and recurring Price only after `STRIPE_SECRET_KEY` is clearly test-mode from the `sk_test_` prefix, then store only non-secret references in `platform_billing_settings`
 - SaaS billing unit coverage and manual fallback QA remain the current proof until an operator configures the missing test-mode names and reruns [docs/stripe-saas-billing-runbook.md](C:/FloorConnector/docs/stripe-saas-billing-runbook.md)
 
 Partially implemented:
@@ -247,7 +247,7 @@ Implemented Phase 2.5 slice:
 
 - `platform_billing_settings` stores platform-admin-controlled non-secret SaaS billing settings, including plan label, Stripe Product id, Stripe Price id, currency, amount, interval, mode, and sync timestamps
 - RLS is enabled and forced on `platform_billing_settings`, broad `public` / `anon` / `authenticated` grants are revoked, and the app uses server-side platform-admin/service-role access only
-- `/super-admin/billing` can create or discover the FloorConnector Founder Access test-mode Product and recurring Price only when `STRIPE_SECRET_KEY` is safely identified as test-mode
+- `/super-admin/billing` can create or discover the FloorConnector Founder Access test-mode Product and recurring Price only when `STRIPE_SECRET_KEY` is safely identified as test-mode from the `sk_test_` prefix; unknown or live-mode keys keep the action blocked
 - the Product/Price setup action attaches `billing_domain=floorconnector_saas`, `environment=test`, and `managed_by=floorconnector` metadata and uses idempotency keys for POST retries
 - the action does not create live Stripe resources, customers, subscriptions, Checkout Sessions, payment links, invoices, webhook endpoints, charges, tenant activation, contractor-customer invoice payments, portal payment state, package assignments, or entitlements
 - SaaS Checkout now prefers `platform_billing_settings.stripe_price_id` and falls back to `STRIPE_FOUNDER_PLAN_PRICE_ID` for compatibility
@@ -258,6 +258,7 @@ Implemented Phase 2.5 slice:
 Before live paid access:
 
 - test-mode Stripe keys are configured and verified locally
+- local test-mode recovery uses `sk_test_` for `STRIPE_SECRET_KEY` and `pk_test_` for `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`; any other configured prefix remains unknown/operator-review
 - either `platform_billing_settings.stripe_price_id` or `STRIPE_FOUNDER_PLAN_PRICE_ID` is configured before Checkout creation
 - the matching test-mode `STRIPE_WEBHOOK_SECRET` is configured before webhook replay
 - live keys are never used in local QA

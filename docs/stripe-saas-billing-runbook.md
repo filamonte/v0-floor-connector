@@ -44,6 +44,14 @@ fallback `STRIPE_FOUNDER_PLAN_PRICE_ID` remains supported for compatibility.
 `STRIPE_WEBHOOK_SECRET` still must be configured from Stripe CLI or the Stripe
 Dashboard endpoint before webhook replay.
 
+The recovery UI now classifies credential readiness by safe prefix only:
+`STRIPE_SECRET_KEY` must start with `sk_test_` for Product/Price setup,
+`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` must start with `pk_test_` for local test
+Checkout, live prefixes are refused for this phase, and any other configured
+value is shown as configured but mode-not-verified. Stripe webhook signing
+secrets remain env/provider-managed; Billing Operations shows the endpoint and
+CLI template but never stores webhook secrets in the database.
+
 Database inspection during this pass showed no SaaS billing reconciliation rows
 yet: `stripe_saas_billing_webhook_events` count `0`,
 `company_subscriptions` count `0`, and `platform_billing_settings` had no stored
@@ -87,11 +95,12 @@ a commercial phase; Billing is the long-term operating home for:
 - manual activation/entitlement separation
 
 The console may create or reuse Stripe Products and recurring Prices only with a
-test-mode Stripe secret key. It does not create live Stripe resources, Checkout
-Sessions, Customer Portal sessions, customers, subscriptions, invoices, payment
-links, live charges, webhook endpoints, or tenant activation. Use it before
-running the local replay steps and after replay to confirm status; use
-`/super-admin/early-access` for founder readiness and manual activation review.
+test-mode Stripe secret key that is recognizable from the `sk_test_` prefix. It
+does not create live Stripe resources, Checkout Sessions, Customer Portal
+sessions, customers, subscriptions, invoices, payment links, live charges,
+webhook endpoints, or tenant activation. Use it before running the local replay
+steps and after replay to confirm status; use `/super-admin/early-access` for
+founder readiness and manual activation review.
 
 ## Required Environment Variable Names
 
@@ -112,6 +121,14 @@ different signing secrets.
 `STRIPE_FOUNDER_PLAN_PRICE_ID` is now an env fallback. If
 `platform_billing_settings.stripe_price_id` exists, SaaS Checkout prefers that
 app-managed non-secret reference before the env value.
+
+Prefix expectations for this test-mode recovery path:
+
+- `STRIPE_SECRET_KEY` must start with `sk_test_`
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` must start with `pk_test_`
+- `sk_live_` and `pk_live_` are live mode and are refused for local replay
+- any other configured value is treated as unknown until the operator corrects
+  env and restarts the app
 
 ## Supported Events
 
@@ -151,8 +168,9 @@ when they include the same SaaS billing domain metadata and a real company id.
    `STRIPE_FOUNDER_PLAN_PRICE_ID` are missing, stop before creating Checkout
    Sessions. If `STRIPE_WEBHOOK_SECRET` is blank, stop before forwarding events.
 2. If the price reference is missing and `STRIPE_SECRET_KEY` is clearly
-   test-mode, use `/super-admin/billing` to create or discover the test founder
-   Product and recurring Price. Store only the non-secret references in the app.
+   `sk_test_`, use `/super-admin/billing` to create or discover the test
+   founder Product and recurring Price. Store only the non-secret references in
+   the app. If the key is live or unknown, leave the action blocked and fix env.
 3. Start the app locally.
 4. Start Stripe CLI forwarding in a separate terminal:
 
@@ -286,6 +304,13 @@ limit 10;
 
 ## Recovery Notes
 
+- If `/super-admin/billing` says a key is configured but mode could not be
+  verified, replace the local value with the expected test prefix and restart
+  the app. Do not attempt Product/Price setup with unknown keys.
+- If Product/Price setup is blocked only by missing webhook secret, it is still
+  safe to create/discover the test Product/Price when `STRIPE_SECRET_KEY` is
+  `sk_test_`; webhook replay remains blocked until `STRIPE_WEBHOOK_SECRET` is
+  configured and the app is restarted.
 - If signature verification fails, confirm the route uses the raw request body
   and the endpoint secret matches the source of the event.
 - If events are ignored, confirm metadata includes

@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 import { getServerEnv } from "@floorconnector/config";
 
 import { requirePlatformAdminUser } from "@/lib/platform-admin/access";
-import { normalizeBillingPlanSetupInput } from "@/lib/platform-admin/billing-operations-core";
+import {
+  getSafeStripeTestPlanSetupErrorMessage,
+  normalizeBillingPlanSetupInput
+} from "@/lib/platform-admin/billing-operations-core";
 import { upsertPlatformBillingSettings } from "@/lib/platform-admin/billing-settings";
 import { createOrDiscoverStripeTestSaasPlan } from "@/lib/platform-admin/stripe-test-plan-setup";
 import {
@@ -183,10 +186,7 @@ export async function createOrDiscoverTestSaasPlanAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect("/super-admin/billing", {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Unable to create or discover Stripe test plan."
+        error: getSafeStripeTestPlanSetupErrorMessage(error)
       })
     );
   }

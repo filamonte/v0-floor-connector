@@ -136,9 +136,10 @@ confirm names-only Stripe configuration health, Checkout readiness, webhook
 health, tenant subscription/reference status, platform price-reference status,
 and activation separation. The page includes a test-mode-only Product/Price
 create-or-discover action that must remain disabled/refused unless
-`STRIPE_SECRET_KEY` is clearly test-mode. The smoke is covered by
-`pnpm e2e:super-admin`; do not click live Checkout or paste secret values while
-exercising the page.
+`STRIPE_SECRET_KEY` is clearly test-mode from the `sk_test_` prefix. Unknown
+keys should show as configured but mode-not-verified, and live keys should stay
+blocked. The smoke is covered by `pnpm e2e:super-admin`; do not click live
+Checkout or paste secret values while exercising the page.
 
 Current local status from the 2026-05-14 replay prep: `STRIPE_SECRET_KEY` and
 `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` were present but mode-unknown from local
@@ -147,7 +148,10 @@ value format, the app-managed platform billing price reference was missing,
 missing. That is an expected stop condition: do not run Product/Price setup,
 create a Checkout Session, click a Checkout URL, or forward webhook events until
 recognizable test-mode values and the missing names are configured and the app
-is restarted.
+is restarted. For this recovery path, `STRIPE_SECRET_KEY` should start with
+`sk_test_`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` should start with `pk_test_`,
+and `STRIPE_WEBHOOK_SECRET` should come from Stripe CLI or the matching Stripe
+Dashboard webhook endpoint.
 
 Stripe SaaS billing webhook QA must also stay test-mode only. Configure
 `STRIPE_WEBHOOK_SECRET` for the `/api/stripe/saas-billing-webhook` endpoint

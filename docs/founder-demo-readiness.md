@@ -130,7 +130,7 @@ Names only; do not print values in demo notes, chat, logs, or screenshots.
 - If protected routes redirect to `/login`, refresh contractor storage state with `pnpm e2e:auth` using the same `PLAYWRIGHT_BASE_URL`.
 - If platform admin is denied, confirm the platform role with the documented platform-admin grant/status commands before the demo.
 - If Stripe test-mode setup is incomplete, show `/setup/billing` readiness and explain that live billing launch is intentionally gated.
-- If the Stripe key prefixes are not safely recognizable as test mode, the app-managed platform billing price reference is missing, or the SaaS webhook signing secret is not configured, do not run Product/Price setup, subscription Checkout, or Stripe CLI replay during the demo; state that the billing bridge is implemented but awaiting operator test-mode replay.
+- If the Stripe key prefixes are not safely recognizable as test mode (`sk_test_` for `STRIPE_SECRET_KEY`, `pk_test_` for `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`), the app-managed platform billing price reference is missing, or the SaaS webhook signing secret is not configured, do not run Product/Price setup, subscription Checkout, or Stripe CLI replay during the demo; state that the billing bridge is implemented but awaiting operator test-mode replay.
 - If a local development run shows Next.js development tooling in the viewport, use a production-style demo run rather than treating development chrome as part of the product. The app's own `DEV MODE / Reset session` helper is opt-in for local QA through `FLOORCONNECTOR_SHOW_DEV_QA_TOOLS=1` and should stay off for founder-demo screenshots.
 
 ## Print/Save Document Steps
@@ -201,7 +201,7 @@ Dry-run results:
 
 - all captured routes loaded with authenticated storage states and no 404s
 - `/setup/billing` rendered the safe billing-unavailable state while the local Stripe SetupIntent endpoint returned a background 500 in the dry-run console; keep live Checkout and payment setup out of founder demos unless test-mode Stripe is explicitly configured
-- 2026-05-14 Stripe SaaS replay prep found Stripe key prefixes not safely recognizable as test mode, no app-managed platform billing price reference, `STRIPE_FOUNDER_PLAN_PRICE_ID` missing, and `STRIPE_WEBHOOK_SECRET` missing locally, so no Product/Price action, Checkout Session, Stripe CLI forwarding, or webhook replay was started; keep billing in the caveated demo lane until the test-mode replay is completed
+- 2026-05-14 Stripe SaaS replay prep found Stripe key prefixes not safely recognizable as test mode, no app-managed platform billing price reference, `STRIPE_FOUNDER_PLAN_PRICE_ID` missing, and `STRIPE_WEBHOOK_SECRET` missing locally, so no Product/Price action, Checkout Session, Stripe CLI forwarding, or webhook replay was started; Billing Operations now explains the blocked state by safe prefix and keeps billing in the caveated demo lane until test-mode credentials, app-managed price reference, and webhook signing secret are ready
 - no protected route stopped at `/login` during the main dry run
 - no Checkout, activation, reset, temporary credential, payment, signature, or invite-copy action was clicked
 - small copy cleanup removed visible internal `canonical` / `provider-backed` wording from the lead workspace, customer workspace summary, and customer-facing print footer language

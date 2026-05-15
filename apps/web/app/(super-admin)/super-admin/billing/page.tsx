@@ -41,6 +41,10 @@ function formatStatus(value: string | null) {
 }
 
 function formatMode(value: string) {
+  if (value === "missing") {
+    return "Missing";
+  }
+
   if (value === "not_applicable") {
     return "Status only";
   }
@@ -180,11 +184,16 @@ export default async function SuperAdminBillingPage({
                     getStatusClasses(item.configured)
                   ].join(" ")}
                 >
-                  {item.configured ? "Configured" : "Missing"}
+                  {item.statusLabel}
                 </span>
                 <span className="inline-flex h-fit rounded-full border border-[var(--border-warm)] bg-white px-2.5 py-1 text-xs font-semibold capitalize text-[var(--text-tertiary)]">
                   {formatMode(item.mode)}
                 </span>
+                {item.recoveryHint ? (
+                  <p className="sm:col-span-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
+                    {item.recoveryHint}
+                  </p>
+                ) : null}
               </div>
             ))}
           </div>
@@ -259,6 +268,12 @@ export default async function SuperAdminBillingPage({
                 customers, subscriptions, Checkout sessions, payment links, or
                 activation.
               </p>
+              <p className="mt-2 text-xs leading-5 text-[var(--text-tertiary)]">
+                Expected recovery key shape:{" "}
+                <span className="font-mono">STRIPE_SECRET_KEY</span> starts
+                with <span className="font-mono">sk_test_</span>. Unknown or
+                live-mode keys keep this action disabled.
+              </p>
               <form
                 action={createOrDiscoverTestSaasPlanAction}
                 className="mt-4 grid gap-3"
@@ -320,9 +335,17 @@ export default async function SuperAdminBillingPage({
                     {testPlanReadiness.reason}
                   </p>
                 ) : null}
+                {!configurationHealth.webhookReady ? (
+                  <p className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2 text-xs leading-5 text-[var(--text-tertiary)]">
+                    Product/Price setup can run before the webhook signing
+                    secret exists, but replay remains blocked until{" "}
+                    <span className="font-mono">STRIPE_WEBHOOK_SECRET</span>{" "}
+                    is configured and the app is restarted.
+                  </p>
+                ) : null}
                 <button
                   type="submit"
-                  disabled={!testPlanReadiness.canManageTestResources}
+                  disabled={!configurationHealth.productPriceSetupReady}
                   className="inline-flex h-10 w-fit items-center justify-center rounded-md bg-[var(--text-primary)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--copper)] disabled:cursor-not-allowed disabled:bg-[#c9c2bb]"
                 >
                   Create or discover test plan
@@ -345,6 +368,11 @@ export default async function SuperAdminBillingPage({
                 and uses platform settings before the env fallback when
                 test-mode configuration is complete.
               </p>
+              {configurationHealth.productPriceSetupBlockedReason ? (
+                <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
+                  {configurationHealth.productPriceSetupBlockedReason}
+                </p>
+              ) : null}
               <span
                 className={[
                   "mt-3 inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
@@ -426,8 +454,14 @@ export default async function SuperAdminBillingPage({
               <p className="mt-1">
                 Use Stripe test mode, then configure{" "}
                 <span className="font-mono">STRIPE_WEBHOOK_SECRET</span> from
-                the listener output. Do not paste the secret into logs or chat.
+                the listener output. Do not paste the secret into logs or chat;
+                restart the app after changing local env.
               </p>
+              {configurationHealth.webhookReplayBlockedReason ? (
+                <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
+                  {configurationHealth.webhookReplayBlockedReason}
+                </p>
+              ) : null}
               <pre className="mt-3 overflow-x-auto rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] p-3 text-xs text-[var(--text-primary)]">
                 stripe listen --events
                 checkout.session.completed,customer.subscription.created,customer.subscription.updated,customer.subscription.deleted,invoice.paid,invoice.payment_failed
