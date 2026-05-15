@@ -10,6 +10,7 @@ This document lists important depth gaps without implying the operating core is 
 - Full scheduling calendar/board depth beyond the current `/schedule` foundation.
 - Dispatch automation, route optimization, and deeper crew/resource coordination.
 - Broader reporting, analytics, exports, and report-builder depth beyond current `/reports` foundations.
+- Broad import/export readiness for founder onboarding, customer/contact/project data movement, and exit confidence.
 - Communications and notification depth, including provider-backed customer messaging, delivery proof, and broader source coverage.
 - External e-sign provider integration on top of canonical contracts.
 - External tax and accounting integrations.
@@ -24,4 +25,3 @@ This document lists important depth gaps without implying the operating core is 
 ## Interpretation
 
 These gaps are depth and maturity gaps around an implemented operational core. Future work should deepen the same canonical record chain rather than create disconnected replacement systems.
-

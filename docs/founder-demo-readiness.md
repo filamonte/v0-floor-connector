@@ -5,7 +5,7 @@ Doc Type: QA / Demo
 
 This document is the rehearsal script for showing FloorConnector to prospective early-access contractors. It packages the current implemented app into one reliable operating story without creating demo-only records, fake auth, stored PDFs, live billing launch, or a parallel workflow.
 
-Read this with [docs/current-state.md](C:/FloorConnector/docs/current-state.md), [docs/workflows.md](C:/FloorConnector/docs/workflows.md), [docs/golden-workflow-demo-path.md](C:/FloorConnector/docs/golden-workflow-demo-path.md), [docs/e2e-browser-qa.md](C:/FloorConnector/docs/e2e-browser-qa.md), [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md), and [docs/stripe-saas-billing-runbook.md](C:/FloorConnector/docs/stripe-saas-billing-runbook.md).
+Read this with [docs/current-state.md](C:/FloorConnector/docs/current-state.md), [docs/workflows.md](C:/FloorConnector/docs/workflows.md), [docs/golden-workflow-demo-path.md](C:/FloorConnector/docs/golden-workflow-demo-path.md), [docs/founder-prospect-demo-script.md](C:/FloorConnector/docs/founder-prospect-demo-script.md), [docs/e2e-browser-qa.md](C:/FloorConnector/docs/e2e-browser-qa.md), [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md), and [docs/stripe-saas-billing-runbook.md](C:/FloorConnector/docs/stripe-saas-billing-runbook.md).
 
 ## Demo Story
 
@@ -14,6 +14,8 @@ FloorConnector is one connected operating path for specialty flooring contractor
 `setup -> lead -> customer/project -> estimate -> contract -> invoice/payment -> schedule/job -> portal -> print/save documents`
 
 The demo should feel like a contractor can start with a real prospect, keep the commercial and operational chain connected, bring the customer into the portal, and leave with customer-facing estimate, contract, and invoice documents that can be printed or saved from the browser.
+
+For the first external conversations, use [docs/founder-prospect-demo-script.md](C:/FloorConnector/docs/founder-prospect-demo-script.md). That script defines who to invite first, what to show in 20-minute and 45-minute demos, what caveats to state plainly, how to collect feedback, and how to decide the next build slice from actual founder-prospect friction.
 
 ## Baselines To Preserve
 
@@ -24,6 +26,31 @@ The demo should feel like a contractor can start with a real prospect, keep the 
 - Do not bypass readiness gates, tenant scope, portal access scope, payment state, signature state, or activation controls.
 - Keep SaaS billing separate from contractor-customer invoice payments.
 - Treat print/save documents as browser-rendered views of existing records, not stored PDF files or a document source of truth.
+
+## Controlled Founder Prospect Mode
+
+For the first one or two external founder-prospect demos, this rehearsal path is an operating script, not a product-build checklist. Pair it with [docs/founder-prospect-demo-script.md](C:/FloorConnector/docs/founder-prospect-demo-script.md) and [docs/founder-prospect-feedback.md](C:/FloorConnector/docs/founder-prospect-feedback.md).
+
+Before the call:
+
+- Choose a trusted prospect who fits the founder profile and will give direct feedback.
+- Rehearse the 20-minute path first; use the 45-minute path only when the prospect has time and fit is strong.
+- Confirm contractor, platform-admin, and portal customer sessions only for the roles being shown.
+- Confirm the known project/estimate/contract/invoice/job and portal fixture routes.
+- Keep the do-not-click list visible to the operator.
+- Prepare a private notes surface for feedback, blockers, and next-slice signals.
+
+During the call:
+
+- Show the connected workflow, not every setting.
+- Narrate caveats as controlled gates: live billing, activation, AI, document storage, scheduling depth, reporting, import/export, and support are intentionally bounded.
+- Stop before live Stripe, customer payment checkout, activation, external sends, temporary credentials, invite-token copy, payment mutation, or signature mutation.
+
+After the call:
+
+- Complete the feedback worksheet the same day.
+- Mark missing capabilities as prospect friction only, not automatic build commitments.
+- Recommend one next build slice from the approved list: estimate/catalog/materials depth, scheduling/dispatch depth, manager/mobile polish, import/export readiness, reporting/dashboard depth, live billing readiness controls, or onboarding/marketing polish.
 
 ## Role And Env Assumptions
 
@@ -167,6 +194,7 @@ pnpm exec playwright test e2e/estimate-document-pdf-delivery.spec.js --project=c
 pnpm e2e:portal-fixture
 pnpm e2e:portal-auth
 pnpm e2e:portal
+pnpm exec tsx --test apps/web/lib/platform-admin/billing-operations-core.test.ts apps/web/lib/platform-admin/stripe-test-plan-setup.test.ts apps/web/lib/onboarding/saas-billing-checkout-core.test.ts apps/web/lib/onboarding/saas-billing-webhook-core.test.ts
 ```
 
 Run shared-webServer Playwright commands sequentially unless each command uses an isolated base URL and port.
@@ -202,6 +230,11 @@ Dry-run results:
 - all captured routes loaded with authenticated storage states and no 404s
 - `/setup/billing` rendered the safe billing-unavailable state while the local Stripe SetupIntent endpoint returned a background 500 in the dry-run console; keep live Checkout and payment setup out of founder demos unless test-mode Stripe is explicitly configured
 - 2026-05-15 Stripe SaaS replay prep found Stripe key prefixes not safely recognizable as test mode, no app-managed platform billing Product/Price reference, `STRIPE_FOUNDER_PLAN_PRICE_ID` missing, and `STRIPE_WEBHOOK_SECRET` blank locally, so no Product/Price action, Checkout Session, Stripe CLI forwarding, or webhook replay was started; Billing Operations explains the blocked state by safe prefix and keeps billing in the caveated demo lane until test-mode credentials, app-managed price reference, and webhook signing secret are ready
+- the 2026-05-15 authenticated follow-up refreshed platform-admin state and confirmed `/super-admin/billing`, `/super-admin/early-access`, `/setup/billing`, and `/setup/pending-activation` load against the running local app; checkout/replay remains blocked until the Stripe test-mode prerequisites above are fixed
+- the guarded retry for SaaS billing repeated the credentials-first stop before Stripe mutation: Product/Price setup was not attempted because the secret key prefix was still not safely recognizable as `sk_test_`, and Checkout/replay stayed blocked by the missing webhook secret and missing platform price reference
+- after the env fix, Billing Operations and Stripe test Checkout can be shown as working in test mode: the Product/Price reference is stored, `/setup/billing` sees Billing Operations as the plan source, and test Checkout returns to FloorConnector; do not claim webhook-confirmed subscription status yet because reconciliation is blocked until an active `subscription_plans` row exists
+- the follow-up recheck confirmed Billing Operations/setup pages still load authenticated with the test-mode env prefix gate and Product/Price reference ready; do not run another test Checkout in demo rehearsal until the canonical SaaS subscription plan row exists, because the webhook cannot create `company_subscriptions` without it
+- the SaaS billing closeout seeded the canonical `founder-default` plan catalog row and completed signed Stripe test-mode webhook reconciliation: Billing Operations can now show reconciled subscription status/current period evidence while activation remains manual and contractor-customer payments stay untouched
 - no protected route stopped at `/login` during the main dry run
 - no Checkout, activation, reset, temporary credential, payment, signature, or invite-copy action was clicked
 - small copy cleanup removed visible internal `canonical` / `provider-backed` wording from the lead workspace, customer workspace summary, and customer-facing print footer language

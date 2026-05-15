@@ -13,6 +13,7 @@ Use with:
 - [docs/e2e-browser-qa.md](C:/FloorConnector/docs/e2e-browser-qa.md)
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
 - [docs/chat-handoff.md](C:/FloorConnector/docs/chat-handoff.md)
+- [docs/saas-billing-live-launch-plan.md](C:/FloorConnector/docs/saas-billing-live-launch-plan.md)
 
 ## Latest Local QA Status
 
@@ -59,6 +60,69 @@ no stored Stripe Product or Price reference. No Product/Price action, Checkout
 Session, Stripe CLI forwarding, webhook replay, tenant activation, or
 contractor-customer payment webhook was invoked.
 
+The authenticated follow-up check on 2026-05-15 refreshed platform-admin auth
+with the local Playwright setup and loaded `/super-admin/billing`,
+`/super-admin/early-access`, `/setup/billing`, and
+`/setup/pending-activation` against the running local app. Billing Operations
+showed the expected names-only readiness surface and setup billing showed the
+test Checkout lane as unavailable until the missing prerequisites are fixed.
+Stripe CLI is installed locally, but forwarding was intentionally not started
+because the running app has no matching `STRIPE_WEBHOOK_SECRET` configured.
+
+A subsequent guarded retry on 2026-05-15 repeated the names-and-prefixes-only
+check before any Stripe mutation and reached the same stop condition:
+`STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` were configured
+but not safely recognizable as test-mode prefixes, `STRIPE_WEBHOOK_SECRET`
+remained blank, `platform_billing_settings` still had no Product/Price
+reference, and the SaaS webhook/subscription tables had no replay evidence.
+No Product/Price setup, Checkout Session, Stripe CLI forwarding, webhook replay,
+tenant activation, or contractor-customer payment action was run.
+
+The post-env-fix proof run on 2026-05-15 confirmed the local Stripe names now
+use safe test-mode prefixes and a configured webhook signing secret. Billing
+Operations created/discovered the test-mode Product and recurring Price and
+stored only non-secret references in `platform_billing_settings`; `/setup/billing`
+then showed the plan as managed by Billing Operations and completed a Stripe
+test-mode subscription Checkout with the standard Stripe test card. Two local
+Stripe CLI listener processes were present for `/api/stripe/saas-billing-webhook`,
+but the completed Checkout events did not arrive through CLI forwarding. A
+fallback signed local replay of real Stripe test-mode SaaS events reached the
+webhook route, but reconciliation returned a safe 500 because the checked
+environment has no `subscription_plans` rows. A signed wrong-domain event was
+accepted by signature verification and ignored without creating SaaS
+subscription, contractor payment, or payment-event rows. Tenant activation
+remained manual.
+
+Current remaining blocker for a full replay closeout: seed or configure the
+existing canonical `subscription_plans` table with an active SaaS plan before
+replaying the real signed test-mode events again. Do not create fake
+subscription state in `company_subscriptions` as a workaround.
+
+The follow-up recheck on 2026-05-15 confirmed the env prefix gate now passes
+again by name/prefix only: the secret key is test-mode, the publishable key is
+test-mode, and the webhook signing secret is configured. The app-managed
+Product/Price reference remains stored and synced, and local Stripe CLI listener
+processes are present for `/api/stripe/saas-billing-webhook` on the active
+local app port. Checkout and real SaaS event replay were intentionally not
+repeated because `subscription_plans` is still empty; creating another Checkout
+would only create another unreconciled Stripe test subscription. A signed
+wrong-domain event was rechecked and ignored without creating SaaS subscription,
+contractor payment, or payment-event rows. Tenant activation remained manual.
+
+The replay closeout on 2026-05-15 seeded the missing platform-wide
+`subscription_plans` catalog prerequisite with an idempotent migration keyed as
+`founder-default`. The seed copies the Billing Operations plan label, amount,
+currency, and monthly/yearly interval when platform settings exist, and it does
+not create `company_subscriptions`, customers, payments, invoices, activation,
+or provider state. After the plan row existed, signed real Stripe test-mode SaaS
+events were replayed through `/api/stripe/saas-billing-webhook`: Checkout
+completion created the current company subscription through the webhook,
+subscription creation updated references/status, invoice paid recorded the
+current period end, and duplicate replay returned duplicate without a second
+subscription row. The SaaS webhook ledger recorded processed event ids,
+contractor payment and payment-event row counts stayed unchanged, a signed
+wrong-domain event remained ignored, and tenant activation stayed manual.
+
 ## Domain Boundary
 
 FloorConnector has two separate Stripe domains:
@@ -101,6 +165,19 @@ sessions, customers, subscriptions, invoices, payment links, live charges,
 webhook endpoints, or tenant activation. Use it before running the local replay
 steps and after replay to confirm status; use `/super-admin/early-access` for
 founder readiness and manual activation review.
+
+The canonical FloorConnector plan catalog is separate from Stripe Product/Price
+setup. The SaaS webhook creates or updates `company_subscriptions` only after an
+active `subscription_plans` row exists. Seed or configure that platform-wide plan
+catalog row before replay; do not manually insert `company_subscriptions` as a
+shortcut.
+
+Live mode is not covered by this runbook. Before any production Stripe key,
+live Product/Price, live webhook endpoint, live Checkout, Customer Portal,
+automatic activation, entitlement enforcement, dunning automation, cancellation
+flow, or waiver control is built or enabled, use
+[docs/saas-billing-live-launch-plan.md](C:/FloorConnector/docs/saas-billing-live-launch-plan.md)
+and complete the release gates there.
 
 ## Required Environment Variable Names
 

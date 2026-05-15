@@ -85,7 +85,7 @@ Future depth:
 - shared file/evidence layer with multi-record links
 - Takeoff & Scope Intelligence as project-scoped, human-reviewed estimate input
 
-Catalog, materials, systems, takeoff, and documents must feed canonical estimates, contracts, jobs, invoices, and closeout evidence rather than become separate estimating or file silos. The founder-demo rehearsal path now lives in [docs/founder-demo-readiness.md](C:/FloorConnector/docs/founder-demo-readiness.md); use that path to decide whether the next product slice should be deeper materials/catalog work, live Stripe test-mode replay, deeper scheduling/dispatch, or founder onboarding/marketing polish.
+Catalog, materials, systems, takeoff, and documents must feed canonical estimates, contracts, jobs, invoices, and closeout evidence rather than become separate estimating or file silos. The founder-demo rehearsal path now lives in [docs/founder-demo-readiness.md](C:/FloorConnector/docs/founder-demo-readiness.md), the first prospect-facing script lives in [docs/founder-prospect-demo-script.md](C:/FloorConnector/docs/founder-prospect-demo-script.md), and the structured worksheet lives in [docs/founder-prospect-feedback.md](C:/FloorConnector/docs/founder-prospect-feedback.md). Use those docs to decide whether the next product slice should be estimate/catalog/materials depth, scheduling/dispatch depth, manager/mobile polish, import/export readiness, reporting/dashboard depth, live billing readiness controls, or onboarding/marketing polish after explicit release decisions.
 
 ## 5. Financial, Reporting, And Integration Expansion
 
@@ -98,6 +98,7 @@ Future depth:
 - deeper payment reconciliation, retries, refunds, disputes, and provider sync
 - subscription/billing governance only after explicit security and release gates
 - paid early-access infrastructure should follow [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md); the current Phase 2.5 foundation covers founder setup/activation visibility, platform-admin-entered billing evidence, a durable `/super-admin/billing` Billing Operations console, test-mode-only Product/recurring Price setup, a test-mode-only FloorConnector SaaS subscription Checkout Session bridge, and signed SaaS-only webhook reconciliation, while live Stripe Billing launch, entitlement enforcement, public self-serve launch, Customer Portal, and live provider mutation remain separate approved phases
+- live SaaS billing launch policy should follow [docs/saas-billing-live-launch-plan.md](C:/FloorConnector/docs/saas-billing-live-launch-plan.md) before any live Stripe resource creation, Customer Portal work, dunning/cancellation automation, entitlement enforcement, waiver controls, or production release gate implementation
 - external e-sign provider integration on canonical contracts
 - tax and accounting adapters
 - package/billing governance beyond current read-only foundations

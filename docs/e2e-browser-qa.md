@@ -153,6 +153,54 @@ is restarted. For this recovery path, `STRIPE_SECRET_KEY` should start with
 and `STRIPE_WEBHOOK_SECRET` should come from Stripe CLI or the matching Stripe
 Dashboard webhook endpoint.
 
+The authenticated 2026-05-15 follow-up refreshed platform-admin state with the
+local Playwright setup and confirmed `/super-admin/billing`,
+`/super-admin/early-access`, `/setup/billing`, and
+`/setup/pending-activation` loaded against `localhost:3000` without falling to
+`/login`. The checkout/replay stop condition remained in force, so no Stripe
+resource, Checkout, webhook forwarding, webhook replay, activation, or
+contractor-customer payment action was invoked.
+
+A subsequent guarded retry repeated the route checks with existing contractor
+and platform-admin storage states and confirmed the same four routes load
+authenticated. Keep treating Product/Price setup as blocked until
+`STRIPE_SECRET_KEY` is safely recognizable as `sk_test_`; keep Checkout and
+webhook replay blocked until the publishable key, platform price reference, and
+matching webhook secret are configured and the app is restarted.
+
+The post-env-fix proof run confirmed those env and Product/Price prerequisites
+can pass and that test-mode Checkout can return to `/setup/billing`. It did not
+complete webhook reconciliation: local Stripe CLI listener processes were
+present but did not forward the Checkout events, and signed replay of real
+Stripe test-mode SaaS events returned the app's safe missing-plan error because
+`subscription_plans` was empty. Before rerunning the webhook closeout, seed or
+configure an active canonical SaaS subscription plan and keep the
+contractor-payment counts check in place.
+
+The follow-up recheck confirmed `/super-admin/billing`,
+`/super-admin/early-access`, `/setup/billing`, and
+`/setup/pending-activation` still load with authenticated platform-admin and
+contractor storage states on the active local app port. It also confirmed a
+signed wrong-domain webhook event is ignored without changing SaaS subscription,
+contractor payment, or payment-event row counts. Repeat Checkout remained
+skipped until an active canonical SaaS subscription plan exists.
+
+The replay closeout seeded the active `founder-default` SaaS plan catalog row,
+then replayed signed real Stripe test-mode SaaS events through the local
+webhook. Expected sanitized proof is: at least one active `subscription_plans`
+row, processed rows in `stripe_saas_billing_webhook_events`, one current
+`company_subscriptions` row with status/current period evidence, unchanged
+contractor `payments` and `payment_events` counts, and unchanged manual tenant
+activation state. Duplicate replay should return duplicate without adding a
+second current subscription row.
+
+Live billing QA remains out of scope until
+[docs/saas-billing-live-launch-plan.md](C:/FloorConnector/docs/saas-billing-live-launch-plan.md)
+release gates are approved. Do not use live keys, create live Product/Price
+resources, create live Checkout sessions, open Stripe Customer Portal, test
+dunning/cancellation controls, or assert live entitlement behavior from the
+test-mode proof.
+
 Stripe SaaS billing webhook QA must also stay test-mode only. Configure
 `STRIPE_WEBHOOK_SECRET` for the `/api/stripe/saas-billing-webhook` endpoint
 signing secret, send only signed Stripe test events with
@@ -507,6 +555,12 @@ The project cue bridge spec verifies:
 - Project Detail cue actions expose readable priority text and contextual accessible names
 - opening a cue bridge does not create a work item until the existing form is submitted
 
+Because Project Workspace guidance is organization-configurable, cue specs that
+assert `#project-guidance-cues` preserve the current organization workflow
+guidance preferences, force Guided presentation for the run, and restore the
+previous preferences afterward. Stable route smoke should keep asserting
+non-negotiable project facts instead of depending on optional guidance panels.
+
 This requires the local-only service role key already used for E2E fixture setup:
 
 ```text
@@ -547,7 +601,7 @@ It verifies:
 
 The Golden Workflow Demo Path is documented in [docs/golden-workflow-demo-path.md](C:/FloorConnector/docs/golden-workflow-demo-path.md). Protected route checks must use the same authenticated contractor storage-state setup described above.
 
-The founder-demo rehearsal script is documented in [docs/founder-demo-readiness.md](C:/FloorConnector/docs/founder-demo-readiness.md). Use it when QA needs to prove the full showable path from setup and early-access billing through contractor workflow, portal review, print/save documents, and super-admin early-access oversight.
+The founder-demo rehearsal script is documented in [docs/founder-demo-readiness.md](C:/FloorConnector/docs/founder-demo-readiness.md). Use it when QA needs to prove the full showable path from setup and early-access billing through contractor workflow, portal review, print/save documents, and super-admin early-access oversight. For the first controlled external demos, pair that QA spine with [docs/founder-prospect-demo-script.md](C:/FloorConnector/docs/founder-prospect-demo-script.md) so prospect selection, caveats, feedback capture, and next-slice decisions are handled consistently.
 
 Focused smoke command:
 
@@ -574,7 +628,12 @@ The protected smoke coverage verifies:
 - core Project, Estimate, Contract, Invoice, and Job Workspaces still render their decision-first regions
 - Project, Estimate, Contract, and Invoice Workspaces remain stable after right-rail consolidation, even when secondary linked records, metadata, revision history, manual payment entry, or invoice editing are behind progressive disclosure
 - Customer Workspace renders contact-centered portal access without stalling on `Preparing your workspace`
+- Schedule submit coverage fills the required date/time fields before expecting the dirty-save button to enable; a disabled `Save schedule` button before input remains expected saved-state behavior.
 - route checks do not seed fake data or create demo-only workflow state
+
+Run shared-webServer Playwright commands sequentially unless each command uses a
+separate `PLAYWRIGHT_BASE_URL`/port. Parallel commands can race on the managed
+Next dev port and produce environment failures that are not app regressions.
 
 For full manual QA, pair that smoke run with the route-by-route checklist in `docs/golden-workflow-demo-path.md` and record missing fixtures, missing portal/customer auth, or skipped detail routes explicitly.
 

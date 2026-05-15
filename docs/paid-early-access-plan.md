@@ -1,6 +1,6 @@
 # Paid Early Access Plan
 
-Status: Phase 2.5 Billing Operations test plan setup implemented; checkout/webhook replay still blocked until recognizable test-mode keys, platform price reference, and webhook secret are configured; live billing launch deferred
+Status: Phase 2.6 test-mode SaaS plan catalog seed and signed webhook replay completed; live billing launch deferred
 Doc Type: Implementation Plan
 
 This plan prepares Phase 2: Paid Early Access Infrastructure. It documents the current implemented onboarding and billing setup state, the safe next implementation path, and the boundaries that must stay intact before any live billing or activation workflow is released.
@@ -12,6 +12,9 @@ Use this with:
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md)
 - [docs/e2e-browser-qa.md](C:/FloorConnector/docs/e2e-browser-qa.md)
 - [docs/stripe-saas-billing-runbook.md](C:/FloorConnector/docs/stripe-saas-billing-runbook.md)
+- [docs/saas-billing-live-launch-plan.md](C:/FloorConnector/docs/saas-billing-live-launch-plan.md)
+- [docs/founder-prospect-demo-script.md](C:/FloorConnector/docs/founder-prospect-demo-script.md)
+- [docs/founder-prospect-feedback.md](C:/FloorConnector/docs/founder-prospect-feedback.md)
 
 ## Current Implemented State
 
@@ -52,8 +55,13 @@ Latest local SaaS billing QA result:
 
 - 2026-05-15 names-only env recheck found `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` present but mode-unknown from local value format, no app-managed platform billing Product/Price reference, `STRIPE_FOUNDER_PLAN_PRICE_ID` missing, and `STRIPE_WEBHOOK_SECRET` blank
 - because that configuration cannot safely prove test-mode Product/Price setup, subscription Checkout, Checkout completion, or signed webhook replay, no Product/Price action, Checkout Session, Stripe CLI forwarding, or webhook replay was run
+- authenticated local QA refreshed platform-admin state and loaded `/super-admin/billing`, `/super-admin/early-access`, `/setup/billing`, and `/setup/pending-activation`; the UI continues to show Billing Operations as the durable status surface and keeps tenant activation manual
+- a subsequent guarded retry repeated the prefix-only credential check and sanitized database read, confirmed the same missing Product/Price reference and empty SaaS webhook/subscription evidence, and again stopped before Product/Price setup, Checkout, webhook replay, tenant activation, or contractor-customer payment mutation
+- after the operator configured test-mode Stripe env names, the 2026-05-15 proof run created/discovered the test Product/Price through Billing Operations, completed test-mode subscription Checkout, and kept contractor payment counts unchanged; webhook reconciliation is still blocked because the checked environment has no `subscription_plans` rows for the SaaS webhook to attach a canonical `company_subscriptions` row to
+- a same-day follow-up recheck confirmed the test-mode key prefixes, webhook secret presence, stored Product/Price reference, and local SaaS webhook listener are now in place; repeat Checkout and real SaaS event replay were skipped because `subscription_plans` is still empty, so another Checkout would create another unreconciled test subscription rather than proving reconciliation
+- the 2026-05-15 replay closeout seeded the canonical platform-wide `subscription_plans` catalog row through an idempotent migration, then replayed signed real Stripe test-mode SaaS events through `/api/stripe/saas-billing-webhook`; the webhook created the current `company_subscriptions` row, recorded processed event ids, set subscription status to active, recorded the current period end from the invoice event, and left tenant activation manual
 - Billing Operations can create or discover the test-mode FloorConnector SaaS Product and recurring Price only after `STRIPE_SECRET_KEY` is clearly test-mode from the `sk_test_` prefix, then store only non-secret references in `platform_billing_settings`
-- SaaS billing unit coverage and manual fallback QA remain the current proof until an operator configures the missing test-mode names and reruns [docs/stripe-saas-billing-runbook.md](C:/FloorConnector/docs/stripe-saas-billing-runbook.md)
+- SaaS billing unit coverage, signed replay evidence, and authenticated Billing Operations/setup QA are the current test-mode proof. Live launch still requires a dedicated release gate.
 
 Partially implemented:
 
@@ -99,11 +107,19 @@ Not implemented:
 - cancellation, past-due, renewal, dunning, or entitlement mapping
 - public self-serve launch or uncontrolled paid signup
 
+Live-launch planning:
+
+- [docs/saas-billing-live-launch-plan.md](C:/FloorConnector/docs/saas-billing-live-launch-plan.md) now defines the policy draft, entitlement map, Customer Portal boundaries, dunning/support/rollback playbook, production release gates, and future Billing Operations build phases required before any live billing controls are built.
+- The default launch policy remains conservative: subscription/payment success should not auto-activate tenants; platform-admin activation stays manual; billing status informs activation and support decisions; and initial billing-state gating should target irreversible external-production actions before internal drafting.
+- This planning document does not approve live Stripe resource creation, live charges, Customer Portal sessions, automatic activation, entitlement enforcement, contractor-customer payment changes, portal payment changes, RLS changes, tenant-isolation changes, invoice/signature/payment state changes, or fake subscription state.
+
 Recommended Phase 2 implementation choices:
 
 - keep activation on the existing company lifecycle fields
 - use `/super-admin/billing` as the durable operator cockpit for SaaS billing readiness, subscription references, webhook health, and manual billing evidence
 - use `/super-admin/early-access` for founder setup, activation, feedback, and follow-up triage
+- use [docs/founder-prospect-demo-script.md](C:/FloorConnector/docs/founder-prospect-demo-script.md) before inviting the first founder prospects so billing proof is presented as a controlled readiness signal, not a live billing launch
+- use [docs/founder-prospect-feedback.md](C:/FloorConnector/docs/founder-prospect-feedback.md) after each controlled demo so product depth, billing readiness, onboarding, reporting, import/export, and support decisions come from observed founder friction rather than abstract roadmap pressure
 - treat saved payment-method references as "billing setup known" only
 - treat founder billing evidence as platform-admin manual evidence on `companies`; do not treat it as subscription truth
 - use manual founder invoices/payment links outside the app for the first controlled cohort unless the test-mode Stripe Billing bridge is explicitly configured and reviewed
@@ -300,4 +316,4 @@ This Phase 2.3 batch implements a test-mode-safe signed Stripe webhook reconcili
 
 Enterprise UX consolidation note: the customer/contact/access/review cleanup does not change paid early-access billing, Stripe setup, checkout, tenant activation, entitlement, webhook, or portal payment behavior. Portal invoice copy may become simpler for customers, but the checkout and activation guards above remain unchanged.
 
-The recommended next prompt is either a Stripe SaaS Billing live test-mode replay slice using the runbook above, or a return to product data hygiene through lead/customer primary contact normalization. Any live billing launch, activation automation, entitlement enforcement, or Stripe Customer Portal work still requires a separate approved release gate.
+The recommended next operating step is controlled founder prospect prep using [docs/founder-prospect-demo-script.md](C:/FloorConnector/docs/founder-prospect-demo-script.md): choose one or two trusted prospects, show the proven founder demo path, state caveats clearly, collect structured feedback, and select the next product slice from real founder friction. Any live billing launch, activation automation, entitlement enforcement, or Stripe Customer Portal work still requires a separate approved release gate.

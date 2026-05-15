@@ -33,6 +33,22 @@ const fieldNoteCueTitle = "Open blocker field notes need review";
 const fieldNoteFixtureProjectName = "[E2E] Field Note Cue Bridge";
 const fieldNoteFixtureCustomerEmail =
   "e2e-field-note-cue@floorconnector.local";
+const guidedWorkflowPreferences = {
+  workflowMode: "guided",
+  showNextBestActions: true,
+  showReadinessGuidance: true,
+  strictReadinessEnforcement: true,
+  allowOneOffInvoiceShortcuts: false,
+  showShortcutCleanupPrompts: true,
+  showWorkflowExplanationCopy: true,
+  enableAiSuggestions: false,
+  enableAiSummaries: false,
+  enableAiDrafting: false,
+  enableAiFormPrefillSuggestions: false,
+  enableAiWorkItemRecommendations: false,
+  requireConfirmationBeforeAiActions: true
+};
+let workflowSettingsSnapshot = null;
 
 function attachIssueCapture(page) {
   const issues = [];
@@ -173,6 +189,83 @@ async function getSupabaseFixtureContext() {
     organizationId: membershipResponse.data.company_id
   };
 }
+
+async function preserveAndForceGuidedWorkflow() {
+  const context = await getSupabaseFixtureContext();
+
+  if (context.skipReason) {
+    return context;
+  }
+
+  const { supabase, organizationId, userId } = context;
+  const existingResponse = await supabase
+    .from("organization_workflow_settings")
+    .select("workflow_guidance_preferences")
+    .eq("company_id", organizationId)
+    .maybeSingle();
+
+  if (existingResponse.error) {
+    throw new Error(
+      `Unable to load workflow guidance preferences for cue bridge QA: ${existingResponse.error.message}`
+    );
+  }
+
+  if (!existingResponse.data) {
+    return context;
+  }
+
+  workflowSettingsSnapshot = {
+    supabase,
+    organizationId,
+    userId,
+    workflowGuidancePreferences: existingResponse.data.workflow_guidance_preferences
+  };
+
+  const updateResponse = await supabase
+    .from("organization_workflow_settings")
+    .update({
+      workflow_guidance_preferences: guidedWorkflowPreferences,
+      updated_by: userId
+    })
+    .eq("company_id", organizationId);
+
+  if (updateResponse.error) {
+    throw new Error(
+      `Unable to force guided workflow preferences for cue bridge QA: ${updateResponse.error.message}`
+    );
+  }
+
+  return context;
+}
+
+async function restoreWorkflowGuidance() {
+  if (!workflowSettingsSnapshot) {
+    return;
+  }
+
+  const restoreResponse = await workflowSettingsSnapshot.supabase
+    .from("organization_workflow_settings")
+    .update({
+      workflow_guidance_preferences:
+        workflowSettingsSnapshot.workflowGuidancePreferences,
+      updated_by: workflowSettingsSnapshot.userId
+    })
+    .eq("company_id", workflowSettingsSnapshot.organizationId);
+
+  if (restoreResponse.error) {
+    throw new Error(
+      `Unable to restore workflow guidance preferences after cue bridge QA: ${restoreResponse.error.message}`
+    );
+  }
+}
+
+test.beforeAll(async () => {
+  await preserveAndForceGuidedWorkflow();
+});
+
+test.afterAll(async () => {
+  await restoreWorkflowGuidance();
+});
 
 async function ensureFixtureCustomer({
   supabase,

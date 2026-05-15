@@ -34,4 +34,5 @@ Status vocabulary: Stable, Active, Foundation, Planned, Deferred.
 | Materials / catalogs | Foundation | `catalog_items`, cost item database, inventory links, materials route, and estimate sourcing exist; execution materials workflows remain future. |
 | Communications | Foundation | Communication threads/messages, filters, safe replies, and notification triage foundations exist; provider-backed depth remains future. |
 | Reporting | Foundation | `/reports` and Sales Tax Summary exist; broad analytics, exports, and report builders remain future. |
+| Import / export | Planned | Internal estimate reuse/import helpers exist, but broad tenant-scoped import/export readiness for core records is not implemented. |
 | AI / intelligence layer | Foundation | Operational cues exist as deterministic/read-only guidance; broad AI assistance remains future. |

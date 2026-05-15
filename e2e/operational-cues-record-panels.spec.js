@@ -22,8 +22,24 @@ const fixtureNames = {
   depositInvoiceReference: "E2E-OPC-DEPOSIT"
 };
 
+const guidedWorkflowPreferences = {
+  workflowMode: "guided",
+  showNextBestActions: true,
+  showReadinessGuidance: true,
+  strictReadinessEnforcement: true,
+  allowOneOffInvoiceShortcuts: false,
+  showShortcutCleanupPrompts: true,
+  showWorkflowExplanationCopy: true,
+  enableAiSuggestions: false,
+  enableAiSummaries: false,
+  enableAiDrafting: false,
+  enableAiFormPrefillSuggestions: false,
+  enableAiWorkItemRecommendations: false,
+  requireConfirmationBeforeAiActions: true
+};
 let fixture;
 let originalRulesByKey = new Map();
+let originalWorkflowGuidancePreferences;
 
 function attachIssueCapture(page) {
   const issues = [];
@@ -160,6 +176,65 @@ async function preserveAndForceCueRules({ supabase, organizationId }) {
 
   if (upsertResponse.error) {
     throw new Error(`Unable to force operational cue rules: ${upsertResponse.error.message}`);
+  }
+}
+
+async function preserveAndForceGuidedWorkflow({ supabase, organizationId, userId }) {
+  const existingResponse = await supabase
+    .from("organization_workflow_settings")
+    .select("workflow_guidance_preferences")
+    .eq("company_id", organizationId)
+    .maybeSingle();
+
+  if (existingResponse.error) {
+    throw new Error(
+      `Unable to load workflow guidance preferences: ${existingResponse.error.message}`
+    );
+  }
+
+  if (!existingResponse.data) {
+    return;
+  }
+
+  originalWorkflowGuidancePreferences =
+    existingResponse.data.workflow_guidance_preferences;
+
+  const updateResponse = await supabase
+    .from("organization_workflow_settings")
+    .update({
+      workflow_guidance_preferences: guidedWorkflowPreferences,
+      updated_by: userId
+    })
+    .eq("company_id", organizationId);
+
+  if (updateResponse.error) {
+    throw new Error(
+      `Unable to force guided workflow preferences: ${updateResponse.error.message}`
+    );
+  }
+}
+
+async function restoreWorkflowGuidance() {
+  if (
+    !fixture?.supabase ||
+    !fixture?.organizationId ||
+    typeof originalWorkflowGuidancePreferences === "undefined"
+  ) {
+    return;
+  }
+
+  const restoreResponse = await fixture.supabase
+    .from("organization_workflow_settings")
+    .update({
+      workflow_guidance_preferences: originalWorkflowGuidancePreferences,
+      updated_by: fixture.userId
+    })
+    .eq("company_id", fixture.organizationId);
+
+  if (restoreResponse.error) {
+    throw new Error(
+      `Unable to restore workflow guidance preferences: ${restoreResponse.error.message}`
+    );
   }
 }
 
@@ -300,6 +375,7 @@ async function ensureFixture() {
 
   const { supabase, organizationId, userId } = context;
   await preserveAndForceCueRules({ supabase, organizationId });
+  await preserveAndForceGuidedWorkflow({ supabase, organizationId, userId });
 
   const customer = await upsertBySingleKey({
     supabase,
@@ -678,6 +754,7 @@ test.describe.serial("operational cue record-level panels", () => {
 
   test.afterAll(async () => {
     await clearFixtureCueStates();
+    await restoreWorkflowGuidance();
     await restoreCueRules();
   });
 
