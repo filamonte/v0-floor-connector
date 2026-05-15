@@ -1,6 +1,6 @@
 # Paid Early Access Plan
 
-Status: Phase 2.5 Billing Operations test plan setup implemented; webhook replay still blocked until test-mode webhook secret is configured; live billing launch deferred
+Status: Phase 2.5 Billing Operations test plan setup implemented; checkout/webhook replay still blocked until recognizable test-mode keys, platform price reference, and webhook secret are configured; live billing launch deferred
 Doc Type: Implementation Plan
 
 This plan prepares Phase 2: Paid Early Access Infrastructure. It documents the current implemented onboarding and billing setup state, the safe next implementation path, and the boundaries that must stay intact before any live billing or activation workflow is released.
@@ -50,7 +50,7 @@ Implemented today:
 
 Latest local SaaS billing QA result:
 
-- 2026-05-14 names-only env check found `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` present but mode-unknown from local value format, no app-managed platform billing price reference, `STRIPE_FOUNDER_PLAN_PRICE_ID` missing, and `STRIPE_WEBHOOK_SECRET` missing
+- 2026-05-15 names-only env recheck found `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` present but mode-unknown from local value format, no app-managed platform billing Product/Price reference, `STRIPE_FOUNDER_PLAN_PRICE_ID` missing, and `STRIPE_WEBHOOK_SECRET` blank
 - because that configuration cannot safely prove test-mode Product/Price setup, subscription Checkout, Checkout completion, or signed webhook replay, no Product/Price action, Checkout Session, Stripe CLI forwarding, or webhook replay was run
 - Billing Operations can create or discover the test-mode FloorConnector SaaS Product and recurring Price only after `STRIPE_SECRET_KEY` is clearly test-mode from the `sk_test_` prefix, then store only non-secret references in `platform_billing_settings`
 - SaaS billing unit coverage and manual fallback QA remain the current proof until an operator configures the missing test-mode names and reruns [docs/stripe-saas-billing-runbook.md](C:/FloorConnector/docs/stripe-saas-billing-runbook.md)

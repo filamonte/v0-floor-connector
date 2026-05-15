@@ -16,7 +16,7 @@ Use with:
 
 ## Latest Local QA Status
 
-Date: 2026-05-14
+Date: 2026-05-15
 
 Names-only local env readiness check:
 
@@ -24,7 +24,7 @@ Names-only local env readiness check:
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: present, mode unknown from the local value format
 - app-managed platform billing price reference: missing
 - `STRIPE_FOUNDER_PLAN_PRICE_ID`: missing env fallback
-- `STRIPE_WEBHOOK_SECRET`: missing
+- `STRIPE_WEBHOOK_SECRET`: blank
 
 Because the Stripe key prefixes are not safely recognizable as test mode, the
 platform billing price reference is missing, and the SaaS webhook signing secret
@@ -52,12 +52,12 @@ value is shown as configured but mode-not-verified. Stripe webhook signing
 secrets remain env/provider-managed; Billing Operations shows the endpoint and
 CLI template but never stores webhook secrets in the database.
 
-Database inspection during this pass showed no SaaS billing reconciliation rows
-yet: `stripe_saas_billing_webhook_events` count `0`,
-`company_subscriptions` count `0`, and `platform_billing_settings` had no stored
-Stripe Product or Price reference. Existing contractor invoice/payment counts
-were inspected only as a no-mutation baseline; no contractor-customer payment
-webhook was invoked.
+The 2026-05-15 recheck confirmed the same safe stop condition. Names-only env
+readiness still reports unknown key modes and blank/missing webhook and env
+fallback price names; the platform billing settings query succeeds but still has
+no stored Stripe Product or Price reference. No Product/Price action, Checkout
+Session, Stripe CLI forwarding, webhook replay, tenant activation, or
+contractor-customer payment webhook was invoked.
 
 ## Domain Boundary
 

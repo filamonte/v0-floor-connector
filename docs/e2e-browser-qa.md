@@ -141,11 +141,11 @@ keys should show as configured but mode-not-verified, and live keys should stay
 blocked. The smoke is covered by `pnpm e2e:super-admin`; do not click live
 Checkout or paste secret values while exercising the page.
 
-Current local status from the 2026-05-14 replay prep: `STRIPE_SECRET_KEY` and
+Current local status from the 2026-05-15 replay prep: `STRIPE_SECRET_KEY` and
 `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` were present but mode-unknown from local
-value format, the app-managed platform billing price reference was missing,
-`STRIPE_FOUNDER_PLAN_PRICE_ID` was missing, and `STRIPE_WEBHOOK_SECRET` was
-missing. That is an expected stop condition: do not run Product/Price setup,
+value format, the app-managed platform billing Product/Price reference was
+missing, `STRIPE_FOUNDER_PLAN_PRICE_ID` was missing, and
+`STRIPE_WEBHOOK_SECRET` was blank. That is an expected stop condition: do not run Product/Price setup,
 create a Checkout Session, click a Checkout URL, or forward webhook events until
 recognizable test-mode values and the missing names are configured and the app
 is restarted. For this recovery path, `STRIPE_SECRET_KEY` should start with
