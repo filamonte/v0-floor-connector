@@ -53,7 +53,8 @@ import {
   ActionBar,
   PrimarySection,
   ProjectStateSummary,
-  WorkflowBar
+  WorkflowBar,
+  getStatusBadgeClassName
 } from "@floorconnector/ui";
 import type { ProjectStateSummaryProps, WorkflowStep } from "@floorconnector/ui";
 
@@ -95,21 +96,6 @@ function formatMoney(value: string | number) {
     style: "currency",
     currency: "USD"
   });
-}
-
-function getStatusBadgeClassName(status: string) {
-  switch (status) {
-    case "sent":
-      return "border-amber-200 bg-amber-50 text-amber-900";
-    case "viewed":
-      return "border-[#d6d6d6] bg-[#f8f8f8] text-[#2a2a2a]";
-    case "signed":
-      return "border-emerald-200 bg-emerald-50 text-emerald-900";
-    case "void":
-      return "border-rose-200 bg-rose-50 text-rose-900";
-    default:
-      return "border-slate-200 bg-slate-50 text-slate-700";
-  }
 }
 
 function getActionBarStatusTone(input: {

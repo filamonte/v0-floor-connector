@@ -132,6 +132,20 @@ Rules:
 - Metadata chips should stay neutral unless they are true status indicators.
 - Do not invent local color systems when the shared helper can represent the state.
 
+## FloorConnector Visual System Rules
+
+Estimates are the reference baseline for visual and workflow quality across the app. Manager pages, record workspaces, setup, settings, portal, admin, and super-admin should all feel like parts of the same enterprise system even when their audiences differ.
+
+Rules:
+- Use the black/graphite, copper/orange, white, and warm-neutral palette as the default visual language.
+- Use shared cards, headers, status pills, action hierarchy, workspace layouts, and settings panels before creating route-local styles.
+- Do not introduce blue, purple, cyan, teal, indigo, sky, lime, or pink as major visual identity colors. Use green only for real success/approved/paid/active completion states, red for destructive/error/blocked states, amber/copper for warning or brand/action emphasis, and gray/graphite for neutral or read-only states.
+- Do not add new major component styles without documenting why existing shared primitives are insufficient.
+- Keep secondary sections behind progressive disclosure when they are not the primary job of the page.
+- Keep right rails short and supportive; they should not become a second full page.
+- Portal pages must be customer-safe, simpler than contractor pages, and free of contractor-only implementation vocabulary.
+- Protected pages must be checked while logged in with the correct role. A login page, access-denied page, or unauthenticated redirect is not a successful visual review.
+
 ## Copper CTA Rule
 
 Copper is the contractor app's primary action color. Use it sparingly so it keeps its meaning.

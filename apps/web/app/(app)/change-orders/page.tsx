@@ -13,6 +13,7 @@ import {
 import { listContracts } from "@/lib/contracts/data";
 import { listInvoices } from "@/lib/invoices/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { getStatusBadgeClassName } from "@floorconnector/ui";
 
 type ChangeOrdersPageProps = {
   searchParams?: Promise<{
@@ -78,19 +79,6 @@ function buildChangeOrdersHref(input: {
 
   const query = searchParams.toString();
   return query.length > 0 ? `/change-orders?${query}` : "/change-orders";
-}
-
-function getStatusBadgeClassName(status: string) {
-  switch (status) {
-    case "approved":
-      return "border-emerald-200 bg-emerald-50 text-emerald-900";
-    case "rejected":
-      return "border-rose-200 bg-rose-50 text-rose-900";
-    case "sent":
-      return "border-amber-200 bg-amber-50 text-amber-900";
-    default:
-      return "border-slate-200 bg-slate-50 text-slate-700";
-  }
 }
 
 export default async function ChangeOrdersPage({

@@ -34,6 +34,7 @@ Use these docs together:
 - [docs/starter-pack-provisioning-review.md](C:/FloorConnector/docs/starter-pack-provisioning-review.md): consolidated architecture/operator readiness review before any real void action
 - [docs/ui-data-model-alignment-backlog.md](C:/FloorConnector/docs/ui-data-model-alignment-backlog.md): future/planned UI, directory/contact, tax, Estimate Editor, project-address, and workflow-guidance alignment backlog
 - [docs/ui-patterns.md](C:/FloorConnector/docs/ui-patterns.md): implemented decision-first UI patterns for contractor workspaces, Manager Pages, status color semantics, and portal/super-admin differences
+- [docs/enterprise-ui-system-audit.md](C:/FloorConnector/docs/enterprise-ui-system-audit.md): latest enterprise visual-system route audit, drift sources, and authenticated QA rules
 - [docs/golden-workflow-demo-path.md](C:/FloorConnector/docs/golden-workflow-demo-path.md): repeatable Phase 1 route-by-route demo and QA spine for the existing canonical workflow
 - [docs/founder-demo-readiness.md](C:/FloorConnector/docs/founder-demo-readiness.md): rehearsal script for the current founder-demo path from setup through portal and print/save documents
 - [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md): Phase 2 paid early-access readiness plan and billing/activation boundaries

@@ -16,6 +16,14 @@ This note records the ownership and cleanup map for the customer, contact, acces
 - Invoice Workspace owns billing state, line-item review, balance, payment activity, customer review/send/payment follow-through, and lower-priority internal work items.
 - Portal owns customer-safe review and action. Portal pages should use simple customer language, one primary next step, and no contractor-only operational management.
 
+## Enterprise Visual System Rules
+
+- Estimate remains the visual and workflow reference baseline for the secured contractor app.
+- The accepted system direction is premium, calm, compact, and enterprise: graphite/black structure, copper/orange action emphasis, white and warm-neutral work surfaces, semantic status color only where it carries meaning.
+- Manager Pages, detail workspaces, setup, settings, portal, admin, and super-admin should reuse the same shared card/header/status/action grammar unless audience-specific differences are documented.
+- Do not introduce route-local blue/green/purple/cyan visual systems. Green is only for success/approved/paid/signed/complete, red for destructive/error/blocked, amber/copper for warning/attention/action, and gray/graphite for neutral/read-only/current utility states.
+- New protected pages need authenticated visual QA. Login, access denied, missing fixture, or setup-gate redirects are not successful reviews of a secured route.
+
 ## Fix-Now Map
 
 - Customer Workspace: make the top stack a customer account summary; keep contact and portal management available through progressive disclosure and a People link.

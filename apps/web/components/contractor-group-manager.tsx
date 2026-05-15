@@ -668,7 +668,7 @@ function proposalStatusClassName(status: string) {
     case "proposed":
       return "border-emerald-200 bg-emerald-50 text-emerald-700";
     case "already_assigned":
-      return "border-sky-200 bg-sky-50 text-sky-700";
+      return "border-[var(--border-medium)] bg-[var(--highlight)] text-[var(--graphite)]";
     case "unavailable":
       return "border-amber-200 bg-amber-50 text-amber-800";
     default:
@@ -681,12 +681,12 @@ function readinessChipClassName(readiness: string) {
     case "ready_for_review":
       return "border-emerald-200 bg-emerald-50 text-emerald-700";
     case "already_assigned":
-      return "border-sky-200 bg-sky-50 text-sky-700";
+      return "border-[var(--border-medium)] bg-[var(--highlight)] text-[var(--graphite)]";
     case "blocked":
     case "future_only":
       return "border-amber-200 bg-amber-50 text-amber-800";
     case "needs_metadata":
-      return "border-violet-200 bg-violet-50 text-violet-700";
+      return "border-amber-200 bg-amber-50 text-amber-800";
     default:
       return "border-slate-200 bg-slate-50 text-slate-600";
   }
@@ -776,11 +776,11 @@ function ManualReviewChecklist({
           ))}
         </div>
       ) : null}
-      <div className="mt-3 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2">
-        <p className="text-xs leading-5 text-sky-800">
+      <div className="mt-3 rounded-xl border border-[var(--border-medium)] bg-[var(--highlight)] px-3 py-2">
+        <p className="text-xs leading-5 text-[var(--text-secondary)]">
           Future checks: {visibleChecks.join(" ")}
         </p>
-        <p className="mt-1 text-xs leading-5 text-sky-800">
+        <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
           Suggested future reason: {checklist.suggestedFutureReasonText}
         </p>
       </div>
@@ -953,14 +953,14 @@ function ProposalReadinessDetails({
         ))}
       </div>
 
-      <div className="mt-3 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-800">
+      <div className="mt-3 rounded-xl border border-[var(--border-medium)] bg-[var(--highlight)] px-3 py-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--graphite)]">
           Future apply preview
         </p>
-        <p className="mt-1 text-xs leading-5 text-sky-800">
+        <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
           {proposal.futureApplyPreview.summary}
         </p>
-        <p className="mt-1 text-xs leading-5 text-sky-800">
+        <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
           Current action available: no. Assignment applied: no. Future affected
           records: {affectedRecords}. Runtime effect:{" "}
           {proposal.futureApplyPreview.runtimeEffect}.
@@ -1151,18 +1151,18 @@ function AssignmentProposalsPanel({
       <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_0.45fr]">
         <div className="space-y-3">
           {selectedOrganizationSummary ? (
-            <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3">
-              <p className="text-sm font-semibold text-sky-950">
+            <div className="rounded-lg border border-[var(--border-medium)] bg-[var(--highlight)] px-4 py-3">
+              <p className="text-sm font-semibold text-[var(--text-primary)]">
                 {selectedOrganizationSummary.organizationName} proposal summary
               </p>
-              <p className="mt-1 text-sm leading-6 text-sky-800">
+              <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                 {selectedOrganizationSummary.totalProposals} total ·{" "}
                 {selectedOrganizationSummary.proposedCount} proposed ·{" "}
                 {selectedOrganizationSummary.alreadyAssignedCount} already assigned ·{" "}
                 {selectedOrganizationSummary.unavailableCount} unavailable.
               </p>
               {visibleReasonSummaries.length > 0 ? (
-                <p className="mt-2 text-xs leading-5 text-sky-800">
+                <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">
                   Top reasons:{" "}
                   {visibleReasonSummaries
                     .map((reason) => `${reason.label} (${reason.count})`)

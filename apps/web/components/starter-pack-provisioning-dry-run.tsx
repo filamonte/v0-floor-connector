@@ -91,7 +91,7 @@ function actionLabel(action: StarterPackProvisioningDryRunAction) {
 function actionClassName(action: StarterPackProvisioningDryRunAction) {
   switch (action) {
     case "would_create":
-      return "border-sky-200 bg-sky-50 text-sky-700";
+      return "border-[var(--border-medium)] bg-[var(--highlight)] text-[var(--graphite)]";
     case "already_exists":
       return "border-emerald-200 bg-emerald-50 text-emerald-700";
     case "blocked":
@@ -197,7 +197,7 @@ function runHealthClassName(health: StarterPackProvisioningRunHealth) {
     case "completed":
       return "border-emerald-200 bg-emerald-50 text-emerald-700";
     case "approved":
-      return "border-sky-200 bg-sky-50 text-sky-700";
+      return "border-[var(--border-medium)] bg-[var(--highlight)] text-[var(--graphite)]";
     case "stale":
       return "border-amber-200 bg-amber-50 text-amber-700";
     case "failed":

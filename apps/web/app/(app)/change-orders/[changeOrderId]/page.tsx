@@ -26,6 +26,7 @@ import { listProgressBillingByProject } from "@/lib/progress-billing/data";
 import { listProjects } from "@/lib/projects/data";
 import { ensureInitialRecordRevision, listRecordRevisions } from "@/lib/revisions/data";
 import { buildChangeOrderRevisionSnapshot } from "@/lib/revisions/snapshots";
+import { getStatusBadgeClassName } from "@floorconnector/ui";
 
 type ChangeOrderDetailPageProps = {
   params: Promise<{
@@ -51,19 +52,6 @@ function formatMoney(value: string) {
 
 function formatDateTime(value: string | null) {
   return value ? new Date(value).toLocaleString() : "Not yet";
-}
-
-function getStatusBadgeClassName(status: string) {
-  switch (status) {
-    case "approved":
-      return "border-emerald-200 bg-emerald-50 text-emerald-900";
-    case "rejected":
-      return "border-rose-200 bg-rose-50 text-rose-900";
-    case "sent":
-      return "border-amber-200 bg-amber-50 text-amber-900";
-    default:
-      return "border-slate-200 bg-slate-50 text-slate-700";
-  }
 }
 
 function getNextAction(input: {
