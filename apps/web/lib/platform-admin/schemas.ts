@@ -56,9 +56,12 @@ function optionalUuidField(message: string) {
     .transform((value) => (value.length > 0 ? value : null))
     .nullable()
     .optional()
-    .refine((value) => value === null || z.string().uuid().safeParse(value).success, {
-      message
-    })
+    .refine(
+      (value) => value === null || z.string().uuid().safeParse(value).success,
+      {
+        message
+      }
+    )
     .transform((value) => value ?? null);
 }
 
@@ -89,7 +92,9 @@ function optionalDateTimeField(label: string) {
         message: `${label} must be a valid date and time.`
       }
     )
-    .transform((value) => (value == null ? null : new Date(value).toISOString()));
+    .transform((value) =>
+      value == null ? null : new Date(value).toISOString()
+    );
 }
 
 function optionalMonthlyAmountCentsField(label: string) {
@@ -118,6 +123,23 @@ export const platformFinancialDefaultsInputSchema = z.object({
   defaultRetainagePercentage: percentStringField("Default retainage percentage")
 });
 
+export const platformBillingPlanSetupInputSchema = z.object({
+  planLabel: z.string().trim().min(1, "Plan label is required.").max(120),
+  amountDollars: z
+    .string()
+    .trim()
+    .min(1, "Plan amount is required.")
+    .refine((value) => !Number.isNaN(Number(value)), {
+      message: "Plan amount must be a valid number."
+    }),
+  currency: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z]{3}$/, "Currency must be a three-letter currency code."),
+  interval: z.enum(["day", "week", "month", "year"] as const)
+});
+
 export const platformWorkflowDefaultsInputSchema = z.object({
   approvedEstimateContractSeedId: optionalUuidField(
     "Select a valid contract starter template."
@@ -131,12 +153,18 @@ export const platformWorkflowDefaultsInputSchema = z.object({
   defaultEstimateInclusionsHtml: trimmedNullableString(50000),
   defaultEstimateExclusionsHtml: trimmedNullableString(50000),
   defaultEstimateScopeSummaryHtml: trimmedNullableString(50000),
-  defaultEstimateStartNumber: positiveIntegerField("Default estimate start number"),
-  defaultInvoiceStartNumber: positiveIntegerField("Default invoice start number"),
+  defaultEstimateStartNumber: positiveIntegerField(
+    "Default estimate start number"
+  ),
+  defaultInvoiceStartNumber: positiveIntegerField(
+    "Default invoice start number"
+  ),
   defaultChangeOrderStartNumber: positiveIntegerField(
     "Default change order start number"
   ),
-  defaultContractStartNumber: positiveIntegerField("Default contract start number")
+  defaultContractStartNumber: positiveIntegerField(
+    "Default contract start number"
+  )
 });
 
 export const platformTemplateSeedInputSchema = z.object({
@@ -144,24 +172,26 @@ export const platformTemplateSeedInputSchema = z.object({
   name: z.string().trim().min(1, "Template name is required.").max(120),
   description: trimmedNullableString(255),
   subjectTemplate: trimmedNullableString(255),
-  bodyTemplate: z.string().trim().min(1, "Template body is required.").max(50000),
+  bodyTemplate: z
+    .string()
+    .trim()
+    .min(1, "Template body is required.")
+    .max(50000),
   isDefault: z.boolean(),
   isActive: z.boolean()
 });
 
 export const platformCatalogSeedInputSchema = z.object({
   seedId: optionalUuidField("Select a valid catalog seed."),
-  itemType: z.enum(
-    [
-      "material",
-      "labor",
-      "service",
-      "equipment",
-      "subcontractor",
-      "other",
-      "system"
-    ] as const
-  ),
+  itemType: z.enum([
+    "material",
+    "labor",
+    "service",
+    "equipment",
+    "subcontractor",
+    "other",
+    "system"
+  ] as const),
   seedKey: z
     .string()
     .trim()
@@ -191,9 +221,13 @@ export const platformCatalogSeedInputSchema = z.object({
     .transform((value) => (value.length > 0 ? value : null))
     .nullable()
     .optional()
-    .refine((value) => value == null || (!Number.isNaN(Number(value)) && Number(value) >= 0), {
-      message: "Default unit price must be a valid non-negative number."
-    })
+    .refine(
+      (value) =>
+        value == null || (!Number.isNaN(Number(value)) && Number(value) >= 0),
+      {
+        message: "Default unit price must be a valid non-negative number."
+      }
+    )
     .transform((value) => (value == null ? null : Number(value).toFixed(2))),
   markupPercent: percentStringField("Markup percentage"),
   hiddenMarkupPercent: percentStringField("Hidden markup percentage"),
@@ -225,7 +259,8 @@ export const platformStarterPackInputSchema = z.object({
     .min(1, "Starter pack key is required.")
     .max(120)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
-      message: "Starter pack key must use lowercase letters, numbers, and hyphens only."
+      message:
+        "Starter pack key must use lowercase letters, numbers, and hyphens only."
     }),
   name: z.string().trim().min(1, "Starter pack name is required.").max(120),
   description: trimmedNullableString(500),
@@ -247,18 +282,16 @@ export const contractorGroupInputSchema = z.object({
   name: z.string().trim().min(1, "Contractor group name is required.").max(120),
   description: trimmedNullableString(500),
   status: z.enum(["active", "inactive", "archived"] as const),
-  groupType: z.enum(
-    [
-      "trade_segment",
-      "onboarding",
-      "beta",
-      "internal",
-      "future_plan",
-      "future_entitlement",
-      "regional",
-      "custom"
-    ] as const
-  )
+  groupType: z.enum([
+    "trade_segment",
+    "onboarding",
+    "beta",
+    "internal",
+    "future_plan",
+    "future_entitlement",
+    "regional",
+    "custom"
+  ] as const)
 });
 
 export const contractorGroupArchiveInputSchema = z.object({
@@ -268,9 +301,11 @@ export const contractorGroupArchiveInputSchema = z.object({
 export const contractorGroupMembershipInputSchema = z.object({
   contractorGroupId: z.string().uuid("Contractor group id is required."),
   organizationId: z.string().uuid("Select a valid contractor organization."),
-  assignmentSource: z.enum(
-    ["manual", "targeting_preview", "future_auto_assignment"] as const
-  ),
+  assignmentSource: z.enum([
+    "manual",
+    "targeting_preview",
+    "future_auto_assignment"
+  ] as const),
   notes: trimmedNullableString(1000)
 });
 
@@ -285,23 +320,29 @@ const contractorGroupProposalSubmittedFingerprintSchema = z
     contractorGroupId: z.string().uuid().nullable().optional(),
     contractorGroupKey: z.string().trim().nullable().optional(),
     contractorGroupType: z
-      .enum(
-        [
-          "trade_segment",
-          "onboarding",
-          "beta",
-          "internal",
-          "future_plan",
-          "future_entitlement",
-          "regional",
-          "custom"
-        ] as const
-      )
+      .enum([
+        "trade_segment",
+        "onboarding",
+        "beta",
+        "internal",
+        "future_plan",
+        "future_entitlement",
+        "regional",
+        "custom"
+      ] as const)
       .nullable()
       .optional(),
-    contractorGroupStatus: z.enum(["active", "inactive", "archived"] as const).nullable().optional(),
+    contractorGroupStatus: z
+      .enum(["active", "inactive", "archived"] as const)
+      .nullable()
+      .optional(),
     status: z
-      .enum(["proposed", "already_assigned", "not_applicable", "unavailable"] as const)
+      .enum([
+        "proposed",
+        "already_assigned",
+        "not_applicable",
+        "unavailable"
+      ] as const)
       .nullable()
       .optional(),
     confidence: z
@@ -309,49 +350,43 @@ const contractorGroupProposalSubmittedFingerprintSchema = z
       .nullable()
       .optional(),
     source: z
-      .enum(
-        [
-          "exact_region_match",
-          "exact_trade_match",
-          "onboarding_label_match",
-          "beta_label_match",
-          "existing_membership",
-          "insufficient_data",
-          "future_only"
-        ] as const
-      )
+      .enum([
+        "exact_region_match",
+        "exact_trade_match",
+        "onboarding_label_match",
+        "beta_label_match",
+        "existing_membership",
+        "insufficient_data",
+        "future_only"
+      ] as const)
       .nullable()
       .optional(),
     reasonCode: z
-      .enum(
-        [
-          "exact_region_match",
-          "exact_trade_match",
-          "onboarding_label_match",
-          "beta_label_match",
-          "missing_region_metadata",
-          "missing_trade_metadata",
-          "future_entitlement_blocked",
-          "future_plan_blocked",
-          "archived_group_blocked",
-          "inactive_group_not_recommended",
-          "existing_membership",
-          "not_applicable"
-        ] as const
-      )
+      .enum([
+        "exact_region_match",
+        "exact_trade_match",
+        "onboarding_label_match",
+        "beta_label_match",
+        "missing_region_metadata",
+        "missing_trade_metadata",
+        "future_entitlement_blocked",
+        "future_plan_blocked",
+        "archived_group_blocked",
+        "inactive_group_not_recommended",
+        "existing_membership",
+        "not_applicable"
+      ] as const)
       .nullable()
       .optional(),
     manualReviewReadiness: z
-      .enum(
-        [
-          "ready_for_review",
-          "already_assigned",
-          "blocked",
-          "needs_metadata",
-          "future_only",
-          "not_recommended"
-        ] as const
-      )
+      .enum([
+        "ready_for_review",
+        "already_assigned",
+        "blocked",
+        "needs_metadata",
+        "future_only",
+        "not_recommended"
+      ] as const)
       .nullable()
       .optional()
   })
@@ -396,17 +431,15 @@ export const platformStarterPackAssignmentInputSchema = z
   .object({
     assignmentId: optionalUuidField("Select a valid starter pack assignment."),
     starterPackId: z.string().uuid("Starter pack id is required."),
-    assignmentType: z.enum(
-      [
-        "all_organizations",
-        "organization",
-        "onboarding_profile",
-        "region",
-        "trade_segment",
-        "plan_tier",
-        "future_contractor_group"
-      ] as const
-    ),
+    assignmentType: z.enum([
+      "all_organizations",
+      "organization",
+      "onboarding_profile",
+      "region",
+      "trade_segment",
+      "plan_tier",
+      "future_contractor_group"
+    ] as const),
     organizationId: optionalUuidField("Select a valid organization."),
     assignmentKey: trimmedNullableString(120),
     label: trimmedNullableString(160),
@@ -480,21 +513,24 @@ export const platformAdminAssignmentInputSchema = z.object({
 
 export const platformTenantStatusInputSchema = z.object({
   companyId: z.string().uuid("Company id is required."),
-  tenantStatus: z.enum(
-    ["trialing", "active", "suspended", "locked", "archived", "deleted"] as const
-  ),
-  lifecycleState: z.enum(
-    [
-      "trial",
-      "active",
-      "grace_period",
-      "locked",
-      "retained",
-      "scheduled_for_deletion",
-      "deleted",
-      "restorable"
-    ] as const
-  )
+  tenantStatus: z.enum([
+    "trialing",
+    "active",
+    "suspended",
+    "locked",
+    "archived",
+    "deleted"
+  ] as const),
+  lifecycleState: z.enum([
+    "trial",
+    "active",
+    "grace_period",
+    "locked",
+    "retained",
+    "scheduled_for_deletion",
+    "deleted",
+    "restorable"
+  ] as const)
 });
 
 export const platformTenantActivationInputSchema = z.object({

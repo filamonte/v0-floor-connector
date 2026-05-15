@@ -122,16 +122,38 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 STRIPE_FOUNDER_PLAN_PRICE_ID
 ```
 
+`STRIPE_FOUNDER_PLAN_PRICE_ID` is an env fallback. If
+`platform_billing_settings.stripe_price_id` exists, SaaS Checkout prefers that
+platform-admin-managed non-secret price reference.
+
 Do not use live keys for local QA. Do not print checkout URLs, because Stripe
 Checkout Session URLs can contain session tokens. Checkout return should land on
 `/setup/billing`, leave activation manual, and leave contractor-customer invoice
 payment records untouched.
 
+Platform-admin Billing Operations QA should open `/super-admin/billing` to
+confirm names-only Stripe configuration health, Checkout readiness, webhook
+health, tenant subscription/reference status, platform price-reference status,
+and activation separation. The page includes a test-mode-only Product/Price
+create-or-discover action that must remain disabled/refused unless
+`STRIPE_SECRET_KEY` is clearly test-mode. The smoke is covered by
+`pnpm e2e:super-admin`; do not click live Checkout or paste secret values while
+exercising the page.
+
+Current local status from the 2026-05-14 replay prep: `STRIPE_SECRET_KEY` and
+`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` were present but mode-unknown from local
+value format, the app-managed platform billing price reference was missing,
+`STRIPE_FOUNDER_PLAN_PRICE_ID` was missing, and `STRIPE_WEBHOOK_SECRET` was
+missing. That is an expected stop condition: do not run Product/Price setup,
+create a Checkout Session, click a Checkout URL, or forward webhook events until
+recognizable test-mode values and the missing names are configured and the app
+is restarted.
+
 Stripe SaaS billing webhook QA must also stay test-mode only. Configure
 `STRIPE_WEBHOOK_SECRET` for the `/api/stripe/saas-billing-webhook` endpoint
 signing secret, send only signed Stripe test events with
 `billing_domain=floorconnector_saas` plus a valid `company_id`, and verify
-`/super-admin/early-access` shows the reconciled subscription references/status
+`/super-admin/billing` shows the reconciled subscription references/status
 without marking the tenant active. Do not print raw webhook payloads, endpoint
 signing secrets, Checkout Session URLs, customer payment details, or Stripe keys.
 The contractor-customer payment webhook remains
@@ -552,4 +574,4 @@ The protected smoke coverage verifies:
 
 For full manual QA, pair that smoke run with the route-by-route checklist in `docs/golden-workflow-demo-path.md` and record missing fixtures, missing portal/customer auth, or skipped detail routes explicitly.
 
-Founder-demo QA should additionally open `/setup/company`, `/setup/billing`, `/setup/pending-activation`, `/dashboard?fresh=true`, `/people`, `/portal`, the protected and portal print/save document routes for estimate/contract/invoice where fixture data exists, and `/super-admin/early-access` with platform-admin auth. Do not click live Checkout, customer payment checkout, activation, reset, temporary credential generation, or raw invite-link copy actions unless the run is explicitly scoped for that safe test action.
+Founder-demo QA should additionally open `/setup/company`, `/setup/billing`, `/setup/pending-activation`, `/dashboard?fresh=true`, `/people`, `/portal`, the protected and portal print/save document routes for estimate/contract/invoice where fixture data exists, `/super-admin/billing`, and `/super-admin/early-access` with platform-admin auth. Do not click live Checkout, customer payment checkout, activation, reset, temporary credential generation, or raw invite-link copy actions unless the run is explicitly scoped for that safe test action.

@@ -97,7 +97,7 @@ Future depth:
 - AIA/progress billing UX, exports, and draw-management depth
 - deeper payment reconciliation, retries, refunds, disputes, and provider sync
 - subscription/billing governance only after explicit security and release gates
-- paid early-access infrastructure should follow [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md); the current Phase 2.3 foundation covers founder setup/activation visibility, platform-admin-entered billing evidence, a test-mode-only FloorConnector SaaS subscription Checkout Session bridge, and signed SaaS-only webhook reconciliation, while live Stripe Billing launch, entitlement enforcement, public self-serve launch, and provider mutation remain separate approved phases
+- paid early-access infrastructure should follow [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md); the current Phase 2.5 foundation covers founder setup/activation visibility, platform-admin-entered billing evidence, a durable `/super-admin/billing` Billing Operations console, test-mode-only Product/recurring Price setup, a test-mode-only FloorConnector SaaS subscription Checkout Session bridge, and signed SaaS-only webhook reconciliation, while live Stripe Billing launch, entitlement enforcement, public self-serve launch, Customer Portal, and live provider mutation remain separate approved phases
 - external e-sign provider integration on canonical contracts
 - tax and accounting adapters
 - package/billing governance beyond current read-only foundations
@@ -111,6 +111,7 @@ Current status: Foundation for communications/notifications and a closed determi
 Planning reference: [docs/ai/intelligent-follow-up-engine.md](C:/FloorConnector/docs/ai/intelligent-follow-up-engine.md) defines the follow-up intelligence model, starting from deterministic evidence-backed cues over canonical records before AI summaries, drafts, or controlled automation.
 
 Implemented deterministic foundation:
+
 - operational cue derivation from canonical estimates, contracts, invoices, jobs, projects, and organization rule settings
 - record and project workspace cue surfaces with safe canonical workflow routing
 - user-confirmed work-item prefill for approved cue contexts only
@@ -119,6 +120,7 @@ Implemented deterministic foundation:
 - dashboard awareness surfaces without cue mutation controls
 
 Deferred:
+
 - company-scoped cue resolve or mark-handled
 - dashboard dismiss/snooze controls
 - AI summaries and draft assistance

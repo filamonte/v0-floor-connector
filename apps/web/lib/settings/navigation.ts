@@ -26,13 +26,15 @@ export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
   {
     href: "/settings/templates",
     label: "Document Templates",
-    description: "Organization-owned estimate, invoice, and contract templates.",
+    description:
+      "Organization-owned estimate, invoice, and contract templates.",
     adminOnly: true
   },
   {
     href: "/settings/catalogs",
     label: "Catalog Items",
-    description: "Catalog Items, Systems, Add-ons / Options, and inventory behavior.",
+    description:
+      "Catalog Items, Systems, Add-ons / Options, and inventory behavior.",
     adminOnly: true
   },
   {
@@ -44,7 +46,8 @@ export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
   {
     href: "/settings/selected-systems",
     label: "Selected Systems",
-    description: "Admin validation for selected floor systems on real workflow records.",
+    description:
+      "Admin validation for selected floor systems on real workflow records.",
     adminOnly: true
   },
   {
@@ -118,6 +121,12 @@ export const platformAdminNavItems: readonly SettingsNavItem[] = [
     description: "Read-only package, plan, billing, and activation readiness."
   },
   {
+    href: "/super-admin/billing",
+    label: "Billing",
+    description:
+      "SaaS billing configuration, Checkout readiness, webhook health, and tenant status."
+  },
+  {
     href: "/super-admin/groups",
     label: "Contractor Groups",
     description: "Platform segmentation for cohorts and future targeting."
@@ -125,12 +134,14 @@ export const platformAdminNavItems: readonly SettingsNavItem[] = [
   {
     href: "/super-admin/operations",
     label: "Operations",
-    description: "Read-only system health, audit activity, and support readiness."
+    description:
+      "Read-only system health, audit activity, and support readiness."
   },
   {
     href: "/super-admin/early-access",
     label: "Early Access",
-    description: "Onboarding visibility, first workflow progress, and activation control."
+    description:
+      "Onboarding visibility, first workflow progress, and activation control."
   },
   {
     href: "/super-admin/admin",

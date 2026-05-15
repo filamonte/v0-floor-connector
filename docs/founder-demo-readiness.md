@@ -72,8 +72,10 @@ Names only; do not print values in demo notes, chat, logs, or screenshots.
     - Proves the customer can review project, estimate, contract, invoice, and print/save routes with scoped access.
 17. `/portal/estimates/[estimateId]/pdf`, `/portal/contracts/[contractId]/pdf`, `/portal/invoices/[invoiceId]/pdf`
     - Proves portal print/save documents use safe contractor organization branding.
-18. `/super-admin/early-access`
-    - Proves platform operators can review early-access tenants and activation evidence without automatic activation or live billing mutation.
+18. `/super-admin/billing`
+    - Proves platform operators can review SaaS billing configuration health, Checkout readiness, webhook health, subscription references, manual billing evidence, and activation separation without live billing mutation.
+19. `/super-admin/early-access`
+    - Proves platform operators can review early-access tenant readiness and activation evidence without automatic activation or live billing mutation.
 
 ## Records Needed
 
@@ -87,7 +89,7 @@ Names only; do not print values in demo notes, chat, logs, or screenshots.
 - One job linked to the project.
 - One portal customer account with a contact-centered portal grant and project visibility.
 - Portal-visible estimate, contract, and invoice records for the granted project.
-- One platform-admin account with access to `/super-admin/early-access`.
+- One platform-admin account with access to `/super-admin/billing` and `/super-admin/early-access`.
 
 ## What Each Screen Should Prove
 
@@ -102,7 +104,7 @@ Names only; do not print values in demo notes, chat, logs, or screenshots.
 - Jobs and Schedule prove operational execution starts from ready project/job context.
 - Portal proves the customer sees only scoped, customer-safe records.
 - Print/save routes prove customer-facing documents are presentable today through browser print/save.
-- Super admin proves early-access activation is visible and operator-controlled.
+- Super admin proves billing operations and early-access activation are visible and operator-controlled.
 
 ## Do Not Click Without Explicit Test Scope
 
@@ -128,6 +130,7 @@ Names only; do not print values in demo notes, chat, logs, or screenshots.
 - If protected routes redirect to `/login`, refresh contractor storage state with `pnpm e2e:auth` using the same `PLAYWRIGHT_BASE_URL`.
 - If platform admin is denied, confirm the platform role with the documented platform-admin grant/status commands before the demo.
 - If Stripe test-mode setup is incomplete, show `/setup/billing` readiness and explain that live billing launch is intentionally gated.
+- If the Stripe key prefixes are not safely recognizable as test mode, the app-managed platform billing price reference is missing, or the SaaS webhook signing secret is not configured, do not run Product/Price setup, subscription Checkout, or Stripe CLI replay during the demo; state that the billing bridge is implemented but awaiting operator test-mode replay.
 - If a local development run shows Next.js development tooling in the viewport, use a production-style demo run rather than treating development chrome as part of the product. The app's own `DEV MODE / Reset session` helper is opt-in for local QA through `FLOORCONNECTOR_SHOW_DEV_QA_TOOLS=1` and should stay off for founder-demo screenshots.
 
 ## Print/Save Document Steps
@@ -138,12 +141,14 @@ Names only; do not print values in demo notes, chat, logs, or screenshots.
 4. Repeat for contract and invoice.
 5. Switch to the portal customer session and repeat the estimate, contract, and invoice print/save routes from customer scope.
 
-## Super Admin Early-Access Steps
+## Super Admin Billing And Early-Access Steps
 
 1. Sign in with platform-admin auth.
-2. Open `/super-admin/early-access`.
-3. Explain the tenant buckets, setup progress, billing evidence fields, and manual activation boundary.
-4. Do not activate or reset a tenant unless the run is explicitly scoped as a local/test operator rehearsal.
+2. Open `/super-admin/billing`.
+3. Explain names-only Stripe configuration health, Checkout readiness, webhook status, subscription references, manual billing evidence, and manual activation boundary.
+4. Open `/super-admin/early-access`.
+5. Explain the tenant buckets, setup progress, and manual activation boundary.
+6. Do not activate or reset a tenant unless the run is explicitly scoped as a local/test operator rehearsal.
 
 ## QA Commands
 
@@ -190,12 +195,13 @@ Coverage captured:
 - contractor setup, billing, pending activation, dashboard, lead, customer, project, estimate, contract, invoice, payment, job, schedule, and People/access routes
 - linked lead, customer, project, estimate, contract, invoice, and job workspaces where fixture data was available
 - contractor estimate, contract, and invoice print/save routes
-- portal home, project, estimate review, contract review, invoice review, all three portal print/save routes, and platform-admin early-access route
+- portal home, project, estimate review, contract review, invoice review, all three portal print/save routes, and platform-admin billing/early-access routes
 
 Dry-run results:
 
 - all captured routes loaded with authenticated storage states and no 404s
 - `/setup/billing` rendered the safe billing-unavailable state while the local Stripe SetupIntent endpoint returned a background 500 in the dry-run console; keep live Checkout and payment setup out of founder demos unless test-mode Stripe is explicitly configured
+- 2026-05-14 Stripe SaaS replay prep found Stripe key prefixes not safely recognizable as test mode, no app-managed platform billing price reference, `STRIPE_FOUNDER_PLAN_PRICE_ID` missing, and `STRIPE_WEBHOOK_SECRET` missing locally, so no Product/Price action, Checkout Session, Stripe CLI forwarding, or webhook replay was started; keep billing in the caveated demo lane until the test-mode replay is completed
 - no protected route stopped at `/login` during the main dry run
 - no Checkout, activation, reset, temporary credential, payment, signature, or invite-copy action was clicked
 - small copy cleanup removed visible internal `canonical` / `provider-backed` wording from the lead workspace, customer workspace summary, and customer-facing print footer language

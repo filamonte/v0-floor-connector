@@ -2,8 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getServerEnv } from "@floorconnector/config";
 
 import { requirePlatformAdminUser } from "@/lib/platform-admin/access";
+import { normalizeBillingPlanSetupInput } from "@/lib/platform-admin/billing-operations-core";
+import { upsertPlatformBillingSettings } from "@/lib/platform-admin/billing-settings";
+import { createOrDiscoverStripeTestSaasPlan } from "@/lib/platform-admin/stripe-test-plan-setup";
 import {
   addCatalogSeedToStarterPack,
   addTemplateSeedToStarterPack,
@@ -40,6 +44,7 @@ import {
   contractorGroupMembershipInputSchema,
   contractorGroupMembershipRemoveInputSchema,
   contractorGroupProposalManualApplyInputSchema,
+  platformBillingPlanSetupInputSchema,
   platformAdminAssignmentInputSchema,
   platformCatalogSeedInputSchema,
   platformFeaturePolicyInputSchema,
@@ -77,7 +82,10 @@ function getCheckboxValue(formData: FormData, key: string) {
   return formData.get(key) === "on";
 }
 
-function buildRedirect(pathname: string, params: Record<string, string | undefined>) {
+function buildRedirect(
+  pathname: string,
+  params: Record<string, string | undefined>
+) {
   const search = new URLSearchParams();
 
   for (const [key, value] of Object.entries(params)) {
@@ -99,7 +107,9 @@ function validUuidOrNull(value: string) {
     : null;
 }
 
-function parseSubmittedProposalFingerprint(value: string): Record<string, unknown> | null {
+function parseSubmittedProposalFingerprint(
+  value: string
+): Record<string, unknown> | null {
   if (!value.trim()) {
     return null;
   }
@@ -124,14 +134,83 @@ function revalidatePlatformAdminSlice() {
   revalidatePath("/super-admin/groups");
   revalidatePath("/super-admin/admin");
   revalidatePath("/super-admin/early-access");
+  revalidatePath("/super-admin/billing");
 }
 
-export async function updatePlatformFinancialDefaultsAction(formData: FormData) {
+export async function createOrDiscoverTestSaasPlanAction(formData: FormData) {
+  const scope = await requirePlatformAdminUser("/super-admin/billing");
+  const result = platformBillingPlanSetupInputSchema.safeParse({
+    planLabel: getFieldValue(formData, "planLabel"),
+    amountDollars: getFieldValue(formData, "amountDollars"),
+    currency: getFieldValue(formData, "currency"),
+    interval: getFieldValue(formData, "interval")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect("/super-admin/billing", {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to prepare Stripe test plan setup."
+      })
+    );
+  }
+
+  try {
+    const env = getServerEnv();
+    const setup = normalizeBillingPlanSetupInput({
+      stripeSecretKey: env.STRIPE_SECRET_KEY,
+      ...result.data
+    });
+    const stripePlan = await createOrDiscoverStripeTestSaasPlan({
+      apiKey: env.STRIPE_SECRET_KEY ?? "",
+      setup
+    });
+    const now = new Date().toISOString();
+
+    await upsertPlatformBillingSettings({
+      userId: scope.userId,
+      planLabel: setup.planLabel,
+      stripeProductId: stripePlan.productId,
+      stripePriceId: stripePlan.priceId,
+      currency: setup.currency,
+      unitAmountCents: setup.unitAmountCents,
+      recurringInterval: setup.interval,
+      stripeMode: "test",
+      stripeProductSyncedAt: now,
+      stripePriceSyncedAt: now
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect("/super-admin/billing", {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to create or discover Stripe test plan."
+      })
+    );
+  }
+
+  revalidatePlatformAdminSlice();
+
+  redirect(
+    buildRedirect("/super-admin/billing", {
+      message: "Stripe test plan reference was stored in Billing Operations."
+    })
+  );
+}
+
+export async function updatePlatformFinancialDefaultsAction(
+  formData: FormData
+) {
   const scope = await requirePlatformAdminUser("/super-admin/platform");
   const result = platformFinancialDefaultsInputSchema.safeParse({
     defaultTaxBehavior: getFieldValue(formData, "defaultTaxBehavior"),
     defaultTaxRate: getFieldValue(formData, "defaultTaxRate"),
-    defaultRetainagePercentage: getFieldValue(formData, "defaultRetainagePercentage")
+    defaultRetainagePercentage: getFieldValue(
+      formData,
+      "defaultRetainagePercentage"
+    )
   });
 
   if (!result.success) {
@@ -192,8 +271,14 @@ export async function updatePlatformWorkflowDefaultsAction(formData: FormData) {
       formData,
       "requireFinancingApprovalBeforeJobScheduling"
     ),
-    defaultDepositPercentage: getFieldValue(formData, "defaultDepositPercentage"),
-    defaultEstimateTermsHtml: getFieldValue(formData, "defaultEstimateTermsHtml"),
+    defaultDepositPercentage: getFieldValue(
+      formData,
+      "defaultDepositPercentage"
+    ),
+    defaultEstimateTermsHtml: getFieldValue(
+      formData,
+      "defaultEstimateTermsHtml"
+    ),
     defaultEstimateInclusionsHtml: getFieldValue(
       formData,
       "defaultEstimateInclusionsHtml"
@@ -206,13 +291,22 @@ export async function updatePlatformWorkflowDefaultsAction(formData: FormData) {
       formData,
       "defaultEstimateScopeSummaryHtml"
     ),
-    defaultEstimateStartNumber: getFieldValue(formData, "defaultEstimateStartNumber"),
-    defaultInvoiceStartNumber: getFieldValue(formData, "defaultInvoiceStartNumber"),
+    defaultEstimateStartNumber: getFieldValue(
+      formData,
+      "defaultEstimateStartNumber"
+    ),
+    defaultInvoiceStartNumber: getFieldValue(
+      formData,
+      "defaultInvoiceStartNumber"
+    ),
     defaultChangeOrderStartNumber: getFieldValue(
       formData,
       "defaultChangeOrderStartNumber"
     ),
-    defaultContractStartNumber: getFieldValue(formData, "defaultContractStartNumber")
+    defaultContractStartNumber: getFieldValue(
+      formData,
+      "defaultContractStartNumber"
+    )
   });
 
   if (!result.success) {
@@ -379,7 +473,9 @@ export async function upsertContractorGroupAction(formData: FormData) {
     redirect(
       buildRedirect("/super-admin/groups", {
         error:
-          error instanceof Error ? error.message : "Unable to save contractor group."
+          error instanceof Error
+            ? error.message
+            : "Unable to save contractor group."
       })
     );
   }
@@ -403,7 +499,8 @@ export async function archiveContractorGroupAction(formData: FormData) {
     redirect(
       buildRedirect("/super-admin/groups", {
         error:
-          result.error.issues[0]?.message ?? "Unable to archive contractor group."
+          result.error.issues[0]?.message ??
+          "Unable to archive contractor group."
       })
     );
   }
@@ -433,7 +530,9 @@ export async function archiveContractorGroupAction(formData: FormData) {
   );
 }
 
-export async function assignContractorGroupMembershipAction(formData: FormData) {
+export async function assignContractorGroupMembershipAction(
+  formData: FormData
+) {
   const scope = await requirePlatformAdminUser("/super-admin/groups");
   const result = contractorGroupMembershipInputSchema.safeParse({
     contractorGroupId: getFieldValue(formData, "contractorGroupId"),
@@ -535,7 +634,9 @@ export async function applyContractorGroupProposalManualAssignmentAction(
   );
 }
 
-export async function removeContractorGroupMembershipAction(formData: FormData) {
+export async function removeContractorGroupMembershipAction(
+  formData: FormData
+) {
   const scope = await requirePlatformAdminUser("/super-admin/groups");
   const result = contractorGroupMembershipRemoveInputSchema.safeParse({
     membershipId: getFieldValue(formData, "membershipId")
@@ -832,7 +933,9 @@ export async function removeStarterPackAssignmentAction(formData: FormData) {
   );
 }
 
-export async function createStarterPackProvisioningDraftAction(formData: FormData) {
+export async function createStarterPackProvisioningDraftAction(
+  formData: FormData
+) {
   const scope = await requirePlatformAdminUser("/super-admin/templates");
   const result = platformStarterPackProvisioningDraftInputSchema.safeParse({
     organizationId: getFieldValue(formData, "organizationId"),
@@ -974,7 +1077,9 @@ export async function executeStarterPackProvisioningRunAction(
     );
   }
 
-  let execution: Awaited<ReturnType<typeof executeApprovedStarterPackProvisioningRun>>;
+  let execution: Awaited<
+    ReturnType<typeof executeApprovedStarterPackProvisioningRun>
+  >;
 
   try {
     execution = await executeApprovedStarterPackProvisioningRun({
@@ -1113,7 +1218,9 @@ export async function updateTenantPlatformStatusAction(formData: FormData) {
     redirect(
       buildRedirect("/super-admin/admin", {
         error:
-          error instanceof Error ? error.message : "Unable to update tenant status."
+          error instanceof Error
+            ? error.message
+            : "Unable to update tenant status."
       })
     );
   }
@@ -1152,7 +1259,9 @@ export async function markEarlyAccessTenantActiveAction(formData: FormData) {
     redirect(
       buildRedirect("/super-admin/early-access", {
         error:
-          error instanceof Error ? error.message : "Unable to activate this company."
+          error instanceof Error
+            ? error.message
+            : "Unable to activate this company."
       })
     );
   }
@@ -1180,7 +1289,10 @@ export async function updateFounderBillingEvidenceAction(formData: FormData) {
     founderBillingMethod: getFieldValue(formData, "founderBillingMethod"),
     founderBillingReference: getFieldValue(formData, "founderBillingReference"),
     founderBillingNotes: getFieldValue(formData, "founderBillingNotes"),
-    founderBillingFollowUpAt: getFieldValue(formData, "founderBillingFollowUpAt"),
+    founderBillingFollowUpAt: getFieldValue(
+      formData,
+      "founderBillingFollowUpAt"
+    ),
     founderBillingEvidenceReceivedAt: getFieldValue(
       formData,
       "founderBillingEvidenceReceivedAt"
@@ -1223,7 +1335,9 @@ export async function updateFounderBillingEvidenceAction(formData: FormData) {
   );
 }
 
-export async function resetEarlyAccessTenantOnboardingStateAction(formData: FormData) {
+export async function resetEarlyAccessTenantOnboardingStateAction(
+  formData: FormData
+) {
   await requirePlatformAdminUser("/super-admin/early-access");
 
   if (process.env.NODE_ENV === "production") {

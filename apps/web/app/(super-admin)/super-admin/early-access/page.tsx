@@ -129,7 +129,9 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
     }))
   );
   const selectedFeedbackTenant =
-    tenants.find((tenant) => tenant.id === resolvedSearchParams.feedbackCompanyId) ??
+    tenants.find(
+      (tenant) => tenant.id === resolvedSearchParams.feedbackCompanyId
+    ) ??
     tenants.find((tenant) => tenant.hasFeedback) ??
     null;
   const showDevReset = process.env.NODE_ENV !== "production";
@@ -143,12 +145,26 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
 
       <DetailPanel
         title="Early Access"
-        description="Platform-admin-only visibility into onboarding companies, first workflow progress, and activation readiness from existing organization and workflow records."
+        description="Platform-admin-only visibility into onboarding companies, first workflow progress, and activation readiness from existing organization and workflow records. Durable SaaS billing operations now live under Billing."
         tone="neutral"
       >
         <div className="mb-4 space-y-3">
+          <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+            Billing configuration health, Checkout readiness, webhook status,
+            and subscription references are managed in{" "}
+            <Link
+              href="/super-admin/billing"
+              className="font-medium text-[var(--copper)] underline-offset-4 hover:underline"
+            >
+              Billing Operations
+            </Link>
+            . Early Access remains focused on founder readiness, workflow
+            progress, and manual activation decisions.
+          </div>
           <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
-            Progress is derived from existing company, project, estimate, contract, and invoice records. No analytics or duplicate tenant records are used here.
+            Progress is derived from existing company, project, estimate,
+            contract, and invoice records. No analytics or duplicate tenant
+            records are used here.
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3">
@@ -186,7 +202,10 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
           </div>
           {showDevReset ? (
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-              <span className="font-semibold">DEV / TEST ONLY:</span> reset clears only the selected tenant&apos;s onboarding workflow test records and saved Stripe payment method reference. It does not create sample data or affect other tenants.
+              <span className="font-semibold">DEV / TEST ONLY:</span> reset
+              clears only the selected tenant&apos;s onboarding workflow test
+              records and saved Stripe payment method reference. It does not
+              create sample data or affect other tenants.
             </div>
           ) : null}
         </div>
@@ -239,7 +258,9 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                 return (
                   <tr key={tenant.id} className="align-top">
                     <td className="px-4 py-4">
-                      <p className="font-semibold text-[var(--text-primary)]">{tenant.displayName}</p>
+                      <p className="font-semibold text-[var(--text-primary)]">
+                        {tenant.displayName}
+                      </p>
                       <p className="mt-1 text-xs text-[var(--text-tertiary)]">
                         {tenant.slug} - {tenant.legalName}
                       </p>
@@ -281,7 +302,9 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                     <td className="min-w-64 px-4 py-4 text-xs leading-5 text-[var(--text-secondary)]">
                       <p>
                         Customer:{" "}
-                        {tenant.stripeCustomerId ? "Stored reference" : "Not recorded"}
+                        {tenant.stripeCustomerId
+                          ? "Stored reference"
+                          : "Not recorded"}
                       </p>
                       <p>
                         Subscription:{" "}
@@ -289,14 +312,21 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                           ? "Stored reference"
                           : "Not recorded"}
                       </p>
-                      <p>Status: {formatOptionalStatus(tenant.stripeSubscriptionStatus)}</p>
+                      <p>
+                        Status:{" "}
+                        {formatOptionalStatus(tenant.stripeSubscriptionStatus)}
+                      </p>
                       <p>
                         Lifecycle:{" "}
-                        {formatOptionalStatus(tenant.stripeSubscriptionLifecycleState)}
+                        {formatOptionalStatus(
+                          tenant.stripeSubscriptionLifecycleState
+                        )}
                       </p>
                       <p>
                         Price:{" "}
-                        {tenant.stripePriceId ? "Stored reference" : "Not recorded"}
+                        {tenant.stripePriceId
+                          ? "Stored reference"
+                          : "Not recorded"}
                       </p>
                       <p>
                         Checkout:{" "}
@@ -312,7 +342,9 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                       </p>
                       <p>
                         Last billing event:{" "}
-                        {tenant.stripeLastEventId ? "Stored reference" : "Not recorded"}
+                        {tenant.stripeLastEventId
+                          ? "Stored reference"
+                          : "Not recorded"}
                       </p>
                       <p>
                         Last webhook:{" "}
@@ -321,8 +353,8 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                           : "Not recorded"}
                       </p>
                       <p className="mt-2 text-[11px] text-[var(--text-tertiary)]">
-                        Stripe SaaS billing does not auto-activate tenants or touch
-                        contractor invoice payments.
+                        Stripe SaaS billing does not auto-activate tenants or
+                        touch contractor invoice payments.
                       </p>
                     </td>
                     <td className="min-w-[22rem] px-4 py-4">
@@ -356,12 +388,18 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                           action={updateFounderBillingEvidenceAction}
                           className="grid gap-2 rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] p-3"
                         >
-                          <input type="hidden" name="companyId" value={tenant.id} />
+                          <input
+                            type="hidden"
+                            name="companyId"
+                            value={tenant.id}
+                          />
                           <label className="grid gap-1 text-xs font-semibold text-[var(--text-secondary)]">
                             Plan label
                             <input
                               name="founderPlanLabel"
-                              defaultValue={tenant.founderBilling.planLabel ?? ""}
+                              defaultValue={
+                                tenant.founderBilling.planLabel ?? ""
+                              }
                               maxLength={120}
                               className="rounded-lg border border-[var(--border-warm)] bg-white px-3 py-2 text-xs font-normal text-[var(--text-primary)]"
                               placeholder="Founder monthly"
@@ -388,7 +426,9 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                                 className="rounded-lg border border-[var(--border-warm)] bg-white px-3 py-2 text-xs font-normal text-[var(--text-primary)]"
                               >
                                 <option value="not_started">Not started</option>
-                                <option value="pending">Pending evidence</option>
+                                <option value="pending">
+                                  Pending evidence
+                                </option>
                                 <option value="evidence_received">
                                   Evidence received
                                 </option>
@@ -404,7 +444,9 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                               defaultValue={tenant.founderBilling.method}
                               className="rounded-lg border border-[var(--border-warm)] bg-white px-3 py-2 text-xs font-normal text-[var(--text-primary)]"
                             >
-                              <option value="manual_invoice">Manual invoice</option>
+                              <option value="manual_invoice">
+                                Manual invoice
+                              </option>
                               <option value="stripe_payment_link">
                                 Stripe Payment Link
                               </option>
@@ -418,7 +460,9 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                             External reference
                             <input
                               name="founderBillingReference"
-                              defaultValue={tenant.founderBilling.reference ?? ""}
+                              defaultValue={
+                                tenant.founderBilling.reference ?? ""
+                              }
                               maxLength={500}
                               className="rounded-lg border border-[var(--border-warm)] bg-white px-3 py-2 text-xs font-normal text-[var(--text-primary)]"
                               placeholder="Manual invoice, receipt, or Payment Link reference"
@@ -460,9 +504,9 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                             />
                           </label>
                           <p className="text-[11px] leading-5 text-[var(--text-tertiary)]">
-                            Evidence is operator-entered only. Saving this does not
-                            activate the tenant, create a Stripe subscription, or
-                            charge a card.
+                            Evidence is operator-entered only. Saving this does
+                            not activate the tenant, create a Stripe
+                            subscription, or charge a card.
                           </p>
                           <button
                             type="submit"
@@ -498,7 +542,8 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                         />
                         {tenant.lastActivityAt ? (
                           <p className="text-xs leading-5 text-[var(--text-tertiary)]">
-                            Last activity {formatDateTime(tenant.lastActivityAt)}
+                            Last activity{" "}
+                            {formatDateTime(tenant.lastActivityAt)}
                           </p>
                         ) : null}
                       </div>
@@ -564,37 +609,37 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                     </td>
                     <td className="px-4 py-4">
                       <div className="space-y-2">
-                      {isActive ? (
-                        <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
-                          Active
-                        </span>
-                      ) : (
-                        <ActivateCompanyForm
-                          action={markEarlyAccessTenantActiveAction}
-                          companyId={tenant.id}
-                        >
-                          <button
-                            type="submit"
-                            className="inline-flex items-center rounded-full bg-[var(--graphite)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--graphite-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2"
+                        {isActive ? (
+                          <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+                            Active
+                          </span>
+                        ) : (
+                          <ActivateCompanyForm
+                            action={markEarlyAccessTenantActiveAction}
+                            companyId={tenant.id}
                           >
-                            Mark active
-                          </button>
-                        </ActivateCompanyForm>
-                      )}
-                      {showDevReset ? (
-                        <ResetOnboardingStateForm
-                          action={resetEarlyAccessTenantOnboardingStateAction}
-                          companyId={tenant.id}
-                          companyName={tenant.displayName}
-                        >
-                          <button
-                            type="submit"
-                            className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 transition hover:bg-amber-100"
+                            <button
+                              type="submit"
+                              className="inline-flex items-center rounded-full bg-[var(--graphite)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--graphite-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2"
+                            >
+                              Mark active
+                            </button>
+                          </ActivateCompanyForm>
+                        )}
+                        {showDevReset ? (
+                          <ResetOnboardingStateForm
+                            action={resetEarlyAccessTenantOnboardingStateAction}
+                            companyId={tenant.id}
+                            companyName={tenant.displayName}
                           >
-                            Reset onboarding state
-                          </button>
-                        </ResetOnboardingStateForm>
-                      ) : null}
+                            <button
+                              type="submit"
+                              className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 transition hover:bg-amber-100"
+                            >
+                              Reset onboarding state
+                            </button>
+                          </ResetOnboardingStateForm>
+                        ) : null}
                       </div>
                     </td>
                   </tr>
@@ -607,7 +652,9 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                       No early-access companies yet.
                     </p>
                     <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[var(--text-tertiary)]">
-                      New signup companies will appear here after organization bootstrap. Use the public Start Free Trial flow to create the first onboarding tenant.
+                      New signup companies will appear here after organization
+                      bootstrap. Use the public Start Free Trial flow to create
+                      the first onboarding tenant.
                     </p>
                   </td>
                 </tr>
@@ -647,7 +694,9 @@ export default async function EarlyAccessPage({ searchParams }: PageProps) {
                           {formatDateTime(feedback.createdAt)}
                         </p>
                       </div>
-                      <p className="mt-3 whitespace-pre-wrap">{feedback.message}</p>
+                      <p className="mt-3 whitespace-pre-wrap">
+                        {feedback.message}
+                      </p>
                     </article>
                   ))
                 ) : (

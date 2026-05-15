@@ -24,13 +24,16 @@ export default async function BillingSetupPage({ searchParams }: PageProps) {
     return (
       <div className="mx-auto max-w-3xl px-5 py-10">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
-          No active organization is available yet. Return to the dashboard and complete account bootstrap before billing setup.
+          No active organization is available yet. Return to the dashboard and
+          complete account bootstrap before billing setup.
         </div>
       </div>
     );
   }
 
-  const billingState = await getBillingSetupState(organizationContext.organization.id);
+  const billingState = await getBillingSetupState(
+    organizationContext.organization.id
+  );
   const saasCheckoutState = await getSaasBillingCheckoutState({
     organizationId: organizationContext.organization.id,
     userCanManageBilling: ["owner", "admin"].includes(
@@ -60,16 +63,22 @@ export default async function BillingSetupPage({ searchParams }: PageProps) {
             Add your billing method
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[#625a52]">
-            You won&apos;t be charged during early access. This saves a future billing method only when secure Stripe setup is available; activation and any paid founder arrangement still require platform review.
+            You won&apos;t be charged during early access. This saves a future
+            billing method only when secure Stripe setup is available;
+            activation and any paid founder arrangement still require platform
+            review.
           </p>
           {resolvedSearchParams.billing_checkout === "returned" ? (
             <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-              Subscription checkout returned to FloorConnector. Subscription status still waits for signed Stripe webhook confirmation and platform review; activation remains separate.
+              Subscription checkout returned to FloorConnector. Subscription
+              status still waits for signed Stripe webhook confirmation and
+              platform review; activation remains separate.
             </div>
           ) : null}
           {resolvedSearchParams.billing_checkout === "cancelled" ? (
             <div className="mt-4 rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4 text-sm leading-6 text-[#625a52]">
-              Subscription checkout was cancelled. No tenant activation, invoice/payment state, or portal payment state changed.
+              Subscription checkout was cancelled. No tenant activation,
+              invoice/payment state, or portal payment state changed.
             </div>
           ) : null}
           {showDevStripeStatus ? (
@@ -84,7 +93,9 @@ export default async function BillingSetupPage({ searchParams }: PageProps) {
                 Billing form
               </p>
               <p className="mt-2 text-sm font-semibold text-[#171412]">
-                {billingState.publishableKeyConfigured ? "Ready" : "Unavailable"}
+                {billingState.publishableKeyConfigured
+                  ? "Ready"
+                  : "Unavailable"}
               </p>
             </div>
             <div className="rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4">
@@ -100,7 +111,9 @@ export default async function BillingSetupPage({ searchParams }: PageProps) {
                 Billing profile
               </p>
               <p className="mt-2 text-sm font-semibold text-[#171412]">
-                {billingState.stripeCustomerId ? "Stored safely" : "Created when available"}
+                {billingState.stripeCustomerId
+                  ? "Stored safely"
+                  : "Created when available"}
               </p>
             </div>
             <div className="rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4 md:col-span-3">
@@ -111,6 +124,19 @@ export default async function BillingSetupPage({ searchParams }: PageProps) {
                 {billingState.stripePaymentMethodId
                   ? "Saved for future activation"
                   : "Not saved yet"}
+              </p>
+            </div>
+            <div className="rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4 md:col-span-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#756c63]">
+                SaaS plan reference
+              </p>
+              <p className="mt-2 text-sm font-semibold text-[#171412]">
+                {saasCheckoutState.priceIdConfigured
+                  ? saasCheckoutState.priceReferenceSource ===
+                    "platform_settings"
+                    ? "Managed by Billing Operations"
+                    : "Configured by environment"
+                  : "Not configured yet"}
               </p>
             </div>
           </div>
@@ -127,10 +153,12 @@ export default async function BillingSetupPage({ searchParams }: PageProps) {
             <SetupIntentForm
               publishableKey={
                 billingState.canCollectCardNow
-                  ? publicEnv.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? null
+                  ? (publicEnv.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? null)
                   : null
               }
-              initialPaymentMethodSaved={Boolean(billingState.stripePaymentMethodId)}
+              initialPaymentMethodSaved={Boolean(
+                billingState.stripePaymentMethodId
+              )}
             />
           </div>
 
@@ -139,7 +167,11 @@ export default async function BillingSetupPage({ searchParams }: PageProps) {
               Founder subscription checkout
             </p>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#625a52]">
-              This starts FloorConnector SaaS subscription checkout in Stripe test mode only. A signed Stripe webhook may take a moment to reconcile subscription status for platform review. Checkout does not activate the workspace and does not touch contractor-customer invoice payments.
+              This starts FloorConnector SaaS subscription checkout in Stripe
+              test mode only. A signed Stripe webhook may take a moment to
+              reconcile subscription status for platform review. Checkout does
+              not activate the workspace and does not touch contractor-customer
+              invoice payments.
             </p>
             <div className="mt-4">
               <SaasSubscriptionCheckoutButton

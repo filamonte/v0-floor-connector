@@ -8,10 +8,48 @@ cover contractor-customer invoice payments, portal checkout, canonical invoice
 payment rows, or `payment_events`.
 
 Use with:
+
 - [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md)
 - [docs/e2e-browser-qa.md](C:/FloorConnector/docs/e2e-browser-qa.md)
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
 - [docs/chat-handoff.md](C:/FloorConnector/docs/chat-handoff.md)
+
+## Latest Local QA Status
+
+Date: 2026-05-14
+
+Names-only local env readiness check:
+
+- `STRIPE_SECRET_KEY`: present, mode unknown from the local value format
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: present, mode unknown from the local value format
+- app-managed platform billing price reference: missing
+- `STRIPE_FOUNDER_PLAN_PRICE_ID`: missing env fallback
+- `STRIPE_WEBHOOK_SECRET`: missing
+
+Because the Stripe key prefixes are not safely recognizable as test mode, the
+platform billing price reference is missing, and the SaaS webhook signing secret
+is missing, local Product/Price setup, SaaS Checkout creation, Checkout
+completion, and Stripe CLI webhook replay were not started in this pass. The
+safe result is to keep `/setup/billing` in its unavailable/review state, run the
+checkout/webhook unit coverage, and complete the replay only after an operator
+configures recognizable Stripe test-mode values and a signed webhook source in
+the local env source of truth.
+
+Billing Operations now also supports a platform-admin-only test-mode Product /
+recurring Price setup action. If `STRIPE_SECRET_KEY` is clearly test mode, use
+`/super-admin/billing` to create or discover the FloorConnector SaaS test Product
+and recurring Price, then store only the non-secret Product and Price references
+in `platform_billing_settings`. The app does not write `.env.local`; the env
+fallback `STRIPE_FOUNDER_PLAN_PRICE_ID` remains supported for compatibility.
+`STRIPE_WEBHOOK_SECRET` still must be configured from Stripe CLI or the Stripe
+Dashboard endpoint before webhook replay.
+
+Database inspection during this pass showed no SaaS billing reconciliation rows
+yet: `stripe_saas_billing_webhook_events` count `0`,
+`company_subscriptions` count `0`, and `platform_billing_settings` had no stored
+Stripe Product or Price reference. Existing contractor invoice/payment counts
+were inspected only as a no-mutation baseline; no contractor-customer payment
+webhook was invoked.
 
 ## Domain Boundary
 
@@ -34,6 +72,27 @@ Do not mix these domains. SaaS billing webhook tests must not create or update
 contractor invoice payments, portal payment state, payment ledger rows, or
 `payment_events`.
 
+## Billing Operations Console
+
+Durable SaaS billing operations live at `/super-admin/billing`. Early access is
+a commercial phase; Billing is the long-term operating home for:
+
+- Stripe configuration health by env name only
+- founder/default SaaS plan reference status from platform settings and env fallback
+- test-mode-only Product/recurring Price create-or-discover control
+- Checkout readiness and the tenant-facing `/setup/billing` entry point
+- signed SaaS webhook endpoint health
+- tenant subscription/reference status from existing company and subscription rows
+- manual founder billing evidence shown separately from Stripe reconciliation
+- manual activation/entitlement separation
+
+The console may create or reuse Stripe Products and recurring Prices only with a
+test-mode Stripe secret key. It does not create live Stripe resources, Checkout
+Sessions, Customer Portal sessions, customers, subscriptions, invoices, payment
+links, live charges, webhook endpoints, or tenant activation. Use it before
+running the local replay steps and after replay to confirm status; use
+`/super-admin/early-access` for founder readiness and manual activation review.
+
 ## Required Environment Variable Names
 
 Configure names only. Never paste or print values in tickets, logs, docs, chat,
@@ -49,6 +108,10 @@ STRIPE_WEBHOOK_SECRET
 `STRIPE_WEBHOOK_SECRET` must match the signing secret for the webhook source
 being tested. Stripe CLI forwarding and a Dashboard-managed endpoint produce
 different signing secrets.
+
+`STRIPE_FOUNDER_PLAN_PRICE_ID` is now an env fallback. If
+`platform_billing_settings.stripe_price_id` exists, SaaS Checkout prefers that
+app-managed non-secret reference before the env value.
 
 ## Supported Events
 
@@ -84,22 +147,28 @@ when they include the same SaaS billing domain metadata and a real company id.
 ## Local Test-Mode Webhook Setup
 
 1. Confirm local app env names are configured with Stripe test-mode values.
-2. Start the app locally.
-3. Start Stripe CLI forwarding in a separate terminal:
+   If both the platform billing settings price reference and
+   `STRIPE_FOUNDER_PLAN_PRICE_ID` are missing, stop before creating Checkout
+   Sessions. If `STRIPE_WEBHOOK_SECRET` is blank, stop before forwarding events.
+2. If the price reference is missing and `STRIPE_SECRET_KEY` is clearly
+   test-mode, use `/super-admin/billing` to create or discover the test founder
+   Product and recurring Price. Store only the non-secret references in the app.
+3. Start the app locally.
+4. Start Stripe CLI forwarding in a separate terminal:
 
 ```bash
 stripe listen --events checkout.session.completed,customer.subscription.created,customer.subscription.updated,customer.subscription.deleted,invoice.paid,invoice.payment_failed --forward-to localhost:3000/api/stripe/saas-billing-webhook
 ```
 
-4. Copy only the signing secret into `STRIPE_WEBHOOK_SECRET` in the local env
+5. Copy only the signing secret into `STRIPE_WEBHOOK_SECRET` in the local env
    source of truth. Do not paste it into tickets or chat.
-5. Restart the app so the env value is loaded.
-6. Use contractor owner/admin auth on `/setup/billing` only when test-mode
+6. Restart the app so the env value is loaded.
+7. Use contractor owner/admin auth on `/setup/billing` only when test-mode
    checkout is explicitly safe. Do not use live keys.
-7. After checkout returns, use platform-admin auth on `/super-admin/early-access`
-   to confirm Stripe SaaS billing references/status appear separately from
-   manual founder billing evidence.
-8. Confirm tenant activation remains manual. The webhook must not mark the
+8. After checkout returns, use platform-admin auth on `/super-admin/billing` to
+   confirm Stripe SaaS billing references/status appear separately from manual
+   founder billing evidence.
+9. Confirm tenant activation remains manual. The webhook must not mark the
    company active.
 
 Do not print Checkout Session URLs. Do not print raw webhook payloads. Do not
@@ -132,7 +201,8 @@ Do not point SaaS subscription events at the contractor invoice payment webhook.
 Safe replay options:
 
 - Prefer the app-created Checkout test flow when the operator has confirmed
-  test keys and `STRIPE_FOUNDER_PLAN_PRICE_ID`.
+  test keys and either a platform billing settings price reference or
+  `STRIPE_FOUNDER_PLAN_PRICE_ID`.
 - Use Stripe CLI event forwarding for local route verification.
 - Use `stripe trigger <event>` for supported event types only when the generated
   test object can carry or be paired with the required SaaS metadata.

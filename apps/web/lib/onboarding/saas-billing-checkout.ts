@@ -6,6 +6,7 @@ import {
   buildSaasBillingCheckoutSessionFormData,
   getSaasBillingCheckoutAvailability
 } from "./saas-billing-checkout-core";
+import { getEffectiveSaasPriceReference } from "@/lib/platform-admin/billing-settings";
 import {
   ensureStripeCustomerForOrganization,
   getBillingSetupState,
@@ -23,6 +24,7 @@ type StripeCheckoutSessionPayload = {
 export type SaasBillingCheckoutState = {
   stripeMode: BillingSetupState["stripeMode"];
   priceIdConfigured: boolean;
+  priceReferenceSource: "platform_settings" | "env" | "missing";
   canStartCheckout: boolean;
   unavailableReason: string | null;
   stripeCustomerId: string | null;
@@ -51,15 +53,19 @@ export async function getSaasBillingCheckoutState(input: {
   userCanManageBilling: boolean;
 }): Promise<SaasBillingCheckoutState> {
   const billingState = await getBillingSetupState(input.organizationId);
+  const priceReference = await getEffectiveSaasPriceReference({
+    envPriceId: getFounderPlanPriceId()
+  });
   const availability = getSaasBillingCheckoutAvailability({
     stripeMode: billingState.stripeMode,
-    priceIdConfigured: Boolean(getFounderPlanPriceId()),
+    priceIdConfigured: Boolean(priceReference.priceId),
     userCanManageBilling: input.userCanManageBilling
   });
 
   return {
     stripeMode: billingState.stripeMode,
-    priceIdConfigured: Boolean(getFounderPlanPriceId()),
+    priceIdConfigured: Boolean(priceReference.priceId),
+    priceReferenceSource: priceReference.source,
     canStartCheckout: availability.canStartCheckout,
     unavailableReason: availability.reason,
     stripeCustomerId: billingState.stripeCustomerId
@@ -78,7 +84,10 @@ export async function createSaasBillingCheckoutSession(input: {
     organizationId: input.organizationId,
     userCanManageBilling: input.userCanManageBilling
   });
-  const priceId = getFounderPlanPriceId();
+  const priceReference = await getEffectiveSaasPriceReference({
+    envPriceId: getFounderPlanPriceId()
+  });
+  const priceId = priceReference.priceId;
 
   if (!checkoutState.canStartCheckout || !priceId) {
     throw new Error(
