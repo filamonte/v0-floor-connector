@@ -10,7 +10,7 @@ This document lists important depth gaps without implying the operating core is 
 - Full scheduling calendar/board depth beyond the current `/schedule` foundation.
 - Dispatch automation, route optimization, and deeper crew/resource coordination.
 - Broader reporting, analytics, and report-builder depth beyond current `/reports` foundations.
-- Import/export depth beyond the first `/settings/export` foundation, including import dry-run mapping, duplicate detection, rollback/undo, attachments/files, communication exports, portal-access metadata exports, contract/change-order export policy, provider-specific accounting exports, and richer export management beyond the current metadata-only history.
+- Import/export depth beyond the current `/settings/export` foundation, including actual customer/contact write execution, editable duplicate-resolution UX, rollback/undo execution, write completion audit trail, attachments/files, communication exports, portal-access metadata exports, contract/change-order export policy, provider-specific accounting exports, and richer export management beyond the current metadata-only history.
 - Communications and notification depth, including provider-backed customer messaging, delivery proof, and broader source coverage.
 - External e-sign provider integration on top of canonical contracts.
 - External tax and accounting integrations.

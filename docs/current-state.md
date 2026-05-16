@@ -464,7 +464,11 @@ Implemented now:
   - portal invite tokens, token hashes, auth sessions, temporary passwords, raw invite links, service-role keys, Stripe keys, webhook secrets, Checkout URLs, and Customer Portal URLs are not exported
   - estimate and invoice line-item exports include customer-facing commercial fields and exclude internal cost, hidden markup, and markup fields in this first foundation
   - export attempts write small `data_export_events` metadata rows after the audit migration is applied, recording who exported, when, module, format, status, record count, schema version, and filename; no exported rows or file contents are stored
-  - import remains planning/no-mutation only: there is no upload control, dry-run parser, import write path, background job, rollback tool, or broad import schema
+  - the same page now includes a validation-only customer/contact CSV import dry run: uploaded CSV text is parsed for column mapping, required-field checks, row-level warnings/errors, and tenant-scoped duplicate signals against existing customers/customer contacts
+  - a successful dry run can be saved as a tenant-scoped import review batch in `data_import_batches` / `data_import_rows`; the batch stores normalized preview rows, validation status, duplicate summaries, counts, mapping/schema version, filename metadata, and review-only proposed decisions
+  - `/settings/export` lists recent import review batches separately from export history, and `/settings/export/imports/[batchId]` shows a read-only approval shell with row previews, validation states, duplicate notes, and disabled future-approval messaging
+  - import remains no-mutation: there is no create/update/delete/merge write path, stored upload, background job, rollback tool, row-decision editing, or preview-to-import commit control
+  - future customer/contact import writes still require explicit owner/admin approval behavior, duplicate-resolution UX, create/link-only execution, dedicated import audit completion evidence, export-before-import backup recommendation, and created-only rollback rules before any canonical record mutation is built
 
 Defined but still foundation-only:
 

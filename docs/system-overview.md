@@ -93,6 +93,9 @@ What contractor teams can do now:
 - rely on server-side readiness enforcement before scheduling and execution workflows proceed
 - manage organization-level settings and admin foundations
 - export core tenant-scoped business records from `/settings/export` as CSV or JSON manifests for data portability, with sensitive tokens, provider payloads, payment secrets, and auth material excluded; export history stores metadata only and never stores downloaded file contents
+- run a validation-only customer/contact CSV import dry run from `/settings/export`, with column mapping, required-field checks, tenant-scoped duplicate signals, and no canonical record writes or stored upload
+- save dry-run results into tenant-scoped import review batches and open `/settings/export/imports/[batchId]` for read-only row review; import batches store normalized preview/audit metadata only and still do not create or change canonical records
+- use the import write-safety plan as the boundary for future customer/contact import writes: editable row decisions, explicit owner/admin approval, create/link-only first phase, dedicated import audit completion evidence, and created-only rollback before mutation
 - use super-admin configuration foundations at the platform layer
 
 The contractor app is no longer just a data shell. It supports connected operating workflows across commercial, billing, and execution contexts.

@@ -34,5 +34,5 @@ Status vocabulary: Stable, Active, Foundation, Planned, Deferred.
 | Materials / catalogs | Foundation | `catalog_items`, cost item database, inventory links, materials route, and estimate sourcing exist; execution materials workflows remain future. |
 | Communications | Foundation | Communication threads/messages, filters, safe replies, and notification triage foundations exist; provider-backed depth remains future. |
 | Reporting | Foundation | `/reports` and Sales Tax Summary exist; broad analytics and report builders remain future. |
-| Import / export | Foundation | `/settings/export` now provides owner/admin tenant-scoped CSV and JSON exports for core canonical records plus metadata-only export history; broad import remains validation/no-mutation planning only. |
+| Import / export | Foundation | `/settings/export` now provides owner/admin tenant-scoped CSV and JSON exports for core canonical records, metadata-only export history, validation-only customer/contact CSV import dry run, saved import review batches, and a read-only `/settings/export/imports/[batchId]` approval shell; import writes remain unimplemented. |
 | AI / intelligence layer | Foundation | Operational cues exist as deterministic/read-only guidance; broad AI assistance remains future. |

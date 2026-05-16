@@ -94,7 +94,7 @@ Current status: Active core with foundation-level depth in several areas.
 Future depth:
 
 - broader Sales Tax Summary/reporting and analytics
-- export-first data portability is now started through `/settings/export`, with small metadata-only export history; future reporting/export depth should build on canonical tenant-scoped exports rather than raw database dumps
+- export-first data portability is now started through `/settings/export`, with small metadata-only export history, validation-only customer/contact CSV import dry run, tenant-scoped saved import review batches, and a read-only batch review shell; future import/write depth should build on editable row decisions, create/link-only first phase, dedicated audit, rollback, duplicate resolution, backups, and explicit approval rather than raw database imports
 - AIA/progress billing UX, exports, and draw-management depth
 - deeper payment reconciliation, retries, refunds, disputes, and provider sync
 - subscription/billing governance only after explicit security and release gates

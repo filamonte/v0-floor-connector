@@ -121,13 +121,29 @@ pnpm exec playwright test e2e/data-export.spec.js --project=chromium-portal
 
 The protected project verifies an authenticated contractor owner/admin can open
 `/settings/export`, receive tenant-scoped CSV responses, and see recent export
-history when the audit-table migration is present. If the active QA database has
-not applied `data_export_events` yet, the page shows the pending-migration audit
-notice while keeping exports usable. The portal project verifies a portal
-customer cannot open the contractor Data Export route. Do not print downloaded
-export contents in tickets, docs, chats, or test summaries.
+history when the audit-table migration is present. It also verifies the
+validation-only customer/contact CSV import dry-run panel can parse a small CSV
+and return row-level dry-run results, save a read-only import review batch, open
+the batch review route, and verify the customer export row count does not change.
+If the active QA database has not applied `data_export_events` or
+`data_import_batches` yet, the page shows the matching pending-migration notice
+while keeping safe export/dry-run behavior usable. The portal project verifies a
+portal customer cannot open the contractor Data Export route, see the import
+dry-run UI, or open an import batch review route. Do not print downloaded export
+contents or uploaded CSV contents in tickets, docs, chats, or test summaries.
 Exports may contain customer PII and commercial data even though they exclude
 tokens, secrets, raw provider payloads, payment secrets, and raw invite links.
+The linked QA database was verified on May 15, 2026 with
+`20260515204452_data_export_events` applied; apply
+`20260515220057_data_import_batches` plus
+`20260515221606_data_import_batch_grant_hardening` before expecting saved import
+review batches to persist there with the intended grant posture.
+
+Future import-write QA should not reuse the dry-run smoke as proof of mutation.
+Before any import execution action is added, tests must cover editable row
+decisions, approval confirmation, create/link-only write scope, no
+portal/auth/email/payment/job creation, created-record audit evidence, rollback
+eligibility, and portal customer exclusion.
 
 Stripe Billing checkout QA must stay test-mode only. To verify the `/setup/billing`
 subscription launcher, configure names-only prerequisites locally, restart the dev
