@@ -16,7 +16,7 @@ export function AppModulePlaceholder({
   actionLabel
 }: AppModulePlaceholderProps) {
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
+    <section className="rounded-lg border border-[var(--border-warm)] bg-white p-4 shadow-sm sm:p-5">
       <AppEmptyState
         eyebrow={eyebrow}
         title={title}

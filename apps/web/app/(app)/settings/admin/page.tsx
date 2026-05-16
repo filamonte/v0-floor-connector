@@ -15,6 +15,12 @@ type PageProps = {
   }>;
 };
 
+const adminSummaryCardClassName =
+  "rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm text-[var(--text-secondary)]";
+
+const adminFormCardClassName =
+  "rounded-lg border border-[var(--border-warm)] bg-white p-5 shadow-sm";
+
 export default async function SettingsAdminPage({ searchParams }: PageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const scope = await requireOrganizationAdminScope("/settings/admin");
@@ -36,16 +42,16 @@ export default async function SettingsAdminPage({ searchParams }: PageProps) {
         description="Manage organization membership roles and review the tenant-scoped system roles available for contractor administration."
       >
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-            <p className="font-medium text-slate-950">Members</p>
+          <div className={adminSummaryCardClassName}>
+            <p className="font-medium text-[var(--text-primary)]">Members</p>
             <p className="mt-1">{members.length} total</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-            <p className="font-medium text-slate-950">Organization roles</p>
+          <div className={adminSummaryCardClassName}>
+            <p className="font-medium text-[var(--text-primary)]">Organization roles</p>
             <p className="mt-1">{roles.length} seeded system roles</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-            <p className="font-medium text-slate-950">Guardrail</p>
+          <div className={adminSummaryCardClassName}>
+            <p className="font-medium text-[var(--text-primary)]">Guardrail</p>
             <p className="mt-1">Platform policy still controls deeper permissions.</p>
           </div>
         </div>
@@ -55,7 +61,7 @@ export default async function SettingsAdminPage({ searchParams }: PageProps) {
             <form
               key={member.id}
               action={updateOrganizationMembershipRoleAction}
-              className="rounded-[1.5rem] border border-slate-200 bg-white p-5"
+              className={adminFormCardClassName}
             >
               <input type="hidden" name="membershipId" value={member.id} />
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -64,7 +70,7 @@ export default async function SettingsAdminPage({ searchParams }: PageProps) {
                     {member.users?.full_name ?? member.users?.email ?? member.invitation_email ?? "Member"}
                   </p>
                   <p className="mt-1 text-sm leading-6 text-slate-600">
-                    {member.users?.email ?? member.invitation_email ?? "No email available"} ·{" "}
+                    {member.users?.email ?? member.invitation_email ?? "No email available"} |{" "}
                     {member.membership_status}
                   </p>
                 </div>
@@ -73,7 +79,7 @@ export default async function SettingsAdminPage({ searchParams }: PageProps) {
                   <select
                     name="nextRole"
                     defaultValue={member.membership_role}
-                    className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                    className="rounded-[4px] border border-[var(--border-warm)] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[var(--copper)] focus:ring-2 focus:ring-[var(--copper)]/20"
                   >
                     {roles.map((role) => (
                       <option key={role.id} value={role.key}>
@@ -83,7 +89,7 @@ export default async function SettingsAdminPage({ searchParams }: PageProps) {
                   </select>
                   <button
                     type="submit"
-                    className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                    className="inline-flex items-center rounded-[4px] border border-[var(--border-warm)] bg-white px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[var(--highlight)]"
                   >
                     Update role
                   </button>
@@ -99,7 +105,7 @@ export default async function SettingsAdminPage({ searchParams }: PageProps) {
         description="Recent tenant-scoped workflow failures recorded for owner/admin review. Contract generation failures are the first logged workflow."
       >
         {workflowErrors.length > 0 ? (
-          <div className="divide-y divide-slate-200 rounded-[1.5rem] border border-slate-200 bg-white">
+          <div className="divide-y divide-[var(--border-warm)] rounded-lg border border-[var(--border-warm)] bg-white shadow-sm">
             {workflowErrors.map((event) => (
               <div key={event.id} className="px-5 py-4">
                 <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
@@ -119,7 +125,7 @@ export default async function SettingsAdminPage({ searchParams }: PageProps) {
             ))}
           </div>
         ) : (
-          <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">
+          <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
             No workflow errors have been recorded for this organization yet.
           </div>
         )}

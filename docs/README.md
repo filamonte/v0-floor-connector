@@ -45,6 +45,8 @@ Document roles:
 - `docs/canonical-lifecycle.md`: canonical record chain and lineage rules
 - `docs/platform-philosophy.md`: stable product/engineering philosophy
 - `docs/ui-system.md`: current contractor UI guardrails
+- `docs/graphite-copper-ui-system.md`: implementation reference for the current Graphite / Copper enterprise UI system across contractor, portal, super-admin, and settings surfaces
+- `docs/enterprise-ui-system-audit.md`: secured-app route audit, Phase 1-4 polish history, drift watch list, and authenticated visual QA rules
 - `docs/floorconnector-ui-build-rules.md`: mandatory contractor UI build rules, including the accepted Graphite & Copper visual foundation and shell/workspace guardrails
 - `docs/design-system-comprehensive-prompt.md`: Graphite & Copper visual reference for targeted future UI work
 - `docs/design-system-implementation-status.md`, `docs/graphite-copper-implementation.md`, and `docs/quick-reference-graphite-copper.md`: post-v0 visual-system status and quick token references
@@ -66,6 +68,7 @@ Document roles:
 - `docs/workflow-spec.md`: primary contractor workflow definition
 - `docs/workflow-state-machine.md`: stages, blockers, and transition guidance
 - `docs/system-inventory.md`: implemented/foundation/planned system inventory, including current template/catalog foundations and planned Templates & Systems administration
+- `docs/security-threat-model.md`: security threat model for tenant isolation, auth, portal access, provider webhooks, exports/imports, and service-role boundaries
 - `docs/starter-pack-provisioning-plan.md`: planning-only safety spec for future starter-pack provisioning approval, audit, conflict handling, idempotency, and void strategy
 - `docs/starter-pack-provisioning-execution-readiness.md`: readiness review for starter-pack provisioning execution field mappings, lineage, transaction/RPC feasibility, and void-readiness foundations
 - `docs/starter-pack-provisioning-review.md`: consolidated architecture/operator readiness review for the implemented starter-pack provisioning lifecycle before any real void action

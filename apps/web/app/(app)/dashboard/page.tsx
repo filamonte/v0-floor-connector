@@ -46,7 +46,10 @@ import { listPunchlistItems } from "@/lib/punchlists/data";
 import { listProgressBillingWorkspaces } from "@/lib/progress-billing/data";
 import { mapProjectCuesToDashboardPreviewItems } from "@/lib/dashboard/project-cue-preview";
 import { quickCreateProjectAction } from "@/lib/projects/actions";
-import { buildProjectCues, selectHighestPriorityProjectCues } from "@/lib/projects/cues";
+import {
+  buildProjectCues,
+  selectHighestPriorityProjectCues
+} from "@/lib/projects/cues";
 import { listProjects } from "@/lib/projects/data";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
 import { filterUpcomingAssignedAppointments } from "@/lib/schedule/read-model";
@@ -122,11 +125,15 @@ function mapOperationalCueToDashboardItem(cue: OperationalCue) {
       : [`Responsible: ${cue.responsibility.displayLabel}`];
   const sourceMeta = [
     ...responsibilityMeta,
-    cue.sourceValue ? `${cue.sourceLabel}: ${cue.sourceValue}` : cue.sourceLabel,
+    cue.sourceValue
+      ? `${cue.sourceLabel}: ${cue.sourceValue}`
+      : cue.sourceLabel,
     formatCueThresholdLabel(cue.thresholdLabel),
     cue.triggeredAtLabel
   ].filter(Boolean);
-  const contextMeta = [cue.customerName, cue.projectName].filter(Boolean).join(" - ");
+  const contextMeta = [cue.customerName, cue.projectName]
+    .filter(Boolean)
+    .join(" - ");
 
   return {
     id: `${cue.cueKey}:${cue.subjectId}`,
@@ -226,14 +233,20 @@ type DashboardPageProps = {
   }>;
 };
 
-export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+export default async function DashboardPage({
+  searchParams
+}: DashboardPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const forceFreshOnboarding =
-    process.env.NODE_ENV !== "production" && resolvedSearchParams.fresh === "true";
+    process.env.NODE_ENV !== "production" &&
+    resolvedSearchParams.fresh === "true";
   const user = await requireAuthenticatedUser("/dashboard");
   const organizationContext = await getActiveOrganizationContext(user.id);
 
-  if (!organizationContext || !hasCompanyProfileFields(organizationContext.organization)) {
+  if (
+    !organizationContext ||
+    !hasCompanyProfileFields(organizationContext.organization)
+  ) {
     redirect("/setup/company");
   }
 
@@ -286,29 +299,40 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const today = new Date().toISOString().slice(0, 10);
   const tomorrow = addDaysDateKey(today, 1);
-  const activeProjects = projects.filter((project) => project.status !== "completed");
+  const activeProjects = projects.filter(
+    (project) => project.status !== "completed"
+  );
   const projectReadinessSnapshots = new Map(
     await Promise.all(
-      activeProjects.map(async (project) => [
-        project.id,
-        await getProjectFinancialReadinessSnapshot({
-          organizationId: project.organizationId,
-          projectId: project.id
-        })
-      ] as const)
+      activeProjects.map(
+        async (project) =>
+          [
+            project.id,
+            await getProjectFinancialReadinessSnapshot({
+              organizationId: project.organizationId,
+              projectId: project.id
+            })
+          ] as const
+      )
     )
   );
   const derivedProjectCues = activeProjects.flatMap((project) =>
-      buildProjectCues({
-        project,
-        readinessSnapshot: projectReadinessSnapshots.get(project.id) ?? null,
-        estimates: estimates.filter((estimate) => estimate.projectId === project.id),
-        contracts: contracts.filter((contract) => contract.projectId === project.id),
-        invoices: invoices.filter((invoice) => invoice.projectId === project.id),
-        jobs: jobs.filter((job) => job.projectId === project.id),
-        fieldNotes: fieldNotes.filter((fieldNote) => fieldNote.projectId === project.id)
-      })
-    );
+    buildProjectCues({
+      project,
+      readinessSnapshot: projectReadinessSnapshots.get(project.id) ?? null,
+      estimates: estimates.filter(
+        (estimate) => estimate.projectId === project.id
+      ),
+      contracts: contracts.filter(
+        (contract) => contract.projectId === project.id
+      ),
+      invoices: invoices.filter((invoice) => invoice.projectId === project.id),
+      jobs: jobs.filter((job) => job.projectId === project.id),
+      fieldNotes: fieldNotes.filter(
+        (fieldNote) => fieldNote.projectId === project.id
+      )
+    })
+  );
   const projectCueStates = await listWorkflowCueStatesForIdentities({
     companyId: organizationContext.organization.id,
     currentUserId: user.id,
@@ -332,14 +356,18 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const overdueInvoices = openInvoices
     .filter((invoice) => isOverdueInvoice(invoice.dueDate, today))
     .sort((left, right) =>
-      (left.dueDate ?? "9999-12-31").localeCompare(right.dueDate ?? "9999-12-31")
+      (left.dueDate ?? "9999-12-31").localeCompare(
+        right.dueDate ?? "9999-12-31"
+      )
     );
   const dueLeadFollowUps = leadFollowUpQueue.filter(
     (item) => item.bucket === "overdue" || item.bucket === "due_today"
   );
   const leadFollowUpsForDashboard = leadFollowUpQueue.slice(0, 5);
   const estimatesAwaitingAction = estimates
-    .filter((estimate) => ["draft", "sent", "rejected"].includes(estimate.status))
+    .filter((estimate) =>
+      ["draft", "sent", "rejected"].includes(estimate.status)
+    )
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
     .slice(0, 5);
   const contractsAwaitingAction = contracts
@@ -352,14 +380,21 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     .slice(0, 5);
   const jobsTodayOrInProgress = jobs
     .filter(
-      (job) => job.dispatchStatus === "in_progress" || job.scheduledDate === today
+      (job) =>
+        job.dispatchStatus === "in_progress" || job.scheduledDate === today
     )
     .sort((left, right) => {
-      if (left.dispatchStatus === "in_progress" && right.dispatchStatus !== "in_progress") {
+      if (
+        left.dispatchStatus === "in_progress" &&
+        right.dispatchStatus !== "in_progress"
+      ) {
         return -1;
       }
 
-      if (left.dispatchStatus !== "in_progress" && right.dispatchStatus === "in_progress") {
+      if (
+        left.dispatchStatus !== "in_progress" &&
+        right.dispatchStatus === "in_progress"
+      ) {
         return 1;
       }
 
@@ -372,8 +407,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     (appointment) => appointment.status === "scheduled"
   );
   const currentUserPerson =
-    people.find((person) => person.membershipUserId === user.id && person.isActive) ??
-    null;
+    people.find(
+      (person) => person.membershipUserId === user.id && person.isActive
+    ) ?? null;
   const myWorkQueueModes = buildMyWorkQueueModes({
     cues: operationalCueDashboard.cues,
     currentUserId: user.id,
@@ -406,7 +442,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     assignedItems: assignedWorkItems,
     companyItems: companyWorkItems
   });
-  const showingCompanyWorkItems = dashboardWorkItemQueue.mode === "company_fallback";
+  const showingCompanyWorkItems =
+    dashboardWorkItemQueue.mode === "company_fallback";
   const appointmentsToday = scheduledAppointments
     .filter((appointment) => {
       const appointmentDate = new Date(appointment.startsAt);
@@ -429,10 +466,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       ? upcomingAppointments
       : companyUpcomingAppointments;
   const appointmentFollowUpActions = appointments
-    .filter((appointment) => appointment.status === "canceled" || appointment.status === "no_show")
+    .filter(
+      (appointment) =>
+        appointment.status === "canceled" || appointment.status === "no_show"
+    )
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
     .slice(0, Math.max(0, 5 - dashboardAppointments.length));
-  const appointmentDashboardItems = [...dashboardAppointments, ...appointmentFollowUpActions];
+  const appointmentDashboardItems = [
+    ...dashboardAppointments,
+    ...appointmentFollowUpActions
+  ];
   const showingCompanyAppointments =
     !currentUserPerson || upcomingAppointments.length === 0;
   const appointmentDashboardTitle = showingCompanyAppointments
@@ -491,12 +534,17 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       label: "Optional: create an invoice or job",
       description:
         "Invoices and jobs stay connected to projects, contracts, payments, and execution.",
-      href: jobs.length > 0 ? "/invoices?compose=1#invoice-create" : "/jobs?compose=1#job-create",
+      href:
+        jobs.length > 0
+          ? "/invoices?compose=1#invoice-create"
+          : "/jobs?compose=1#job-create",
       actionLabel: jobs.length > 0 ? "Create invoice" : "Create job",
       complete: invoices.length > 0 || jobs.length > 0
     }
   ];
-  const recentPayments = payments.filter((payment) => payment.status !== "void").slice(0, 5);
+  const recentPayments = payments
+    .filter((payment) => payment.status !== "void")
+    .slice(0, 5);
   const openReceivables = openInvoices.reduce(
     (sum, invoice) => sum + Number(invoice.balanceDueAmount),
     0
@@ -524,7 +572,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             badge: item.category.replaceAll("-", " "),
             contextHref: item.contextHref ?? null,
             contextLabel: item.contextLabel ?? null,
-            searchText: [item.title, item.description, item.badge, item.category].join(" ")
+            searchText: [
+              item.title,
+              item.description,
+              item.badge,
+              item.category
+            ].join(" ")
           }))
         }
       : {
@@ -553,7 +606,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         lifecycleState: organizationContext.organization.lifecycleState
       })
     : false;
-  const hasSavedBillingMethod = Boolean(billingSetupState.stripePaymentMethodId);
+  const hasSavedBillingMethod = Boolean(
+    billingSetupState.stripePaymentMethodId
+  );
   const shouldSuggestBillingSetup =
     !hasSavedBillingMethod &&
     (isProductionActionLocked ? billingSetupState.canCollectCardNow : true);
@@ -562,7 +617,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     <ContractorDashboardSurface
       header={{
         organizationName:
-          organizationContext?.organization.displayName ?? "Organization setup pending",
+          organizationContext?.organization.displayName ??
+          "Organization setup pending",
         currentRole: organizationContext?.membership.role ?? "member",
         roleLabel: organizationContext?.membership.role ?? "member",
         activeProjectCount: activeProjects.length,
@@ -570,7 +626,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       }}
       earlyAccess={{
         isLocked: isProductionActionLocked,
-        statusLabel: isProductionActionLocked ? "Early access" : "Account active",
+        statusLabel: isProductionActionLocked
+          ? "Early access"
+          : "Account active",
         href: "/setup/pending-activation",
         setupHref: shouldSuggestBillingSetup ? "/setup/billing" : undefined,
         setupCtaLabel: shouldSuggestBillingSetup
@@ -635,7 +693,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 key: "collections",
                 label: "Collections",
                 title: "No open receivables",
-                detail: "Paid and void invoices are clear from the dashboard collection queue.",
+                detail:
+                  "Paid and void invoices are clear from the dashboard collection queue.",
                 href: "/payments",
                 actionLabel: "Open payments",
                 countLabel: "$0",
@@ -656,7 +715,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               key: "estimates",
               label: "Commercial",
               title: "No estimates need action",
-              detail: "Draft, sent, and rejected estimate queues are clear right now.",
+              detail:
+                "Draft, sent, and rejected estimate queues are clear right now.",
               href: "/estimates",
               actionLabel: "Open estimates",
               countLabel: "0",
@@ -691,7 +751,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 key: "execution",
                 label: "Execution",
                 title: "No urgent execution queue",
-                detail: "Unscheduled and live job queues are clear from the dashboard.",
+                detail:
+                  "Unscheduled and live job queues are clear from the dashboard.",
                 href: "/schedule",
                 actionLabel: "Open schedule",
                 countLabel: "0",
@@ -740,6 +801,97 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           href: "/schedule?view=today"
         }
       ]}
+      lifecycleSteps={[
+        {
+          key: "opportunity",
+          label: "Opportunity",
+          value: String(dueLeadFollowUps.length),
+          detail:
+            dueLeadFollowUps.length > 0
+              ? "Follow-up due before the customer and project handoff stalls."
+              : `${opportunities.length} opportunity records in the commercial queue.`,
+          href: dueLeadFollowUps.length > 0 ? "/leads?followUp=due" : "/leads",
+          tone: dueLeadFollowUps.length > 0 ? "attention" : "quiet"
+        },
+        {
+          key: "customer-project",
+          label: "Customer / project",
+          value: String(activeProjects.length),
+          detail:
+            activeProjects.length > 0
+              ? "Active projects anchor the downstream estimate, contract, job, invoice, and payment chain."
+              : "Create a project to anchor the operational workflow.",
+          href: "/projects",
+          tone: activeProjects.length > 0 ? "active" : "quiet"
+        },
+        {
+          key: "estimate-contract",
+          label: "Estimate / contract",
+          value: String(
+            estimatesAwaitingAction.length + contractsAwaitingAction.length
+          ),
+          detail:
+            estimatesAwaitingAction.length + contractsAwaitingAction.length > 0
+              ? "Commercial records need send, approval, or signature follow-through."
+              : `${approvedEstimates.length} approved estimate${approvedEstimates.length === 1 ? "" : "s"} ready for downstream handoff.`,
+          href:
+            estimatesAwaitingAction.length > 0
+              ? "/estimates"
+              : contractsAwaitingAction.length > 0
+                ? "/contracts"
+                : "/estimates?status=approved",
+          tone:
+            estimatesAwaitingAction.length + contractsAwaitingAction.length > 0
+              ? "attention"
+              : approvedEstimates.length > 0
+                ? "ready"
+                : "quiet"
+        },
+        {
+          key: "job-schedule",
+          label: "Job / schedule",
+          value: String(
+            jobsNeedingScheduling.length + jobsTodayOrInProgress.length
+          ),
+          detail:
+            jobsNeedingScheduling.length > 0
+              ? "Ready jobs need date and crew follow-through on the canonical job chain."
+              : jobsTodayOrInProgress.length > 0
+                ? "Today and in-progress work is active in the schedule workspace."
+                : "No urgent schedule handoff is active right now.",
+          href:
+            jobsNeedingScheduling.length > 0
+              ? "/schedule?view=unscheduled"
+              : "/schedule",
+          tone:
+            jobsNeedingScheduling.length > 0
+              ? "attention"
+              : jobsTodayOrInProgress.length > 0
+                ? "active"
+                : "quiet"
+        },
+        {
+          key: "invoice-payment",
+          label: "Invoice / payment",
+          value: formatCurrency(openReceivables),
+          detail:
+            overdueInvoices.length > 0
+              ? "Overdue balances need collection follow-through from invoice workspaces."
+              : openInvoices.length > 0
+                ? "Open receivables remain tied to invoices and payments."
+                : "No open receivables are currently blocking cash collection.",
+          href:
+            overdueInvoices.length > 0 || openInvoices.length > 0
+              ? "/invoices"
+              : "/payments",
+          tone:
+            overdueInvoices.length > 0
+              ? "attention"
+              : openInvoices.length > 0
+                ? "active"
+                : "ready"
+        }
+      ]}
       attentionWidget={attentionWidget}
       projectCueWidget={{
         key: "project-cues",
@@ -778,7 +930,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             workItem.assignedPerson?.displayName ??
             "Internal contractor action",
           meta: `${labelize(workItem.kind)} - ${workItem.dueAt ? formatDateTime(workItem.dueAt) : "no due date"}${
-            workItem.assignedPerson ? ` - ${workItem.assignedPerson.displayName}` : ""
+            workItem.assignedPerson
+              ? ` - ${workItem.assignedPerson.displayName}`
+              : ""
           }`,
           href: workItem.linkPath ?? "/dashboard",
           actionLabel: "Open",
@@ -827,14 +981,17 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             emptyDescription:
               "Mine is a convenience filter over responsibility metadata, not task assignment.",
             count: myWorkQueueModes.counts.mine,
-            widgets: buildMyWorkDashboardWidgets(myWorkQueueModes.queues.mine.cues)
+            widgets: buildMyWorkDashboardWidgets(
+              myWorkQueueModes.queues.mine.cues
+            )
           },
           {
             mode: "unresolved",
             label: "Unresolved",
             href: buildMyWorkModeHref("unresolved"),
             description: "Needs responsible person",
-            emptyTitle: "All current attention items have a responsible role/person.",
+            emptyTitle:
+              "All current attention items have a responsible role/person.",
             emptyDescription:
               "Unresolved shows strategy-only, organization queue, and unavailable record-owner fallbacks.",
             count: myWorkQueueModes.counts.unresolved,
@@ -905,10 +1062,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             meta: `${labelize(estimate.status)} - updated ${formatDateTime(estimate.updatedAt)}`,
             href: `/estimates/${estimate.id}`,
             actionLabel:
-              estimate.status === "draft" ? "Send estimate" : "Approve estimate",
+              estimate.status === "draft"
+                ? "Send estimate"
+                : "Approve estimate",
             badge: labelize(estimate.status),
             trailing: formatCurrency(estimate.totalAmount),
-            contextHref: estimate.project ? `/projects/${estimate.project.id}` : null,
+            contextHref: estimate.project
+              ? `/projects/${estimate.project.id}`
+              : null,
             contextLabel: estimate.project ? "Open project" : null,
             searchText: buildSearchText(
               estimate.referenceNumber,
@@ -938,7 +1099,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             actionLabel:
               contract.status === "draft" ? "Send contract" : "Open contract",
             badge: labelize(contract.status),
-            contextHref: contract.project ? `/projects/${contract.project.id}` : null,
+            contextHref: contract.project
+              ? `/projects/${contract.project.id}`
+              : null,
             contextLabel: contract.project ? "Open project" : null,
             searchText: buildSearchText(
               contract.title,
@@ -1063,7 +1226,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               .toISOString()
               .slice(0, 10);
             const needsFollowUp =
-              appointment.status === "canceled" || appointment.status === "no_show";
+              appointment.status === "canceled" ||
+              appointment.status === "no_show";
             const timingBadge =
               appointmentDateKey === today
                 ? "Today"
@@ -1074,55 +1238,55 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                     : labelize(appointment.status);
 
             return {
-            id: appointment.id,
-            title: appointment.title,
-            subtitle:
-              appointment.customer?.name ??
-              appointment.opportunity?.title ??
-              "Lead appointment",
-            meta: `${formatDateTime(appointment.startsAt)} - ${
-              appointment.assignedPerson?.displayName ?? "Unassigned"
-            }${
-              needsFollowUp
-                ? ` - ${labelize(appointment.status)} appointment may need follow-up`
-                : ""
-            }`,
-            href: `/appointments/${appointment.id}`,
-            actionLabel: "Open appointment",
-            badge: needsFollowUp ? "Needs follow-up" : timingBadge,
-            contextHref: appointment.projectId
-              ? `/projects/${appointment.projectId}`
-              : appointment.opportunityId
-                ? `/leads/${appointment.opportunityId}`
-                : appointment.customerId
-                  ? `/customers/${appointment.customerId}`
+              id: appointment.id,
+              title: appointment.title,
+              subtitle:
+                appointment.customer?.name ??
+                appointment.opportunity?.title ??
+                "Lead appointment",
+              meta: `${formatDateTime(appointment.startsAt)} - ${
+                appointment.assignedPerson?.displayName ?? "Unassigned"
+              }${
+                needsFollowUp
+                  ? ` - ${labelize(appointment.status)} appointment may need follow-up`
+                  : ""
+              }`,
+              href: `/appointments/${appointment.id}`,
+              actionLabel: "Open appointment",
+              badge: needsFollowUp ? "Needs follow-up" : timingBadge,
+              contextHref: appointment.projectId
+                ? `/projects/${appointment.projectId}`
+                : appointment.opportunityId
+                  ? `/leads/${appointment.opportunityId}`
+                  : appointment.customerId
+                    ? `/customers/${appointment.customerId}`
+                    : null,
+              contextLabel: appointment.projectId
+                ? "Open project"
+                : appointment.opportunityId
+                  ? "Open lead"
+                  : appointment.customerId
+                    ? "Open customer"
+                    : null,
+              bridgeHref: needsFollowUp
+                ? `/appointments/${appointment.id}?workItemCue=appointment_follow_up#work-items`
+                : appointment.status === "scheduled"
+                  ? `/appointments/${appointment.id}?workItemCue=confirmation_prep#work-items`
                   : null,
-            contextLabel: appointment.projectId
-              ? "Open project"
-              : appointment.opportunityId
-                ? "Open lead"
-                : appointment.customerId
-                  ? "Open customer"
+              bridgeLabel: needsFollowUp
+                ? "Create follow-up item"
+                : appointment.status === "scheduled"
+                  ? "Create prep item"
                   : null,
-            bridgeHref: needsFollowUp
-              ? `/appointments/${appointment.id}?workItemCue=appointment_follow_up#work-items`
-              : appointment.status === "scheduled"
-                ? `/appointments/${appointment.id}?workItemCue=confirmation_prep#work-items`
-                : null,
-            bridgeLabel: needsFollowUp
-              ? "Create follow-up item"
-              : appointment.status === "scheduled"
-                ? "Create prep item"
-                : null,
-            searchText: buildSearchText(
-              appointment.title,
-              appointment.customer?.name,
-              appointment.opportunity?.title,
-              appointment.assignedPerson?.displayName,
-              appointment.location,
-              appointment.status
-            )
-          };
+              searchText: buildSearchText(
+                appointment.title,
+                appointment.customer?.name,
+                appointment.opportunity?.title,
+                appointment.assignedPerson?.displayName,
+                appointment.location,
+                appointment.status
+              )
+            };
           })
         }
       ]}
@@ -1138,31 +1302,36 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           emptyTitle: "No unpaid or overdue invoices need attention right now.",
           emptyDescription:
             "Invoices will appear after estimate approval, contract readiness, and job or billing context move forward on the same project chain.",
-          items: (overdueInvoices.length > 0 ? overdueInvoices : openInvoices.slice(0, 5)).map(
-            (invoice) => ({
-              id: invoice.id,
-              title: invoice.referenceNumber,
-              subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "Unknown project"}`,
-              meta: `${
-                isOverdueInvoice(invoice.dueDate, today)
-                  ? "overdue"
-                  : labelize(invoice.status)
-              } - due ${formatShortDate(invoice.dueDate)}`,
-              href: `/invoices/${invoice.id}`,
-              actionLabel: "Open invoice",
-              badge: isOverdueInvoice(invoice.dueDate, today) ? "Overdue" : "Open",
-              trailing: formatCurrency(invoice.balanceDueAmount),
-              contextHref: invoice.project ? `/projects/${invoice.project.id}` : null,
-              contextLabel: invoice.project ? "Open project" : null,
-              searchText: buildSearchText(
-                invoice.referenceNumber,
-                invoice.customer?.name,
-                invoice.project?.name,
-                invoice.status,
-                invoice.dueDate
-              )
-            })
-          )
+          items: (overdueInvoices.length > 0
+            ? overdueInvoices
+            : openInvoices.slice(0, 5)
+          ).map((invoice) => ({
+            id: invoice.id,
+            title: invoice.referenceNumber,
+            subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "Unknown project"}`,
+            meta: `${
+              isOverdueInvoice(invoice.dueDate, today)
+                ? "overdue"
+                : labelize(invoice.status)
+            } - due ${formatShortDate(invoice.dueDate)}`,
+            href: `/invoices/${invoice.id}`,
+            actionLabel: "Open invoice",
+            badge: isOverdueInvoice(invoice.dueDate, today)
+              ? "Overdue"
+              : "Open",
+            trailing: formatCurrency(invoice.balanceDueAmount),
+            contextHref: invoice.project
+              ? `/projects/${invoice.project.id}`
+              : null,
+            contextLabel: invoice.project ? "Open project" : null,
+            searchText: buildSearchText(
+              invoice.referenceNumber,
+              invoice.customer?.name,
+              invoice.project?.name,
+              invoice.status,
+              invoice.dueDate
+            )
+          }))
         },
         {
           key: "recent-payments",
@@ -1187,7 +1356,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 ? "Portal"
                 : labelize(payment.paymentSource),
             trailing: formatCurrency(payment.amount),
-            contextHref: payment.project ? `/projects/${payment.project.id}` : null,
+            contextHref: payment.project
+              ? `/projects/${payment.project.id}`
+              : null,
             contextLabel: payment.project ? "Open project" : null,
             searchText: buildSearchText(
               payment.invoice?.referenceNumber,
@@ -1346,4 +1517,3 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     />
   );
 }
-

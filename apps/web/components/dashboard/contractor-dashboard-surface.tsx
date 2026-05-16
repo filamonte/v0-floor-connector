@@ -21,6 +21,15 @@ type DashboardMetric = {
   href: string;
 };
 
+type DashboardLifecycleStep = {
+  key: string;
+  label: string;
+  value: string;
+  detail: string;
+  href: string;
+  tone: "attention" | "active" | "ready" | "quiet";
+};
+
 type DashboardQueueItem = {
   id: string;
   title: string;
@@ -145,6 +154,7 @@ export type ContractorDashboardSurfaceProps = {
   };
   priorityItems: DashboardPriorityItem[];
   metrics: DashboardMetric[];
+  lifecycleSteps: DashboardLifecycleStep[];
   attentionWidget?: DashboardWidget | null;
   projectCueWidget?: DashboardWidget | null;
   workItemsWidget?: DashboardWidget | null;
@@ -243,7 +253,9 @@ function TopLink({
       className="inline-flex h-8 items-center gap-2 rounded-md border border-[var(--border-warm)] bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:bg-[var(--highlight)]"
     >
       <span>{label}</span>
-      {metric ? <span className="text-[var(--text-secondary)]">{metric}</span> : null}
+      {metric ? (
+        <span className="text-[var(--text-secondary)]">{metric}</span>
+      ) : null}
     </Link>
   );
 }
@@ -272,7 +284,9 @@ function BoardPanel({
             {title}
           </h3>
           {description ? (
-            <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{description}</p>
+            <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+              {description}
+            </p>
           ) : null}
         </div>
         {action}
@@ -317,6 +331,66 @@ function PriorityGrid({ metrics }: { metrics: DashboardMetric[] }) {
             <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-[var(--text-secondary)]">
               {metric.detail}
             </p>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function getLifecycleStepClassName(tone: DashboardLifecycleStep["tone"]) {
+  switch (tone) {
+    case "attention":
+      return "border-amber-200 bg-amber-50 text-amber-950";
+    case "active":
+      return "border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-primary)]";
+    case "ready":
+      return "border-emerald-200 bg-emerald-50 text-emerald-950";
+    case "quiet":
+      return "border-[var(--border-warm)] bg-white text-[var(--text-secondary)]";
+  }
+}
+
+function LifecycleRail({ steps }: { steps: DashboardLifecycleStep[] }) {
+  return (
+    <section
+      aria-labelledby="dashboard-lifecycle-title"
+      className="rounded-lg border border-[var(--border-warm)] bg-white"
+    >
+      <div className="flex flex-col gap-2 border-b border-[var(--border-warm)] px-4 py-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+            Canonical lifecycle
+          </p>
+          <h2
+            id="dashboard-lifecycle-title"
+            className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
+          >
+            Opportunity to payment continuity
+          </h2>
+        </div>
+        <p className="max-w-[54ch] text-xs leading-5 text-[var(--text-secondary)]">
+          Every stage links back to the existing manager or workspace queue so
+          daily work stays on the shared record chain.
+        </p>
+      </div>
+      <div className="grid gap-px bg-[var(--border-warm)] sm:grid-cols-2 lg:grid-cols-5">
+        {steps.map((step) => (
+          <Link
+            key={step.key}
+            href={step.href}
+            className={[
+              "min-w-0 px-3 py-3 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-inset",
+              getLifecycleStepClassName(step.tone)
+            ].join(" ")}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em]">
+                {step.label}
+              </p>
+              <p className="shrink-0 text-sm font-semibold">{step.value}</p>
+            </div>
+            <p className="mt-2 line-clamp-2 text-xs leading-5">{step.detail}</p>
           </Link>
         ))}
       </div>
@@ -373,7 +447,9 @@ function QueueRows({
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-1 text-sm leading-5 text-[var(--text-secondary)]">{item.subtitle}</p>
+                  <p className="mt-1 text-sm leading-5 text-[var(--text-secondary)]">
+                    {item.subtitle}
+                  </p>
                   <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                     {item.meta}
                   </p>
@@ -414,7 +490,11 @@ function QueueRows({
               {item.workItemId && workItemActions ? (
                 <div className="mt-3 flex flex-wrap gap-2">
                   <form action={workItemActions.complete}>
-                    <input type="hidden" name="workItemId" value={item.workItemId} />
+                    <input
+                      type="hidden"
+                      name="workItemId"
+                      value={item.workItemId}
+                    />
                     <input type="hidden" name="returnTo" value="/dashboard" />
                     <button
                       type="submit"
@@ -424,7 +504,11 @@ function QueueRows({
                     </button>
                   </form>
                   <form action={workItemActions.dismiss}>
-                    <input type="hidden" name="workItemId" value={item.workItemId} />
+                    <input
+                      type="hidden"
+                      name="workItemId"
+                      value={item.workItemId}
+                    />
                     <input type="hidden" name="returnTo" value="/dashboard" />
                     <button
                       type="submit"
@@ -439,8 +523,12 @@ function QueueRows({
           ))
         ) : (
           <div className="px-4 py-5">
-            <p className="text-sm font-semibold text-[var(--text-primary)]">{widget.emptyTitle}</p>
-            <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">{widget.emptyDescription}</p>
+            <p className="text-sm font-semibold text-[var(--text-primary)]">
+              {widget.emptyTitle}
+            </p>
+            <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">
+              {widget.emptyDescription}
+            </p>
           </div>
         )}
       </div>
@@ -487,17 +575,23 @@ function FinanceTable({
                     >
                       {item.title}
                     </Link>
-                    <p className="mt-1 truncate text-xs text-[var(--text-secondary)]">{item.subtitle}</p>
+                    <p className="mt-1 truncate text-xs text-[var(--text-secondary)]">
+                      {item.subtitle}
+                    </p>
                   </div>
                   <div className="min-w-0">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                       {item.badge ?? item.meta}
                     </p>
-                    <p className="mt-1 text-xs text-[var(--text-secondary)]">{item.meta}</p>
+                    <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                      {item.meta}
+                    </p>
                   </div>
                   <div className="text-right">
                     {item.trailing ? (
-                      <p className="text-sm font-semibold text-[var(--text-primary)]">{item.trailing}</p>
+                      <p className="text-sm font-semibold text-[var(--text-primary)]">
+                        {item.trailing}
+                      </p>
                     ) : null}
                   </div>
                 </div>
@@ -507,8 +601,12 @@ function FinanceTable({
         </div>
       ) : (
         <div className="px-4 py-5">
-          <p className="text-sm font-semibold text-[var(--text-primary)]">{widget.emptyTitle}</p>
-          <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">{widget.emptyDescription}</p>
+          <p className="text-sm font-semibold text-[var(--text-primary)]">
+            {widget.emptyTitle}
+          </p>
+          <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">
+            {widget.emptyDescription}
+          </p>
         </div>
       )}
     </BoardPanel>
@@ -520,6 +618,7 @@ export function ContractorDashboardSurface({
   earlyAccess,
   priorityItems,
   metrics,
+  lifecycleSteps,
   attentionWidget,
   projectCueWidget,
   workItemsWidget,
@@ -627,7 +726,8 @@ export function ContractorDashboardSurface({
                 {header.organizationName}
               </h1>
               <p className="mt-1 text-[13px] leading-5 text-[var(--text-secondary)]">
-                Priority decisions, core metrics, and work queues in one contractor surface.
+                Priority decisions, core metrics, and work queues in one
+                contractor surface.
               </p>
             </div>
 
@@ -733,7 +833,9 @@ export function ContractorDashboardSurface({
                   <p
                     className={[
                       "mt-1 text-xs font-semibold",
-                      earlyAccess.isLocked ? "text-amber-800" : "text-emerald-800"
+                      earlyAccess.isLocked
+                        ? "text-amber-800"
+                        : "text-emerald-800"
                     ].join(" ")}
                   >
                     {earlyAccess.billingStatusLabel}
@@ -767,10 +869,15 @@ export function ContractorDashboardSurface({
 
         <PriorityStrip items={priorityItems} />
 
+        <LifecycleRail steps={lifecycleSteps} />
+
         <PriorityGrid metrics={metrics} />
 
         {filteredProjectCueWidget ? (
-          <QueueRows widget={filteredProjectCueWidget} items={filteredProjectCueWidget.items} />
+          <QueueRows
+            widget={filteredProjectCueWidget}
+            items={filteredProjectCueWidget.items}
+          />
         ) : null}
 
         {filteredWorkItemsWidget ? (
@@ -782,7 +889,10 @@ export function ContractorDashboardSurface({
         ) : null}
 
         {filteredMyWorkWidgets.length > 0 ? (
-          <section aria-labelledby="dashboard-my-work-title" className="space-y-3">
+          <section
+            aria-labelledby="dashboard-my-work-title"
+            className="space-y-3"
+          >
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
@@ -806,7 +916,8 @@ export function ContractorDashboardSurface({
                   role="tablist"
                 >
                   {myWorkQueueModes.modes.map((mode) => {
-                    const selected = mode.mode === selectedMyWorkQueueMode?.mode;
+                    const selected =
+                      mode.mode === selectedMyWorkQueueMode?.mode;
 
                     return (
                       <a
@@ -826,7 +937,9 @@ export function ContractorDashboardSurface({
                         <span
                           className={[
                             "rounded-sm px-1.5 py-0.5 text-[10px]",
-                            selected ? "bg-white/15 text-white" : "bg-[var(--highlight)] text-[var(--text-secondary)]"
+                            selected
+                              ? "bg-white/15 text-white"
+                              : "bg-[var(--highlight)] text-[var(--text-secondary)]"
                           ].join(" ")}
                         >
                           {mode.count}
@@ -841,15 +954,15 @@ export function ContractorDashboardSurface({
             selectedMyWorkQueueMode?.mode === "mine" ? (
               <div className="border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-5 text-amber-950">
                 No active People record is linked to your app user yet. Mine can
-                still include cues resolved directly to your app user, but linking a
-                Person improves responsibility matching.
+                still include cues resolved directly to your app user, but
+                linking a Person improves responsibility matching.
               </div>
             ) : null}
             {myWorkQueueModes?.caveats.unresolvedItemsPresent &&
             selectedMyWorkQueueMode?.mode === "unresolved" ? (
               <div className="border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-5 text-[var(--text-secondary)]">
-                These attention items need a responsible person/default. They also
-                remain visible in Company.
+                These attention items need a responsible person/default. They
+                also remain visible in Company.
               </div>
             ) : null}
             {selectedMyWorkQueueMode?.count === 0 ? (
@@ -863,9 +976,16 @@ export function ContractorDashboardSurface({
               </div>
             ) : null}
             {selectedMyWorkQueueMode?.count === 0 ? null : (
-              <div id="dashboard-my-work-queues" className="grid gap-3 xl:grid-cols-4">
+              <div
+                id="dashboard-my-work-queues"
+                className="grid gap-3 xl:grid-cols-4"
+              >
                 {filteredMyWorkWidgets.map((widget) => (
-                  <QueueRows key={widget.key} widget={widget} items={widget.items} />
+                  <QueueRows
+                    key={widget.key}
+                    widget={widget}
+                    items={widget.items}
+                  />
                 ))}
               </div>
             )}
@@ -873,11 +993,18 @@ export function ContractorDashboardSurface({
         ) : null}
 
         {onboardingSteps &&
-        (startHereForceVisible || onboardingSteps.some((step) => !step.complete)) ? (
-          <StartHereCard steps={onboardingSteps} forceVisible={startHereForceVisible} />
+        (startHereForceVisible ||
+          onboardingSteps.some((step) => !step.complete)) ? (
+          <StartHereCard
+            steps={onboardingSteps}
+            forceVisible={startHereForceVisible}
+          />
         ) : null}
 
-        <section aria-labelledby="dashboard-work-queues-title" className="space-y-3">
+        <section
+          aria-labelledby="dashboard-work-queues-title"
+          className="space-y-3"
+        >
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
               Work queues
@@ -890,79 +1017,82 @@ export function ContractorDashboardSurface({
             </h2>
           </div>
 
-        <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,0.95fr)]">
-          {attentionWidget ? (
-            <QueueRows widget={attentionWidget} items={attentionWidget.items} />
-          ) : null}
-          {filteredCommercialWidgets[1] ? (
-            <QueueRows
-              widget={filteredCommercialWidgets[1]}
-              items={filteredCommercialWidgets[1].items}
-            />
-          ) : null}
-          {filteredFinanceWidgets[0] ? (
-            <FinanceTable
-              widget={filteredFinanceWidgets[0]}
-              items={filteredFinanceWidgets[0].items}
-            />
-          ) : null}
-        </div>
-
-        <div className="grid gap-3 xl:grid-cols-4">
-          {filteredOperationsWidgets[3] ? (
-            <QueueRows
-              widget={filteredOperationsWidgets[3]}
-              items={filteredOperationsWidgets[3].items}
-            />
-          ) : null}
-          {filteredCommercialWidgets[0] ? (
-            <QueueRows
-              widget={filteredCommercialWidgets[0]}
-              items={filteredCommercialWidgets[0].items}
-            />
-          ) : null}
-          {filteredOperationsWidgets[0] ? (
-            <QueueRows
-              widget={filteredOperationsWidgets[0]}
-              items={filteredOperationsWidgets[0].items}
-            />
-          ) : null}
-          {filteredOperationsWidgets[2] ? (
-            <QueueRows
-              widget={filteredOperationsWidgets[2]}
-              items={filteredOperationsWidgets[2].items}
-            />
-          ) : null}
-        </div>
-
-        <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-          <div className="space-y-3">
-            {filteredCommercialWidgets[2] ? (
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,0.95fr)]">
+            {attentionWidget ? (
               <QueueRows
-                widget={filteredCommercialWidgets[2]}
-                items={filteredCommercialWidgets[2].items}
+                widget={attentionWidget}
+                items={attentionWidget.items}
               />
             ) : null}
-          </div>
-
-          <div className="space-y-3">
-            {filteredFinanceWidgets[1] ? (
+            {filteredCommercialWidgets[1] ? (
+              <QueueRows
+                widget={filteredCommercialWidgets[1]}
+                items={filteredCommercialWidgets[1].items}
+              />
+            ) : null}
+            {filteredFinanceWidgets[0] ? (
               <FinanceTable
-                widget={filteredFinanceWidgets[1]}
-                items={filteredFinanceWidgets[1].items}
+                widget={filteredFinanceWidgets[0]}
+                items={filteredFinanceWidgets[0].items}
               />
             ) : null}
           </div>
-        </div>
 
-        <div className="grid gap-3 xl:grid-cols-[minmax(0,1.28fr)_minmax(0,0.72fr)]">
-          {filteredOperationsWidgets[1] ? (
-            <QueueRows
-              widget={filteredOperationsWidgets[1]}
-              items={filteredOperationsWidgets[1].items}
-            />
-          ) : null}
-        </div>
+          <div className="grid gap-3 xl:grid-cols-4">
+            {filteredOperationsWidgets[3] ? (
+              <QueueRows
+                widget={filteredOperationsWidgets[3]}
+                items={filteredOperationsWidgets[3].items}
+              />
+            ) : null}
+            {filteredCommercialWidgets[0] ? (
+              <QueueRows
+                widget={filteredCommercialWidgets[0]}
+                items={filteredCommercialWidgets[0].items}
+              />
+            ) : null}
+            {filteredOperationsWidgets[0] ? (
+              <QueueRows
+                widget={filteredOperationsWidgets[0]}
+                items={filteredOperationsWidgets[0].items}
+              />
+            ) : null}
+            {filteredOperationsWidgets[2] ? (
+              <QueueRows
+                widget={filteredOperationsWidgets[2]}
+                items={filteredOperationsWidgets[2].items}
+              />
+            ) : null}
+          </div>
+
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+            <div className="space-y-3">
+              {filteredCommercialWidgets[2] ? (
+                <QueueRows
+                  widget={filteredCommercialWidgets[2]}
+                  items={filteredCommercialWidgets[2].items}
+                />
+              ) : null}
+            </div>
+
+            <div className="space-y-3">
+              {filteredFinanceWidgets[1] ? (
+                <FinanceTable
+                  widget={filteredFinanceWidgets[1]}
+                  items={filteredFinanceWidgets[1].items}
+                />
+              ) : null}
+            </div>
+          </div>
+
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.28fr)_minmax(0,0.72fr)]">
+            {filteredOperationsWidgets[1] ? (
+              <QueueRows
+                widget={filteredOperationsWidgets[1]}
+                items={filteredOperationsWidgets[1].items}
+              />
+            ) : null}
+          </div>
         </section>
       </div>
     </div>

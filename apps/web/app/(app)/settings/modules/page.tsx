@@ -17,6 +17,11 @@ type PageProps = {
   }>;
 };
 
+const modulePolicyBadgeClassName =
+  "rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]";
+const moduleOverrideControlClassName =
+  "flex items-start gap-3 rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4";
+
 export default async function SettingsModulesPage({ searchParams }: PageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const scope = await requireOrganizationAdminScope("/settings/modules");
@@ -49,7 +54,7 @@ export default async function SettingsModulesPage({ searchParams }: PageProps) {
                 description={policy.description}
                 badges={
                   <>
-                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600">
+                    <span className={modulePolicyBadgeClassName}>
                       {policy.surface ?? "shared surface"}
                     </span>
                     <span
@@ -80,12 +85,12 @@ export default async function SettingsModulesPage({ searchParams }: PageProps) {
                     <input type="hidden" name="moduleKey" value={policy.module_key ?? ""} />
                     <input type="hidden" name="surface" value={policy.surface ?? ""} />
 
-                    <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                    <label className={moduleOverrideControlClassName}>
                       <input
                         type="checkbox"
                         name="enabled"
                         defaultChecked={effectiveEnabled}
-                        className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
+                        className="mt-1 h-4 w-4 rounded border-[var(--border-warm)] text-[var(--copper)] focus:ring-[var(--copper)]/20"
                       />
                       <span className="text-sm leading-6 text-slate-700">
                         Store an organization-scoped enabled/disabled override for this feature family.

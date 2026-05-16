@@ -20,17 +20,12 @@ export function DetailPanel({
   return (
     <section
       id={id}
-      className={[
-        "min-w-0 border p-4 sm:p-6",
-        neutral
-          ? "rounded-lg border-[var(--border-warm)] bg-white shadow-sm"
-          : "rounded-lg border-[var(--border-warm)] bg-white shadow-sm"
-      ].join(" ")}
+      className="min-w-0 rounded-lg border border-[var(--border-warm)] bg-white p-4 shadow-sm sm:p-5"
     >
       <div className="space-y-2.5">
         <p
           className={[
-            "text-[11px] font-semibold uppercase tracking-[0.26em]",
+            "text-[11px] font-semibold uppercase tracking-[0.18em]",
             neutral ? "text-[var(--text-secondary)]" : "text-[var(--text-secondary)]"
           ].join(" ")}
         >
@@ -40,7 +35,7 @@ export function DetailPanel({
           <p className="max-w-[65ch] text-sm leading-6 text-[var(--text-secondary)]">{description}</p>
         ) : null}
       </div>
-      <div className="mt-8">{children}</div>
+      <div className="mt-5 min-w-0">{children}</div>
     </section>
   );
 }

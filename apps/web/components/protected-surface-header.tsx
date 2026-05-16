@@ -27,7 +27,7 @@ export function ProtectedSurfaceHeader({
   return (
     <header className="border-b border-[var(--border-warm)] bg-white/85 backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 py-5 sm:px-10 lg:flex-row lg:items-center lg:justify-between">
-        <div>
+        <div className="min-w-0">
           <OrganizationBrandLink
             href={brandHref}
             organizationName={brandName}
@@ -41,8 +41,8 @@ export function ProtectedSurfaceHeader({
           </h1>
           <p className="mt-2 text-sm text-[var(--text-secondary)]">{description}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-2 text-sm text-[var(--text-secondary)]">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
+          <div className="max-w-full rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-2 text-sm text-[var(--text-secondary)] [overflow-wrap:anywhere]">
             {user.email ?? "Authenticated user"}
           </div>
           <SignOutForm />

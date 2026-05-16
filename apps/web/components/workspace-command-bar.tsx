@@ -18,11 +18,11 @@ export function WorkspaceCommandBar({
   }
 
   return (
-    <section className="border border-[#e2e5e9] bg-[#f8fafc] px-3 py-2">
+    <section className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2 shadow-[0_1px_2px_rgba(34,26,20,0.04)]">
       <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
         <div className="min-w-0 flex-1 space-y-1.5">
           {supportSlot ? (
-            <div className="text-[11px] leading-4 text-[#4b5563]">{supportSlot}</div>
+            <div className="text-[11px] leading-4 text-[var(--text-secondary)]">{supportSlot}</div>
           ) : null}
           {filterSlot ? <div className="flex flex-wrap gap-1.5">{filterSlot}</div> : null}
         </div>

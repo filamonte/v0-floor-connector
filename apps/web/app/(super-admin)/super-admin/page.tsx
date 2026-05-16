@@ -65,7 +65,7 @@ export default async function SuperAdminHomePage() {
           ctaLabel="Manage platform defaults"
           tone="neutral"
         >
-          <div className="space-y-2 rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+          <div className="space-y-2 rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
             <p>
               Tax: {financialDefaults.defaultTaxBehavior} at{" "}
               {formatPercentFromRate(financialDefaults.defaultTaxRate)}%
@@ -93,7 +93,7 @@ export default async function SuperAdminHomePage() {
                 return (
                   <div
                     key={templateType}
-                    className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm text-[var(--text-secondary)]"
+                    className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm text-[var(--text-secondary)]"
                   >
                     <p className="font-medium capitalize text-[var(--text-primary)]">
                       {templateType}
@@ -126,7 +126,7 @@ export default async function SuperAdminHomePage() {
               return (
                 <div
                   key={itemType}
-                  className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm text-[var(--text-secondary)]"
+                  className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm text-[var(--text-secondary)]"
                 >
                   <p className="font-medium capitalize text-[var(--text-primary)]">
                     {itemType}s
@@ -147,7 +147,7 @@ export default async function SuperAdminHomePage() {
           ctaLabel="Manage module controls"
           tone="neutral"
         >
-          <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm text-[var(--text-secondary)]">
+          <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm text-[var(--text-secondary)]">
             <p className="font-medium text-[var(--text-primary)]">
               {featurePolicies.length} platform feature policies
             </p>
@@ -164,7 +164,7 @@ export default async function SuperAdminHomePage() {
           ctaLabel="Review package readiness"
           tone="neutral"
         >
-          <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+          <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
             <p className="font-medium text-[var(--text-primary)]">
               Package governance foundation
             </p>
@@ -182,7 +182,7 @@ export default async function SuperAdminHomePage() {
           ctaLabel="Review billing operations"
           tone="neutral"
         >
-          <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+          <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
             <p className="font-medium text-[var(--text-primary)]">
               Billing operations console
             </p>
@@ -200,7 +200,7 @@ export default async function SuperAdminHomePage() {
           ctaLabel="Review system health"
           tone="neutral"
         >
-          <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+          <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
             <p className="font-medium text-[var(--text-primary)]">
               Read-only operations foundation
             </p>

@@ -46,7 +46,10 @@ import { listPeople } from "@/lib/people/data";
 import { getProgressBillingByEstimateId } from "@/lib/progress-billing/data";
 import { listProjects } from "@/lib/projects/data";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
-import { ensureInitialRecordRevision, listRecordRevisions } from "@/lib/revisions/data";
+import {
+  ensureInitialRecordRevision,
+  listRecordRevisions
+} from "@/lib/revisions/data";
 import { buildInvoiceRevisionSnapshot } from "@/lib/revisions/snapshots";
 import { buildScheduleHref } from "@/lib/schedule/links";
 import {
@@ -59,7 +62,10 @@ import {
   ProjectStateSummary,
   WorkflowBar
 } from "@floorconnector/ui";
-import type { ProjectStateSummaryProps, WorkflowStep } from "@floorconnector/ui";
+import type {
+  ProjectStateSummaryProps,
+  WorkflowStep
+} from "@floorconnector/ui";
 import {
   completeWorkItemAction,
   createWorkItemAction,
@@ -162,18 +168,18 @@ function getOnlinePaymentReadinessSummary(input: {
   balanceDueAmount: string;
 }) {
   if (input.invoiceStatus === "void") {
-    return "Online payment stays closed because this invoice has been voided.";
+    return "Online payment stays closed because this invoice is void and preserved for billing history.";
   }
 
   if (input.invoiceStatus === "draft") {
-    return "Send the invoice before exposing customer-facing online payment actions.";
+    return "Send the invoice before exposing customer-facing online payment actions in the invoice/payment stage.";
   }
 
   if (!input.canStartCheckout || Number(input.balanceDueAmount) <= 0) {
     return "Customer-facing payment is effectively complete because no balance remains due.";
   }
 
-    return "This invoice is ready for secure customer checkout.";
+  return "This invoice is ready for secure customer checkout on the canonical invoice/payment chain.";
 }
 
 function getRecentPaymentSignal(input: {
@@ -207,7 +213,10 @@ function getRecentPaymentSignal(input: {
   return "No customer-facing or contractor-recorded payment activity has been captured yet.";
 }
 
-function getInvoiceTypeLabel(input: { billingModel: string; workflowRole: string }) {
+function getInvoiceTypeLabel(input: {
+  billingModel: string;
+  workflowRole: string;
+}) {
   if (input.billingModel === "aia_progress") {
     return "Progress invoice";
   }
@@ -227,21 +236,24 @@ function getInvoiceTypeMeaning(input: {
   if (input.billingModel === "aia_progress") {
     return `${
       input.projectName ?? "This project"
-    } is being billed from percent-complete schedule-of-values state, and structural billing edits belong in the progress billing workspace.`;
+    } is in the invoice/payment stage through percent-complete schedule-of-values billing. Structural billing edits belong in the progress billing workspace, while broader readiness belongs in Project Workspace.`;
   }
 
   if (input.workflowRole === "deposit") {
     return `${
       input.projectName ?? "This project"
-    } is using this invoice for deposit readiness on the same canonical project and payment chain.`;
+    } is using this invoice for deposit readiness on the same canonical project and payment chain before job/schedule handoff can proceed.`;
   }
 
   return `${
     input.projectName ?? "This project"
-  } is using this invoice as a standard billing record on the shared estimate, job, and payment chain.`;
+  } is using this invoice as a standard billing record on the shared estimate/contract, job/schedule, and payment chain.`;
 }
 
-function getInvoiceContinuityTitle(input: { billingModel: string; workflowRole: string }) {
+function getInvoiceContinuityTitle(input: {
+  billingModel: string;
+  workflowRole: string;
+}) {
   if (input.billingModel === "aia_progress") {
     return "Progress billing continuity";
   }
@@ -280,17 +292,25 @@ export default async function InvoiceDetailPage({
   const { invoiceId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
   const user = await requireAuthenticatedUser(`/invoices/${invoiceId}`);
-  const [invoice, projects, estimates, jobs, changeOrders, sourceOptions, catalogItems, communicationThreads] =
-    await Promise.all([
-      getInvoiceById(invoiceId, `/invoices/${invoiceId}`),
-      listProjects(),
-      listEstimates(),
-      listJobs(),
-      listInvoiceChangeOrders(invoiceId, `/invoices/${invoiceId}`),
-      listInvoiceSourceOptions(),
-      listCatalogItems(),
-      listCommunicationThreadsForSubject("invoice", invoiceId)
-    ]);
+  const [
+    invoice,
+    projects,
+    estimates,
+    jobs,
+    changeOrders,
+    sourceOptions,
+    catalogItems,
+    communicationThreads
+  ] = await Promise.all([
+    getInvoiceById(invoiceId, `/invoices/${invoiceId}`),
+    listProjects(),
+    listEstimates(),
+    listJobs(),
+    listInvoiceChangeOrders(invoiceId, `/invoices/${invoiceId}`),
+    listInvoiceSourceOptions(),
+    listCatalogItems(),
+    listCommunicationThreadsForSubject("invoice", invoiceId)
+  ]);
 
   if (!invoice) {
     notFound();
@@ -301,7 +321,8 @@ export default async function InvoiceDetailPage({
     subjectType: "invoice",
     subjectId: invoice.id,
     revisionKind: "system_snapshot",
-    revisionReason: "Initial revision captured from the existing canonical invoice.",
+    revisionReason:
+      "Initial revision captured from the existing canonical invoice.",
     snapshot: buildInvoiceRevisionSnapshot(invoice),
     createdByUserId: user.id
   });
@@ -318,7 +339,9 @@ export default async function InvoiceDetailPage({
       )
     : null;
 
-  const financialSettings = await getOrganizationFinancialSettings(invoice.organizationId);
+  const financialSettings = await getOrganizationFinancialSettings(
+    invoice.organizationId
+  );
   const readinessSnapshot = await getProjectFinancialReadinessSnapshot({
     organizationId: invoice.organizationId,
     projectId: invoice.projectId
@@ -360,85 +383,97 @@ export default async function InvoiceDetailPage({
   });
   const latestPaymentEvent = invoice.paymentEvents[0] ?? null;
   const latestPaymentFailure =
-    invoice.paymentEvents.find((event) => event.eventType === "payment_failed") ?? null;
+    invoice.paymentEvents.find(
+      (event) => event.eventType === "payment_failed"
+    ) ?? null;
   const latestCheckoutStarted =
-    invoice.paymentEvents.find((event) => event.eventType === "checkout_started") ?? null;
+    invoice.paymentEvents.find(
+      (event) => event.eventType === "checkout_started"
+    ) ?? null;
   const latestPaymentSucceeded =
-    invoice.paymentEvents.find((event) => event.eventType === "payment_succeeded") ?? null;
+    invoice.paymentEvents.find(
+      (event) => event.eventType === "payment_succeeded"
+    ) ?? null;
   const latestPaymentRequested =
-    invoice.paymentEvents.find((event) => event.eventType === "payment_requested") ?? null;
+    invoice.paymentEvents.find(
+      (event) => event.eventType === "payment_requested"
+    ) ?? null;
   const latestPaymentVoided =
-    invoice.paymentEvents.find((event) => event.eventType === "payment_voided") ?? null;
+    invoice.paymentEvents.find(
+      (event) => event.eventType === "payment_voided"
+    ) ?? null;
   const nextAction =
     invoice.status === "void"
       ? {
           title: "Invoice is closed",
           description:
-            "This invoice is void, so the page stays focused on historical review instead of payment collection or editing changes."
+            "This invoice is void, so the invoice/payment stage stays focused on historical review instead of payment collection or editing changes."
         }
       : invoice.status === "paid"
         ? {
             title: "Billing review is current",
             description:
-              "This invoice is fully paid. Use the secondary or overflow links for broader project, estimate, or job context."
+              "This invoice is fully paid. Use the secondary or overflow links for broader project, estimate/contract, or job/schedule context."
           }
-      : invoice.status === "draft"
-        ? {
-            title: "Review and send invoice",
-            description:
-              "Finish billing details, lineage, tax, retainage, and status in the existing invoice editor before customer-facing collection begins. Customer contact and portal access management stays in People.",
-            primaryLabel: "Send Invoice",
-            primaryHref: "#invoice-editing"
-          }
-      : Number(invoice.balanceDueAmount) > 0
-        ? {
-            title:
-              latestPaymentFailure
-                ? "Follow up on the failed payment attempt"
-                : latestCheckoutStarted
-                  ? "Wait for payment completion"
-                  : latestPaymentSucceeded && invoice.status === "partially_paid"
-                    ? invoice.workflowRole === "deposit"
-                      ? "Close the remaining deposit after the recent payment"
-                      : "Close the remaining balance after the recent payment"
-                  : latestPaymentRequested
-                    ? "Monitor the customer payment request"
-                    : latestPaymentVoided
-                      ? "Restart payment follow-through after the void"
-                    : invoice.status === "partially_paid"
+        : invoice.status === "draft"
+          ? {
+              title: "Review and send invoice",
+              description:
+                "Finish billing details, lineage, tax, retainage, and status in the existing invoice editor before customer-facing collection begins. Resolve upstream project, contract, job, or deposit blockers from Project Workspace.",
+              primaryLabel: "Send Invoice",
+              primaryHref: "#invoice-editing"
+            }
+          : Number(invoice.balanceDueAmount) > 0
+            ? {
+                title: latestPaymentFailure
+                  ? "Follow up on the failed payment attempt"
+                  : latestCheckoutStarted
+                    ? "Wait for payment completion"
+                    : latestPaymentSucceeded &&
+                        invoice.status === "partially_paid"
                       ? invoice.workflowRole === "deposit"
-                        ? "Collect the remaining deposit balance"
-                        : "Collect the remaining balance"
-                      : "Record the next payment",
-            description:
-              latestPaymentFailure
-                ? "A customer payment attempt failed, so the remaining balance still needs active follow-through from this invoice workspace."
-                : latestCheckoutStarted
-                  ? "A customer has already entered checkout. Keep attention on the outcome instead of recording a parallel payment unless the provider flow fails."
-                  : latestPaymentSucceeded && invoice.status === "partially_paid"
-                    ? invoice.workflowRole === "deposit"
-                      ? "A provider-backed deposit payment has landed, but part of the deposit still remains before the commercial handoff is complete."
-                      : "A provider-backed payment has landed, but the invoice still carries an open balance."
-                  : latestPaymentRequested
-                    ? "Customer-facing payment intent has already been recorded on this invoice, so the next operational step is following the request through."
-                    : latestPaymentVoided
-                      ? "The most recent provider-backed payment was voided, so this invoice has returned to an active collection state."
-                    : invoice.status === "partially_paid"
+                        ? "Close the remaining deposit after the recent payment"
+                        : "Close the remaining balance after the recent payment"
+                      : latestPaymentRequested
+                        ? "Monitor the customer payment request"
+                        : latestPaymentVoided
+                          ? "Restart payment follow-through after the void"
+                          : invoice.status === "partially_paid"
+                            ? invoice.workflowRole === "deposit"
+                              ? "Collect the remaining deposit balance"
+                              : "Collect the remaining balance"
+                            : "Record the next payment",
+                description: latestPaymentFailure
+                  ? "A customer payment attempt failed, so the remaining invoice/payment balance still needs active follow-through from this workspace."
+                  : latestCheckoutStarted
+                    ? "A customer has already entered checkout. Keep attention on the outcome instead of recording a parallel payment unless the provider flow fails."
+                    : latestPaymentSucceeded &&
+                        invoice.status === "partially_paid"
                       ? invoice.workflowRole === "deposit"
-                        ? "This invoice is carrying deposit readiness. A payment has already been recorded, but the remaining balance still blocks the commercial handoff."
-                        : "A payment has already been recorded on this invoice, but the balance is still outstanding."
-                      : invoice.workflowRole === "deposit"
-                        ? "This invoice is carrying deposit readiness. Keep payment collection and project handoff aligned before moving further downstream."
-                        : "Balance is still outstanding on this invoice, so payment recording is the clearest next operational step from this page.",
-            primaryLabel: "Record payment",
-            primaryHref: "#payment-recording"
-          }
-        : {
-            title: "Billing review is current",
-            description:
-              "This invoice is fully paid. Use the secondary or overflow links for broader project, estimate, or job context."
-          };
-  const activePayments = invoice.payments.filter((payment) => payment.status !== "void");
+                        ? "A provider-backed deposit payment has landed, but part of the deposit still remains before the downstream job/schedule handoff is complete."
+                        : "A provider-backed payment has landed, but the invoice still carries an open balance."
+                      : latestPaymentRequested
+                        ? "Customer-facing payment intent has already been recorded on this invoice, so the next operational step is following the request through."
+                        : latestPaymentVoided
+                          ? "The most recent provider-backed payment was voided, so this invoice has returned to an active collection state."
+                          : invoice.status === "partially_paid"
+                            ? invoice.workflowRole === "deposit"
+                              ? "This invoice is carrying deposit readiness. A payment has already been recorded, but the remaining balance still blocks downstream job/schedule readiness."
+                              : "A payment has already been recorded on this invoice, but the balance is still outstanding."
+                            : invoice.workflowRole === "deposit"
+                              ? "This invoice is carrying deposit readiness. Keep payment collection and Project Workspace handoff aligned before moving further downstream."
+                              : "Balance is still outstanding on this invoice, so payment recording is the clearest next operational step from this page.",
+                primaryLabel: "Record payment",
+                primaryHref: "#payment-recording"
+              }
+            : {
+                title: "Billing review is current",
+                description:
+                  "This invoice is fully paid. Use the secondary or overflow links for broader project, estimate/contract, or job/schedule context."
+              };
+  const activePayments = invoice.payments.filter(
+    (payment) => payment.status !== "void"
+  );
   const latestPayment = activePayments[0] ?? invoice.payments[0] ?? null;
   const invoiceTypeLabel = getInvoiceTypeLabel({
     billingModel: invoice.billingModel,
@@ -459,14 +494,19 @@ export default async function InvoiceDetailPage({
       .filter((value): value is string => Boolean(value))
   );
   const linkedProgressItems =
-    progressBillingWorkspace?.items.filter((item) => linkedScheduleOfValueItemIds.has(item.id)) ??
-    [];
+    progressBillingWorkspace?.items.filter((item) =>
+      linkedScheduleOfValueItemIds.has(item.id)
+    ) ?? [];
   const linkedProgressSummary = linkedProgressItems.reduce(
     (summary, item) => ({
-      previousBilled: summary.previousBilled + parseMoney(item.previousBilledAmount),
-      currentBilling: summary.currentBilling + parseMoney(item.currentToBillAmount),
-      retainageHeld: summary.retainageHeld + parseMoney(item.retainageHeldCurrentAmount),
-      balanceToFinish: summary.balanceToFinish + parseMoney(item.balanceToFinishAmount)
+      previousBilled:
+        summary.previousBilled + parseMoney(item.previousBilledAmount),
+      currentBilling:
+        summary.currentBilling + parseMoney(item.currentToBillAmount),
+      retainageHeld:
+        summary.retainageHeld + parseMoney(item.retainageHeldCurrentAmount),
+      balanceToFinish:
+        summary.balanceToFinish + parseMoney(item.balanceToFinishAmount)
     }),
     {
       previousBilled: 0,
@@ -494,7 +534,10 @@ export default async function InvoiceDetailPage({
   }));
 
   const approvedEstimateOptions = estimates
-    .filter((estimate) => estimate.status === "approved" || estimate.id === invoice.estimateId)
+    .filter(
+      (estimate) =>
+        estimate.status === "approved" || estimate.id === invoice.estimateId
+    )
     .map((estimate) => ({
       id: estimate.id,
       referenceNumber: estimate.referenceNumber,
@@ -512,7 +555,9 @@ export default async function InvoiceDetailPage({
   }));
   const projectJobs = jobs.filter((job) => job.projectId === invoice.projectId);
   const linkedJob = invoice.jobId
-    ? projectJobs.find((job) => job.id === invoice.jobId) ?? jobs.find((job) => job.id === invoice.jobId) ?? null
+    ? (projectJobs.find((job) => job.id === invoice.jobId) ??
+      jobs.find((job) => job.id === invoice.jobId) ??
+      null)
     : null;
   const scheduleSummaryJobs = linkedJob ? [linkedJob] : projectJobs;
   const scheduleAssignmentsByJobId = await listJobAssignmentsByJobIds(
@@ -520,26 +565,36 @@ export default async function InvoiceDetailPage({
     `/invoices/${invoiceId}`
   );
   const scheduleCounts = {
-    scheduled: projectJobs.filter((job) => job.dispatchStatus === "scheduled").length,
-    unscheduled: projectJobs.filter((job) => job.dispatchStatus === "unscheduled").length,
-    inProgress: projectJobs.filter((job) => job.dispatchStatus === "in_progress").length
+    scheduled: projectJobs.filter((job) => job.dispatchStatus === "scheduled")
+      .length,
+    unscheduled: projectJobs.filter(
+      (job) => job.dispatchStatus === "unscheduled"
+    ).length,
+    inProgress: projectJobs.filter(
+      (job) => job.dispatchStatus === "in_progress"
+    ).length
   };
   const projectScheduleFocusJob =
     [...projectJobs]
       .filter(
         (job) =>
-          (job.dispatchStatus === "scheduled" || job.dispatchStatus === "in_progress") &&
+          (job.dispatchStatus === "scheduled" ||
+            job.dispatchStatus === "in_progress") &&
           job.scheduledDate
       )
       .sort(
-        (left, right) => getScheduleSummarySortValue(left) - getScheduleSummarySortValue(right)
+        (left, right) =>
+          getScheduleSummarySortValue(left) - getScheduleSummarySortValue(right)
       )[0] ?? null;
   const scheduleFocusJob = linkedJob ?? projectScheduleFocusJob;
   const scheduleFocusAssignments = scheduleFocusJob
-    ? scheduleAssignmentsByJobId.get(scheduleFocusJob.id) ?? []
+    ? (scheduleAssignmentsByJobId.get(scheduleFocusJob.id) ?? [])
     : [];
   const scheduleFocusAssignmentNames = scheduleFocusAssignments
-    .map((assignment) => assignment.person?.displayName ?? assignment.vendor?.name ?? null)
+    .map(
+      (assignment) =>
+        assignment.person?.displayName ?? assignment.vendor?.name ?? null
+    )
     .filter((value): value is string => Boolean(value));
   const scheduleFocusSummary = scheduleFocusJob
     ? getScheduleAssignmentSummary({
@@ -551,19 +606,25 @@ export default async function InvoiceDetailPage({
   const projectJobsWithoutAssignments = projectJobs.filter(
     (job) =>
       job.dispatchStatus !== "completed" &&
-      ((linkedJob
+      (linkedJob
         ? job.id === linkedJob.id
-          ? scheduleAssignmentsByJobId.get(job.id)?.length ?? 0
+          ? (scheduleAssignmentsByJobId.get(job.id)?.length ?? 0)
           : 0
-        : scheduleAssignmentsByJobId.get(job.id)?.length ?? 0) === 0)
+        : (scheduleAssignmentsByJobId.get(job.id)?.length ?? 0)) === 0
   );
   const invoiceBalanceDue = Number(invoice.balanceDueAmount);
   const invoiceRetainageHeld = Number(invoice.retainageHeldAmount);
   const invoiceIsSettled = invoice.status === "paid" || invoiceBalanceDue <= 0;
   const invoiceWorkflowSteps: WorkflowStep[] = [
     {
-      id: "estimate",
-      label: "Estimate",
+      id: "customer-project",
+      label: "Customer / project",
+      state: "complete",
+      description: "Project owns broader readiness"
+    },
+    {
+      id: "estimate-contract",
+      label: "Estimate / contract",
       state: invoice.estimate
         ? invoice.estimate.status === "approved"
           ? "complete"
@@ -574,8 +635,8 @@ export default async function InvoiceDetailPage({
         : "No estimate source"
     },
     {
-      id: "contract",
-      label: "Contract",
+      id: "signature-readiness",
+      label: "Signature readiness",
       state: readinessSnapshot?.contractStatus
         ? readinessSnapshot.contractStatus === "signed"
           ? "complete"
@@ -586,8 +647,8 @@ export default async function InvoiceDetailPage({
         : "Project readiness source"
     },
     {
-      id: "job",
-      label: "Job",
+      id: "job-schedule",
+      label: "Job / schedule",
       state: linkedJob
         ? linkedJob.dispatchStatus === "completed"
           ? "complete"
@@ -601,27 +662,20 @@ export default async function InvoiceDetailPage({
         ? formatStatusLabel(linkedJob.dispatchStatus)
         : projectJobs.length > 0
           ? `${projectJobs.length} project job${projectJobs.length === 1 ? "" : "s"}`
-          : "After billable work"
+          : invoice.workflowRole === "deposit"
+            ? "After deposit readiness"
+            : "After billable work"
     },
     {
-      id: "invoice",
-      label: "Invoice",
-      state: invoice.status === "void" ? "blocked" : invoice.status === "paid" ? "complete" : "current",
-      description: `${formatStatusLabel(invoice.status)} | ${formatMoney(invoice.balanceDueAmount)} due`
-    },
-    {
-      id: "payment",
-      label: "Payment",
+      id: "invoice-payment",
+      label: "Invoice / payment",
       state:
-        invoice.status === "paid"
-          ? "complete"
-          : invoice.status === "void"
-            ? "blocked"
+        invoice.status === "void"
+          ? "blocked"
+          : invoice.status === "paid"
+            ? "complete"
             : "current",
-      description:
-        activePayments.length > 0
-          ? `${activePayments.length} recorded payment${activePayments.length === 1 ? "" : "s"}`
-          : "No payment recorded"
+      description: `${formatStatusLabel(invoice.status)} | ${formatMoney(invoice.balanceDueAmount)} due`
     }
   ];
   const invoiceStateItems: ProjectStateSummaryProps["items"] = [
@@ -701,11 +755,17 @@ export default async function InvoiceDetailPage({
               primaryAction={
                 nextAction.primaryLabel && nextAction.primaryHref ? (
                   nextAction.primaryHref.startsWith("#") ? (
-                    <a href={nextAction.primaryHref} className={primaryActionClassName}>
+                    <a
+                      href={nextAction.primaryHref}
+                      className={primaryActionClassName}
+                    >
                       {nextAction.primaryLabel}
                     </a>
                   ) : (
-                    <Link href={nextAction.primaryHref} className={primaryActionClassName}>
+                    <Link
+                      href={nextAction.primaryHref}
+                      className={primaryActionClassName}
+                    >
                       {nextAction.primaryLabel}
                     </Link>
                   )
@@ -719,7 +779,10 @@ export default async function InvoiceDetailPage({
                   >
                     Print / save PDF
                   </Link>
-                  <a href="#invoice-editing" className={secondaryActionClassName}>
+                  <a
+                    href="#invoice-editing"
+                    className={secondaryActionClassName}
+                  >
                     Edit
                   </a>
                   <Link
@@ -730,17 +793,27 @@ export default async function InvoiceDetailPage({
                   </Link>
                   <ActionOverflowMenu>
                     {invoice.estimateId ? (
-                      <Link href={`/estimates/${invoice.estimateId}`} className={overflowActionClassName}>
+                      <Link
+                        href={`/estimates/${invoice.estimateId}`}
+                        className={overflowActionClassName}
+                      >
                         View Estimate
                       </Link>
                     ) : null}
                     {invoice.jobId ? (
-                      <Link href={`/jobs/${invoice.jobId}`} className={overflowActionClassName}>
+                      <Link
+                        href={`/jobs/${invoice.jobId}`}
+                        className={overflowActionClassName}
+                      >
                         View Job
                       </Link>
                     ) : null}
-                    {invoice.billingModel === "aia_progress" && progressBillingWorkspace ? (
-                      <Link href={`/progress-billing/${progressBillingWorkspace.id}`} className={overflowActionClassName}>
+                    {invoice.billingModel === "aia_progress" &&
+                    progressBillingWorkspace ? (
+                      <Link
+                        href={`/progress-billing/${progressBillingWorkspace.id}`}
+                        className={overflowActionClassName}
+                      >
                         Progress Billing
                       </Link>
                     ) : null}
@@ -755,13 +828,19 @@ export default async function InvoiceDetailPage({
               }
             />
 
-            <WorkflowBar title="Billing workflow" steps={invoiceWorkflowSteps} />
+            <WorkflowBar
+              title="Billing workflow"
+              steps={invoiceWorkflowSteps}
+            />
 
-            <ProjectStateSummary title="Invoice state summary" items={invoiceStateItems} />
+            <ProjectStateSummary
+              title="Invoice state summary"
+              items={invoiceStateItems}
+            />
 
             <NeedsAttentionPanel
               cues={invoiceAttentionCues}
-              description="Invoice-specific collection cues derived from this canonical invoice and enabled organization rules."
+              description="Invoice-specific collection cues derived from this canonical invoice and enabled organization rules. Use Project Workspace for upstream contract, deposit, job, or readiness blockers."
               getWorkItemAction={getOperationalCueWorkItemBridgeAction}
               getCueStateControls={(cue) => (
                 <CueStateControls
@@ -785,14 +864,21 @@ export default async function InvoiceDetailPage({
                     Invoice follow-through
                   </h3>
                   <p className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600">
-                    Create an internal contractor work item tied to this invoice. Cue
-                    prefill is only a draft; nothing is created until you submit.
+                    Create an internal contractor work item tied to this
+                    invoice. Cue prefill is only a draft; nothing is created
+                    until you submit.
                   </p>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 md:w-56">
-                  <p className="font-semibold text-slate-950">Open linked items</p>
+                  <p className="font-semibold text-slate-950">
+                    Open linked items
+                  </p>
                   <p className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
-                    {linkedWorkItems.filter((workItem) => workItem.status === "open").length}
+                    {
+                      linkedWorkItems.filter(
+                        (workItem) => workItem.status === "open"
+                      ).length
+                    }
                   </p>
                 </div>
               </div>
@@ -805,8 +891,8 @@ export default async function InvoiceDetailPage({
                         Create internal work item
                       </p>
                       <p className="mt-2 text-sm leading-6 text-slate-600">
-                        Internal follow-through is available when needed, but billing review stays
-                        primary on this invoice.
+                        Internal follow-through is available when needed, but
+                        billing review stays primary on this invoice.
                       </p>
                     </div>
                     <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
@@ -827,15 +913,22 @@ export default async function InvoiceDetailPage({
                       linkPath={defaultInvoiceWorkItemSource.linkPath}
                       customerId={invoice.customerId}
                       projectId={invoice.projectId}
-                      defaultKind={invoiceWorkItemPrefill?.kind ?? "invoice_follow_up"}
+                      defaultKind={
+                        invoiceWorkItemPrefill?.kind ?? "invoice_follow_up"
+                      }
                       defaultTitle={invoiceWorkItemPrefill?.title}
                       defaultDescription={invoiceWorkItemPrefill?.description}
                       defaultDueAt={invoiceWorkItemPrefill?.dueAt}
-                      defaultPriority={invoiceWorkItemPrefill?.priority ?? "normal"}
+                      defaultPriority={
+                        invoiceWorkItemPrefill?.priority ?? "normal"
+                      }
                       dedupeKey={invoiceWorkItemPrefill?.dedupeKey}
                       metadata={invoiceWorkItemPrefill?.metadata}
                       kindOptions={[
-                        { value: "invoice_follow_up", label: "Invoice follow-up" },
+                        {
+                          value: "invoice_follow_up",
+                          label: "Invoice follow-up"
+                        },
                         { value: "human_handoff", label: "Human handoff" },
                         { value: "manual", label: "Manual" }
                       ]}
@@ -882,11 +975,13 @@ export default async function InvoiceDetailPage({
             <div className="space-y-6">
               <section className="space-y-4">
                 <div>
-                  <p className="text-sm font-medium text-[var(--text-primary)]">Line items</p>
+                  <p className="text-sm font-medium text-[var(--text-primary)]">
+                    Line items
+                  </p>
                   <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                     {invoice.billingModel === "aia_progress"
                       ? "Read-only billing lines generated from the canonical schedule-of-values chain. Review them here, but return to the progress billing workspace for structural scope or percent-complete changes."
-                      : "Canonical billing scope for this invoice, preserved in the same project, estimate, and job chain."}
+                      : "Canonical billing scope for this invoice, preserved in the same customer/project, estimate/contract, job/schedule, and payment chain."}
                   </p>
                 </div>
 
@@ -908,13 +1003,17 @@ export default async function InvoiceDetailPage({
                               </p>
                             ) : null}
                             <p className="text-sm text-[var(--text-secondary)]">
-                              {Number(lineItem.quantity).toLocaleString("en-US")} {lineItem.unit} at{" "}
+                              {Number(lineItem.quantity).toLocaleString(
+                                "en-US"
+                              )}{" "}
+                              {lineItem.unit} at{" "}
                               {formatMoney(lineItem.unitPrice)}
                             </p>
                             <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                               {getInvoiceLineageBadge({
                                 lineageType: lineItem.lineageType,
-                                invoiceOnlyAdjustmentKind: lineItem.invoiceOnlyAdjustmentKind
+                                invoiceOnlyAdjustmentKind:
+                                  lineItem.invoiceOnlyAdjustmentKind
                               })}
                             </p>
                           </div>
@@ -934,13 +1033,15 @@ export default async function InvoiceDetailPage({
 
               <section className="space-y-3">
                 <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-5 py-5">
-                  <p className="text-sm font-medium text-[var(--text-primary)]">{invoiceContinuityTitle}</p>
+                  <p className="text-sm font-medium text-[var(--text-primary)]">
+                    {invoiceContinuityTitle}
+                  </p>
                   <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                     {invoice.billingModel === "aia_progress"
                       ? "This invoice is a read-only billing snapshot of current SOV state. Keep structural percent-complete, retainage, and scope billing changes in the progress billing workspace."
                       : invoice.workflowRole === "deposit"
-                        ? "This invoice carries deposit collection on the same canonical project and payment chain. Keep contract, readiness, and downstream execution review in the project workspace."
-                        : "This invoice remains part of the shared estimate, project, and payment chain. Use it for billing review without replacing the project workspace as the operational root."}
+                        ? "This invoice carries deposit collection on the same canonical project and payment chain. Keep contract, readiness, and downstream execution review in Project Workspace."
+                        : "This invoice remains part of the shared estimate/contract, project, job/schedule, and payment chain. Use it for billing review without replacing Project Workspace as the operational root."}
                   </p>
                   <div className="mt-4 flex flex-wrap gap-2.5">
                     <Link
@@ -969,12 +1070,18 @@ export default async function InvoiceDetailPage({
                             Linked progress billing snapshot
                           </p>
                           <p className="text-sm leading-6 text-[var(--text-secondary)]">
-                            This page summarizes the invoice outcome. The canonical SOV workspace remains the place to adjust billed percent, retainage, and scope-item billing.
+                            This page summarizes the invoice outcome. The
+                            canonical SOV workspace remains the place to adjust
+                            billed percent, retainage, and scope-item billing.
                           </p>
                         </div>
                         <span className="inline-flex rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
-                          {linkedProgressItems.length || invoice.lineItems.length} linked item
-                          {linkedProgressItems.length === 1 || (linkedProgressItems.length === 0 && invoice.lineItems.length === 1)
+                          {linkedProgressItems.length ||
+                            invoice.lineItems.length}{" "}
+                          linked item
+                          {linkedProgressItems.length === 1 ||
+                          (linkedProgressItems.length === 0 &&
+                            invoice.lineItems.length === 1)
                             ? ""
                             : "s"}
                         </span>
@@ -1016,7 +1123,9 @@ export default async function InvoiceDetailPage({
                     </div>
                   ) : (
                     <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
-                      This invoice is marked as progress-billed, but the linked progress billing workspace could not be resolved from the current estimate chain.
+                      This invoice is marked as progress-billed, but the linked
+                      progress billing workspace could not be resolved from the
+                      current estimate chain.
                     </div>
                   )
                 ) : null}
@@ -1024,14 +1133,19 @@ export default async function InvoiceDetailPage({
 
               <section className="grid gap-6 lg:grid-cols-2">
                 <div className="space-y-3">
-                  <p className="text-sm font-medium text-[var(--text-primary)]">Billing notes</p>
+                  <p className="text-sm font-medium text-[var(--text-primary)]">
+                    Billing notes
+                  </p>
                   <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
-                    {invoice.notes ?? "No billing notes have been captured on this invoice yet."}
+                    {invoice.notes ??
+                      "No billing notes have been captured on this invoice yet."}
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <p className="text-sm font-medium text-[var(--text-primary)]">Latest payment activity</p>
+                  <p className="text-sm font-medium text-[var(--text-primary)]">
+                    Latest payment activity
+                  </p>
                   <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
                     <div className="space-y-3">
                       {latestPayment ? (
@@ -1041,12 +1155,17 @@ export default async function InvoiceDetailPage({
                           </p>
                           <p>{formatDate(latestPayment.paymentDate)}</p>
                           <p className="capitalize">
-                            {formatStatusLabel(latestPayment.status)} via {latestPayment.paymentMethod}
+                            {formatStatusLabel(latestPayment.status)} via{" "}
+                            {latestPayment.paymentMethod}
                           </p>
-                          {latestPayment.reference ? <p>Ref: {latestPayment.reference}</p> : null}
+                          {latestPayment.reference ? (
+                            <p>Ref: {latestPayment.reference}</p>
+                          ) : null}
                         </div>
                       ) : (
-                        <p>No payments have been recorded for this invoice yet.</p>
+                        <p>
+                          No payments have been recorded for this invoice yet.
+                        </p>
                       )}
                       <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
@@ -1116,7 +1235,9 @@ export default async function InvoiceDetailPage({
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4 border-t border-[var(--border-warm)] pt-3">
-                    <dt className="font-semibold text-[var(--text-primary)]">Total</dt>
+                    <dt className="font-semibold text-[var(--text-primary)]">
+                      Total
+                    </dt>
                     <dd className="font-semibold text-[var(--text-primary)]">
                       {formatMoney(invoice.totalAmount)}
                     </dd>
@@ -1128,7 +1249,9 @@ export default async function InvoiceDetailPage({
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
-                    <dt className="font-semibold text-[var(--text-primary)]">Balance due</dt>
+                    <dt className="font-semibold text-[var(--text-primary)]">
+                      Balance due
+                    </dt>
                     <dd className="font-semibold text-[var(--text-primary)]">
                       {formatMoney(invoice.balanceDueAmount)}
                     </dd>
@@ -1137,19 +1260,27 @@ export default async function InvoiceDetailPage({
               </div>
 
               <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-5 py-5">
-                <p className="text-sm font-medium text-[var(--text-primary)]">Billing configuration</p>
+                <p className="text-sm font-medium text-[var(--text-primary)]">
+                  Billing configuration
+                </p>
                 <dl className="mt-4 space-y-3 text-sm leading-6 text-[var(--text-secondary)]">
                   <div className="flex items-center justify-between gap-4">
                     <dt>Billing model</dt>
-                    <dd className="text-right text-[var(--text-primary)]">{invoice.billingModel}</dd>
+                    <dd className="text-right text-[var(--text-primary)]">
+                      {invoice.billingModel}
+                    </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Issue date</dt>
-                    <dd className="text-right text-[var(--text-primary)]">{formatDate(invoice.issueDate)}</dd>
+                    <dd className="text-right text-[var(--text-primary)]">
+                      {formatDate(invoice.issueDate)}
+                    </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Due date</dt>
-                    <dd className="text-right text-[var(--text-primary)]">{formatDate(invoice.dueDate)}</dd>
+                    <dd className="text-right text-[var(--text-primary)]">
+                      {formatDate(invoice.dueDate)}
+                    </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Tax behavior</dt>
@@ -1172,8 +1303,11 @@ export default async function InvoiceDetailPage({
                   <div className="flex items-center justify-between gap-4">
                     <dt>Org default tax</dt>
                     <dd className="max-w-[14rem] text-right text-[var(--text-primary)]">
-                      {financialSettings.defaultTaxBehavior.replaceAll("_", " ")} at{" "}
-                      {formatRate(financialSettings.defaultTaxRate)}
+                      {financialSettings.defaultTaxBehavior.replaceAll(
+                        "_",
+                        " "
+                      )}{" "}
+                      at {formatRate(financialSettings.defaultTaxRate)}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
@@ -1194,7 +1328,7 @@ export default async function InvoiceDetailPage({
             description={
               invoiceIsSettled
                 ? "Review canonical payment activity and settled balance without prompting another collection step."
-                : "Record canonical payments here while keeping customer-facing checkout signals in view."
+                : "Record canonical payments here while keeping customer-facing checkout signals and upstream project readiness in view."
             }
           >
             <div id="payment-recording" className="space-y-4">
@@ -1261,13 +1395,13 @@ export default async function InvoiceDetailPage({
                             ? Number(invoice.balanceDueAmount) > 0
                               ? "A secure payment has been applied, but the invoice still carries an open balance."
                               : "The most recent secure payment completed successfully."
-                          : latestPaymentRequested
-                            ? "Collections activity has started, even if the invoice still needs the actual payment completion event."
-                            : latestPaymentVoided
-                              ? "A secure payment was voided, so collection attention has reopened on this invoice."
-                            : Number(invoice.balanceDueAmount) > 0
-                              ? "No recent customer-facing payment signal is recorded yet."
-                              : "No further collection step is currently needed on this invoice."}
+                            : latestPaymentRequested
+                              ? "Collections activity has started, even if the invoice still needs the actual payment completion event."
+                              : latestPaymentVoided
+                                ? "A secure payment was voided, so collection attention has reopened on this invoice."
+                                : Number(invoice.balanceDueAmount) > 0
+                                  ? "No recent customer-facing payment signal is recorded yet."
+                                  : "No further collection step is currently needed on this invoice."}
                     </p>
                   </div>
                 </div>
@@ -1275,11 +1409,14 @@ export default async function InvoiceDetailPage({
 
               {invoice.status === "void" ? (
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
-                  Void invoices do not accept recorded payments.
+                  Void invoices do not accept recorded payments. Resolve any
+                  replacement billing path from the project and canonical
+                  invoice chain.
                 </div>
               ) : invoiceIsSettled ? (
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-900">
-                  This invoice is fully paid. No additional payment recording is needed while the balance remains settled.
+                  This invoice is fully paid. No additional payment recording is
+                  needed while the invoice/payment balance remains settled.
                 </div>
               ) : (
                 <details className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4">
@@ -1288,7 +1425,8 @@ export default async function InvoiceDetailPage({
                       Record a payment
                     </p>
                     <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
-                      Open this when you are entering an offline or manually confirmed payment.
+                      Open this when you are entering an offline or manually
+                      confirmed payment on the canonical invoice.
                     </p>
                   </summary>
                   <div className="mt-4">
@@ -1301,7 +1439,9 @@ export default async function InvoiceDetailPage({
               )}
 
               <div className="space-y-3">
-                <p className="text-sm font-medium text-[var(--text-primary)]">Recorded payments</p>
+                <p className="text-sm font-medium text-[var(--text-primary)]">
+                  Recorded payments
+                </p>
                 {invoice.payments.length > 0 ? (
                   invoice.payments.map((payment) => (
                     <div
@@ -1312,17 +1452,23 @@ export default async function InvoiceDetailPage({
                         <p className="font-medium text-[var(--text-primary)]">
                           {formatMoney(payment.amount)}
                         </p>
-                        <p className="capitalize">{formatStatusLabel(payment.status)}</p>
+                        <p className="capitalize">
+                          {formatStatusLabel(payment.status)}
+                        </p>
                       </div>
                       <p className="mt-1">{formatDate(payment.paymentDate)}</p>
                       <p>{payment.paymentMethod}</p>
-                      {payment.reference ? <p>Ref: {payment.reference}</p> : null}
+                      {payment.reference ? (
+                        <p>Ref: {payment.reference}</p>
+                      ) : null}
                       {payment.notes ? <p>{payment.notes}</p> : null}
                     </div>
                   ))
                 ) : (
                   <div className="rounded-2xl border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
-                    No payments have been recorded for this invoice yet.
+                    No payments have been recorded for this invoice yet. Sent or
+                    partially paid invoices remain in the invoice/payment stage
+                    until a payment lands or the balance is otherwise resolved.
                   </div>
                 )}
               </div>
@@ -1351,52 +1497,53 @@ export default async function InvoiceDetailPage({
                   <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                     {invoice.billingModel === "aia_progress"
                       ? "Progress billing structure is managed from the SOV workspace."
-                      : "Use this only when billing content needs to change."}
+                      : "Use this only when billing content needs to change; use Project Workspace for upstream readiness blockers."}
                   </p>
                 </summary>
                 <div className="mt-4">
-              {invoice.billingModel === "aia_progress" ? (
-                <div className="space-y-4">
-                  <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
-                    Progress-billed invoice lines stay tied to approved scope through the
-                    shared schedule-of-values record. Update percent complete and rebuild the
-                    draft invoice from the progress billing workspace instead of editing those
-                    lines here.
-                  </div>
-                  {progressBillingWorkspace ? (
-                    <Link
-                      href={`/progress-billing/${progressBillingWorkspace.id}`}
-                      className="inline-flex items-center rounded-md border border-[var(--border-warm)] bg-white px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--graphite-light)] hover:bg-[var(--highlight)]"
-                    >
-                      Open progress billing workspace
-                    </Link>
-                  ) : null}
-                </div>
-              ) : (
-                <InvoiceForm
-                  action={updateInvoiceAction}
-                  submitLabel="Save invoice"
-                  pendingLabel="Saving invoice..."
-                  projects={projectOptions}
-                  estimates={approvedEstimateOptions}
-                  jobs={jobOptions}
-                  organizationFinancialSettings={financialSettings}
-                  invoice={{
-                    ...invoice,
-                    lineItems: invoice.lineItems,
-                    paidAmount: invoice.paidAmount
-                  }}
-                  paidAmount={invoice.paidAmount}
-                  sourceOptions={sourceOptions}
-                  catalogItems={catalogItems.map((item) => ({
-                    id: item.id,
-                    name: item.name,
-                    unit: item.unit,
-                    defaultUnitPrice: item.defaultUnitPrice,
-                    status: item.status
-                  }))}
-                />
-              )}
+                  {invoice.billingModel === "aia_progress" ? (
+                    <div className="space-y-4">
+                      <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+                        Progress-billed invoice lines stay tied to approved
+                        scope through the shared schedule-of-values record.
+                        Update percent complete and rebuild the draft invoice
+                        from the progress billing workspace instead of editing
+                        those lines here.
+                      </div>
+                      {progressBillingWorkspace ? (
+                        <Link
+                          href={`/progress-billing/${progressBillingWorkspace.id}`}
+                          className="inline-flex items-center rounded-md border border-[var(--border-warm)] bg-white px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--graphite-light)] hover:bg-[var(--highlight)]"
+                        >
+                          Open progress billing workspace
+                        </Link>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <InvoiceForm
+                      action={updateInvoiceAction}
+                      submitLabel="Save invoice"
+                      pendingLabel="Saving invoice..."
+                      projects={projectOptions}
+                      estimates={approvedEstimateOptions}
+                      jobs={jobOptions}
+                      organizationFinancialSettings={financialSettings}
+                      invoice={{
+                        ...invoice,
+                        lineItems: invoice.lineItems,
+                        paidAmount: invoice.paidAmount
+                      }}
+                      paidAmount={invoice.paidAmount}
+                      sourceOptions={sourceOptions}
+                      catalogItems={catalogItems.map((item) => ({
+                        id: item.id,
+                        name: item.name,
+                        unit: item.unit,
+                        defaultUnitPrice: item.defaultUnitPrice,
+                        status: item.status
+                      }))}
+                    />
+                  )}
                 </div>
               </details>
             </DetailPanel>
@@ -1412,19 +1559,78 @@ export default async function InvoiceDetailPage({
               ? "This invoice is linked to a canonical execution record, so billing can be read alongside that job's current schedule and crew state."
               : "This invoice is not linked to a single job, so schedule context is summarized from canonical project jobs without creating a billing-to-schedule bridge model."
           }
-          >
-            <div className="space-y-4 text-sm leading-6 text-[var(--text-secondary)]">
-              {linkedJob ? (
-                scheduleFocusJob ? (
+        >
+          <div className="space-y-4 text-sm leading-6 text-[var(--text-secondary)]">
+            {linkedJob ? (
+              scheduleFocusJob ? (
+                <ScheduleContextFocusCard
+                  eyebrow={
+                    scheduleFocusJob.dispatchStatus === "in_progress"
+                      ? "Linked work in progress"
+                      : "Linked job"
+                  }
+                  title={
+                    invoice.project?.name ??
+                    scheduleFocusJob.project?.name ??
+                    "Linked job"
+                  }
+                  titleHref={`/jobs/${scheduleFocusJob.id}`}
+                  statusLabel={formatStatusLabel(
+                    scheduleFocusJob.dispatchStatus
+                  )}
+                  summary={formatScheduleSummaryWindow({
+                    scheduledDate: scheduleFocusJob.scheduledDate,
+                    scheduledStartAt: scheduleFocusJob.scheduledStartAt,
+                    scheduledEndAt: scheduleFocusJob.scheduledEndAt
+                  })}
+                  detailRows={[
+                    {
+                      label: "Crew",
+                      value:
+                        scheduleFocusAssignments.length > 0
+                          ? scheduleFocusSummary
+                          : scheduleFocusJob.dispatchStatus === "scheduled"
+                            ? "Scheduled, but crew assignment still needs to be confirmed"
+                            : scheduleFocusSummary
+                    }
+                  ]}
+                />
+              ) : (
+                <ScheduleContextNotice
+                  eyebrow="Ready for scheduling"
+                  title="The linked job exists, but it is still unscheduled"
+                >
+                  Billing is already tied to a canonical execution record. Add a
+                  real schedule commitment on that job to surface its next
+                  production timing here.
+                </ScheduleContextNotice>
+              )
+            ) : (
+              <>
+                <ScheduleContextMetrics
+                  items={[
+                    { label: "Scheduled", value: scheduleCounts.scheduled },
+                    { label: "Unscheduled", value: scheduleCounts.unscheduled },
+                    { label: "In progress", value: scheduleCounts.inProgress }
+                  ]}
+                />
+
+                {scheduleFocusJob ? (
                   <ScheduleContextFocusCard
                     eyebrow={
                       scheduleFocusJob.dispatchStatus === "in_progress"
-                        ? "Linked work in progress"
-                        : "Linked job"
+                        ? "Work in progress"
+                        : "Next scheduled job"
                     }
-                    title={invoice.project?.name ?? scheduleFocusJob.project?.name ?? "Linked job"}
+                    title={
+                      scheduleFocusJob.project?.name ??
+                      invoice.project?.name ??
+                      "Project job"
+                    }
                     titleHref={`/jobs/${scheduleFocusJob.id}`}
-                    statusLabel={formatStatusLabel(scheduleFocusJob.dispatchStatus)}
+                    statusLabel={formatStatusLabel(
+                      scheduleFocusJob.dispatchStatus
+                    )}
                     summary={formatScheduleSummaryWindow({
                       scheduledDate: scheduleFocusJob.scheduledDate,
                       scheduledStartAt: scheduleFocusJob.scheduledStartAt,
@@ -1444,73 +1650,34 @@ export default async function InvoiceDetailPage({
                   />
                 ) : (
                   <ScheduleContextNotice
-                    eyebrow="Ready for scheduling"
-                    title="The linked job exists, but it is still unscheduled"
+                    eyebrow={
+                      projectJobs.length > 0
+                        ? "Ready for scheduling"
+                        : "No jobs yet"
+                    }
+                    title={
+                      projectJobs.length > 0
+                        ? "Project work exists, but no schedule commitment is set yet"
+                        : "No production jobs are linked to this project yet"
+                    }
                   >
-                    Billing is already tied to a canonical execution record. Add a real schedule
-                    commitment on that job to surface its next production timing here.
+                    {projectJobs.length > 0
+                      ? "Canonical project jobs already exist for this invoice, but they are still unscheduled. The next production commitment will show here once a real date is attached."
+                      : "Schedule continuity will appear here after downstream production work is created on the canonical project chain. If work should already be schedulable, inspect Project Workspace for contract, deposit, or readiness blockers."}
                   </ScheduleContextNotice>
-                )
-              ) : (
-                <>
-                  <ScheduleContextMetrics
-                    items={[
-                      { label: "Scheduled", value: scheduleCounts.scheduled },
-                      { label: "Unscheduled", value: scheduleCounts.unscheduled },
-                      { label: "In progress", value: scheduleCounts.inProgress }
-                    ]}
-                  />
-
-                  {scheduleFocusJob ? (
-                    <ScheduleContextFocusCard
-                      eyebrow={
-                        scheduleFocusJob.dispatchStatus === "in_progress"
-                          ? "Work in progress"
-                          : "Next scheduled job"
-                      }
-                      title={scheduleFocusJob.project?.name ?? invoice.project?.name ?? "Project job"}
-                      titleHref={`/jobs/${scheduleFocusJob.id}`}
-                      statusLabel={formatStatusLabel(scheduleFocusJob.dispatchStatus)}
-                      summary={formatScheduleSummaryWindow({
-                        scheduledDate: scheduleFocusJob.scheduledDate,
-                        scheduledStartAt: scheduleFocusJob.scheduledStartAt,
-                        scheduledEndAt: scheduleFocusJob.scheduledEndAt
-                      })}
-                      detailRows={[
-                        {
-                          label: "Crew",
-                          value:
-                            scheduleFocusAssignments.length > 0
-                              ? scheduleFocusSummary
-                              : scheduleFocusJob.dispatchStatus === "scheduled"
-                                ? "Scheduled, but crew assignment still needs to be confirmed"
-                                : scheduleFocusSummary
-                        }
-                      ]}
-                    />
-                  ) : (
-                    <ScheduleContextNotice
-                      eyebrow={projectJobs.length > 0 ? "Ready for scheduling" : "No jobs yet"}
-                      title={
-                        projectJobs.length > 0
-                          ? "Project work exists, but no schedule commitment is set yet"
-                          : "No production jobs are linked to this project yet"
-                      }
-                    >
-                      {projectJobs.length > 0
-                        ? "Canonical project jobs already exist for this invoice, but they are still unscheduled. The next production commitment will show here once a real date is attached."
-                        : "Schedule continuity will appear here after downstream production work is created on the canonical project chain."}
-                    </ScheduleContextNotice>
-                  )}
-                </>
-              )}
+                )}
+              </>
+            )}
 
             <ContextFactsList
               items={[
                 {
                   label: "Project link",
                   value: invoice.project ? (
-                    <Link href={`/projects/${invoice.project.id}`} className="font-medium text-brand-700">
+                    <Link
+                      href={`/projects/${invoice.project.id}`}
+                      className="font-medium text-brand-700"
+                    >
                       {invoice.project.name}
                     </Link>
                   ) : (
@@ -1521,10 +1688,12 @@ export default async function InvoiceDetailPage({
                   label: "Crew assignment state",
                   value:
                     linkedJob && scheduleFocusJob
-                      ? scheduleFocusSummary ?? "No crew state yet"
+                      ? (scheduleFocusSummary ?? "No crew state yet")
                       : projectJobsWithoutAssignments.length > 0
                         ? `${projectJobsWithoutAssignments.length} job${
-                            projectJobsWithoutAssignments.length === 1 ? "" : "s"
+                            projectJobsWithoutAssignments.length === 1
+                              ? ""
+                              : "s"
                           } still need crew assignment rows`
                         : projectJobs.length > 0
                           ? "Crew coverage is already attached where needed"
@@ -1536,7 +1705,12 @@ export default async function InvoiceDetailPage({
             <ScheduleContextActions
               actions={[
                 ...(linkedJob
-                  ? [{ href: `/jobs/${linkedJob.id}`, label: "Open linked job" as const }]
+                  ? [
+                      {
+                        href: `/jobs/${linkedJob.id}`,
+                        label: "Open linked job" as const
+                      }
+                    ]
                   : []),
                 {
                   href: buildProjectScheduleHref(invoice.projectId),
@@ -1550,7 +1724,7 @@ export default async function InvoiceDetailPage({
 
         <DetailPanel
           title="Connected Records"
-          description="Primary billing context stays visible; extra chain records are collapsed."
+          description="Primary billing context stays visible across customer/project, estimate/contract, job/schedule, and invoice/payment continuity."
         >
           <div className="grid gap-4">
             {invoice.project ? (
@@ -1587,7 +1761,9 @@ export default async function InvoiceDetailPage({
                 }
               />
             ) : null}
-            {progressBillingWorkspace || invoice.job || changeOrders.length > 0 ? (
+            {progressBillingWorkspace ||
+            invoice.job ||
+            changeOrders.length > 0 ? (
               <details className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
                 <summary className="cursor-pointer list-none font-semibold text-[var(--text-primary)]">
                   More linked records
@@ -1596,7 +1772,10 @@ export default async function InvoiceDetailPage({
                   {progressBillingWorkspace ? (
                     <LinkedRecordCard
                       href={`/progress-billing/${progressBillingWorkspace.id}`}
-                      title={progressBillingWorkspace.project?.name ?? "Schedule of values"}
+                      title={
+                        progressBillingWorkspace.project?.name ??
+                        "Schedule of values"
+                      }
                       subtitle="Progress billing / SOV"
                       meta={`Current ${formatMoney(progressBillingWorkspace.currentBillableTotal)} | Balance ${formatMoney(progressBillingWorkspace.balanceToFinishTotal)}`}
                       badge={
@@ -1651,60 +1830,64 @@ export default async function InvoiceDetailPage({
           <div className="mt-5">
             <ContextFactsList
               items={[
-              {
-                label: "Project readiness",
-                value: (
-                  <span className="capitalize">
-                    {formatReadinessLabel(readinessSnapshot?.status ?? null)}
-                  </span>
-                )
-              },
-              {
-                label: "Invoice type",
-                value: invoiceTypeLabel
-              },
-              {
-                label: "Status",
-                value: <span className="capitalize">{formatStatusLabel(invoice.status)}</span>
-              },
-              {
-                label: "Online payment readiness",
-                value: onlinePaymentGate.canStartCheckout
-                  ? "Ready for customer-facing payment flow"
-                  : "Not currently ready for customer-facing payment flow"
-              },
-              {
-                label: "Recent payment signal",
-                value: latestPaymentEvent
-                  ? `${getPaymentEventLabel(latestPaymentEvent.eventType)} at ${formatDateTime(latestPaymentEvent.occurredAt)}`
-                  : "No customer-facing payment signal yet"
-              },
-              {
-                label: "Billing role",
-                value:
-                  invoice.billingModel === "aia_progress"
-                    ? "Progress invoices stay tied to the schedule-of-values chain and should send structural billing work back to the progress billing workspace."
-                    : invoice.workflowRole === "deposit"
-                      ? "Deposit invoices contribute directly to the commercial handoff."
-                      : "Standard invoices stay connected to the same project and execution chain without replacing the project hub."
-              },
-              {
-                label: "Customer company",
-                value: invoice.customer?.companyName ?? "Not provided"
-              },
-              {
-                label: "Created",
-                value: new Date(invoice.createdAt).toLocaleString()
-              },
-              {
-                label: "Updated",
-                value: new Date(invoice.updatedAt).toLocaleString()
-              },
-              {
-                label: "Hub guidance",
-                value:
-                  "Use the project readiness hub when you need the current contract, signature, deposit, financing, and ready-to-schedule handoff context."
-              }
+                {
+                  label: "Project readiness",
+                  value: (
+                    <span className="capitalize">
+                      {formatReadinessLabel(readinessSnapshot?.status ?? null)}
+                    </span>
+                  )
+                },
+                {
+                  label: "Invoice type",
+                  value: invoiceTypeLabel
+                },
+                {
+                  label: "Status",
+                  value: (
+                    <span className="capitalize">
+                      {formatStatusLabel(invoice.status)}
+                    </span>
+                  )
+                },
+                {
+                  label: "Online payment readiness",
+                  value: onlinePaymentGate.canStartCheckout
+                    ? "Ready for customer-facing payment flow"
+                    : "Not currently ready for customer-facing payment flow"
+                },
+                {
+                  label: "Recent payment signal",
+                  value: latestPaymentEvent
+                    ? `${getPaymentEventLabel(latestPaymentEvent.eventType)} at ${formatDateTime(latestPaymentEvent.occurredAt)}`
+                    : "No customer-facing payment signal yet"
+                },
+                {
+                  label: "Billing role",
+                  value:
+                    invoice.billingModel === "aia_progress"
+                      ? "Progress invoices stay tied to the schedule-of-values chain and should send structural billing work back to the progress billing workspace."
+                      : invoice.workflowRole === "deposit"
+                        ? "Deposit invoices contribute directly to the contract-to-job/schedule handoff."
+                        : "Standard invoices stay connected to the same project and execution chain without replacing Project Workspace."
+                },
+                {
+                  label: "Customer company",
+                  value: invoice.customer?.companyName ?? "Not provided"
+                },
+                {
+                  label: "Created",
+                  value: new Date(invoice.createdAt).toLocaleString()
+                },
+                {
+                  label: "Updated",
+                  value: new Date(invoice.updatedAt).toLocaleString()
+                },
+                {
+                  label: "Hub guidance",
+                  value:
+                    "Use Project Workspace when you need the current contract, signature, deposit, financing, job/schedule, and ready-to-schedule handoff context."
+                }
               ]}
             />
           </div>

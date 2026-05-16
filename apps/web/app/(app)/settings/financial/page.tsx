@@ -24,6 +24,12 @@ function formatPercentFromRate(rate: string) {
   return (Number(rate) * 100).toFixed(2);
 }
 
+const fieldClassName =
+  "w-full rounded-[4px] border border-[var(--border-warm)] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[var(--copper)] focus:ring-2 focus:ring-[var(--copper)]/20";
+
+const compactFieldClassName =
+  "h-9 rounded-[4px] border border-[var(--border-warm)] bg-white px-3 text-sm outline-none transition focus:border-[var(--copper)] focus:ring-2 focus:ring-[var(--copper)]/20";
+
 export default async function SettingsFinancialPage({ searchParams }: PageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const scope = await requireOrganizationAdminScope("/settings/financial");
@@ -57,7 +63,7 @@ export default async function SettingsFinancialPage({ searchParams }: PageProps)
               <select
                 name="defaultTaxBehavior"
                 defaultValue={financialSettings.defaultTaxBehavior}
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                className={fieldClassName}
               >
                 <option value="exclusive">Exclusive</option>
                 <option value="inclusive">Inclusive</option>
@@ -76,7 +82,7 @@ export default async function SettingsFinancialPage({ searchParams }: PageProps)
                 step="0.01"
                 defaultValue={formatPercentFromRate(financialSettings.defaultTaxRate)}
                 required
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                className={fieldClassName}
               />
             </label>
           </div>
@@ -93,7 +99,7 @@ export default async function SettingsFinancialPage({ searchParams }: PageProps)
               step="0.01"
               defaultValue={financialSettings.defaultRetainagePercentage}
               required
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              className={fieldClassName}
             />
             <p className="mt-2 text-xs leading-5 text-slate-500">
               This tenant baseline now feeds new customer defaults, so downstream invoice and retainage-ready billing behavior stays consistent.
@@ -117,7 +123,7 @@ export default async function SettingsFinancialPage({ searchParams }: PageProps)
             <input
               name="name"
               placeholder="New tax code name"
-              className="h-9 rounded-[4px] border border-[#d8dfe9] px-3 text-sm outline-none md:col-span-2"
+              className={`${compactFieldClassName} md:col-span-2`}
             />
             <input
               name="rate"
@@ -126,36 +132,36 @@ export default async function SettingsFinancialPage({ searchParams }: PageProps)
               max="100"
               step="0.01"
               placeholder="Rate %"
-              className="h-9 rounded-[4px] border border-[#d8dfe9] px-3 text-sm outline-none"
+              className={compactFieldClassName}
             />
             <input
               name="jurisdiction"
               placeholder="Jurisdiction"
-              className="h-9 rounded-[4px] border border-[#d8dfe9] px-3 text-sm outline-none"
+              className={compactFieldClassName}
             />
-            <label className="flex items-center gap-2 rounded-[4px] border border-[#d8dfe9] px-3 text-sm text-[#3f3f3f]">
+            <label className="flex items-center gap-2 rounded-[4px] border border-[var(--border-warm)] px-3 text-sm text-[var(--text-primary)]">
               <input
                 type="checkbox"
                 name="active"
                 defaultChecked
-                className="h-4 w-4 rounded border-[#bdbdbd]"
+                className="h-4 w-4 rounded border-[var(--border-warm)] text-[var(--copper)]"
               />
               Active
             </label>
             <div className="md:col-span-5">
               <button
                 type="submit"
-                className="rounded-[4px] border border-[#171717] bg-[#171717] px-3 py-2 text-sm font-medium text-white"
+                className="rounded-[4px] border border-[var(--graphite)] bg-[var(--graphite)] px-3 py-2 text-sm font-medium text-white transition hover:bg-[var(--graphite-light)]"
               >
                 Save tax code
               </button>
             </div>
           </form>
 
-          <div className="overflow-x-auto border border-[#e5e5e5]">
+          <div className="overflow-x-auto rounded-lg border border-[var(--border-warm)]">
             <table className="min-w-full border-collapse">
               <thead>
-                <tr className="border-b border-[#e5e5e5] bg-[#f8f8f8] text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                <tr className="border-b border-[var(--border-warm)] bg-[var(--highlight)] text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                   <th className="px-3 py-2.5">Name</th>
                   <th className="px-3 py-2.5">Rate</th>
                   <th className="px-3 py-2.5">Jurisdiction</th>
@@ -165,27 +171,27 @@ export default async function SettingsFinancialPage({ searchParams }: PageProps)
               </thead>
               <tbody>
                 {taxCodes.map((taxCode) => (
-                  <tr key={taxCode.id} className="border-b border-[#f8f8f8] text-sm text-[#2a2a2a]">
+                  <tr key={taxCode.id} className="border-b border-[var(--border-warm)] text-sm text-[var(--text-primary)]">
                     <td className="px-3 py-2.5">{taxCode.name}</td>
                     <td className="px-3 py-2.5">{formatPercentFromRate(taxCode.rate)}%</td>
                     <td className="px-3 py-2.5">{taxCode.jurisdiction ?? "-"}</td>
                     <td className="px-3 py-2.5">{taxCode.active ? "Yes" : "No"}</td>
                     <td className="px-3 py-2.5 text-right">
                       <details className="inline-block text-left">
-                        <summary className="cursor-pointer rounded-[4px] border border-[#d6d6d6] px-3 py-1.5 text-sm text-[#3f3f3f]">
+                        <summary className="cursor-pointer rounded-[4px] border border-[var(--border-warm)] px-3 py-1.5 text-sm text-[var(--text-primary)] transition hover:bg-[var(--highlight)]">
                           Edit
                         </summary>
                         <SaveStateForm
                           action={updateTaxCodeAction}
                           pendingLabel="Saving..."
-                          className="mt-2 grid min-w-[320px] gap-2 border border-[#d8dfe9] bg-white p-3 shadow-lg"
+                          className="mt-2 grid min-w-[320px] gap-2 rounded-lg border border-[var(--border-warm)] bg-white p-3 shadow-lg"
                         >
                           <input type="hidden" name="returnTo" value="/settings/financial" />
                           <input type="hidden" name="taxCodeId" value={taxCode.id} />
                           <input
                             name="name"
                             defaultValue={taxCode.name}
-                            className="h-9 rounded-[4px] border border-[#d8dfe9] px-3 text-sm outline-none"
+                            className={compactFieldClassName}
                           />
                           <input
                             name="rate"
@@ -194,19 +200,19 @@ export default async function SettingsFinancialPage({ searchParams }: PageProps)
                             max="100"
                             step="0.01"
                             defaultValue={formatPercentFromRate(taxCode.rate)}
-                            className="h-9 rounded-[4px] border border-[#d8dfe9] px-3 text-sm outline-none"
+                            className={compactFieldClassName}
                           />
                           <input
                             name="jurisdiction"
                             defaultValue={taxCode.jurisdiction ?? ""}
-                            className="h-9 rounded-[4px] border border-[#d8dfe9] px-3 text-sm outline-none"
+                            className={compactFieldClassName}
                           />
-                          <label className="flex items-center gap-2 text-sm text-[#3f3f3f]">
+                          <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
                             <input
                               type="checkbox"
                               name="active"
                               defaultChecked={taxCode.active}
-                              className="h-4 w-4 rounded border-[#bdbdbd]"
+                              className="h-4 w-4 rounded border-[var(--border-warm)] text-[var(--copper)]"
                             />
                             Active
                           </label>
@@ -222,7 +228,7 @@ export default async function SettingsFinancialPage({ searchParams }: PageProps)
                 ))}
                 {taxCodes.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-3 py-6 text-center text-sm text-[#777777]">
+                    <td colSpan={5} className="px-3 py-6 text-center text-sm text-[var(--text-secondary)]">
                       No tax codes yet.
                     </td>
                   </tr>
@@ -238,7 +244,7 @@ export default async function SettingsFinancialPage({ searchParams }: PageProps)
         title="Cost item tax handling"
         description="Operational cost item screens stay lightweight while organization tax rules stay centralized here."
       >
-        <div className="space-y-2 border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+        <div className="space-y-2 rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
           <p>Cost items expose the taxable checkbox in the operational workflow.</p>
           <p>Organization tax behavior and rates are configured here.</p>
           <p>Advanced tax codes remain available without moving item CRUD into settings.</p>

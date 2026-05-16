@@ -33,7 +33,7 @@ export function ManagerDashboardCard({
 }: ManagerDashboardCardProps) {
   return (
     <section className="flex h-full min-w-0 flex-col rounded-lg border border-[var(--border-warm)] bg-white">
-      <div className="flex flex-col items-start gap-3 border-b border-[var(--border-warm)] px-3 py-2.5 sm:flex-row sm:justify-between">
+      <div className="flex flex-col items-start gap-3 border-b border-[var(--border-warm)] bg-[var(--highlight)]/45 px-3 py-2.5 sm:flex-row sm:justify-between">
         <div className="min-w-0">
           {eyebrow ? (
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
@@ -59,7 +59,7 @@ export function ManagerDashboardCard({
             <Link
               key={`${item.href}:${item.title}`}
               href={item.href}
-              className="group flex min-w-0 flex-col gap-2 px-3 py-2.5 transition hover:bg-[var(--highlight)] sm:flex-row sm:items-start sm:justify-between sm:gap-3"
+              className="group flex min-w-0 flex-col gap-2 px-3 py-2.5 transition hover:bg-[var(--highlight)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-inset sm:flex-row sm:items-start sm:justify-between sm:gap-3"
             >
               <div className="min-w-0">
                 <div className="flex min-w-0 items-center gap-2">
@@ -77,7 +77,9 @@ export function ManagerDashboardCard({
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-1 text-sm leading-5 text-[var(--text-secondary)]">{item.subtitle}</p>
+                <p className="mt-1 whitespace-normal break-words text-sm leading-5 text-[var(--text-secondary)] [overflow-wrap:anywhere]">
+                  {item.subtitle}
+                </p>
                 {item.meta ? (
                   <p className="mt-1 whitespace-normal break-words text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--text-secondary)] [overflow-wrap:anywhere]">
                     {item.meta}
@@ -85,7 +87,7 @@ export function ManagerDashboardCard({
                 ) : null}
               </div>
               {item.trailing ? (
-                <p className="text-sm font-semibold text-[var(--text-primary)] sm:shrink-0">
+                <p className="whitespace-normal break-words text-sm font-semibold text-[var(--text-primary)] [overflow-wrap:anywhere] sm:shrink-0 sm:text-right">
                   {item.trailing}
                 </p>
               ) : null}

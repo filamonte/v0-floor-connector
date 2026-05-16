@@ -14,6 +14,11 @@ type PageProps = {
   }>;
 };
 
+const organizationFieldClassName =
+  "w-full rounded-[4px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)] focus:ring-2 focus:ring-[var(--copper)]/15";
+const organizationNoticeClassName =
+  "rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]";
+
 export default async function OrganizationSettingsPage({ searchParams }: PageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const scope = await requireOrganizationAdminScope("/settings/organization");
@@ -44,7 +49,7 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
                 name="legalName"
                 defaultValue={scope.organization.legalName}
                 required
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                className={organizationFieldClassName}
               />
             </label>
             <label className="block">
@@ -55,7 +60,7 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
                 name="displayName"
                 defaultValue={scope.organization.displayName}
                 required
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                className={organizationFieldClassName}
               />
             </label>
           </div>
@@ -66,7 +71,7 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
               name="slug"
               defaultValue={scope.organization.slug}
               required
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              className={organizationFieldClassName}
             />
           </label>
 
@@ -79,7 +84,7 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
               type="url"
               defaultValue={scope.organization.logoUrl ?? ""}
               placeholder="https://example.com/logo.png"
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              className={organizationFieldClassName}
             />
             <span className="mt-2 block text-xs leading-5 text-slate-500">
               Use an absolute image URL to show the tenant logo in the shared app header.
@@ -95,7 +100,7 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
                 name="phone"
                 type="tel"
                 defaultValue={scope.organization.phone ?? ""}
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                className={organizationFieldClassName}
               />
             </label>
             <label className="block">
@@ -106,7 +111,7 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
                 name="email"
                 type="email"
                 defaultValue={scope.organization.email ?? ""}
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                className={organizationFieldClassName}
               />
             </label>
           </div>
@@ -121,7 +126,7 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
                 type="url"
                 defaultValue={scope.organization.websiteUrl ?? ""}
                 placeholder="https://example.com"
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                className={organizationFieldClassName}
               />
             </label>
             <label className="block">
@@ -132,7 +137,7 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
                 name="primaryTrade"
                 defaultValue={scope.organization.primaryTrade ?? ""}
                 placeholder="Epoxy flooring"
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                className={organizationFieldClassName}
               />
             </label>
           </div>
@@ -145,14 +150,14 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
               <div className="flex items-center gap-3">
                 <span
                   aria-hidden="true"
-                  className="h-10 w-10 shrink-0 rounded-full border border-slate-300"
+                  className="h-10 w-10 shrink-0 rounded-[4px] border border-[var(--border-warm)]"
                   style={{ backgroundColor: brandAccentColor }}
                 />
                 <input
                   name="brandAccentColor"
                   defaultValue={scope.organization.brandAccentColor ?? ""}
                   placeholder="#d8731f"
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                  className={organizationFieldClassName}
                 />
               </div>
             </label>
@@ -164,12 +169,12 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
                 name="timeZone"
                 defaultValue={scope.organization.timeZone ?? ""}
                 placeholder="America/New_York"
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                className={organizationFieldClassName}
               />
             </label>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+          <div className={organizationNoticeClassName}>
             Platform status is still controlled by super admin. Contractor admins manage only the organization-owned profile layer here. Logo upload remains deferred; use a hosted URL or storage reference.
           </div>
 

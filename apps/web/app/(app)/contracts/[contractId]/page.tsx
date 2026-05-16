@@ -31,7 +31,10 @@ import {
 } from "@/components/schedule-context-card";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
-import { getContractById, getContractSignatureActionOptions } from "@/lib/contracts/data";
+import {
+  getContractById,
+  getContractSignatureActionOptions
+} from "@/lib/contracts/data";
 import { listInvoices } from "@/lib/invoices/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
@@ -41,7 +44,10 @@ import { getOperationalCuesForSubject } from "@/lib/operational-cues/data";
 import { getCueStateActionSupport } from "@/lib/cue-states/apply";
 import { buildOperationalCueIdentity } from "@/lib/cue-states/identity";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
-import { ensureInitialRecordRevision, listRecordRevisions } from "@/lib/revisions/data";
+import {
+  ensureInitialRecordRevision,
+  listRecordRevisions
+} from "@/lib/revisions/data";
 import { buildContractRevisionSnapshot } from "@/lib/revisions/snapshots";
 import { buildScheduleHref } from "@/lib/schedule/links";
 import {
@@ -56,7 +62,10 @@ import {
   WorkflowBar,
   getStatusBadgeClassName
 } from "@floorconnector/ui";
-import type { ProjectStateSummaryProps, WorkflowStep } from "@floorconnector/ui";
+import type {
+  ProjectStateSummaryProps,
+  WorkflowStep
+} from "@floorconnector/ui";
 
 type ContractDetailPageProps = {
   params: Promise<{
@@ -102,7 +111,11 @@ function getActionBarStatusTone(input: {
   status: string;
   signatureSummary: ReturnType<typeof computeContractSignatureWorkflowSummary>;
 }): "neutral" | "warning" | "success" | "danger" {
-  if (input.signatureSummary.isVoided || input.signatureSummary.isDeclined || input.status === "void") {
+  if (
+    input.signatureSummary.isVoided ||
+    input.signatureSummary.isDeclined ||
+    input.status === "void"
+  ) {
     return "danger";
   }
 
@@ -110,7 +123,11 @@ function getActionBarStatusTone(input: {
     return "success";
   }
 
-  if (input.status === "draft" || input.status === "sent" || input.status === "viewed") {
+  if (
+    input.status === "draft" ||
+    input.status === "sent" ||
+    input.status === "viewed"
+  ) {
     return "warning";
   }
 
@@ -133,7 +150,10 @@ function getContractDisplayState(input: {
     return "Signed";
   }
 
-  if (input.signatureSummary.requiresCountersign && input.signatureSummary.allCustomerSignersSigned) {
+  if (
+    input.signatureSummary.requiresCountersign &&
+    input.signatureSummary.allCustomerSignersSigned
+  ) {
     return "Awaiting countersign";
   }
 
@@ -154,8 +174,10 @@ function getContractDisplayState(input: {
 function getSignatureProgressLabel(
   summary: ReturnType<typeof computeContractSignatureWorkflowSummary>
 ) {
-  const totalRequiredSigners = summary.customerSignerCount + summary.contractorSignerCount;
-  const signedRequiredSigners = summary.signedCustomerSignerCount + summary.signedContractorSignerCount;
+  const totalRequiredSigners =
+    summary.customerSignerCount + summary.contractorSignerCount;
+  const signedRequiredSigners =
+    summary.signedCustomerSignerCount + summary.signedContractorSignerCount;
 
   if (totalRequiredSigners === 0) {
     return "No signer routing";
@@ -181,7 +203,7 @@ function getContractAction(input: {
     return {
       title: "Contract is void",
       description:
-        "This contract is preserved for history. Use the project hub for any active replacement workflow.",
+        "This contract is preserved for history in the estimate/contract stage. Use Project Workspace to resolve the active customer/project chain before creating any replacement workflow.",
       label: "Open project hub",
       href: `/projects/${input.projectId}`
     };
@@ -191,7 +213,7 @@ function getContractAction(input: {
     return {
       title: "Customer declined",
       description:
-        "A signer declined this contract. Review signer routing and signature history before revising or replacing the agreement.",
+        "A signer declined this contract, so the estimate/contract handoff is blocked here. Review signer routing and signature history, then resolve broader project readiness from Project Workspace if the agreement needs to be replaced.",
       label: "Review signer history",
       href: "#signer-routing"
     };
@@ -201,7 +223,7 @@ function getContractAction(input: {
     return {
       title: "Contractor countersign needed",
       description:
-        "Customer signature is complete. The only signing action shown here is the contractor countersign step.",
+        "Customer signature is complete on the canonical contract. Finish the contractor countersign here before the chain can move cleanly into job/schedule or invoice/payment follow-through.",
       label: "Countersign",
       href: "#contract-workflow-actions"
     };
@@ -212,7 +234,7 @@ function getContractAction(input: {
       return {
         title: "Contract signed; deposit next",
         description:
-          "Signature is complete. Deposit collection is the active financial handoff before downstream readiness can proceed.",
+          "Signature is complete in the estimate/contract stage. Deposit collection is the invoice/payment handoff that must clear before downstream job/schedule readiness can proceed.",
         label: "Create deposit invoice",
         href: `/invoices?projectId=${input.projectId}&estimateId=${input.estimateId ?? ""}&workflowRole=deposit`
       };
@@ -221,7 +243,7 @@ function getContractAction(input: {
     return {
       title: "Signature complete",
       description:
-        "The contract is fully signed. Use the project readiness hub for deposit, scheduling, job, and invoice follow-through.",
+        "The contract is fully signed. Use Project Workspace for the next canonical handoff across deposit, job/schedule, invoice, and payment readiness.",
       label: "Open project hub",
       href: `/projects/${input.projectId}`
     };
@@ -231,7 +253,7 @@ function getContractAction(input: {
     return {
       title: "Await customer signature",
       description:
-        "The contract is out for signature. Keep signer routing visible and avoid draft edits while signature activity is active.",
+        "The contract is out for signature in the estimate/contract stage. The next step is customer action; avoid draft edits while signature activity is active.",
       label: "Review signer routing",
       href: "#signer-routing"
     };
@@ -241,7 +263,7 @@ function getContractAction(input: {
     return {
       title: "Send for signature",
       description:
-        "Draft review and internal approval are ready. Select the customer signer in workflow actions to send this contract.",
+        "Draft review and internal approval are ready. Select the customer signer here to move from estimate/contract preparation into the signature request.",
       label: "Send for signature",
       href: "#contract-workflow-actions"
     };
@@ -251,7 +273,7 @@ function getContractAction(input: {
     return {
       title: "Edit draft before send",
       description:
-        "Internal review marked this contract for revision. Edit the draft before attempting signature routing again.",
+        "Internal review marked this estimate/contract handoff for revision. Edit the draft before attempting signature routing again.",
       label: "Edit draft",
       href: `/contracts/${input.contractId}/edit`
     };
@@ -261,7 +283,7 @@ function getContractAction(input: {
     return {
       title: "Complete send readiness",
       description:
-        "Internal approval or signer setup is still blocking send. Use the workflow actions to clear the draft gate.",
+        "Internal approval or signer setup is still blocking the signature request. Use the existing workflow actions to clear the draft gate before customer signature.",
       label: "Review workflow actions",
       href: "#contract-workflow-actions"
     };
@@ -270,7 +292,7 @@ function getContractAction(input: {
   return {
     title: "Review signature lock state",
     description:
-      "Signature activity or lock state prevents draft send/edit actions. Review signer routing and project readiness from here.",
+      "Signature activity or lock state prevents draft send/edit actions. Review signer routing here, then use Project Workspace for upstream readiness questions.",
     label: "Review signer routing",
     href: "#signer-routing"
   };
@@ -285,27 +307,51 @@ function getContractWorkflowSteps(input: {
 }): WorkflowStep[] {
   const hasApprovedEstimate = input.estimateStatus === "approved";
   const hasJobs = input.relatedJobs.length > 0;
-  const hasCompletedJob = input.relatedJobs.some((job) => job.dispatchStatus === "completed");
+  const hasCompletedJob = input.relatedJobs.some(
+    (job) => job.dispatchStatus === "completed"
+  );
   const hasInvoices = input.relatedInvoices.length > 0;
-  const hasPaidInvoice = input.relatedInvoices.some((invoice) => invoice.status === "paid");
+  const hasPaidInvoice = input.relatedInvoices.some(
+    (invoice) => invoice.status === "paid"
+  );
   const hasOpenInvoiceBalance = input.relatedInvoices.some(
     (invoice) => Number(invoice.balanceDueAmount) > 0
   );
   const contractBlocked =
-    input.signatureSummary.isDeclined || input.signatureSummary.isVoided || input.contractStatus === "void";
-  const contractComplete = input.contractStatus === "signed" && input.signatureSummary.isCompleted;
+    input.signatureSummary.isDeclined ||
+    input.signatureSummary.isVoided ||
+    input.contractStatus === "void";
+  const contractComplete =
+    input.contractStatus === "signed" && input.signatureSummary.isCompleted;
 
   return [
     {
-      id: "estimate",
-      label: "Estimate",
-      state: hasApprovedEstimate && contractComplete ? "complete" : input.estimateStatus ? "current" : "upcoming",
-      description: input.estimateStatus ? formatStatusLabel(input.estimateStatus) : "No linked estimate"
+      id: "customer-project",
+      label: "Customer / project",
+      state: input.estimateStatus || contractComplete ? "complete" : "current",
+      description: "Project owns broader readiness"
     },
     {
-      id: "contract",
-      label: "Contract",
-      state: contractBlocked ? "blocked" : contractComplete ? "complete" : "current",
+      id: "estimate-contract",
+      label: "Estimate / contract",
+      state:
+        hasApprovedEstimate && contractComplete
+          ? "complete"
+          : input.estimateStatus
+            ? "current"
+            : "upcoming",
+      description: input.estimateStatus
+        ? formatStatusLabel(input.estimateStatus)
+        : "No linked estimate"
+    },
+    {
+      id: "signature",
+      label: "Signature",
+      state: contractBlocked
+        ? "blocked"
+        : contractComplete
+          ? "complete"
+          : "current",
       description: contractBlocked
         ? getContractDisplayState({
             status: input.contractStatus,
@@ -316,30 +362,32 @@ function getContractWorkflowSteps(input: {
           : getSignatureProgressLabel(input.signatureSummary)
     },
     {
-      id: "job",
-      label: "Job",
-      state: hasCompletedJob ? "complete" : hasJobs && contractComplete ? "current" : "upcoming",
+      id: "job-schedule",
+      label: "Job / schedule",
+      state: hasCompletedJob
+        ? "complete"
+        : hasJobs && contractComplete
+          ? "current"
+          : "upcoming",
       description: hasJobs
         ? `${input.relatedJobs.length} job${input.relatedJobs.length === 1 ? "" : "s"} linked`
-        : "Not created from this project yet"
+        : "After signed contract readiness"
     },
     {
-      id: "invoice",
-      label: "Invoice",
-      state: hasPaidInvoice ? "complete" : hasInvoices && contractComplete ? "current" : "upcoming",
-      description: hasInvoices
-        ? `${input.relatedInvoices.length} invoice${input.relatedInvoices.length === 1 ? "" : "s"} linked`
-        : "No linked project invoice"
-    },
-    {
-      id: "payment",
-      label: "Payment",
-      state: hasPaidInvoice ? "complete" : hasOpenInvoiceBalance ? "current" : "upcoming",
-      description: hasPaidInvoice
-        ? "Paid invoice present"
+      id: "invoice-payment",
+      label: "Invoice / payment",
+      state: hasPaidInvoice
+        ? "complete"
         : hasOpenInvoiceBalance
-          ? "Open invoice balance"
-          : "No collected payment signal"
+          ? "current"
+          : "upcoming",
+      description: hasInvoices
+        ? hasPaidInvoice
+          ? "Paid invoice present"
+          : hasOpenInvoiceBalance
+            ? "Open invoice balance"
+            : `${input.relatedInvoices.length} invoice${input.relatedInvoices.length === 1 ? "" : "s"} linked`
+        : "No invoice/payment handoff yet"
     }
   ];
 }
@@ -373,18 +421,18 @@ function formatEventType(eventType: string) {
 
 function getContractMeaning(status: string) {
   if (status === "draft") {
-    return "This agreement is still a draft commercial record. Review the scope and signer routing here, then move it into approval and send in the right order.";
+    return "This agreement sits in the estimate/contract stage of the lifecycle. Review scope, internal approval, and signer routing here before sending it for customer signature.";
   }
 
   if (status === "signed") {
-    return "This agreement is now part of the signed commercial chain. Use the project readiness hub for deposit, financial, and downstream operational handoff.";
+    return "This agreement has completed the signature portion of estimate/contract. Use Project Workspace for deposit, job/schedule, invoice, and payment handoff context.";
   }
 
   if (status === "void") {
-    return "This agreement is preserved for historical continuity, but active commercial follow-through should happen from the current project and contract chain.";
+    return "This agreement is preserved for historical continuity, but active commercial follow-through should be resolved from the current Project Workspace and contract chain.";
   }
 
-  return "This agreement is in signature workflow. Review the document here first, then use signer state and workflow actions to move it forward.";
+  return "This agreement is in signature workflow. Review the document here first, then use signer state and existing workflow actions to move the estimate/contract stage forward.";
 }
 
 function getSignatureStateMessage(input: {
@@ -392,7 +440,7 @@ function getSignatureStateMessage(input: {
   summary: ReturnType<typeof computeContractSignatureWorkflowSummary>;
 }) {
   if (input.status === "draft") {
-    return "Draft review is still active. Send the contract when signer routing is ready.";
+    return "Draft review is still active. Send the contract when signer routing and internal approval are ready.";
   }
 
   if (input.summary.isVoided) {
@@ -405,11 +453,14 @@ function getSignatureStateMessage(input: {
 
   if (input.summary.allRequiredSignersSigned) {
     return input.summary.requiresCountersign
-      ? "Customer signature and contractor countersign are complete on the canonical contract."
-      : "Customer signature is complete on the canonical contract.";
+      ? "Customer signature and contractor countersign are complete on the canonical contract; downstream handoff belongs in Project Workspace."
+      : "Customer signature is complete on the canonical contract; downstream handoff belongs in Project Workspace.";
   }
 
-  if (input.summary.requiresCountersign && input.summary.allCustomerSignersSigned) {
+  if (
+    input.summary.requiresCountersign &&
+    input.summary.allCustomerSignersSigned
+  ) {
     return "Customer signature is complete. Contractor countersign is the remaining step.";
   }
 
@@ -417,7 +468,7 @@ function getSignatureStateMessage(input: {
     return "Signature collection is in progress and the customer has already interacted with the contract.";
   }
 
-  return "This contract is out for signature and waiting on the assigned customer signer.";
+  return "This contract is out for signature and waiting on the assigned customer signer before downstream readiness can proceed.";
 }
 
 function buildProjectScheduleHref(projectId: string) {
@@ -431,15 +482,21 @@ export default async function ContractDetailPage({
   const { contractId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
   const user = await requireAuthenticatedUser(`/contracts/${contractId}`);
-  const [contract, organizationContext, jobs, invoices, signatureActionOptions, communicationThreads] =
-    await Promise.all([
-      getContractById(contractId, `/contracts/${contractId}`),
-      getActiveOrganizationContext(user.id),
-      listJobs(),
-      listInvoices(),
-      getContractSignatureActionOptions(contractId, `/contracts/${contractId}`),
-      listCommunicationThreadsForSubject("contract", contractId)
-    ]);
+  const [
+    contract,
+    organizationContext,
+    jobs,
+    invoices,
+    signatureActionOptions,
+    communicationThreads
+  ] = await Promise.all([
+    getContractById(contractId, `/contracts/${contractId}`),
+    getActiveOrganizationContext(user.id),
+    listJobs(),
+    listInvoices(),
+    getContractSignatureActionOptions(contractId, `/contracts/${contractId}`),
+    listCommunicationThreadsForSubject("contract", contractId)
+  ]);
 
   if (!contract) {
     notFound();
@@ -450,7 +507,8 @@ export default async function ContractDetailPage({
     subjectType: "contract",
     subjectId: contract.id,
     revisionKind: "system_snapshot",
-    revisionReason: "Initial revision captured from the existing canonical contract.",
+    revisionReason:
+      "Initial revision captured from the existing canonical contract.",
     snapshot: buildContractRevisionSnapshot(contract),
     createdByUserId: user.id
   });
@@ -460,7 +518,9 @@ export default async function ContractDetailPage({
     subjectId: contract.id
   });
 
-  const workflowSettings = await getOrganizationWorkflowSettings(contract.organizationId);
+  const workflowSettings = await getOrganizationWorkflowSettings(
+    contract.organizationId
+  );
   const readinessSnapshot = await getProjectFinancialReadinessSnapshot({
     organizationId: contract.organizationId,
     projectId: contract.projectId
@@ -474,7 +534,8 @@ export default async function ContractDetailPage({
   const contractGate = computeContractWorkflowGate({
     status: contract.status,
     internalApprovalStatus: contract.internalApprovalStatus,
-    requireContractInternalApproval: workflowSettings.requireContractInternalApproval,
+    requireContractInternalApproval:
+      workflowSettings.requireContractInternalApproval,
     signatureStartedAt: contract.signatureStartedAt,
     lockedAt: contract.lockedAt
   });
@@ -492,25 +553,40 @@ export default async function ContractDetailPage({
     }))
   });
 
-  const relatedJobs = jobs.filter((job) => job.projectId === contract.projectId);
+  const relatedJobs = jobs.filter(
+    (job) => job.projectId === contract.projectId
+  );
   const relatedJobAssignments = await listJobAssignmentsByJobIds(
     relatedJobs.map((job) => job.id),
     `/contracts/${contractId}`
   );
-  const relatedInvoices = invoices.filter((invoice) => invoice.projectId === contract.projectId);
-  const scheduledJobs = relatedJobs.filter((job) => job.dispatchStatus === "scheduled");
-  const unscheduledJobs = relatedJobs.filter((job) => job.dispatchStatus === "unscheduled");
-  const inProgressJobs = relatedJobs.filter((job) => job.dispatchStatus === "in_progress");
+  const relatedInvoices = invoices.filter(
+    (invoice) => invoice.projectId === contract.projectId
+  );
+  const scheduledJobs = relatedJobs.filter(
+    (job) => job.dispatchStatus === "scheduled"
+  );
+  const unscheduledJobs = relatedJobs.filter(
+    (job) => job.dispatchStatus === "unscheduled"
+  );
+  const inProgressJobs = relatedJobs.filter(
+    (job) => job.dispatchStatus === "in_progress"
+  );
   const nextScheduledJob =
     [...scheduledJobs]
       .filter((job) => job.scheduledDate)
-      .sort((left, right) => getScheduleSummarySortValue(left) - getScheduleSummarySortValue(right))[0] ??
-    null;
+      .sort(
+        (left, right) =>
+          getScheduleSummarySortValue(left) - getScheduleSummarySortValue(right)
+      )[0] ?? null;
   const nextScheduledAssignments = nextScheduledJob
-    ? relatedJobAssignments.get(nextScheduledJob.id) ?? []
+    ? (relatedJobAssignments.get(nextScheduledJob.id) ?? [])
     : [];
   const nextScheduledAssignmentNames = nextScheduledAssignments
-    .map((assignment) => assignment.person?.displayName ?? assignment.vendor?.name ?? null)
+    .map(
+      (assignment) =>
+        assignment.person?.displayName ?? assignment.vendor?.name ?? null
+    )
     .filter((value): value is string => Boolean(value));
   const nextScheduledCrewSummary = nextScheduledJob
     ? getScheduleAssignmentSummary({
@@ -541,7 +617,9 @@ export default async function ContractDetailPage({
       })
     : false;
   const currentContractorSigner = contract.signers.find(
-    (signer) => signer.signerRole === "contractor" && signer.organizationUserId === user.id
+    (signer) =>
+      signer.signerRole === "contractor" &&
+      signer.organizationUserId === user.id
   );
   const canCountersign =
     signatureSummary.canContractorCountersign &&
@@ -576,7 +654,8 @@ export default async function ContractDetailPage({
           (signer) =>
             signer.signerRole === "customer" &&
             signer.signedAt === null &&
-            (signer.signerStatus === "pending" || signer.signerStatus === "viewed")
+            (signer.signerStatus === "pending" ||
+              signer.signerStatus === "viewed")
         )
       : null;
   const depositHref =
@@ -601,7 +680,8 @@ export default async function ContractDetailPage({
     depositSatisfied: readinessSnapshot?.depositSatisfied ?? false
   });
   const contractPrimaryAction =
-    contractAction.label === "Send for signature" || contractAction.label === "Countersign"
+    contractAction.label === "Send for signature" ||
+    contractAction.label === "Countersign"
       ? contractAction
       : null;
   const contractDisplayState = getContractDisplayState({
@@ -624,7 +704,9 @@ export default async function ContractDetailPage({
       tone:
         contract.status === "signed" && signatureSummary.isCompleted
           ? "complete"
-          : signatureSummary.isDeclined || signatureSummary.isVoided || contract.status === "void"
+          : signatureSummary.isDeclined ||
+              signatureSummary.isVoided ||
+              contract.status === "void"
             ? "blocked"
             : contract.status === "draft"
               ? "pending"
@@ -651,7 +733,9 @@ export default async function ContractDetailPage({
     {
       id: "signature",
       label: "Signature",
-      value: signatureSummary.requiresCountersign ? "Countersign tracked" : "Customer signature",
+      value: signatureSummary.requiresCountersign
+        ? "Countersign tracked"
+        : "Customer signature",
       tone:
         contract.status === "signed" && signatureSummary.isCompleted
           ? "complete"
@@ -741,7 +825,10 @@ export default async function ContractDetailPage({
             title={contractAction.title}
             description={contractAction.description}
             statusLabel={contractDisplayState}
-            statusTone={getActionBarStatusTone({ status: contract.status, signatureSummary })}
+            statusTone={getActionBarStatusTone({
+              status: contract.status,
+              signatureSummary
+            })}
             nextActionLabel={
               signatureSummary.isCompleted
                 ? "Signature complete"
@@ -753,7 +840,10 @@ export default async function ContractDetailPage({
             }
             primaryAction={
               contractPrimaryAction ? (
-                <a href={contractPrimaryAction.href} className={primaryActionClassName}>
+                <a
+                  href={contractPrimaryAction.href}
+                  className={primaryActionClassName}
+                >
                   {contractPrimaryAction.label}
                 </a>
               ) : null
@@ -774,17 +864,28 @@ export default async function ContractDetailPage({
                     Edit
                   </Link>
                 ) : null}
-                <Link href={`/projects/${contract.projectId}`} className={secondaryActionClassName}>
+                <Link
+                  href={`/projects/${contract.projectId}`}
+                  className={secondaryActionClassName}
+                >
                   View Project
                 </Link>
                 <ActionOverflowMenu>
-                  {contract.status === "draft" || contract.status === "sent" || contract.status === "viewed" ? (
-                    <a href="#contract-workflow-actions" className={overflowActionClassName}>
+                  {contract.status === "draft" ||
+                  contract.status === "sent" ||
+                  contract.status === "viewed" ? (
+                    <a
+                      href="#contract-workflow-actions"
+                      className={overflowActionClassName}
+                    >
                       Void
                     </a>
                   ) : null}
                   {contract.estimateId ? (
-                    <Link href={`/estimates/${contract.estimateId}`} className={overflowActionClassName}>
+                    <Link
+                      href={`/estimates/${contract.estimateId}`}
+                      className={overflowActionClassName}
+                    >
                       View Estimate
                     </Link>
                   ) : null}
@@ -797,19 +898,25 @@ export default async function ContractDetailPage({
             meta={
               <>
                 {contract.customer?.name ?? "Unknown customer"} ·{" "}
-                {contract.project?.name ?? "Unknown project"} ·{" "}
-                Internal approval {formatStatusLabel(contract.internalApprovalStatus)}
+                {contract.project?.name ?? "Unknown project"} · Internal
+                approval {formatStatusLabel(contract.internalApprovalStatus)}
               </>
             }
           />
 
-          <WorkflowBar title="Contract workflow" steps={contractWorkflowSteps} />
+          <WorkflowBar
+            title="Contract workflow"
+            steps={contractWorkflowSteps}
+          />
 
-          <ProjectStateSummary title="Signature state" items={contractStateItems} />
+          <ProjectStateSummary
+            title="Signature state"
+            items={contractStateItems}
+          />
 
           <NeedsAttentionPanel
             cues={contractAttentionCues}
-            description="Contract-specific signature cues derived from this canonical contract and enabled organization rules."
+            description="Contract-specific signature cues derived from this canonical contract and enabled organization rules. Broader project, deposit, job, invoice, or payment blockers stay anchored in Project Workspace."
             getCueStateControls={(cue) => (
               <CueStateControls
                 identity={buildOperationalCueIdentity(cue)}
@@ -823,7 +930,11 @@ export default async function ContractDetailPage({
             <ReadyToScheduleActionPanel
               projectId={contract.projectId}
               projectName={contract.project?.name ?? "Linked project"}
-              estimateId={contract.estimate?.status === "approved" ? contract.estimateId : null}
+              estimateId={
+                contract.estimate?.status === "approved"
+                  ? contract.estimateId
+                  : null
+              }
               contractId={contract.id}
               readyToScheduleAt={readinessSnapshot?.contractSignedAt}
               jobCount={relatedJobs.length}
@@ -839,7 +950,7 @@ export default async function ContractDetailPage({
 
       <PrimarySection
         title="Contract content"
-        description="Review the generated agreement as the primary surface. Signature actions, signer routing, and project handoff stay nearby without competing with the document."
+        description="Review the generated agreement as the primary surface. Signature actions, signer routing, and project handoff stay nearby so this contract reads as the estimate/contract stage of the same lifecycle."
         className="rounded-[2rem] border-slate-200 px-6 py-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] sm:px-8 sm:py-10 print:rounded-none print:border-none print:px-0 print:py-0 print:shadow-none"
       >
         <div className="flex flex-col gap-6 border-b border-slate-200 pb-8 sm:flex-row sm:items-start sm:justify-between">
@@ -848,7 +959,8 @@ export default async function ContractDetailPage({
               Prepared by
             </p>
             <h2 className="mt-3 text-2xl font-semibold text-slate-950">
-              {organizationContext?.organization.displayName ?? "FloorConnector"}
+              {organizationContext?.organization.displayName ??
+                "FloorConnector"}
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               {organizationContext?.organization.legalName ??
@@ -868,36 +980,68 @@ export default async function ContractDetailPage({
               {formatStatusLabel(contract.status)}
             </div>
             {contract.renderedSubject ? (
-              <p className="mt-3 text-sm leading-6 text-slate-600">{contract.renderedSubject}</p>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                {contract.renderedSubject}
+              </p>
             ) : null}
           </div>
         </div>
 
         <div className="grid gap-6 border-b border-slate-200 py-8 md:grid-cols-3">
           <section>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Customer</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Customer
+            </p>
             <div className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-              <p className="text-lg font-semibold text-slate-950">{contract.customer?.name ?? "Unknown customer"}</p>
-              {contract.customer?.companyName ? <p>{contract.customer.companyName}</p> : null}
-              {contract.customer?.email ? <p>{contract.customer.email}</p> : null}
-              {contract.customer?.phone ? <p>{contract.customer.phone}</p> : null}
+              <p className="text-lg font-semibold text-slate-950">
+                {contract.customer?.name ?? "Unknown customer"}
+              </p>
+              {contract.customer?.companyName ? (
+                <p>{contract.customer.companyName}</p>
+              ) : null}
+              {contract.customer?.email ? (
+                <p>{contract.customer.email}</p>
+              ) : null}
+              {contract.customer?.phone ? (
+                <p>{contract.customer.phone}</p>
+              ) : null}
             </div>
           </section>
 
           <section>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Project</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Project
+            </p>
             <div className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-              <p className="text-lg font-semibold text-slate-950">{contract.project?.name ?? "Unknown project"}</p>
-              {contract.project ? <p className="capitalize">Current status: {formatStatusLabel(contract.project.status)}</p> : null}
+              <p className="text-lg font-semibold text-slate-950">
+                {contract.project?.name ?? "Unknown project"}
+              </p>
+              {contract.project ? (
+                <p className="capitalize">
+                  Current status: {formatStatusLabel(contract.project.status)}
+                </p>
+              ) : null}
             </div>
           </section>
 
           <section>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Estimate Source</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Estimate Source
+            </p>
             <div className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-              <p className="text-lg font-semibold text-slate-950">{contract.generatedFromEstimateReference ?? contract.estimate?.referenceNumber ?? "No linked estimate"}</p>
-              {contract.estimate ? <p className="capitalize">Estimate status: {formatStatusLabel(contract.estimate.status)}</p> : null}
-              {contract.template?.name ? <p>Template: {contract.template.name}</p> : null}
+              <p className="text-lg font-semibold text-slate-950">
+                {contract.generatedFromEstimateReference ??
+                  contract.estimate?.referenceNumber ??
+                  "No linked estimate"}
+              </p>
+              {contract.estimate ? (
+                <p className="capitalize">
+                  Estimate status: {formatStatusLabel(contract.estimate.status)}
+                </p>
+              ) : null}
+              {contract.template?.name ? (
+                <p>Template: {contract.template.name}</p>
+              ) : null}
             </div>
           </section>
         </div>
@@ -909,26 +1053,33 @@ export default async function ContractDetailPage({
                 Agreement body
               </p>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-                Review the generated agreement here first. Signature workflow and supporting record context stay to the side so the document remains the main workspace.
+                Review the generated agreement here first. Signature workflow
+                and supporting record context stay to the side so the document
+                remains the main workspace while Project Workspace continues to
+                own broader readiness.
               </p>
             </div>
 
             <article
               className="rounded-3xl border border-slate-200 bg-slate-50/50 px-6 py-6 text-sm leading-7 text-slate-700 [&_a]:text-brand-700 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-slate-200 [&_blockquote]:pl-4 [&_h1]:text-2xl [&_h1]:font-semibold [&_h2]:mt-6 [&_h2]:text-xl [&_h2]:font-semibold [&_h3]:mt-5 [&_h3]:text-lg [&_h3]:font-semibold [&_li]:ml-5 [&_ol]:list-decimal [&_p]:my-3 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-200 [&_td]:px-3 [&_td]:py-2 [&_th]:border [&_th]:border-slate-200 [&_th]:bg-slate-100 [&_th]:px-3 [&_th]:py-2 [&_ul]:list-disc"
-              dangerouslySetInnerHTML={{ __html: sanitizeHtml(contract.renderedContent) }}
+              dangerouslySetInnerHTML={{
+                __html: sanitizeHtml(contract.renderedContent)
+              }}
             />
           </div>
 
           <aside className="space-y-6 print:hidden">
             <DetailPanel
               title="Workflow Actions"
-              description="Move the contract through approval, send, and countersign from this review surface."
+              description="Move the contract through approval, send, customer signature, and countersign from this review surface without changing downstream readiness rules."
             >
               <div id="contract-workflow-actions" className="space-y-4">
                 <ContractStatusActions
                   contractId={contract.id}
                   currentStatus={contract.status}
-                  currentInternalApprovalStatus={contract.internalApprovalStatus}
+                  currentInternalApprovalStatus={
+                    contract.internalApprovalStatus
+                  }
                   requireContractInternalApproval={
                     workflowSettings.requireContractInternalApproval
                   }
@@ -952,8 +1103,9 @@ export default async function ContractDetailPage({
                         Onsite customer signature
                       </p>
                       <p>
-                        Hand this device to {onsiteCustomerSigner.displayName} to
-                        capture the next customer signature on the canonical contract.
+                        Hand this device to {onsiteCustomerSigner.displayName}{" "}
+                        to capture the next customer signature on the canonical
+                        contract.
                       </p>
                     </div>
                     <div className="mt-4">
@@ -981,7 +1133,7 @@ export default async function ContractDetailPage({
 
             <DetailPanel
               title="Schedule Handoff"
-              description="Compact production context from the contract's canonical project jobs and job assignments, without creating a contract-to-schedule bridge model."
+              description="Compact job/schedule context from the contract's canonical project jobs and job assignments. Resolve missing upstream readiness in Project Workspace."
             >
               <div className="space-y-4 text-sm leading-6 text-slate-600">
                 <ScheduleContextMetrics
@@ -999,9 +1151,15 @@ export default async function ContractDetailPage({
                         ? "Work in progress"
                         : "Next scheduled job"
                     }
-                    title={nextScheduledJob.project?.name ?? contract.project?.name ?? "Project job"}
+                    title={
+                      nextScheduledJob.project?.name ??
+                      contract.project?.name ??
+                      "Project job"
+                    }
                     titleHref={`/jobs/${nextScheduledJob.id}`}
-                    statusLabel={formatStatusLabel(nextScheduledJob.dispatchStatus)}
+                    statusLabel={formatStatusLabel(
+                      nextScheduledJob.dispatchStatus
+                    )}
                     summary={formatScheduleSummaryWindow({
                       scheduledDate: nextScheduledJob.scheduledDate,
                       scheduledStartAt: nextScheduledJob.scheduledStartAt,
@@ -1021,7 +1179,11 @@ export default async function ContractDetailPage({
                   />
                 ) : (
                   <ScheduleContextNotice
-                    eyebrow={relatedJobs.length > 0 ? "Ready for scheduling" : "No jobs yet"}
+                    eyebrow={
+                      relatedJobs.length > 0
+                        ? "Ready for scheduling"
+                        : "No jobs yet"
+                    }
                     title={
                       relatedJobs.length > 0
                         ? "Contract work has moved into jobs, but not onto the calendar yet"
@@ -1030,7 +1192,7 @@ export default async function ContractDetailPage({
                   >
                     {relatedJobs.length > 0
                       ? "Canonical project jobs already exist for this contract, but they are still unscheduled. The next production commitment will show here once a real date is attached."
-                      : "This contract is linked to a project, but downstream production jobs have not been created yet."}
+                      : "This contract is linked to a project, but downstream production jobs have not been created yet. Open Project Workspace to inspect whether signature, deposit, or readiness is still blocking the job/schedule handoff."}
                   </ScheduleContextNotice>
                 )}
 
@@ -1068,7 +1230,12 @@ export default async function ContractDetailPage({
                 <ScheduleContextActions
                   actions={[
                     ...(nextScheduledJob
-                      ? [{ href: `/jobs/${nextScheduledJob.id}`, label: "Open next scheduled job" as const }]
+                      ? [
+                          {
+                            href: `/jobs/${nextScheduledJob.id}`,
+                            label: "Open next scheduled job" as const
+                          }
+                        ]
                       : []),
                     {
                       href: buildProjectScheduleHref(contract.projectId),
@@ -1082,7 +1249,7 @@ export default async function ContractDetailPage({
 
             <DetailPanel
               title="Signer Routing"
-              description="Assigned signers and current signature timing on this contract."
+              description="Assigned signers and current signature timing on this contract. This panel explains what is waiting before the estimate/contract stage can hand off downstream."
             >
               <div className="space-y-5 text-sm leading-6 text-slate-600">
                 <ContextFactsList
@@ -1130,7 +1297,9 @@ export default async function ContractDetailPage({
                       >
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div>
-                            <p className="font-medium text-slate-950">{signer.displayName}</p>
+                            <p className="font-medium text-slate-950">
+                              {signer.displayName}
+                            </p>
                             <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
                               {formatSignerRole(signer.signerRole)}
                             </p>
@@ -1142,29 +1311,35 @@ export default async function ContractDetailPage({
                         <div className="mt-3 space-y-1 text-xs leading-5 text-slate-500">
                           <p>Order {signer.signerOrder}</p>
                           <p>{signer.email}</p>
-                          {signer.viewedAt ? <p>Viewed {formatDateTime(signer.viewedAt)}</p> : null}
-                          {signer.signedAt ? <p>Signed {formatDateTime(signer.signedAt)}</p> : null}
+                          {signer.viewedAt ? (
+                            <p>Viewed {formatDateTime(signer.viewedAt)}</p>
+                          ) : null}
+                          {signer.signedAt ? (
+                            <p>Signed {formatDateTime(signer.signedAt)}</p>
+                          ) : null}
                           {signer.declinedAt ? (
                             <p>Declined {formatDateTime(signer.declinedAt)}</p>
                           ) : null}
-                          {signer.declineReason ? <p>Reason: {signer.declineReason}</p> : null}
+                          {signer.declineReason ? (
+                            <p>Reason: {signer.declineReason}</p>
+                          ) : null}
                         </div>
                       </div>
                     ))
                   ) : (
                     <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4">
-                      No signer routing has been created yet. Send the contract when the customer
-                      portal signer is ready.
+                      No signer routing has been created yet. Finish draft
+                      readiness and choose the customer portal signer before
+                      sending this contract.
                     </p>
                   )}
                 </div>
-
               </div>
             </DetailPanel>
 
             <DetailPanel
               title="Connected Workflow"
-              description="Primary agreement context stays visible; downstream activity expands only when needed."
+              description="Primary agreement context stays visible across opportunity, customer/project, estimate/contract, job/schedule, and invoice/payment continuity."
             >
               <div className="grid gap-4">
                 {contract.project ? (
@@ -1198,7 +1373,11 @@ export default async function ContractDetailPage({
                     href={`/jobs/${relatedJobs[0].id}`}
                     title={relatedJobs[0].project?.name ?? "Job"}
                     subtitle="Current job"
-                    meta={relatedJobs[0].scheduledDate ? `Scheduled ${new Date(`${relatedJobs[0].scheduledDate}T00:00:00`).toLocaleDateString()}` : "Unscheduled"}
+                    meta={
+                      relatedJobs[0].scheduledDate
+                        ? `Scheduled ${new Date(`${relatedJobs[0].scheduledDate}T00:00:00`).toLocaleDateString()}`
+                        : "Unscheduled"
+                    }
                     badge={
                       <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
                         {formatStatusLabel(relatedJobs[0].dispatchStatus)}
@@ -1231,7 +1410,11 @@ export default async function ContractDetailPage({
                           href={`/jobs/${job.id}`}
                           title={job.project?.name ?? "Job"}
                           subtitle="Job"
-                          meta={job.scheduledDate ? `Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}` : "Unscheduled"}
+                          meta={
+                            job.scheduledDate
+                              ? `Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}`
+                              : "Unscheduled"
+                          }
                           badge={
                             <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
                               {formatStatusLabel(job.dispatchStatus)}
@@ -1258,7 +1441,10 @@ export default async function ContractDetailPage({
                 ) : null}
                 {relatedJobs.length === 0 && relatedInvoices.length === 0 ? (
                   <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
-                    No jobs or invoices are connected to this contract's project yet.
+                    No jobs or invoices are connected to this contract's project
+                    yet. If this signed agreement should already be moving
+                    downstream, open Project Workspace to inspect deposit,
+                    financial readiness, and job creation blockers.
                   </p>
                 ) : null}
               </div>
@@ -1275,7 +1461,7 @@ export default async function ContractDetailPage({
 
             <DetailPanel
               title="Recent Signature Events"
-              description="Recent signature milestones for verification, kept secondary to the active workflow."
+              description="Recent signature milestones for verification, kept secondary to the active contract workflow."
             >
               <div className="space-y-3 text-sm leading-6 text-slate-600">
                 {recentSignatureEvents.length > 0 ? (
@@ -1299,7 +1485,9 @@ export default async function ContractDetailPage({
                   ))
                 ) : (
                   <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4">
-                    No signature events have been recorded yet.
+                    No signature events have been recorded yet. Draft contracts
+                    will stay here until the signature request is sent through
+                    the existing workflow actions.
                   </p>
                 )}
               </div>
@@ -1307,7 +1495,7 @@ export default async function ContractDetailPage({
 
             <DetailPanel
               title="Editability"
-              description="Lower-priority draft administration and lock context."
+              description="Lower-priority draft administration and lock context. Lock state protects signature history on the canonical contract."
             >
               <div className="space-y-5 text-sm leading-6 text-slate-600">
                 <ContextFactsList
@@ -1342,12 +1530,22 @@ export default async function ContractDetailPage({
                 />
                 {contract.isEditable ? (
                   <>
-                    <p>This contract is still editable because it remains in draft and no signature activity has started.</p>
-                    <p>Use the draft edit flow for practical pre-sign customizations. If internal approval is required, saving draft changes resets send readiness back to pending review.</p>
+                    <p>
+                      This contract is still editable because it remains in
+                      draft and no signature activity has started.
+                    </p>
+                    <p>
+                      Use the draft edit flow for practical pre-sign
+                      customizations. If internal approval is required, saving
+                      draft changes resets send readiness back to pending
+                      review.
+                    </p>
                   </>
                 ) : (
                   <>
-                    <p>This contract is locked from further unrestricted edits.</p>
+                    <p>
+                      This contract is locked from further unrestricted edits.
+                    </p>
                     <p>{formatLockReason(contract.editLockReason)}.</p>
                   </>
                 )}
@@ -1367,10 +1565,19 @@ export default async function ContractDetailPage({
                 <div className="space-y-3 text-sm leading-6 text-slate-600">
                   {contract.revisions.length > 0 ? (
                     contract.revisions.map((revision) => (
-                      <div key={revision.id} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                        <p className="font-medium text-slate-950">Revision {revision.revisionNumber}</p>
+                      <div
+                        key={revision.id}
+                        className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                      >
+                        <p className="font-medium text-slate-950">
+                          Revision {revision.revisionNumber}
+                        </p>
                         <p>{formatDateTime(revision.createdAt)}</p>
-                        {revision.editSummary ? <p>{revision.editSummary}</p> : <p>Draft snapshot before edit</p>}
+                        {revision.editSummary ? (
+                          <p>{revision.editSummary}</p>
+                        ) : (
+                          <p>Draft snapshot before edit</p>
+                        )}
                       </div>
                     ))
                   ) : (

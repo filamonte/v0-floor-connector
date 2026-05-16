@@ -72,8 +72,8 @@ export default async function DailyLogsPage({
   if (!organizationContext) {
     return (
       <section className="rounded-3xl border border-amber-200 bg-amber-50 px-8 py-6 text-sm leading-6 text-amber-900">
-        Daily execution records need an active organization before they can be created.
-        Sign out and back in if this account was just initialized.
+        Daily execution records need an active organization before they can be
+        created. Sign out and back in if this account was just initialized.
       </section>
     );
   }
@@ -93,18 +93,20 @@ export default async function DailyLogsPage({
     Boolean(resolvedSearchParams.projectId) ||
     Boolean(resolvedSearchParams.jobId);
   const draftCount = dailyLogs.filter((log) => log.status === "draft").length;
-  const blockedCount = dailyLogs.filter((log) => Boolean(log.delaysOrBlockers)).length;
+  const blockedCount = dailyLogs.filter((log) =>
+    Boolean(log.delaysOrBlockers)
+  ).length;
   const nextAction =
     draftCount > 0
       ? {
           title: "Requires follow-up: tighten the open draft logs",
           description:
-            "Draft daily logs already exist, so the highest-value next step is finishing narrative details and field notes before more project days stack up."
+            "Draft daily logs already exist, so the highest-value next step is finishing narrative details, blockers, field notes, and labor evidence before more project days stack up."
         }
       : {
           title: "Ready: capture the next project day",
           description:
-            "No draft execution records are waiting, so the next operational step is creating the next daily log as work moves through the field."
+            "No draft execution records are waiting, so the next operational step is creating the next daily log as work moves through the job/schedule stage."
         };
   const filteredDailyLogs = dailyLogs.filter((dailyLog) => {
     const matchesStatus =
@@ -164,7 +166,7 @@ export default async function DailyLogsPage({
     <ContractorWorkspacePage
       eyebrow="Daily Logs"
       title={`Project-day field logs for ${organizationContext.organization.displayName}`}
-      description="Use daily logs as the canonical project-day record for what happened on site, what is blocked, and how labor and job execution connect back to the same project spine."
+      description="Use daily logs as the canonical project-day record for what happened on site, what is blocked, and how labor, attachments, and job execution connect back to the same project spine."
       summary={
         <WorkspaceSummaryBand
           className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,1fr)]"
@@ -214,13 +216,23 @@ export default async function DailyLogsPage({
       commandBar={{
         supportSlot: (
           <p>
-            Review project-day execution records, see which project or job each one came from, and open the full workspace when the next field follow-up is ready.
+            Review project-day execution records, see which project or job each
+            one came from, and open the full workspace when the next field
+            follow-up is ready. Upstream readiness still belongs in Project
+            Workspace.
           </p>
         ),
         searchSlot: (
-          <form action="/daily-logs" className="flex flex-col gap-2 sm:flex-row">
-            {statusFilter !== "all" ? <input type="hidden" name="status" value={statusFilter} /> : null}
-            {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
+          <form
+            action="/daily-logs"
+            className="flex flex-col gap-2 sm:flex-row"
+          >
+            {statusFilter !== "all" ? (
+              <input type="hidden" name="status" value={statusFilter} />
+            ) : null}
+            {showComposer ? (
+              <input type="hidden" name="compose" value="1" />
+            ) : null}
             <input
               type="search"
               name="q"
@@ -250,7 +262,11 @@ export default async function DailyLogsPage({
           return (
             <Link
               key={view.key}
-              href={buildDailyLogsHref({ q: query, status: view.key, compose: showComposer ? "1" : undefined })}
+              href={buildDailyLogsHref({
+                q: query,
+                status: view.key,
+                compose: showComposer ? "1" : undefined
+              })}
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
@@ -262,7 +278,9 @@ export default async function DailyLogsPage({
               <span
                 className={[
                   "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                  isActive
+                    ? "bg-white/15 text-white"
+                    : "bg-slate-100 text-slate-500"
                 ].join(" ")}
               >
                 {view.count}
@@ -272,7 +290,13 @@ export default async function DailyLogsPage({
         }),
         actionSlot: (
           <Link
-            href={buildDailyLogsHref({ q: query, status: statusFilter, compose: "1" }) + "#daily-log-create"}
+            href={
+              buildDailyLogsHref({
+                q: query,
+                status: statusFilter,
+                compose: "1"
+              }) + "#daily-log-create"
+            }
             className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
           >
             New daily log
@@ -280,7 +304,13 @@ export default async function DailyLogsPage({
         )
       }}
     >
-      <div className={showComposer ? "grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_400px]" : "space-y-4"}>
+      <div
+        className={
+          showComposer
+            ? "grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_400px]"
+            : "space-y-4"
+        }
+      >
         <section className="space-y-6">
           {resolvedSearchParams.error ? (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
@@ -325,13 +355,15 @@ export default async function DailyLogsPage({
                     <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_160px_120px] md:items-start">
                       <div className="min-w-0">
                         <h3 className="text-base font-semibold text-slate-950 transition group-hover:text-brand-700">
-                          {dailyLog.summary?.trim() || `${formatDate(dailyLog.logDate)} field log`}
+                          {dailyLog.summary?.trim() ||
+                            `${formatDate(dailyLog.logDate)} field log`}
                         </h3>
                         <p className="mt-2 text-sm leading-6 text-slate-500">
                           {formatDate(dailyLog.logDate)}
                         </p>
                         <p className="mt-1 text-sm leading-6 text-slate-500">
-                          {dailyLog.workCompleted?.trim() || "Work-completed narrative has not been captured yet."}
+                          {dailyLog.workCompleted?.trim() ||
+                            "Work-completed narrative has not been captured yet."}
                         </p>
                       </div>
                       <div>
@@ -343,8 +375,8 @@ export default async function DailyLogsPage({
                         </p>
                         <p className="mt-1 text-sm leading-6 text-slate-500">
                           {dailyLog.job
-                            ? `Job ${dailyLog.job.id.slice(0, 8)} · execution history stays tied to the same job record`
-                            : "Project-day log · supports the wider project execution chain"}
+                            ? `Job ${dailyLog.job.id.slice(0, 8)} | job/schedule evidence stays tied to the same job record`
+                            : "Project-day log | supports the wider project execution chain"}
                         </p>
                       </div>
                       <div>
@@ -355,9 +387,11 @@ export default async function DailyLogsPage({
                           {dailyLog.weatherSummary ?? "No weather summary"}
                         </p>
                         <p className="mt-1 text-sm leading-6 text-slate-500">
-                          {dailyLog.temperatureHighF !== null || dailyLog.temperatureLowF !== null
+                          {dailyLog.temperatureHighF !== null ||
+                          dailyLog.temperatureLowF !== null
                             ? `${dailyLog.temperatureLowF ?? "?"}F to ${dailyLog.temperatureHighF ?? "?"}F`
-                            : dailyLog.weatherConditions ?? "No conditions entered"}
+                            : (dailyLog.weatherConditions ??
+                              "No conditions entered")}
                         </p>
                       </div>
                       <div className="md:text-right">
@@ -378,12 +412,20 @@ export default async function DailyLogsPage({
               ) : (
                 <div className="px-6 py-8 sm:px-8">
                   <AppEmptyState
-                    eyebrow={dailyLogs.length > 0 ? "No matching daily logs" : "No daily logs yet"}
-                    title={dailyLogs.length > 0 ? "Adjust the execution filters" : "Create the first project-day execution record"}
+                    eyebrow={
+                      dailyLogs.length > 0
+                        ? "No matching daily logs"
+                        : "No daily logs yet"
+                    }
+                    title={
+                      dailyLogs.length > 0
+                        ? "Adjust the execution filters"
+                        : "Create the first project-day execution record"
+                    }
                     description={
                       dailyLogs.length > 0
                         ? "Try a broader search or switch views to find the execution record you need."
-                        : "Daily logs become the canonical field execution layer without inventing separate issue, blocker, or punch-list modules."
+                        : "Daily logs become the canonical field execution layer for the job/schedule stage without inventing separate issue, blocker, or punch-list modules."
                     }
                   />
                 </div>
@@ -395,9 +437,15 @@ export default async function DailyLogsPage({
         <WorkspaceComposerSheet
           id="daily-log-create"
           title="Quick create daily log"
-          description="Capture only the minimum project-day context here, create the canonical daily log, and then finish the execution record in the full workspace."
+          description="Capture the minimum project-day context here, create the canonical daily log, and then finish field notes, blockers, labor, and attachments in the full workspace."
           open={showComposer}
-          openHref={buildDailyLogsHref({ q: query, status: statusFilter, compose: "1" }) + "#daily-log-create"}
+          openHref={
+            buildDailyLogsHref({
+              q: query,
+              status: statusFilter,
+              compose: "1"
+            }) + "#daily-log-create"
+          }
           closeHref={buildDailyLogsHref({ q: query, status: statusFilter })}
           openLabel="Open daily-log quick create"
         >

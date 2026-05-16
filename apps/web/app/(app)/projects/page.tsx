@@ -184,33 +184,33 @@ export default async function ProjectsPage({
       description="Projects are the operational root connecting customer context to estimating, contracts, execution, billing, and closeout."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Lead</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
+          <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">Lead</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
               {leadProjects.length}
             </p>
           </div>
-          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+          <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">
               Estimating
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
               {estimatingProjects.length}
             </p>
           </div>
-          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+          <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">
               Scheduled
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
               {scheduledProjects.length}
             </p>
           </div>
-          <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+          <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">
               In progress
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
               {inProgressProjects.length}
             </p>
           </div>
@@ -242,11 +242,11 @@ export default async function ProjectsPage({
               name="q"
               defaultValue={query}
               placeholder="Search projects, customers, or locations"
-              className="min-w-0 flex-1 rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
+              className="min-w-0 flex-1 rounded-[4px] border border-[var(--border-warm)] bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[var(--copper)]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[var(--border-warm)] bg-white px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[var(--highlight)]"
             >
               Search
             </button>
@@ -278,8 +278,8 @@ export default async function ProjectsPage({
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
-                  ? "bg-[#171717] text-white"
-                  : "border border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"
+                  ? "bg-[var(--graphite)] text-white"
+                  : "border border-[var(--border-warm)] bg-white text-[var(--text-primary)] hover:bg-[var(--highlight)]"
               ].join(" ")}
             >
               <span>{view.label}</span>
@@ -302,7 +302,7 @@ export default async function ProjectsPage({
               compose: "1",
               customerId: resolvedSearchParams.customerId
             })}
-            className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
+            className="inline-flex items-center rounded-[4px] border border-[var(--graphite)] bg-[var(--graphite)] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--graphite-light)]"
           >
             New project
           </Link>
@@ -393,10 +393,10 @@ export default async function ProjectsPage({
           />
         </section>
 
-        <section className="order-1 overflow-hidden border border-[#d6d6d6] bg-white">
-          <div className="flex items-center justify-between gap-4 border-b border-[#e5e5e5] px-4 py-2.5">
+        <section className="order-1 overflow-hidden rounded-lg border border-[var(--border-warm)] bg-white shadow-sm">
+          <div className="flex items-center justify-between gap-4 border-b border-[var(--border-warm)] bg-[var(--highlight)]/45 px-4 py-2.5">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                 Recent records
               </p>
               <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-slate-950">
@@ -411,7 +411,7 @@ export default async function ProjectsPage({
           {recentProjects.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-200 text-sm">
-                <thead className="bg-[#f8f8f8] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <thead className="bg-[var(--highlight)] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                   <tr>
                     <th className="px-4 py-2.5">Project</th>
                     <th className="px-4 py-2.5">Customer</th>

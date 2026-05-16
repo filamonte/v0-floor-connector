@@ -28,6 +28,17 @@ type PageProps = {
 
 const returnPath = "/settings/selected-systems";
 
+const selectedSystemFieldClassName =
+  "w-full rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--graphite)] focus:ring-2 focus:ring-[var(--focus-ring)]";
+const selectedSystemPrimaryActionClassName =
+  "inline-flex items-center rounded-[4px] border border-[var(--graphite)] bg-[var(--graphite)] px-3 py-2 text-sm font-medium text-white transition hover:bg-[var(--graphite-light)]";
+const selectedSystemSecondaryActionClassName =
+  "inline-flex items-center rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--copper)] hover:text-[var(--copper)]";
+const selectedSystemInsetClassName =
+  "rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4";
+const selectedSystemPanelClassName =
+  "rounded-lg border border-[var(--border-warm)] bg-white shadow-sm";
+
 function Field({
   label,
   name,
@@ -53,7 +64,7 @@ function Field({
         type={type}
         min={type === "number" ? "0" : undefined}
         step={type === "number" ? "0.01" : undefined}
-        className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#171717]"
+        className={selectedSystemFieldClassName}
       />
     </label>
   );
@@ -79,7 +90,7 @@ function TextAreaField({
         name={name}
         defaultValue={defaultValue ?? ""}
         rows={rows}
-        className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#171717]"
+        className={selectedSystemFieldClassName}
       />
     </label>
   );
@@ -87,10 +98,7 @@ function TextAreaField({
 
 function SaveButton({ children = "Save" }: { children?: string }) {
   return (
-    <button
-      type="submit"
-      className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
-    >
+    <button type="submit" className={selectedSystemPrimaryActionClassName}>
       {children}
     </button>
   );
@@ -98,10 +106,7 @@ function SaveButton({ children = "Save" }: { children?: string }) {
 
 function SecondaryButton({ children }: { children: string }) {
   return (
-    <button
-      type="submit"
-      className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-    >
+    <button type="submit" className={selectedSystemSecondaryActionClassName}>
       {children}
     </button>
   );
@@ -126,7 +131,7 @@ function OptionSelect({
       <select
         name={name}
         defaultValue={defaultValue ?? options[0]}
-        className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#171717]"
+        className={selectedSystemFieldClassName}
       >
         {options.map((option) => (
           <option key={option} value={option}>
@@ -160,13 +165,15 @@ function LookupSelect({
         name={name}
         defaultValue={defaultValue ?? ""}
         required={required}
-        className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#171717]"
+        className={selectedSystemFieldClassName}
       >
         <option value="">None</option>
         {options.map((option) => (
           <option key={option.id} value={option.id}>
             {option.label}
-            {option.status ? ` (${formatSelectedSystemOption(option.status)})` : ""}
+            {option.status
+              ? ` (${formatSelectedSystemOption(option.status)})`
+              : ""}
           </option>
         ))}
       </select>
@@ -186,8 +193,16 @@ function SelectedSystemForm({
   return (
     <form action={saveSelectedSystemAction} className="space-y-4">
       <input type="hidden" name="returnTo" value={returnPath} />
-      <input type="hidden" name="selectedSystemId" value={selectedSystem?.id ?? ""} />
-      <input type="hidden" name="source" value={selectedSystem?.source ?? "manual"} />
+      <input
+        type="hidden"
+        name="selectedSystemId"
+        value={selectedSystem?.id ?? ""}
+      />
+      <input
+        type="hidden"
+        name="source"
+        value={selectedSystem?.source ?? "manual"}
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <LookupSelect
@@ -251,7 +266,11 @@ function SelectedSystemForm({
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Field label="Area label" name="areaLabel" defaultValue={selectedSystem?.areaLabel} />
+        <Field
+          label="Area label"
+          name="areaLabel"
+          defaultValue={selectedSystem?.areaLabel}
+        />
         <OptionSelect
           label="Area type"
           name="areaType"
@@ -315,17 +334,27 @@ function SelectedSystemForm({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs leading-5 text-slate-500">
-          Admin validation only. This does not feed estimates, contracts, jobs, files, delivery, or activity.
+          Admin validation only. This does not feed estimates, contracts, jobs,
+          files, delivery, or activity.
         </p>
-        <SaveButton>{selectedSystem ? "Save selected system" : "Create selected system"}</SaveButton>
+        <SaveButton>
+          {selectedSystem ? "Save selected system" : "Create selected system"}
+        </SaveButton>
       </div>
     </form>
   );
 }
 
-function StatusChangeForm({ selectedSystem }: { selectedSystem: SelectedSystem }) {
+function StatusChangeForm({
+  selectedSystem
+}: {
+  selectedSystem: SelectedSystem;
+}) {
   return (
-    <form action={changeSelectedSystemStatusAction} className="flex flex-wrap items-end gap-2">
+    <form
+      action={changeSelectedSystemStatusAction}
+      className="flex flex-wrap items-end gap-2"
+    >
       <input type="hidden" name="returnTo" value={returnPath} />
       <input type="hidden" name="selectedSystemId" value={selectedSystem.id} />
       <label>
@@ -335,7 +364,7 @@ function StatusChangeForm({ selectedSystem }: { selectedSystem: SelectedSystem }
         <select
           name="status"
           defaultValue={selectedSystem.status}
-          className="rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-slate-900"
+          className={selectedSystemFieldClassName}
         >
           {selectedSystemStatuses.map((status) => (
             <option key={status} value={status}>
@@ -349,9 +378,16 @@ function StatusChangeForm({ selectedSystem }: { selectedSystem: SelectedSystem }
   );
 }
 
-function PrimaryToggleForm({ selectedSystem }: { selectedSystem: SelectedSystem }) {
+function PrimaryToggleForm({
+  selectedSystem
+}: {
+  selectedSystem: SelectedSystem;
+}) {
   return (
-    <form action={toggleSelectedSystemPrimaryAction} className="flex items-center gap-3">
+    <form
+      action={toggleSelectedSystemPrimaryAction}
+      className="flex items-center gap-3"
+    >
       <input type="hidden" name="returnTo" value={returnPath} />
       <input type="hidden" name="selectedSystemId" value={selectedSystem.id} />
       <label className="inline-flex items-center gap-2 text-sm text-slate-700">
@@ -368,7 +404,9 @@ function PrimaryToggleForm({ selectedSystem }: { selectedSystem: SelectedSystem 
   );
 }
 
-export default async function SelectedSystemsSettingsPage({ searchParams }: PageProps) {
+export default async function SelectedSystemsSettingsPage({
+  searchParams
+}: PageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const data = await getSelectedSystemsAdminData(returnPath);
 
@@ -387,7 +425,10 @@ export default async function SelectedSystemsSettingsPage({ searchParams }: Page
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
           <div className="space-y-3">
             {data.selectedSystems.map((selectedSystem) => (
-              <details key={selectedSystem.id} className="border border-slate-200 bg-white">
+              <details
+                key={selectedSystem.id}
+                className={selectedSystemPanelClassName}
+              >
                 <summary className="flex cursor-pointer items-center justify-between gap-4 px-4 py-3 text-sm">
                   <span>
                     <span className="font-semibold text-slate-950">
@@ -411,8 +452,10 @@ export default async function SelectedSystemsSettingsPage({ searchParams }: Page
                       "Anchored"}
                   </span>
                 </summary>
-                <div className="space-y-5 border-t border-slate-200 p-4">
-                  <div className="grid gap-3 border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600 md:grid-cols-3">
+                <div className="space-y-5 border-t border-[var(--border-warm)] p-4">
+                  <div
+                    className={`grid gap-3 text-sm leading-6 text-[var(--text-secondary)] md:grid-cols-3 ${selectedSystemInsetClassName}`}
+                  >
                     <p>
                       <span className="font-medium text-slate-950">Area:</span>{" "}
                       {selectedSystem.areaLabel ?? "Unlabeled"} /{" "}
@@ -430,9 +473,12 @@ export default async function SelectedSystemsSettingsPage({ searchParams }: Page
                     </p>
                   </div>
 
-                  <SelectedSystemForm selectedSystem={selectedSystem} data={data} />
+                  <SelectedSystemForm
+                    selectedSystem={selectedSystem}
+                    data={data}
+                  />
 
-                  <div className="flex flex-wrap gap-3 border-t border-slate-200 pt-4">
+                  <div className="flex flex-wrap gap-3 border-t border-[var(--border-warm)] pt-4">
                     <StatusChangeForm selectedSystem={selectedSystem} />
                     <PrimaryToggleForm selectedSystem={selectedSystem} />
                     <form action={archiveSelectedSystemAction}>
@@ -458,13 +504,13 @@ export default async function SelectedSystemsSettingsPage({ searchParams }: Page
               </details>
             ))}
             {data.selectedSystems.length === 0 ? (
-              <div className="border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm leading-6 text-slate-600">
+              <div className="rounded-lg border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-6 text-sm leading-6 text-[var(--text-secondary)]">
                 No selected systems exist yet.
               </div>
             ) : null}
           </div>
 
-          <div className="border border-dashed border-slate-300 bg-slate-50 p-4">
+          <div className="rounded-lg border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] p-4">
             <p className="mb-4 text-sm font-semibold text-slate-950">
               Create selected system
             </p>

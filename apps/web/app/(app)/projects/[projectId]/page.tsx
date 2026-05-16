@@ -37,13 +37,19 @@ import { listContracts } from "@/lib/contracts/data";
 import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
 import { listDailyLogsByProject } from "@/lib/daily-logs/data";
 import { listCustomers } from "@/lib/customers/data";
-import { listEstimates, listProjectEstimateAttachments } from "@/lib/estimates/data";
+import {
+  listEstimates,
+  listProjectEstimateAttachments
+} from "@/lib/estimates/data";
 import { listFieldNotes } from "@/lib/field-notes/data";
 import { getInvoiceById, listInvoices } from "@/lib/invoices/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getOperationalCuesForProject } from "@/lib/operational-cues/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
-import { applyCueStates, getCueStateActionSupport } from "@/lib/cue-states/apply";
+import {
+  applyCueStates,
+  getCueStateActionSupport
+} from "@/lib/cue-states/apply";
 import {
   buildOperationalCueIdentity,
   buildProjectCueIdentity
@@ -70,7 +76,10 @@ import {
   getScheduleAssignmentSummary,
   getScheduleSummarySortValue
 } from "@/lib/schedule/summary";
-import { listOpenTimeCardStates, listTimeCardsByProject } from "@/lib/time/data";
+import {
+  listOpenTimeCardStates,
+  listTimeCardsByProject
+} from "@/lib/time/data";
 import {
   completeWorkItemAction,
   createWorkItemAction,
@@ -111,14 +120,26 @@ type NextAction = {
   blockerCopy?: string;
 };
 
-type ProjectEstimateListItem = Awaited<ReturnType<typeof listEstimates>>[number];
-type ProjectContractListItem = Awaited<ReturnType<typeof listContracts>>[number];
+type ProjectEstimateListItem = Awaited<
+  ReturnType<typeof listEstimates>
+>[number];
+type ProjectContractListItem = Awaited<
+  ReturnType<typeof listContracts>
+>[number];
 type ProjectInvoiceListItem = Awaited<ReturnType<typeof listInvoices>>[number];
-type ProjectChangeOrderListItem = Awaited<ReturnType<typeof listProjectChangeOrders>>[number];
+type ProjectChangeOrderListItem = Awaited<
+  ReturnType<typeof listProjectChangeOrders>
+>[number];
 type ProjectJobListItem = Awaited<ReturnType<typeof listJobs>>[number];
-type ProjectDailyLogListItem = Awaited<ReturnType<typeof listDailyLogsByProject>>[number];
-type ProjectFieldNoteListItem = Awaited<ReturnType<typeof listFieldNotes>>[number];
-type ProjectPaymentListItem = NonNullable<Awaited<ReturnType<typeof getInvoiceById>>>["payments"][number];
+type ProjectDailyLogListItem = Awaited<
+  ReturnType<typeof listDailyLogsByProject>
+>[number];
+type ProjectFieldNoteListItem = Awaited<
+  ReturnType<typeof listFieldNotes>
+>[number];
+type ProjectPaymentListItem = NonNullable<
+  Awaited<ReturnType<typeof getInvoiceById>>
+>["payments"][number];
 type WorkspaceStateTone = "positive" | "warning" | "critical" | "neutral";
 type WorkspaceActionItem = {
   title: string;
@@ -142,7 +163,12 @@ type ConnectedRecordLane = {
   note?: string;
   blocker?: string;
 };
-type LifecycleStepId = "lead" | "project" | "estimate" | "contract" | "job" | "invoice" | "payment";
+type LifecycleStepId =
+  | "opportunity"
+  | "customer-project"
+  | "estimate-contract"
+  | "job-schedule"
+  | "invoice-payment";
 
 type SectionOverviewProps = {
   eyebrow: string;
@@ -222,7 +248,9 @@ function formatDateTime(value: string | null) {
 }
 
 function joinMetaParts(parts: Array<string | null | undefined>) {
-  return parts.filter((part): part is string => Boolean(part && part.trim())).join(" | ");
+  return parts
+    .filter((part): part is string => Boolean(part && part.trim()))
+    .join(" | ");
 }
 
 function formatUpdatedActivity(value: string | null | undefined) {
@@ -314,13 +342,18 @@ function SectionOverview({
         <h3 className="mt-2 text-lg font-semibold tracking-tight text-[#2b2118]">
           {title}
         </h3>
-        <p className="mt-2 max-w-[60ch] text-sm leading-6 text-[#665446]">{description}</p>
+        <p className="mt-2 max-w-[60ch] text-sm leading-6 text-[#665446]">
+          {description}
+        </p>
       </div>
       <div className="flex items-center gap-3 sm:flex-shrink-0">
         <span className="rounded-full border border-[#e3d6c7] bg-[#fbf4ea] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#6a5645]">
           {stat}
         </span>
-        <Link href={href} className={getWorkspaceActionLinkClassName("secondary")}>
+        <Link
+          href={href}
+          className={getWorkspaceActionLinkClassName("secondary")}
+        >
           {linkLabel}
         </Link>
       </div>
@@ -328,7 +361,11 @@ function SectionOverview({
   );
 }
 
-function LinkedRecordRecencyPanel({ items }: { items: LinkedRecordRecencyItem[] }) {
+function LinkedRecordRecencyPanel({
+  items
+}: {
+  items: LinkedRecordRecencyItem[];
+}) {
   const mostRecent = items[0] ?? null;
 
   return (
@@ -341,12 +378,15 @@ function LinkedRecordRecencyPanel({ items }: { items: LinkedRecordRecencyItem[] 
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
             Linked record recency
           </p>
-          <h3 id="linked-record-recency-title" className="mt-1 text-base font-semibold text-slate-950">
+          <h3
+            id="linked-record-recency-title"
+            className="mt-1 text-base font-semibold text-slate-950"
+          >
             What changed recently
           </h3>
           <p className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600">
-            Existing linked records sorted by their own timestamps. This is a breadcrumb
-            summary, not a separate project activity feed.
+            Existing linked records sorted by their own timestamps. This is a
+            breadcrumb summary, not a separate project activity feed.
           </p>
         </div>
         <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
@@ -383,7 +423,9 @@ function LinkedRecordRecencyPanel({ items }: { items: LinkedRecordRecencyItem[] 
                     <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                       {item.typeLabel}
                     </p>
-                    <p className="mt-1 truncate font-semibold text-slate-950">{item.title}</p>
+                    <p className="mt-1 truncate font-semibold text-slate-950">
+                      {item.title}
+                    </p>
                   </div>
                   <div className="flex flex-wrap justify-end gap-2">
                     {item.isDrivingRecord ? (
@@ -451,11 +493,16 @@ function OperationalCommandCenter({
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
             Project command
           </p>
-          <h2 id="project-command-center-title" className="mt-1 text-lg font-semibold text-slate-950">
+          <h2
+            id="project-command-center-title"
+            className="mt-1 text-lg font-semibold text-slate-950"
+          >
             Operational command center
           </h2>
           <p className="mt-2 max-w-[76ch] text-sm leading-6 text-slate-600">
-            {customerName} / {projectLocation}
+            {customerName} / {projectLocation}. This project hub reads the
+            opportunity, customer/project, estimate/contract, job/schedule, and
+            invoice/payment chain in one place.
           </p>
         </div>
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 lg:w-72">
@@ -472,10 +519,14 @@ function OperationalCommandCenter({
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7a614a]">
             Next move
           </p>
-          <p className="mt-1 text-base font-semibold text-[#2b2118]">{nextAction.title}</p>
+          <p className="mt-1 text-base font-semibold text-[#2b2118]">
+            {nextAction.title}
+          </p>
           <p className="mt-1">{nextAction.description}</p>
           {nextAction.blockerCopy ? (
-            <p className="mt-2 font-medium text-amber-900">{nextAction.blockerCopy}</p>
+            <p className="mt-2 font-medium text-amber-900">
+              {nextAction.blockerCopy}
+            </p>
           ) : null}
           <div className="mt-3 flex flex-wrap gap-2">
             {nextAction.primaryHref && nextAction.primaryLabel ? (
@@ -515,8 +566,8 @@ function OperationalCommandCenter({
           </p>
           <p className="mt-1">
             {blockerCount > 0
-              ? "Use the lanes below to open the record that owns the next fix."
-              : "Commercial, scheduling, and closeout signals are currently clear."}
+              ? "Use the lanes below to open the canonical record that owns the next fix."
+              : "Commercial, scheduling, and billing signals are currently clear."}
           </p>
         </div>
       </div>
@@ -542,7 +593,11 @@ function OperationalCommandCenter({
   );
 }
 
-function ProjectConnectedRecordLanes({ lanes }: { lanes: ConnectedRecordLane[] }) {
+function ProjectConnectedRecordLanes({
+  lanes
+}: {
+  lanes: ConnectedRecordLane[];
+}) {
   return (
     <section
       aria-labelledby="connected-record-lanes-title"
@@ -553,12 +608,15 @@ function ProjectConnectedRecordLanes({ lanes }: { lanes: ConnectedRecordLane[] }
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
             Connected records
           </p>
-          <h2 id="connected-record-lanes-title" className="mt-1 text-lg font-semibold text-slate-950">
+          <h2
+            id="connected-record-lanes-title"
+            className="mt-1 text-lg font-semibold text-slate-950"
+          >
             Connected record lanes
           </h2>
           <p className="mt-1 max-w-[72ch] text-sm leading-6 text-slate-600">
-            Each lane shows the current project-owned signal and sends full editing back to the
-            focused record workspace.
+            Each lane shows where this project sits in the lifecycle and sends
+            full editing back to the focused canonical workspace.
           </p>
         </div>
         <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
@@ -574,7 +632,9 @@ function ProjectConnectedRecordLanes({ lanes }: { lanes: ConnectedRecordLane[] }
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-slate-950">{lane.title}</h3>
+                <h3 className="text-sm font-semibold text-slate-950">
+                  {lane.title}
+                </h3>
                 <p className="mt-1 text-slate-600">{lane.keyFact}</p>
               </div>
               {renderStatusBadge(lane.status)}
@@ -584,10 +644,17 @@ function ProjectConnectedRecordLanes({ lanes }: { lanes: ConnectedRecordLane[] }
                 {lane.blocker}
               </p>
             ) : null}
-            {lane.note ? <p className="mt-3 text-xs leading-5 text-slate-500">{lane.note}</p> : null}
+            {lane.note ? (
+              <p className="mt-3 text-xs leading-5 text-slate-500">
+                {lane.note}
+              </p>
+            ) : null}
             <div className="mt-auto pt-4">
               {lane.href && lane.actionLabel ? (
-                <Link href={lane.href} className={getWorkspaceActionLinkClassName("secondary")}>
+                <Link
+                  href={lane.href}
+                  className={getWorkspaceActionLinkClassName("secondary")}
+                >
                   {lane.actionLabel}
                 </Link>
               ) : (
@@ -611,7 +678,9 @@ function ProjectCuePanel({
   getCueStateControls?: (cue: ProjectCue) => ReactNode;
 }) {
   const visibleCues = cues.slice(0, 4);
-  const canonicalWorkflowCues = visibleCues.filter((cue) => !cue.workItemBridge);
+  const canonicalWorkflowCues = visibleCues.filter(
+    (cue) => !cue.workItemBridge
+  );
   const humanFollowUpCues = visibleCues.filter((cue) => cue.workItemBridge);
   const renderCueCards = (groupCues: ProjectCue[]) =>
     groupCues.map((cue) => {
@@ -633,7 +702,10 @@ function ProjectCuePanel({
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <h4 id={cueTitleId} className="text-sm font-semibold text-slate-950">
+              <h4
+                id={cueTitleId}
+                className="text-sm font-semibold text-slate-950"
+              >
                 {cue.title}
               </h4>
               <p id={cueDescriptionId} className="mt-1 text-sm text-slate-700">
@@ -703,9 +775,9 @@ function ProjectCuePanel({
             id="project-guidance-cues-description"
             className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600"
           >
-            Suggestions from current project records only. Canonical actions open the existing
-            workflow; human follow-up can open a prefilled work item draft. Nothing is created
-            or changed until you submit.
+            Suggestions from current project records only. Canonical actions
+            open the existing workflow; human follow-up can open a prefilled
+            work item draft. Nothing is created or changed until you submit.
           </p>
         </div>
         <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
@@ -722,8 +794,8 @@ function ProjectCuePanel({
                   Canonical workflow actions
                 </p>
                 <p className="mt-1 text-xs leading-5 text-slate-600">
-                  These open existing estimate, contract, invoice, job, or schedule
-                  workflows without creating side records.
+                  These open existing estimate, contract, invoice, job, or
+                  schedule workflows without creating side records.
                 </p>
               </div>
               <div className="grid gap-3 lg:grid-cols-2">
@@ -739,8 +811,8 @@ function ProjectCuePanel({
                   Human follow-up actions
                 </p>
                 <p className="mt-1 text-xs leading-5 text-slate-600">
-                  These can prefill internal work item drafts for coordination. The
-                  work item is still user-confirmed.
+                  These can prefill internal work item drafts for coordination.
+                  The work item is still user-confirmed.
                 </p>
               </div>
               <div className="grid gap-3 lg:grid-cols-2">
@@ -774,7 +846,10 @@ function WorkflowForwardLink({
 
   return (
     <div className="pt-1">
-      <Link href={href} className={getWorkspaceActionLinkClassName("secondary")}>
+      <Link
+        href={href}
+        className={getWorkspaceActionLinkClassName("secondary")}
+      >
         {children}
       </Link>
     </div>
@@ -860,7 +935,8 @@ function getDrivingRecordKey(input: {
   projectJobs: ProjectJobListItem[];
   unscheduledJobs: ProjectJobListItem[];
 }) {
-  const href = input.nextAction.primaryHref ?? input.nextAction.secondaryHref ?? "";
+  const href =
+    input.nextAction.primaryHref ?? input.nextAction.secondaryHref ?? "";
 
   if (href.startsWith("/estimates/") && input.latestEstimate) {
     return `estimate:${input.latestEstimate.id}`;
@@ -910,7 +986,8 @@ function getProjectWorkflowDriverLabel(input: {
   projectJobsCount: number;
   unscheduledJobsCount: number;
 }) {
-  const href = input.nextAction.primaryHref ?? input.nextAction.secondaryHref ?? "";
+  const href =
+    input.nextAction.primaryHref ?? input.nextAction.secondaryHref ?? "";
 
   if (href.startsWith("/estimates/") && input.latestEstimate) {
     return `Estimate ${input.latestEstimate.referenceNumber}`;
@@ -935,7 +1012,9 @@ function getProjectWorkflowDriverLabel(input: {
   }
 
   if (href.startsWith("/jobs")) {
-    return input.projectJobsCount > 0 ? "Existing job chain" : "Project readiness";
+    return input.projectJobsCount > 0
+      ? "Existing job chain"
+      : "Project readiness";
   }
 
   if (href.startsWith("/schedule")) {
@@ -980,7 +1059,8 @@ function buildLinkedRecordRecencyItems(input: {
         formatUpdatedActivity(estimate.updatedAt)
       ]),
       timestamp: estimate.updatedAt,
-      timestampLabel: formatUpdatedActivity(estimate.updatedAt) ?? "Updated date unavailable"
+      timestampLabel:
+        formatUpdatedActivity(estimate.updatedAt) ?? "Updated date unavailable"
     });
   });
 
@@ -1001,7 +1081,8 @@ function buildLinkedRecordRecencyItems(input: {
         formatUpdatedActivity(contract.updatedAt)
       ]),
       timestamp: contract.updatedAt,
-      timestampLabel: formatUpdatedActivity(contract.updatedAt) ?? "Updated date unavailable"
+      timestampLabel:
+        formatUpdatedActivity(contract.updatedAt) ?? "Updated date unavailable"
     });
   });
 
@@ -1021,7 +1102,8 @@ function buildLinkedRecordRecencyItems(input: {
         formatUpdatedActivity(job.updatedAt)
       ]),
       timestamp: job.updatedAt,
-      timestampLabel: formatUpdatedActivity(job.updatedAt) ?? "Updated date unavailable"
+      timestampLabel:
+        formatUpdatedActivity(job.updatedAt) ?? "Updated date unavailable"
     });
   });
 
@@ -1029,7 +1111,8 @@ function buildLinkedRecordRecencyItems(input: {
     pushItem({
       id: `invoice-${invoice.id}`,
       recordKey: `invoice:${invoice.id}`,
-      typeLabel: invoice.workflowRole === "deposit" ? "Deposit invoice" : "Invoice",
+      typeLabel:
+        invoice.workflowRole === "deposit" ? "Deposit invoice" : "Invoice",
       title: invoice.referenceNumber,
       href: `/invoices/${invoice.id}`,
       statusLabel: formatStatusLabel(invoice.status),
@@ -1038,7 +1121,8 @@ function buildLinkedRecordRecencyItems(input: {
         formatUpdatedActivity(invoice.updatedAt)
       ]),
       timestamp: invoice.updatedAt,
-      timestampLabel: formatUpdatedActivity(invoice.updatedAt) ?? "Updated date unavailable"
+      timestampLabel:
+        formatUpdatedActivity(invoice.updatedAt) ?? "Updated date unavailable"
     });
   });
 
@@ -1052,11 +1136,15 @@ function buildLinkedRecordRecencyItems(input: {
       statusLabel: formatStatusLabel(changeOrder.status),
       activityLabel: joinMetaParts([
         formatMoney(changeOrder.priceAdjustment),
-        changeOrder.invoice ? `Invoice ${changeOrder.invoice.referenceNumber}` : "Project scope change",
+        changeOrder.invoice
+          ? `Invoice ${changeOrder.invoice.referenceNumber}`
+          : "Project scope change",
         formatUpdatedActivity(changeOrder.updatedAt)
       ]),
       timestamp: changeOrder.updatedAt,
-      timestampLabel: formatUpdatedActivity(changeOrder.updatedAt) ?? "Updated date unavailable"
+      timestampLabel:
+        formatUpdatedActivity(changeOrder.updatedAt) ??
+        "Updated date unavailable"
     });
   });
 
@@ -1071,12 +1159,15 @@ function buildLinkedRecordRecencyItems(input: {
       href: `/daily-logs/${dailyLog.id}`,
       statusLabel: formatStatusLabel(dailyLog.status),
       activityLabel: joinMetaParts([
-        dailyLog.job ? `Job ${dailyLog.job.id.slice(0, 8)}` : "Project-day execution",
+        dailyLog.job
+          ? `Job ${dailyLog.job.id.slice(0, 8)}`
+          : "Project-day execution",
         dailyLog.weatherSummary ?? null,
         formatUpdatedActivity(dailyLog.updatedAt)
       ]),
       timestamp: dailyLog.updatedAt,
-      timestampLabel: formatUpdatedActivity(dailyLog.updatedAt) ?? "Updated date unavailable"
+      timestampLabel:
+        formatUpdatedActivity(dailyLog.updatedAt) ?? "Updated date unavailable"
     });
   });
 
@@ -1086,19 +1177,26 @@ function buildLinkedRecordRecencyItems(input: {
       recordKey: `field_note:${fieldNote.id}`,
       typeLabel: "Field note",
       title: fieldNote.title,
-      href: fieldNote.dailyLog ? `/daily-logs/${fieldNote.dailyLog.id}` : "/daily-logs",
+      href: fieldNote.dailyLog
+        ? `/daily-logs/${fieldNote.dailyLog.id}`
+        : "/daily-logs",
       statusLabel: formatStatusLabel(fieldNote.status),
       activityLabel: joinMetaParts([
         formatStatusLabel(fieldNote.noteType),
-        fieldNote.job ? `Job ${fieldNote.job.id.slice(0, 8)}` : "Project field note",
+        fieldNote.job
+          ? `Job ${fieldNote.job.id.slice(0, 8)}`
+          : "Project field note",
         formatUpdatedActivity(fieldNote.updatedAt)
       ]),
       timestamp: fieldNote.updatedAt,
-      timestampLabel: formatUpdatedActivity(fieldNote.updatedAt) ?? "Updated date unavailable"
+      timestampLabel:
+        formatUpdatedActivity(fieldNote.updatedAt) ?? "Updated date unavailable"
     });
   });
 
-  return items.sort((left, right) => right.timestamp.localeCompare(left.timestamp));
+  return items.sort((left, right) =>
+    right.timestamp.localeCompare(left.timestamp)
+  );
 }
 
 function getProjectInvoiceContinuitySummary(input: {
@@ -1140,7 +1238,7 @@ function getProjectInvoiceContinuitySummary(input: {
 }
 
 function getProjectContractSummary(input: {
-  contract: (Awaited<ReturnType<typeof listContracts>>)[number];
+  contract: Awaited<ReturnType<typeof listContracts>>[number];
   readinessSnapshot: ProjectFinancialReadinessSnapshot | null;
 }) {
   const { contract, readinessSnapshot } = input;
@@ -1173,7 +1271,11 @@ function getProjectContractSummary(input: {
 }
 
 function getMostRecentByUpdatedAt<T extends { updatedAt: string }>(items: T[]) {
-  return [...items].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))[0] ?? null;
+  return (
+    [...items].sort((left, right) =>
+      right.updatedAt.localeCompare(left.updatedAt)
+    )[0] ?? null
+  );
 }
 
 function buildReadinessStages(input: {
@@ -1183,7 +1285,13 @@ function buildReadinessStages(input: {
   approvedEstimateId: string | null;
   readinessSnapshot: ProjectFinancialReadinessSnapshot | null;
 }): ReadinessStageView[] {
-  const { hasOpportunity, projectOpportunityStatus, estimateCount, approvedEstimateId, readinessSnapshot } = input;
+  const {
+    hasOpportunity,
+    projectOpportunityStatus,
+    estimateCount,
+    approvedEstimateId,
+    readinessSnapshot
+  } = input;
   const hasApprovedEstimate = Boolean(approvedEstimateId);
   const hasContract = Boolean(readinessSnapshot?.contractId);
   const contractSigned = readinessSnapshot?.contractStatus === "signed";
@@ -1198,35 +1306,41 @@ function buildReadinessStages(input: {
       ? projectOpportunityStatus === "completed"
         ? {
             title: "Sales assessment",
-            detail: "Assessment and requirements are captured on the linked opportunity record.",
+            detail:
+              "Assessment and requirements are captured on the linked opportunity record.",
             state: "complete"
           }
         : projectOpportunityStatus === "scheduled"
           ? {
               title: "Sales assessment",
-              detail: "A site assessment is scheduled. This is sales-side scheduling, not operational crew scheduling.",
+              detail:
+                "A site assessment is scheduled. This is sales-side scheduling, not operational crew scheduling.",
               state: "current"
             }
           : {
               title: "Sales assessment",
-              detail: "Lead assessment context still needs completion before the handoff is fully documented.",
+              detail:
+                "Lead assessment context still needs completion before the handoff is fully documented.",
               state: "blocked"
             }
       : {
           title: "Sales assessment",
-          detail: "This project is moving on a manual path with no linked opportunity record.",
+          detail:
+            "This project is moving on a manual path with no linked opportunity record.",
           state: "complete"
         },
     hasApprovedEstimate
       ? {
           title: "Estimate approval",
-          detail: "An approved estimate exists and commercial scope is ready to move forward.",
+          detail:
+            "An approved estimate exists and commercial scope is ready to move forward.",
           state: "complete"
         }
       : estimateCount > 0
         ? {
             title: "Estimate approval",
-            detail: "Estimate work exists, but approval is still the active blocker.",
+            detail:
+              "Estimate work exists, but approval is still the active blocker.",
             state:
               readinessSnapshot?.status === "waiting_on_estimate_approval"
                 ? "current"
@@ -1234,7 +1348,8 @@ function buildReadinessStages(input: {
           }
         : {
             title: "Estimate approval",
-            detail: "Create the first estimate so scope and pricing enter the canonical workflow.",
+            detail:
+              "Create the first estimate so scope and pricing enter the canonical workflow.",
             state: "blocked"
           },
     !hasApprovedEstimate
@@ -1246,7 +1361,8 @@ function buildReadinessStages(input: {
       : !hasContract
         ? {
             title: "Contract gate",
-            detail: "Generate a contract from the approved estimate to continue the commercial handoff.",
+            detail:
+              "Generate a contract from the approved estimate to continue the commercial handoff.",
             state:
               readinessSnapshot?.status === "waiting_on_contract"
                 ? "current"
@@ -1261,46 +1377,54 @@ function buildReadinessStages(input: {
           : readinessSnapshot?.status === "waiting_on_internal_approval"
             ? {
                 title: "Contract gate",
-                detail: "Internal approval is the active gate before the contract can move out for signature.",
+                detail:
+                  "Internal approval is the active gate before the contract can move out for signature.",
                 state: "current"
               }
             : {
                 title: "Contract gate",
-                detail: "Signature is still required before this work can move into operations readiness.",
+                detail:
+                  "Signature is still required before this work can move into operations readiness.",
                 state: "current"
               },
     !hasContract
       ? {
           title: "Financial readiness",
-          detail: "Deposit and financing rules apply after the contract workflow reaches the right stage.",
+          detail:
+            "Deposit and financing rules apply after the contract workflow reaches the right stage.",
           state: "upcoming"
         }
       : financialReady
         ? {
             title: "Financial readiness",
-            detail: "Deposit and financing readiness are currently satisfied on the canonical project chain.",
+            detail:
+              "Deposit and financing readiness are currently satisfied on the canonical project chain.",
             state: "complete"
           }
         : readinessSnapshot?.status === "waiting_on_deposit"
           ? {
               title: "Financial readiness",
-              detail: "Deposit readiness is the active gate before operations can take over.",
+              detail:
+                "Deposit readiness is the active gate before operations can take over.",
               state: "current"
             }
           : {
               title: "Financial readiness",
-              detail: "Financing state is still preventing the project from becoming operationally ready.",
+              detail:
+                "Financing state is still preventing the project from becoming operationally ready.",
               state: "current"
             },
     readinessSnapshot?.isReadyToSchedule
       ? {
           title: "Ready to schedule",
-          detail: "Commercial handoff is complete. This marks operational eligibility, not a calendar booking.",
+          detail:
+            "Commercial handoff is complete. This marks operational eligibility, not a calendar booking.",
           state: "complete"
         }
       : {
           title: "Ready to schedule",
-          detail: "Operations should not schedule or create downstream work until the current blockers are cleared.",
+          detail:
+            "Operations should not schedule or create downstream work until the current blockers are cleared.",
           state: "blocked"
         }
   ];
@@ -1324,75 +1448,59 @@ function buildProjectLifecycleSteps(input: {
     description: string;
   }> = [
     {
-      id: "lead",
-      label: "Lead",
+      id: "opportunity",
+      label: "Opportunity",
       complete: true,
       started: input.hasOpportunity,
       description: input.hasOpportunity
-        ? "Linked opportunity context exists."
-        : "Project is on a manual path with no linked opportunity."
+        ? "Linked opportunity context started this commercial path."
+        : "Manual project path; no linked opportunity is required to continue."
     },
     {
-      id: "project",
-      label: "Project",
+      id: "customer-project",
+      label: "Customer / project",
       complete: input.hasEstimate,
       started: true,
       description: input.hasEstimate
-        ? "Project hub is carrying downstream records."
-        : "Current hub before estimating starts."
+        ? "The project is carrying downstream commercial and operations records."
+        : "The project is the current hub before estimating starts."
     },
     {
-      id: "estimate",
-      label: "Estimate",
-      complete: input.hasApprovedEstimate,
-      started: input.hasEstimate,
-      description: input.hasApprovedEstimate
-        ? "Approved estimate exists."
-        : input.hasEstimate
-          ? "Estimate exists and still needs approval."
-          : "Create your estimate next."
-    },
-    {
-      id: "contract",
-      label: "Contract",
+      id: "estimate-contract",
+      label: "Estimate / contract",
       complete: input.hasSignedContract,
-      started: input.hasContract,
+      started: input.hasEstimate || input.hasContract,
       description: input.hasSignedContract
-        ? "Signed contract exists."
+        ? "Approved scope has moved through the signed contract gate."
         : input.hasContract
-          ? "Contract exists and still needs signature."
-          : "Generate contract after estimate approval."
+          ? "Contract exists; signature or internal approval is still the active handoff."
+          : input.hasApprovedEstimate
+            ? "Approved estimate is ready for contract generation."
+            : input.hasEstimate
+              ? "Estimate exists and still needs approval before contract work."
+              : "Create an estimate to start the commercial handoff."
     },
     {
-      id: "job",
-      label: "Job",
+      id: "job-schedule",
+      label: "Job / schedule",
       complete: input.hasInvoice,
       started: input.hasJob,
       description: input.hasInvoice
-        ? "Job handoff has reached billing."
+        ? "Execution has produced billable invoice context."
         : input.hasJob
-          ? "Job exists; invoice follows billable work."
-          : "Create job once work is ready."
+          ? "Job exists; schedule and crew continuity are the operations focus."
+          : "Create the job after readiness clears, then schedule it."
     },
     {
-      id: "invoice",
-      label: "Invoice",
+      id: "invoice-payment",
+      label: "Invoice / payment",
       complete: input.hasPayment,
       started: input.hasInvoice,
       description: input.hasPayment
-        ? "Invoice has payment activity."
+        ? "Payment activity is recorded on the invoice/payment chain."
         : input.hasInvoice
-          ? "Invoice exists and payment is next."
-          : "Invoices follow completed work."
-    },
-    {
-      id: "payment",
-      label: "Payment",
-      complete: input.hasPayment,
-      started: input.hasPayment,
-      description: input.hasPayment
-        ? "Payment activity is recorded."
-        : "Payment follows the canonical invoice."
+          ? "Invoice exists; collection is the next financial follow-through."
+          : "Invoices follow deposit rules, billable work, or completed execution."
     }
   ];
   const firstIncompleteIndex = orderedSteps.findIndex((step) => !step.complete);
@@ -1476,10 +1584,16 @@ function getNextAction(input: {
   if (projectEstimatesCount === 0) {
     return {
       title: "Create your estimate",
-      description: "Start the project estimate so scope, pricing, and downstream records stay connected to this project.",
+      description:
+        "Start the project estimate so scope, pricing, and downstream records stay connected to this project.",
       primaryLabel: "Create estimate",
-      primaryHref: buildProjectEstimateCreateHref(projectId, customerId, opportunityId),
-      blockerCopy: "No estimate exists yet, so contract, job, invoice, and payment work should wait."
+      primaryHref: buildProjectEstimateCreateHref(
+        projectId,
+        customerId,
+        opportunityId
+      ),
+      blockerCopy:
+        "No estimate exists yet, so contract, job, invoice, and payment work should wait."
     };
   }
 
@@ -1492,7 +1606,8 @@ function getNextAction(input: {
       primaryHref: `/estimates/${latestEstimate.id}/edit`,
       secondaryLabel: "Review estimate",
       secondaryHref: `/estimates/${latestEstimate.id}`,
-      blockerCopy: "Approval, contract generation, and downstream work stay blocked until the estimate is sent and approved."
+      blockerCopy:
+        "Approval, contract generation, and downstream work stay blocked until the estimate is sent and approved."
     };
   }
 
@@ -1503,7 +1618,8 @@ function getNextAction(input: {
         "The estimate has been sent for customer review. Keep follow-up anchored to the existing estimate record until approval is recorded.",
       primaryLabel: "Review estimate",
       primaryHref: `/estimates/${latestEstimate.id}`,
-      blockerCopy: "Contract generation and scheduling should wait until the estimate is approved."
+      blockerCopy:
+        "Contract generation and scheduling should wait until the estimate is approved."
     };
   }
 
@@ -1515,12 +1631,20 @@ function getNextAction(input: {
       primaryLabel: "Review and send estimate",
       primaryHref: `/estimates/${latestEstimate.id}/edit`,
       secondaryLabel: "Start new estimate",
-      secondaryHref: buildProjectEstimateCreateHref(projectId, customerId, opportunityId),
-      blockerCopy: "A rejected estimate cannot generate the canonical contract or billing chain."
+      secondaryHref: buildProjectEstimateCreateHref(
+        projectId,
+        customerId,
+        opportunityId
+      ),
+      blockerCopy:
+        "A rejected estimate cannot generate the canonical contract or billing chain."
     };
   }
 
-  if (readinessSnapshot?.status === "waiting_on_estimate_approval" && !approvedEstimateId) {
+  if (
+    readinessSnapshot?.status === "waiting_on_estimate_approval" &&
+    !approvedEstimateId
+  ) {
     return {
       title: "Review and send estimate",
       description:
@@ -1529,19 +1653,22 @@ function getNextAction(input: {
       primaryHref: readinessSnapshot.estimateId
         ? `/estimates/${readinessSnapshot.estimateId}`
         : buildProjectEstimateCreateHref(projectId, customerId, opportunityId),
-      blockerCopy: "The project cannot move to contract or scheduling until estimate approval is recorded."
+      blockerCopy:
+        "The project cannot move to contract or scheduling until estimate approval is recorded."
     };
   }
 
   if (projectContractsCount === 0 && approvedEstimateId) {
     return {
       title: "Generate contract",
-      description: "An approved estimate exists, so the next step is creating the canonical contract from the same commercial context instead of branching into a separate workflow.",
+      description:
+        "An approved estimate exists, so the next step is creating the canonical contract from the same commercial context instead of branching into a separate workflow.",
       primaryLabel: "Generate contract",
       primaryHref: `/contracts?estimateId=${approvedEstimateId}`,
       secondaryLabel: "Review approved estimate",
       secondaryHref: `/estimates/${approvedEstimateId}`,
-      blockerCopy: "No contract exists yet, so signature readiness and downstream operations remain blocked."
+      blockerCopy:
+        "No contract exists yet, so signature readiness and downstream operations remain blocked."
     };
   }
 
@@ -1582,7 +1709,10 @@ function getNextAction(input: {
     };
   }
 
-  if (latestContract && (latestContract.status === "sent" || latestContract.status === "viewed")) {
+  if (
+    latestContract &&
+    (latestContract.status === "sent" || latestContract.status === "viewed")
+  ) {
     return {
       title: "Send for signature",
       description:
@@ -1591,7 +1721,8 @@ function getNextAction(input: {
           : "The contract has been sent for signature. Keep signature follow-up on the existing contract record.",
       primaryLabel: "Send for signature",
       primaryHref: `/contracts/${latestContract.id}`,
-      blockerCopy: "Jobs, invoices, and payment collection should wait until the configured contract signature gate is clear."
+      blockerCopy:
+        "Jobs, invoices, and payment collection should wait until the configured contract signature gate is clear."
     };
   }
 
@@ -1606,13 +1737,13 @@ function getNextAction(input: {
                 : depositLatestPaymentEventType === "payment_succeeded" &&
                     depositInvoice?.status === "partially_paid"
                   ? "Requires follow-up: close the remaining deposit balance"
-                : depositLatestPaymentEventType === "payment_requested"
-                  ? "Requires follow-up: monitor the requested deposit payment"
-                  : depositLatestPaymentEventType === "payment_voided"
-                    ? "Blocked: restart deposit collection after the void"
-                  : depositInvoice?.status === "partially_paid"
-                    ? "Requires follow-up: close the remaining deposit balance"
-                    : "Blocked: collect the deposit",
+                  : depositLatestPaymentEventType === "payment_requested"
+                    ? "Requires follow-up: monitor the requested deposit payment"
+                    : depositLatestPaymentEventType === "payment_voided"
+                      ? "Blocked: restart deposit collection after the void"
+                      : depositInvoice?.status === "partially_paid"
+                        ? "Requires follow-up: close the remaining deposit balance"
+                        : "Blocked: collect the deposit",
           description:
             depositLatestPaymentEventType === "payment_failed"
               ? `A customer payment attempt failed on the deposit invoice, so ${formatMoney(
@@ -1625,36 +1756,41 @@ function getNextAction(input: {
                   ? `A provider-backed deposit payment has landed, but ${formatMoney(
                       depositInvoice.balanceDueAmount
                     )} still needs to clear before the commercial handoff is complete.`
-                : depositLatestPaymentEventType === "payment_requested"
-                  ? "Customer-facing payment has already been requested on the deposit invoice, so the active work is following that request through."
-                  : depositLatestPaymentEventType === "payment_voided"
-                    ? `The latest provider-backed payment on the deposit invoice was voided, so ${formatMoney(
-                        depositInvoice?.balanceDueAmount ?? "0"
-                      )} is open again before the commercial handoff can complete.`
-                  : depositInvoice?.status === "partially_paid"
-                    ? `A deposit payment has already been recorded, but ${formatMoney(
-                        depositInvoice.balanceDueAmount
-                      )} still needs to clear before the commercial handoff is complete.`
-                    : "A deposit invoice exists, but the commercial handoff will stay blocked until that invoice is paid.",
+                  : depositLatestPaymentEventType === "payment_requested"
+                    ? "Customer-facing payment has already been requested on the deposit invoice, so the active work is following that request through."
+                    : depositLatestPaymentEventType === "payment_voided"
+                      ? `The latest provider-backed payment on the deposit invoice was voided, so ${formatMoney(
+                          depositInvoice?.balanceDueAmount ?? "0"
+                        )} is open again before the commercial handoff can complete.`
+                      : depositInvoice?.status === "partially_paid"
+                        ? `A deposit payment has already been recorded, but ${formatMoney(
+                            depositInvoice.balanceDueAmount
+                          )} still needs to clear before the commercial handoff is complete.`
+                        : "A deposit invoice exists, but the commercial handoff will stay blocked until that invoice is paid.",
           primaryLabel: "Review deposit invoice",
           primaryHref: `/invoices/${readinessSnapshot.depositInvoiceId}`,
-          blockerCopy: "Scheduling stays blocked until the required deposit is satisfied."
+          blockerCopy:
+            "Scheduling stays blocked until the required deposit is satisfied."
         }
       : {
           title: "Blocked: create the deposit request",
-          description: "The organization requires a deposit before operations can schedule this work on the same project chain.",
+          description:
+            "The organization requires a deposit before operations can schedule this work on the same project chain.",
           primaryLabel: "Create deposit invoice",
           primaryHref: `/invoices?projectId=${projectId}&estimateId=${approvedEstimateId ?? ""}&workflowRole=deposit`,
-          blockerCopy: "Deposit collection cannot start until a deposit invoice is created from the existing project and approved-estimate context."
+          blockerCopy:
+            "Deposit collection cannot start until a deposit invoice is created from the existing project and approved-estimate context."
         };
   }
 
   if (readinessSnapshot?.status === "waiting_on_financing") {
     return {
       title: "Blocked: resolve financing readiness",
-      description: "Financing status is still blocking the operations handoff. Update the project financing state once the commercial outcome is known.",
+      description:
+        "Financing status is still blocking the operations handoff. Update the project financing state once the commercial outcome is known.",
       secondaryLabel: "Edit project financing below",
-      blockerCopy: "Operations should wait until financing is approved or no longer required."
+      blockerCopy:
+        "Operations should wait until financing is approved or no longer required."
     };
   }
 
@@ -1687,7 +1823,8 @@ function getNextAction(input: {
         primaryHref: `/jobs?projectId=${projectId}`,
         secondaryLabel: "Open schedule",
         secondaryHref: `/schedule?projectId=${projectId}`,
-        blockerCopy: "Scheduling cannot assign real work until a canonical job exists."
+        blockerCopy:
+          "Scheduling cannot assign real work until a canonical job exists."
       };
     }
 
@@ -1700,7 +1837,8 @@ function getNextAction(input: {
             : `${unscheduledJobsCount} jobs exist but are still unscheduled. Use the schedule workspace to place them on the calendar and coordinate crew.`,
         primaryLabel: "Open schedule",
         primaryHref: `/schedule?projectId=${projectId}`,
-        blockerCopy: "Field execution is not fully planned until the project jobs have schedule commitments."
+        blockerCopy:
+          "Field execution is not fully planned until the project jobs have schedule commitments."
       };
     }
 
@@ -1713,7 +1851,8 @@ function getNextAction(input: {
         primaryHref: completedJobWithoutInvoiceId
           ? `/invoices?projectId=${projectId}&jobId=${completedJobWithoutInvoiceId}`
           : `/invoices?projectId=${projectId}`,
-        blockerCopy: "Payment follow-up cannot start until completed work is represented by a canonical invoice."
+        blockerCopy:
+          "Payment follow-up cannot start until completed work is represented by a canonical invoice."
       };
     }
 
@@ -1726,7 +1865,8 @@ function getNextAction(input: {
         primaryHref: firstJobId
           ? `/invoices?projectId=${projectId}&jobId=${firstJobId}`
           : `/invoices?projectId=${projectId}`,
-        blockerCopy: "Invoices follow completed or otherwise billable work; the invoice workflow still enforces that guardrail."
+        blockerCopy:
+          "Invoices follow completed or otherwise billable work; the invoice workflow still enforces that guardrail."
       };
     }
 
@@ -1763,7 +1903,8 @@ function getNextAction(input: {
 
     return {
       title: "Schedule project work",
-      description: "This project is ready for operational scheduling. Operations can take over next while staying on the same project, job, time, and billing chain.",
+      description:
+        "This project is ready for operational scheduling. Operations can take over next while staying on the same project, job, time, and billing chain.",
       primaryLabel: "Open schedule",
       primaryHref: `/schedule?projectId=${projectId}`,
       secondaryLabel: "Create job",
@@ -1773,8 +1914,10 @@ function getNextAction(input: {
 
   return {
     title: "Requires follow-up: review the commercial chain",
-    description: "Use the blocker list and readiness stages above to clear the next gate in order, rather than jumping ahead into disconnected downstream work.",
-    blockerCopy: "No supported downstream action is available until the current commercial blocker is resolved."
+    description:
+      "Use the blocker list and readiness stages above to clear the next gate in order, rather than jumping ahead into disconnected downstream work.",
+    blockerCopy:
+      "No supported downstream action is available until the current commercial blocker is resolved."
   };
 }
 
@@ -1957,20 +2100,30 @@ export default async function ProjectDetailPage({
   }
 
   const customerPortalAccessGrants = project.customerId
-    ? await listPortalAccessGrantsByCustomer(project.customerId, `/projects/${projectId}`)
+    ? await listPortalAccessGrantsByCustomer(
+        project.customerId,
+        `/projects/${projectId}`
+      )
     : [];
   const projectPortalAccessEntries = await Promise.all(
-    customerPortalAccessGrants.map(async (grant) => [
-      grant.id,
-      await listPortalProjectAccessByGrantId(grant.id, `/projects/${projectId}`)
-    ] as const)
+    customerPortalAccessGrants.map(
+      async (grant) =>
+        [
+          grant.id,
+          await listPortalProjectAccessByGrantId(
+            grant.id,
+            `/projects/${projectId}`
+          )
+        ] as const
+    )
   );
   const projectVisiblePortalGrants = customerPortalAccessGrants
     .map((grant) => ({
       grant,
-      access: projectPortalAccessEntries
-        .find(([grantId]) => grantId === grant.id)?.[1]
-        .find((access) => access.projectId === project.id) ?? null
+      access:
+        projectPortalAccessEntries
+          .find(([grantId]) => grantId === grant.id)?.[1]
+          .find((access) => access.projectId === project.id) ?? null
     }))
     .filter(({ access }) => access?.status === "active");
 
@@ -1978,12 +2131,16 @@ export default async function ProjectDetailPage({
     organizationId: project.organizationId,
     projectId: project.id
   });
-  const workflowSettings = await getOrganizationWorkflowSettings(project.organizationId);
+  const workflowSettings = await getOrganizationWorkflowSettings(
+    project.organizationId
+  );
   const guidancePreferences = normalizeWorkflowGuidancePreferences(
     workflowSettings.workflowGuidancePreferences
   );
-  const showNextBestActionGuidance = shouldShowNextBestActions(guidancePreferences);
-  const showReadinessGuidancePanel = shouldShowReadinessGuidance(guidancePreferences);
+  const showNextBestActionGuidance =
+    shouldShowNextBestActions(guidancePreferences);
+  const showReadinessGuidancePanel =
+    shouldShowReadinessGuidance(guidancePreferences);
   const [
     projectTimeCards,
     openTimeStates,
@@ -2005,13 +2162,24 @@ export default async function ProjectDetailPage({
     }),
     listPeople()
   ]);
-  const projectDailyLogs = await listDailyLogsByProject(project.id, `/projects/${projectId}`);
-  const projectFieldNotes = fieldNotes.filter((fieldNote) => fieldNote.projectId === project.id);
+  const projectDailyLogs = await listDailyLogsByProject(
+    project.id,
+    `/projects/${projectId}`
+  );
+  const projectFieldNotes = fieldNotes.filter(
+    (fieldNote) => fieldNote.projectId === project.id
+  );
 
-  const projectEstimates = estimates.filter((estimate) => estimate.projectId === project.id);
-  const approvedEstimate = projectEstimates.find((estimate) => estimate.status === "approved");
+  const projectEstimates = estimates.filter(
+    (estimate) => estimate.projectId === project.id
+  );
+  const approvedEstimate = projectEstimates.find(
+    (estimate) => estimate.status === "approved"
+  );
   const latestEstimate = getMostRecentByUpdatedAt(projectEstimates);
-  const projectContracts = contracts.filter((contract) => contract.projectId === project.id);
+  const projectContracts = contracts.filter(
+    (contract) => contract.projectId === project.id
+  );
   const latestContract = getMostRecentByUpdatedAt(projectContracts);
   const projectContractDocuments = projectContracts.filter(
     (contract) => contract.sentPdfDownloadUrl && contract.sentPdfFileName
@@ -2021,18 +2189,25 @@ export default async function ProjectDetailPage({
     projectJobs.map((job) => job.id),
     `/projects/${projectId}`
   );
-  const completedJob = projectJobs.find((job) => job.dispatchStatus === "completed");
+  const completedJob = projectJobs.find(
+    (job) => job.dispatchStatus === "completed"
+  );
   const projectOpenTimeStates = openTimeStates.filter(
     (state) => state.projectId === project.id
   );
-  const projectInvoices = invoices.filter((invoice) => invoice.projectId === project.id);
+  const projectInvoices = invoices.filter(
+    (invoice) => invoice.projectId === project.id
+  );
   const pendingChangeOrder =
     projectChangeOrders.find(
-      (changeOrder) => changeOrder.status === "sent" || changeOrder.status === "draft"
+      (changeOrder) =>
+        changeOrder.status === "sent" || changeOrder.status === "draft"
     ) ?? null;
   const depositInvoice =
     (readinessSnapshot?.depositInvoiceId
-      ? projectInvoices.find((invoice) => invoice.id === readinessSnapshot.depositInvoiceId)
+      ? projectInvoices.find(
+          (invoice) => invoice.id === readinessSnapshot.depositInvoiceId
+        )
       : null) ??
     projectInvoices.find((invoice) => invoice.workflowRole === "deposit") ??
     null;
@@ -2053,13 +2228,18 @@ export default async function ProjectDetailPage({
         ? getProjectInvoiceSummary(latestPaidInvoice)
         : "No invoice payment activity yet";
   const paymentFocusInvoiceId =
-    depositInvoice?.id ?? latestOpenInvoice?.id ?? latestPaidInvoice?.id ?? null;
+    depositInvoice?.id ??
+    latestOpenInvoice?.id ??
+    latestPaidInvoice?.id ??
+    null;
   const paymentFocusInvoice = paymentFocusInvoiceId
     ? await getInvoiceById(paymentFocusInvoiceId, `/projects/${projectId}`)
     : null;
-  const paymentFocusLatestEventType = paymentFocusInvoice?.paymentEvents[0]?.eventType ?? null;
+  const paymentFocusLatestEventType =
+    paymentFocusInvoice?.paymentEvents[0]?.eventType ?? null;
   const paymentFocusSummary =
-    paymentFocusInvoice && (depositInvoice || latestOpenInvoice || latestPaidInvoice)
+    paymentFocusInvoice &&
+    (depositInvoice || latestOpenInvoice || latestPaidInvoice)
       ? getProjectInvoiceContinuitySummary({
           invoice: depositInvoice ?? latestOpenInvoice ?? latestPaidInvoice!,
           latestPaymentEventType: paymentFocusLatestEventType
@@ -2070,19 +2250,25 @@ export default async function ProjectDetailPage({
     : false;
   const canCreateInvoice = Boolean(completedJob) && !hasInvoiceForCompletedJob;
   const firstProjectJobId = projectJobs[0]?.id ?? null;
-  const unscheduledJobs = projectJobs.filter((job) => job.dispatchStatus === "unscheduled");
-  const scheduledJobs = projectJobs.filter((job) => job.dispatchStatus === "scheduled");
-  const activeJobs = projectJobs.filter((job) => job.dispatchStatus === "in_progress");
+  const unscheduledJobs = projectJobs.filter(
+    (job) => job.dispatchStatus === "unscheduled"
+  );
+  const scheduledJobs = projectJobs.filter(
+    (job) => job.dispatchStatus === "scheduled"
+  );
+  const activeJobs = projectJobs.filter(
+    (job) => job.dispatchStatus === "in_progress"
+  );
   const jobsWithoutCrew = projectJobs.filter(
     (job) => job.dispatchStatus !== "completed" && !job.crewVendorId
   );
   const approvedEstimateId = approvedEstimate?.id ?? null;
   const completedJobId = completedJob?.id ?? null;
-  const readinessStatus = readinessSnapshot?.status ?? project.commercialReadinessStatus;
-  const readyToScheduleAt =
-    readinessSnapshot?.isReadyToSchedule
-      ? project.readyToScheduleAt ?? new Date().toISOString()
-      : project.readyToScheduleAt;
+  const readinessStatus =
+    readinessSnapshot?.status ?? project.commercialReadinessStatus;
+  const readyToScheduleAt = readinessSnapshot?.isReadyToSchedule
+    ? (project.readyToScheduleAt ?? new Date().toISOString())
+    : project.readyToScheduleAt;
   const readinessStages = buildReadinessStages({
     hasOpportunity: Boolean(projectOpportunity),
     projectOpportunityStatus: projectOpportunity?.siteAssessmentStatus ?? null,
@@ -2111,7 +2297,9 @@ export default async function ProjectDetailPage({
     completedJobWithoutInvoiceId: canCreateInvoice ? completedJobId : null,
     depositInvoice,
     depositLatestPaymentEventType:
-      paymentFocusInvoice?.id === depositInvoice?.id ? paymentFocusLatestEventType : null
+      paymentFocusInvoice?.id === depositInvoice?.id
+        ? paymentFocusLatestEventType
+        : null
   });
   const activeBlockers = readinessSnapshot?.blockers ?? [];
   const unresolvedPunchlistItems = projectPunchlistItems.filter(
@@ -2128,33 +2316,42 @@ export default async function ProjectDetailPage({
   const scheduledOrActiveJobs = [...projectJobs]
     .filter(
       (job) =>
-        (job.dispatchStatus === "scheduled" || job.dispatchStatus === "in_progress") &&
+        (job.dispatchStatus === "scheduled" ||
+          job.dispatchStatus === "in_progress") &&
         job.scheduledDate
     )
     .sort(
-      (left, right) => getScheduleSummarySortValue(left) - getScheduleSummarySortValue(right)
+      (left, right) =>
+        getScheduleSummarySortValue(left) - getScheduleSummarySortValue(right)
     );
-  const latestScheduledJob = [...projectJobs]
-    .filter((job) => job.scheduledDate)
-    .sort(
-      (left, right) => getScheduleSummarySortValue(right) - getScheduleSummarySortValue(left)
-    )[0] ?? null;
+  const latestScheduledJob =
+    [...projectJobs]
+      .filter((job) => job.scheduledDate)
+      .sort(
+        (left, right) =>
+          getScheduleSummarySortValue(right) - getScheduleSummarySortValue(left)
+      )[0] ?? null;
   const nextScheduledJob =
     activeJobs
       .filter((job) => job.scheduledDate)
       .sort(
-        (left, right) => getScheduleSummarySortValue(left) - getScheduleSummarySortValue(right)
+        (left, right) =>
+          getScheduleSummarySortValue(left) - getScheduleSummarySortValue(right)
       )[0] ??
     scheduledOrActiveJobs[0] ??
     latestScheduledJob;
   const scheduleFocusJob = nextScheduledJob ?? latestScheduledJob ?? null;
   const scheduleFocusAssignments = scheduleFocusJob
-    ? projectJobAssignments.get(scheduleFocusJob.id) ?? []
+    ? (projectJobAssignments.get(scheduleFocusJob.id) ?? [])
     : [];
   const scheduleFocusAssignmentNames = scheduleFocusAssignments
-    .map((assignment) => assignment.person?.displayName ?? assignment.vendor?.name ?? null)
+    .map(
+      (assignment) =>
+        assignment.person?.displayName ?? assignment.vendor?.name ?? null
+    )
     .filter((value): value is string => Boolean(value));
-  const scheduleFocusLabel = activeJobs.length > 0 ? "In progress now" : "Next scheduled job";
+  const scheduleFocusLabel =
+    activeJobs.length > 0 ? "In progress now" : "Next scheduled job";
   const scheduleFocusSummary = scheduleFocusJob
     ? getScheduleAssignmentSummary({
         assignmentNames: scheduleFocusAssignmentNames,
@@ -2176,7 +2373,8 @@ export default async function ProjectDetailPage({
   const hasProgressBillingInvoiceGap =
     projectProgressBilling.length > 0 &&
     currentBillableValue > 0 &&
-    projectInvoices.filter((invoice) => invoice.billingModel === "aia_progress").length === 0;
+    projectInvoices.filter((invoice) => invoice.billingModel === "aia_progress")
+      .length === 0;
   const workspaceBlockers = [
     ...activeBlockers.map((blocker) => formatBlockerLabel(blocker)),
     ...(unscheduledJobs.length > 0
@@ -2194,7 +2392,9 @@ export default async function ProjectDetailPage({
         ]
       : []),
     ...(hasProgressBillingInvoiceGap
-      ? ["Progress billing exists, but no connected progress invoice has been created yet."]
+      ? [
+          "Progress billing exists, but no connected progress invoice has been created yet."
+        ]
       : []),
     ...(canCreateInvoice
       ? ["Completed work exists without a connected invoice."]
@@ -2216,24 +2416,30 @@ export default async function ProjectDetailPage({
         : unscheduledJobs.length > 0
           ? {
               value: `${unscheduledJobs.length} unscheduled ${unscheduledJobs.length === 1 ? "job" : "jobs"}`,
-              detail: "Operational handoff is clear, but crew assignment still needs attention.",
+              detail:
+                "Operational handoff is clear, but crew assignment still needs attention.",
               tone: "warning" as WorkspaceStateTone
             }
           : {
               value: "Ready for first job",
-              detail: "Commercial handoff is clear and operations can create the first job.",
+              detail:
+                "Commercial handoff is clear and operations can create the first job.",
               tone: "warning" as WorkspaceStateTone
             }
     : {
         value: "Not schedule-ready",
-        detail: "Commercial blockers still need to clear before operations should schedule work.",
+        detail:
+          "Commercial blockers still need to clear before operations should schedule work.",
         tone: "critical" as WorkspaceStateTone
       };
   const financialState =
     openInvoices.length > 0
       ? {
           value: `${formatMoney(
-            openInvoices.reduce((sum, invoice) => sum + Number(invoice.balanceDueAmount), 0)
+            openInvoices.reduce(
+              (sum, invoice) => sum + Number(invoice.balanceDueAmount),
+              0
+            )
           )} open`,
           detail: `Across ${openInvoices.length} invoice${openInvoices.length === 1 ? "" : "s"}, billing still needs collection.`,
           tone: "warning" as WorkspaceStateTone
@@ -2241,21 +2447,28 @@ export default async function ProjectDetailPage({
       : recentPayments.length > 0
         ? {
             value: `${formatMoney(
-              recentPayments.reduce((sum, payment) => sum + Number(payment.amount), 0)
+              recentPayments.reduce(
+                (sum, payment) => sum + Number(payment.amount),
+                0
+              )
             )} recent payments`,
-            detail: "Connected invoice payments are already recorded on this project chain.",
+            detail:
+              "Connected invoice payments are already recorded on this project chain.",
             tone: "positive" as WorkspaceStateTone
           }
-        : readinessSnapshot?.depositRequired && !readinessSnapshot.depositSatisfied
+        : readinessSnapshot?.depositRequired &&
+            !readinessSnapshot.depositSatisfied
           ? {
               value: "Deposit required",
-              detail: "Commercial readiness is still waiting on deposit collection.",
+              detail:
+                "Commercial readiness is still waiting on deposit collection.",
               tone: "critical" as WorkspaceStateTone
             }
           : hasProgressBillingInvoiceGap
             ? {
                 value: `${formatMoney(currentBillableValue)} ready to bill`,
-                detail: "Current SOV progress exists, but billing has not been pushed into invoices yet.",
+                detail:
+                  "Current SOV progress exists, but billing has not been pushed into invoices yet.",
                 tone: "warning" as WorkspaceStateTone
               }
             : {
@@ -2328,10 +2541,11 @@ export default async function ProjectDetailPage({
       id: person.id,
       displayName: person.displayName
     }));
-  const hasSignedContract = projectContracts.some((contract) => contract.status === "signed");
+  const hasSignedContract = projectContracts.some(
+    (contract) => contract.status === "signed"
+  );
   const hasPaymentActivity = Boolean(
-    latestPaidInvoice ||
-      paymentFocusInvoice?.payments.length
+    latestPaidInvoice || paymentFocusInvoice?.payments.length
   );
   const workflowSteps = buildProjectLifecycleSteps({
     hasOpportunity: Boolean(projectOpportunity),
@@ -2343,12 +2557,14 @@ export default async function ProjectDetailPage({
     hasInvoice: projectInvoices.length > 0,
     hasPayment: hasPaymentActivity
   });
-  const readinessWorkflowSteps: WorkflowStep[] = readinessStages.map((stage) => ({
-    id: stage.title.toLowerCase().replaceAll(" ", "-"),
-    label: stage.title,
-    description: stage.detail,
-    state: mapReadinessStageToWorkflowState(stage.state)
-  }));
+  const readinessWorkflowSteps: WorkflowStep[] = readinessStages.map(
+    (stage) => ({
+      id: stage.title.toLowerCase().replaceAll(" ", "-"),
+      label: stage.title,
+      description: stage.detail,
+      state: mapReadinessStageToWorkflowState(stage.state)
+    })
+  );
   const projectStateItems: ProjectStateItem[] = [
     {
       id: "project-status",
@@ -2365,10 +2581,9 @@ export default async function ProjectDetailPage({
       value: readinessSnapshot?.isReadyToSchedule
         ? "Ready to schedule"
         : formatStatusLabel(readinessStatus),
-      detail:
-        readinessSnapshot?.isReadyToSchedule
-          ? "Commercial handoff is complete."
-          : "Clear the current gate before operations moves forward.",
+      detail: readinessSnapshot?.isReadyToSchedule
+        ? "Commercial handoff is complete."
+        : "Clear the current gate before operations moves forward.",
       tone: readinessSnapshot?.isReadyToSchedule ? "complete" : "needsAction"
     },
     {
@@ -2449,9 +2664,14 @@ export default async function ProjectDetailPage({
       label: "Records",
       value: `${projectEstimates.length + projectContracts.length + projectInvoices.length + projectJobs.length} linked`,
       detail: `${projectEstimates.length} estimates / ${projectContracts.length} contracts / ${projectJobs.length} jobs / ${projectInvoices.length} invoices`,
-      tone: projectEstimates.length + projectContracts.length + projectInvoices.length + projectJobs.length > 0
-        ? "positive"
-        : "neutral"
+      tone:
+        projectEstimates.length +
+          projectContracts.length +
+          projectInvoices.length +
+          projectJobs.length >
+        0
+          ? "positive"
+          : "neutral"
     },
     {
       label: "Field",
@@ -2466,30 +2686,47 @@ export default async function ProjectDetailPage({
         (projectJobs.length > 0
           ? `${projectJobs.length} job${projectJobs.length === 1 ? "" : "s"} on the chain`
           : "Field execution has not started yet."),
-      tone: activeJobs.length > 0 || projectDailyLogs.length > 0 ? "positive" : "neutral"
+      tone:
+        activeJobs.length > 0 || projectDailyLogs.length > 0
+          ? "positive"
+          : "neutral"
     }
   ];
   const connectedRecordLanes: ConnectedRecordLane[] = [
     {
       title: "Sales / Estimate",
-      status: latestEstimate ? formatStatusLabel(latestEstimate.status) : "not started",
+      status: latestEstimate
+        ? formatStatusLabel(latestEstimate.status)
+        : "not started",
       keyFact: latestEstimate
         ? `${latestEstimate.referenceNumber} / ${formatMoney(latestEstimate.totalAmount)}`
         : "No estimate is connected yet.",
       href: latestEstimate
         ? `/estimates/${latestEstimate.id}`
-        : buildProjectEstimateCreateHref(project.id, project.customerId, projectOpportunity?.id),
+        : buildProjectEstimateCreateHref(
+            project.id,
+            project.customerId,
+            projectOpportunity?.id
+          ),
       actionLabel: latestEstimate ? "Open estimate" : "Create estimate",
       note: approvedEstimate
         ? "Approved scope can feed the canonical contract."
         : "Estimate approval is the first commercial gate.",
-      blocker: projectEstimates.length === 0 ? "Contract, job, and billing work should wait." : undefined
+      blocker:
+        projectEstimates.length === 0
+          ? "Contract, job, and billing work should wait."
+          : undefined
     },
     {
       title: "Contract / Signature",
-      status: latestContract ? formatStatusLabel(latestContract.status) : "not started",
+      status: latestContract
+        ? formatStatusLabel(latestContract.status)
+        : "not started",
       keyFact: latestContract
-        ? getProjectContractSummary({ contract: latestContract, readinessSnapshot })
+        ? getProjectContractSummary({
+            contract: latestContract,
+            readinessSnapshot
+          })
         : "No contract has been generated yet.",
       href: latestContract
         ? `/contracts/${latestContract.id}`
@@ -2505,13 +2742,16 @@ export default async function ProjectDetailPage({
       blocker:
         !latestContract && approvedEstimateId
           ? "Approved scope is waiting for contract generation."
-          : readinessSnapshot?.contractStatus && readinessSnapshot.contractStatus !== "signed"
+          : readinessSnapshot?.contractStatus &&
+              readinessSnapshot.contractStatus !== "signed"
             ? "Signature readiness is still open."
             : undefined
     },
     {
       title: "Change Orders",
-      status: pendingChangeOrder ? formatStatusLabel(pendingChangeOrder.status) : "clear",
+      status: pendingChangeOrder
+        ? formatStatusLabel(pendingChangeOrder.status)
+        : "clear",
       keyFact:
         projectChangeOrders.length > 0
           ? `${projectChangeOrders.length} change order${
@@ -2521,9 +2761,13 @@ export default async function ProjectDetailPage({
       href: pendingChangeOrder
         ? `/change-orders/${pendingChangeOrder.id}`
         : `/change-orders?projectId=${project.id}`,
-      actionLabel: pendingChangeOrder ? "Open change order" : "Open change orders",
+      actionLabel: pendingChangeOrder
+        ? "Open change order"
+        : "Open change orders",
       note: "Scope changes stay in the canonical change-order lane.",
-      blocker: pendingChangeOrder ? "Resolve pending scope before relying on billing or closeout." : undefined
+      blocker: pendingChangeOrder
+        ? "Resolve pending scope before relying on billing or closeout."
+        : undefined
     },
     {
       title: "Billing / Payments",
@@ -2534,13 +2778,18 @@ export default async function ProjectDetailPage({
             ? "current"
             : "not started",
       keyFact: paymentFocusSummary,
-      href: paymentFocusInvoiceId ? `/invoices/${paymentFocusInvoiceId}` : "/invoices",
+      href: paymentFocusInvoiceId
+        ? `/invoices/${paymentFocusInvoiceId}`
+        : "/invoices",
       actionLabel: paymentFocusInvoiceId ? "Open invoice" : "Open invoices",
       note: "Payment records remain attached to canonical invoices.",
       blocker:
         openInvoices.length > 0
           ? `${formatMoney(
-              openInvoices.reduce((sum, invoice) => sum + Number(invoice.balanceDueAmount), 0)
+              openInvoices.reduce(
+                (sum, invoice) => sum + Number(invoice.balanceDueAmount),
+                0
+              )
             )} still open.`
           : undefined
     },
@@ -2572,7 +2821,10 @@ export default async function ProjectDetailPage({
     },
     {
       title: "Field / Daily Logs",
-      status: projectDailyLogs.length > 0 ? formatStatusLabel(projectDailyLogs[0].status) : "not started",
+      status:
+        projectDailyLogs.length > 0
+          ? formatStatusLabel(projectDailyLogs[0].status)
+          : "not started",
       keyFact:
         projectDailyLogs[0]?.summary?.trim() ??
         (projectFieldNotes.length > 0
@@ -2580,13 +2832,16 @@ export default async function ProjectDetailPage({
               projectFieldNotes.length === 1 ? "" : "s"
             } connected`
           : "No daily logs or field notes yet."),
-      href: projectDailyLogs[0] ? `/daily-logs/${projectDailyLogs[0].id}` : "/daily-logs",
+      href: projectDailyLogs[0]
+        ? `/daily-logs/${projectDailyLogs[0].id}`
+        : "/daily-logs",
       actionLabel: projectDailyLogs[0] ? "Open daily log" : "Open daily logs",
       note: "Field detail remains in daily logs, jobs, punchlists, and time.",
-      blocker:
-        projectFieldNotes.some((note) => note.status === "open" && note.noteType === "blocker")
-          ? "Open blocker field notes need review."
-          : undefined
+      blocker: projectFieldNotes.some(
+        (note) => note.status === "open" && note.noteType === "blocker"
+      )
+        ? "Open blocker field notes need review."
+        : undefined
     },
     {
       title: "Customer Access",
@@ -2644,7 +2899,8 @@ export default async function ProjectDetailPage({
                   >
                     Create appointment
                   </Link>
-                  {readinessSnapshot?.depositRequired && !readinessSnapshot.depositSatisfied ? (
+                  {readinessSnapshot?.depositRequired &&
+                  !readinessSnapshot.depositSatisfied ? (
                     <Link
                       href={`/invoices?projectId=${project.id}&estimateId=${approvedEstimateId ?? ""}&workflowRole=deposit`}
                       className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
@@ -2657,10 +2913,10 @@ export default async function ProjectDetailPage({
                       href={`/invoices?projectId=${project.id}&jobId=${completedJobId}`}
                       className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
                     >
-                    Create invoice
-                  </Link>
-                ) : null}
-              </div>
+                      Create invoice
+                    </Link>
+                  ) : null}
+                </div>
               </>
             }
           />
@@ -2679,67 +2935,74 @@ export default async function ProjectDetailPage({
 
           <div className="mt-6 space-y-4">
             {showNextBestActionGuidance ? (
-            <ActionBar
-              title={nextAction.title}
-              description={
-                <div className="space-y-2">
-                  <p>{nextAction.description}</p>
-                  {nextAction.blockerCopy ? (
-                    <p className="font-medium text-amber-900">{nextAction.blockerCopy}</p>
-                  ) : null}
-                </div>
-              }
-              statusLabel={
-                readinessSnapshot?.isReadyToSchedule
-                  ? "Ready to schedule"
-                  : formatStatusLabel(readinessStatus)
-              }
-              statusTone={
-                readinessSnapshot?.isReadyToSchedule
-                  ? "success"
-                  : workspaceBlockers.length > 0
-                    ? "warning"
-                    : "neutral"
-              }
-              nextActionLabel="Next step"
-              primaryAction={
-                nextAction.primaryLabel && nextAction.primaryHref ? (
-                  <Link
-                    href={nextAction.primaryHref}
-                    className={getWorkspaceActionLinkClassName("primary")}
-                  >
-                    {nextAction.primaryLabel}
-                  </Link>
-                ) : undefined
-              }
-              secondaryActions={
-                nextAction.secondaryLabel && nextAction.secondaryHref ? (
-                  <Link
-                    href={nextAction.secondaryHref}
-                    className={getWorkspaceActionLinkClassName("secondary")}
-                  >
-                    {nextAction.secondaryLabel}
-                  </Link>
-                ) : nextAction.secondaryLabel ? (
-                  <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600">
-                    {nextAction.secondaryLabel}
-                  </span>
-                ) : undefined
-              }
-              meta={`${project.customer?.name ?? "Unknown customer"} / ${formatLocation([
-                project.addressLine1,
-                project.city,
-                project.stateRegion,
-                project.postalCode
-              ])}`}
-            />
+              <ActionBar
+                title={nextAction.title}
+                description={
+                  <div className="space-y-2">
+                    <p>{nextAction.description}</p>
+                    {nextAction.blockerCopy ? (
+                      <p className="font-medium text-amber-900">
+                        {nextAction.blockerCopy}
+                      </p>
+                    ) : null}
+                  </div>
+                }
+                statusLabel={
+                  readinessSnapshot?.isReadyToSchedule
+                    ? "Ready to schedule"
+                    : formatStatusLabel(readinessStatus)
+                }
+                statusTone={
+                  readinessSnapshot?.isReadyToSchedule
+                    ? "success"
+                    : workspaceBlockers.length > 0
+                      ? "warning"
+                      : "neutral"
+                }
+                nextActionLabel="Next step"
+                primaryAction={
+                  nextAction.primaryLabel && nextAction.primaryHref ? (
+                    <Link
+                      href={nextAction.primaryHref}
+                      className={getWorkspaceActionLinkClassName("primary")}
+                    >
+                      {nextAction.primaryLabel}
+                    </Link>
+                  ) : undefined
+                }
+                secondaryActions={
+                  nextAction.secondaryLabel && nextAction.secondaryHref ? (
+                    <Link
+                      href={nextAction.secondaryHref}
+                      className={getWorkspaceActionLinkClassName("secondary")}
+                    >
+                      {nextAction.secondaryLabel}
+                    </Link>
+                  ) : nextAction.secondaryLabel ? (
+                    <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600">
+                      {nextAction.secondaryLabel}
+                    </span>
+                  ) : undefined
+                }
+                meta={`${project.customer?.name ?? "Unknown customer"} / ${formatLocation(
+                  [
+                    project.addressLine1,
+                    project.city,
+                    project.stateRegion,
+                    project.postalCode
+                  ]
+                )}`}
+              />
             ) : null}
 
             {showReadinessGuidancePanel ? (
               <WorkflowBar title="Project workflow" steps={workflowSteps} />
             ) : null}
 
-            <ProjectStateSummary title="Project state summary" items={projectStateItems} />
+            <ProjectStateSummary
+              title="Project state summary"
+              items={projectStateItems}
+            />
 
             <OperationalCommandCenter
               customerName={project.customer?.name ?? "Unknown customer"}
@@ -2769,30 +3032,33 @@ export default async function ProjectDetailPage({
             <LinkedRecordRecencyPanel items={linkedRecordRecencyItems} />
 
             {showReadinessGuidancePanel ? (
-            <NeedsAttentionPanel
-              cues={projectAttentionCues}
-              description="Linked estimate, contract, invoice, and job cues for this project. These are derived at view time and do not create tasks or mutate workflow state."
-              getCueStateControls={(cue) => (
-                <CueStateControls
-                  identity={buildOperationalCueIdentity(cue)}
-                  support={getCueStateActionSupport(cue)}
-                  returnTo={`/projects/${project.id}`}
-                />
-              )}
-            />
+              <NeedsAttentionPanel
+                cues={projectAttentionCues}
+                description="Linked estimate, contract, invoice, and job cues for this project. These are derived at view time and do not create tasks or mutate workflow state."
+                getCueStateControls={(cue) => (
+                  <CueStateControls
+                    identity={buildOperationalCueIdentity(cue)}
+                    support={getCueStateActionSupport(cue)}
+                    returnTo={`/projects/${project.id}`}
+                  />
+                )}
+              />
             ) : null}
 
             {showNextBestActionGuidance ? (
-            <ProjectCuePanel
-              cues={projectCues}
-              getCueStateControls={(cue) => (
-                <CueStateControls
-                  identity={buildProjectCueIdentity(project.organizationId, cue)}
-                  support={getCueStateActionSupport(cue)}
-                  returnTo={`/projects/${project.id}`}
-                />
-              )}
-            />
+              <ProjectCuePanel
+                cues={projectCues}
+                getCueStateControls={(cue) => (
+                  <CueStateControls
+                    identity={buildProjectCueIdentity(
+                      project.organizationId,
+                      cue
+                    )}
+                    support={getCueStateActionSupport(cue)}
+                    returnTo={`/projects/${project.id}`}
+                  />
+                )}
+              />
             ) : null}
 
             <section
@@ -2808,15 +3074,22 @@ export default async function ProjectDetailPage({
                     Project follow-through
                   </h3>
                   <p className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600">
-                    Create internal contractor work tied to this project or a selected
-                    guidance source. Nothing is created until you submit, and submission stays
-                    separate from readiness, scheduling, invoices, contracts, jobs, and field notes.
+                    Create internal contractor work tied to this project or a
+                    selected guidance source. Nothing is created until you
+                    submit, and submission stays separate from readiness,
+                    scheduling, invoices, contracts, jobs, and field notes.
                   </p>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 md:w-56">
-                  <p className="font-semibold text-slate-950">Open linked items</p>
+                  <p className="font-semibold text-slate-950">
+                    Open linked items
+                  </p>
                   <p className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
-                    {linkedWorkItems.filter((workItem) => workItem.status === "open").length}
+                    {
+                      linkedWorkItems.filter(
+                        (workItem) => workItem.status === "open"
+                      ).length
+                    }
                   </p>
                 </div>
               </div>
@@ -2829,13 +3102,13 @@ export default async function ProjectDetailPage({
                     </p>
                     {projectGuidanceWorkItemPrefill ? (
                       <p className="text-sm leading-6 text-slate-600">
-                        Prefilled from project guidance. Review the owner, due date, and
-                        context; nothing is created until you submit.
+                        Prefilled from project guidance. Review the owner, due
+                        date, and context; nothing is created until you submit.
                       </p>
                     ) : (
                       <p className="text-sm leading-6 text-slate-600">
-                        Use this form for explicit contractor-owned follow-through on the
-                        project.
+                        Use this form for explicit contractor-owned
+                        follow-through on the project.
                       </p>
                     )}
                   </div>
@@ -2848,16 +3121,26 @@ export default async function ProjectDetailPage({
                       linkPath={defaultProjectWorkItemSource.linkPath}
                       customerId={project.customerId}
                       projectId={project.id}
-                      defaultKind={projectGuidanceWorkItemPrefill?.kind ?? "manual"}
+                      defaultKind={
+                        projectGuidanceWorkItemPrefill?.kind ?? "manual"
+                      }
                       defaultTitle={projectGuidanceWorkItemPrefill?.title}
-                      defaultDescription={projectGuidanceWorkItemPrefill?.description}
+                      defaultDescription={
+                        projectGuidanceWorkItemPrefill?.description
+                      }
                       defaultDueAt={projectGuidanceWorkItemPrefill?.dueAt}
                       defaultPriority={projectGuidanceWorkItemPrefill?.priority}
                       dedupeKey={projectGuidanceWorkItemPrefill?.dedupeKey}
                       metadata={projectGuidanceWorkItemPrefill?.metadata}
                       kindOptions={[
-                        { value: "estimate_follow_up", label: "Estimate follow-up" },
-                        { value: "invoice_follow_up", label: "Invoice follow-up" },
+                        {
+                          value: "estimate_follow_up",
+                          label: "Estimate follow-up"
+                        },
+                        {
+                          value: "invoice_follow_up",
+                          label: "Invoice follow-up"
+                        },
                         { value: "human_handoff", label: "Human handoff" },
                         { value: "manual", label: "Manual" }
                       ]}
@@ -2872,7 +3155,8 @@ export default async function ProjectDetailPage({
                     Linked work items
                   </p>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Internal project actions tied through the canonical project relationship.
+                    Internal project actions tied through the canonical project
+                    relationship.
                   </p>
                   <div className="mt-4">
                     <WorkItemList
@@ -2932,7 +3216,8 @@ export default async function ProjectDetailPage({
                 </div>
               ) : (
                 <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
-                  Commercial, scheduling, and closeout blockers are currently clear on this project.
+                  Commercial, scheduling, and closeout blockers are currently
+                  clear on this project.
                 </div>
               )}
             </section>
@@ -2941,19 +3226,17 @@ export default async function ProjectDetailPage({
 
         <CoreWorkflowSection
           title="Workflow sections"
-          description="Overview, estimate, contract, jobs, and invoices stay in the same order as the canonical project handoff. The overview names the linked record or workspace currently driving the next step."
+          description="Overview, estimate, contract, jobs, and invoices stay in the same order as the canonical lifecycle: opportunity, customer/project, estimate/contract, job/schedule, and invoice/payment. The overview names the linked record or workspace currently driving the next step."
         >
           <section className="space-y-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 lg:col-span-2 xl:col-span-4">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-medium text-slate-950">Overview</p>
-              <span className="text-xs font-semibold text-slate-500">
-                Hub
-              </span>
+              <span className="text-xs font-semibold text-slate-500">Hub</span>
             </div>
             <div className="space-y-3 text-sm leading-6 text-slate-600">
               <p>
-                Project is the operational hub for this customer, commercial chain,
-                field work, billing, and payment follow-through.
+                Project is the operational hub for this customer, commercial
+                chain, field work, billing, and payment follow-through.
               </p>
               <ContextFactsList
                 items={[
@@ -2993,12 +3276,18 @@ export default async function ProjectDetailPage({
                       key={estimate.id}
                       href={`/estimates/${estimate.id}`}
                       title={estimate.referenceNumber}
-                      subtitle={estimate.customer?.name ?? project.customer?.name ?? "Unknown customer"}
+                      subtitle={
+                        estimate.customer?.name ??
+                        project.customer?.name ??
+                        "Unknown customer"
+                      }
                       meta={joinMetaParts([
                         `Total ${formatMoney(estimate.totalAmount)}`,
                         formatUpdatedActivity(estimate.updatedAt)
                       ])}
-                      badge={renderStatusBadge(formatStatusLabel(estimate.status))}
+                      badge={renderStatusBadge(
+                        formatStatusLabel(estimate.status)
+                      )}
                     />
                   ))}
                   <WorkflowForwardLink
@@ -3042,12 +3331,21 @@ export default async function ProjectDetailPage({
                       key={contract.id}
                       href={`/contracts/${contract.id}`}
                       title={contract.title}
-                      subtitle={contract.customer?.name ?? project.customer?.name ?? "Unknown customer"}
+                      subtitle={
+                        contract.customer?.name ??
+                        project.customer?.name ??
+                        "Unknown customer"
+                      }
                       meta={joinMetaParts([
-                        getProjectContractSummary({ contract, readinessSnapshot }),
+                        getProjectContractSummary({
+                          contract,
+                          readinessSnapshot
+                        }),
                         formatUpdatedActivity(contract.updatedAt)
                       ])}
-                      badge={renderStatusBadge(formatStatusLabel(contract.status))}
+                      badge={renderStatusBadge(
+                        formatStatusLabel(contract.status)
+                      )}
                     />
                   ))}
                   <WorkflowForwardLink
@@ -3065,8 +3363,14 @@ export default async function ProjectDetailPage({
                   eyebrow="No contracts"
                   title="Generate contract after approval"
                   description="Contracts are generated from approved estimates."
-                  actionHref={approvedEstimateId ? `/contracts?estimateId=${approvedEstimateId}` : undefined}
-                  actionLabel={approvedEstimateId ? "Generate contract" : undefined}
+                  actionHref={
+                    approvedEstimateId
+                      ? `/contracts?estimateId=${approvedEstimateId}`
+                      : undefined
+                  }
+                  actionLabel={
+                    approvedEstimateId ? "Generate contract" : undefined
+                  }
                 />
               )}
             </div>
@@ -3075,7 +3379,9 @@ export default async function ProjectDetailPage({
           <section className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-medium text-slate-950">Jobs</p>
-              <span className="text-xs font-semibold text-slate-500">{projectJobs.length}</span>
+              <span className="text-xs font-semibold text-slate-500">
+                {projectJobs.length}
+              </span>
             </div>
             <div className="grid gap-3">
               {projectJobs.length > 0 ? (
@@ -3085,16 +3391,20 @@ export default async function ProjectDetailPage({
                       key={job.id}
                       href={`/jobs/${job.id}`}
                       title={job.project?.name ?? project.name}
-                      subtitle={job.customer?.name ?? project.customer?.name ?? "Unknown customer"}
-                      meta={
-                        joinMetaParts([
-                          job.scheduledDate
-                            ? `${job.crewVendor?.name ?? "Crew not assigned"} / Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}`
-                            : `${job.crewVendor?.name ?? "Crew not assigned"} / Unscheduled`,
-                          formatUpdatedActivity(job.updatedAt)
-                        ])
+                      subtitle={
+                        job.customer?.name ??
+                        project.customer?.name ??
+                        "Unknown customer"
                       }
-                      badge={renderStatusBadge(formatStatusLabel(job.dispatchStatus))}
+                      meta={joinMetaParts([
+                        job.scheduledDate
+                          ? `${job.crewVendor?.name ?? "Crew not assigned"} / Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}`
+                          : `${job.crewVendor?.name ?? "Crew not assigned"} / Unscheduled`,
+                        formatUpdatedActivity(job.updatedAt)
+                      ])}
+                      badge={renderStatusBadge(
+                        formatStatusLabel(job.dispatchStatus)
+                      )}
                     />
                   ))}
                   <WorkflowForwardLink
@@ -3113,13 +3423,17 @@ export default async function ProjectDetailPage({
                 <AppEmptyState
                   eyebrow="No jobs"
                   title="Create a job once work is ready"
-                  description="Create a job once work is ready."
+                  description="Job and schedule work starts only after the project readiness chain clears. Until then, resolve the upstream estimate, contract, deposit, or financing gate named above."
                   actionHref={
                     readinessSnapshot?.isReadyToSchedule
                       ? `/jobs?projectId=${project.id}`
                       : undefined
                   }
-                  actionLabel={readinessSnapshot?.isReadyToSchedule ? "Create job" : undefined}
+                  actionLabel={
+                    readinessSnapshot?.isReadyToSchedule
+                      ? "Create job"
+                      : undefined
+                  }
                 />
               )}
             </div>
@@ -3134,30 +3448,42 @@ export default async function ProjectDetailPage({
             </div>
             <div className="grid gap-3">
               {projectInvoices.length > 0 ? (
-                projectInvoices.slice(0, 2).map((invoice) => (
-                  <LinkedRecordCard
-                    key={invoice.id}
-                    href={`/invoices/${invoice.id}`}
-                    title={invoice.referenceNumber}
-                    subtitle={invoice.customer?.name ?? project.customer?.name ?? "Unknown customer"}
-                    meta={joinMetaParts([
-                      getProjectInvoiceSummary(invoice),
-                      formatUpdatedActivity(invoice.updatedAt)
-                    ])}
-                    badge={renderStatusBadge(formatStatusLabel(invoice.status))}
-                  />
-                ))
+                projectInvoices
+                  .slice(0, 2)
+                  .map((invoice) => (
+                    <LinkedRecordCard
+                      key={invoice.id}
+                      href={`/invoices/${invoice.id}`}
+                      title={invoice.referenceNumber}
+                      subtitle={
+                        invoice.customer?.name ??
+                        project.customer?.name ??
+                        "Unknown customer"
+                      }
+                      meta={joinMetaParts([
+                        getProjectInvoiceSummary(invoice),
+                        formatUpdatedActivity(invoice.updatedAt)
+                      ])}
+                      badge={renderStatusBadge(
+                        formatStatusLabel(invoice.status)
+                      )}
+                    />
+                  ))
               ) : (
                 <AppEmptyState
                   eyebrow="No invoices"
                   title="Invoices follow completed work"
-                  description="Invoices follow completed work."
+                  description="Invoices and payments stay downstream of approved scope, deposit rules, and billable job context. Use the project and job records above to confirm what is actually ready to bill."
                   actionHref={
                     canCreateInvoice && completedJobId
                       ? `/invoices?projectId=${project.id}&jobId=${completedJobId}`
                       : undefined
                   }
-                  actionLabel={canCreateInvoice && completedJobId ? "Create invoice" : undefined}
+                  actionLabel={
+                    canCreateInvoice && completedJobId
+                      ? "Create invoice"
+                      : undefined
+                  }
                 />
               )}
             </div>
@@ -3175,8 +3501,12 @@ export default async function ProjectDetailPage({
                   key={`${action.title}-${action.href ?? "no-link"}`}
                   className="rounded-lg border border-slate-200 bg-white px-5 py-4"
                 >
-                  <p className="text-base font-semibold text-slate-950">{action.title}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{action.description}</p>
+                  <p className="text-base font-semibold text-slate-950">
+                    {action.title}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {action.description}
+                  </p>
                   {action.href && action.label ? (
                     <div className="mt-4">
                       <Link
@@ -3194,30 +3524,35 @@ export default async function ProjectDetailPage({
         ) : null}
 
         {showReadinessGuidancePanel ? (
-        <DetailPanel
-          title="Upstream Readiness Chain"
-          description="The project hub still reflects the commercial handoff in order, so operations can see what is blocking downstream work at a glance."
-        >
-          <div className="space-y-4">
-            <WorkflowBar title="Readiness gates" steps={readinessWorkflowSteps} />
-            <div className="grid gap-4 xl:grid-cols-5">
-            {readinessStages.map((stage) => (
-              <section
-                key={stage.title}
-                className={`rounded-2xl border px-5 py-4 ${getStageCardClassName(stage.state)}`}
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                  {stage.title}
-                </p>
-                <p className="mt-3 text-sm font-medium capitalize text-slate-950">
-                  {stage.state}
-                </p>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{stage.detail}</p>
-              </section>
-            ))}
+          <DetailPanel
+            title="Upstream Readiness Chain"
+            description="The project hub reflects the lifecycle in order: opportunity, customer/project, estimate/contract, job/schedule, and invoice/payment. Use this chain to see what is blocking downstream work before opening Schedule."
+          >
+            <div className="space-y-4">
+              <WorkflowBar
+                title="Readiness gates"
+                steps={readinessWorkflowSteps}
+              />
+              <div className="grid gap-4 xl:grid-cols-5">
+                {readinessStages.map((stage) => (
+                  <section
+                    key={stage.title}
+                    className={`rounded-2xl border px-5 py-4 ${getStageCardClassName(stage.state)}`}
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      {stage.title}
+                    </p>
+                    <p className="mt-3 text-sm font-medium capitalize text-slate-950">
+                      {stage.state}
+                    </p>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">
+                      {stage.detail}
+                    </p>
+                  </section>
+                ))}
+              </div>
             </div>
-          </div>
-        </DetailPanel>
+          </DetailPanel>
         ) : null}
 
         <DetailPanel
@@ -3234,38 +3569,44 @@ export default async function ProjectDetailPage({
               stat={`${projectAppointments.length} appointments`}
             />
             <div className="grid gap-8">
-            <section className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-slate-950">Appointments</p>
-              </div>
-              <div className="grid gap-4">
-                {projectAppointments.length > 0 ? (
-                  projectAppointments.slice(0, 2).map((appointment) => (
-                    <LinkedRecordCard
-                      key={appointment.id}
-                      href={`/appointments/${appointment.id}`}
-                      title={appointment.title}
-                      subtitle={
-                        appointment.customer?.name ??
-                        project.customer?.name ??
-                        "Unknown customer"
-                      }
-                      meta={`${appointment.appointmentType.replaceAll("_", " ")} / ${new Date(appointment.startsAt).toLocaleString()}`}
-                      badge={renderStatusBadge(formatStatusLabel(appointment.status))}
+              <section className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-950">
+                    Appointments
+                  </p>
+                </div>
+                <div className="grid gap-4">
+                  {projectAppointments.length > 0 ? (
+                    projectAppointments
+                      .slice(0, 2)
+                      .map((appointment) => (
+                        <LinkedRecordCard
+                          key={appointment.id}
+                          href={`/appointments/${appointment.id}`}
+                          title={appointment.title}
+                          subtitle={
+                            appointment.customer?.name ??
+                            project.customer?.name ??
+                            "Unknown customer"
+                          }
+                          meta={`${appointment.appointmentType.replaceAll("_", " ")} / ${new Date(appointment.startsAt).toLocaleString()}`}
+                          badge={renderStatusBadge(
+                            formatStatusLabel(appointment.status)
+                          )}
+                        />
+                      ))
+                  ) : (
+                    <AppEmptyState
+                      eyebrow="No appointments"
+                      title="Schedule project-facing coordination here"
+                      description="Use appointments for customer meetings, site visits, and follow-up blocks while keeping execution scheduling on canonical jobs."
+                      actionHref={`/appointments?projectId=${project.id}&customerId=${project.customerId}&compose=1#appointment-create`}
+                      actionLabel="Create appointment"
                     />
-                  ))
-                ) : (
-                  <AppEmptyState
-                    eyebrow="No appointments"
-                    title="Schedule project-facing coordination here"
-                    description="Use appointments for customer meetings, site visits, and follow-up blocks while keeping execution scheduling on canonical jobs."
-                    actionHref={`/appointments?projectId=${project.id}&customerId=${project.customerId}&compose=1#appointment-create`}
-                    actionLabel="Create appointment"
-                  />
-                )}
-              </div>
-            </section>
-          </div>
+                  )}
+                </div>
+              </section>
+            </div>
           </div>
         </DetailPanel>
 
@@ -3276,20 +3617,27 @@ export default async function ProjectDetailPage({
           <div className="grid gap-8 xl:grid-cols-2">
             <section className="space-y-4">
               <div>
-                <p className="text-sm font-medium text-slate-950">Estimate attachments</p>
+                <p className="text-sm font-medium text-slate-950">
+                  Estimate attachments
+                </p>
               </div>
               <div className="grid gap-4">
                 {projectEstimateAttachments.length > 0 ? (
-                  projectEstimateAttachments.slice(0, 4).map((attachment) => (
-                    <LinkedRecordCard
-                      key={attachment.id}
-                      href={attachment.downloadUrl ?? `/estimates/${attachment.estimateId}`}
-                      title={attachment.fileName}
-                      subtitle={attachment.estimateReferenceNumber}
-                      meta={new Date(attachment.createdAt).toLocaleString()}
-                      badge={renderStatusBadge("Estimate file")}
-                    />
-                  ))
+                  projectEstimateAttachments
+                    .slice(0, 4)
+                    .map((attachment) => (
+                      <LinkedRecordCard
+                        key={attachment.id}
+                        href={
+                          attachment.downloadUrl ??
+                          `/estimates/${attachment.estimateId}`
+                        }
+                        title={attachment.fileName}
+                        subtitle={attachment.estimateReferenceNumber}
+                        meta={new Date(attachment.createdAt).toLocaleString()}
+                        badge={renderStatusBadge("Estimate file")}
+                      />
+                    ))
                 ) : (
                   <AppEmptyState
                     eyebrow="No estimate files"
@@ -3302,24 +3650,33 @@ export default async function ProjectDetailPage({
 
             <section className="space-y-4">
               <div>
-                <p className="text-sm font-medium text-slate-950">Contract PDFs</p>
+                <p className="text-sm font-medium text-slate-950">
+                  Contract PDFs
+                </p>
               </div>
               <div className="grid gap-4">
                 {projectContractDocuments.length > 0 ? (
-                  projectContractDocuments.slice(0, 4).map((contract) => (
-                    <LinkedRecordCard
-                      key={contract.id}
-                      href={contract.sentPdfDownloadUrl ?? `/contracts/${contract.id}`}
-                      title={contract.sentPdfFileName ?? `${contract.title}.pdf`}
-                      subtitle={contract.title}
-                      meta={
-                        contract.sentPdfGeneratedAt
-                          ? `Generated ${new Date(contract.sentPdfGeneratedAt).toLocaleString()}`
-                          : "Sent contract PDF"
-                      }
-                      badge={renderStatusBadge("Sent PDF")}
-                    />
-                  ))
+                  projectContractDocuments
+                    .slice(0, 4)
+                    .map((contract) => (
+                      <LinkedRecordCard
+                        key={contract.id}
+                        href={
+                          contract.sentPdfDownloadUrl ??
+                          `/contracts/${contract.id}`
+                        }
+                        title={
+                          contract.sentPdfFileName ?? `${contract.title}.pdf`
+                        }
+                        subtitle={contract.title}
+                        meta={
+                          contract.sentPdfGeneratedAt
+                            ? `Generated ${new Date(contract.sentPdfGeneratedAt).toLocaleString()}`
+                            : "Sent contract PDF"
+                        }
+                        badge={renderStatusBadge("Sent PDF")}
+                      />
+                    ))
                 ) : (
                   <AppEmptyState
                     eyebrow="No sent PDFs"
@@ -3341,116 +3698,143 @@ export default async function ProjectDetailPage({
               eyebrow="Jobs / Scheduling / Punchlists"
               title="Execution pressure is summarized here first"
               description="Use this section to see whether the project is ready for the field, what is unscheduled, what still needs crew attention, and what closeout work is still open."
-              href={unscheduledJobs.length > 0 ? "/schedule?view=unscheduled" : "/jobs"}
-              linkLabel={unscheduledJobs.length > 0 ? "Open schedule" : "Open jobs"}
+              href={
+                unscheduledJobs.length > 0
+                  ? "/schedule?view=unscheduled"
+                  : "/jobs"
+              }
+              linkLabel={
+                unscheduledJobs.length > 0 ? "Open schedule" : "Open jobs"
+              }
               stat={`${projectJobs.length} jobs / ${jobsWithoutCrew.length} missing crew / ${unresolvedPunchlistItems.length} unresolved punchlists`}
             />
             <div className="grid gap-8 xl:grid-cols-3">
-            <section className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-slate-950">Jobs</p>
-              </div>
-              <div className="grid gap-4">
-                {projectJobs.length > 0 ? (
-                  projectJobs.slice(0, 3).map((job) => (
-                    <LinkedRecordCard
-                      key={job.id}
-                      href={`/jobs/${job.id}`}
-                      title={job.project?.name ?? project.name}
-                      subtitle={job.customer?.name ?? project.customer?.name ?? "Unknown customer"}
-                      meta={
-                        joinMetaParts([
-                          job.scheduledDate
-                            ? `${job.crewVendor?.name ?? "Crew not assigned"} / Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}`
-                            : `${job.crewVendor?.name ?? "Crew not assigned"} / Unscheduled`,
-                          formatUpdatedActivity(job.updatedAt)
-                        ])
-                      }
-                      badge={renderStatusBadge(formatStatusLabel(job.dispatchStatus))}
+              <section className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-950">Jobs</p>
+                </div>
+                <div className="grid gap-4">
+                  {projectJobs.length > 0 ? (
+                    projectJobs
+                      .slice(0, 3)
+                      .map((job) => (
+                        <LinkedRecordCard
+                          key={job.id}
+                          href={`/jobs/${job.id}`}
+                          title={job.project?.name ?? project.name}
+                          subtitle={
+                            job.customer?.name ??
+                            project.customer?.name ??
+                            "Unknown customer"
+                          }
+                          meta={joinMetaParts([
+                            job.scheduledDate
+                              ? `${job.crewVendor?.name ?? "Crew not assigned"} / Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}`
+                              : `${job.crewVendor?.name ?? "Crew not assigned"} / Unscheduled`,
+                            formatUpdatedActivity(job.updatedAt)
+                          ])}
+                          badge={renderStatusBadge(
+                            formatStatusLabel(job.dispatchStatus)
+                          )}
+                        />
+                      ))
+                  ) : (
+                    <AppEmptyState
+                      eyebrow="No jobs"
+                      title="Hold operations until the handoff is clear"
+                      description="Jobs should stay downstream of the commercial readiness chain instead of becoming a parallel scheduling system."
                     />
-                  ))
-                ) : (
-                  <AppEmptyState
-                    eyebrow="No jobs"
-                    title="Hold operations until the handoff is clear"
-                    description="Jobs should stay downstream of the commercial readiness chain instead of becoming a parallel scheduling system."
-                  />
-                )}
-              </div>
-            </section>
+                  )}
+                </div>
+              </section>
 
-            <section className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-slate-950">Punchlists</p>
-              </div>
-              <div className="grid gap-4">
-                {projectPunchlistItems.length > 0 ? (
-                  projectPunchlistItems.slice(0, 3).map((item) => (
-                    <LinkedRecordCard
-                      key={item.id}
-                      href={`/punchlists/${item.id}`}
-                      title={item.title}
-                      subtitle={item.assignee?.displayName ?? "Unassigned"}
-                      meta={
-                        item.job
-                          ? `Job ${item.job.id.slice(0, 8)} / ${item.dueDate ? `Due ${new Date(`${item.dueDate}T00:00:00`).toLocaleDateString()}` : "No due date"}`
-                          : item.dueDate
-                            ? `Due ${new Date(`${item.dueDate}T00:00:00`).toLocaleDateString()}`
-                            : "Project-level closeout item"
-                      }
-                      badge={renderStatusBadge(formatStatusLabel(item.status))}
+              <section className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-950">
+                    Punchlists
+                  </p>
+                </div>
+                <div className="grid gap-4">
+                  {projectPunchlistItems.length > 0 ? (
+                    projectPunchlistItems
+                      .slice(0, 3)
+                      .map((item) => (
+                        <LinkedRecordCard
+                          key={item.id}
+                          href={`/punchlists/${item.id}`}
+                          title={item.title}
+                          subtitle={item.assignee?.displayName ?? "Unassigned"}
+                          meta={
+                            item.job
+                              ? `Job ${item.job.id.slice(0, 8)} / ${item.dueDate ? `Due ${new Date(`${item.dueDate}T00:00:00`).toLocaleDateString()}` : "No due date"}`
+                              : item.dueDate
+                                ? `Due ${new Date(`${item.dueDate}T00:00:00`).toLocaleDateString()}`
+                                : "Project-level closeout item"
+                          }
+                          badge={renderStatusBadge(
+                            formatStatusLabel(item.status)
+                          )}
+                        />
+                      ))
+                  ) : (
+                    <AppEmptyState
+                      eyebrow="No punchlists"
+                      title="Track closeout work here"
+                      description="When corrective or closeout work needs to survive beyond one project day, keep it on the canonical punchlist chain."
+                      actionHref={`/punchlists?projectId=${project.id}&compose=1`}
+                      actionLabel="Create punchlist item"
                     />
-                  ))
-                ) : (
-                  <AppEmptyState
-                    eyebrow="No punchlists"
-                    title="Track closeout work here"
-                    description="When corrective or closeout work needs to survive beyond one project day, keep it on the canonical punchlist chain."
-                    actionHref={`/punchlists?projectId=${project.id}&compose=1`}
-                    actionLabel="Create punchlist item"
-                  />
-                )}
-              </div>
-            </section>
+                  )}
+                </div>
+              </section>
 
-            <section className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-slate-950">Daily execution</p>
-              </div>
-              <div className="grid gap-4">
-                {projectDailyLogs.slice(0, 2).length > 0 ? (
-                  projectDailyLogs.slice(0, 2).map((dailyLog) => (
-                    <LinkedRecordCard
-                      key={dailyLog.id}
-                      href={`/daily-logs/${dailyLog.id}`}
-                      title={
-                        dailyLog.summary?.trim() ||
-                        new Date(`${dailyLog.logDate}T00:00:00`).toLocaleDateString()
-                      }
-                      subtitle={new Date(`${dailyLog.logDate}T00:00:00`).toLocaleDateString()}
-                      meta={
-                        joinMetaParts([
-                          dailyLog.job
-                            ? `Job ${dailyLog.job.id.slice(0, 8)} / ${dailyLog.weatherSummary ?? "No weather summary"}`
-                            : dailyLog.weatherSummary ?? "Project-day execution record",
-                          formatUpdatedActivity(dailyLog.updatedAt)
-                        ])
-                      }
-                      badge={renderStatusBadge(formatStatusLabel(dailyLog.status))}
+              <section className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-950">
+                    Daily execution
+                  </p>
+                </div>
+                <div className="grid gap-4">
+                  {projectDailyLogs.slice(0, 2).length > 0 ? (
+                    projectDailyLogs
+                      .slice(0, 2)
+                      .map((dailyLog) => (
+                        <LinkedRecordCard
+                          key={dailyLog.id}
+                          href={`/daily-logs/${dailyLog.id}`}
+                          title={
+                            dailyLog.summary?.trim() ||
+                            new Date(
+                              `${dailyLog.logDate}T00:00:00`
+                            ).toLocaleDateString()
+                          }
+                          subtitle={new Date(
+                            `${dailyLog.logDate}T00:00:00`
+                          ).toLocaleDateString()}
+                          meta={joinMetaParts([
+                            dailyLog.job
+                              ? `Job ${dailyLog.job.id.slice(0, 8)} / ${dailyLog.weatherSummary ?? "No weather summary"}`
+                              : (dailyLog.weatherSummary ??
+                                "Project-day execution record"),
+                            formatUpdatedActivity(dailyLog.updatedAt)
+                          ])}
+                          badge={renderStatusBadge(
+                            formatStatusLabel(dailyLog.status)
+                          )}
+                        />
+                      ))
+                  ) : (
+                    <AppEmptyState
+                      eyebrow="No daily logs"
+                      title="Capture the first project day"
+                      description="Daily execution records stay connected to the same project and job chain once field work begins."
+                      actionHref={`/daily-logs?projectId=${project.id}`}
+                      actionLabel="Create daily log"
                     />
-                  ))
-                ) : (
-                  <AppEmptyState
-                    eyebrow="No daily logs"
-                    title="Capture the first project day"
-                    description="Daily execution records stay connected to the same project and job chain once field work begins."
-                    actionHref={`/daily-logs?projectId=${project.id}`}
-                    actionLabel="Create daily log"
-                  />
-                )}
-              </div>
-            </section>
-          </div>
+                  )}
+                </div>
+              </section>
+            </div>
           </div>
         </ExecutionSection>
 
@@ -3464,141 +3848,170 @@ export default async function ProjectDetailPage({
               title="Financial state is visible without leaving the project hub"
               description="Use this section to see what is billable, what has been invoiced, and what still needs collection before you move into the deeper billing workspaces."
               href={openInvoices.length > 0 ? "/payments" : "/invoices"}
-              linkLabel={openInvoices.length > 0 ? "Open payments" : "Open invoices"}
+              linkLabel={
+                openInvoices.length > 0 ? "Open payments" : "Open invoices"
+              }
               stat={`${projectInvoices.length} invoices / ${formatMoney(openInvoices.reduce((sum, invoice) => sum + Number(invoice.balanceDueAmount), 0))} open`}
             />
             <div className="grid gap-8 xl:grid-cols-4">
-            <section className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-slate-950">Change orders</p>
-              </div>
-              <div className="grid gap-4">
-                {projectChangeOrders.length > 0 ? (
-                  projectChangeOrders.slice(0, 2).map((changeOrder) => (
-                    <LinkedRecordCard
-                      key={changeOrder.id}
-                      href={`/change-orders/${changeOrder.id}`}
-                      title={changeOrder.title}
-                      subtitle={changeOrder.customer?.name ?? project.customer?.name ?? "Unknown customer"}
-                      meta={joinMetaParts([
-                        formatMoney(changeOrder.priceAdjustment),
-                        changeOrder.invoice
-                          ? `Invoice ${changeOrder.invoice.referenceNumber}`
-                          : "Project scope change",
-                        formatUpdatedActivity(changeOrder.updatedAt)
-                      ])}
-                      badge={renderStatusBadge(formatStatusLabel(changeOrder.status))}
+              <section className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-950">
+                    Change orders
+                  </p>
+                </div>
+                <div className="grid gap-4">
+                  {projectChangeOrders.length > 0 ? (
+                    projectChangeOrders
+                      .slice(0, 2)
+                      .map((changeOrder) => (
+                        <LinkedRecordCard
+                          key={changeOrder.id}
+                          href={`/change-orders/${changeOrder.id}`}
+                          title={changeOrder.title}
+                          subtitle={
+                            changeOrder.customer?.name ??
+                            project.customer?.name ??
+                            "Unknown customer"
+                          }
+                          meta={joinMetaParts([
+                            formatMoney(changeOrder.priceAdjustment),
+                            changeOrder.invoice
+                              ? `Invoice ${changeOrder.invoice.referenceNumber}`
+                              : "Project scope change",
+                            formatUpdatedActivity(changeOrder.updatedAt)
+                          ])}
+                          badge={renderStatusBadge(
+                            formatStatusLabel(changeOrder.status)
+                          )}
+                        />
+                      ))
+                  ) : (
+                    <AppEmptyState
+                      eyebrow="No change orders"
+                      title="Track scope changes here"
+                      description="When scope or price shifts after contract approval, keep the adjustment on the same project chain with a canonical change order."
+                      actionHref={`/change-orders?projectId=${project.id}&compose=1`}
+                      actionLabel="Create change order"
                     />
-                  ))
-                ) : (
-                  <AppEmptyState
-                    eyebrow="No change orders"
-                    title="Track scope changes here"
-                    description="When scope or price shifts after contract approval, keep the adjustment on the same project chain with a canonical change order."
-                    actionHref={`/change-orders?projectId=${project.id}&compose=1`}
-                    actionLabel="Create change order"
-                  />
-                )}
-              </div>
-            </section>
+                  )}
+                </div>
+              </section>
 
-            <section className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-slate-950">Progress billing / SOV</p>
-              </div>
-              <div className="grid gap-4">
-                {projectProgressBilling.length > 0 ? (
-                  projectProgressBilling.slice(0, 2).map((workspace) => (
-                    <LinkedRecordCard
-                      key={workspace.id}
-                      href={`/progress-billing/${workspace.id}`}
-                      title={workspace.estimate?.referenceNumber ?? "Schedule of values"}
-                      subtitle={
-                        workspace.customer?.name ?? project.customer?.name ?? "Unknown customer"
-                      }
-                      meta={
-                        `Current ${formatMoney(workspace.currentBillableTotal)} / Balance ${formatMoney(workspace.balanceToFinishTotal)} / ${workspace.weightedPercentComplete}% complete`
-                      }
-                      badge={renderStatusBadge(formatStatusLabel(workspace.status))}
+              <section className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-950">
+                    Progress billing / SOV
+                  </p>
+                </div>
+                <div className="grid gap-4">
+                  {projectProgressBilling.length > 0 ? (
+                    projectProgressBilling
+                      .slice(0, 2)
+                      .map((workspace) => (
+                        <LinkedRecordCard
+                          key={workspace.id}
+                          href={`/progress-billing/${workspace.id}`}
+                          title={
+                            workspace.estimate?.referenceNumber ??
+                            "Schedule of values"
+                          }
+                          subtitle={
+                            workspace.customer?.name ??
+                            project.customer?.name ??
+                            "Unknown customer"
+                          }
+                          meta={`Current ${formatMoney(workspace.currentBillableTotal)} / Balance ${formatMoney(workspace.balanceToFinishTotal)} / ${workspace.weightedPercentComplete}% complete`}
+                          badge={renderStatusBadge(
+                            formatStatusLabel(workspace.status)
+                          )}
+                        />
+                      ))
+                  ) : (
+                    <AppEmptyState
+                      eyebrow="No progress billing"
+                      title="Open progress billing after approved scope seeds here"
+                      description="Once approved estimate items seed a schedule of values on this project, progress billing stays tied to the same estimate, project, and invoice chain."
                     />
-                  ))
-                ) : (
-                  <AppEmptyState
-                    eyebrow="No progress billing"
-                    title="Open progress billing after approved scope seeds here"
-                    description="Once approved estimate items seed a schedule of values on this project, progress billing stays tied to the same estimate, project, and invoice chain."
-                  />
-                )}
-              </div>
-            </section>
+                  )}
+                </div>
+              </section>
 
-            <section className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-slate-950">Invoices</p>
-              </div>
-              <div className="grid gap-4">
-                {projectInvoices.length > 0 ? (
-                  projectInvoices.slice(0, 3).map((invoice) => (
-                    <LinkedRecordCard
-                      key={invoice.id}
-                      href={`/invoices/${invoice.id}`}
-                      title={invoice.referenceNumber}
-                      subtitle={
-                        invoice.customer?.name ?? project.customer?.name ?? "Unknown customer"
-                      }
-                      meta={
-                        joinMetaParts([
-                          getProjectInvoiceSummary(invoice),
-                          formatUpdatedActivity(invoice.updatedAt)
-                        ])
-                      }
-                      badge={renderStatusBadge(formatStatusLabel(invoice.status))}
+              <section className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-950">Invoices</p>
+                </div>
+                <div className="grid gap-4">
+                  {projectInvoices.length > 0 ? (
+                    projectInvoices
+                      .slice(0, 3)
+                      .map((invoice) => (
+                        <LinkedRecordCard
+                          key={invoice.id}
+                          href={`/invoices/${invoice.id}`}
+                          title={invoice.referenceNumber}
+                          subtitle={
+                            invoice.customer?.name ??
+                            project.customer?.name ??
+                            "Unknown customer"
+                          }
+                          meta={joinMetaParts([
+                            getProjectInvoiceSummary(invoice),
+                            formatUpdatedActivity(invoice.updatedAt)
+                          ])}
+                          badge={renderStatusBadge(
+                            formatStatusLabel(invoice.status)
+                          )}
+                        />
+                      ))
+                  ) : (
+                    <AppEmptyState
+                      eyebrow="No invoices"
+                      title="Create invoice from the connected workflow"
+                      description="Billing should continue from the same project and downstream work context, with deposit readiness staying on canonical invoices instead of a side model."
                     />
-                  ))
-                ) : (
-                  <AppEmptyState
-                    eyebrow="No invoices"
-                    title="Create invoice from the connected workflow"
-                    description="Billing should continue from the same project and downstream work context, with deposit readiness staying on canonical invoices instead of a side model."
-                  />
-                )}
-              </div>
-            </section>
+                  )}
+                </div>
+              </section>
 
-            <section className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-slate-950">Payments</p>
-              </div>
-              <div className="grid gap-4">
-                {recentPayments.length > 0 ? (
-                  recentPayments.slice(0, 3).map((payment) => (
-                    <LinkedRecordCard
-                      key={payment.id}
-                      href={
-                        paymentFocusInvoice
-                          ? `/invoices/${paymentFocusInvoice.id}`
-                          : "/payments"
-                      }
-                      title={formatMoney(payment.amount)}
-                      subtitle={
-                        paymentFocusInvoice
-                          ? `On ${paymentFocusInvoice.referenceNumber}`
-                          : "Recent payment"
-                      }
-                      meta={getPaymentRecordSummary(payment)}
-                      badge={renderStatusBadge(formatStatusLabel(payment.status))}
+              <section className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-950">Payments</p>
+                </div>
+                <div className="grid gap-4">
+                  {recentPayments.length > 0 ? (
+                    recentPayments
+                      .slice(0, 3)
+                      .map((payment) => (
+                        <LinkedRecordCard
+                          key={payment.id}
+                          href={
+                            paymentFocusInvoice
+                              ? `/invoices/${paymentFocusInvoice.id}`
+                              : "/payments"
+                          }
+                          title={formatMoney(payment.amount)}
+                          subtitle={
+                            paymentFocusInvoice
+                              ? `On ${paymentFocusInvoice.referenceNumber}`
+                              : "Recent payment"
+                          }
+                          meta={getPaymentRecordSummary(payment)}
+                          badge={renderStatusBadge(
+                            formatStatusLabel(payment.status)
+                          )}
+                        />
+                      ))
+                  ) : (
+                    <AppEmptyState
+                      eyebrow="No payments"
+                      title="Payment activity will show up here"
+                      description="Recorded payments remain attached to canonical invoices, so this workspace surfaces them through the same billing chain."
                     />
-                  ))
-                ) : (
-                  <AppEmptyState
-                    eyebrow="No payments"
-                    title="Payment activity will show up here"
-                    description="Recorded payments remain attached to canonical invoices, so this workspace surfaces them through the same billing chain."
-                  />
-                )}
-              </div>
-            </section>
-          </div>
+                  )}
+                </div>
+              </section>
+            </div>
           </div>
         </DetailPanel>
 
@@ -3612,9 +4025,11 @@ export default async function ProjectDetailPage({
                 {
                   label: "Financing status",
                   value: formatStatusLabel(
-                    readinessSnapshot?.financingStatus ?? project.financingStatus
+                    readinessSnapshot?.financingStatus ??
+                      project.financingStatus
                   ),
-                  detail: "Stored on the canonical project and used only as readiness context."
+                  detail:
+                    "Stored on the canonical project and used only as readiness context."
                 },
                 {
                   label: "Deposit readiness",
@@ -3623,7 +4038,8 @@ export default async function ProjectDetailPage({
                       ? "Deposit satisfied"
                       : "Deposit required"
                     : "No deposit requirement",
-                  detail: "Deposit behavior continues to use the existing financial chain."
+                  detail:
+                    "Deposit behavior continues to use the existing financial chain."
                 },
                 {
                   label: "Commercial readiness",
@@ -3635,7 +4051,8 @@ export default async function ProjectDetailPage({
                 {
                   label: "Ready to schedule",
                   value: formatDateTime(readyToScheduleAt),
-                  detail: "Readiness is derived from existing project, contract, deposit, and financing state."
+                  detail:
+                    "Readiness is derived from existing project, contract, deposit, and financing state."
                 }
               ].map((item) => (
                 <section
@@ -3648,7 +4065,9 @@ export default async function ProjectDetailPage({
                   <p className="mt-3 text-base font-semibold capitalize text-slate-950">
                     {item.value}
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.detail}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {item.detail}
+                  </p>
                 </section>
               ))}
             </div>
@@ -3659,15 +4078,43 @@ export default async function ProjectDetailPage({
             >
               <input type="hidden" name="projectId" value={project.id} />
               <input type="hidden" name="name" value={project.name} />
-              <input type="hidden" name="customerId" value={project.customerId} />
+              <input
+                type="hidden"
+                name="customerId"
+                value={project.customerId}
+              />
               <input type="hidden" name="status" value={project.status} />
-              <input type="hidden" name="description" value={project.description ?? ""} />
-              <input type="hidden" name="addressLine1" value={project.addressLine1 ?? ""} />
-              <input type="hidden" name="addressLine2" value={project.addressLine2 ?? ""} />
+              <input
+                type="hidden"
+                name="description"
+                value={project.description ?? ""}
+              />
+              <input
+                type="hidden"
+                name="addressLine1"
+                value={project.addressLine1 ?? ""}
+              />
+              <input
+                type="hidden"
+                name="addressLine2"
+                value={project.addressLine2 ?? ""}
+              />
               <input type="hidden" name="city" value={project.city ?? ""} />
-              <input type="hidden" name="stateRegion" value={project.stateRegion ?? ""} />
-              <input type="hidden" name="postalCode" value={project.postalCode ?? ""} />
-              <input type="hidden" name="countryCode" value={project.countryCode ?? ""} />
+              <input
+                type="hidden"
+                name="stateRegion"
+                value={project.stateRegion ?? ""}
+              />
+              <input
+                type="hidden"
+                name="postalCode"
+                value={project.postalCode ?? ""}
+              />
+              <input
+                type="hidden"
+                name="countryCode"
+                value={project.countryCode ?? ""}
+              />
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-slate-800">
                   Edit financing status
@@ -3686,8 +4133,8 @@ export default async function ProjectDetailPage({
                 </select>
               </label>
               <p className="mt-3 text-xs leading-5 text-slate-500">
-                This updates the existing project readiness field only. It does not change
-                estimate, invoice, catalog, or contract behavior.
+                This updates the existing project readiness field only. It does
+                not change estimate, invoice, catalog, or contract behavior.
               </p>
               <button
                 type="submit"
@@ -3705,7 +4152,9 @@ export default async function ProjectDetailPage({
         >
           <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
             <div className="space-y-3">
-              <p className="text-sm font-medium text-slate-950">Current punch state</p>
+              <p className="text-sm font-medium text-slate-950">
+                Current punch state
+              </p>
               {projectOpenTimeStates.length > 0 ? (
                 projectOpenTimeStates.slice(0, 3).map((state) => (
                   <div
@@ -3716,33 +4165,46 @@ export default async function ProjectDetailPage({
                       {state.person?.displayName ?? "Unknown worker"}
                     </p>
                     <p className="mt-1">
-                      {state.currentPunchState === "on_break" ? "On break" : "Punched in"}
+                      {state.currentPunchState === "on_break"
+                        ? "On break"
+                        : "Punched in"}
                     </p>
                     <p className="mt-1">
-                      {state.job ? `Job ${state.job.id.slice(0, 8)}` : "Project-level time"}
+                      {state.job
+                        ? `Job ${state.job.id.slice(0, 8)}`
+                        : "Project-level time"}
                     </p>
                   </div>
                 ))
               ) : (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
-                  No open time sessions are currently attributed to this project.
+                  No open time sessions are currently attributed to this
+                  project.
                 </div>
               )}
             </div>
 
             <div className="space-y-3">
-              <p className="text-sm font-medium text-slate-950">Recent time cards</p>
+              <p className="text-sm font-medium text-slate-950">
+                Recent time cards
+              </p>
               {projectTimeCards.slice(0, 3).length > 0 ? (
-                projectTimeCards.slice(0, 3).map((timeCard) => (
-                  <LinkedRecordCard
-                    key={timeCard.id}
-                    href={`/time-cards/${timeCard.id}`}
-                    title={timeCard.person?.displayName ?? "Unknown worker"}
-                    subtitle={new Date(`${timeCard.workDate}T00:00:00`).toLocaleDateString()}
-                    meta={`${timeCard.workedMinutes} worked minutes${timeCard.job ? ` / Job ${timeCard.job.id.slice(0, 8)}` : ""}`}
-                    badge={renderStatusBadge(formatStatusLabel(timeCard.status))}
-                  />
-                ))
+                projectTimeCards
+                  .slice(0, 3)
+                  .map((timeCard) => (
+                    <LinkedRecordCard
+                      key={timeCard.id}
+                      href={`/time-cards/${timeCard.id}`}
+                      title={timeCard.person?.displayName ?? "Unknown worker"}
+                      subtitle={new Date(
+                        `${timeCard.workDate}T00:00:00`
+                      ).toLocaleDateString()}
+                      meta={`${timeCard.workedMinutes} worked minutes${timeCard.job ? ` / Job ${timeCard.job.id.slice(0, 8)}` : ""}`}
+                      badge={renderStatusBadge(
+                        formatStatusLabel(timeCard.status)
+                      )}
+                    />
+                  ))
               ) : (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
                   No time cards are attributed to this project yet.
@@ -3775,7 +4237,11 @@ export default async function ProjectDetailPage({
             items={[
               {
                 label: "Commercial readiness",
-                value: <span className="capitalize">{formatStatusLabel(readinessStatus)}</span>
+                value: (
+                  <span className="capitalize">
+                    {formatStatusLabel(readinessStatus)}
+                  </span>
+                )
               },
               {
                 label: "Ready to schedule",
@@ -3785,7 +4251,10 @@ export default async function ProjectDetailPage({
                 label: "Financing status",
                 value: (
                   <span className="capitalize">
-                    {formatStatusLabel(readinessSnapshot?.financingStatus ?? project.financingStatus)}
+                    {formatStatusLabel(
+                      readinessSnapshot?.financingStatus ??
+                        project.financingStatus
+                    )}
                   </span>
                 )
               },
@@ -3816,7 +4285,9 @@ export default async function ProjectDetailPage({
                       label: "Assessment status",
                       value: (
                         <span className="capitalize">
-                          {formatStatusLabel(projectOpportunity.siteAssessmentStatus)}
+                          {formatStatusLabel(
+                            projectOpportunity.siteAssessmentStatus
+                          )}
                         </span>
                       )
                     },
@@ -3843,7 +4314,11 @@ export default async function ProjectDetailPage({
               },
               {
                 label: "Status",
-                value: <span className="capitalize">{formatStatusLabel(project.status)}</span>
+                value: (
+                  <span className="capitalize">
+                    {formatStatusLabel(project.status)}
+                  </span>
+                )
               },
               {
                 label: "Scope notes",
@@ -3888,8 +4363,9 @@ export default async function ProjectDetailPage({
                   {
                     label: "Service state / postal",
                     value:
-                      [project.stateRegion, project.postalCode].filter(Boolean).join(" ") ||
-                      "Not provided"
+                      [project.stateRegion, project.postalCode]
+                        .filter(Boolean)
+                        .join(" ") || "Not provided"
                   },
                   {
                     label: "Created",
@@ -3927,18 +4403,23 @@ export default async function ProjectDetailPage({
                     <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                       {grant.customerContact?.isPrimary
                         ? "Primary contact"
-                        : grant.customerContact?.relationshipLabel?.replaceAll("_", " ") ??
-                          "Customer contact"}
+                        : (grant.customerContact?.relationshipLabel?.replaceAll(
+                            "_",
+                            " "
+                          ) ?? "Customer contact")}
                     </p>
                     <p className="mt-2">
-                      {grant.portalUser?.email ?? grant.invitedEmail ?? "Email not captured"}
+                      {grant.portalUser?.email ??
+                        grant.invitedEmail ??
+                        "Email not captured"}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="rounded-[6px] border border-dashed border-slate-300 bg-slate-50 px-4 py-4">
-                No customer contacts currently have active portal visibility for this project.
+                No customer contacts currently have active portal visibility for
+                this project.
               </div>
             )}
             <Link
@@ -3966,7 +4447,9 @@ export default async function ProjectDetailPage({
                     "Unknown customer",
                   formatUpdatedActivity(projectEstimates[0].updatedAt)
                 ])}
-                badge={renderStatusBadge(formatStatusLabel(projectEstimates[0].status))}
+                badge={renderStatusBadge(
+                  formatStatusLabel(projectEstimates[0].status)
+                )}
               />
             ) : null}
             {projectContracts[0] ? (
@@ -3981,7 +4464,9 @@ export default async function ProjectDetailPage({
                   }),
                   formatUpdatedActivity(projectContracts[0].updatedAt)
                 ])}
-                badge={renderStatusBadge(formatStatusLabel(projectContracts[0].status))}
+                badge={renderStatusBadge(
+                  formatStatusLabel(projectContracts[0].status)
+                )}
               />
             ) : null}
             {projectJobs[0] ? (
@@ -3990,10 +4475,13 @@ export default async function ProjectDetailPage({
                 title={projectJobs[0].project?.name ?? project.name}
                 subtitle="Current job"
                 meta={joinMetaParts([
-                  projectJobs[0].estimate?.referenceNumber ?? "Project-driven job",
+                  projectJobs[0].estimate?.referenceNumber ??
+                    "Project-driven job",
                   formatUpdatedActivity(projectJobs[0].updatedAt)
                 ])}
-                badge={renderStatusBadge(formatStatusLabel(projectJobs[0].dispatchStatus))}
+                badge={renderStatusBadge(
+                  formatStatusLabel(projectJobs[0].dispatchStatus)
+                )}
               />
             ) : null}
             {projectInvoices[0] ? (
@@ -4009,7 +4497,9 @@ export default async function ProjectDetailPage({
                   getProjectInvoiceSummary(projectInvoices[0]),
                   formatUpdatedActivity(projectInvoices[0].updatedAt)
                 ])}
-                badge={renderStatusBadge(formatStatusLabel(projectInvoices[0].status))}
+                badge={renderStatusBadge(
+                  formatStatusLabel(projectInvoices[0].status)
+                )}
               />
             ) : null}
             {projectChangeOrders[0] ||
@@ -4033,7 +4523,9 @@ export default async function ProjectDetailPage({
                           : "Project-linked scope change",
                         formatUpdatedActivity(projectChangeOrders[0].updatedAt)
                       ])}
-                      badge={renderStatusBadge(formatStatusLabel(projectChangeOrders[0].status))}
+                      badge={renderStatusBadge(
+                        formatStatusLabel(projectChangeOrders[0].status)
+                      )}
                     />
                   ) : null}
                   {projectAppointments[0] ? (
@@ -4042,7 +4534,9 @@ export default async function ProjectDetailPage({
                       title={projectAppointments[0].title}
                       subtitle="Current appointment"
                       meta={`${projectAppointments[0].appointmentType.replaceAll("_", " ")} / ${new Date(projectAppointments[0].startsAt).toLocaleString()}`}
-                      badge={renderStatusBadge(formatStatusLabel(projectAppointments[0].status))}
+                      badge={renderStatusBadge(
+                        formatStatusLabel(projectAppointments[0].status)
+                      )}
                     />
                   ) : null}
                   {projectPunchlistItems[0] ? (
@@ -4054,7 +4548,9 @@ export default async function ProjectDetailPage({
                         projectPunchlistItems[0].assignee?.displayName ??
                         "Unassigned closeout item"
                       }
-                      badge={renderStatusBadge(formatStatusLabel(projectPunchlistItems[0].status))}
+                      badge={renderStatusBadge(
+                        formatStatusLabel(projectPunchlistItems[0].status)
+                      )}
                     />
                   ) : null}
                   {projectDailyLogs[0] ? (
@@ -4062,14 +4558,19 @@ export default async function ProjectDetailPage({
                       href={`/daily-logs/${projectDailyLogs[0].id}`}
                       title={
                         projectDailyLogs[0].summary?.trim() ||
-                        new Date(`${projectDailyLogs[0].logDate}T00:00:00`).toLocaleDateString()
+                        new Date(
+                          `${projectDailyLogs[0].logDate}T00:00:00`
+                        ).toLocaleDateString()
                       }
                       subtitle="Current daily log"
                       meta={joinMetaParts([
-                        projectDailyLogs[0].weatherSummary ?? "Recent field execution record",
+                        projectDailyLogs[0].weatherSummary ??
+                          "Recent field execution record",
                         formatUpdatedActivity(projectDailyLogs[0].updatedAt)
                       ])}
-                      badge={renderStatusBadge(formatStatusLabel(projectDailyLogs[0].status))}
+                      badge={renderStatusBadge(
+                        formatStatusLabel(projectDailyLogs[0].status)
+                      )}
                     />
                   ) : null}
                 </div>
@@ -4084,7 +4585,8 @@ export default async function ProjectDetailPage({
             !projectPunchlistItems[0] &&
             !projectDailyLogs[0] ? (
               <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">
-                No related estimate, contract, appointment, change order, punchlist item, daily log, job, or invoice has been created yet.
+                No related estimate, contract, appointment, change order,
+                punchlist item, daily log, job, or invoice has been created yet.
               </div>
             ) : null}
           </div>
@@ -4132,7 +4634,11 @@ export default async function ProjectDetailPage({
               />
             ) : (
               <ScheduleContextNotice
-                eyebrow={projectJobs.length > 0 ? "Ready for scheduling" : "No jobs yet"}
+                eyebrow={
+                  projectJobs.length > 0
+                    ? "Ready for scheduling"
+                    : "No jobs yet"
+                }
                 title={
                   projectJobs.length > 0
                     ? "Project jobs exist, but no calendar commitment is set yet"
@@ -4183,7 +4689,8 @@ export default async function ProjectDetailPage({
                         : activeJobs.length > 0
                           ? "in_progress"
                           : "all",
-                    crew: jobsWithoutAssignments.length > 0 ? "unassigned" : "all"
+                    crew:
+                      jobsWithoutAssignments.length > 0 ? "unassigned" : "all"
                   }),
                   label: "Open schedule",
                   variant: "subtle"

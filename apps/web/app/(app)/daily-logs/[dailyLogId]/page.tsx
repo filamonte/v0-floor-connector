@@ -105,14 +105,24 @@ export default async function DailyLogDetailPage({
 }: DailyLogDetailPageProps) {
   const { dailyLogId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
-  const dailyLog = await getDailyLogById(dailyLogId, `/daily-logs/${dailyLogId}`);
+  const dailyLog = await getDailyLogById(
+    dailyLogId,
+    `/daily-logs/${dailyLogId}`
+  );
 
   if (!dailyLog) {
     notFound();
   }
 
-  const [projects, jobs, people, fieldNotes, laborSummary, timeCards, dailyLogAttachments] =
-    await Promise.all([
+  const [
+    projects,
+    jobs,
+    people,
+    fieldNotes,
+    laborSummary,
+    timeCards,
+    dailyLogAttachments
+  ] = await Promise.all([
     listProjects(),
     listJobs(),
     listPeople(),
@@ -123,7 +133,11 @@ export default async function DailyLogDetailPage({
       dailyLog.logDate,
       `/daily-logs/${dailyLog.id}`
     ),
-    listExecutionAttachmentsBySubject("daily_log", dailyLog.id, `/daily-logs/${dailyLog.id}`)
+    listExecutionAttachmentsBySubject(
+      "daily_log",
+      dailyLog.id,
+      `/daily-logs/${dailyLog.id}`
+    )
   ]);
   const fieldNoteAttachments = await listExecutionAttachmentsByFieldNotes(
     fieldNotes.map((fieldNote) => fieldNote.id),
@@ -172,7 +186,10 @@ export default async function DailyLogDetailPage({
             "This execution record is finalized, so the main task now is using it as the day-level reference point for field context on the connected project and job chain."
         };
   const notesByType = new Map<string, typeof fieldNotes>();
-  const attachmentsByFieldNoteId = new Map<string, typeof fieldNoteAttachments>();
+  const attachmentsByFieldNoteId = new Map<
+    string,
+    typeof fieldNoteAttachments
+  >();
 
   for (const noteType of fieldNoteTypeOrder) {
     notesByType.set(
@@ -184,7 +201,9 @@ export default async function DailyLogDetailPage({
   for (const fieldNote of fieldNotes) {
     attachmentsByFieldNoteId.set(
       fieldNote.id,
-      fieldNoteAttachments.filter((attachment) => attachment.subjectId === fieldNote.id)
+      fieldNoteAttachments.filter(
+        (attachment) => attachment.subjectId === fieldNote.id
+      )
     );
   }
 
@@ -194,8 +213,11 @@ export default async function DailyLogDetailPage({
         <div className="rounded-[2rem] border border-slate-200 bg-white/92 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
           <DetailPageHeader
             eyebrow="Daily Execution Workspace"
-            title={dailyLog.summary?.trim() || `${formatDate(dailyLog.logDate)} field log`}
-            description="Use this page as the canonical project-day execution workspace for field narrative, blockers, structured field notes, and connected labor continuity."
+            title={
+              dailyLog.summary?.trim() ||
+              `${formatDate(dailyLog.logDate)} field log`
+            }
+            description="Use this page as the canonical project-day execution workspace for field narrative, blockers, structured field notes, attachments, and connected labor continuity on the same project/job chain."
             backHref="/daily-logs"
             backLabel="Back to daily logs"
             actions={
@@ -204,7 +226,7 @@ export default async function DailyLogDetailPage({
                   href={`/projects/${dailyLog.projectId}`}
                   className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
                 >
-                  Open project hub
+                  Open Project Workspace
                 </Link>
                 {dailyLog.jobId ? (
                   <Link
@@ -245,7 +267,9 @@ export default async function DailyLogDetailPage({
                   label: "What this page is for",
                   content: (
                     <p className="text-sm leading-6 text-slate-600">
-                      Review the project-day record first, then use field notes and labor continuity to explain what actually happened in the field.
+                      Review the project-day record first, then use field notes,
+                      attachments, and labor continuity to explain what happened
+                      in the job/schedule stage.
                     </p>
                   )
                 },
@@ -258,9 +282,11 @@ export default async function DailyLogDetailPage({
                         {dailyLog.weatherSummary ?? "No weather summary"}
                       </p>
                       <p className="mt-2 text-sm text-slate-600">
-                        {dailyLog.temperatureLowF !== null || dailyLog.temperatureHighF !== null
+                        {dailyLog.temperatureLowF !== null ||
+                        dailyLog.temperatureHighF !== null
                           ? `${dailyLog.temperatureLowF ?? "?"}F to ${dailyLog.temperatureHighF ?? "?"}F`
-                          : dailyLog.weatherConditions ?? "No weather details entered"}
+                          : (dailyLog.weatherConditions ??
+                            "No weather details entered")}
                       </p>
                     </>
                   )
@@ -276,7 +302,7 @@ export default async function DailyLogDetailPage({
                       <p className="mt-2 text-sm text-slate-600">
                         {laborSummary
                           ? `${laborSummary.totalHoursWorked.toFixed(1)} total hours from ${laborSummary.totalTimeCardCount} time card${laborSummary.totalTimeCardCount === 1 ? "" : "s"}`
-                          : "No time-card continuity is connected to this project day yet."}
+                          : "No time-card continuity is connected to this project day yet; use Time when labor attribution is missing."}
                       </p>
                     </>
                   )
@@ -301,7 +327,7 @@ export default async function DailyLogDetailPage({
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)]">
           <DetailPanel
             title="Daily Narrative"
-            description="This is the main project-day record. Review the summary, completed work, planned next work, and blockers before dropping into note-level detail."
+            description="This is the main project-day record. Review the summary, completed work, planned next work, and blockers before dropping into note-level detail; upstream readiness or commercial issues should still resolve in Project Workspace."
           >
             <div className="grid gap-4 lg:grid-cols-2">
               <div className="space-y-4">
@@ -312,30 +338,42 @@ export default async function DailyLogDetailPage({
                   </p>
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5">
-                  <p className="text-sm font-medium text-slate-950">Work completed</p>
+                  <p className="text-sm font-medium text-slate-950">
+                    Work completed
+                  </p>
                   <p className="mt-4 text-sm leading-7 text-slate-600">
-                    {dailyLog.workCompleted ?? "No completed-work narrative captured yet."}
+                    {dailyLog.workCompleted ??
+                      "No completed-work narrative captured yet."}
                   </p>
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5">
-                  <p className="text-sm font-medium text-slate-950">Work planned next</p>
+                  <p className="text-sm font-medium text-slate-950">
+                    Work planned next
+                  </p>
                   <p className="mt-4 text-sm leading-7 text-slate-600">
-                    {dailyLog.workPlannedNext ?? "No next-step narrative captured yet."}
+                    {dailyLog.workPlannedNext ??
+                      "No next-step narrative captured yet."}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
-                  <p className="text-sm font-medium text-slate-950">Delays and blockers</p>
+                  <p className="text-sm font-medium text-slate-950">
+                    Delays and blockers
+                  </p>
                   <p className="mt-4 text-sm leading-7 text-slate-600">
-                    {dailyLog.delaysOrBlockers ?? "No blockers or delays were entered for this day."}
+                    {dailyLog.delaysOrBlockers ??
+                      "No blockers or delays were entered for this day."}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5">
-                  <p className="text-sm font-medium text-slate-950">Safety notes</p>
+                  <p className="text-sm font-medium text-slate-950">
+                    Safety notes
+                  </p>
                   <p className="mt-4 text-sm leading-7 text-slate-600">
-                    {dailyLog.safetyNotes ?? "No safety notes were captured for this day."}
+                    {dailyLog.safetyNotes ??
+                      "No safety notes were captured for this day."}
                   </p>
                 </div>
               </div>
@@ -344,7 +382,7 @@ export default async function DailyLogDetailPage({
 
           <DetailPanel
             title="Labor and Time Continuity"
-            description="Daily logs reuse canonical time cards for project-day labor visibility instead of persisting a second labor-entry model."
+            description="Daily logs reuse canonical time cards for job/schedule labor visibility instead of persisting a second labor-entry model."
           >
             <div className="grid gap-4">
               {laborSummary?.entries.length ? (
@@ -372,7 +410,7 @@ export default async function DailyLogDetailPage({
                 <AppEmptyState
                   eyebrow="No labor continuity yet"
                   title="No time cards are connected to this project day"
-                  description="Time continuity will appear here automatically when canonical time cards exist for the same project and log date."
+                  description="Time continuity will appear here automatically when canonical time cards exist for the same project and log date. Use Time when crew labor exists but is not attributed yet."
                 />
               )}
 
@@ -400,14 +438,18 @@ export default async function DailyLogDetailPage({
 
         <DetailPanel
           title="Field Notes"
-          description="Execution observations stay inside the daily-log workflow. Use shared note types and statuses instead of separate issue, blocker, or punch-list pages."
+          description="Execution observations stay inside the daily-log workflow and project/job chain. Use shared note types and statuses instead of separate issue, blocker, or punch-list pages."
         >
           <div className="space-y-8">
             <section className="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
               <div className="flex flex-col gap-2">
-                <p className="text-base font-semibold text-slate-950">Add field note</p>
+                <p className="text-base font-semibold text-slate-950">
+                  Add field note
+                </p>
                 <p className="text-sm leading-6 text-slate-600">
-                  Capture a structured execution observation and optionally connect it to a job, workforce person, or canonical time card.
+                  Capture a structured execution observation and optionally
+                  connect it to a job, workforce person, or canonical time card
+                  so field evidence stays connected.
                 </p>
               </div>
               <div className="mt-5">
@@ -440,7 +482,8 @@ export default async function DailyLogDetailPage({
                         {formatNoteTypeLabel(noteType)}
                       </p>
                       <p className="mt-1 text-sm leading-6 text-slate-600">
-                        {notes.length} note{notes.length === 1 ? "" : "s"} in this execution category.
+                        {notes.length} note{notes.length === 1 ? "" : "s"} in
+                        this execution category.
                       </p>
                     </div>
                     <div className="grid gap-4">
@@ -481,53 +524,63 @@ export default async function DailyLogDetailPage({
                             />
                           </div>
                           <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4">
-                            <p className="text-sm font-medium text-slate-950">Attachments</p>
+                            <p className="text-sm font-medium text-slate-950">
+                              Attachments
+                            </p>
                             <div className="mt-4 grid gap-3">
-                              {(attachmentsByFieldNoteId.get(fieldNote.id) ?? []).length > 0 ? (
-                                (attachmentsByFieldNoteId.get(fieldNote.id) ?? []).map(
-                                  (attachment) => (
-                                    <div
-                                      key={attachment.id}
-                                      className="rounded-2xl border border-slate-200 bg-white px-4 py-4"
-                                    >
-                                      <div className="flex flex-wrap items-center justify-between gap-3">
-                                        <div>
-                                          <p className="text-sm font-semibold text-slate-950">
-                                            {attachment.fileName}
-                                          </p>
-                                          <p className="mt-1 text-sm leading-6 text-slate-500">
-                                            {attachment.mimeType}
-                                          </p>
-                                        </div>
-                                        <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
-                                          {attachment.attachmentType}
-                                        </span>
+                              {(
+                                attachmentsByFieldNoteId.get(fieldNote.id) ?? []
+                              ).length > 0 ? (
+                                (
+                                  attachmentsByFieldNoteId.get(fieldNote.id) ??
+                                  []
+                                ).map((attachment) => (
+                                  <div
+                                    key={attachment.id}
+                                    className="rounded-2xl border border-slate-200 bg-white px-4 py-4"
+                                  >
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                      <div>
+                                        <p className="text-sm font-semibold text-slate-950">
+                                          {attachment.fileName}
+                                        </p>
+                                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                                          {attachment.mimeType}
+                                        </p>
                                       </div>
-                                      <p className="mt-3 text-sm leading-6 text-slate-600">
-                                        {attachment.caption ?? "No caption provided."}
-                                      </p>
-                                      <p className="mt-3 text-sm leading-6 text-slate-500">
-                                        {isExternalReference(attachment.storagePath) ? (
-                                          <a
-                                            href={attachment.storagePath}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="font-medium text-brand-700"
-                                          >
-                                            Open attachment reference
-                                          </a>
-                                        ) : (
-                                          <code className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-700">
-                                            {attachment.storagePath}
-                                          </code>
-                                        )}
-                                      </p>
+                                      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                                        {attachment.attachmentType}
+                                      </span>
                                     </div>
-                                  )
-                                )
+                                    <p className="mt-3 text-sm leading-6 text-slate-600">
+                                      {attachment.caption ??
+                                        "No caption provided."}
+                                    </p>
+                                    <p className="mt-3 text-sm leading-6 text-slate-500">
+                                      {isExternalReference(
+                                        attachment.storagePath
+                                      ) ? (
+                                        <a
+                                          href={attachment.storagePath}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="font-medium text-brand-700"
+                                        >
+                                          Open attachment reference
+                                        </a>
+                                      ) : (
+                                        <code className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-700">
+                                          {attachment.storagePath}
+                                        </code>
+                                      )}
+                                    </p>
+                                  </div>
+                                ))
                               ) : (
                                 <p className="text-sm leading-6 text-slate-500">
-                                  No attachment references are linked to this field note yet.
+                                  No attachment references are linked to this
+                                  field note yet. Add photos or files here when
+                                  the observation needs field evidence.
                                 </p>
                               )}
                             </div>
@@ -554,7 +607,7 @@ export default async function DailyLogDetailPage({
               <AppEmptyState
                 eyebrow="No field notes yet"
                 title="Capture the first execution observation"
-                description="Blockers, issues, labor notes, and punch-list-ready observations all stay on this shared field-note model under the daily log."
+                description="Blockers, issues, labor notes, and punch-list-ready observations all stay on this shared field-note model under the canonical daily log."
               />
             )}
           </div>
@@ -562,7 +615,7 @@ export default async function DailyLogDetailPage({
 
         <DetailPanel
           title="Execution Attachments"
-          description="Daily-log attachment context stays lightweight and subject-scoped. Photos and files hang directly off the daily log or a field note, not a separate document subsystem."
+          description="Daily-log attachment context stays lightweight and subject-scoped. Photos and files hang directly off the daily log or a field note on the same project/job chain, not a separate document subsystem."
         >
           <div className="space-y-6">
             <div className="grid gap-4">
@@ -610,13 +663,15 @@ export default async function DailyLogDetailPage({
                 <AppEmptyState
                   eyebrow="No daily-log attachments yet"
                   title="Add the first execution photo or file reference"
-                  description="Attachment references can capture progress photos, delivery files, or other execution evidence without turning this slice into a full file-management system."
+                  description="Attachment references can capture progress photos, delivery files, or other execution evidence without turning this slice into a full file-management system or separate document model."
                 />
               )}
             </div>
 
             <section className="rounded-[1.75rem] border border-slate-200 bg-white px-5 py-5">
-              <p className="text-sm font-medium text-slate-950">Add attachment to the daily log</p>
+              <p className="text-sm font-medium text-slate-950">
+                Add attachment to the daily log
+              </p>
               <div className="mt-5">
                 <ExecutionAttachmentForm
                   action={createExecutionAttachmentAction}
@@ -635,7 +690,7 @@ export default async function DailyLogDetailPage({
 
         <DetailPanel
           title="Edit Daily Log"
-          description="Keep the canonical project-day record editable here while the main narrative, notes, and labor continuity stay easy to review above."
+          description="Keep the canonical project-day record editable here while schedule, time-card, readiness, and invoice rules stay owned by their existing workflows."
         >
           <DailyLogForm
             action={updateDailyLogAction}
@@ -661,7 +716,11 @@ export default async function DailyLogDetailPage({
               },
               {
                 label: "Status",
-                value: <span className="capitalize">{formatStatusLabel(dailyLog.status)}</span>
+                value: (
+                  <span className="capitalize">
+                    {formatStatusLabel(dailyLog.status)}
+                  </span>
+                )
               },
               {
                 label: "Project",
@@ -715,15 +774,15 @@ export default async function DailyLogDetailPage({
 
         <DetailPanel
           title="Linked Workflow"
-          description="Daily execution supports the shared project and job chain instead of becoming a parallel execution workspace."
+          description="Daily execution supports the shared customer/project -> job/schedule chain instead of becoming a parallel execution workspace."
         >
           <div className="grid gap-4">
             {dailyLog.project ? (
               <LinkedRecordCard
                 href={`/projects/${dailyLog.project.id}`}
                 title={dailyLog.project.name}
-                subtitle="Project hub"
-                meta="Use the project page for broader commercial and execution continuity."
+                subtitle="Project Workspace"
+                meta="Use Project Workspace for broader readiness, commercial, and execution continuity."
                 badge={
                   <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
                     Project
@@ -736,7 +795,7 @@ export default async function DailyLogDetailPage({
                 href={`/jobs/${dailyLog.jobId}`}
                 title={`Job ${dailyLog.jobId.slice(0, 8)}`}
                 subtitle="Linked job"
-                meta="Use the job page for downstream execution-state continuity."
+                meta="Use Job Workspace for schedule, crew, execution-state, and downstream billing continuity."
                 badge={
                   <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
                     Job
@@ -745,7 +804,8 @@ export default async function DailyLogDetailPage({
               />
             ) : (
               <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-500">
-                No dominant job is attached to this project-day log.
+                No dominant job is attached to this project-day log. It still
+                belongs to the project-day execution chain.
               </div>
             )}
           </div>

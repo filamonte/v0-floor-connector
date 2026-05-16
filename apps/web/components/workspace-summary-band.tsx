@@ -17,8 +17,8 @@ type WorkspaceSummaryBandProps = {
 export function WorkspaceSummaryBand({
   items,
   className = "grid gap-4 lg:grid-cols-2 2xl:grid-cols-4",
-  itemClassName = "border border-[#d7c7b4] bg-[#fbf7f1] px-4 py-3",
-  labelClassName = "text-xs font-semibold uppercase tracking-[0.24em] text-[#a4581a]"
+  itemClassName = "rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3",
+  labelClassName = "text-xs font-semibold uppercase tracking-[0.18em] text-[var(--copper)]"
 }: WorkspaceSummaryBandProps) {
   const purposeItems = items.filter((item) =>
     ["purpose", "review-purpose", "what-this-page-is-for"].includes(item.key)
@@ -30,14 +30,14 @@ export function WorkspaceSummaryBand({
     (item) => !purposeItems.includes(item) && !nextActionItems.includes(item)
   );
 
-  const secondaryCardClassName = `${itemClassName} border-[#d7c7b4] bg-[#fbf7f1] px-4 py-3`;
+  const secondaryCardClassName = `${itemClassName} min-w-0`;
 
   return (
     <div className="space-y-3">
       {purposeItems.length > 0 ? (
         <div className="max-w-[68ch]">
           {purposeItems.map((item) => (
-            <div key={item.key} className="text-[13px] leading-5 text-[#665446]">
+            <div key={item.key} className="text-[13px] leading-5 text-[var(--text-secondary)]">
               {item.content}
             </div>
           ))}
@@ -47,12 +47,12 @@ export function WorkspaceSummaryBand({
       {nextActionItems.map((item) => (
         <div
           key={item.key}
-          className="border border-[#d7c7b4] bg-[#fbf7f1] px-4 py-3"
+          className="min-w-0 rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3"
         >
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
             {item.label}
           </p>
-          <div className="mt-2 text-[13px] leading-5 text-[#665446]">{item.content}</div>
+          <div className="mt-2 text-[13px] leading-5 text-[var(--text-secondary)]">{item.content}</div>
         </div>
       ))}
 
@@ -68,7 +68,7 @@ export function WorkspaceSummaryBand({
               }
             >
               <p className={labelClassName}>{item.label}</p>
-              <div className="mt-1.5 text-[13px] leading-5 text-[#665446]">{item.content}</div>
+              <div className="mt-1.5 text-[13px] leading-5 text-[var(--text-secondary)]">{item.content}</div>
             </div>
           ))}
         </div>

@@ -409,8 +409,6 @@ export default async function PortalProjectDetailPage({
 
               <WorkspaceSummaryBand
                 className="grid gap-3 sm:grid-cols-2"
-                itemClassName="rounded-2xl border border-slate-200/80 bg-slate-50/65 px-4 py-4"
-                labelClassName="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"
                 items={[
                   {
                     key: "next-action",

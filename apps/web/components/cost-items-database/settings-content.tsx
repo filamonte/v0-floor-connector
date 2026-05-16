@@ -3,7 +3,10 @@ import Link from "next/link";
 import { DetailPanel } from "@/components/detail-panel";
 import { SettingsFeedback } from "@/components/settings-feedback";
 import { SettingsSectionCard } from "@/components/settings-section-card";
-import type { CatalogItem, PlatformCatalogItemSeed } from "@floorconnector/types";
+import type {
+  CatalogItem,
+  PlatformCatalogItemSeed
+} from "@floorconnector/types";
 
 import { INVENTORY_ENABLED_FEATURE_POLICY } from "@/lib/organizations/module-settings";
 import {
@@ -26,6 +29,15 @@ type CostItemsSettingsContentProps = {
   returnPath: string;
 };
 
+const settingsPrimaryActionClassName =
+  "inline-flex items-center rounded-[4px] border border-[var(--graphite)] bg-[var(--graphite)] px-3 py-2 text-sm font-medium text-white transition hover:bg-[var(--graphite-light)]";
+const settingsSecondaryActionClassName =
+  "inline-flex items-center rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--copper)] hover:text-[var(--copper)]";
+const settingsInsetClassName =
+  "rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3";
+const settingsStatusPillClassName =
+  "inline-flex items-center rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-2.5 py-1 text-sm text-[var(--text-secondary)]";
+
 export function CostItemsSettingsContent({
   searchParams,
   inventoryState,
@@ -34,7 +46,9 @@ export function CostItemsSettingsContent({
   returnPath
 }: CostItemsSettingsContentProps) {
   const categoryDefaults = [
-    ...new Set(catalogItems.flatMap((item) => (item.category ? [item.category] : [])))
+    ...new Set(
+      catalogItems.flatMap((item) => (item.category ? [item.category] : []))
+    )
   ].sort((left, right) => left.localeCompare(right));
   const defaultItems = catalogItems.filter((item) => item.isDefault);
   const addOnOptionItems = catalogItems.filter(
@@ -46,19 +60,22 @@ export function CostItemsSettingsContent({
 
   return (
     <div className="space-y-4">
-      <SettingsFeedback error={searchParams?.error} message={searchParams?.message} />
+      <SettingsFeedback
+        error={searchParams?.error}
+        message={searchParams?.message}
+      />
 
       <div className="flex justify-end">
         <div className="flex flex-wrap gap-2">
           <Link
             href="/cost-items-database"
-            className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            className={settingsSecondaryActionClassName}
           >
             Open Cost Items Database
           </Link>
           <Link
             href="/settings/financial"
-            className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            className={settingsSecondaryActionClassName}
           >
             Open Financial Settings
           </Link>
@@ -70,10 +87,21 @@ export function CostItemsSettingsContent({
           title="Inventory Tracking"
           description="Inventory remains an optional operational extension of Cost Items Database. Disabling it hides inventory controls without deleting linked stock records or transaction history."
         >
-          <form action={updateOrganizationFeatureOverrideAction} className="space-y-4">
+          <form
+            action={updateOrganizationFeatureOverrideAction}
+            className="space-y-4"
+          >
             <input type="hidden" name="returnTo" value={returnPath} />
-            <input type="hidden" name="key" value={INVENTORY_ENABLED_FEATURE_POLICY.key} />
-            <input type="hidden" name="name" value={INVENTORY_ENABLED_FEATURE_POLICY.name} />
+            <input
+              type="hidden"
+              name="key"
+              value={INVENTORY_ENABLED_FEATURE_POLICY.key}
+            />
+            <input
+              type="hidden"
+              name="name"
+              value={INVENTORY_ENABLED_FEATURE_POLICY.name}
+            />
             <input
               type="hidden"
               name="description"
@@ -90,7 +118,9 @@ export function CostItemsSettingsContent({
               value={INVENTORY_ENABLED_FEATURE_POLICY.surface}
             />
 
-            <label className="flex items-start gap-3 border border-slate-200 bg-slate-50 px-4 py-3">
+            <label
+              className={`flex items-start gap-3 ${settingsInsetClassName}`}
+            >
               <input
                 type="checkbox"
                 name="enabled"
@@ -102,8 +132,11 @@ export function CostItemsSettingsContent({
               </span>
             </label>
 
-            <div className="border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-600">
-              <p>Platform default: {inventoryState.platformEnabled ? "enabled" : "disabled"}</p>
+            <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+              <p>
+                Platform default:{" "}
+                {inventoryState.platformEnabled ? "enabled" : "disabled"}
+              </p>
               <p>
                 Organization override:{" "}
                 {inventoryState.organizationEnabled == null
@@ -112,13 +145,13 @@ export function CostItemsSettingsContent({
                     ? "enabled"
                     : "disabled"}
               </p>
-              <p>Effective state: {inventoryState.effectiveEnabled ? "enabled" : "disabled"}</p>
+              <p>
+                Effective state:{" "}
+                {inventoryState.effectiveEnabled ? "enabled" : "disabled"}
+              </p>
             </div>
 
-            <button
-              type="submit"
-              className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
-            >
+            <button type="submit" className={settingsPrimaryActionClassName}>
               Save inventory setting
             </button>
           </form>
@@ -129,10 +162,19 @@ export function CostItemsSettingsContent({
           title="How Cost Items and Inventory work"
           description="Cost Items Database is always available. Inventory turns the same catalog item master into an operational stock workflow without changing estimate or invoice pricing."
         >
-          <div className="space-y-2 border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
-            <p>`catalog_items` remain the reusable commercial source of truth.</p>
-            <p>`inventory_items` and `inventory_transactions` stay operational only.</p>
-            <p>Disabling inventory preserves existing quantities and history.</p>
+          <div
+            className={`space-y-2 text-sm leading-6 text-[var(--text-secondary)] ${settingsInsetClassName}`}
+          >
+            <p>
+              `catalog_items` remain the reusable commercial source of truth.
+            </p>
+            <p>
+              `inventory_items` and `inventory_transactions` stay operational
+              only.
+            </p>
+            <p>
+              Disabling inventory preserves existing quantities and history.
+            </p>
           </div>
         </SettingsSectionCard>
       </div>
@@ -142,14 +184,21 @@ export function CostItemsSettingsContent({
         description="Tax behavior, tax rates, and tax-code management now live under Financial Settings. Cost Items settings stay focused on catalog and inventory configuration."
       >
         <div className="space-y-3">
-          <div className="border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
-            <p>Item-level operational screens still use the taxable checkbox.</p>
-            <p>Organization tax behavior and reusable tax codes are managed in Financial Settings.</p>
+          <div
+            className={`text-sm leading-6 text-[var(--text-secondary)] ${settingsInsetClassName}`}
+          >
+            <p>
+              Item-level operational screens still use the taxable checkbox.
+            </p>
+            <p>
+              Organization tax behavior and reusable tax codes are managed in
+              Financial Settings.
+            </p>
           </div>
 
           <Link
             href="/settings/financial"
-            className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
+            className={settingsPrimaryActionClassName}
           >
             Go to Financial Settings
           </Link>
@@ -165,10 +214,7 @@ export function CostItemsSettingsContent({
           <div className="flex flex-wrap gap-2">
             {categoryDefaults.length > 0 ? (
               categoryDefaults.map((category) => (
-                <span
-                  key={category}
-                  className="inline-flex items-center rounded-[4px] border border-slate-200 bg-slate-50 px-2.5 py-1 text-sm text-slate-700"
-                >
+                <span key={category} className={settingsStatusPillClassName}>
                   {category}
                 </span>
               ))
@@ -188,13 +234,16 @@ export function CostItemsSettingsContent({
           <div className="space-y-2 text-sm leading-6 text-slate-600">
             <p>
               {addOnOptionItems.length} Catalog Item
-              {addOnOptionItems.length === 1 ? "" : "s"} are categorized as Add-ons / Options.
+              {addOnOptionItems.length === 1 ? "" : "s"} are categorized as
+              Add-ons / Options.
             </p>
             <p>
-              Units can stay practical for estimating: LF, sqft, ea, or a fixed/project row through the existing system basis selector.
+              Units can stay practical for estimating: LF, sqft, ea, or a
+              fixed/project row through the existing system basis selector.
             </p>
             <p>
-              System-level optional toggles remain a future Templates & Systems decision.
+              System-level optional toggles remain a future Templates & Systems
+              decision.
             </p>
           </div>
         </SettingsSectionCard>
@@ -209,7 +258,10 @@ export function CostItemsSettingsContent({
               {defaultItems.length} default cost item pattern
               {defaultItems.length === 1 ? "" : "s"} are active.
             </p>
-            <p>Visible and hidden markup still live on each reusable catalog item.</p>
+            <p>
+              Visible and hidden markup still live on each reusable catalog
+              item.
+            </p>
             <p>No pricing engine changes are introduced in this pass.</p>
           </div>
         </SettingsSectionCard>
@@ -241,7 +293,7 @@ export function CostItemsSettingsContent({
                 <input type="hidden" name="seedId" value={seed.id} />
                 <button
                   type="submit"
-                  className="rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-1.5 text-xs font-medium text-[#3f3f3f]"
+                  className="rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] transition hover:border-[var(--copper)] hover:text-[var(--copper)]"
                 >
                   Adopt {seed.name}
                 </button>

@@ -9,6 +9,7 @@ import {
   PortalStatusBadge,
   portalHeroPanelClassName,
   portalInsetPanelClassName,
+  portalMetricPanelClassName,
   portalReviewCardClassName,
   portalStatePanelClassName
 } from "@/components/portal-review-ui";
@@ -262,7 +263,7 @@ export default async function PortalHomePage() {
                       </p>
                     </div>
                   ) : (
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50/85 px-4 py-4 text-sm leading-6 text-slate-600">
+                    <div className={portalInsetPanelClassName}>
                       Shared projects will appear here once your contractor grants access.
                     </div>
                   )}
@@ -271,8 +272,6 @@ export default async function PortalHomePage() {
 
               <WorkspaceSummaryBand
                 className="grid gap-3 sm:grid-cols-2"
-                itemClassName="rounded-2xl border border-slate-200/80 bg-slate-50/65 px-4 py-4"
-                labelClassName="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"
                 items={[
                   {
                     key: "next-action",
@@ -394,7 +393,7 @@ export default async function PortalHomePage() {
                   </div>
 
                   <div className="mt-5 grid gap-3 md:grid-cols-3">
-                    <div className="rounded-2xl border border-slate-200 bg-white/85 px-4 py-3">
+                    <div className={portalMetricPanelClassName}>
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                         Estimate
                       </p>
@@ -402,7 +401,7 @@ export default async function PortalHomePage() {
                         {formatStatusLabel(project.latestEstimateStatus)}
                       </p>
                     </div>
-                    <div className="rounded-2xl border border-slate-200 bg-white/85 px-4 py-3">
+                    <div className={portalMetricPanelClassName}>
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                         Contract
                       </p>
@@ -410,7 +409,7 @@ export default async function PortalHomePage() {
                         {formatStatusLabel(project.latestContractStatus)}
                       </p>
                     </div>
-                    <div className="rounded-2xl border border-slate-200 bg-white/85 px-4 py-3">
+                    <div className={portalMetricPanelClassName}>
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                         Invoice
                       </p>
@@ -421,7 +420,7 @@ export default async function PortalHomePage() {
                   </div>
 
                   {project.latestInvoiceStatus ? (
-                    <div className="mt-4 rounded-2xl border border-slate-200 bg-white/85 px-4 py-3 text-sm leading-6 text-slate-600">
+                    <div className={`${portalMetricPanelClassName} mt-4 text-sm leading-6 text-slate-600`}>
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                         What matters now
                       </p>
@@ -482,9 +481,9 @@ export default async function PortalHomePage() {
               {projects.slice(0, 3).map((project) => (
                 <div
                   key={project.id}
-                  className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4 text-sm leading-6 text-slate-600"
+                  className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]"
                 >
-                  <p className="font-medium text-slate-950">{project.name}</p>
+                  <p className="font-medium text-[var(--text-primary)]">{project.name}</p>
                   <p className="mt-1">{formatDateTime(project.updatedAt)}</p>
                   <p className="mt-1 capitalize">
                     Project status: {formatStatusLabel(project.status)}
@@ -493,7 +492,7 @@ export default async function PortalHomePage() {
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
+            <div className="rounded-lg border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
               Shared projects will appear here once access is granted.
             </div>
           )}

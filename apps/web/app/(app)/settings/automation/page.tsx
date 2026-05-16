@@ -25,6 +25,27 @@ type PageProps = {
   }>;
 };
 
+const automationMetricClassName =
+  "rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4";
+const automationCardClassName =
+  "rounded-lg border border-[var(--border-warm)] bg-white px-5 py-5 shadow-sm";
+const automationCompactCardClassName =
+  "rounded-lg border border-[var(--border-warm)] bg-white px-5 py-4 shadow-sm";
+const automationPanelClassName =
+  "rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]";
+const automationInsetClassName =
+  "rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4";
+const automationSmallInsetClassName =
+  "rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2";
+const automationChoiceClassName =
+  "flex items-start gap-3 rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4";
+const automationPrimaryActionClassName =
+  "inline-flex items-center rounded-[4px] border border-[var(--graphite)] bg-[var(--graphite)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--graphite-light)]";
+const automationWarningClassName =
+  "rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900";
+const automationMutedStatusClassName =
+  "rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]";
+
 function getStatusClasses(status: AutomationPlanningStatus) {
   switch (status) {
     case "implemented":
@@ -32,7 +53,7 @@ function getStatusClasses(status: AutomationPlanningStatus) {
     case "foundation":
       return "border border-amber-200 bg-amber-50 text-amber-800";
     default:
-      return "border border-slate-200 bg-slate-100 text-slate-700";
+      return "border border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-secondary)]";
   }
 }
 
@@ -41,7 +62,7 @@ function getReadinessPlanClasses(status: AutomationPlanningReadinessStatus) {
     case "planning_ready":
       return "border border-emerald-200 bg-emerald-50 text-emerald-800";
     case "needs_preferences":
-      return "border border-[#d6d6d6] bg-[#f8f8f8] text-[#2a2a2a]";
+      return "border border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-secondary)]";
     case "needs_sample_context":
       return "border border-amber-200 bg-amber-50 text-amber-800";
     default:
@@ -71,7 +92,7 @@ function getRunStatusClasses(status: string) {
     case "failed":
       return "border border-rose-200 bg-rose-50 text-rose-800";
     default:
-      return "border border-slate-200 bg-slate-100 text-slate-700";
+      return "border border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-secondary)]";
   }
 }
 
@@ -84,7 +105,9 @@ function formatDateTime(value: string) {
   }).format(new Date(value));
 }
 
-export default async function SettingsAutomationPage({ searchParams }: PageProps) {
+export default async function SettingsAutomationPage({
+  searchParams
+}: PageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const scope = await requireOrganizationAdminScope("/settings/automation");
   const [automation, runHistory] = await Promise.all([
@@ -92,10 +115,9 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
     getAutomationRunHistory(scope.organizationId)
   ]);
   const preferenceByCategory = new Map(
-    automation.workflowSettings.automationNotificationPreferences.map((preference) => [
-      preference.category,
-      preference
-    ])
+    automation.workflowSettings.automationNotificationPreferences.map(
+      (preference) => [preference.category, preference]
+    )
   );
   const planningByCategory = new Map(
     automation.categories.map((category) => [category.key, category])
@@ -116,25 +138,31 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
         description="This dashboard shows which automation concepts are safe to build on top of real canonical foundations. Manual execution below creates in-app notifications only. Nothing on this page runs cron jobs, sends email or SMS, or mutates workflow state."
       >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
-            <p className="text-sm font-medium text-slate-950">Implemented concepts</p>
+          <div className={automationMetricClassName}>
+            <p className="text-sm font-medium text-slate-950">
+              Implemented concepts
+            </p>
             <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
               {automation.summary.implementedCount}
             </p>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Visibility exists on live canonical records, but execution still remains manual.
+              Visibility exists on live canonical records, but execution still
+              remains manual.
             </p>
           </div>
-          <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
-            <p className="text-sm font-medium text-slate-950">Foundation only</p>
+          <div className={automationMetricClassName}>
+            <p className="text-sm font-medium text-slate-950">
+              Foundation only
+            </p>
             <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
               {automation.summary.foundationCount}
             </p>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Canonical source data exists, but no automation runner has been added.
+              Canonical source data exists, but no automation runner has been
+              added.
             </p>
           </div>
-          <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
+          <div className={automationMetricClassName}>
             <p className="text-sm font-medium text-slate-950">Planned</p>
             <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
               {automation.summary.plannedCount}
@@ -143,13 +171,16 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
               Concepts with no execution or dedicated event layer yet.
             </p>
           </div>
-          <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 px-5 py-4">
-            <p className="text-sm font-medium text-slate-950">Execution enabled</p>
+          <div className={automationMetricClassName}>
+            <p className="text-sm font-medium text-slate-950">
+              Execution enabled
+            </p>
             <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
               {automation.summary.executionEnabledCount}
             </p>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Manual notification-only execution is available for configured internal beta categories.
+              Manual notification-only execution is available for configured
+              internal beta categories.
             </p>
           </div>
         </div>
@@ -179,7 +210,7 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
           ].map((item) => (
             <div
               key={item.title}
-              className="rounded-[1.5rem] border border-slate-200 bg-white px-5 py-5 text-sm leading-6 text-slate-600"
+              className={`${automationCardClassName} text-sm leading-6 text-slate-600`}
             >
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 {item.title}
@@ -192,13 +223,18 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
           ))}
         </div>
 
-        <div className="mt-6 rounded-[1.5rem] border border-slate-200 bg-white px-5 py-5 text-sm leading-6 text-slate-600">
-          <p className="font-medium text-slate-950">Current workflow dependencies</p>
+        <div
+          className={`mt-6 ${automationCardClassName} text-sm leading-6 text-slate-600`}
+        >
+          <p className="font-medium text-slate-950">
+            Current workflow dependencies
+          </p>
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             <p>
               Contract signature before scheduling:{" "}
               <span className="font-medium text-slate-950">
-                {automation.workflowSettings.requireContractSignatureBeforeJobScheduling
+                {automation.workflowSettings
+                  .requireContractSignatureBeforeJobScheduling
                   ? "required"
                   : "optional"}
               </span>
@@ -214,7 +250,8 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
             <p>
               Financing approval before scheduling:{" "}
               <span className="font-medium text-slate-950">
-                {automation.workflowSettings.requireFinancingApprovalBeforeJobScheduling
+                {automation.workflowSettings
+                  .requireFinancingApprovalBeforeJobScheduling
                   ? "required"
                   : "optional"}
               </span>
@@ -236,19 +273,22 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
         description="Run the first internal-beta automation checks for this organization only. The runner creates canonical notification_events and per-user in-app notifications when configured preferences, canonical context, recipients, and duplicate guards pass."
       >
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-          <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">
-            <p className="font-medium text-slate-950">Notification-only guardrails</p>
+          <div className={automationPanelClassName}>
+            <p className="font-medium text-slate-950">
+              Notification-only guardrails
+            </p>
             <p className="mt-2">
-              This run checks customer messages, sent estimates awaiting approval,
-              contracts awaiting signature, and overdue open invoices. It does not send
-              email or SMS, does not post communication messages, and does not update
-              estimates, contracts, invoices, payments, projects, jobs, or schedules.
+              This run checks customer messages, sent estimates awaiting
+              approval, contracts awaiting signature, and overdue open invoices.
+              It does not send email or SMS, does not post communication
+              messages, and does not update estimates, contracts, invoices,
+              payments, projects, jobs, or schedules.
             </p>
           </div>
           <form action={runManualAutomationNotificationsAction}>
             <button
               type="submit"
-              className="inline-flex w-full items-center justify-center rounded-full bg-brand-700 px-5 py-3 text-sm font-medium text-white transition hover:bg-brand-900 lg:w-auto"
+              className={`${automationPrimaryActionClassName} w-full justify-center px-5 py-3 lg:w-auto`}
             >
               Run notification checks
             </button>
@@ -256,20 +296,22 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-4">
-          <div className="rounded-[1.5rem] border border-slate-200 bg-white px-5 py-4">
+          <div className={automationCompactCardClassName}>
             <p className="text-sm font-medium text-slate-950">Run logs</p>
             <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
               {runHistory.totalCount}
             </p>
           </div>
           {(["executed", "blocked", "skipped"] as const).map((status) => (
-            <div
-              key={status}
-              className="rounded-[1.5rem] border border-slate-200 bg-white px-5 py-4"
-            >
-              <p className="text-sm font-medium capitalize text-slate-950">{status}</p>
+            <div key={status} className={automationCompactCardClassName}>
+              <p className="text-sm font-medium capitalize text-slate-950">
+                {status}
+              </p>
               <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
-                {runHistory.recentRuns.filter((run) => run.status === status).length}
+                {
+                  runHistory.recentRuns.filter((run) => run.status === status)
+                    .length
+                }
               </p>
               <p className="mt-2 text-xs leading-5 text-slate-500">
                 Recent visible run rows
@@ -278,7 +320,7 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
           ))}
         </div>
 
-        <div className="mt-6 rounded-[1.5rem] border border-slate-200 bg-white">
+        <div className="mt-6 rounded-lg border border-[var(--border-warm)] bg-white shadow-sm">
           {runHistory.recentRuns.length > 0 ? (
             <div className="divide-y divide-slate-100">
               {runHistory.recentRuns.map((run) => (
@@ -297,11 +339,13 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
                         {run.status}
                       </span>
                       <span className="font-medium text-slate-950">
-                        {automationNotificationPreferenceContent[run.category]?.label ??
-                          run.category.replaceAll("_", " ")}
+                        {automationNotificationPreferenceContent[run.category]
+                          ?.label ?? run.category.replaceAll("_", " ")}
                       </span>
                     </div>
-                    <p className="mt-2">{run.reason ?? "No run detail was recorded."}</p>
+                    <p className="mt-2">
+                      {run.reason ?? "No run detail was recorded."}
+                    </p>
                   </div>
                   <div className="text-left text-xs leading-5 text-slate-500 lg:text-right">
                     <p>{formatDateTime(run.createdAt)}</p>
@@ -316,8 +360,8 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
             </div>
           ) : (
             <div className="px-5 py-8 text-sm leading-6 text-slate-600">
-              No automation run logs yet. Run notification checks after configuring at least
-              one category and recipient role.
+              No automation run logs yet. Run notification checks after
+              configuring at least one category and recipient role.
             </div>
           )}
         </div>
@@ -329,10 +373,7 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
       >
         <div className="grid gap-4 xl:grid-cols-2">
           {automation.readinessPlan.map((plan) => (
-            <article
-              key={plan.category}
-              className="rounded-[1.5rem] border border-slate-200 bg-white px-5 py-5 shadow-[0_18px_48px_-36px_rgba(15,23,42,0.45)]"
-            >
+            <article key={plan.category} className={automationCardClassName}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-lg font-semibold tracking-tight text-slate-950">
@@ -351,7 +392,7 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
                   >
                     {getReadinessPlanLabel(plan.readinessStatus)}
                   </span>
-                  <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700">
+                  <span className={automationMutedStatusClassName}>
                     Manual only
                   </span>
                 </div>
@@ -388,7 +429,7 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
                         {plan.blockers.map((blocker) => (
                           <li
                             key={`${plan.category}-${blocker}`}
-                            className="rounded-[1rem] border border-slate-200 bg-slate-50 px-3 py-2"
+                            className={automationSmallInsetClassName}
                           >
                             {blocker}
                           </li>
@@ -396,7 +437,10 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
                       </ul>
                     ) : (
                       <p className="rounded-[1rem] border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-800">
-                        Saved preferences, the current sample context, and the static template definition line up. Manual notification-only execution can evaluate this category when it is in the first execution set.
+                        Saved preferences, the current sample context, and the
+                        static template definition line up. Manual
+                        notification-only execution can evaluate this category
+                        when it is in the first execution set.
                       </p>
                     )}
                   </dd>
@@ -419,19 +463,18 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
         title="Future Notification Copy Preview"
         description="These are static planning definitions for future notification-only copy. They are preview-only, not editable, and they do not activate automation, create notification_events, send messages, or mutate canonical records."
       >
-        <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
-          Future notification copy only. This section previews default template definitions for later planning and does not save or execute anything.
+        <div className={automationWarningClassName}>
+          Future notification copy only. This section previews default template
+          definitions for later planning and does not save or execute anything.
         </div>
 
         <div className="mt-5 grid gap-4 xl:grid-cols-2">
           {automationNotificationPreferenceCategories.map((categoryKey) => {
-            const template = automationNotificationTemplateDefinitionsByCategory[categoryKey];
+            const template =
+              automationNotificationTemplateDefinitionsByCategory[categoryKey];
 
             return (
-              <article
-                key={categoryKey}
-                className="rounded-[1.5rem] border border-slate-200 bg-white px-5 py-5 shadow-[0_18px_48px_-36px_rgba(15,23,42,0.45)]"
-              >
+              <article key={categoryKey} className={automationCardClassName}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-lg font-semibold tracking-tight text-slate-950">
@@ -445,7 +488,7 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
                     <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-800">
                       Preview only
                     </span>
-                    <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700">
+                    <span className={automationMutedStatusClassName}>
                       Execution off
                     </span>
                   </div>
@@ -470,7 +513,9 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
                     <dt className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                       Sample subject / title
                     </dt>
-                    <dd className="mt-1 text-slate-900">{template.sampleSubject}</dd>
+                    <dd className="mt-1 text-slate-900">
+                      {template.sampleSubject}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -484,20 +529,24 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
                     </dt>
                     <dd className="mt-2">
                       <ul className="space-y-2">
-                        {template.requiredCanonicalContextFields.map((field) => (
-                          <li
-                            key={`${template.category}-${field.key}`}
-                            className="rounded-[1rem] border border-slate-200 bg-slate-50 px-3 py-2"
-                          >
-                            <span className="font-medium text-slate-950">
-                              {field.label}
-                            </span>{" "}
-                            <span className="text-slate-500">({field.key})</span>
-                            <p className="mt-1 text-sm text-slate-600">
-                              {field.description}
-                            </p>
-                          </li>
-                        ))}
+                        {template.requiredCanonicalContextFields.map(
+                          (field) => (
+                            <li
+                              key={`${template.category}-${field.key}`}
+                              className={automationSmallInsetClassName}
+                            >
+                              <span className="font-medium text-slate-950">
+                                {field.label}
+                              </span>{" "}
+                              <span className="text-slate-500">
+                                ({field.key})
+                              </span>
+                              <p className="mt-1 text-sm text-slate-600">
+                                {field.description}
+                              </p>
+                            </li>
+                          )
+                        )}
                       </ul>
                     </dd>
                   </div>
@@ -520,24 +569,27 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
         title="Future Notification Preferences"
         description="Save organization-scoped preferences for notification-only automations. These preferences control internal in-app notification routing only; they do not send messages or update contracts, invoices, payments, jobs, communications, or change orders."
       >
-        <form action={updateAutomationNotificationPreferencesAction} className="space-y-5">
+        <form
+          action={updateAutomationNotificationPreferencesAction}
+          className="space-y-5"
+        >
           <input type="hidden" name="returnTo" value="/settings/automation" />
 
-          <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
-            Saving these settings records contractor notification intent on the existing organization workflow settings row. Manual execution uses these settings only for in-app notification routing.
+          <div className={automationWarningClassName}>
+            Saving these settings records contractor notification intent on the
+            existing organization workflow settings row. Manual execution uses
+            these settings only for in-app notification routing.
           </div>
 
           <div className="grid gap-4 xl:grid-cols-2">
             {automationNotificationPreferenceCategories.map((categoryKey) => {
               const preference = preferenceByCategory.get(categoryKey);
               const planningCategory = planningByCategory.get(categoryKey);
-              const content = automationNotificationPreferenceContent[categoryKey];
+              const content =
+                automationNotificationPreferenceContent[categoryKey];
 
               return (
-                <article
-                  key={categoryKey}
-                  className="rounded-[1.5rem] border border-slate-200 bg-white px-5 py-5 shadow-[0_18px_48px_-36px_rgba(15,23,42,0.45)]"
-                >
+                <article key={categoryKey} className={automationCardClassName}>
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-lg font-semibold tracking-tight text-slate-950">
@@ -558,18 +610,20 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
                           {planningCategory.status}
                         </span>
                       ) : null}
-                      <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700">
+                      <span className={automationMutedStatusClassName}>
                         Preparation only
                       </span>
                     </div>
                   </div>
 
                   <div className="mt-5 space-y-4">
-                    <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                    <label className={automationChoiceClassName}>
                       <input
                         type="checkbox"
                         name={`automation.${categoryKey}.enabledForFutureExecution`}
-                        defaultChecked={preference?.enabledForFutureExecution ?? false}
+                        defaultChecked={
+                          preference?.enabledForFutureExecution ?? false
+                        }
                         className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
                       />
                       <span>
@@ -577,54 +631,66 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
                           Enable for manual execution
                         </span>
                         <span className="mt-1 block text-xs leading-5 text-slate-500">
-                          The manual notification runner uses this saved intent when you run checks.
+                          The manual notification runner uses this saved intent
+                          when you run checks.
                         </span>
                       </span>
                     </label>
 
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                    <div className={automationInsetClassName}>
                       <p className="text-sm font-medium text-slate-900">
                         Notify these contractor roles
                       </p>
                       <p className="mt-1 text-xs leading-5 text-slate-500">
-                        Manual runs create in-app notifications for active users in the selected roles only.
+                        Manual runs create in-app notifications for active users
+                        in the selected roles only.
                       </p>
                       <div className="mt-4 grid gap-3 md:grid-cols-2">
-                        {automationNotificationPreferenceRoleOptions.map((roleOption) => (
-                          <label
-                            key={roleOption.role}
-                            className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3"
-                          >
-                            <input
-                              type="checkbox"
-                              name={`automation.${categoryKey}.notifyRoles`}
-                              value={roleOption.role}
-                              defaultChecked={
-                                preference?.notifyRoles.includes(roleOption.role) ?? false
-                              }
-                              className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
-                            />
-                            <span>
-                              <span className="block text-sm font-medium text-slate-900">
-                                {roleOption.label}
+                        {automationNotificationPreferenceRoleOptions.map(
+                          (roleOption) => (
+                            <label
+                              key={roleOption.role}
+                              className="flex items-start gap-3 rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3"
+                            >
+                              <input
+                                type="checkbox"
+                                name={`automation.${categoryKey}.notifyRoles`}
+                                value={roleOption.role}
+                                defaultChecked={
+                                  preference?.notifyRoles.includes(
+                                    roleOption.role
+                                  ) ?? false
+                                }
+                                className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
+                              />
+                              <span>
+                                <span className="block text-sm font-medium text-slate-900">
+                                  {roleOption.label}
+                                </span>
+                                <span className="mt-1 block text-xs leading-5 text-slate-500">
+                                  {roleOption.description}
+                                </span>
                               </span>
-                              <span className="mt-1 block text-xs leading-5 text-slate-500">
-                                {roleOption.description}
-                              </span>
-                            </span>
-                          </label>
-                        ))}
+                            </label>
+                          )
+                        )}
                       </div>
                     </div>
 
                     {planningCategory ? (
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
-                        <p className="font-medium text-slate-950">Current canonical trigger</p>
+                      <div
+                        className={`${automationInsetClassName} text-sm leading-6 text-[var(--text-secondary)]`}
+                      >
+                        <p className="font-medium text-slate-950">
+                          Current canonical trigger
+                        </p>
                         <p className="mt-1">{planningCategory.triggerSource}</p>
                         <p className="mt-3 font-medium text-slate-950">
                           Current readiness gap
                         </p>
-                        <p className="mt-1">{planningCategory.missingDependency}</p>
+                        <p className="mt-1">
+                          {planningCategory.missingDependency}
+                        </p>
                       </div>
                     ) : null}
                   </div>
@@ -633,14 +699,12 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
             })}
           </div>
 
-          <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">
-            These preferences are organization-scoped. They do not create cron jobs, queues, customer messages, read receipts, or workflow updates.
+          <div className={automationPanelClassName}>
+            These preferences are organization-scoped. They do not create cron
+            jobs, queues, customer messages, read receipts, or workflow updates.
           </div>
 
-          <button
-            type="submit"
-            className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-          >
+          <button type="submit" className={automationPrimaryActionClassName}>
             Save future notification preferences
           </button>
         </form>
@@ -653,17 +717,15 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
         <div className="grid gap-4 xl:grid-cols-2">
           {automationNotificationPreferenceCategories.map((categoryKey) => {
             const preview = previewByCategory.get(categoryKey);
-            const content = automationNotificationPreferenceContent[categoryKey];
+            const content =
+              automationNotificationPreferenceContent[categoryKey];
 
             if (!preview) {
               return null;
             }
 
             return (
-              <article
-                key={categoryKey}
-                className="rounded-[1.5rem] border border-slate-200 bg-white px-5 py-5 shadow-[0_18px_48px_-36px_rgba(15,23,42,0.45)]"
-              >
+              <article key={categoryKey} className={automationCardClassName}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-lg font-semibold tracking-tight text-slate-950">
@@ -682,9 +744,11 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
                           : "border border-amber-200 bg-amber-50 text-amber-800"
                       ].join(" ")}
                     >
-                      {preview.result.wouldBeEligible ? "Eligible later" : "Blocked"}
+                      {preview.result.wouldBeEligible
+                        ? "Eligible later"
+                        : "Blocked"}
                     </span>
-                    <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700">
+                    <span className={automationMutedStatusClassName}>
                       Execution off
                     </span>
                   </div>
@@ -692,7 +756,7 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
 
                 <dl className="mt-5 space-y-3 text-sm leading-6 text-slate-600">
                   <div className="grid gap-3 md:grid-cols-2">
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <div className={automationInsetClassName}>
                       <dt className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                         Configured
                       </dt>
@@ -700,15 +764,17 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
                         {preview.result.isConfigured ? "Yes" : "No"}
                       </dd>
                     </div>
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <div className={automationInsetClassName}>
                       <dt className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                         Future execution intent
                       </dt>
                       <dd className="mt-1 font-medium text-slate-950">
-                        {preview.result.isEnabledForFutureExecution ? "Enabled" : "Off"}
+                        {preview.result.isEnabledForFutureExecution
+                          ? "Enabled"
+                          : "Off"}
                       </dd>
                     </div>
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <div className={automationInsetClassName}>
                       <dt className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                         Notify roles
                       </dt>
@@ -718,7 +784,7 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
                           : "None selected"}
                       </dd>
                     </div>
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <div className={automationInsetClassName}>
                       <dt className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                         Execution available
                       </dt>
@@ -745,7 +811,7 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
                           {preview.result.blockers.map((blocker) => (
                             <li
                               key={blocker}
-                              className="rounded-[1rem] border border-slate-200 bg-slate-50 px-3 py-2"
+                              className={automationSmallInsetClassName}
                             >
                               {blocker}
                             </li>
@@ -753,7 +819,8 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
                         </ul>
                       ) : (
                         <p className="rounded-[1rem] border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-800">
-                          No blockers on this sample context. Execution still remains unavailable in this branch.
+                          No blockers on this sample context. Execution still
+                          remains unavailable in this branch.
                         </p>
                       )}
                     </dd>
@@ -771,10 +838,7 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
       >
         <div className="grid gap-4 xl:grid-cols-2">
           {automation.recommendations.map((recommendation) => (
-            <div
-              key={recommendation.title}
-              className="rounded-[1.5rem] border border-slate-200 bg-white px-5 py-5"
-            >
+            <div key={recommendation.title} className={automationCardClassName}>
               <p className="text-base font-semibold text-slate-950">
                 {recommendation.title}
               </p>
@@ -792,10 +856,7 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
       >
         <div className="grid gap-4 xl:grid-cols-2">
           {automation.categories.map((category) => (
-            <article
-              key={category.key}
-              className="rounded-[1.5rem] border border-slate-200 bg-white px-5 py-5 shadow-[0_18px_48px_-36px_rgba(15,23,42,0.45)]"
-            >
+            <article key={category.key} className={automationCardClassName}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-lg font-semibold tracking-tight text-slate-950">
@@ -814,7 +875,7 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
                   >
                     {category.status}
                   </span>
-                  <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700">
+                  <span className={automationMutedStatusClassName}>
                     Execution off
                   </span>
                 </div>
@@ -872,7 +933,7 @@ export default async function SettingsAutomationPage({ searchParams }: PageProps
                       {category.recentSamples.map((sample) => (
                         <li
                           key={sample}
-                          className="rounded-[1rem] border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600"
+                          className={`${automationSmallInsetClassName} text-sm text-slate-600`}
                         >
                           {sample}
                         </li>

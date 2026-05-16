@@ -1,4 +1,8 @@
-import type { DocumentTemplate, PlatformTemplateSeed, TemplateType } from "@floorconnector/types";
+import type {
+  DocumentTemplate,
+  PlatformTemplateSeed,
+  TemplateType
+} from "@floorconnector/types";
 
 import {
   adoptPlatformTemplateSeedAction,
@@ -10,6 +14,17 @@ type DocumentTemplateSettingsCardProps = {
   templates: DocumentTemplate[];
   availableSeeds: PlatformTemplateSeed[];
 };
+
+const templatePanelClassName =
+  "rounded-lg border border-[var(--border-warm)] bg-white p-5 shadow-sm";
+const templateInsetClassName =
+  "rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4";
+const templateFieldClassName =
+  "w-full rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--graphite)] focus:ring-2 focus:ring-[var(--focus-ring)]";
+const templatePrimaryActionClassName =
+  "inline-flex items-center rounded-[4px] border border-[var(--graphite)] bg-[var(--graphite)] px-3 py-2 text-sm font-medium text-white transition hover:bg-[var(--graphite-light)]";
+const templateSecondaryActionClassName =
+  "inline-flex items-center rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--copper)] hover:text-[var(--copper)]";
 
 function getTemplateTypeLabel(templateType: TemplateType) {
   switch (templateType) {
@@ -43,7 +58,7 @@ export function DocumentTemplateSettingsCard({
   availableSeeds
 }: DocumentTemplateSettingsCardProps) {
   return (
-    <section className="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
+    <section className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] p-5 sm:p-6">
       <div className="flex flex-col gap-2">
         <p className="text-base font-semibold text-slate-950">
           {getTemplateTypeLabel(templateType)}
@@ -59,13 +74,15 @@ export function DocumentTemplateSettingsCard({
             <form
               key={template.id}
               action={updateDocumentTemplateSettingsAction}
-              className="rounded-[1.5rem] border border-slate-200 bg-white p-5"
+              className={templatePanelClassName}
             >
               <input type="hidden" name="templateId" value={template.id} />
 
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600">
-                  {template.sourceSeedKey ? "Seeded copy" : "Organization template"}
+                  {template.sourceSeedKey
+                    ? "Seeded copy"
+                    : "Organization template"}
                 </span>
                 {template.isDefault ? (
                   <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
@@ -85,7 +102,7 @@ export function DocumentTemplateSettingsCard({
                   <input
                     name="name"
                     defaultValue={template.name}
-                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                    className={templateFieldClassName}
                     required
                   />
                 </label>
@@ -96,7 +113,7 @@ export function DocumentTemplateSettingsCard({
                   <select
                     name="status"
                     defaultValue={template.status}
-                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                    className={templateFieldClassName}
                   >
                     <option value="active">Active</option>
                     <option value="archived">Archived</option>
@@ -111,7 +128,7 @@ export function DocumentTemplateSettingsCard({
                 <input
                   name="description"
                   defaultValue={template.description ?? ""}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                  className={templateFieldClassName}
                 />
               </label>
 
@@ -122,7 +139,7 @@ export function DocumentTemplateSettingsCard({
                 <input
                   name="subjectTemplate"
                   defaultValue={template.subjectTemplate ?? ""}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                  className={templateFieldClassName}
                 />
               </label>
 
@@ -134,18 +151,20 @@ export function DocumentTemplateSettingsCard({
                   name="bodyTemplate"
                   defaultValue={template.bodyTemplate}
                   rows={8}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 font-mono text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                  className={`${templateFieldClassName} font-mono`}
                 />
               </label>
 
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-6 text-slate-600">
+              <div className="mt-4 rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-xs leading-6 text-[var(--text-secondary)]">
                 Merge fields:{" "}
                 {template.mergeFieldManifest.length > 0
                   ? template.mergeFieldManifest.join(", ")
                   : "No merge fields documented yet."}
               </div>
 
-              <label className="mt-4 flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+              <label
+                className={`mt-4 flex items-start gap-3 ${templateInsetClassName}`}
+              >
                 <input
                   type="checkbox"
                   name="isDefault"
@@ -157,7 +176,8 @@ export function DocumentTemplateSettingsCard({
                     Use as the organization default {templateType} template
                   </span>
                   <span className="mt-1 block text-xs leading-5 text-slate-500">
-                    Default templates are used when downstream workflow screens do not pick a more specific template explicitly.
+                    Default templates are used when downstream workflow screens
+                    do not pick a more specific template explicitly.
                   </span>
                 </span>
               </label>
@@ -168,7 +188,7 @@ export function DocumentTemplateSettingsCard({
                 </p>
                 <button
                   type="submit"
-                  className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                  className={templatePrimaryActionClassName}
                 >
                   Save template
                 </button>
@@ -176,14 +196,18 @@ export function DocumentTemplateSettingsCard({
             </form>
           ))
         ) : (
-          <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-white px-5 py-4 text-sm leading-6 text-slate-600">
-            This organization does not have any {templateType} template copies yet. Adopt a platform seed below to start with a real editable baseline.
+          <div className="rounded-lg border border-dashed border-[var(--border-warm)] bg-white px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+            This organization does not have any {templateType} template copies
+            yet. Adopt a platform seed below to start with a real editable
+            baseline.
           </div>
         )}
 
         {availableSeeds.length > 0 ? (
-          <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
-            <p className="text-sm font-semibold text-slate-950">Available platform seeds</p>
+          <div className={templatePanelClassName}>
+            <p className="text-sm font-semibold text-slate-950">
+              Available platform seeds
+            </p>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               Adopt a platform default as an organization-owned editable copy.
             </p>
@@ -192,18 +216,20 @@ export function DocumentTemplateSettingsCard({
                 <form
                   key={seed.id}
                   action={adoptPlatformTemplateSeedAction}
-                  className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                  className={`flex flex-col gap-3 ${templateInsetClassName} sm:flex-row sm:items-center sm:justify-between`}
                 >
                   <input type="hidden" name="seedId" value={seed.id} />
                   <div>
-                    <p className="text-sm font-medium text-slate-950">{seed.name}</p>
+                    <p className="text-sm font-medium text-slate-950">
+                      {seed.name}
+                    </p>
                     <p className="mt-1 text-xs leading-5 text-slate-500">
                       {seed.description ?? "Platform template seed"}
                     </p>
                   </div>
                   <button
                     type="submit"
-                    className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                    className={templateSecondaryActionClassName}
                   >
                     Adopt seed
                   </button>

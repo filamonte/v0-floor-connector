@@ -1,4 +1,7 @@
-import type { CatalogItem, PlatformCatalogItemSeed } from "@floorconnector/types";
+import type {
+  CatalogItem,
+  PlatformCatalogItemSeed
+} from "@floorconnector/types";
 
 import {
   adoptPlatformCatalogItemSeedAction,
@@ -10,6 +13,17 @@ type CatalogItemSettingsCardProps = {
   items: CatalogItem[];
   availableSeeds: PlatformCatalogItemSeed[];
 };
+
+const settingsPanelClassName =
+  "rounded-lg border border-[var(--border-warm)] bg-white p-5 shadow-sm";
+const settingsInsetClassName =
+  "rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4";
+const settingsFieldClassName =
+  "w-full rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--graphite)] focus:ring-2 focus:ring-[var(--focus-ring)]";
+const settingsPrimaryActionClassName =
+  "inline-flex items-center rounded-[4px] border border-[var(--graphite)] bg-[var(--graphite)] px-3 py-2 text-sm font-medium text-white transition hover:bg-[var(--graphite-light)]";
+const settingsSecondaryActionClassName =
+  "inline-flex items-center rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--copper)] hover:text-[var(--copper)]";
 
 function getLabel(itemType: CatalogItem["itemType"]) {
   switch (itemType) {
@@ -51,9 +65,11 @@ export function CatalogItemSettingsCard({
   availableSeeds
 }: CatalogItemSettingsCardProps) {
   return (
-    <section className="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
+    <section className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] p-5 sm:p-6">
       <div>
-        <p className="text-base font-semibold text-slate-950">{getLabel(itemType)}</p>
+        <p className="text-base font-semibold text-slate-950">
+          {getLabel(itemType)}
+        </p>
         <p className="mt-2 text-sm leading-6 text-slate-600">
           {getDescription(itemType)}
         </p>
@@ -64,7 +80,7 @@ export function CatalogItemSettingsCard({
           <form
             key={item.id}
             action={updateOrganizationCatalogItemAction}
-            className="rounded-[1.5rem] border border-slate-200 bg-white p-5"
+            className={settingsPanelClassName}
           >
             <input type="hidden" name="itemId" value={item.id} />
             <input type="hidden" name="itemType" value={item.itemType} />
@@ -92,7 +108,7 @@ export function CatalogItemSettingsCard({
                   name="name"
                   defaultValue={item.name}
                   required
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                  className={settingsFieldClassName}
                 />
               </label>
               <label className="block">
@@ -102,7 +118,7 @@ export function CatalogItemSettingsCard({
                 <select
                   name="status"
                   defaultValue={item.status}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                  className={settingsFieldClassName}
                 >
                   <option value="active">Active</option>
                   <option value="archived">Archived</option>
@@ -119,7 +135,7 @@ export function CatalogItemSettingsCard({
                   name="unit"
                   defaultValue={item.unit}
                   required
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                  className={settingsFieldClassName}
                 />
               </label>
               <label className="block">
@@ -133,7 +149,7 @@ export function CatalogItemSettingsCard({
                   step="0.01"
                   defaultValue={item.defaultUnitCost}
                   required
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                  className={settingsFieldClassName}
                 />
               </label>
               <label className="block">
@@ -146,7 +162,7 @@ export function CatalogItemSettingsCard({
                   min="0"
                   step="0.01"
                   defaultValue={item.defaultUnitPrice ?? ""}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                  className={settingsFieldClassName}
                 />
               </label>
             </div>
@@ -159,10 +175,12 @@ export function CatalogItemSettingsCard({
                 <input
                   name="category"
                   defaultValue={item.category ?? ""}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                  className={settingsFieldClassName}
                 />
               </label>
-              <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+              <label
+                className={`flex items-start gap-3 ${settingsInsetClassName}`}
+              >
                 <input
                   type="checkbox"
                   name="taxable"
@@ -174,7 +192,8 @@ export function CatalogItemSettingsCard({
                     Taxable by default
                   </span>
                   <span className="mt-1 block text-xs leading-5 text-slate-500">
-                    Estimates and invoices derive tax from this flag together with org defaults and customer exemption.
+                    Estimates and invoices derive tax from this flag together
+                    with org defaults and customer exemption.
                   </span>
                 </span>
               </label>
@@ -188,11 +207,13 @@ export function CatalogItemSettingsCard({
                 name="description"
                 defaultValue={item.description ?? ""}
                 rows={3}
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+                className={settingsFieldClassName}
               />
             </label>
 
-            <label className="mt-4 flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <label
+              className={`mt-4 flex items-start gap-3 ${settingsInsetClassName}`}
+            >
               <input
                 type="checkbox"
                 name="isDefault"
@@ -204,7 +225,8 @@ export function CatalogItemSettingsCard({
                   Use as the default {itemType} item
                 </span>
                 <span className="mt-1 block text-xs leading-5 text-slate-500">
-                  Default reusable items can be surfaced in future estimate and invoice composition flows.
+                  Default reusable items can be surfaced in future estimate and
+                  invoice composition flows.
                 </span>
               </span>
             </label>
@@ -213,10 +235,7 @@ export function CatalogItemSettingsCard({
               <p className="text-xs leading-5 text-slate-500">
                 Stored as an organization-owned reusable item.
               </p>
-              <button
-                type="submit"
-                className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-              >
+              <button type="submit" className={settingsPrimaryActionClassName}>
                 Save item
               </button>
             </div>
@@ -225,22 +244,24 @@ export function CatalogItemSettingsCard({
 
         <form
           action={updateOrganizationCatalogItemAction}
-          className="rounded-[1.5rem] border border-dashed border-slate-300 bg-white px-5 py-5"
+          className="rounded-lg border border-dashed border-[var(--border-warm)] bg-white px-5 py-5"
         >
           <input type="hidden" name="itemType" value={itemType} />
-          <p className="text-sm font-semibold text-slate-950">Add organization item</p>
+          <p className="text-sm font-semibold text-slate-950">
+            Add organization item
+          </p>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <input
               name="name"
               placeholder={`${getLabel(itemType).slice(0, -1)} name`}
               required
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              className={settingsFieldClassName}
             />
             <input
               name="unit"
               placeholder="Unit"
               required
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              className={settingsFieldClassName}
             />
             <input
               name="defaultUnitPrice"
@@ -249,7 +270,7 @@ export function CatalogItemSettingsCard({
               step="0.01"
               placeholder="0.00"
               required
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              className={settingsFieldClassName}
             />
             <input
               name="defaultUnitCost"
@@ -258,12 +279,12 @@ export function CatalogItemSettingsCard({
               step="0.01"
               placeholder="0.00"
               required
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              className={settingsFieldClassName}
             />
             <select
               name="status"
               defaultValue="active"
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+              className={settingsFieldClassName}
             >
               <option value="active">Active</option>
               <option value="archived">Archived</option>
@@ -273,25 +294,27 @@ export function CatalogItemSettingsCard({
             name="description"
             rows={3}
             placeholder="Description"
-            className="mt-4 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className={`mt-4 ${settingsFieldClassName}`}
           />
           <input
             name="category"
             placeholder="Category"
-            className="mt-4 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className={`mt-4 ${settingsFieldClassName}`}
           />
-          <label className="mt-4 flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <label
+            className={`mt-4 flex items-start gap-3 ${settingsInsetClassName}`}
+          >
             <input
               type="checkbox"
               name="taxable"
               defaultChecked
               className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-200"
             />
-            <span className="text-sm text-slate-700">
-              Taxable by default
-            </span>
+            <span className="text-sm text-slate-700">Taxable by default</span>
           </label>
-          <label className="mt-4 flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <label
+            className={`mt-4 flex items-start gap-3 ${settingsInsetClassName}`}
+          >
             <input
               type="checkbox"
               name="isDefault"
@@ -303,34 +326,38 @@ export function CatalogItemSettingsCard({
           </label>
           <button
             type="submit"
-            className="mt-5 inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+            className={`mt-5 ${settingsSecondaryActionClassName}`}
           >
             Create item
           </button>
         </form>
 
         {availableSeeds.length > 0 ? (
-          <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
-            <p className="text-sm font-semibold text-slate-950">Available platform starter items</p>
+          <div className={settingsPanelClassName}>
+            <p className="text-sm font-semibold text-slate-950">
+              Available platform starter items
+            </p>
             <div className="mt-4 grid gap-3">
               {availableSeeds.map((seed) => (
                 <form
                   key={seed.id}
                   action={adoptPlatformCatalogItemSeedAction}
-                  className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                  className={`flex flex-col gap-3 ${settingsInsetClassName} sm:flex-row sm:items-center sm:justify-between`}
                 >
                   <input type="hidden" name="seedId" value={seed.id} />
                   <div>
                     <p className="text-sm font-medium text-slate-950">
-                      {seed.name} <span className="text-slate-500">- {seed.unit}</span>
+                      {seed.name}{" "}
+                      <span className="text-slate-500">- {seed.unit}</span>
                     </p>
                     <p className="mt-1 text-xs leading-5 text-slate-500">
-                      {seed.description ?? "Platform starter item"} - ${seed.defaultUnitPrice}
+                      {seed.description ?? "Platform starter item"} - $
+                      {seed.defaultUnitPrice}
                     </p>
                   </div>
                   <button
                     type="submit"
-                    className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                    className={settingsSecondaryActionClassName}
                   >
                     Adopt seed
                   </button>
