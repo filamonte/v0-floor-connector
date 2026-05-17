@@ -173,6 +173,13 @@ Deferred from this polish sequence:
 - The Schedule action panel copy now clarifies the highest-friction edge states: no job selected, unscheduled job, and scheduled job with crew not assigned.
 - This pass stayed on existing project readiness snapshots, canonical jobs, and canonical job assignments. It did not add schema, migrations, schedule-only records, payment/signature/portal changes, readiness-gate changes, auth/RLS changes, fake metrics, or live provider calls.
 
+## Latest Staging / Demo Readiness Checkpoint
+
+- Staging and controlled-demo readiness now has a dedicated runbook at [docs/staging-demo-readiness.md](C:/FloorConnector/docs/staging-demo-readiness.md). It maps env var ownership by system, provider setup checklists, demo modes, a practical route script, validation commands, known limitations, go/no-go gates, and owner actions.
+- Current recommendation remains: GO for controlled internal demo using test-mode/provider-isolated boundaries; CONDITIONAL for public early-access intake until staging URL, email, activation, and `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` posture is configured; NO-GO for live provider billing/payment/signature replay until Stripe, Postmark, and SignWell staging settings are verified on the actual host.
+- Local docs-pass validation passed `pnpm --filter @floorconnector/web typecheck`, `pnpm --filter @floorconnector/web lint`, `pnpm build`, and `git diff --check`. Non-mutating Supabase CLI checks stopped before database contact because this shell has no Supabase access token; run `supabase login` or provide `SUPABASE_ACCESS_TOKEN` before repeating `supabase migration list` and `supabase db push --dry-run`.
+- The runbook is documentation only. It does not authorize deployment, live provider calls, schema changes, auth/RLS changes, portal grant changes, payment/signature behavior changes, readiness-gate changes, or new demo data.
+
 ## Latest Revision / Perspective Checkpoint
 
 - First-pass canonical revision infrastructure is implemented through `record_revisions` for estimates, invoices, contracts, and change orders.

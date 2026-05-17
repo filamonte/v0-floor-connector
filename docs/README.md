@@ -57,6 +57,7 @@ Document roles:
 - `docs/future-platform-expansion.md`: future platform expansion direction
 - `docs/current-state.md`: source of truth for implemented status
 - `docs/workflows.md`: canonical business workflows and near-term workflow direction
+- `docs/staging-demo-readiness.md`: staging/demo readiness runbook for env ownership, provider setup checklists, demo modes, and go/no-go gates
 - `docs/site-visit-scope-intake-plan.md`: planning guardrails for the lead site visit Scope Intake stage between appointment capture and estimate planning
 - `docs/vision.md`: long-term product direction and platform thesis
 - `docs/ai-assisted-operating-system.md`: target AI-assisted operating system strategy across contractor and FloorConnector-facing AI
