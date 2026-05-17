@@ -158,11 +158,30 @@ Observed status means names-only status from local `.env.local` at the time of t
 
 ### Vercel
 
+- Discovery status as of the latest staging setup check:
+  - no local `.vercel/project.json` exists
+  - no root `vercel.json` exists
+  - the Vercel connector can see the `FloorConnectorPro` team, slug `floor-connector-pro`, id `team_YagR2wrTSaYjQqCLBlbzfopb`
+  - the connector reports no projects under that team
+  - no staging deployment URL is discoverable from this workspace yet
+  - if a Vercel project already exists elsewhere, the active Vercel account likely lacks access to that project/team; switch the Vercel CLI/connector to the owning account or invite the current account to the correct team before repeating project discovery
 - Connect the Vercel project to `https://github.com/filamonte/v0-floor-connector.git`.
 - Decide whether staging uses a protected preview deployment, a stable staging domain, or both.
 - Keep production, preview, and staging env vars separated.
 - Configure `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_MARKETING_URL`, and explicit `APP_ENV=staging` for staging.
 - Confirm monorepo root/build command expectations before deploying. Current package scripts expose `pnpm build`, `pnpm --filter @floorconnector/web typecheck`, and `pnpm --filter @floorconnector/web lint`.
+- Recommended first Vercel project setup:
+  - Project name: `floorconnector` or `floorconnector-staging`
+  - Team: `FloorConnectorPro`
+  - Git repository: `filamonte/v0-floor-connector`
+  - Framework preset: Next.js
+  - Install command: `pnpm install --frozen-lockfile`
+  - Build command: `pnpm --filter @floorconnector/web build`
+  - Development command, if Vercel asks: `pnpm --filter @floorconnector/web dev`
+  - Output directory: leave as Vercel/Next.js default unless the first build log proves it needs an explicit path
+  - Node version: use a Node 20+ runtime; the repo declares `node >=20.0.0`
+  - Root directory: prefer `apps/web` if Vercel's monorepo detection keeps workspace package resolution intact; if workspace package resolution fails, switch to repo root and keep the filtered web build command
+  - Do not add a `vercel.json` until a failed build or owner deployment preference proves the setting should live in the repo
 - Decide deployment protection before sharing a staging link externally.
 - After deploy, smoke public home, `/login`, `/signup?next=/setup/company`, `/api/health`, `/api/health/auth`, contractor dashboard, portal home, and super-admin access with the intended accounts.
 
