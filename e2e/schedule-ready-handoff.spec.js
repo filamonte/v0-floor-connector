@@ -14,6 +14,13 @@ const scheduledJobHandoffFixtureCustomerEmail =
 const scheduleSubmitFixtureProjectName = "[E2E] Schedule Submit Path";
 const scheduleSubmitFixtureCustomerEmail =
   "e2e-schedule-submit@floorconnector.local";
+const readyNoJobFixtureProjectName = "[E2E] Dashboard Ready No Job";
+const readyNoJobFixtureCustomerEmail =
+  "e2e-dashboard-ready-no-job@floorconnector.local";
+const dashboardUnscheduledJobFixtureProjectName =
+  "[E2E] Dashboard Unscheduled Job Project";
+const dashboardUnscheduledJobFixtureCustomerEmail =
+  "e2e-dashboard-unscheduled-job@floorconnector.local";
 
 function attachIssueCapture(page) {
   const issues = [];
@@ -547,10 +554,87 @@ async function createReadyProjectFixture({
   return {
     projectPath: `/projects/${project.id}`,
     projectId: project.id,
+    projectName: project.name,
     jobId: job.id,
     contractId: contract.id,
     estimateId: estimate.id
   };
+}
+
+async function createReadyProjectWithoutJobFixture() {
+  const context = await getSupabaseFixtureContext();
+
+  if (context.skipReason) {
+    return context;
+  }
+
+  const { supabase, organizationId, userId } = context;
+  const description =
+    "Disposable local E2E fixture for dashboard ready-project-without-job coverage.";
+  const customerId = await ensureFixtureCustomer({
+    supabase,
+    organizationId,
+    userId,
+    email: readyNoJobFixtureCustomerEmail,
+    name: "E2E Dashboard Ready No Job Customer",
+    notes: description
+  });
+  const project = await createFixtureProject({
+    supabase,
+    organizationId,
+    userId,
+    customerId,
+    fixtureProjectName: readyNoJobFixtureProjectName,
+    description
+  });
+  const opportunityId = await ensureFixtureOpportunity({
+    supabase,
+    organizationId,
+    userId,
+    customerId,
+    projectId: project.id,
+    projectName: project.name,
+    customerName: "E2E Dashboard Ready No Job Customer",
+    customerEmail: readyNoJobFixtureCustomerEmail,
+    requirementsSummary: description
+  });
+  const estimate = await createApprovedFixtureEstimate({
+    supabase,
+    organizationId,
+    userId,
+    customerId,
+    projectId: project.id,
+    opportunityId,
+    title: `${readyNoJobFixtureProjectName} Estimate`,
+    notes: description
+  });
+  const contract = await createSignedFixtureContract({
+    supabase,
+    organizationId,
+    userId,
+    customerId,
+    projectId: project.id,
+    estimate
+  });
+
+  return {
+    projectPath: `/projects/${project.id}`,
+    projectId: project.id,
+    projectName: project.name,
+    contractId: contract.id,
+    estimateId: estimate.id
+  };
+}
+
+async function createDashboardUnscheduledJobFixture() {
+  return createReadyProjectFixture({
+    fixtureProjectName: dashboardUnscheduledJobFixtureProjectName,
+    customerEmail: dashboardUnscheduledJobFixtureCustomerEmail,
+    customerName: "E2E Dashboard Unscheduled Job Customer",
+    description:
+      "Disposable local E2E fixture for dashboard existing-unscheduled-job handoff coverage.",
+    jobScheduled: false
+  });
 }
 
 async function ensureUnscheduledJobHandoffFixture() {
@@ -889,7 +973,7 @@ test("schedule handoff opens one unscheduled job in the focused scheduling compo
   );
   await expect(page.locator("#schedule-action")).toContainText("Update schedule");
   await expect(page.locator("#schedule-action")).toContainText("Unscheduled");
-  await expect(page.locator("#schedule-action")).toContainText("No crew attached yet");
+  await expect(page.locator("#schedule-action")).toContainText("Crew not assigned yet");
   const scheduleForm = await getScheduleUpdateForm(page);
   await expect(scheduleForm.locator('input[name="jobId"]')).toHaveValue(fixture.jobId);
   await expect(scheduleForm.locator('input[name="scheduledDate"]')).toHaveValue("");
@@ -910,6 +994,161 @@ test("schedule handoff opens one unscheduled job in the focused scheduling compo
       workItemCountBefore
     );
   }
+
+  expect(issues).toEqual([]);
+});
+
+test("dashboard ready project without a job links to canonical job creation", async ({
+  page
+}) => {
+  const issues = attachIssueCapture(page);
+  const fixture = await createReadyProjectWithoutJobFixture();
+
+  test.skip(
+    Boolean(fixture.skipReason),
+    fixture.skipReason ??
+      "No ready project without a job fixture was available for dashboard ready queue QA."
+  );
+
+  expect(await countJobsForProject({ projectId: fixture.projectId })).toBe(0);
+
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+  await page.waitForLoadState("domcontentloaded");
+
+  if (page.url().includes("/login")) {
+    throw new Error(
+      "Dashboard ready queue QA requires authenticated storage state. Run the setup project with FLOORCONNECTOR_E2E_EMAIL and FLOORCONNECTOR_E2E_PASSWORD."
+    );
+  }
+
+  const workflowQueues = page.getByRole("region", {
+    name: "Follow up by workflow area"
+  });
+  const readyQueue = workflowQueues.locator("section").filter({
+    has: page.getByRole("heading", { name: "Projects ready for job creation" })
+  });
+  await expect(readyQueue).toBeVisible();
+  const fixtureRow = readyQueue.locator("article").filter({
+    hasText: fixture.projectName
+  });
+  await expect(fixtureRow).toBeVisible();
+  await expect(fixtureRow).toContainText("Ready to schedule");
+  await expect(fixtureRow).toContainText(
+    "Ready to schedule - create the job, then place it on Schedule"
+  );
+
+  const createJobLink = fixtureRow.getByRole("link", {
+    name: "Create job"
+  });
+  await expect(createJobLink).toBeVisible();
+
+  const href = await createJobLink.getAttribute("href");
+  expect(href).toBeTruthy();
+
+  const jobCreationUrl = new URL(href, "http://floorconnector.local");
+  expect(jobCreationUrl.pathname).toBe("/jobs");
+  expect(jobCreationUrl.searchParams.get("projectId")).toBe(fixture.projectId);
+  expect(jobCreationUrl.searchParams.get("compose")).toBe("1");
+  expect(jobCreationUrl.searchParams.get("estimateId")).toBe(fixture.estimateId);
+  expect(jobCreationUrl.searchParams.get("contractId")).toBe(fixture.contractId);
+
+  expect(issues).toEqual([]);
+});
+
+test("dashboard unscheduled job opens the schedule action panel with selected job context", async ({
+  page
+}) => {
+  const issues = attachIssueCapture(page);
+  const fixture = await createDashboardUnscheduledJobFixture();
+
+  test.skip(
+    Boolean(fixture.skipReason),
+    fixture.skipReason ??
+      "No disposable unscheduled job fixture was available for dashboard schedule handoff QA."
+  );
+
+  const scheduleStateBefore = await getJobScheduleState({
+    projectId: fixture.projectId,
+    jobId: fixture.jobId
+  });
+  expect(scheduleStateBefore.dispatch_status).toBe("unscheduled");
+  expect(scheduleStateBefore.scheduled_date).toBeNull();
+  expect(scheduleStateBefore.scheduled_start_at).toBeNull();
+  expect(scheduleStateBefore.scheduled_end_at).toBeNull();
+
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+  await page.waitForLoadState("domcontentloaded");
+
+  if (page.url().includes("/login")) {
+    throw new Error(
+      "Dashboard unscheduled job handoff QA requires authenticated storage state. Run the setup project with FLOORCONNECTOR_E2E_EMAIL and FLOORCONNECTOR_E2E_PASSWORD."
+    );
+  }
+
+  const workflowQueues = page.getByRole("region", {
+    name: "Follow up by workflow area"
+  });
+  const schedulingQueue = workflowQueues.locator("section").filter({
+    has: page.getByRole("heading", { name: "Jobs needing scheduling" })
+  });
+  await expect(schedulingQueue).toBeVisible();
+
+  const fixtureRow = schedulingQueue.locator("article").filter({
+    hasText: fixture.projectName
+  });
+  await expect(fixtureRow).toBeVisible();
+  await expect(fixtureRow).toContainText("Needs schedule");
+  await expect(fixtureRow).toContainText(
+    "Unscheduled - set the work date, then assign crew from the same job record"
+  );
+
+  const schedulePanelLink = fixtureRow.getByRole("link", {
+    name: `Open schedule panel: ${fixture.projectName}`
+  });
+  await expect(schedulePanelLink).toBeVisible();
+
+  const href = await schedulePanelLink.getAttribute("href");
+  expect(href).toBeTruthy();
+
+  const scheduleUrl = new URL(href, "http://floorconnector.local");
+  expect(scheduleUrl.pathname).toBe("/schedule");
+  expect(scheduleUrl.searchParams.get("projectId")).toBe(fixture.projectId);
+  expect(scheduleUrl.searchParams.get("jobId")).toBe(fixture.jobId);
+  expect(scheduleUrl.searchParams.get("view")).toBe("unscheduled");
+  expect(scheduleUrl.searchParams.get("action")).toBe("schedule");
+  expect(scheduleUrl.hash).toBe("#schedule-action");
+
+  await schedulePanelLink.click();
+  await page.waitForURL("**/schedule?**#schedule-action", { timeout: 15_000 });
+  await expectAuthenticatedSchedulePage(page);
+
+  const currentUrl = new URL(page.url());
+  expect(currentUrl.pathname).toBe("/schedule");
+  expect(currentUrl.searchParams.get("projectId")).toBe(fixture.projectId);
+  expect(currentUrl.searchParams.get("jobId")).toBe(fixture.jobId);
+  expect(currentUrl.searchParams.get("view")).toBe("unscheduled");
+  expect(currentUrl.searchParams.get("action")).toBe("schedule");
+  expect(currentUrl.hash).toBe("#schedule-action");
+
+  const schedulePanel = page.locator("#schedule-action");
+  await expect(schedulePanel).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Selected job action panel" })).toBeVisible();
+  await expect(schedulePanel).toContainText(fixture.projectName);
+  await expect(schedulePanel).toContainText("Unscheduled job");
+  await expect(schedulePanel).toContainText(
+    "Choose a date and time before assigning people or labor-provider vendors."
+  );
+  await expect(schedulePanel).toContainText("Crew not assigned yet");
+  await expect(schedulePanel).toContainText("Update schedule");
+  const scheduleForm = await getScheduleUpdateForm(page);
+  await expect(scheduleForm.locator('input[name="jobId"]')).toHaveValue(fixture.jobId);
+  await expect(scheduleForm.locator('input[name="scheduledDate"]')).toHaveValue("");
+
+  const scheduleStateAfter = await getJobScheduleState({
+    projectId: fixture.projectId,
+    jobId: fixture.jobId
+  });
+  expect(scheduleStateAfter).toEqual(scheduleStateBefore);
 
   expect(issues).toEqual([]);
 });

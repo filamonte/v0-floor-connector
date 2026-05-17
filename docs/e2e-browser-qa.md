@@ -706,6 +706,8 @@ If no path is provided, the fixture-backed cue and handoff regressions create or
 - signed-ready-no-job cue: one customer, one project, one opportunity, one approved estimate, and one signed contract with no linked jobs
 - ready-project-with-unscheduled-job cue: one customer, one project, one opportunity, one approved estimate, one signed contract, and exactly one unscheduled job
 - ready-to-schedule already-scheduled-job handoff: one customer, one project, one opportunity, one approved estimate, one signed contract, and one scheduled job with no unscheduled jobs
+- dashboard ready-project-without-job handoff: one disposable `[E2E] Dashboard Ready No Job ...` project, one customer, one opportunity, one approved estimate, and one signed contract with no linked jobs
+- dashboard existing-unscheduled-job handoff: one disposable `[E2E] Dashboard Unscheduled Job Project ...` project, one customer, one opportunity, one approved estimate, one signed contract, and one canonical unscheduled job with no schedule date/time
 - open-blocker-field-note cue: one customer, one ready project, one opportunity, one approved estimate, one signed contract, one daily log, and one open blocker field note
 
 The project cue bridge spec verifies:
@@ -740,6 +742,8 @@ The schedule ready handoff spec uses the same protected project and shared authe
 
 The spec also asserts the good-enough scheduling landmarks so `/schedule` remains understandable as a contractor scheduling surface: `Scheduling command center`, `Ready work queue`, `Scheduled timeline`, and `Selected job action panel`.
 
+It also includes dashboard coverage for the `Projects ready for job creation` and `Jobs needing scheduling` queues, proving a ready project with no canonical job links to job creation while an existing canonical unscheduled job links into the Schedule selected-job action panel.
+
 The protected regression command is:
 
 ```bash
@@ -756,6 +760,8 @@ FLOORCONNECTOR_E2E_SCHEDULED_JOB_HANDOFF_PATH
 It verifies:
 
 - `/schedule?projectId={projectId}&jobId={jobId}&view=unscheduled&action=schedule` opens the existing schedule composer for that exact unscheduled job
+- `/dashboard` shows a fixture-backed ready project without a job in `Projects ready for job creation` and exposes `/jobs?projectId={projectId}&compose=1&estimateId={estimateId}&contractId={contractId}`
+- `/dashboard` shows a fixture-backed existing unscheduled job in `Jobs needing scheduling`, exposes `/schedule?projectId={projectId}&view=unscheduled&action=schedule&jobId={jobId}#schedule-action`, and opens the Schedule selected-job action panel with unscheduled-job copy visible
 - `/schedule?projectId={projectId}&view=unscheduled&action=schedule` still uses the exact-one unscheduled job fallback when the project has exactly one unscheduled job
 - `/schedule?projectId={projectId}` stays project-scoped for already scheduled jobs without opening job creation, work-item creation, or schedule mutation surfaces
 - the intentional submit-path regression uses a disposable `[E2E] Schedule Submit Path ...` fixture, schedules that one canonical job through the existing `/schedule` composer, verifies the saved schedule persists after reload, confirms no duplicate jobs or work items were created, and resets that fixture job back to unscheduled after the assertions

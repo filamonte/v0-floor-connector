@@ -168,6 +168,9 @@ Deferred from this polish sequence:
 
 - The contractor dashboard now separates `Ready to schedule` projects from `Jobs needing scheduling`: commercially clear projects with no canonical job appear as a project/job-creation handoff, while existing unscheduled jobs continue to route into `/schedule`.
 - Jobs Manager and Job Workspace schedule actions now deep-link unscheduled jobs into the `/schedule` selected job action panel with project, job, view, and action context preserved. The local job workspace schedule form remains available for direct updates.
+- Fixture-backed dashboard coverage now proves a commercially ready `[E2E] Dashboard Ready No Job ...` project with no canonical jobs appears in `Projects ready for job creation` and links to `/jobs?projectId=...&compose=1` with estimate and contract context preserved.
+- Fixture-backed dashboard coverage now also proves a disposable `[E2E] Dashboard Unscheduled Job Project ...` canonical unscheduled job appears in `Jobs needing scheduling` and opens `/schedule?projectId=...&view=unscheduled&action=schedule&jobId=...#schedule-action` with the selected job action panel visible.
+- The Schedule action panel copy now clarifies the highest-friction edge states: no job selected, unscheduled job, and scheduled job with crew not assigned.
 - This pass stayed on existing project readiness snapshots, canonical jobs, and canonical job assignments. It did not add schema, migrations, schedule-only records, payment/signature/portal changes, readiness-gate changes, auth/RLS changes, fake metrics, or live provider calls.
 
 ## Latest Revision / Perspective Checkpoint

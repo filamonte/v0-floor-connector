@@ -437,17 +437,18 @@ function getCrewState(job: {
 
   if (job.dispatchStatus === "unscheduled") {
     return {
-      label: "Crew comes after scheduling",
-      detail: "Set a date first, then attach people or labor-provider vendors.",
+      label: "Unscheduled job",
+      detail:
+        "Choose a date and time before assigning people or labor-provider vendors.",
       emphasisClass: "text-amber-700",
       badgeClass: "border-amber-200 bg-amber-50 text-amber-700"
     };
   }
 
   return {
-    label: "Needs crew",
+    label: "Crew not assigned",
     detail:
-      "Scheduled work still needs people or labor-provider vendors attached.",
+      "Assign a crew or labor-provider vendor before production starts.",
     emphasisClass: "text-rose-700",
     badgeClass: "border-rose-200 bg-rose-50 text-rose-700"
   };
@@ -3377,7 +3378,7 @@ export default async function SchedulePage({
                 <p className="mt-1">
                   {selectedJobAssignments.length > 0
                     ? `${formatAssignmentLabel(selectedJobAssignments.length)} already attached`
-                    : "No crew attached yet"}
+                    : "Crew not assigned yet"}
                 </p>
               </div>
 
@@ -3415,9 +3416,9 @@ export default async function SchedulePage({
                 selectedJobNeedsScheduleBeforeCrew ? (
                   <div className="space-y-4">
                     <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-                      Set the schedule commitment first. Crew assignment stays
-                      on the same job, but it only becomes actionable after the
-                      job has a real date on the board.
+                      Unscheduled job. Choose a date and time first; crew
+                      assignment stays on this same job after the schedule
+                      commitment is real.
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Link
@@ -3471,8 +3472,8 @@ export default async function SchedulePage({
                 ) : (
                   <div className="space-y-4">
                     <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-                      Add active assignable people or labor-provider vendors
-                      before attaching crew from the schedule surface.
+                      Crew not assigned. Add active assignable people or
+                      labor-provider vendors before production starts.
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Link
@@ -3508,9 +3509,9 @@ export default async function SchedulePage({
             </div>
           ) : (
             <div className={scheduleInsetPanelClassName}>
-              Select a job from the unscheduled, today, upcoming, or crew queues
-              to schedule work or attach crew without leaving the schedule
-              dashboard.
+              No job selected yet. Pick an existing job from the unscheduled,
+              today, upcoming, or crew queues to schedule work or attach crew
+              without leaving the schedule dashboard.
             </div>
           )}
         </WorkspaceComposerSheet>
