@@ -308,16 +308,22 @@ export default async function PortalInvoiceReviewPage({
           />
 
           {resolvedSearchParams.error ? (
-            <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+            <div
+              role="alert"
+              className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800"
+            >
               {resolvedSearchParams.error}
             </div>
           ) : null}
 
           {resolvedSearchParams.message ? (
-            <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
-            {resolvedSearchParams.message}
-          </div>
-        ) : null}
+            <div
+              role="status"
+              className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800"
+            >
+              {resolvedSearchParams.message}
+            </div>
+          ) : null}
 
           <div className="mt-10 space-y-5">
             <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">

@@ -99,6 +99,12 @@ function withMessage(urlString: string, message: string) {
   return url.toString();
 }
 
+function withMessagePath(urlString: string, message: string) {
+  const url = new URL(urlString);
+  url.searchParams.set("message", message);
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
 function numberToCurrencyAmount(value: number | null | undefined) {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     return null;
@@ -475,7 +481,7 @@ class LocalManualPaymentGatewayAdapter implements PaymentGatewayAdapter {
       gatewayCheckoutSessionReference,
       gatewayPaymentIntentReference: null,
       gatewayStatus: "open",
-      checkoutUrl: withMessage(
+      checkoutUrl: withMessagePath(
         input.cancelUrl,
         "A local payment checkout session was created. External gateway completion is not configured in this environment yet."
       ),
