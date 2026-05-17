@@ -12,6 +12,7 @@ type ProtectedSurfaceHeaderProps = {
   logoUrl?: string | null;
   brandAccentColor?: string | null;
   brandSupportingLabel?: string;
+  headingLevel?: "h1" | "h2";
 };
 
 export function ProtectedSurfaceHeader({
@@ -22,8 +23,11 @@ export function ProtectedSurfaceHeader({
   brandName = "FloorConnector",
   logoUrl,
   brandAccentColor,
-  brandSupportingLabel
+  brandSupportingLabel,
+  headingLevel = "h1"
 }: ProtectedSurfaceHeaderProps) {
+  const Heading = headingLevel;
+
   return (
     <header className="border-b border-[var(--border-warm)] bg-white/85 backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 py-5 sm:px-10 lg:flex-row lg:items-center lg:justify-between">
@@ -36,9 +40,9 @@ export function ProtectedSurfaceHeader({
             supportingLabel={brandSupportingLabel}
             className="mb-3"
           />
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
+          <Heading className="mt-2 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
             {title}
-          </h1>
+          </Heading>
           <p className="mt-2 text-sm text-[var(--text-secondary)]">{description}</p>
         </div>
         <div className="flex min-w-0 flex-wrap items-center gap-3">

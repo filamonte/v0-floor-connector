@@ -496,6 +496,8 @@ class LocalManualPaymentGatewayAdapter implements PaymentGatewayAdapter {
 export function getPaymentGatewayAdapter(
   provider?: PaymentGatewayProvider
 ): PaymentGatewayAdapter {
+  const env = getServerEnv();
+
   if (provider === "stripe") {
     return new StripePaymentGatewayAdapter();
   }
@@ -504,7 +506,12 @@ export function getPaymentGatewayAdapter(
     return new LocalManualPaymentGatewayAdapter();
   }
 
-  const env = getServerEnv();
+  if (
+    env.NODE_ENV !== "production" &&
+    env.FLOORCONNECTOR_E2E_PAYMENT_GATEWAY === "local_manual"
+  ) {
+    return new LocalManualPaymentGatewayAdapter();
+  }
 
   if (env.STRIPE_SECRET_KEY) {
     return new StripePaymentGatewayAdapter();

@@ -26,9 +26,9 @@ export function DetailPageHeader({
             {eyebrow}
           </p>
           <div className="space-y-3">
-            <h2 className="whitespace-normal break-words text-3xl font-semibold tracking-tight text-[var(--text-primary)] [overflow-wrap:anywhere] sm:text-[2.4rem]">
+            <h1 className="whitespace-normal break-words text-3xl font-semibold tracking-tight text-[var(--text-primary)] [overflow-wrap:anywhere] sm:text-[2.4rem]">
               {title}
-            </h2>
+            </h1>
             <p className="max-w-[65ch] text-sm leading-6 text-[var(--text-secondary)] sm:text-[0.95rem]">
               {description}
             </p>

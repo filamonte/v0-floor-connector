@@ -136,9 +136,9 @@ export function StandardWorkspaceLayout<TView extends string>({
                 {header.eyebrow}
               </p>
             ) : null}
-            <h2 className="mt-1 whitespace-normal break-words text-[22px] font-semibold leading-tight tracking-tight text-[var(--text-primary)] [overflow-wrap:anywhere] sm:text-[24px]">
+            <h1 className="mt-1 whitespace-normal break-words text-[22px] font-semibold leading-tight tracking-tight text-[var(--text-primary)] [overflow-wrap:anywhere] sm:text-[24px]">
               {header.title}
-            </h2>
+            </h1>
             {header.description ? (
               <p className="mt-1 max-w-3xl text-[13px] leading-5 text-[var(--text-secondary)]">
                 {header.description}

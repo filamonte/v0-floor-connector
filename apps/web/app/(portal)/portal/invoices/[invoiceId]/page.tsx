@@ -286,8 +286,8 @@ export default async function PortalInvoiceReviewPage({
   });
 
   return (
-    <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
-      <section className="space-y-10">
+    <div className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
+      <section className="min-w-0 space-y-10">
         <div className={portalHeroPanelClassName}>
           <DetailPageHeader
             eyebrow="Invoice Review"
@@ -406,29 +406,29 @@ export default async function PortalInvoiceReviewPage({
           title="Invoice Body"
           description="Review the bill, line items, totals, and notes before taking any payment action."
         >
-          <div className="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
-            <div className="space-y-6">
-              <section className="space-y-4">
-                <div>
+          <div className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
+            <div className="min-w-0 space-y-6">
+              <section className="min-w-0 space-y-4">
+                <div className="min-w-0">
                   <p className="text-sm font-medium text-slate-950">Line items</p>
                   <p className="mt-1 text-sm leading-6 text-slate-600">
                     The work and charges included on this invoice.
                   </p>
                 </div>
                 {invoice.lineItems.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="min-w-0 space-y-3">
                     {invoice.lineItems.map((lineItem) => (
                       <div
                         key={lineItem.id}
-                        className="rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4"
+                        className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4"
                       >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold text-slate-950">
+                        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0 space-y-1">
+                            <p className="break-words text-sm font-semibold text-slate-950 [overflow-wrap:anywhere]">
                               {lineItem.name}
                             </p>
                             {lineItem.description ? (
-                              <p className="text-sm leading-6 text-slate-600">
+                              <p className="break-words text-sm leading-6 text-slate-600 [overflow-wrap:anywhere]">
                                 {lineItem.description}
                               </p>
                             ) : null}
@@ -451,22 +451,22 @@ export default async function PortalInvoiceReviewPage({
                 )}
               </section>
 
-              <section className="grid gap-6 lg:grid-cols-2">
-                <div className="space-y-3">
+              <section className="grid min-w-0 gap-6 lg:grid-cols-2">
+                <div className="min-w-0 space-y-3">
                   <p className="text-sm font-medium text-slate-950">Invoice notes</p>
-                  <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600">
+                  <div className="min-w-0 break-words rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600 [overflow-wrap:anywhere]">
                     {invoice.notes ?? "No billing notes are currently shared on this invoice."}
                   </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="min-w-0 space-y-3">
                   <p className="text-sm font-medium text-slate-950">Payment records</p>
                   {invoice.payments.length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="min-w-0 space-y-3">
                       {invoice.payments.map((payment) => (
                         <div
                           key={payment.id}
-                          className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600"
+                          className="min-w-0 break-words rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600 [overflow-wrap:anywhere]"
                         >
                           <p className="font-semibold text-slate-950">
                             {formatMoney(payment.amount)}
@@ -488,7 +488,7 @@ export default async function PortalInvoiceReviewPage({
               </section>
             </div>
 
-            <div className="space-y-4">
+            <div className="min-w-0 space-y-4">
               <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
                 <p className="text-sm font-medium text-slate-950">Totals</p>
                 <dl className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
@@ -569,7 +569,7 @@ export default async function PortalInvoiceReviewPage({
         </DetailPanel>
       </section>
 
-      <aside className="space-y-6">
+      <aside className="min-w-0 space-y-6">
         <DetailPanel
           title="Payment Actions"
           description="Continue to secure checkout when payment is available."

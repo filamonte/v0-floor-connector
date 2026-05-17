@@ -52,14 +52,14 @@ export default async function BillingSetupPage({ searchParams }: PageProps) {
           : "Stripe live keys configured";
 
   return (
-    <div className="-mx-5 min-h-[calc(100vh-140px)] bg-[#f7f5f1] px-5 py-8 sm:-mx-8 sm:px-8">
-      <div className="mx-auto max-w-4xl">
+    <div className="min-w-0 overflow-x-hidden bg-[#f7f5f1] px-5 py-8 sm:px-8">
+      <div className="mx-auto w-full max-w-4xl min-w-0">
         <SetupEscapeBanner />
-        <section className="rounded-2xl border border-[#d8d1c9] bg-white p-6 shadow-[0_24px_70px_-64px_rgba(0,0,0,0.9)] sm:p-8">
+        <section className="min-w-0 rounded-2xl border border-[#d8d1c9] bg-white p-6 shadow-[0_24px_70px_-64px_rgba(0,0,0,0.9)] sm:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c75f12]">
             Step 2 of 3
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#11100f]">
+          <h1 className="mt-3 whitespace-normal break-words text-3xl font-semibold tracking-tight text-[#11100f] [overflow-wrap:anywhere]">
             Add your billing method
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[#625a52]">
@@ -87,50 +87,50 @@ export default async function BillingSetupPage({ searchParams }: PageProps) {
             </div>
           ) : null}
 
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            <div className="rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4">
+          <div className="mt-8 grid min-w-0 gap-4 md:grid-cols-3">
+            <div className="min-w-0 rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#756c63]">
                 Billing form
               </p>
-              <p className="mt-2 text-sm font-semibold text-[#171412]">
+              <p className="mt-2 break-words text-sm font-semibold text-[#171412] [overflow-wrap:anywhere]">
                 {billingState.publishableKeyConfigured
                   ? "Ready"
                   : "Unavailable"}
               </p>
             </div>
-            <div className="rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4">
+            <div className="min-w-0 rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#756c63]">
                 Secure setup
               </p>
-              <p className="mt-2 text-sm font-semibold text-[#171412]">
+              <p className="mt-2 break-words text-sm font-semibold text-[#171412] [overflow-wrap:anywhere]">
                 {billingState.secretKeyConfigured ? "Ready" : "Unavailable"}
               </p>
             </div>
-            <div className="rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4">
+            <div className="min-w-0 rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#756c63]">
                 Billing profile
               </p>
-              <p className="mt-2 text-sm font-semibold text-[#171412]">
+              <p className="mt-2 break-words text-sm font-semibold text-[#171412] [overflow-wrap:anywhere]">
                 {billingState.stripeCustomerId
                   ? "Stored safely"
                   : "Created when available"}
               </p>
             </div>
-            <div className="rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4 md:col-span-3">
+            <div className="min-w-0 rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4 md:col-span-3">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#756c63]">
                 Payment method
               </p>
-              <p className="mt-2 text-sm font-semibold text-[#171412]">
+              <p className="mt-2 break-words text-sm font-semibold text-[#171412] [overflow-wrap:anywhere]">
                 {billingState.stripePaymentMethodId
                   ? "Saved for future activation"
                   : "Not saved yet"}
               </p>
             </div>
-            <div className="rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4 md:col-span-3">
+            <div className="min-w-0 rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4 md:col-span-3">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#756c63]">
                 SaaS plan reference
               </p>
-              <p className="mt-2 text-sm font-semibold text-[#171412]">
+              <p className="mt-2 break-words text-sm font-semibold text-[#171412] [overflow-wrap:anywhere]">
                 {saasCheckoutState.priceIdConfigured
                   ? saasCheckoutState.priceReferenceSource ===
                     "platform_settings"
@@ -141,7 +141,7 @@ export default async function BillingSetupPage({ searchParams }: PageProps) {
             </div>
           </div>
 
-          <div className="mt-6 rounded-xl border border-[#d8d1c9] bg-[#11100f] p-5 text-white">
+          <div className="mt-6 min-w-0 rounded-xl border border-[#d8d1c9] bg-[#11100f] p-5 text-white">
             <p className="text-sm font-semibold">Secure card collection</p>
             <p className="mt-2 text-sm leading-6 text-white/68">
               {billingState.deferredReason ??
@@ -162,7 +162,7 @@ export default async function BillingSetupPage({ searchParams }: PageProps) {
             />
           </div>
 
-          <div className="mt-6 rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-5">
+          <div className="mt-6 min-w-0 rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-5">
             <p className="text-sm font-semibold text-[#171412]">
               Founder subscription checkout
             </p>

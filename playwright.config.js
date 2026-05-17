@@ -12,6 +12,10 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3001";
 const parsedBaseURL = new URL(baseURL);
 const devServerPort =
   parsedBaseURL.port || (parsedBaseURL.protocol === "https:" ? "443" : "80");
+process.env.FLOORCONNECTOR_E2E_PAYMENT_GATEWAY =
+  process.env.FLOORCONNECTOR_E2E_PAYMENT_GATEWAY ?? "local_manual";
+process.env.STRIPE_WEBHOOK_SECRET =
+  process.env.STRIPE_WEBHOOK_SECRET ?? "whsec_floorconnector_e2e_payment_webhook";
 
 module.exports = defineConfig({
   testDir: "./e2e",
@@ -67,7 +71,7 @@ module.exports = defineConfig({
     },
     {
       name: "chromium-portal",
-      testMatch: /(?:portal-(?:golden-path|invite-acceptance)|data-export)\.spec\.js/,
+      testMatch: /(?:portal-(?:golden-path|invite-acceptance|change-order-actions|estimate-actions|contract-actions|invoice-boundary|invoice-checkout-start)|stripe-webhook-reconciliation|data-export)\.spec\.js/,
       use: {
         ...devices["Desktop Chrome"]
       }
@@ -78,6 +82,12 @@ module.exports = defineConfig({
     : {
         command: `pnpm --filter @floorconnector/web dev -p ${devServerPort}`,
         url: baseURL,
+        env: {
+          ...process.env,
+          FLOORCONNECTOR_E2E_PAYMENT_GATEWAY:
+            process.env.FLOORCONNECTOR_E2E_PAYMENT_GATEWAY,
+          STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET
+        },
         reuseExistingServer: true,
         timeout: 180_000
       }

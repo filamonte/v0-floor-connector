@@ -48,14 +48,14 @@ export function ContractorWorkspacePage({
             >
               {eyebrow}
             </p>
-            <h2
+            <h1
               className={[
                 "mt-1 text-[20px] font-semibold tracking-tight sm:text-[22px]",
                 darkHeader ? "text-white" : "text-[var(--text-primary)]"
               ].join(" ")}
             >
               {title}
-            </h2>
+            </h1>
             <p
               className={[
                 "mt-1 max-w-4xl text-[13px] leading-5",

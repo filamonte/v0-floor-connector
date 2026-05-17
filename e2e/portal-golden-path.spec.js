@@ -125,15 +125,15 @@ async function getProjectRecordPath(
   await page.goto(projectPath);
   await expectAuthenticatedPortalPage(page, /Shared Project Workspace/i);
 
-  const recordLink = page.locator(selector).first();
-  const recordLinkCount = await recordLink.count();
+  const recordLinks = page.locator(selector);
+  const recordLinkCount = await recordLinks.count();
 
   test.skip(
     recordLinkCount === 0,
     `Portal ${recordType} smoke requires a granted project with a shared ${recordType} link, or a configured ${configuredEnvName} route override. Run pnpm e2e:portal-fixture to validate or create the canonical fixture.`
   );
 
-  return await recordLink.getAttribute("href");
+  return await recordLinks.last().getAttribute("href");
 }
 
 test.describe("portal golden workflow smoke", () => {
@@ -266,10 +266,43 @@ test.describe("portal golden workflow smoke", () => {
     }
   });
 
+  test("portal change order review loads when a shared change-order fixture exists", async ({
+    browser,
+    baseURL
+  }) => {
+    const { page, context } = await newPortalPage(browser, baseURL);
+
+    try {
+      const changeOrderPath = await getProjectRecordPath(
+        page,
+        "change order",
+        process.env.FLOORCONNECTOR_E2E_PORTAL_CHANGE_ORDER_PATH,
+        "FLOORCONNECTOR_E2E_PORTAL_CHANGE_ORDER_PATH",
+        'a[href^="/portal/change-orders/"]'
+      );
+
+      await page.goto(changeOrderPath);
+      await expectAuthenticatedPortalPage(page, /Change Order Review/i);
+      await expect(
+        page.getByText("Decision Actions", { exact: true })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: /approve change order/i })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: /reject change order/i })
+      ).toBeVisible();
+    } finally {
+      await context.close();
+    }
+  });
+
   test("portal shared records expose customer-safe print views", async ({
     browser,
     baseURL
   }) => {
+    test.setTimeout(180_000);
+
     const { page, context } = await newPortalPage(browser, baseURL);
 
     try {
@@ -383,6 +416,20 @@ test.describe("portal golden workflow smoke", () => {
       await page.goto(invoicePath);
       await expectAuthenticatedPortalPage(page, /Invoice Review/i);
       await expectNoHorizontalPageOverflow(page, "Portal invoice mobile layout");
+
+      const changeOrderPath = await getProjectRecordPath(
+        page,
+        "change order",
+        process.env.FLOORCONNECTOR_E2E_PORTAL_CHANGE_ORDER_PATH,
+        "FLOORCONNECTOR_E2E_PORTAL_CHANGE_ORDER_PATH",
+        'a[href^="/portal/change-orders/"]'
+      );
+      await page.goto(changeOrderPath);
+      await expectAuthenticatedPortalPage(page, /Change Order Review/i);
+      await expectNoHorizontalPageOverflow(
+        page,
+        "Portal change order mobile layout"
+      );
     } finally {
       await context.close();
     }

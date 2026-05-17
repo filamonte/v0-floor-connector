@@ -12,14 +12,14 @@ export default async function PendingActivationPage() {
   const isActive = tenantStatus === "active" && lifecycleState === "active";
 
   return (
-    <div className="-mx-5 min-h-[calc(100vh-140px)] bg-[#f7f5f1] px-5 py-8 sm:-mx-8 sm:px-8">
-      <div className="mx-auto max-w-4xl">
+    <div className="min-w-0 overflow-x-hidden bg-[#f7f5f1] px-5 py-8 sm:px-8">
+      <div className="mx-auto w-full max-w-4xl min-w-0">
         <SetupEscapeBanner />
-        <section className="rounded-2xl border border-[#d8d1c9] bg-white p-6 shadow-[0_24px_70px_-64px_rgba(0,0,0,0.9)] sm:p-8">
+        <section className="min-w-0 rounded-2xl border border-[#d8d1c9] bg-white p-6 shadow-[0_24px_70px_-64px_rgba(0,0,0,0.9)] sm:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c75f12]">
             Step 3 of 3
           </p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[#11100f]">
+          <h1 className="mt-3 whitespace-normal break-words text-3xl font-semibold tracking-tight text-[#11100f] [overflow-wrap:anywhere] sm:text-4xl">
             You&apos;re in founder early access
           </h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-[#625a52]">
@@ -27,32 +27,32 @@ export default async function PendingActivationPage() {
             and move through the contractor workflow while platform activation is pending.
           </p>
 
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            <div className="rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4">
+          <div className="mt-8 grid min-w-0 gap-4 md:grid-cols-3">
+            <div className="min-w-0 rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#756c63]">
                 Tenant status
               </p>
-              <p className="mt-2 text-sm font-semibold text-[#171412]">{tenantStatus}</p>
+              <p className="mt-2 break-words text-sm font-semibold text-[#171412] [overflow-wrap:anywhere]">{tenantStatus}</p>
             </div>
-            <div className="rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4">
+            <div className="min-w-0 rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#756c63]">
                 Lifecycle
               </p>
-              <p className="mt-2 text-sm font-semibold text-[#171412]">{lifecycleState}</p>
+              <p className="mt-2 break-words text-sm font-semibold text-[#171412] [overflow-wrap:anywhere]">{lifecycleState}</p>
             </div>
-            <div className="rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4">
+            <div className="min-w-0 rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#756c63]">
                 Access
               </p>
-              <p className="mt-2 text-sm font-semibold text-[#171412]">
+              <p className="mt-2 break-words text-sm font-semibold text-[#171412] [overflow-wrap:anywhere]">
                 {isActive ? "Active" : "Pending activation"}
               </p>
             </div>
           </div>
 
-          <div className="mt-8 rounded-xl border border-[#d8d1c9] bg-[#11100f] p-5 text-white">
+          <div className="mt-8 min-w-0 rounded-xl border border-[#d8d1c9] bg-[#11100f] p-5 text-white">
             <p className="text-sm font-semibold">What you can do now</p>
-            <div className="mt-4 grid gap-3 text-sm leading-6 text-white/68 sm:grid-cols-2">
+            <div className="mt-4 grid min-w-0 gap-3 text-sm leading-6 text-white/68 sm:grid-cols-2">
               <p>Create real projects and customers.</p>
               <p>Build real estimates from the same customer and project records.</p>
               <p>Generate and review contracts.</p>
@@ -64,7 +64,7 @@ export default async function PendingActivationPage() {
             </p>
           </div>
 
-          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-950">
+          <div className="mt-4 min-w-0 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-950">
             <p className="font-semibold">What happens next</p>
             <p className="mt-2 text-amber-900">
               A platform operator reviews your setup, billing readiness, and founder access notes before marking the tenant active. Activation unlocks guarded external production actions; it does not create a Stripe subscription or charge a card.

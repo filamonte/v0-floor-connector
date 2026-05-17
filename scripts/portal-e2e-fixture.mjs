@@ -20,6 +20,7 @@ const fixture = {
   catalogItemName: "[E2E] Portal Surface System",
   estimateTitle: "E2E Portal Estimate Review",
   contractTitle: "E2E Portal Contract Review",
+  changeOrderTitle: "E2E Portal Change Order Review",
   invoiceNotes:
     "Portal E2E fixture invoice. Smoke tests may load this page but must not start checkout."
 };
@@ -1193,11 +1194,98 @@ async function ensureInvoice({
   return invoiceId;
 }
 
+async function ensureChangeOrder({
+  supabase,
+  organizationId,
+  userId,
+  customerId,
+  projectId,
+  contractId,
+  invoiceId,
+  write,
+  results
+}) {
+  if (!customerId || !projectId) {
+    addResult(results, "Portal change-order fixture", "missing");
+    return null;
+  }
+
+  const existing = await findSingleBy(supabase, "change_orders", "id, status", [
+    { column: "company_id", value: organizationId },
+    { column: "project_id", value: projectId },
+    { column: "title", value: fixture.changeOrderTitle }
+  ]);
+
+  if (existing) {
+    if (write && existing.status !== "sent") {
+      const now = new Date().toISOString();
+      const response = await supabase
+        .from("change_orders")
+        .update({
+          status: "sent",
+          sent_at: now,
+          customer_viewed_at: null,
+          approved_at: null,
+          rejected_at: null,
+          decision_note: null,
+          updated_by: userId
+        })
+        .eq("company_id", organizationId)
+        .eq("id", existing.id);
+
+      if (response.error) {
+        throw new Error(
+          `Unable to reset portal change-order fixture: ${response.error.message}`
+        );
+      }
+
+      addResult(results, "Portal change-order fixture", "reset");
+      return existing.id;
+    }
+
+    addResult(results, "Portal change-order fixture", "present");
+    return existing.id;
+  }
+
+  if (!write) {
+    addResult(results, "Portal change-order fixture", "missing");
+    return null;
+  }
+
+  const now = new Date().toISOString();
+  const changeOrderId = await insertAndReturnId(
+    supabase,
+    "change_orders",
+    {
+      company_id: organizationId,
+      customer_id: customerId,
+      project_id: projectId,
+      contract_id: contractId,
+      invoice_id: invoiceId,
+      status: "sent",
+      title: fixture.changeOrderTitle,
+      description:
+        "Customer-facing fixture change order for portal review coverage.",
+      scope_change_notes:
+        "Add a labeled safety topcoat at the final walkthrough area. This fixture keeps the portal review path tied to the same canonical project chain.",
+      price_adjustment: "425.00",
+      sent_at: now,
+      created_by: userId,
+      updated_by: userId
+    },
+    "portal change order"
+  );
+
+  addResult(results, "Portal change-order fixture", "created");
+  return changeOrderId;
+}
+
 async function getRouteOutputs({
   projectId,
   estimateId,
   contractId,
   invoiceId,
+  changeOrderId,
   unauthorizedProjectId
 }) {
   return {
@@ -1212,6 +1300,9 @@ async function getRouteOutputs({
       : null,
     FLOORCONNECTOR_E2E_PORTAL_INVOICE_PATH: invoiceId
       ? `/portal/invoices/${invoiceId}`
+      : null,
+    FLOORCONNECTOR_E2E_PORTAL_CHANGE_ORDER_PATH: changeOrderId
+      ? `/portal/change-orders/${changeOrderId}`
       : null,
     FLOORCONNECTOR_E2E_PORTAL_UNAUTHORIZED_PROJECT_PATH: unauthorizedProjectId
       ? `/portal/projects/${unauthorizedProjectId}`
@@ -1421,12 +1512,24 @@ async function main() {
     write,
     results
   });
+  const changeOrderId = await ensureChangeOrder({
+    supabase,
+    organizationId: contractor.organizationId,
+    userId: contractor.userId,
+    customerId,
+    projectId,
+    contractId,
+    invoiceId,
+    write,
+    results
+  });
 
   const routes = await getRouteOutputs({
     projectId,
     estimateId,
     contractId,
     invoiceId,
+    changeOrderId,
     unauthorizedProjectId
   });
 

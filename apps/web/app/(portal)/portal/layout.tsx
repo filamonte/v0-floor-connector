@@ -27,6 +27,7 @@ export default async function PortalLayout({ children }: PortalLayoutProps) {
           brandHref="/portal"
           brandName="FloorConnector"
           brandSupportingLabel="Shared customer portal"
+          headingLevel="h2"
         />
       </div>
       <div className="border-b border-[var(--border-warm)] bg-white/70 backdrop-blur print:hidden">

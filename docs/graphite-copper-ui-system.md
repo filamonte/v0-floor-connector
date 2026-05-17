@@ -162,6 +162,8 @@ Use for protected surface identity: title, operational description, primary acti
 
 Headers should wrap safely with long customer, project, organization, or user text.
 
+Use the page-level `h1` for the actual route/workspace title. When `ProtectedSurfaceHeader` is acting as shared shell chrome above a customer-facing page that already renders its own route title, render the shell title as a lower heading level so assistive technology reaches the record or review title first.
+
 ### `WorkspaceCommandBar`
 
 File: [apps/web/components/workspace-command-bar.tsx](C:/FloorConnector/apps/web/components/workspace-command-bar.tsx)
@@ -365,6 +367,7 @@ Rules:
 - card grids should collapse predictably
 - command bars should stack without hiding filters
 - portal review pages must remain readable at mobile width
+- setup/auth-adjacent pages should avoid negative-margin full-bleed wrappers that widen the viewport; use padded, overflow-contained bands instead
 
 Do not use viewport-scaled typography. Keep stable dimensions for boards, toolbars, tiles, and repeated controls where layout shift would be distracting.
 
@@ -374,6 +377,7 @@ Preserve semantic structure first.
 
 Rules:
 
+- route/workspace titles should be the page-level `h1`; repeated section or panel labels should use real heading elements when they introduce meaningful content regions
 - keep labels on inputs
 - keep form names, hidden inputs, test IDs, action payloads, and routes intact during UI refactors
 - use visible focus states on interactive controls
@@ -424,6 +428,18 @@ Repeated class patterns that are safe candidates for future consolidation:
 - schedule panel/action classes
 
 Centralize only when a helper reduces real duplication without forcing broad route churn. Documentation is preferred over fragile sweeping refactors.
+
+## Public / Auth Edge Guidance
+
+The public homepage and auth/setup-adjacent surfaces should share the Graphite / Copper identity without pretending to be contractor workspaces.
+
+Rules:
+
+- lead public messaging with FloorConnector as one connected operating system for specialty flooring contractors
+- avoid unsupported numeric claims, fake proof, or "free trial" wording that outruns the current early-access activation model
+- label roadmap and package depth as planned, future, or operator-reviewed when implementation is not current truth
+- use the existing icon library for repeated marketing and auth iconography
+- preserve public intake, auth redirects, setup/billing guardrails, and activation boundaries during visual polish
 
 ## Future PR Review Checklist
 

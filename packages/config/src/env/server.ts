@@ -11,6 +11,7 @@ const appEnvValues = [
   "test"
 ] as const;
 const quickbooksEnvironmentValues = ["sandbox", "production"] as const;
+const e2ePaymentGatewayValues = ["local_manual"] as const;
 
 export const serverEnvSchema = publicEnvSchema.extend({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -40,6 +41,7 @@ export const serverEnvSchema = publicEnvSchema.extend({
   STRIPE_CONNECT_WEBHOOK_SECRET: optionalString,
   STRIPE_FOUNDER_PLAN_PRICE_ID: optionalString,
   STRIPE_PRICE_ID_BASE: optionalString,
+  FLOORCONNECTOR_E2E_PAYMENT_GATEWAY: optionalEnum(e2ePaymentGatewayValues),
   FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID: optionalString,
   PLATFORM_SUPER_ADMIN_EMAIL: optionalString,
   POSTMARK_SERVER_TOKEN: optionalString,
@@ -112,6 +114,8 @@ function getServerRawEnv(): Record<keyof ServerEnv, string | undefined> {
     STRIPE_CONNECT_WEBHOOK_SECRET: process.env.STRIPE_CONNECT_WEBHOOK_SECRET,
     STRIPE_FOUNDER_PLAN_PRICE_ID: process.env.STRIPE_FOUNDER_PLAN_PRICE_ID,
     STRIPE_PRICE_ID_BASE: process.env.STRIPE_PRICE_ID_BASE,
+    FLOORCONNECTOR_E2E_PAYMENT_GATEWAY:
+      process.env.FLOORCONNECTOR_E2E_PAYMENT_GATEWAY,
     FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID:
       process.env.FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID,
     PLATFORM_SUPER_ADMIN_EMAIL: process.env.PLATFORM_SUPER_ADMIN_EMAIL,

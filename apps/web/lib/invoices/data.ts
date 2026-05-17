@@ -3693,6 +3693,14 @@ export async function processProviderPaymentWebhookEvent(
       true
     );
 
+    if (!referencedPayment) {
+      return {
+        handled: false,
+        duplicate: false,
+        reason: "missing_canonical_payment"
+      } as const;
+    }
+
     if (referencedPayment && referencedPayment.status !== "void") {
       const admin = getSupabaseAdminClient();
       const response = await admin

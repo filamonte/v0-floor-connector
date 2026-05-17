@@ -23,14 +23,14 @@ export function DetailPanel({
       className="min-w-0 rounded-lg border border-[var(--border-warm)] bg-white p-4 shadow-sm sm:p-5"
     >
       <div className="space-y-2.5">
-        <p
+        <h2
           className={[
             "text-[11px] font-semibold uppercase tracking-[0.18em]",
             neutral ? "text-[var(--text-secondary)]" : "text-[var(--text-secondary)]"
           ].join(" ")}
         >
           {title}
-        </p>
+        </h2>
         {description ? (
           <p className="max-w-[65ch] text-sm leading-6 text-[var(--text-secondary)]">{description}</p>
         ) : null}

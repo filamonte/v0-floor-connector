@@ -390,6 +390,7 @@ FLOORCONNECTOR_E2E_PORTAL_PROJECT_PATH
 FLOORCONNECTOR_E2E_PORTAL_ESTIMATE_PATH
 FLOORCONNECTOR_E2E_PORTAL_CONTRACT_PATH
 FLOORCONNECTOR_E2E_PORTAL_INVOICE_PATH
+FLOORCONNECTOR_E2E_PORTAL_CHANGE_ORDER_PATH
 FLOORCONNECTOR_E2E_PORTAL_UNAUTHORIZED_PROJECT_PATH
 ```
 
@@ -424,6 +425,15 @@ playwright/.auth/portal-user.json
 
 That file is local-only and should not be committed. If the portal credential variables are missing, `pnpm e2e:portal-auth` skips with the missing prerequisite instead of creating fake auth state.
 
+The local Phase 3 authenticated portal closeout on May 16, 2026 used this sequence successfully:
+
+```bash
+pnpm e2e:portal-fixture
+pnpm e2e:portal-auth
+```
+
+That run validated the canonical portal fixture and created `playwright/.auth/portal-user.json` from real portal E2E credentials. Do not fake the storage state; when credentials, grants, or shared records are absent, document the missing prerequisite instead.
+
 Run the portal golden-path smoke:
 
 ```bash
@@ -438,6 +448,7 @@ The smoke spec covers:
 - `/portal/estimates/[estimateId]` when a shared estimate link or route override exists
 - `/portal/contracts/[contractId]` when a shared contract link or route override exists
 - `/portal/invoices/[invoiceId]` when a shared invoice link or route override exists, without clicking checkout or attempting payment
+- `/portal/change-orders/[changeOrderId]` when a shared sent change-order link or route override exists, without approving or rejecting the record
 - an intentional unauthorized-project 404 only when `FLOORCONNECTOR_E2E_PORTAL_UNAUTHORIZED_PROJECT_PATH` is configured
 - unauthenticated `/portal/invite?token=...` account-onboarding copy when a pending invite fixture can be prepared with `FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1`
 
@@ -453,7 +464,126 @@ Fixture requirements:
 - the portal user must have an active customer-anchored portal access grant
 - at least one active project access row is required for project workspace smoke
 - estimate, contract, and invoice checks require records linked from that granted project or explicit route overrides
+- change-order checks require a sent canonical `change_orders` record linked to that granted project or an explicit route override
 - the invoice smoke only loads the review page and stops before any irreversible external charge boundary
+- the change-order smoke only loads the review page and verifies decision controls; it does not approve, reject, invoice, or otherwise mutate the change-order decision state
+
+Portal change-order decision action coverage lives in:
+
+```bash
+pnpm exec playwright test e2e/portal-change-order-actions.spec.js --project=chromium-portal
+```
+
+This focused spec creates or resets disposable canonical `change_orders` records on the same E2E portal customer/project chain and leaves the stable golden review fixture untouched. It verifies portal approval and rejection through the real customer-facing forms, confirms canonical DB state after each decision, resets the disposable records back to `sent`, verifies an already-approved disposable record does not expose decision actions, and verifies a change order on the unauthorized boundary project is not visible to the portal customer.
+
+Portal estimate decision action coverage lives in:
+
+```bash
+pnpm exec playwright test e2e/portal-estimate-actions.spec.js --project=chromium-portal
+```
+
+This focused spec creates or resets disposable canonical `estimates` records with simple valid line items and explicit fixture totals on the same E2E portal customer/project chain. It leaves the stable golden estimate review fixture untouched, verifies portal approval and rejection through the real customer-facing forms, confirms canonical DB status/timestamp/user state after each decision, confirms fixture math remains unchanged, resets disposable estimates back to `sent`, verifies an already-approved disposable estimate does not expose decision actions, and verifies an estimate on the unauthorized boundary project is not visible to the portal customer.
+
+Portal contract signature action coverage lives in:
+
+```bash
+pnpm exec playwright test e2e/portal-contract-actions.spec.js --project=chromium-portal
+```
+
+This focused spec creates or resets disposable canonical `contracts` and `contract_signers` rows on the same E2E portal customer/project chain. It leaves the stable golden contract review fixture untouched, verifies portal customer signing and decline through the real customer-facing forms, confirms canonical `contracts` state, `contract_signers` state, and appended `contract_signature_events`, resets disposable contracts and signers back to `sent`/`pending`, verifies an already-signed disposable contract does not expose signature actions, and verifies a contract on the unauthorized boundary project is not visible to the portal customer. Signature events are immutable by design, so the spec verifies event counts increase rather than deleting event history.
+
+## Payment And Portal Payment QA
+
+The payment QA slice is intentionally split into portal review/start boundaries and synthetic webhook reconciliation. It uses disposable canonical invoices/payments and never calls live Stripe.
+
+Coverage map:
+
+- Portal invoice review boundary: open, paid, and unauthorized-project invoice review; verifies render does not create payments or payment events.
+- Portal checkout-start boundary: submits the real portal start-payment form through the `local_manual` gateway and verifies pending payment/request events without provider completion.
+- Synthetic Stripe webhook matrix: signed local payloads for `checkout.session.completed`, `checkout.session.expired`, `checkout.session.async_payment_failed`, `payment_intent.payment_failed`, and `payment_intent.canceled`.
+- Negative webhook coverage: invalid signature, missing metadata, wrong/unknown `payment_id`, unsupported event type, same-tenant cross-invoice mismatch, and cross-tenant mismatch using the Tenant B fixture.
+
+Useful package scripts:
+
+```bash
+pnpm e2e:payments:portal
+pnpm e2e:payments:webhook
+pnpm e2e:payments
+```
+
+Fixture and auth order:
+
+```bash
+pnpm e2e:portal-fixture
+pnpm e2e:portal-auth
+FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1 pnpm e2e:second-tenant-fixture:write
+pnpm e2e:second-tenant-fixture
+pnpm e2e:payments
+pnpm e2e:portal
+```
+
+Required env vars:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `FLOORCONNECTOR_E2E_EMAIL`
+- `FLOORCONNECTOR_PORTAL_E2E_EMAIL`
+- `STRIPE_WEBHOOK_SECRET` for synthetic webhook tests; Playwright supplies a local default when it is not already configured
+- `FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1` only for write-gated fixture reset commands
+- `FLOORCONNECTOR_E2E_PAYMENT_GATEWAY=local_manual` is configured by Playwright for checkout-start coverage
+
+Not covered by this payment QA slice:
+
+- live Stripe Checkout
+- real charges
+- Stripe CLI forwarding
+- refunds
+- disputes
+- subscriptions or SaaS billing webhooks
+- provider settlement or payout reconciliation
+
+Troubleshooting:
+
+- If port `3001` is already in use, stop the stale local dev server or set `PLAYWRIGHT_BASE_URL` / `PLAYWRIGHT_SKIP_WEB_SERVER` according to the run you are performing.
+- If portal auth is missing, rerun `pnpm e2e:portal-fixture` and `pnpm e2e:portal-auth`; do not treat an unauthenticated `/login` redirect as portal coverage.
+- If the cross-tenant webhook test skips, run `FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1 pnpm e2e:second-tenant-fixture:write`, then `pnpm e2e:second-tenant-fixture`.
+- If a Playwright dev-server run fails before reaching the changed surface, rerun the focused script once before classifying it as an app regression.
+- If generated build output appears stale, remove `.next` only as local generated output cleanup, then rerun the focused command.
+
+Portal invoice payment-boundary coverage lives in:
+
+```bash
+pnpm e2e:payments:portal
+```
+
+This focused spec creates or resets disposable canonical `invoices`, `invoice_line_items`, and, for paid-state coverage, canonical recorded `payments` plus `payment_events`. It leaves the stable golden invoice review fixture untouched, verifies an open invoice can render without creating new payments or payment events, verifies a paid invoice renders safe payment state and payment activity without showing checkout, verifies invoice totals and balance remain unchanged, and verifies an invoice on the unauthorized boundary project is not visible to the portal customer. The spec intentionally does not click the checkout CTA, create checkout sessions, call Stripe, complete payment, or exercise webhook behavior.
+
+Portal invoice checkout-start provider-isolated coverage lives in:
+
+```bash
+pnpm exec playwright test e2e/portal-invoice-checkout-start.spec.js --project=chromium-portal
+```
+
+This focused spec uses the existing `local_manual` payment gateway adapter through the non-production-only `FLOORCONNECTOR_E2E_PAYMENT_GATEWAY=local_manual` override configured by Playwright. It creates or resets one disposable canonical invoice and line item, temporarily activates the E2E organization so the real production-action guard allows the portal checkout-start form, restores the organization activation state afterward, submits the real portal payment-start form, and verifies the canonical pending `payments` row plus `payment_requested` and `checkout_started` events. It also verifies invoice total, balance, and status remain unchanged, no `payment_succeeded` event is written, no checkout completion is simulated, and no Stripe/provider network path is used. This is checkout-start boundary coverage only; webhook reconciliation and payment completion remain out of scope.
+
+Synthetic Stripe webhook reconciliation coverage lives in:
+
+```bash
+pnpm e2e:payments:webhook
+```
+
+This focused spec uses a local `STRIPE_WEBHOOK_SECRET` supplied by Playwright when one is not already configured, creates or resets disposable canonical invoices plus pending canonical `payments` rows, signs synthetic Stripe payloads with the same HMAC header shape used by Stripe, and posts them to `/api/payments/stripe/webhook`. It verifies the real webhook route accepts a `checkout.session.completed` payload, finalizes the pending payment through canonical reconciliation, writes one provider `payment_succeeded` event, updates invoice balance/status through canonical payment state, and treats an exact duplicate provider event as idempotent without creating another payment or event. It also verifies a synthetic `checkout.session.expired` payload voids the pending canonical payment, writes one provider `payment_voided` event, leaves the invoice status and balance unchanged, writes no success event, and treats duplicate expired delivery as idempotent. It verifies a synthetic `checkout.session.async_payment_failed` payload records one provider `payment_failed` event, attaches checkout and PaymentIntent failure references to the pending canonical payment, leaves invoice status and balance unchanged, writes no success event, and treats duplicate async-failure delivery as idempotent. It verifies a synthetic `payment_intent.payment_failed` payload records one provider `payment_failed` event, attaches the PaymentIntent failure status to the pending canonical payment, leaves the invoice status and balance unchanged, writes no success event, and treats duplicate failure delivery as idempotent. It verifies a synthetic `payment_intent.canceled` payload voids the pending canonical payment, writes one provider `payment_voided` event, leaves invoice status and balance unchanged, writes no success event, and treats duplicate canceled delivery as idempotent. Negative coverage verifies invalid signatures are rejected before mutation, signed missing-metadata events are ignored without mutation, signed events with an explicit unknown `payment_id` are ignored without fallback payment creation, signed same-tenant cross-invoice events using a real payment from a different invoice are ignored without mutating either invoice/payment pair, and signed unsupported event types are ignored without invoice/payment/payment-event changes. It does not call Stripe, create a Checkout Session, create a charge, fake a production bypass, or exercise SaaS subscription webhooks.
+
+Cross-tenant mismatched-reference webhook coverage uses the disposable tenant B fixture seam:
+
+```bash
+pnpm e2e:second-tenant-fixture
+FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1 pnpm e2e:second-tenant-fixture:write
+```
+
+The helper creates or resets a service-role-only E2E company/customer/project/invoice/payment chain using these stable identifiers: company slug `e2e-stripe-webhook-tenant-b`, company name `E2E Stripe Webhook Tenant B`, customer email `e2e-stripe-webhook-tenant-b@example.invalid`, project name `E2E Stripe Webhook Tenant B Project`, and invoice reference `E2E-STRIPE-WEBHOOK-TENANT-B-INVOICE`. It prints tenant B organization, customer, project, invoice, line-item, and payment ids plus the contractor E2E user's active tenant A organization id for the cross-tenant webhook assertion. The helper is dry-run by default, write-gated by `FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1`, refuses production-marked environments, does not create tenant B memberships, does not make tenant B active/default for UI auth, and leaves stable golden fixtures untouched.
+
+The webhook reconciliation spec now consumes this fixture seam for cross-tenant integrity coverage. It combines tenant A's real organization/invoice ids with tenant B's real pending payment id in one signed synthetic `checkout.session.completed` payload, expects the safe `missing_canonical_payment` response, and verifies tenant A and tenant B invoice/payment/payment-event state remain unchanged. If tenant B is missing, the test skips with the write-gated fixture command as the prerequisite instead of creating tenant records inside the webhook spec.
 
 ## Estimate Group Catalog Insertion QA
 
@@ -671,3 +801,29 @@ Next dev port and produce environment failures that are not app regressions.
 For full manual QA, pair that smoke run with the route-by-route checklist in `docs/golden-workflow-demo-path.md` and record missing fixtures, missing portal/customer auth, or skipped detail routes explicitly.
 
 Founder-demo QA should additionally open `/setup/company`, `/setup/billing`, `/setup/pending-activation`, `/dashboard?fresh=true`, `/people`, `/portal`, the protected and portal print/save document routes for estimate/contract/invoice where fixture data exists, `/super-admin/billing`, and `/super-admin/early-access` with platform-admin auth. Do not click live Checkout, customer payment checkout, activation, reset, temporary credential generation, or raw invite-link copy actions unless the run is explicitly scoped for that safe test action.
+
+## Phase 2 Visual Route Matrix
+
+The authenticated visual route-matrix harness is:
+
+```bash
+pnpm exec node scripts/visual-audit-phase2.cjs
+```
+
+It expects a local app at `PLAYWRIGHT_BASE_URL` or `http://localhost:3001`, uses `playwright/.auth/local-user.json` for contractor/setup routes, `playwright/.auth/platform-admin.json` for super-admin routes, and `playwright/.auth/portal-user.json` for portal routes when available. The script writes `tmp-visual-audit-phase2/route-audit.json` plus selected screenshots, records redirects/missing storage states as blocked rather than successful route checks, and checks first heading text, console/page errors, interactive count, and page-level horizontal overflow.
+
+If `playwright/.auth/portal-user.json` is missing, portal routes must be reported as blocked unless `pnpm e2e:portal-auth` has been run with real portal fixture credentials. Do not count unauthenticated `/login` redirects as successful protected or portal QA.
+
+## Phase 3 Focused Portal / Materials Visual Audit
+
+Use the focused Phase 3 harness when closing portal-authenticated QA, setup overflow, or materials-route evidence:
+
+```bash
+pnpm exec node scripts/visual-audit-phase3.cjs
+```
+
+The script expects the same local app and storage-state files as the Phase 2 harness. It writes `tmp-visual-audit-phase3/route-audit.json` and screenshots for desktop setup, `/materials`, and authenticated portal routes. Each row records requested route, final path after navigation, auth state, viewport, screenshot path, first `h1`, console errors, page errors, horizontal overflow, redirects, and blocked prerequisites.
+
+`/materials` is intentionally audited as an alias. The route server-redirects to `/cost-items-database/items`, and the harness records both the requested route and final route instead of treating the navigation as a failed DOM evaluation.
+
+The May 16, 2026 Phase 4 closeout extended the stable portal fixture with a sent canonical change-order record. The focused visual run checked 16 of 16 rows with 0 blocked prerequisites, 0 missing headings, 0 console/page errors, and 0 page-level horizontal overflow, including desktop screenshot plus mobile DOM smoke for `/portal/change-orders/[changeOrderId]`.

@@ -1906,7 +1906,8 @@ export async function getPortalContractReviewData(
     return null;
   }
 
-  const contractSignerResponse = await supabase
+  const admin = getSupabaseAdminClient();
+  const contractSignerResponse = await admin
     .from("contract_signers")
     .select(
       `
@@ -2063,6 +2064,7 @@ export async function getPortalInvoiceReviewData(
     return null;
   }
 
+  const admin = getSupabaseAdminClient();
   const [lineItemsResponse, paymentsResponse, paymentEventsResponse, contractorBrand] = await Promise.all([
     supabase
       .from("invoice_line_items")
@@ -2097,7 +2099,7 @@ export async function getPortalInvoiceReviewData(
       .eq("invoice_id", invoiceId)
       .eq("status", "recorded")
       .order("payment_date", { ascending: false }),
-    supabase
+    admin
       .from("payment_events")
       .select(
         `

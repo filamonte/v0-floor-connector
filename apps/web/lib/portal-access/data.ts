@@ -327,7 +327,8 @@ export async function resolvePortalScopedPermissionForGrantRecord(input: {
     };
   }
 
-  const permissionResponse = await supabase
+  const admin = getSupabaseAdminClient();
+  const permissionResponse = await admin
     .from("customer_contact_portal_permissions")
     .select(customerContactPortalPermissionSelect)
     .eq("company_id", input.organizationId)
