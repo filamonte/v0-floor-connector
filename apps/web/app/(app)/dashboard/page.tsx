@@ -52,6 +52,7 @@ import {
 } from "@/lib/projects/cues";
 import { listProjects } from "@/lib/projects/data";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
+import { buildScheduleHref } from "@/lib/schedule/links";
 import { filterUpcomingAssignedAppointments } from "@/lib/schedule/read-model";
 import {
   completeWorkItemAction,
@@ -375,6 +376,14 @@ export default async function DashboardPage({
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
     .slice(0, 5);
   const projectsNeedingAttention = activeProjects.slice(0, 5);
+  const readyProjectsWithoutJobs = activeProjects
+    .filter((project) => {
+      const readinessSnapshot = projectReadinessSnapshots.get(project.id);
+      const projectJobs = jobs.filter((job) => job.projectId === project.id);
+
+      return readinessSnapshot?.isReadyToSchedule && projectJobs.length === 0;
+    })
+    .slice(0, 5);
   const jobsNeedingScheduling = jobs
     .filter((job) => job.dispatchStatus === "unscheduled")
     .slice(0, 5);
@@ -597,6 +606,7 @@ export default async function DashboardPage({
   const firstOverdueInvoice = overdueInvoices[0] ?? null;
   const firstOpenInvoice = openInvoices[0] ?? null;
   const firstEstimateAwaitingAction = estimatesAwaitingAction[0] ?? null;
+  const firstReadyProjectWithoutJob = readyProjectsWithoutJobs[0] ?? null;
   const firstJobNeedingScheduling = jobsNeedingScheduling[0] ?? null;
   const firstJobTodayOrInProgress = jobsTodayOrInProgress[0] ?? null;
   const isProductionActionLocked = organizationContext
@@ -722,7 +732,18 @@ export default async function DashboardPage({
               countLabel: "0",
               status: "complete"
             },
-        firstJobNeedingScheduling
+        firstReadyProjectWithoutJob
+          ? {
+              key: "execution",
+              label: "Execution",
+              title: `${readyProjectsWithoutJobs.length} project${readyProjectsWithoutJobs.length === 1 ? "" : "s"} ready for job creation`,
+              detail: `${firstReadyProjectWithoutJob.name} is commercially clear; create the canonical job before placing work on schedule.`,
+              href: `/projects/${firstReadyProjectWithoutJob.id}`,
+              actionLabel: "Open ready project",
+              countLabel: String(readyProjectsWithoutJobs.length),
+              status: "ready"
+            }
+          : firstJobNeedingScheduling
           ? {
               key: "execution",
               label: "Execution",
@@ -778,11 +799,16 @@ export default async function DashboardPage({
         },
         {
           key: "jobs-needing-schedule",
-          label: "Jobs needing schedule",
-          value: String(jobsNeedingScheduling.length),
+          label: "Schedule handoffs",
+          value: String(
+            readyProjectsWithoutJobs.length + jobsNeedingScheduling.length
+          ),
           detail:
-            "Execution records already exist, but planned dates still need to be assigned.",
-          href: "/schedule?view=unscheduled"
+            "Ready projects need job creation; unscheduled jobs need date and crew follow-through.",
+          href:
+            readyProjectsWithoutJobs.length > 0
+              ? `/projects/${readyProjectsWithoutJobs[0].id}`
+              : "/schedule?view=unscheduled"
         },
         {
           key: "appointments-today",
@@ -851,20 +877,28 @@ export default async function DashboardPage({
           key: "job-schedule",
           label: "Job / schedule",
           value: String(
-            jobsNeedingScheduling.length + jobsTodayOrInProgress.length
+            readyProjectsWithoutJobs.length +
+              jobsNeedingScheduling.length +
+              jobsTodayOrInProgress.length
           ),
           detail:
-            jobsNeedingScheduling.length > 0
+            readyProjectsWithoutJobs.length > 0
+              ? "Commercially clear projects need canonical jobs before schedule placement."
+              : jobsNeedingScheduling.length > 0
               ? "Ready jobs need date and crew follow-through on the canonical job chain."
               : jobsTodayOrInProgress.length > 0
                 ? "Today and in-progress work is active in the schedule workspace."
                 : "No urgent schedule handoff is active right now.",
           href:
-            jobsNeedingScheduling.length > 0
+            readyProjectsWithoutJobs.length > 0
+              ? `/projects/${readyProjectsWithoutJobs[0].id}`
+              : jobsNeedingScheduling.length > 0
               ? "/schedule?view=unscheduled"
               : "/schedule",
           tone:
-            jobsNeedingScheduling.length > 0
+            readyProjectsWithoutJobs.length > 0
+              ? "ready"
+              : jobsNeedingScheduling.length > 0
               ? "attention"
               : jobsTodayOrInProgress.length > 0
                 ? "active"
@@ -1115,6 +1149,54 @@ export default async function DashboardPage({
       ]}
       operationsWidgets={[
         {
+          key: "ready-to-schedule-projects",
+          eyebrow: "Ready to schedule",
+          title: "Projects ready for job creation",
+          description:
+            "These projects cleared commercial readiness but still need a canonical job before schedule timing and crew assignment can happen.",
+          href:
+            readyProjectsWithoutJobs.length > 0
+              ? `/projects/${readyProjectsWithoutJobs[0].id}`
+              : "/projects",
+          actionLabel: "Open project",
+          emptyTitle: "No ready projects are waiting for job creation.",
+          emptyDescription:
+            "Once contract, deposit, financing, and readiness gates clear, projects without jobs will appear here before they enter Schedule.",
+          items: readyProjectsWithoutJobs.map((project) => {
+            const readinessSnapshot =
+              projectReadinessSnapshots.get(project.id) ?? null;
+
+            return {
+              id: project.id,
+              title: project.name,
+              subtitle: project.customer?.name ?? "Unknown customer",
+              meta: readinessSnapshot?.contractId
+                ? "Ready to schedule - create the job, then place it on Schedule"
+                : "Ready to schedule - review project handoff",
+              href: `/projects/${project.id}`,
+              actionLabel: "Open project",
+              badge: "Ready to schedule",
+              bridgeHref: `/jobs?projectId=${project.id}&compose=1${
+                readinessSnapshot?.estimateId
+                  ? `&estimateId=${readinessSnapshot.estimateId}`
+                  : ""
+              }${
+                readinessSnapshot?.contractId
+                  ? `&contractId=${readinessSnapshot.contractId}`
+                  : ""
+              }`,
+              bridgeLabel: "Create job",
+              searchText: buildSearchText(
+                project.name,
+                project.customer?.name,
+                project.customer?.companyName,
+                project.status,
+                "ready to schedule"
+              )
+            };
+          })
+        },
+        {
           key: "projects",
           eyebrow: "Project continuity",
           title: "Projects needing attention",
@@ -1151,14 +1233,20 @@ export default async function DashboardPage({
           actionLabel: "Open schedule",
           emptyTitle: "No jobs are waiting for scheduling.",
           emptyDescription:
-            "As unscheduled jobs enter the execution queue, they will surface here for operational follow-through.",
+            "As unscheduled jobs enter the execution queue, they will surface here for operational follow-through. Projects that are ready but do not have jobs yet appear in the ready-to-schedule project queue above.",
           items: jobsNeedingScheduling.map((job) => ({
             id: job.id,
             title: job.project?.name ?? "Untitled job",
             subtitle: `${job.customer?.name ?? "Unknown customer"} - ${job.estimate?.referenceNumber ?? "Created from project chain"}`,
             meta: "Unscheduled - set the work date, then assign crew from the same job record",
-            href: `/jobs/${job.id}`,
-            actionLabel: "Open job",
+            href:
+              buildScheduleHref({
+                projectId: job.projectId,
+                view: "unscheduled",
+                action: "schedule",
+                jobId: job.id
+              }) + "#schedule-action",
+            actionLabel: "Open schedule panel",
             badge: "Needs schedule",
             contextHref: job.project ? `/projects/${job.project.id}` : null,
             contextLabel: job.project ? "Open project" : null,

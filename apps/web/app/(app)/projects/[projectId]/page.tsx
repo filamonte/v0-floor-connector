@@ -3177,6 +3177,7 @@ export default async function ProjectDetailPage({
                 projectId={project.id}
                 projectName={project.name}
                 estimateId={approvedEstimateId}
+                contractId={latestContract?.id ?? null}
                 readyToScheduleAt={readyToScheduleAt}
                 jobCount={projectJobs.length}
                 unscheduledJobCount={unscheduledJobs.length}

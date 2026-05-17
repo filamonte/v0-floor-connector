@@ -36,6 +36,7 @@ import { getOperationalCuesForSubject } from "@/lib/operational-cues/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getCueStateActionSupport } from "@/lib/cue-states/apply";
 import { buildOperationalCueIdentity } from "@/lib/cue-states/identity";
+import { buildScheduleHref } from "@/lib/schedule/links";
 import { listVendors } from "@/lib/vendors/data";
 import {
   ActionBar,
@@ -251,7 +252,13 @@ function getHeaderPrimaryAction(
       label: progressionAction.label,
       helper: progressionAction.helper,
       summary: progressionAction.summary,
-      href: "#schedule-and-crew"
+      href:
+        buildScheduleHref({
+          projectId,
+          view: "unscheduled",
+          action: "schedule",
+          jobId
+        }) + "#schedule-action"
     };
   }
 
@@ -278,6 +285,25 @@ function getHeaderPrimaryAction(
   }
 
   return null;
+}
+
+function getSchedulePanelHref(job: {
+  id: string;
+  projectId: string;
+  dispatchStatus: string;
+  crewVendorId: string | null;
+}) {
+  return (
+    buildScheduleHref({
+      projectId: job.projectId,
+      view: job.dispatchStatus === "unscheduled" ? "unscheduled" : "all",
+      action:
+        job.dispatchStatus === "unscheduled" || job.crewVendorId !== null
+          ? "schedule"
+          : "assign",
+      jobId: job.id
+    }) + "#schedule-action"
+  );
 }
 
 function renderPrimaryAction(
@@ -544,6 +570,12 @@ export default async function JobDetailPage({
                   >
                     Update Schedule
                   </a>
+                  <Link
+                    href={getSchedulePanelHref(job)}
+                    className={secondaryActionClassName}
+                  >
+                    Open Schedule
+                  </Link>
                   <Link
                     href={`/projects/${job.projectId}`}
                     className={secondaryActionClassName}

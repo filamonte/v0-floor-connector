@@ -15,6 +15,7 @@ import { quickCreateJobAction } from "@/lib/jobs/actions";
 import type { JobListItem } from "@/lib/jobs/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { listProjects } from "@/lib/projects/data";
+import { buildScheduleHref } from "@/lib/schedule/links";
 import { getStatusBadgeClassName } from "@floorconnector/ui";
 
 type JobView = "all" | "unscheduled" | "scheduled" | "in_progress" | "completed";
@@ -75,10 +76,33 @@ function getJobContinuityCue(job: JobListItem, assignmentCount: number) {
 function getJobPrimaryAction(job: JobListItem) {
   switch (job.dispatchStatus) {
     case "unscheduled":
-      return { label: "Set Schedule", href: `/jobs/${job.id}#schedule-and-crew` };
+      return {
+        label: "Set Schedule",
+        href:
+          buildScheduleHref({
+            projectId: job.projectId,
+            view: "unscheduled",
+            action: "schedule",
+            jobId: job.id
+          }) + "#schedule-action"
+      };
     default:
       return null;
   }
+}
+
+function getJobScheduleActionHref(job: JobListItem) {
+  return (
+    buildScheduleHref({
+      projectId: job.projectId,
+      view: job.dispatchStatus === "unscheduled" ? "unscheduled" : "all",
+      action:
+        job.dispatchStatus === "unscheduled" || job.crewVendorId !== null
+          ? "schedule"
+          : "assign",
+      jobId: job.id
+    }) + "#schedule-action"
+  );
 }
 
 function buildJobsHref(input: {
@@ -525,8 +549,8 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                               {primaryAction.label}
                             </Link>
                           ) : null}
-                          <Link href={`/jobs/${job.id}#schedule-and-crew`} className={secondaryActionClassName}>
-                            Update Schedule
+                          <Link href={getJobScheduleActionHref(job)} className={secondaryActionClassName}>
+                            Open Schedule
                           </Link>
                           <ActionOverflowMenu>
                             {job.project?.id ? (
@@ -534,6 +558,9 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                                 View Project
                               </Link>
                             ) : null}
+                            <Link href={getJobScheduleActionHref(job)} className={overflowActionClassName}>
+                              Schedule Panel
+                            </Link>
                             <Link href={`/jobs/${job.id}#schedule-and-crew`} className={overflowActionClassName}>
                               Assign Crew
                             </Link>

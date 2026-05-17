@@ -164,6 +164,12 @@ Deferred from this polish sequence:
 - Founder Demo Readiness is now packaged as a rehearsal path. Recommended next product slices should be chosen from the demo's real blockers: materials/catalog depth, live Stripe test-mode replay, deeper scheduling/dispatch, or founder onboarding/marketing polish.
 - The working tree is intentionally dirty from the active revision, cue-state, and operational-intelligence slices; do not treat unrelated modified files as part of a future docs-only closeout unless the task explicitly scopes them.
 
+## Latest Project / Schedule Cockpit Checkpoint
+
+- The contractor dashboard now separates `Ready to schedule` projects from `Jobs needing scheduling`: commercially clear projects with no canonical job appear as a project/job-creation handoff, while existing unscheduled jobs continue to route into `/schedule`.
+- Jobs Manager and Job Workspace schedule actions now deep-link unscheduled jobs into the `/schedule` selected job action panel with project, job, view, and action context preserved. The local job workspace schedule form remains available for direct updates.
+- This pass stayed on existing project readiness snapshots, canonical jobs, and canonical job assignments. It did not add schema, migrations, schedule-only records, payment/signature/portal changes, readiness-gate changes, auth/RLS changes, fake metrics, or live provider calls.
+
 ## Latest Revision / Perspective Checkpoint
 
 - First-pass canonical revision infrastructure is implemented through `record_revisions` for estimates, invoices, contracts, and change orders.
