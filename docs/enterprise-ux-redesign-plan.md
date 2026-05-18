@@ -472,9 +472,149 @@ bg-white (solid, no blur)
 
 ---
 
-## 7. Proposed Page Architecture Patterns
+## 7. Calendar & Schedule Page Styling
 
-### 7.1 Manager Page (unchanged, documented for consistency)
+The Schedule page (`/schedule/page.tsx`) is the second-largest accumulation of visual drift after Project Workspace. It mixes hardcoded `slate-*` Tailwind classes, `--highlight` references, and local action class constants that should be unified with the shared action hierarchy and graphite surface tokens.
+
+### 7.1 Schedule Page Style Issues
+
+**Current problems:**
+
+1. **Hardcoded `slate-*` classes throughout:**
+   - Line 2413: `text-slate-500` (eyebrow label)
+   - Line 2416: `text-slate-950` (section title)
+   - Line 2419: `text-slate-500` (description text)
+   - Repeated in form fields, cards, and context rails
+   - ScheduleContextMetrics/ScheduleContextCards also use `slate-*` extensively
+
+2. **Local action class constants** instead of shared imports:
+   - `schedulePrimaryActionClassName` (line 68–69)
+   - `scheduleSecondaryActionClassName` (line 70–71)
+   - `scheduleMutedActionClassName` (line 72–73)
+   - These duplicate logic that lives in `action-hierarchy.tsx`
+
+3. **Panel styling constants** mixing references:
+   - `schedulePanelClassName` uses `rounded-lg` (should be `rounded-[6px]`)
+   - `schedulePanelHeaderClassName` uses `bg-[var(--highlight)]/45` (wrong opacity approach; should be solid `--surface-inset`)
+   - `scheduleInsetPanelClassName` uses `bg-[var(--highlight)]` (should use `--surface-inset`)
+
+4. **Layout classes** that don't follow spacing grid:
+   - `gap-4`, `gap-3` used inconsistently
+   - `px-5 py-4` (5–4 variant) vs `px-6` (standardization needed)
+   - Local field styling in `scheduleFieldClassName` vs. shared input component styling
+
+### 7.2 Schedule Page Token Alignment
+
+**Target state mapping:**
+
+| Current Class/Token             | Target Class/Token                | Use                                  |
+| ------------------------------- | --------------------------------- | ------------------------------------ |
+| `text-slate-500`                | `text-[var(--text-tertiary)]`     | Eyebrow labels, descriptions         |
+| `text-slate-600`                | `text-[var(--text-secondary)]`    | Body copy                            |
+| `text-slate-950`                | `text-[var(--text-primary)]`      | Headlines, titles                    |
+| `bg-slate-50/80`                | `bg-[var(--surface-inset)]`       | Inset panels, table headers          |
+| `border-slate-200`              | `border-[var(--border-warm)]`     | All borders                          |
+| `bg-[var(--highlight)]/45`      | `bg-[var(--surface-inset)]`       | Panel header backgrounds (solid)     |
+| `bg-[var(--highlight)]`         | `bg-[var(--surface-inset)]`       | Inset panel backgrounds              |
+| `rounded-lg` / `rounded-2xl`    | `rounded-[6px]` / `rounded-[8px]` | Card corner radius (precision align) |
+| `rounded-full` (action buttons) | Remove; use `rounded-[4px]`       | Never on action buttons              |
+
+### 7.3 Schedule Page Files & Changes (Phase 1)
+
+**Files requiring updates:**
+
+- `/apps/web/app/(app)/schedule/page.tsx` — Remove local action constants (lines 68–73); import from `action-hierarchy.tsx`. Replace all `slate-*` classes with CSS variables. Update panel constants to use graphite surface tokens. Remove opacity values from background colors (use solid values instead).
+
+- `/apps/web/components/schedule-context-card.tsx` — Replace all `slate-*` classes with CSS variables. Update rounded corners to `rounded-[6px]` / `rounded-[8px]` for consistency.
+
+**Specific code patterns to migrate:**
+
+```tsx
+// Before (lines 68–81 in schedule/page.tsx)
+const schedulePrimaryActionClassName =
+  "border-[var(--graphite)] bg-[var(--graphite)] text-white ...";
+const scheduleSecondaryActionClassName =
+  "border-[var(--border-warm)] bg-white text-[var(--text-primary)] ...";
+const scheduleMutedActionClassName =
+  "border-[var(--border-warm)] bg-[var(--highlight)] ...";
+const schedulePanelClassName =
+  "rounded-lg border border-[var(--border-warm)] bg-white ...";
+const schedulePanelHeaderClassName = "... bg-[var(--highlight)]/45 ...";
+
+// After
+import {
+  primaryActionClassName,
+  secondaryActionClassName,
+  overflowActionClassName
+} from "@/components/action-hierarchy";
+
+const schedulePanelClassName =
+  "rounded-[6px] border border-[var(--border-warm)] bg-white shadow-sm";
+const schedulePanelHeaderClassName =
+  "border-b border-[var(--border-warm)] bg-[var(--surface-inset)] px-5 py-4 sm:px-6";
+
+// Before (throughout file)
+className = "text-slate-500";
+className = "text-slate-950";
+className = "rounded-lg";
+className = "border-slate-200";
+className = "bg-slate-50/80";
+
+// After
+className = "text-[var(--text-tertiary)]";
+className = "text-[var(--text-primary)]";
+className = "rounded-[6px]";
+className = "border-[var(--border-warm)]";
+className = "bg-[var(--surface-inset)]";
+```
+
+### 7.4 Schedule Context Cards (`schedule-context-card.tsx`)
+
+Update the three exported components:
+
+```tsx
+// ScheduleContextMetrics (line 32)
+// Before
+className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3"
+
+// After
+className="rounded-[8px] border border-[var(--border-warm)] bg-[var(--surface-inset)] px-4 py-3"
+
+// ScheduleContextFocusCard (line 60)
+// Before
+className="rounded-2xl border border-slate-200 bg-white px-4 py-4"
+
+// After
+className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-4"
+
+// ScheduleContextNoticeBase (line 122)
+// Before
+className={`rounded-2xl border px-4 py-4 text-sm leading-6 ${getNoticeClassName(tone)}`}
+
+// After
+className={`rounded-[8px] border px-4 py-4 text-sm leading-6 ${getNoticeClassName(tone)}`}
+```
+
+### 7.5 Schedule Form Components
+
+The `ScheduleJobForm` and `ScheduleCrewAssignmentForm` components inherit from the Schedule page's local `scheduleFieldClassName` constant (line 80–81). Consolidate this to a shared input field component or reference a CSS variable:
+
+```tsx
+// Option 1: Use shared input from form-field component library
+// Option 2: Create a CSS variable --form-field-class and apply consistently
+
+// Current (line 81)
+scheduleFieldClassName =
+  "min-w-0 rounded-[4px] border border-[var(--border-warm)] bg-white px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)]";
+
+// This is actually correct — keep as-is, just ensure it's referenced consistently across both form components
+```
+
+---
+
+## 8. Proposed Page Architecture Patterns
+
+### 8.1 Manager Page (unchanged, documented for consistency)
 
 ```
 ProtectedSurfaceHeader or ContractorWorkspacePage header
@@ -486,7 +626,7 @@ ProtectedSurfaceHeader or ContractorWorkspacePage header
 
 All Manager Pages must use this pattern. No route-local shells.
 
-### 7.2 Detail Workspace (tightened grammar)
+### 8.2 Detail Workspace (tightened grammar)
 
 ```
 DetailPageHeader (h1 title, status badge, primary action, secondary actions)
@@ -500,7 +640,7 @@ DetailPageHeader (h1 title, status badge, primary action, secondary actions)
 
 The `ActionBar` / `WorkflowBar` / `NeedsAttentionPanel` trio must appear in this order before any content panels. This is already correct in Estimate Workspace; it needs enforcing in Project, Invoice, Contract, and Job Workspaces.
 
-### 7.3 Project Workspace (enhanced)
+### 8.3 Project Workspace (enhanced)
 
 The Project Workspace is the continuity hub. Its structure should reflect that:
 
@@ -518,11 +658,11 @@ DetailPageHeader (project name, stage badge, primary actions)
 
 The `OperationalCommandCenter` component should be refactored to use CSS variables and shared action classes before the next design pass.
 
-### 7.4 Settings / Admin Page (unchanged)
+### 8.4 Settings / Admin Page (unchanged)
 
 Compact section card → form panel → save zone. No operational workflow content.
 
-### 7.5 Portal Review Page (unchanged)
+### 8.5 Portal Review Page (unchanged)
 
 Customer-safe, single primary action, supporting record facts. No internal language.
 
