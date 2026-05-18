@@ -362,9 +362,119 @@ The top nav and mobile nav should use the proposed module icons consistently. Cu
 
 ---
 
-## 6. Proposed Page Architecture Patterns
+## 6. Navigation & Header System
 
-### 6.1 Manager Page (unchanged, documented for consistency)
+The shell header and top navigation anchor the entire visual system. They must feel integrated into the graphite-forward industrial aesthetic, not like a separate chrome layer.
+
+### 6.1 Top Navigation Styling
+
+**Current state:** The protected app top nav uses a dark glass effect (`bg-white/8`, `text-[var(--cream)]`) with utility icon buttons that feel disconnected from the graphite surface stack.
+
+**Target state:** A clean, graphite-integrated header that matches the operational control software aesthetic:
+
+```
+Header: bg-white border-b border-[var(--border-warm)]
+  ├─ Brand/Logo section: text-[var(--text-primary)]
+  ├─ Navigation menu:
+  │   ├─ Menu item: text-[var(--text-secondary)], hover bg-[var(--surface-inset)]
+  │   ├─ Active menu item: text-[var(--text-primary)], bg-[var(--surface-inset)]
+  │   └─ Icons: 16px stroke, text-[var(--text-secondary)], hover text-[var(--text-primary)]
+  ├─ Utility buttons (notifications, create, search):
+  │   ├─ Default: bg-white, border border-[var(--border-warm)], text-[var(--text-secondary)]
+  │   ├─ Hover: text-[var(--text-primary)], border-[var(--copper)]
+  │   ├─ Active/badge count: border-[var(--copper)], text-[var(--copper)]
+  │   └─ Size: h-8 w-8, rounded-[4px] (not rounded-full)
+  └─ Account menu:
+      ├─ Default: bg-white, border border-[var(--border-warm)], text-[var(--text-secondary)]
+      ├─ Hover: text-[var(--text-primary)]
+      └─ Menu trigger: always uses graphite or neutral styling (no copper)
+```
+
+**Key changes from current:**
+
+- Replace dark glass (`bg-white/8`, `text-[var(--cream)]`) with clean white and graphite token references
+- All utility icon buttons use `rounded-[4px]`, not custom border styling
+- Active state uses `bg-[var(--surface-inset)]` (cool gray), not custom opacity
+- Copper is used only for notification/alert badges and hover states on interactive elements
+- Navigation text defaults to `text-[var(--text-secondary)]`, becomes `text-[var(--text-primary)]` on hover/active
+
+### 6.2 Mobile Navigation
+
+The mobile top nav (AppShellMobileNav, AppShellMobileNav menu dropdowns) must follow the same graphite-integrated pattern:
+
+```
+Menu item:
+  ├─ Default: bg-transparent, text-[var(--text-secondary)]
+  ├─ Hover: bg-[var(--surface-inset)], text-[var(--text-primary)]
+  └─ Active: bg-[var(--surface-inset)], border-l-2 border-[var(--copper)], text-[var(--text-primary)]
+
+Menu section divider: border-[var(--border-warm)]
+Menu footer: text-[var(--text-tertiary)], text-[11px]
+```
+
+### 6.3 App Shell Body & Surfaces
+
+**Current shell references:**
+
+- Body background: `bg-[var(--cream)]`
+- Header/footer: `bg-white`
+- Global search button: `bg-[var(--highlight)]`
+
+**Target state:** Consistent with graphite surface stack:
+
+```
+Body background: bg-[var(--surface-body)]  ← warm neutral (formerly --cream)
+Header: bg-white border-b border-[var(--border-warm)]
+Footer: bg-white border-t border-[var(--border-warm)]
+Search button: bg-[var(--surface-inset)], border border-[var(--border-warm)], text-[var(--text-secondary)]
+Search button hover: text-[var(--text-primary)], border-[var(--copper)]
+```
+
+### 6.4 Header Variants by Page Type
+
+**Manager Page Header** (`ProtectedSurfaceHeader`):
+
+```
+bg-white/85 backdrop-blur
+  Brand logo (left)
+  h1 title: text-[var(--text-primary)], text-2xl font-semibold
+  Description: text-[var(--text-secondary)], text-sm
+  User email badge: bg-[var(--surface-inset)], border-[var(--border-warm)], rounded-full
+  Sign out: graphite button
+```
+
+**Detail Workspace Header** (`DetailPageHeader`):
+
+```
+bg-white (solid, no blur)
+  Brand logo (left)
+  h1 title: text-[var(--text-primary)], text-xl font-semibold
+  Status badge: colored pill matching state (green/amber/red), not custom
+  Primary action: graphite or copper depending on workflow stage
+```
+
+### 6.5 Files Requiring Navigation/Header Updates
+
+**Phase 1 (token cleanup, no structural changes):**
+
+- `components/contractor-app-shell.tsx` — Replace `bg-[var(--cream)]` → `bg-[var(--surface-body)]`; update shell icon button styling to use graphite tokens
+- `components/protected-app-top-nav.tsx` — Replace dark glass effect with clean white/graphite styling; update `UtilityIconFrame` to use graphite surface tokens; enforce `rounded-[4px]`
+- `components/protected-surface-header.tsx` — Replace `bg-white/85` → `bg-white`; update button styling to graphite
+- `components/protected-app-breadcrumbs.tsx` — Ensure text colors use `--text-*` tokens, not hardcoded
+- `components/app-shell-mobile-nav.tsx` — Update menu item hover/active states to use graphite surface tokens
+- `components/global-search.tsx` — Update search button styling to match surface tokens
+
+**Phase 2 (future, structural enhancements):**
+
+- Add 16px module icons to navigation menu items for visual scanning
+- Refactor account menu to use a consistent dropdown pattern
+- Consider persistent left sidebar on desktop (future, not Phase 1)
+
+---
+
+## 7. Proposed Page Architecture Patterns
+
+### 7.1 Manager Page (unchanged, documented for consistency)
 
 ```
 ProtectedSurfaceHeader or ContractorWorkspacePage header
@@ -376,7 +486,7 @@ ProtectedSurfaceHeader or ContractorWorkspacePage header
 
 All Manager Pages must use this pattern. No route-local shells.
 
-### 6.2 Detail Workspace (tightened grammar)
+### 7.2 Detail Workspace (tightened grammar)
 
 ```
 DetailPageHeader (h1 title, status badge, primary action, secondary actions)
@@ -390,7 +500,7 @@ DetailPageHeader (h1 title, status badge, primary action, secondary actions)
 
 The `ActionBar` / `WorkflowBar` / `NeedsAttentionPanel` trio must appear in this order before any content panels. This is already correct in Estimate Workspace; it needs enforcing in Project, Invoice, Contract, and Job Workspaces.
 
-### 6.3 Project Workspace (enhanced)
+### 7.3 Project Workspace (enhanced)
 
 The Project Workspace is the continuity hub. Its structure should reflect that:
 
@@ -408,11 +518,11 @@ DetailPageHeader (project name, stage badge, primary actions)
 
 The `OperationalCommandCenter` component should be refactored to use CSS variables and shared action classes before the next design pass.
 
-### 6.4 Settings / Admin Page (unchanged)
+### 7.4 Settings / Admin Page (unchanged)
 
 Compact section card → form panel → save zone. No operational workflow content.
 
-### 6.5 Portal Review Page (unchanged)
+### 7.5 Portal Review Page (unchanged)
 
 Customer-safe, single primary action, supporting record facts. No internal language.
 
