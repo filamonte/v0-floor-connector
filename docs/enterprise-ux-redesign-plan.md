@@ -146,6 +146,114 @@ Each module is presented as a discrete card/tile with an icon, title, and brief 
 
 ---
 
+## 2.6 Feature Comparison: Contractor Foreman vs FloorConnector
+
+This section provides a systematic comparison of CF features vs FC implementation status, highlighting gaps that may inform future roadmap prioritization.
+
+### Legend
+
+- **FC Implemented**: Feature exists and is operational in FloorConnector
+- **FC Foundation**: Schema/basic UI exists but deeper workflow is future
+- **FC Planned**: Documented in target IA or roadmap but not implemented
+- **FC Gap**: CF has this, FC does not have it and it's not explicitly planned
+
+### Project Management Cluster
+
+| CF Feature          | FC Status      | Notes                                                                                             |
+| ------------------- | -------------- | ------------------------------------------------------------------------------------------------- |
+| Projects            | FC Implemented | Project Workspace is the operational hub with readiness gates, connected records, lifecycle state |
+| Opportunities/Leads | FC Implemented | Canonical opportunity intake with source tracking, follow-up, appointment linking                 |
+| Daily Logs          | FC Foundation  | Daily logs and field notes exist; deeper execution workflow is future                             |
+| Scheduling          | FC Foundation  | `/schedule` exists with planner board, job assignment; dispatch-grade depth is future             |
+| Work Orders         | FC Foundation  | Jobs serve as work orders; deeper work-order-specific UX is future                                |
+| Inspections         | FC Gap         | No dedicated inspection workflow or checklist system                                              |
+| Punchlists          | FC Foundation  | Punchlist items schema exists; dedicated punchlist management UI is future                        |
+| Permit Manager      | FC Gap         | No permit tracking, application status, or inspection scheduling                                  |
+| Service Tickets     | FC Gap         | No dedicated service/warranty ticket workflow                                                     |
+| Client Portal       | FC Implemented | Portal with project visibility, estimate/contract/invoice review, payment, signing                |
+| To-Do's             | FC Gap         | No dedicated task/to-do management system beyond operational cues                                 |
+
+### Financials Cluster
+
+| CF Feature               | FC Status      | Notes                                                                                      |
+| ------------------------ | -------------- | ------------------------------------------------------------------------------------------ |
+| Estimates                | FC Implemented | Catalog-first Estimate Editor with line items, systems, snapshots, portal review, approval |
+| Bid Management           | FC Gap         | No formal bid/RFP tracking, bid package assembly, or competitive bid workflow              |
+| Change Orders            | FC Foundation  | Canonical change orders exist; deeper approval/financial-effect UX is future               |
+| Invoices                 | FC Implemented | Canonical invoices with line items, balances, lineage, workspaces                          |
+| Purchase Orders          | FC Gap         | No purchase order creation, approval, or vendor ordering workflow                          |
+| Sub-Contracts            | FC Gap         | No subcontractor contract generation or sub-invoice workflow                               |
+| Bills and Expenses       | FC Gap         | No expense tracking, bill entry, or AP workflow                                            |
+| Online Payments          | FC Implemented | Portal checkout, Stripe integration, payment events, balance recalculation                 |
+| Real-time Costs Database | FC Foundation  | `catalog_items` and cost item database exist; real-time cost tracking is future            |
+| Takeoffs                 | FC Gap         | No visual takeoff tool, measurement extraction, or quantity calculation from plans         |
+
+### People Cluster
+
+| CF Feature          | FC Status      | Notes                                                                   |
+| ------------------- | -------------- | ----------------------------------------------------------------------- |
+| Time Cards w/GPS    | FC Foundation  | Time punches and time cards exist; GPS tracking is not implemented      |
+| Employee Management | FC Foundation  | People/workforce records exist; deeper HR/employee management is future |
+| Crew Assignment     | FC Implemented | Job assignments exist with crew linking on `/schedule`                  |
+
+### Documents Cluster
+
+| CF Feature          | FC Status     | Notes                                                                                 |
+| ------------------- | ------------- | ------------------------------------------------------------------------------------- |
+| Document Management | FC Foundation | Documents bucket exists; shared file/evidence layer with multi-record links is future |
+| Photos              | FC Foundation | Execution attachments and field photos exist; gallery/tagging is future               |
+| Plans/Blueprints    | FC Gap        | No plan storage, markup, or plan-based navigation                                     |
+
+### Additional CF Features Not in FC
+
+| CF Feature             | FC Status | Notes                                                                   |
+| ---------------------- | --------- | ----------------------------------------------------------------------- |
+| Equipment Management   | FC Gap    | No equipment inventory, maintenance scheduling, or utilization tracking |
+| Safety/Toolbox Talks   | FC Gap    | No safety meeting documentation or OSHA compliance workflow             |
+| Weather Integration    | FC Gap    | No weather forecast integration for scheduling decisions                |
+| GPS Fleet Tracking     | FC Gap    | No vehicle/equipment GPS tracking                                       |
+| QuickBooks Integration | FC Gap    | No accounting software sync (planned as future integration)             |
+| Mobile App             | FC Gap    | No native mobile app (responsive web only)                              |
+| Offline Mode           | FC Gap    | No offline capability for field crews                                   |
+| Custom Reports Builder | FC Gap    | No drag-and-drop report builder (basic `/reports` exists)               |
+| Budget vs Actual       | FC Gap    | No project budget tracking with variance analysis                       |
+| Earned Value           | FC Gap    | No earned value management calculations                                 |
+
+### FC Features CF Does Not Have (Differentiation)
+
+| FC Feature                        | Notes                                                                              |
+| --------------------------------- | ---------------------------------------------------------------------------------- |
+| Flooring-specific catalog/systems | Product catalogs with sqft expansion, waste factors, transition strips, prep work  |
+| Readiness gates                   | Workflow gates for moisture testing, substrate prep, acclimation before scheduling |
+| Operational cues                  | Deterministic next-best-action guidance based on lifecycle state                   |
+| Premium document output           | Customer-facing print/PDF views designed as premium proposal documents             |
+| Revision snapshots                | Immutable revision timeline on estimates, contracts, invoices, change orders       |
+| Multi-tenant SaaS billing         | Stripe-backed subscription management and tenant activation                        |
+| Guided/Flexible/Manual modes      | Workflow guidance intensity configuration per organization                         |
+| Portal signing + onsite signing   | Two interaction surfaces on same canonical signature system                        |
+
+### Summary: Priority Gaps for Design Planning
+
+The following CF features represent the largest functional gaps where FloorConnector may need to consider UX patterns even if full implementation is future:
+
+1. **Inspections / Punchlists** — CF has dedicated inspection and punchlist management. FC has schema foundations but no dedicated UI. Design should reserve navigation/workspace patterns for these workflows.
+
+2. **Takeoffs** — CF has visual takeoff from plans. FC has no takeoff tool. This is a major estimating workflow gap for flooring contractors who work from architectural plans.
+
+3. **Purchase Orders / Bills / Expenses** — CF has full AP workflow. FC has no vendor ordering or expense tracking. Design should consider where these surfaces live in the target IA (likely under Financials).
+
+4. **Permit Manager** — CF tracks permits and inspections. FC has no permit workflow. For commercial flooring work, this may be important.
+
+5. **Equipment Management** — CF tracks equipment. FC has no equipment module. For contractors with spray rigs, grinders, and polishers, this may matter.
+
+6. **Time Cards with GPS** — CF has GPS-backed time tracking. FC has time punches but no GPS. Field verification is important for contractor labor management.
+
+7. **Offline Mode / Mobile App** — CF emphasizes mobile field access. FC is responsive web only with no offline capability. This is a significant field-crew UX gap.
+
+8. **Budget vs Actual / Earned Value** — CF has project cost tracking. FC has no budget variance analysis. For larger commercial projects, this is important.
+
+---
+
 ## 3. Current UX Problems (Detailed)
 
 **a. Mixed surface density signals.**
