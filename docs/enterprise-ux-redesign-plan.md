@@ -33,6 +33,58 @@ The redesign plan targets four areas:
 
 ---
 
+## 1.1 Contractor Foreman Feature Context
+
+FloorConnector's feature model is informed by Contractor Foreman (contractorforeman.com), one of the leading all-in-one construction management platforms for general contractors. Understanding their module structure helps clarify what FloorConnector shares, where it differs, and where the specialty flooring vertical focus adds depth.
+
+### Contractor Foreman Module Coverage
+
+**Project Management cluster:**
+
+- Projects, Opportunities, Daily Logs, Scheduling, Work Orders, Inspections, Punchlists, Permit Manager, Service Tickets, Client Portal, To-Do's
+
+**Financials cluster:**
+
+- Estimates, Bid Management, Change Orders, Invoices, Purchase Orders, Sub-Contracts, Bills and Expenses, Online Payments, Real-time Costs Database, Takeoffs
+
+**People cluster:**
+
+- Time Cards w/GPS, Employee Management, Crew Assignment
+
+**Documents cluster:**
+
+- Document Management, Photos, Plans/Blueprints
+
+### FloorConnector Differentiation
+
+FloorConnector is **not** a horizontal general contractor tool. It is a vertical specialty surface contractor operating system with deeper flooring-specific workflow integration:
+
+1. **Flooring-specific takeoff and estimating.** Product catalogs, waste factors, material specifications, and pricing tied to flooring industry realities (sqft, LFT, transition strips, prep work, moisture testing).
+
+2. **Readiness gates tuned to specialty surface work.** Moisture testing, substrate prep verification, acclimation schedules — these are first-class workflow concepts, not generic checklist items.
+
+3. **Change order semantics tied to surface installation.** Scope changes specific to flooring: substrate condition discovered on-site, spec changes after acclimation, pattern matching adjustments.
+
+4. **Progress billing tied to surface installation phases.** Installation stages map to specialty surface work: demo, leveling, underlayment, install, trim/transitions — not generic construction phases.
+
+5. **Material management for flooring.** Lot numbers, dye lots, acclimation tracking, waste/return handling specific to flooring materials.
+
+6. **Field crew tools.** Moisture readings, photo documentation with room/area tagging, punchlist items specific to surface defects.
+
+### UX Implications
+
+The Contractor Foreman navigation pattern (left sidebar with module groups: Project Management, Financials, People, Documents, More Features) is a **horizontal breadth play**. FloorConnector can adopt a similar navigation pattern for familiarity, but the visual language and information density should reflect:
+
+- **Deeper workflow integration per module.** The Estimate Workspace isn't just a form — it's a guided proposing flow with signature capture, deposit handling, and portal delivery. The Project Workspace isn't just a record view — it's a continuity hub showing the full lifecycle arc.
+
+- **Trade-specific intelligence.** Guidance copy, prerequisite gates, and workflow prompts should speak flooring, not generic construction.
+
+- **Premium document output.** Proposals and invoices must feel like premium client-facing documents, not internal software printouts. This is where FloorConnector can outclass Contractor Foreman's functional-but-utilitarian output.
+
+The graphite-forward industrial aesthetic supports this positioning: FloorConnector should feel like a precision tool built for specialty surface professionals, not a generic construction template adapted for flooring.
+
+---
+
 ## 2. Current UX Problems
 
 ### 2.1 System-Level Problems
