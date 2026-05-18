@@ -14,10 +14,13 @@ import {
   unassignCrewAction,
   unscheduleJobAction
 } from "@/lib/jobs/actions";
-import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
+import {
+  listScheduleJobAssignmentsByJobIds,
+  listScheduleJobs
+} from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
-import { listPeople } from "@/lib/people/data";
-import { listOpportunities } from "@/lib/opportunities/data";
+import { listScheduleAssignablePeople } from "@/lib/people/data";
+import { listScheduleOpportunityAssessments } from "@/lib/opportunities/data";
 import {
   buildScheduleHref,
   type CrewViewKey,
@@ -30,8 +33,8 @@ import {
   buildScheduleItems,
   type ScheduleItem
 } from "@/lib/schedule/read-model";
-import { listAppointments } from "@/lib/appointments/data";
-import { listVendors } from "@/lib/vendors/data";
+import { listScheduleAppointments } from "@/lib/appointments/data";
+import { listScheduleLaborVendors } from "@/lib/vendors/data";
 
 const SCHEDULE_VIEW_OPTIONS = [
   { value: "all", label: "All scheduled work" },
@@ -447,8 +450,7 @@ function getCrewState(job: {
 
   return {
     label: "Crew not assigned",
-    detail:
-      "Assign a crew or labor-provider vendor before production starts.",
+    detail: "Assign a crew or labor-provider vendor before production starts.",
     emphasisClass: "text-rose-700",
     badgeClass: "border-rose-200 bg-rose-50 text-rose-700"
   };
@@ -1023,17 +1025,21 @@ export default async function SchedulePage({
     );
   }
 
-  const [jobs, appointments, opportunities, people, vendors] =
-    await Promise.all([
-      listJobs(),
-      listAppointments(),
-      listOpportunities(),
-      listPeople(),
-      listVendors()
-    ]);
-  const assignmentsByJobId = await listJobAssignmentsByJobIds(
-    jobs.map((job) => job.id),
-    "/schedule"
+  const [
+    jobs,
+    appointments,
+    scheduleOpportunityAssessments,
+    assignablePeople,
+    laborVendors
+  ] = await Promise.all([
+    listScheduleJobs(),
+    listScheduleAppointments(),
+    listScheduleOpportunityAssessments(),
+    listScheduleAssignablePeople(),
+    listScheduleLaborVendors()
+  ]);
+  const assignmentsByJobId = await listScheduleJobAssignmentsByJobIds(
+    jobs.map((job) => job.id)
   );
 
   const tomorrow = addDays(today, 1);
@@ -1140,11 +1146,8 @@ export default async function SchedulePage({
       .map((appointment) => appointment.opportunityId)
       .filter(Boolean)
   );
-  const opportunityAssessments = opportunities.filter(
-    (opportunity) =>
-      opportunity.status === "site_assessment_scheduled" &&
-      opportunity.siteAssessmentScheduledAt &&
-      !appointmentOpportunityIds.has(opportunity.id)
+  const opportunityAssessments = scheduleOpportunityAssessments.filter(
+    (opportunity) => !appointmentOpportunityIds.has(opportunity.id)
   );
   const todayAppointments = scheduledAppointments.filter(
     (appointment) =>
@@ -1252,6 +1255,7 @@ export default async function SchedulePage({
 
     return matchesProject && matchesView && matchesCrew && matchesQuery;
   });
+  const visibleJobsById = new Map(visibleJobs.map((job) => [job.id, job]));
   const visibleAppointments = appointments.filter((appointment) => {
     const appointmentDateKey = new Date(appointment.startsAt)
       .toISOString()
@@ -1476,15 +1480,50 @@ export default async function SchedulePage({
   const visiblePlannerAppointments = visibleScheduleItems.filter(
     (item) => item.type === "appointment"
   );
+  const visibleScheduledJobsByDate = new Map<
+    string,
+    typeof visibleScheduledJobs
+  >();
+  const visiblePlannerAppointmentsByDate = new Map<
+    string,
+    typeof visiblePlannerAppointments
+  >();
+
+  for (const job of visibleScheduledJobs) {
+    if (!job.scheduledDate) {
+      continue;
+    }
+
+    const dateJobs = visibleScheduledJobsByDate.get(job.scheduledDate);
+
+    if (dateJobs) {
+      dateJobs.push(job);
+    } else {
+      visibleScheduledJobsByDate.set(job.scheduledDate, [job]);
+    }
+  }
+
+  for (const appointment of visiblePlannerAppointments) {
+    if (!appointment.dateKey) {
+      continue;
+    }
+
+    const dateAppointments = visiblePlannerAppointmentsByDate.get(
+      appointment.dateKey
+    );
+
+    if (dateAppointments) {
+      dateAppointments.push(appointment);
+    } else {
+      visiblePlannerAppointmentsByDate.set(appointment.dateKey, [appointment]);
+    }
+  }
+
   const scheduledBoardGroups = plannerDays
     .map((day) => ({
       date: day.dateKey,
-      jobs: visibleScheduledJobs.filter(
-        (job) => job.scheduledDate === day.dateKey
-      ),
-      appointments: visiblePlannerAppointments.filter(
-        (item) => item.dateKey === day.dateKey
-      ),
+      jobs: visibleScheduledJobsByDate.get(day.dateKey) ?? [],
+      appointments: visiblePlannerAppointmentsByDate.get(day.dateKey) ?? [],
       isToday: day.dateKey === todayDateKey
     }))
     .filter((group) => group.jobs.length > 0 || group.appointments.length > 0);
@@ -1598,12 +1637,6 @@ export default async function SchedulePage({
     crewFilter !== "all" ||
     itemFilter !== "all" ||
     Boolean(selectedAction && selectedJobId);
-  const assignablePeople = people.filter(
-    (person) => person.isActive && person.isAssignable
-  );
-  const laborVendors = vendors.filter(
-    (vendor) => vendor.isActive && vendor.isLaborProvider
-  );
   const scheduleViews = SCHEDULE_VIEW_OPTIONS.map((option) => ({
     ...option,
     count:
@@ -3197,9 +3230,7 @@ export default async function SchedulePage({
                     );
                   }
 
-                  const job = visibleJobs.find(
-                    (visibleJob) => visibleJob.id === item.id
-                  );
+                  const job = visibleJobsById.get(item.id);
 
                   if (!job) {
                     return null;
@@ -3460,14 +3491,8 @@ export default async function SchedulePage({
                           }
                         : null
                     }))}
-                    people={assignablePeople.map((person) => ({
-                      id: person.id,
-                      displayName: person.displayName
-                    }))}
-                    vendors={laborVendors.map((vendor) => ({
-                      id: vendor.id,
-                      name: vendor.name
-                    }))}
+                    people={assignablePeople}
+                    vendors={laborVendors}
                   />
                 ) : (
                   <div className="space-y-4">

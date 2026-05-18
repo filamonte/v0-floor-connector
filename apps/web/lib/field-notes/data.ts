@@ -25,37 +25,27 @@ type FieldNoteRow = {
   updated_by: string | null;
   created_at: string;
   updated_at: string;
-  daily_logs?:
-    | {
-        id: string;
-        log_date: string;
-      }
-    | null;
-  projects?:
-    | {
-        id: string;
-        name: string;
-      }
-    | null;
-  jobs?:
-    | {
-        id: string;
-        dispatch_status: string;
-      }
-    | null;
-  people?:
-    | {
-        id: string;
-        display_name: string;
-      }
-    | null;
-  time_cards?:
-    | {
-        id: string;
-        work_date: string;
-        status: string;
-      }
-    | null;
+  daily_logs?: {
+    id: string;
+    log_date: string;
+  } | null;
+  projects?: {
+    id: string;
+    name: string;
+  } | null;
+  jobs?: {
+    id: string;
+    dispatch_status: string;
+  } | null;
+  people?: {
+    id: string;
+    display_name: string;
+  } | null;
+  time_cards?: {
+    id: string;
+    work_date: string;
+    status: string;
+  } | null;
 };
 
 export type FieldNoteListItem = FieldNoteRecord & {
@@ -81,6 +71,11 @@ export type FieldNoteListItem = FieldNoteRecord & {
     status: string;
   } | null;
 };
+
+export type DashboardProjectCueFieldNote = Pick<
+  FieldNoteRecord,
+  "id" | "dailyLogId" | "projectId" | "noteType" | "status" | "title"
+>;
 
 const fieldNoteSelect = `
   id,
@@ -122,6 +117,15 @@ const fieldNoteSelect = `
   )
 `;
 
+const dashboardProjectCueFieldNoteSelect = `
+  id,
+  daily_log_id,
+  project_id,
+  note_type,
+  title,
+  status
+`;
+
 function isFieldNoteRow(value: unknown): value is FieldNoteRow {
   if (!value || typeof value !== "object") {
     return false;
@@ -147,6 +151,53 @@ function isFieldNoteRowArray(value: unknown): value is FieldNoteRow[] {
   return Array.isArray(value) && value.every((row) => isFieldNoteRow(row));
 }
 
+function isDashboardProjectCueFieldNoteRow(value: unknown): value is {
+  id: string;
+  daily_log_id: string;
+  project_id: string;
+  note_type: FieldNoteRecord["noteType"];
+  title: string;
+  status: FieldNoteRecord["status"];
+} {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const row = value as {
+    id?: unknown;
+    daily_log_id?: unknown;
+    project_id?: unknown;
+    note_type?: unknown;
+    title?: unknown;
+    status?: unknown;
+  };
+
+  return (
+    typeof row.id === "string" &&
+    typeof row.daily_log_id === "string" &&
+    typeof row.project_id === "string" &&
+    typeof row.note_type === "string" &&
+    typeof row.title === "string" &&
+    typeof row.status === "string"
+  );
+}
+
+function isDashboardProjectCueFieldNoteRowArray(
+  value: unknown
+): value is Array<{
+  id: string;
+  daily_log_id: string;
+  project_id: string;
+  note_type: FieldNoteRecord["noteType"];
+  title: string;
+  status: FieldNoteRecord["status"];
+}> {
+  return (
+    Array.isArray(value) &&
+    value.every((row) => isDashboardProjectCueFieldNoteRow(row))
+  );
+}
+
 function mapFieldNote(row: FieldNoteRow): FieldNoteRecord {
   return {
     id: row.id,
@@ -165,6 +216,24 @@ function mapFieldNote(row: FieldNoteRow): FieldNoteRecord {
     updatedByUserId: row.updated_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at
+  };
+}
+
+function mapDashboardProjectCueFieldNote(row: {
+  id: string;
+  daily_log_id: string;
+  project_id: string;
+  note_type: FieldNoteRecord["noteType"];
+  title: string;
+  status: FieldNoteRecord["status"];
+}): DashboardProjectCueFieldNote {
+  return {
+    id: row.id,
+    dailyLogId: row.daily_log_id,
+    projectId: row.project_id,
+    noteType: row.note_type,
+    title: row.title,
+    status: row.status
   };
 }
 
@@ -233,7 +302,10 @@ async function ensureScopedJob(organizationId: string, jobId: string | null) {
   };
 }
 
-async function ensureScopedPerson(organizationId: string, personId: string | null) {
+async function ensureScopedPerson(
+  organizationId: string,
+  personId: string | null
+) {
   if (!personId) {
     return null;
   }
@@ -248,7 +320,9 @@ async function ensureScopedPerson(organizationId: string, personId: string | nul
   const data = response.data as { id?: string } | null;
 
   if (response.error) {
-    throw new Error(`Unable to validate the workforce person: ${response.error.message}`);
+    throw new Error(
+      `Unable to validate the workforce person: ${response.error.message}`
+    );
   }
 
   if (!data?.id) {
@@ -258,7 +332,10 @@ async function ensureScopedPerson(organizationId: string, personId: string | nul
   return data;
 }
 
-async function ensureScopedTimeCard(organizationId: string, timeCardId: string | null) {
+async function ensureScopedTimeCard(
+  organizationId: string,
+  timeCardId: string | null
+) {
   if (!timeCardId) {
     return null;
   }
@@ -270,18 +347,18 @@ async function ensureScopedTimeCard(organizationId: string, timeCardId: string |
     .eq("company_id", organizationId)
     .eq("id", timeCardId)
     .maybeSingle();
-  const data = response.data as
-    | {
-        id?: string;
-        person_id?: string;
-        project_id?: string | null;
-        job_id?: string | null;
-        work_date?: string;
-      }
-    | null;
+  const data = response.data as {
+    id?: string;
+    person_id?: string;
+    project_id?: string | null;
+    job_id?: string | null;
+    work_date?: string;
+  } | null;
 
   if (response.error) {
-    throw new Error(`Unable to validate the time card: ${response.error.message}`);
+    throw new Error(
+      `Unable to validate the time card: ${response.error.message}`
+    );
   }
 
   if (!data?.id || !data.work_date) {
@@ -301,7 +378,10 @@ async function validateFieldNoteInput(
   organizationId: string,
   input: FieldNoteInput
 ) {
-  const dailyLog = await getDailyLogById(input.dailyLogId, `/projects/${input.projectId}`);
+  const dailyLog = await getDailyLogById(
+    input.dailyLogId,
+    `/projects/${input.projectId}`
+  );
 
   if (!dailyLog) {
     throw new Error("Daily log not found for this organization.");
@@ -333,11 +413,19 @@ async function validateFieldNoteInput(
   }
 
   if (scopedTimeCard && scopedTimeCard.workDate !== dailyLog.logDate) {
-    throw new Error("Time card work date must match the selected daily log date.");
+    throw new Error(
+      "Time card work date must match the selected daily log date."
+    );
   }
 
-  if (scopedTimeCard && input.personId && scopedTimeCard.personId !== input.personId) {
-    throw new Error("Time card person must match the selected workforce person.");
+  if (
+    scopedTimeCard &&
+    input.personId &&
+    scopedTimeCard.personId !== input.personId
+  ) {
+    throw new Error(
+      "Time card person must match the selected workforce person."
+    );
   }
 
   if (scopedTimeCard && input.jobId && scopedTimeCard.jobId !== input.jobId) {
@@ -370,7 +458,37 @@ export const listFieldNotes = cache(async (): Promise<FieldNoteListItem[]> => {
   return data.map(mapFieldNoteListItem);
 });
 
-export async function listFieldNotesByDailyLog(dailyLogId: string, next = "/projects") {
+export const listDashboardProjectCueFieldNotes = cache(
+  async (): Promise<DashboardProjectCueFieldNote[]> => {
+    const scope = await requireDailyLogScope("/projects");
+    const supabase = await getSupabaseServerClient();
+    const response = await supabase
+      .from("field_notes")
+      .select(dashboardProjectCueFieldNoteSelect)
+      .eq("company_id", scope.organizationId)
+      .eq("status", "open")
+      .in("note_type", ["blocker", "issue"])
+      .order("created_at", { ascending: false });
+    const data: unknown = response.data;
+
+    if (response.error) {
+      throw new Error(
+        `Unable to load dashboard field-note cues: ${response.error.message}`
+      );
+    }
+
+    if (!isDashboardProjectCueFieldNoteRowArray(data)) {
+      return [];
+    }
+
+    return data.map(mapDashboardProjectCueFieldNote);
+  }
+);
+
+export async function listFieldNotesByDailyLog(
+  dailyLogId: string,
+  next = "/projects"
+) {
   const scope = await requireDailyLogScope(next);
   const supabase = await getSupabaseServerClient();
   const response = await supabase
@@ -382,7 +500,9 @@ export async function listFieldNotesByDailyLog(dailyLogId: string, next = "/proj
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load field notes for the daily log: ${response.error.message}`);
+    throw new Error(
+      `Unable to load field notes for the daily log: ${response.error.message}`
+    );
   }
 
   if (!isFieldNoteRowArray(data)) {
@@ -392,7 +512,10 @@ export async function listFieldNotesByDailyLog(dailyLogId: string, next = "/proj
   return data.map(mapFieldNoteListItem);
 }
 
-export async function getFieldNoteById(fieldNoteId: string, next = "/projects") {
+export async function getFieldNoteById(
+  fieldNoteId: string,
+  next = "/projects"
+) {
   const scope = await requireDailyLogScope(next);
   const supabase = await getSupabaseServerClient();
   const response = await supabase
@@ -440,7 +563,9 @@ export async function createFieldNote(input: FieldNoteInput) {
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to create the field note: ${response.error.message}`);
+    throw new Error(
+      `Unable to create the field note: ${response.error.message}`
+    );
   }
 
   if (!isFieldNoteRow(data)) {
@@ -450,7 +575,10 @@ export async function createFieldNote(input: FieldNoteInput) {
   return mapFieldNoteListItem(data);
 }
 
-export async function updateFieldNote(fieldNoteId: string, input: FieldNoteInput) {
+export async function updateFieldNote(
+  fieldNoteId: string,
+  input: FieldNoteInput
+) {
   const scope = await requireDailyLogScope(`/projects/${input.projectId}`);
   await validateFieldNoteInput(scope.organizationId, input);
   const supabase = await getSupabaseServerClient();
@@ -476,7 +604,9 @@ export async function updateFieldNote(fieldNoteId: string, input: FieldNoteInput
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to update the field note: ${response.error.message}`);
+    throw new Error(
+      `Unable to update the field note: ${response.error.message}`
+    );
   }
 
   if (!isFieldNoteRow(data)) {

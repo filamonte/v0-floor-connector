@@ -21,6 +21,10 @@ import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
+import {
+  OperationalGuidanceSection,
+  type OperationalGuidanceBucket
+} from "@/components/operational-guidance-section";
 import { CueStateControls } from "@/components/cue-states/cue-state-controls";
 import { ProjectForm } from "@/components/project-form";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
@@ -234,6 +238,19 @@ function mapWorkspaceToneToProjectStateTone(
 
 function formatStatusLabel(status: string) {
   return status.replaceAll("_", " ");
+}
+
+function formatWorkflowModeLabel(mode: string) {
+  switch (mode) {
+    case "guided":
+      return "Guided";
+    case "flexible":
+      return "Flexible";
+    case "manual":
+      return "Manual";
+    default:
+      return formatStatusLabel(mode);
+  }
 }
 
 function formatMoney(value: string | number) {
@@ -2861,6 +2878,140 @@ export default async function ProjectDetailPage({
           : undefined
     }
   ];
+  const currentReadinessStage =
+    readinessStages.find((stage) => stage.state === "blocked") ??
+    readinessStages.find((stage) => stage.state === "current") ??
+    readinessStages[readinessStages.length - 1] ??
+    null;
+  const drivingRecord =
+    linkedRecordRecencyItems.find((item) => item.isDrivingRecord) ??
+    linkedRecordRecencyItems[0] ??
+    null;
+  const projectOperationalGuidanceBuckets: OperationalGuidanceBucket[] = [
+    {
+      key: "current-stage",
+      eyebrow: "Current stage",
+      title: "Where this project stands",
+      description:
+        "A compact read of the current workflow posture from the existing readiness and linked-record state.",
+      emptyTitle: "No stage signal is available yet.",
+      emptyDescription:
+        "Create estimate, contract, job, or invoice records to make the project stage more specific.",
+      tone:
+        currentReadinessStage?.state === "blocked" ? "attention" : "neutral",
+      items: currentReadinessStage
+        ? [
+            {
+              id: "project-current-stage",
+              title: currentReadinessStage.title,
+              description: currentReadinessStage.detail,
+              why: `${formatWorkflowModeLabel(guidancePreferences.workflowMode)} mode is reading the existing readiness chain without changing gates.`,
+              href: `/projects/${project.id}`,
+              actionLabel: "Stay in project",
+              badge: currentReadinessStage.state
+            }
+          ]
+        : []
+    },
+    {
+      key: "blocker",
+      eyebrow: "Blocker",
+      title: "What is holding it back",
+      description:
+        "The first visible blocker or clear-state message, without recalculating readiness.",
+      emptyTitle: "No blocker is active.",
+      emptyDescription:
+        "Readiness, signature, deposit, schedule, billing, and field blockers are currently clear.",
+      tone: workspaceBlockers.length > 0 ? "attention" : "ready",
+      items:
+        workspaceBlockers.length > 0
+          ? [
+              {
+                id: "project-primary-blocker",
+                title: "Primary blocker",
+                description: workspaceBlockers[0],
+                why: "This comes from the existing project readiness, billing, schedule, progress-billing, punchlist, or field-note context.",
+                href: nextAction.primaryHref ?? `/projects/${project.id}`,
+                actionLabel: nextAction.primaryLabel ?? "Review next step",
+                badge: "Blocker"
+              }
+            ]
+          : [
+              {
+                id: "project-clear-blockers",
+                title: "No active blockers",
+                description:
+                  "Commercial, scheduling, billing, and closeout blockers are clear in the current project view.",
+                why: "The cockpit is showing clear state only; it does not mark anything resolved.",
+                href: `/projects/${project.id}`,
+                actionLabel: "Review project",
+                badge: "Clear"
+              }
+            ]
+    },
+    {
+      key: "next-action",
+      eyebrow: "Next action",
+      title: "What to do next",
+      description:
+        "The same next-best action already used by Project Workspace, presented as an operator summary.",
+      emptyTitle: "No next action is available.",
+      emptyDescription:
+        "The project still shows linked records and readiness facts even when coaching is reduced.",
+      tone: nextAction.blockerCopy ? "attention" : "ready",
+      items: [
+        {
+          id: "project-next-action",
+          title: nextAction.title,
+          description: nextAction.description,
+          why:
+            nextAction.blockerCopy ??
+            "This action keeps the project moving through the canonical workflow.",
+          href: nextAction.primaryHref ?? nextAction.secondaryHref ?? null,
+          actionLabel:
+            nextAction.primaryLabel ?? nextAction.secondaryLabel ?? null,
+          secondaryHref:
+            nextAction.primaryHref && nextAction.secondaryHref
+              ? nextAction.secondaryHref
+              : null,
+          secondaryLabel:
+            nextAction.primaryHref && nextAction.secondaryHref
+              ? nextAction.secondaryLabel
+              : null,
+          badge: readinessSnapshot?.isReadyToSchedule
+            ? "Ready"
+            : formatStatusLabel(readinessStatus)
+        }
+      ]
+    },
+    {
+      key: "related-record",
+      eyebrow: "Related record",
+      title: "Where to inspect the proof",
+      description:
+        "Open the linked record currently driving the handoff, or stay in Project if no child record exists yet.",
+      emptyTitle: "No linked record is driving the next step yet.",
+      emptyDescription:
+        "The project itself remains the source of context until estimate, contract, invoice, job, or field records exist.",
+      tone: drivingRecord ? "neutral" : "waiting",
+      items: [
+        {
+          id: "project-related-record",
+          title: workflowDriverLabel,
+          description: drivingRecord
+            ? `${drivingRecord.typeLabel}: ${drivingRecord.title}`
+            : "No child record is currently driving the next step.",
+          why: "Operators should inspect the record that owns the state instead of creating a duplicate workflow.",
+          href:
+            drivingRecord?.href ??
+            nextAction.primaryHref ??
+            `/projects/${project.id}`,
+          actionLabel: drivingRecord ? "Open record" : "Review project",
+          badge: drivingRecord?.statusLabel ?? "Project"
+        }
+      ]
+    }
+  ];
 
   return (
     <div className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,1.12fr)_320px]">
@@ -3025,6 +3176,12 @@ export default async function ProjectDetailPage({
                   : "Clear the current gate before operations moves forward."
               }
               summaryItems={commandSummaryItems}
+            />
+
+            <OperationalGuidanceSection
+              title="Project workflow summary"
+              description="Current stage, blocker, next action, and driving record are summarized from existing project readiness and linked canonical records."
+              buckets={projectOperationalGuidanceBuckets}
             />
 
             <ProjectConnectedRecordLanes lanes={connectedRecordLanes} />

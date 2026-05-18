@@ -10,7 +10,12 @@ import { listProgressBillingWorkspaces } from "@/lib/progress-billing/data";
 type ProgressBillingPageProps = {
   searchParams?: Promise<{
     q?: string;
-    status?: "all" | "ready_to_bill" | "in_progress" | "fully_billed" | "not_started";
+    status?:
+      | "all"
+      | "ready_to_bill"
+      | "in_progress"
+      | "fully_billed"
+      | "not_started";
   }>;
 };
 
@@ -50,7 +55,8 @@ export default async function ProgressBillingPage({
   if (!organizationContext) {
     return (
       <section className="rounded-3xl border border-amber-200 bg-amber-50 px-8 py-6 text-sm leading-6 text-amber-900">
-        Progress billing needs an active organization before approved scope can be reviewed.
+        Progress billing needs an active organization before approved scope can
+        be reviewed.
       </section>
     );
   }
@@ -80,9 +86,15 @@ export default async function ProgressBillingPage({
     return matchesStatus && matchesQuery;
   });
 
-  const readyToBill = workspaces.filter((workspace) => workspace.status === "ready_to_bill");
-  const inProgress = workspaces.filter((workspace) => workspace.status === "in_progress");
-  const fullyBilled = workspaces.filter((workspace) => workspace.status === "fully_billed");
+  const readyToBill = workspaces.filter(
+    (workspace) => workspace.status === "ready_to_bill"
+  );
+  const inProgress = workspaces.filter(
+    (workspace) => workspace.status === "in_progress"
+  );
+  const fullyBilled = workspaces.filter(
+    (workspace) => workspace.status === "fully_billed"
+  );
   const scheduledValueTotal = workspaces.reduce(
     (sum, workspace) => sum + Number(workspace.scheduledValueTotal),
     0
@@ -142,13 +154,16 @@ export default async function ProgressBillingPage({
       commandBar={{
         supportSlot: (
           <p>
-            Approved estimate scope seeds these workspaces automatically. Progress billing
-            stays review-first here, then turns into a canonical invoice instead of a separate
-            pay-app subsystem.
+            Approved estimate scope seeds these workspaces automatically.
+            Progress billing stays review-first here, then turns into a
+            canonical invoice instead of a separate pay-app subsystem.
           </p>
         ),
         searchSlot: (
-          <form action="/progress-billing" className="flex flex-col gap-2 sm:flex-row">
+          <form
+            action="/progress-billing"
+            className="flex flex-col gap-2 sm:flex-row"
+          >
             {statusFilter !== "all" ? (
               <input type="hidden" name="status" value={statusFilter} />
             ) : null}
@@ -193,7 +208,9 @@ export default async function ProgressBillingPage({
               <span
                 className={[
                   "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-[#f3eadf] text-[#755f4d]"
+                  isActive
+                    ? "bg-white/15 text-white"
+                    : "bg-[#f3eadf] text-[#755f4d]"
                 ].join(" ")}
               >
                 {status.count}
@@ -204,12 +221,67 @@ export default async function ProgressBillingPage({
       }}
     >
       <div className="space-y-6">
+        <section className="grid gap-4 lg:grid-cols-3">
+          {[
+            {
+              label: "Approved scope",
+              title:
+                "SOV starts from approved estimate or change-order snapshots",
+              detail:
+                "Progress billing workspaces appear only after approved scope seeds the canonical schedule-of-values chain.",
+              href: "/estimates",
+              action: "Review estimates"
+            },
+            {
+              label: "Current draw",
+              title: "Percent complete drives the current billable amount",
+              detail:
+                "The workspace keeps prior billed, retainage, current billing, and balance-to-finish visible before an invoice is built.",
+              href: buildProgressBillingHref({
+                q: query,
+                status: "ready_to_bill"
+              }),
+              action: "Open ready draws"
+            },
+            {
+              label: "Invoice handoff",
+              title: "Billing still lands on canonical invoices",
+              detail:
+                "Draft progress invoices stay tied to the same customer, project, estimate, SOV, invoice, and payment chain.",
+              href: "/invoices",
+              action: "Open invoices"
+            }
+          ].map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className="group border border-[#e4d7c9] bg-[#fdfaf6] px-5 py-4 transition hover:border-[#c59a6b] hover:bg-[#fffaf2]"
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8a6a4f]">
+                {item.label}
+              </p>
+              <h2 className="mt-2 text-base font-semibold text-[#2b2118]">
+                {item.title}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-[#665446]">
+                {item.detail}
+              </p>
+              <p className="mt-4 text-sm font-semibold text-[#a4581a] transition group-hover:text-[#7c3f12]">
+                {item.action}
+              </p>
+            </Link>
+          ))}
+        </section>
+
         <section className="grid gap-4 xl:auto-rows-fr xl:grid-cols-2">
           <ManagerDashboardCard
             eyebrow="Ready now"
             title="Scope ready to bill"
             description="These approved-scope workspaces already have billable progress beyond prior billed amounts."
-            actionHref={buildProgressBillingHref({ q: query, status: "ready_to_bill" })}
+            actionHref={buildProgressBillingHref({
+              q: query,
+              status: "ready_to_bill"
+            })}
             actionLabel="Open ready"
             items={readyToBill.slice(0, 3).map((workspace) => ({
               href: `/progress-billing/${workspace.id}`,
@@ -227,7 +299,10 @@ export default async function ProgressBillingPage({
             eyebrow="Continuity"
             title="Active progress billing work"
             description="These workspaces already have progress billed, but still carry remaining balance to finish."
-            actionHref={buildProgressBillingHref({ q: query, status: "in_progress" })}
+            actionHref={buildProgressBillingHref({
+              q: query,
+              status: "in_progress"
+            })}
             actionLabel="Open active"
             items={inProgress.slice(0, 3).map((workspace) => ({
               href: `/progress-billing/${workspace.id}`,
@@ -278,7 +353,8 @@ export default async function ProgressBillingPage({
                         {workspace.project?.name ?? "Schedule of values"}
                       </p>
                       <p className="mt-2 text-sm leading-6 text-[#665446]">
-                        {formatStatusLabel(workspace.status)} · {workspace.weightedPercentComplete}% complete
+                        {formatStatusLabel(workspace.status)} ·{" "}
+                        {workspace.weightedPercentComplete}% complete
                       </p>
                     </div>
 
@@ -287,7 +363,8 @@ export default async function ProgressBillingPage({
                         Continuity
                       </p>
                       <p className="text-sm font-medium text-[#2b2118]">
-                        {workspace.estimate?.referenceNumber ?? "Approved estimate"}
+                        {workspace.estimate?.referenceNumber ??
+                          "Approved estimate"}
                       </p>
                       <p className="mt-1 text-sm leading-6 text-[#665446]">
                         {workspace.customer?.name ?? "Unknown customer"}
@@ -335,7 +412,11 @@ export default async function ProgressBillingPage({
             ) : (
               <div className="px-6 py-8 sm:px-8">
                 <AppEmptyState
-                  eyebrow={workspaces.length > 0 ? "No matching workspaces" : "No approved SOV work yet"}
+                  eyebrow={
+                    workspaces.length > 0
+                      ? "No matching workspaces"
+                      : "No approved SOV work yet"
+                  }
                   title={
                     workspaces.length > 0
                       ? "Adjust the progress billing filters"

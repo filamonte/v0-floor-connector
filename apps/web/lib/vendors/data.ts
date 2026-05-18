@@ -36,6 +36,16 @@ type VendorScope = {
   organizationId: string;
 };
 
+type ScheduleLaborVendorRow = {
+  id: string;
+  name: string;
+};
+
+export type ScheduleLaborVendorOption = {
+  id: string;
+  name: string;
+};
+
 const vendorSelect = `
   id,
   company_id,
@@ -56,6 +66,11 @@ const vendorSelect = `
   is_active,
   created_at,
   updated_at
+`;
+
+const scheduleLaborVendorSelect = `
+  id,
+  name
 `;
 
 function isVendorRow(value: unknown): value is VendorRow {
@@ -81,6 +96,26 @@ function isVendorRowArray(value: unknown): value is VendorRow[] {
   return Array.isArray(value) && value.every((row) => isVendorRow(row));
 }
 
+function isScheduleLaborVendorRow(
+  value: unknown
+): value is ScheduleLaborVendorRow {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const row = value as Partial<ScheduleLaborVendorRow>;
+
+  return typeof row.id === "string" && typeof row.name === "string";
+}
+
+function isScheduleLaborVendorRowArray(
+  value: unknown
+): value is ScheduleLaborVendorRow[] {
+  return (
+    Array.isArray(value) && value.every((row) => isScheduleLaborVendorRow(row))
+  );
+}
+
 function mapVendor(row: VendorRow): VendorRecord {
   return {
     id: row.id,
@@ -102,6 +137,15 @@ function mapVendor(row: VendorRow): VendorRecord {
     isActive: row.is_active,
     createdAt: row.created_at,
     updatedAt: row.updated_at
+  };
+}
+
+function mapScheduleLaborVendorOption(
+  row: ScheduleLaborVendorRow
+): ScheduleLaborVendorOption {
+  return {
+    id: row.id,
+    name: row.name
   };
 }
 
@@ -155,6 +199,31 @@ export const listVendors = cache(async () => {
   }
 
   return data.map(mapVendor);
+});
+
+export const listScheduleLaborVendors = cache(async () => {
+  const scope = await requireVendorScope("/schedule");
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("vendors")
+    .select(scheduleLaborVendorSelect)
+    .eq("company_id", scope.organizationId)
+    .eq("is_active", true)
+    .eq("is_labor_provider", true)
+    .order("name", { ascending: true });
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load schedule labor vendor options: ${response.error.message}`
+    );
+  }
+
+  if (!isScheduleLaborVendorRowArray(data)) {
+    return [];
+  }
+
+  return data.map(mapScheduleLaborVendorOption);
 });
 
 export async function getVendorById(vendorId: string, next = "/vendors") {

@@ -3,12 +3,16 @@
 import type { ReactNode } from "react";
 import { startTransition, useDeferredValue, useMemo, useState } from "react";
 import Link from "next/link";
-import type { Customer, MembershipRole } from "@floorconnector/types";
+import type { MembershipRole } from "@floorconnector/types";
 import { getStatusBadgeClassName } from "@floorconnector/ui";
 
 import type { DashboardPriorityItem } from "@/components/dashboard/priority-strip";
 import { PriorityStrip } from "@/components/dashboard/priority-strip";
 import { StartHereCard } from "@/components/onboarding/start-here-card";
+import {
+  OperationalGuidanceSection,
+  type OperationalGuidanceBucket
+} from "@/components/operational-guidance-section";
 import { UniversalCreateMenu } from "@/components/universal-create-menu";
 
 type QuickCreateAction = (formData: FormData) => void | Promise<void>;
@@ -97,44 +101,6 @@ type DashboardPlaceholder = {
   priority: "High";
 };
 
-type ProjectOption = {
-  id: string;
-  name: string;
-  customerId?: string | null;
-  customerName?: string | null;
-  status?: string | null;
-};
-
-type OpportunityOption = {
-  id: string;
-  title: string;
-  contactName: string;
-  customerName?: string | null;
-  jobType?: string | null;
-  siteName?: string | null;
-  status: string;
-};
-
-type ApprovedEstimateOption = {
-  id: string;
-  referenceNumber: string;
-  projectName?: string | null;
-};
-
-type ContractOption = {
-  id: string;
-  projectId: string;
-  title: string;
-  status: string;
-};
-
-type InvoiceOption = {
-  id: string;
-  projectId: string;
-  referenceNumber: string;
-  status: string;
-};
-
 export type ContractorDashboardSurfaceProps = {
   header: {
     organizationName: string;
@@ -155,6 +121,7 @@ export type ContractorDashboardSurfaceProps = {
   priorityItems: DashboardPriorityItem[];
   metrics: DashboardMetric[];
   lifecycleSteps: DashboardLifecycleStep[];
+  operationalCockpitBuckets?: OperationalGuidanceBucket[];
   attentionWidget?: DashboardWidget | null;
   projectCueWidget?: DashboardWidget | null;
   workItemsWidget?: DashboardWidget | null;
@@ -180,27 +147,6 @@ export type ContractorDashboardSurfaceProps = {
   startHereForceVisible?: boolean;
   shortcuts: DashboardShortcut[];
   placeholders: DashboardPlaceholder[];
-  quickCreate: {
-    defaultRetainagePercentage: string;
-    customerOptions: Customer[];
-    opportunityOptions: OpportunityOption[];
-    projectOptions: ProjectOption[];
-    approvedEstimateOptions: ApprovedEstimateOption[];
-    contractOptions: ContractOption[];
-    invoiceOptions: InvoiceOption[];
-    preferredContractTemplateId?: string | null;
-    requireContractInternalApproval?: boolean;
-    actions: {
-      lead: QuickCreateAction;
-      customer: QuickCreateAction;
-      project: QuickCreateAction;
-      estimate: QuickCreateAction;
-      contract: QuickCreateAction;
-      job: QuickCreateAction;
-      invoice: QuickCreateAction;
-      changeOrder: QuickCreateAction;
-    };
-  };
 };
 
 const dashboardIconStyle = {
@@ -619,6 +565,7 @@ export function ContractorDashboardSurface({
   priorityItems,
   metrics,
   lifecycleSteps,
+  operationalCockpitBuckets = [],
   attentionWidget,
   projectCueWidget,
   workItemsWidget,
@@ -870,6 +817,14 @@ export function ContractorDashboardSurface({
         <PriorityStrip items={priorityItems} />
 
         <LifecycleRail steps={lifecycleSteps} />
+
+        {operationalCockpitBuckets.length > 0 ? (
+          <OperationalGuidanceSection
+            title="Operational cockpit"
+            description="The home board groups current work by decision posture: what needs attention, what is ready to move, what is waiting on a customer or payment, and what needs field follow-through."
+            buckets={operationalCockpitBuckets}
+          />
+        ) : null}
 
         <PriorityGrid metrics={metrics} />
 

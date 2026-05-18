@@ -28,26 +28,27 @@ type PersonRow = {
   notes: string | null;
   created_at: string;
   updated_at: string;
-  vendors?:
-    | {
-        id: string;
-        name: string;
-        vendor_type: string;
-        is_labor_provider: boolean;
-      }
-    | null;
-  users?:
-    | {
-        id: string;
-        email: string;
-        full_name: string | null;
-      }
-    | null;
+  vendors?: {
+    id: string;
+    name: string;
+    vendor_type: string;
+    is_labor_provider: boolean;
+  } | null;
+  users?: {
+    id: string;
+    email: string;
+    full_name: string | null;
+  } | null;
 };
 
 type PeopleScope = {
   userId: string;
   organizationId: string;
+};
+
+type ScheduleAssignablePersonRow = {
+  id: string;
+  display_name: string;
 };
 
 export type PersonListItem = PersonRecord & {
@@ -62,6 +63,11 @@ export type PersonListItem = PersonRecord & {
     email: string;
     fullName: string | null;
   } | null;
+};
+
+export type ScheduleAssignablePersonOption = {
+  id: string;
+  displayName: string;
 };
 
 const personSelect = `
@@ -96,6 +102,11 @@ const personSelect = `
   )
 `;
 
+const scheduleAssignablePersonSelect = `
+  id,
+  display_name
+`;
+
 function isPersonRow(value: unknown): value is PersonRow {
   if (!value || typeof value !== "object") {
     return false;
@@ -117,6 +128,27 @@ function isPersonRow(value: unknown): value is PersonRow {
 
 function isPersonRowArray(value: unknown): value is PersonRow[] {
   return Array.isArray(value) && value.every((row) => isPersonRow(row));
+}
+
+function isScheduleAssignablePersonRow(
+  value: unknown
+): value is ScheduleAssignablePersonRow {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const row = value as Partial<ScheduleAssignablePersonRow>;
+
+  return typeof row.id === "string" && typeof row.display_name === "string";
+}
+
+function isScheduleAssignablePersonRowArray(
+  value: unknown
+): value is ScheduleAssignablePersonRow[] {
+  return (
+    Array.isArray(value) &&
+    value.every((row) => isScheduleAssignablePersonRow(row))
+  );
 }
 
 function mapPerson(row: PersonRow): PersonRecord {
@@ -163,6 +195,15 @@ function mapPersonListItem(row: PersonRow): PersonListItem {
   };
 }
 
+function mapScheduleAssignablePersonOption(
+  row: ScheduleAssignablePersonRow
+): ScheduleAssignablePersonOption {
+  return {
+    id: row.id,
+    displayName: row.display_name
+  };
+}
+
 async function getPeopleScope(next = "/people"): Promise<PeopleScope | null> {
   const user = await requireAuthenticatedUser(next);
   const organizationContext = await getActiveOrganizationContext(user.id);
@@ -205,7 +246,9 @@ export const listPeople = cache(async () => {
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load workforce records: ${response.error.message}`);
+    throw new Error(
+      `Unable to load workforce records: ${response.error.message}`
+    );
   }
 
   if (!isPersonRowArray(data)) {
@@ -213,6 +256,31 @@ export const listPeople = cache(async () => {
   }
 
   return data.map(mapPersonListItem);
+});
+
+export const listScheduleAssignablePeople = cache(async () => {
+  const scope = await requirePeopleScope("/schedule");
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("people")
+    .select(scheduleAssignablePersonSelect)
+    .eq("company_id", scope.organizationId)
+    .eq("is_active", true)
+    .eq("is_assignable", true)
+    .order("display_name", { ascending: true });
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load schedule crew options: ${response.error.message}`
+    );
+  }
+
+  if (!isScheduleAssignablePersonRowArray(data)) {
+    return [];
+  }
+
+  return data.map(mapScheduleAssignablePersonOption);
 });
 
 export async function getPersonById(personId: string, next = "/people") {
@@ -227,7 +295,9 @@ export async function getPersonById(personId: string, next = "/people") {
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load the workforce record: ${response.error.message}`);
+    throw new Error(
+      `Unable to load the workforce record: ${response.error.message}`
+    );
   }
 
   if (!isPersonRow(data)) {
@@ -237,7 +307,10 @@ export async function getPersonById(personId: string, next = "/people") {
   return mapPersonListItem(data);
 }
 
-async function ensureScopedVendor(organizationId: string, vendorId: string | null) {
+async function ensureScopedVendor(
+  organizationId: string,
+  vendorId: string | null
+) {
   if (!vendorId) {
     return null;
   }
@@ -249,10 +322,15 @@ async function ensureScopedVendor(organizationId: string, vendorId: string | nul
     .eq("company_id", organizationId)
     .eq("id", vendorId)
     .maybeSingle();
-  const data = response.data as { id?: string; is_labor_provider?: boolean } | null;
+  const data = response.data as {
+    id?: string;
+    is_labor_provider?: boolean;
+  } | null;
 
   if (response.error) {
-    throw new Error(`Unable to validate the linked vendor: ${response.error.message}`);
+    throw new Error(
+      `Unable to validate the linked vendor: ${response.error.message}`
+    );
   }
 
   if (!data?.id) {
@@ -260,7 +338,9 @@ async function ensureScopedVendor(organizationId: string, vendorId: string | nul
   }
 
   if (!data.is_labor_provider) {
-    throw new Error("Only labor-provider vendors can be linked to subcontractor workers.");
+    throw new Error(
+      "Only labor-provider vendors can be linked to subcontractor workers."
+    );
   }
 
   return data;
@@ -280,7 +360,9 @@ async function ensureScopedLinkedUser(linkedUserId: string | null) {
   const data = response.data as { id?: string } | null;
 
   if (response.error) {
-    throw new Error(`Unable to validate the linked user: ${response.error.message}`);
+    throw new Error(
+      `Unable to validate the linked user: ${response.error.message}`
+    );
   }
 
   if (!data?.id) {
@@ -325,7 +407,9 @@ export async function createPerson(input: PersonInput) {
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to create the workforce record: ${response.error.message}`);
+    throw new Error(
+      `Unable to create the workforce record: ${response.error.message}`
+    );
   }
 
   if (!isPersonRow(data)) {
@@ -370,7 +454,9 @@ export async function updatePerson(personId: string, input: PersonInput) {
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to update the workforce record: ${response.error.message}`);
+    throw new Error(
+      `Unable to update the workforce record: ${response.error.message}`
+    );
   }
 
   if (!isPersonRow(data)) {

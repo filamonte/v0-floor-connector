@@ -32,26 +32,20 @@ type PunchlistItemRow = {
   updated_by: string | null;
   created_at: string;
   updated_at: string;
-  projects?:
-    | {
-        id: string;
-        name: string;
-      }
-    | null;
-  jobs?:
-    | {
-        id: string;
-        dispatch_status: string;
-        scheduled_date: string | null;
-      }
-    | null;
-  assignee:
-    | {
-        id: string;
-        display_name: string;
-        is_active: boolean;
-      }
-    | null;
+  projects?: {
+    id: string;
+    name: string;
+  } | null;
+  jobs?: {
+    id: string;
+    dispatch_status: string;
+    scheduled_date: string | null;
+  } | null;
+  assignee: {
+    id: string;
+    display_name: string;
+    is_active: boolean;
+  } | null;
 };
 
 export type PunchlistListItem = PunchlistItemRecord & {
@@ -113,7 +107,8 @@ function isPunchlistItemRow(value: unknown): value is PunchlistItemRow {
     typeof row.company_id === "string" &&
     typeof row.project_id === "string" &&
     (row.job_id === null || typeof row.job_id === "string") &&
-    (row.assignee_person_id === null || typeof row.assignee_person_id === "string") &&
+    (row.assignee_person_id === null ||
+      typeof row.assignee_person_id === "string") &&
     typeof row.title === "string" &&
     (row.details === null || typeof row.details === "string") &&
     (row.due_date === null || typeof row.due_date === "string") &&
@@ -189,7 +184,8 @@ function getPunchlistStatusRank(status: PunchlistStatus) {
 function sortPunchlistItems(items: PunchlistListItem[]) {
   return items.sort((left, right) => {
     const statusComparison =
-      getPunchlistStatusRank(left.status) - getPunchlistStatusRank(right.status);
+      getPunchlistStatusRank(left.status) -
+      getPunchlistStatusRank(right.status);
 
     if (statusComparison !== 0) {
       return statusComparison;
@@ -207,7 +203,9 @@ function sortPunchlistItems(items: PunchlistListItem[]) {
   });
 }
 
-async function getPunchlistScope(next = "/punchlists"): Promise<PunchlistScope | null> {
+async function getPunchlistScope(
+  next = "/punchlists"
+): Promise<PunchlistScope | null> {
   const user = await requireAuthenticatedUser(next);
   const organizationContext = await getActiveOrganizationContext(user.id);
 
@@ -249,7 +247,9 @@ async function ensureScopedProject(organizationId: string, projectId: string) {
   const data = response.data as { id?: string } | null;
 
   if (response.error) {
-    throw new Error(`Unable to validate the project: ${response.error.message}`);
+    throw new Error(
+      `Unable to validate the project: ${response.error.message}`
+    );
   }
 
   if (!data?.id) {
@@ -274,7 +274,9 @@ async function ensureScopedJob(organizationId: string, jobId: string | null) {
   const data = response.data as { id?: string; project_id?: string } | null;
 
   if (response.error) {
-    throw new Error(`Unable to validate the linked job: ${response.error.message}`);
+    throw new Error(
+      `Unable to validate the linked job: ${response.error.message}`
+    );
   }
 
   if (!data?.id || !data.project_id) {
@@ -305,7 +307,9 @@ async function ensureScopedActivePerson(
   const data = response.data as { id?: string; is_active?: boolean } | null;
 
   if (response.error) {
-    throw new Error(`Unable to validate the assignee: ${response.error.message}`);
+    throw new Error(
+      `Unable to validate the assignee: ${response.error.message}`
+    );
   }
 
   if (!data?.id) {
@@ -340,28 +344,53 @@ async function validatePunchlistItemInput(
   }
 }
 
-export const listPunchlistItems = cache(async (): Promise<PunchlistListItem[]> => {
+export const listPunchlistItems = cache(
+  async (): Promise<PunchlistListItem[]> => {
+    const scope = await requirePunchlistScope("/punchlists");
+    const supabase = await getSupabaseServerClient();
+    const response = await supabase
+      .from("punchlist_items")
+      .select(punchlistSelect)
+      .eq("company_id", scope.organizationId)
+      .order("updated_at", { ascending: false });
+    const data: unknown = response.data;
+
+    if (response.error) {
+      throw new Error(
+        `Unable to load punchlist items: ${response.error.message}`
+      );
+    }
+
+    if (!isPunchlistItemRowArray(data)) {
+      return [];
+    }
+
+    return sortPunchlistItems(data.map(mapPunchlistListItem));
+  }
+);
+
+export const countOpenPunchlistItemsForDashboard = cache(async () => {
   const scope = await requirePunchlistScope("/punchlists");
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("punchlist_items")
-    .select(punchlistSelect)
+    .select("id", { count: "exact", head: true })
     .eq("company_id", scope.organizationId)
-    .order("updated_at", { ascending: false });
-  const data: unknown = response.data;
+    .in("status", ["open", "in_progress"]);
 
   if (response.error) {
-    throw new Error(`Unable to load punchlist items: ${response.error.message}`);
+    throw new Error(
+      `Unable to count dashboard punchlist items: ${response.error.message}`
+    );
   }
 
-  if (!isPunchlistItemRowArray(data)) {
-    return [];
-  }
-
-  return sortPunchlistItems(data.map(mapPunchlistListItem));
+  return response.count ?? 0;
 });
 
-export async function listPunchlistItemsByProject(projectId: string, next = "/projects") {
+export async function listPunchlistItemsByProject(
+  projectId: string,
+  next = "/projects"
+) {
   const scope = await requirePunchlistScope(next);
   const supabase = await getSupabaseServerClient();
   const response = await supabase
@@ -373,7 +402,9 @@ export async function listPunchlistItemsByProject(projectId: string, next = "/pr
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load project punchlist items: ${response.error.message}`);
+    throw new Error(
+      `Unable to load project punchlist items: ${response.error.message}`
+    );
   }
 
   if (!isPunchlistItemRowArray(data)) {
@@ -395,7 +426,9 @@ export async function listPunchlistItemsByJob(jobId: string, next = "/jobs") {
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load job punchlist items: ${response.error.message}`);
+    throw new Error(
+      `Unable to load job punchlist items: ${response.error.message}`
+    );
   }
 
   if (!isPunchlistItemRowArray(data)) {
@@ -420,7 +453,9 @@ export async function getPunchlistItemById(
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load the punchlist item: ${response.error.message}`);
+    throw new Error(
+      `Unable to load the punchlist item: ${response.error.message}`
+    );
   }
 
   if (!isPunchlistItemRow(data)) {
@@ -454,7 +489,9 @@ export async function createPunchlistItem(input: PunchlistItemInput) {
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to create the punchlist item: ${response.error.message}`);
+    throw new Error(
+      `Unable to create the punchlist item: ${response.error.message}`
+    );
   }
 
   if (!isPunchlistItemRow(data)) {
@@ -491,7 +528,9 @@ export async function updatePunchlistItem(
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to update the punchlist item: ${response.error.message}`);
+    throw new Error(
+      `Unable to update the punchlist item: ${response.error.message}`
+    );
   }
 
   if (!isPunchlistItemRow(data)) {

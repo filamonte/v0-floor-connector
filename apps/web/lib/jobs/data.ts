@@ -62,6 +62,8 @@ type JobRow = {
     | null;
 };
 
+type ScheduleJobRow = Omit<JobRow, "notes">;
+
 type JobAssignmentRow = {
   id: string;
   company_id: string;
@@ -87,6 +89,28 @@ type JobAssignmentRow = {
         name: string;
         is_labor_provider: boolean;
         is_active: boolean;
+      }
+    | null;
+};
+
+type ScheduleJobAssignmentRow = {
+  id: string;
+  job_id: string;
+  person_id: string | null;
+  vendor_id: string | null;
+  role: JobAssignmentRole;
+  assigned_start_at: string | null;
+  assigned_end_at: string | null;
+  people?:
+    | {
+        id: string;
+        display_name: string;
+      }
+    | null;
+  vendors?:
+    | {
+        id: string;
+        name: string;
       }
     | null;
 };
@@ -118,6 +142,8 @@ export type JobListItem = JobRecord & {
   } | null;
 };
 
+export type ScheduleJobSummary = Omit<JobListItem, "notes">;
+
 export type JobAssignmentListItem = JobAssignmentRecord & {
   person: {
     id: string;
@@ -133,7 +159,29 @@ export type JobAssignmentListItem = JobAssignmentRecord & {
   } | null;
 };
 
+export type ScheduleJobAssignmentSummary = {
+  id: string;
+  jobId: string;
+  personId: string | null;
+  vendorId: string | null;
+  role: JobAssignmentRole;
+  assignedStartAt: string | null;
+  assignedEndAt: string | null;
+  person: {
+    id: string;
+    displayName: string;
+  } | null;
+  vendor: {
+    id: string;
+    name: string;
+  } | null;
+};
+
 export type JobAssignmentsByJobId = Map<string, JobAssignmentListItem[]>;
+export type ScheduleJobAssignmentsByJobId = Map<
+  string,
+  ScheduleJobAssignmentSummary[]
+>;
 
 const jobSelect = `
   id,
@@ -148,6 +196,41 @@ const jobSelect = `
   schedule_notes,
   crew_vendor_id,
   notes,
+  created_at,
+  updated_at,
+  customers (
+    id,
+    name,
+    company_name
+  ),
+  projects (
+    id,
+    name
+  ),
+  estimates (
+    id,
+    reference_number,
+    status
+  ),
+  crew_vendor:vendors!jobs_crew_vendor_id_fkey (
+    id,
+    name,
+    is_labor_provider
+  )
+`;
+
+const scheduleJobSelect = `
+  id,
+  company_id,
+  customer_id,
+  project_id,
+  estimate_id,
+  dispatch_status,
+  scheduled_date,
+  scheduled_start_at,
+  scheduled_end_at,
+  schedule_notes,
+  crew_vendor_id,
   created_at,
   updated_at,
   customers (
@@ -196,6 +279,24 @@ const jobAssignmentSelect = `
   )
 `;
 
+const scheduleJobAssignmentSelect = `
+  id,
+  job_id,
+  person_id,
+  vendor_id,
+  role,
+  assigned_start_at,
+  assigned_end_at,
+  people (
+    id,
+    display_name
+  ),
+  vendors (
+    id,
+    name
+  )
+`;
+
 function isJobRow(value: unknown): value is JobRow {
   if (!value || typeof value !== "object") {
     return false;
@@ -224,6 +325,18 @@ function isJobRowArray(value: unknown): value is JobRow[] {
   return Array.isArray(value) && value.every((row) => isJobRow(row));
 }
 
+function isScheduleJobRow(value: unknown): value is ScheduleJobRow {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  return isJobRow({ ...value, notes: null });
+}
+
+function isScheduleJobRowArray(value: unknown): value is ScheduleJobRow[] {
+  return Array.isArray(value) && value.every((row) => isScheduleJobRow(row));
+}
+
 function isJobAssignmentRow(value: unknown): value is JobAssignmentRow {
   if (!value || typeof value !== "object") {
     return false;
@@ -249,6 +362,35 @@ function isJobAssignmentRowArray(value: unknown): value is JobAssignmentRow[] {
   return Array.isArray(value) && value.every((row) => isJobAssignmentRow(row));
 }
 
+function isScheduleJobAssignmentRow(
+  value: unknown
+): value is ScheduleJobAssignmentRow {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const row = value as Partial<ScheduleJobAssignmentRow>;
+
+  return (
+    typeof row.id === "string" &&
+    typeof row.job_id === "string" &&
+    (row.person_id === null || typeof row.person_id === "string") &&
+    (row.vendor_id === null || typeof row.vendor_id === "string") &&
+    typeof row.role === "string" &&
+    (row.assigned_start_at === null ||
+      typeof row.assigned_start_at === "string") &&
+    (row.assigned_end_at === null || typeof row.assigned_end_at === "string")
+  );
+}
+
+function isScheduleJobAssignmentRowArray(
+  value: unknown
+): value is ScheduleJobAssignmentRow[] {
+  return (
+    Array.isArray(value) && value.every((row) => isScheduleJobAssignmentRow(row))
+  );
+}
+
 function mapJob(row: JobRow): JobRecord {
   return {
     id: row.id,
@@ -271,6 +413,51 @@ function mapJob(row: JobRow): JobRecord {
 function mapJobListItem(row: JobRow): JobListItem {
   return {
     ...mapJob(row),
+    customer: row.customers
+      ? {
+          id: row.customers.id,
+          name: row.customers.name,
+          companyName: row.customers.company_name
+        }
+      : null,
+    project: row.projects
+      ? {
+          id: row.projects.id,
+          name: row.projects.name
+        }
+      : null,
+    estimate: row.estimates
+      ? {
+          id: row.estimates.id,
+          referenceNumber: row.estimates.reference_number,
+          status: row.estimates.status
+        }
+      : null,
+    crewVendor: row.crew_vendor
+      ? {
+          id: row.crew_vendor.id,
+          name: row.crew_vendor.name,
+          isLaborProvider: row.crew_vendor.is_labor_provider
+        }
+      : null
+  };
+}
+
+function mapScheduleJobSummary(row: ScheduleJobRow): ScheduleJobSummary {
+  return {
+    id: row.id,
+    organizationId: row.company_id,
+    customerId: row.customer_id,
+    projectId: row.project_id,
+    estimateId: row.estimate_id,
+    dispatchStatus: row.dispatch_status,
+    scheduledDate: row.scheduled_date,
+    scheduledStartAt: row.scheduled_start_at,
+    scheduledEndAt: row.scheduled_end_at,
+    scheduleNotes: row.schedule_notes,
+    crewVendorId: row.crew_vendor_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
     customer: row.customers
       ? {
           id: row.customers.id,
@@ -333,6 +520,32 @@ function mapJobAssignmentListItem(row: JobAssignmentRow): JobAssignmentListItem 
           name: row.vendors.name,
           isActive: row.vendors.is_active,
           isLaborProvider: row.vendors.is_labor_provider
+        }
+      : null
+  };
+}
+
+function mapScheduleJobAssignmentSummary(
+  row: ScheduleJobAssignmentRow
+): ScheduleJobAssignmentSummary {
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    personId: row.person_id,
+    vendorId: row.vendor_id,
+    role: row.role,
+    assignedStartAt: row.assigned_start_at,
+    assignedEndAt: row.assigned_end_at,
+    person: row.people
+      ? {
+          id: row.people.id,
+          displayName: row.people.display_name
+        }
+      : null,
+    vendor: row.vendors
+      ? {
+          id: row.vendors.id,
+          name: row.vendors.name
         }
       : null
   };
@@ -411,7 +624,14 @@ export async function requireJobScope(next = "/jobs") {
   return scope;
 }
 
-function sortJobs(jobs: JobListItem[]) {
+function sortJobs<
+  T extends {
+    dispatchStatus: JobStatus;
+    scheduledStartAt: string | null;
+    scheduledDate: string | null;
+    updatedAt: string;
+  }
+>(jobs: T[]) {
   return jobs.sort((left, right) => {
     const statusComparison = compareJobStatuses(
       left.dispatchStatus,
@@ -453,6 +673,27 @@ export const listJobs = cache(async (): Promise<JobListItem[]> => {
   }
 
   return sortJobs(data.map(mapJobListItem));
+});
+
+export const listScheduleJobs = cache(async (): Promise<ScheduleJobSummary[]> => {
+  const scope = await requireJobScope("/schedule");
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("jobs")
+    .select(scheduleJobSelect)
+    .eq("company_id", scope.organizationId)
+    .order("updated_at", { ascending: false });
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(`Unable to load schedule jobs: ${response.error.message}`);
+  }
+
+  if (!isScheduleJobRowArray(data)) {
+    return [];
+  }
+
+  return sortJobs(data.map(mapScheduleJobSummary));
 });
 
 export const listJobsByCustomer = cache(
@@ -591,6 +832,53 @@ export async function listJobAssignmentsByJobIds(
   const assignmentsByJobId: JobAssignmentsByJobId = new Map();
 
   for (const row of data.map(mapJobAssignmentListItem)) {
+    const existing = assignmentsByJobId.get(row.jobId);
+
+    if (existing) {
+      existing.push(row);
+      continue;
+    }
+
+    assignmentsByJobId.set(row.jobId, [row]);
+  }
+
+  return assignmentsByJobId;
+}
+
+export async function listScheduleJobAssignmentsByJobIds(
+  jobIds: string[]
+): Promise<ScheduleJobAssignmentsByJobId> {
+  const scopedJobIds = [...new Set(jobIds.filter(Boolean))];
+
+  if (scopedJobIds.length === 0) {
+    return new Map();
+  }
+
+  const scope = await requireJobScope("/schedule");
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("job_assignments")
+    .select(scheduleJobAssignmentSelect)
+    .eq("company_id", scope.organizationId)
+    .in("job_id", scopedJobIds)
+    .order("role", { ascending: true })
+    .order("assigned_start_at", { ascending: true, nullsFirst: true })
+    .order("created_at", { ascending: true });
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load schedule job assignments: ${response.error.message}`
+    );
+  }
+
+  if (!isScheduleJobAssignmentRowArray(data)) {
+    return new Map();
+  }
+
+  const assignmentsByJobId: ScheduleJobAssignmentsByJobId = new Map();
+
+  for (const row of data.map(mapScheduleJobAssignmentSummary)) {
     const existing = assignmentsByJobId.get(row.jobId);
 
     if (existing) {

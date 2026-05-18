@@ -99,9 +99,9 @@ export default async function ProgressBillingDetailPage({
       commandBar={{
         supportSlot: (
           <p>
-            This workspace stays on the same approved estimate, project, and invoice chain.
-            Progress billing is real here now, but the resulting bill still lives on the
-            canonical invoice record.
+            This workspace stays on the same approved estimate, project, and
+            invoice chain. Progress billing is real here now, but the resulting
+            bill still lives on the canonical invoice record.
           </p>
         ),
         actionSlot: (
@@ -142,19 +142,60 @@ export default async function ProgressBillingDetailPage({
             title="Build Progress Invoice"
             description="Percent complete is the contractor-side input here. Previously billed, current billing, retainage, and balance are derived from the canonical schedule-of-values and invoice chain."
           >
+            <div className="mb-5 grid gap-3 md:grid-cols-3">
+              {[
+                {
+                  label: "1. Source",
+                  value: "Approved snapshot",
+                  detail:
+                    "SOV rows stay sourced from approved estimate or change-order snapshot items."
+                },
+                {
+                  label: "2. Review",
+                  value: "Percent complete",
+                  detail:
+                    "Only completion inputs are entered here; billed totals and retainage are derived."
+                },
+                {
+                  label: "3. Handoff",
+                  value: "Draft invoice",
+                  detail:
+                    "The draw becomes or updates a canonical invoice before collection."
+                }
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="border border-[#e4d7c9] bg-[#fdfaf6] px-4 py-3"
+                >
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8a6a4f]">
+                    {item.label}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-[#2b2118]">
+                    {item.value}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-[#665446]">
+                    {item.detail}
+                  </p>
+                </div>
+              ))}
+            </div>
             <ProgressBillingForm
               action={buildProgressBillingInvoiceAction}
               scheduleOfValuesId={workspace.id}
               issueDateDefault={
-                workspace.draftProgressInvoice?.issueDate ?? getDefaultIssueDate()
+                workspace.draftProgressInvoice?.issueDate ??
+                getDefaultIssueDate()
               }
-              dueDateDefault={workspace.draftProgressInvoice?.dueDate ?? getDefaultDueDate()}
+              dueDateDefault={
+                workspace.draftProgressInvoice?.dueDate ?? getDefaultDueDate()
+              }
               notesDefault={workspace.draftProgressInvoice?.notes ?? null}
               draftInvoice={
                 workspace.draftProgressInvoice
                   ? {
                       id: workspace.draftProgressInvoice.id,
-                      referenceNumber: workspace.draftProgressInvoice.referenceNumber
+                      referenceNumber:
+                        workspace.draftProgressInvoice.referenceNumber
                     }
                   : null
               }
@@ -164,7 +205,8 @@ export default async function ProgressBillingDetailPage({
                 description: item.description,
                 scheduledValueAmount: item.scheduledValueAmount,
                 percentComplete: item.percentComplete,
-                minimumAllowedPercentComplete: item.minimumAllowedPercentComplete,
+                minimumAllowedPercentComplete:
+                  item.minimumAllowedPercentComplete,
                 previousBilledAmount: item.previousBilledAmount,
                 retainagePercentage: item.retainagePercentage
               }))}
@@ -193,7 +235,8 @@ export default async function ProgressBillingDetailPage({
                 ))
               ) : (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
-                  No progress invoices have been created from this schedule of values yet.
+                  No progress invoices have been created from this schedule of
+                  values yet.
                 </div>
               )}
             </div>
@@ -255,11 +298,16 @@ export default async function ProgressBillingDetailPage({
                 },
                 {
                   label: "Estimate",
-                  value: workspace.estimate?.referenceNumber ?? "Approved estimate"
+                  value:
+                    workspace.estimate?.referenceNumber ?? "Approved estimate"
                 },
                 {
                   label: "Workspace status",
-                  value: <span className="capitalize">{formatStatusLabel(workspace.status)}</span>
+                  value: (
+                    <span className="capitalize">
+                      {formatStatusLabel(workspace.status)}
+                    </span>
+                  )
                 },
                 {
                   label: "Weighted completion",
@@ -279,7 +327,11 @@ export default async function ProgressBillingDetailPage({
                 },
                 {
                   label: "Source estimate status",
-                  value: <span className="capitalize">{formatStatusLabel(workspace.sourceEstimateStatus)}</span>
+                  value: (
+                    <span className="capitalize">
+                      {formatStatusLabel(workspace.sourceEstimateStatus)}
+                    </span>
+                  )
                 }
               ]}
             />

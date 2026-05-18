@@ -1045,18 +1045,24 @@ export function EstimateForm({
   async function handleQuickCreateCatalogItem(input: {
     name: string;
     description: string | null;
+    itemType: Exclude<CatalogItem["itemType"], "system">;
     unit: string;
+    category: string | null;
+    defaultUnitCost: string;
     defaultUnitPrice: string;
     taxable: boolean;
   }) {
     const formData = new FormData();
     formData.set("name", input.name);
-    formData.set("itemType", "service");
+    formData.set("itemType", input.itemType);
     formData.set("unit", input.unit);
     if (input.description) {
       formData.set("description", input.description);
     }
-    formData.set("defaultUnitCost", "0.00");
+    if (input.category) {
+      formData.set("category", input.category);
+    }
+    formData.set("defaultUnitCost", input.defaultUnitCost);
     formData.set("defaultUnitPrice", input.defaultUnitPrice);
     if (input.taxable) {
       formData.set("taxable", "on");

@@ -73,6 +73,50 @@ type AppointmentRow = {
     | null;
 };
 
+type ScheduleAppointmentRow = {
+  id: string;
+  company_id: string;
+  opportunity_id: string | null;
+  customer_id: string | null;
+  project_id: string | null;
+  assigned_person_id: string | null;
+  title: string;
+  appointment_type: AppointmentType;
+  starts_at: string;
+  ends_at: string | null;
+  location: string | null;
+  customer_visible: boolean;
+  status: AppointmentStatus;
+  updated_at: string;
+  opportunities?:
+    | {
+        id: string;
+        title: string;
+        status: string;
+      }
+    | null;
+  customers?:
+    | {
+        id: string;
+        name: string;
+        company_name: string | null;
+      }
+    | null;
+  projects?:
+    | {
+        id: string;
+        name: string;
+        status: string;
+      }
+    | null;
+  assigned_person?:
+    | {
+        id: string;
+        display_name: string;
+      }
+    | null;
+};
+
 type ScopedOpportunity = {
   id: string;
   customerId: string | null;
@@ -115,6 +159,42 @@ export type AppointmentListItem = AppointmentRecord & {
     displayName: string;
     isActive: boolean;
     membershipUserId: string | null;
+  } | null;
+};
+
+export type ScheduleAppointmentSummary = {
+  id: string;
+  organizationId: string;
+  opportunityId: string | null;
+  customerId: string | null;
+  projectId: string | null;
+  assignedPersonId: string | null;
+  title: string;
+  appointmentType: AppointmentType;
+  startsAt: string;
+  endsAt: string | null;
+  location: string | null;
+  customerVisible: boolean;
+  status: AppointmentStatus;
+  updatedAt: string;
+  opportunity: {
+    id: string;
+    title: string;
+    status: string;
+  } | null;
+  customer: {
+    id: string;
+    name: string;
+    companyName: string | null;
+  } | null;
+  project: {
+    id: string;
+    name: string;
+    status: string;
+  } | null;
+  assignedPerson: {
+    id: string;
+    displayName: string;
   } | null;
 };
 
@@ -165,6 +245,42 @@ const appointmentSelect = `
   )
 `;
 
+const scheduleAppointmentSelect = `
+  id,
+  company_id,
+  opportunity_id,
+  customer_id,
+  project_id,
+  assigned_person_id,
+  title,
+  appointment_type,
+  starts_at,
+  ends_at,
+  location,
+  customer_visible,
+  status,
+  updated_at,
+  opportunities (
+    id,
+    title,
+    status
+  ),
+  customers (
+    id,
+    name,
+    company_name
+  ),
+  projects (
+    id,
+    name,
+    status
+  ),
+  assigned_person:people!appointments_assigned_person_id_fkey (
+    id,
+    display_name
+  )
+`;
+
 function isAppointmentRow(value: unknown): value is AppointmentRow {
   if (!value || typeof value !== "object") {
     return false;
@@ -196,6 +312,42 @@ function isAppointmentRow(value: unknown): value is AppointmentRow {
 
 function isAppointmentRowArray(value: unknown): value is AppointmentRow[] {
   return Array.isArray(value) && value.every((row) => isAppointmentRow(row));
+}
+
+function isScheduleAppointmentRow(
+  value: unknown
+): value is ScheduleAppointmentRow {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const row = value as Partial<ScheduleAppointmentRow>;
+
+  return (
+    typeof row.id === "string" &&
+    typeof row.company_id === "string" &&
+    (row.opportunity_id === null || typeof row.opportunity_id === "string") &&
+    (row.customer_id === null || typeof row.customer_id === "string") &&
+    (row.project_id === null || typeof row.project_id === "string") &&
+    (row.assigned_person_id === null ||
+      typeof row.assigned_person_id === "string") &&
+    typeof row.title === "string" &&
+    typeof row.appointment_type === "string" &&
+    typeof row.starts_at === "string" &&
+    (row.ends_at === null || typeof row.ends_at === "string") &&
+    (row.location === null || typeof row.location === "string") &&
+    typeof row.customer_visible === "boolean" &&
+    typeof row.status === "string" &&
+    typeof row.updated_at === "string"
+  );
+}
+
+function isScheduleAppointmentRowArray(
+  value: unknown
+): value is ScheduleAppointmentRow[] {
+  return (
+    Array.isArray(value) && value.every((row) => isScheduleAppointmentRow(row))
+  );
 }
 
 function mapAppointment(row: AppointmentRow): AppointmentRecord {
@@ -258,6 +410,54 @@ function mapAppointmentListItem(row: AppointmentRow): AppointmentListItem {
   };
 }
 
+function mapScheduleAppointmentSummary(
+  row: ScheduleAppointmentRow
+): ScheduleAppointmentSummary {
+  return {
+    id: row.id,
+    organizationId: row.company_id,
+    opportunityId: row.opportunity_id,
+    customerId: row.customer_id,
+    projectId: row.project_id,
+    assignedPersonId: row.assigned_person_id,
+    title: row.title,
+    appointmentType: row.appointment_type,
+    startsAt: row.starts_at,
+    endsAt: row.ends_at,
+    location: row.location,
+    customerVisible: row.customer_visible,
+    status: row.status,
+    updatedAt: row.updated_at,
+    opportunity: row.opportunities
+      ? {
+          id: row.opportunities.id,
+          title: row.opportunities.title,
+          status: row.opportunities.status
+        }
+      : null,
+    customer: row.customers
+      ? {
+          id: row.customers.id,
+          name: row.customers.name,
+          companyName: row.customers.company_name
+        }
+      : null,
+    project: row.projects
+      ? {
+          id: row.projects.id,
+          name: row.projects.name,
+          status: row.projects.status
+        }
+      : null,
+    assignedPerson: row.assigned_person
+      ? {
+          id: row.assigned_person.id,
+          displayName: row.assigned_person.display_name
+        }
+      : null
+  };
+}
+
 function getAppointmentStatusRank(status: AppointmentStatus) {
   switch (status) {
     case "scheduled":
@@ -273,7 +473,13 @@ function getAppointmentStatusRank(status: AppointmentStatus) {
   }
 }
 
-function sortAppointments(appointments: AppointmentListItem[]) {
+function sortAppointments<
+  T extends {
+    status: AppointmentStatus;
+    startsAt: string;
+    updatedAt: string;
+  }
+>(appointments: T[]) {
   return appointments.sort((left, right) => {
     const statusComparison =
       getAppointmentStatusRank(left.status) - getAppointmentStatusRank(right.status);
@@ -594,6 +800,31 @@ export const listAppointments = cache(async (): Promise<AppointmentListItem[]> =
 
   return sortAppointments(data.map(mapAppointmentListItem));
 });
+
+export const listScheduleAppointments = cache(
+  async (): Promise<ScheduleAppointmentSummary[]> => {
+    const scope = await requireAppointmentScope("/schedule");
+    const supabase = await getSupabaseServerClient();
+    const response = await supabase
+      .from("appointments")
+      .select(scheduleAppointmentSelect)
+      .eq("company_id", scope.organizationId)
+      .order("starts_at", { ascending: true });
+    const data: unknown = response.data;
+
+    if (response.error) {
+      throw new Error(
+        `Unable to load schedule appointments: ${response.error.message}`
+      );
+    }
+
+    if (!isScheduleAppointmentRowArray(data)) {
+      return [];
+    }
+
+    return sortAppointments(data.map(mapScheduleAppointmentSummary));
+  }
+);
 
 export async function listAppointmentsByOpportunity(
   opportunityId: string,

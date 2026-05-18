@@ -1,8 +1,14 @@
-import type { AppointmentListItem } from "@/lib/appointments/data";
-import type { JobAssignmentListItem, JobListItem } from "@/lib/jobs/data";
+import type {
+  AppointmentListItem,
+  ScheduleAppointmentSummary
+} from "@/lib/appointments/data";
+import type {
+  ScheduleJobAssignmentSummary,
+  ScheduleJobSummary
+} from "@/lib/jobs/data";
 
-export type ScheduleJobSource = JobListItem & {
-  assignments?: JobAssignmentListItem[];
+export type ScheduleJobSource = ScheduleJobSummary & {
+  assignments?: ScheduleJobAssignmentSummary[];
   assignmentCount?: number;
   crewSummary?: string[];
 };
@@ -92,7 +98,7 @@ function getJobAssigneeLabel(job: ScheduleJobSource) {
 
 export function buildScheduleItems(input: {
   jobs: ScheduleJobSource[];
-  appointments: AppointmentListItem[];
+  appointments: ScheduleAppointmentSummary[];
   opportunityAssessments?: ScheduleOpportunityAssessmentSource[];
   rangeStart: Date;
   rangeEnd: Date;

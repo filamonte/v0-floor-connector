@@ -128,7 +128,10 @@ type ItemsSectionProps = {
   onQuickCreateCatalogItem: (input: {
     name: string;
     description: string | null;
+    itemType: Exclude<CatalogItemType, "system">;
     unit: string;
+    category: string | null;
+    defaultUnitCost: string;
     defaultUnitPrice: string;
     taxable: boolean;
   }) => Promise<boolean>;
@@ -264,6 +267,80 @@ function getCatalogCategoryLabel(item: CatalogItem) {
   return item.category?.trim() || formatCatalogTypeLabel(item.itemType);
 }
 
+const catalogDiscoveryFilters = [
+  {
+    id: "all",
+    label: "All",
+    tokens: []
+  },
+  {
+    id: "epoxy",
+    label: "Epoxy",
+    tokens: ["epoxy", "resinous", "basecoat", "topcoat", "urethane"]
+  },
+  {
+    id: "flake",
+    label: "Flake",
+    tokens: ["flake", "chip", "decorative flake"]
+  },
+  {
+    id: "metallic",
+    label: "Metallic",
+    tokens: ["metallic"]
+  },
+  {
+    id: "quartz",
+    label: "Quartz",
+    tokens: ["quartz"]
+  },
+  {
+    id: "polish",
+    label: "Polish",
+    tokens: ["polish", "polishing", "concrete polishing"]
+  },
+  {
+    id: "grind-seal",
+    label: "Grind & seal",
+    tokens: ["grind", "seal", "grind and seal", "grind-and-seal"]
+  },
+  {
+    id: "prep",
+    label: "Prep",
+    tokens: ["prep", "grind", "crack", "moisture", "mitigation", "repair"]
+  },
+  {
+    id: "addons",
+    label: "Add-ons",
+    tokens: ["addon", "add-on", "cove", "joint", "mobilization", "setup"]
+  }
+] as const;
+
+function getCatalogDiscoveryText(item: CatalogItem) {
+  return [
+    item.name,
+    item.description,
+    item.category,
+    item.sku,
+    item.costCode,
+    item.itemType
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(" ")
+    .toLowerCase();
+}
+
+function matchesCatalogDiscoveryFilter(item: CatalogItem, filterId: string) {
+  const filter = catalogDiscoveryFilters.find((option) => option.id === filterId);
+
+  if (!filter || filter.tokens.length === 0) {
+    return true;
+  }
+
+  const discoveryText = getCatalogDiscoveryText(item);
+
+  return filter.tokens.some((token) => discoveryText.includes(token));
+}
+
 function getVisibleRowGroups(
   lineItems: EstimateItemsDraft[],
   itemGroups: EstimateItemGroup[],
@@ -375,7 +452,11 @@ export function ItemsSection({
   const [showImportTools, setShowImportTools] = useState(false);
   const [quickItemName, setQuickItemName] = useState("");
   const [quickItemDescription, setQuickItemDescription] = useState("");
+  const [quickItemType, setQuickItemType] =
+    useState<Exclude<CatalogItemType, "system">>("material");
   const [quickItemUnit, setQuickItemUnit] = useState("each");
+  const [quickItemCategory, setQuickItemCategory] = useState("");
+  const [quickItemCost, setQuickItemCost] = useState("0.00");
   const [quickItemPrice, setQuickItemPrice] = useState("");
   const [quickItemTaxable, setQuickItemTaxable] = useState(true);
   const [editingLineItem, setEditingLineItem] =
@@ -386,6 +467,8 @@ export function ItemsSection({
   const [editItemPrice, setEditItemPrice] = useState("");
   const [editItemTaxable, setEditItemTaxable] = useState(true);
   const [catalogPreviewSearch, setCatalogPreviewSearch] = useState("");
+  const [catalogPreviewFlooringFilter, setCatalogPreviewFlooringFilter] =
+    useState("all");
   const [catalogPreviewType, setCatalogPreviewType] = useState("all");
   const [catalogPreviewCategory, setCatalogPreviewCategory] = useState("all");
   const [selectedCatalogPreviewId, setSelectedCatalogPreviewId] = useState("");
@@ -452,7 +535,12 @@ export function ItemsSection({
         item.name.toLowerCase().includes(normalizedSearch) ||
         (item.category ?? "").toLowerCase().includes(normalizedSearch) ||
         (item.sku ?? "").toLowerCase().includes(normalizedSearch) ||
-        (item.costCode ?? "").toLowerCase().includes(normalizedSearch);
+        (item.costCode ?? "").toLowerCase().includes(normalizedSearch) ||
+        (item.description ?? "").toLowerCase().includes(normalizedSearch);
+      const matchesFlooringFilter = matchesCatalogDiscoveryFilter(
+        item,
+        catalogPreviewFlooringFilter
+      );
       const matchesType =
         catalogPreviewType === "all" || item.itemType === catalogPreviewType;
       const matchesCategory =
@@ -460,10 +548,16 @@ export function ItemsSection({
         item.category?.trim().toLowerCase() ===
           catalogPreviewCategory.toLowerCase();
 
-      return matchesSearch && matchesType && matchesCategory;
+      return (
+        matchesSearch &&
+        matchesFlooringFilter &&
+        matchesType &&
+        matchesCategory
+      );
     });
   }, [
     catalogPreviewCategory,
+    catalogPreviewFlooringFilter,
     catalogPreviewSearch,
     catalogPreviewType,
     readOnlyCatalogItems
@@ -584,9 +678,30 @@ export function ItemsSection({
 
             <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(280px,0.7fr)]">
               <div>
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {catalogDiscoveryFilters.map((filter) => {
+                    const isActive = catalogPreviewFlooringFilter === filter.id;
+
+                    return (
+                      <button
+                        key={filter.id}
+                        type="button"
+                        onClick={() => setCatalogPreviewFlooringFilter(filter.id)}
+                        className={[
+                          "inline-flex h-8 items-center rounded-full border px-3 text-[12px] font-semibold transition",
+                          isActive
+                            ? "border-[#d8731f] bg-[#fff7ef] text-[#a4581a]"
+                            : "border-[#d6d6d6] bg-white text-[#5f5f5f] hover:border-[#d8731f] hover:text-[#a4581a]"
+                        ].join(" ")}
+                      >
+                        {filter.label}
+                      </button>
+                    );
+                  })}
+                </div>
                 <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_220px]">
                   <label className="text-[12px] font-medium text-[#5d6f8a]">
-                    Search by name
+                    Search catalog
                     <div className="mt-1.5 flex h-10 items-center rounded-[8px] border border-[#d6d6d6] bg-white px-3">
                       <Search className="h-4 w-4 text-[#7b8aa3]" />
                       <input
@@ -594,7 +709,7 @@ export function ItemsSection({
                         onChange={(event) =>
                           setCatalogPreviewSearch(event.target.value)
                         }
-                        placeholder="Search catalog items"
+                        placeholder="Name, system, SKU, code, or description"
                         className="h-full w-full border-0 bg-transparent px-3 text-[14px] text-[#2a2a2a] outline-none"
                         data-testid="estimate-catalog-preview-search"
                       />
@@ -1018,11 +1133,54 @@ export function ItemsSection({
                       />
                     </label>
                     <label className="text-[12px] font-medium text-[#5d6f8a]">
+                      Type
+                      <select
+                        value={quickItemType}
+                        onChange={(event) =>
+                          setQuickItemType(
+                            event.target.value as Exclude<
+                              CatalogItemType,
+                              "system"
+                            >
+                          )
+                        }
+                        className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
+                      >
+                        <option value="material">Material</option>
+                        <option value="labor">Labor</option>
+                        <option value="service">Service</option>
+                        <option value="equipment">Equipment</option>
+                        <option value="subcontractor">Subcontractor</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </label>
+                    <label className="text-[12px] font-medium text-[#5d6f8a]">
                       Unit
                       <input
                         value={quickItemUnit}
                         onChange={(event) =>
                           setQuickItemUnit(event.target.value)
+                        }
+                        className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
+                      />
+                    </label>
+                    <label className="text-[12px] font-medium text-[#5d6f8a]">
+                      Category
+                      <input
+                        value={quickItemCategory}
+                        onChange={(event) =>
+                          setQuickItemCategory(event.target.value)
+                        }
+                        placeholder="Epoxy, flake, prep, polish..."
+                        className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
+                      />
+                    </label>
+                    <label className="text-[12px] font-medium text-[#5d6f8a]">
+                      Cost
+                      <input
+                        value={quickItemCost}
+                        onChange={(event) =>
+                          setQuickItemCost(event.target.value)
                         }
                         className="mt-1.5 h-11 w-full rounded-[8px] border border-[#d6d6d6] px-3 text-[14px] text-[#2a2a2a] outline-none"
                       />
@@ -1089,14 +1247,23 @@ export function ItemsSection({
                               quickItemDescription.trim().length > 0
                                 ? quickItemDescription
                                 : null,
+                            itemType: quickItemType,
                             unit: quickItemUnit,
+                            category:
+                              quickItemCategory.trim().length > 0
+                                ? quickItemCategory
+                                : null,
+                            defaultUnitCost: quickItemCost,
                             defaultUnitPrice: quickItemPrice,
                             taxable: quickItemTaxable
                           });
                           if (didCreate) {
                             setQuickItemName("");
                             setQuickItemDescription("");
+                            setQuickItemType("material");
                             setQuickItemUnit("each");
+                            setQuickItemCategory("");
+                            setQuickItemCost("0.00");
                             setQuickItemPrice("");
                             setQuickItemTaxable(true);
                             setShowCreateItemForm(false);

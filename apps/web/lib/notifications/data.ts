@@ -21,17 +21,15 @@ type NotificationRow = {
   read_at: string | null;
   created_at: string;
   updated_at: string;
-  notification_events?:
-    | {
-        id: string;
-        category: NotificationEventCategory;
-        severity: "critical" | "warning" | "neutral";
-        title: string;
-        message: string;
-        link_path: string;
-        occurred_at: string;
-      }
-    | null;
+  notification_events?: {
+    id: string;
+    category: NotificationEventCategory;
+    severity: "critical" | "warning" | "neutral";
+    title: string;
+    message: string;
+    link_path: string;
+    occurred_at: string;
+  } | null;
 };
 
 const categoryLabels: Record<NotificationEventCategory, string> = {
@@ -59,7 +57,9 @@ function formatBadge(category: NotificationEventCategory) {
   }
 }
 
-function mapNotificationRow(row: NotificationRow): ContractorNotificationItem | null {
+function mapNotificationRow(
+  row: NotificationRow
+): ContractorNotificationItem | null {
   if (!row.notification_events) {
     return null;
   }
@@ -91,6 +91,18 @@ export const listContractorNotifications = cache(
       };
     }
 
+    return listContractorNotificationsForContext(
+      user.id,
+      organizationContext.organization.id
+    );
+  }
+);
+
+export const listContractorNotificationsForContext = cache(
+  async (
+    userId: string,
+    organizationId: string
+  ): Promise<ContractorNotificationsSummary> => {
     const supabase = await getSupabaseServerClient();
     const response = await supabase
       .from("notifications")
@@ -115,21 +127,26 @@ export const listContractorNotifications = cache(
           )
         `
       )
-      .eq("company_id", organizationContext.organization.id)
-      .eq("user_id", user.id)
+      .eq("company_id", organizationId)
+      .eq("user_id", userId)
       .eq("is_read", false)
       .order("created_at", { ascending: false })
       .limit(50);
     const rows = (response.data as NotificationRow[] | null) ?? [];
 
     if (response.error) {
-      throw new Error(`Unable to load notifications: ${response.error.message}`);
+      throw new Error(
+        `Unable to load notifications: ${response.error.message}`
+      );
     }
 
     const items = rows
       .map(mapNotificationRow)
       .filter((value): value is ContractorNotificationItem => value !== null);
-    const sectionsByCategory = new Map<NotificationEventCategory, ContractorNotificationItem[]>();
+    const sectionsByCategory = new Map<
+      NotificationEventCategory,
+      ContractorNotificationItem[]
+    >();
 
     for (const item of items) {
       sectionsByCategory.set(item.category, [

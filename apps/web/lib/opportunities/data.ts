@@ -60,20 +60,40 @@ type OpportunityRow = {
   lost_at: string | null;
   created_at: string;
   updated_at: string;
-  customers?:
-    | {
-        id: string;
-        name: string;
-        company_name: string | null;
-      }
-    | null;
-  projects?:
-    | {
-        id: string;
-        name: string;
-        status: string;
-      }
-    | null;
+  customers?: {
+    id: string;
+    name: string;
+    company_name: string | null;
+  } | null;
+  projects?: {
+    id: string;
+    name: string;
+    status: string;
+  } | null;
+};
+
+type ScheduleOpportunityAssessmentRow = {
+  id: string;
+  company_id: string;
+  primary_contact_id: string | null;
+  customer_id: string | null;
+  project_id: string | null;
+  status: OpportunityRecord["status"];
+  title: string;
+  job_type: string | null;
+  site_name: string | null;
+  prospect_name: string;
+  site_assessment_scheduled_at: string;
+  customers?: {
+    id: string;
+    name: string;
+    company_name: string | null;
+  } | null;
+  projects?: {
+    id: string;
+    name: string;
+    status: string;
+  } | null;
 };
 
 type OpportunityMeasurementRow = {
@@ -153,15 +173,13 @@ type EstimateCustomerRow = {
 
 type CustomerContactLookupRow = {
   contact_id: string;
-  contacts:
-    | {
-        id: string;
-        display_name: string;
-        company_name: string | null;
-        email: string | null;
-        phone: string | null;
-      }
-    | null;
+  contacts: {
+    id: string;
+    display_name: string;
+    company_name: string | null;
+    email: string | null;
+    phone: string | null;
+  } | null;
 };
 
 export type OpportunityListItem = OpportunityRecord & {
@@ -171,6 +189,29 @@ export type OpportunityListItem = OpportunityRecord & {
   >
     ? T | null
     : never;
+  customer: {
+    id: string;
+    name: string;
+    companyName: string | null;
+  } | null;
+  project: {
+    id: string;
+    name: string;
+    status: string;
+  } | null;
+};
+
+export type ScheduleOpportunityAssessment = {
+  id: string;
+  customerId: string | null;
+  projectId: string | null;
+  status: OpportunityRecord["status"];
+  title: string;
+  siteName: string | null;
+  siteAssessmentScheduledAt: string;
+  primaryContact: {
+    displayName: string | null;
+  } | null;
   customer: {
     id: string;
     name: string;
@@ -224,6 +265,30 @@ const opportunitySelect = `
   lost_at,
   created_at,
   updated_at,
+  customers (
+    id,
+    name,
+    company_name
+  ),
+  projects (
+    id,
+    name,
+    status
+  )
+`;
+
+const scheduleOpportunityAssessmentSelect = `
+  id,
+  company_id,
+  primary_contact_id,
+  customer_id,
+  project_id,
+  status,
+  title,
+  job_type,
+  site_name,
+  prospect_name,
+  site_assessment_scheduled_at,
   customers (
     id,
     name,
@@ -310,7 +375,8 @@ function isOpportunityRow(value: unknown): value is OpportunityRow {
   return (
     typeof row.id === "string" &&
     typeof row.company_id === "string" &&
-    (row.primary_contact_id === null || typeof row.primary_contact_id === "string") &&
+    (row.primary_contact_id === null ||
+      typeof row.primary_contact_id === "string") &&
     (row.customer_id === null || typeof row.customer_id === "string") &&
     (row.project_id === null || typeof row.project_id === "string") &&
     typeof row.status === "string" &&
@@ -326,7 +392,43 @@ function isOpportunityRowArray(value: unknown): value is OpportunityRow[] {
   return Array.isArray(value) && value.every((row) => isOpportunityRow(row));
 }
 
-function isOpportunityMeasurementRow(value: unknown): value is OpportunityMeasurementRow {
+function isScheduleOpportunityAssessmentRow(
+  value: unknown
+): value is ScheduleOpportunityAssessmentRow {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const row = value as Partial<ScheduleOpportunityAssessmentRow>;
+
+  return (
+    typeof row.id === "string" &&
+    typeof row.company_id === "string" &&
+    (row.primary_contact_id === null ||
+      typeof row.primary_contact_id === "string") &&
+    (row.customer_id === null || typeof row.customer_id === "string") &&
+    (row.project_id === null || typeof row.project_id === "string") &&
+    typeof row.status === "string" &&
+    typeof row.title === "string" &&
+    (row.job_type === null || typeof row.job_type === "string") &&
+    (row.site_name === null || typeof row.site_name === "string") &&
+    typeof row.prospect_name === "string" &&
+    typeof row.site_assessment_scheduled_at === "string"
+  );
+}
+
+function isScheduleOpportunityAssessmentRowArray(
+  value: unknown
+): value is ScheduleOpportunityAssessmentRow[] {
+  return (
+    Array.isArray(value) &&
+    value.every((row) => isScheduleOpportunityAssessmentRow(row))
+  );
+}
+
+function isOpportunityMeasurementRow(
+  value: unknown
+): value is OpportunityMeasurementRow {
   if (!value || typeof value !== "object") {
     return false;
   }
@@ -338,7 +440,8 @@ function isOpportunityMeasurementRow(value: unknown): value is OpportunityMeasur
     typeof row.company_id === "string" &&
     typeof row.opportunity_id === "string" &&
     typeof row.measurement_type === "string" &&
-    (typeof row.value_numeric === "string" || typeof row.value_numeric === "number") &&
+    (typeof row.value_numeric === "string" ||
+      typeof row.value_numeric === "number") &&
     typeof row.unit === "string" &&
     typeof row.created_at === "string" &&
     typeof row.updated_at === "string"
@@ -348,10 +451,15 @@ function isOpportunityMeasurementRow(value: unknown): value is OpportunityMeasur
 function isOpportunityMeasurementRowArray(
   value: unknown
 ): value is OpportunityMeasurementRow[] {
-  return Array.isArray(value) && value.every((row) => isOpportunityMeasurementRow(row));
+  return (
+    Array.isArray(value) &&
+    value.every((row) => isOpportunityMeasurementRow(row))
+  );
 }
 
-function isOpportunityAttachmentRow(value: unknown): value is OpportunityAttachmentRow {
+function isOpportunityAttachmentRow(
+  value: unknown
+): value is OpportunityAttachmentRow {
   if (!value || typeof value !== "object") {
     return false;
   }
@@ -374,10 +482,15 @@ function isOpportunityAttachmentRow(value: unknown): value is OpportunityAttachm
 function isOpportunityAttachmentRowArray(
   value: unknown
 ): value is OpportunityAttachmentRow[] {
-  return Array.isArray(value) && value.every((row) => isOpportunityAttachmentRow(row));
+  return (
+    Array.isArray(value) &&
+    value.every((row) => isOpportunityAttachmentRow(row))
+  );
 }
 
-function isOpportunityObservationRow(value: unknown): value is OpportunityObservationRow {
+function isOpportunityObservationRow(
+  value: unknown
+): value is OpportunityObservationRow {
   if (!value || typeof value !== "object") {
     return false;
   }
@@ -398,7 +511,10 @@ function isOpportunityObservationRow(value: unknown): value is OpportunityObserv
 function isOpportunityObservationRowArray(
   value: unknown
 ): value is OpportunityObservationRow[] {
-  return Array.isArray(value) && value.every((row) => isOpportunityObservationRow(row));
+  return (
+    Array.isArray(value) &&
+    value.every((row) => isOpportunityObservationRow(row))
+  );
 }
 
 function isIdRow(value: unknown): value is IdRow {
@@ -409,7 +525,10 @@ function isIdRow(value: unknown): value is IdRow {
   return typeof (value as Partial<IdRow>).id === "string";
 }
 
-function mapOpportunity(row: OpportunityRow, primaryContact?: OpportunityListItem["primaryContact"]): OpportunityRecord {
+function mapOpportunity(
+  row: OpportunityRow,
+  primaryContact?: OpportunityListItem["primaryContact"]
+): OpportunityRecord {
   const resolvedContact = primaryContact ?? null;
 
   return {
@@ -431,7 +550,8 @@ function mapOpportunity(row: OpportunityRow, primaryContact?: OpportunityListIte
     jobType: row.job_type,
     siteName: row.site_name,
     prospectName: resolvedContact?.displayName ?? row.prospect_name,
-    prospectCompanyName: resolvedContact?.companyName ?? row.prospect_company_name,
+    prospectCompanyName:
+      resolvedContact?.companyName ?? row.prospect_company_name,
     email: resolvedContact?.email ?? row.email,
     phone: resolvedContact?.phone ?? row.phone,
     addressLine1: row.address_line_1,
@@ -467,7 +587,8 @@ function mapOpportunityMeasurement(
     valueNumeric: Number(row.value_numeric).toFixed(2),
     unit: row.unit,
     quantity: row.quantity,
-    captureMethod: row.capture_method as OpportunityMeasurementRecord["captureMethod"],
+    captureMethod:
+      row.capture_method as OpportunityMeasurementRecord["captureMethod"],
     notes: row.notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at
@@ -512,7 +633,10 @@ function mapOpportunityObservation(
   };
 }
 
-function toStoredAssessmentTimestamp(date: string | null, time?: string | null) {
+function toStoredAssessmentTimestamp(
+  date: string | null,
+  time?: string | null
+) {
   if (!date) {
     return null;
   }
@@ -597,7 +721,48 @@ function mapOpportunityListItem(
   };
 }
 
-async function getOpportunityScope(next = "/leads"): Promise<OpportunityScope | null> {
+function mapScheduleOpportunityAssessment(
+  row: ScheduleOpportunityAssessmentRow,
+  primaryContact: OpportunityListItem["primaryContact"]
+): ScheduleOpportunityAssessment {
+  return {
+    id: row.id,
+    customerId: row.customer_id,
+    projectId: row.project_id,
+    status: row.status,
+    title: buildOpportunityDisplayTitle({
+      title: row.title,
+      contactName: primaryContact?.displayName ?? row.prospect_name,
+      jobType: row.job_type,
+      siteName: row.site_name
+    }),
+    siteName: row.site_name,
+    siteAssessmentScheduledAt: row.site_assessment_scheduled_at,
+    primaryContact: primaryContact
+      ? {
+          displayName: primaryContact.displayName
+        }
+      : null,
+    customer: row.customers
+      ? {
+          id: row.customers.id,
+          name: row.customers.name,
+          companyName: row.customers.company_name
+        }
+      : null,
+    project: row.projects
+      ? {
+          id: row.projects.id,
+          name: row.projects.name,
+          status: row.projects.status
+        }
+      : null
+  };
+}
+
+async function getOpportunityScope(
+  next = "/leads"
+): Promise<OpportunityScope | null> {
   const user = await requireAuthenticatedUser(next);
   const organizationContext = await getActiveOrganizationContext(user.id);
 
@@ -630,7 +795,10 @@ export async function requireOpportunityScope(next = "/leads") {
 
 function sortOpportunities(opportunities: OpportunityListItem[]) {
   return opportunities.sort((left, right) => {
-    const statusComparison = compareOpportunityStatuses(left.status, right.status);
+    const statusComparison = compareOpportunityStatuses(
+      left.status,
+      right.status
+    );
 
     if (statusComparison !== 0) {
       return statusComparison;
@@ -652,7 +820,12 @@ async function hydrateOpportunityListItems(
   });
 
   return rows.map((row) =>
-    mapOpportunityListItem(row, row.primary_contact_id ? contactMap.get(row.primary_contact_id) ?? null : null)
+    mapOpportunityListItem(
+      row,
+      row.primary_contact_id
+        ? (contactMap.get(row.primary_contact_id) ?? null)
+        : null
+    )
   );
 }
 
@@ -670,7 +843,9 @@ async function getOpportunityMeasurements(
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load opportunity measurements: ${response.error.message}`);
+    throw new Error(
+      `Unable to load opportunity measurements: ${response.error.message}`
+    );
   }
 
   if (!isOpportunityMeasurementRowArray(data)) {
@@ -694,7 +869,9 @@ async function getOpportunityAttachments(
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load opportunity attachments: ${response.error.message}`);
+    throw new Error(
+      `Unable to load opportunity attachments: ${response.error.message}`
+    );
   }
 
   if (!isOpportunityAttachmentRowArray(data)) {
@@ -718,7 +895,9 @@ async function getOpportunityObservations(
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load opportunity observations: ${response.error.message}`);
+    throw new Error(
+      `Unable to load opportunity observations: ${response.error.message}`
+    );
   }
 
   if (!isOpportunityObservationRowArray(data)) {
@@ -909,46 +1088,96 @@ async function getOpportunityRecordById(
   return isOpportunityRow(data) ? data : null;
 }
 
-export const listOpportunities = cache(async (): Promise<OpportunityListItem[]> => {
-  const scope = await requireOpportunityScope("/leads");
-  const supabase = await getSupabaseServerClient();
-  const response = await supabase
-    .from("opportunities")
-    .select(opportunitySelect)
-    .eq("company_id", scope.organizationId)
-    .order("updated_at", { ascending: false });
-  const data: unknown = response.data;
+export const listOpportunities = cache(
+  async (): Promise<OpportunityListItem[]> => {
+    const scope = await requireOpportunityScope("/leads");
+    const supabase = await getSupabaseServerClient();
+    const response = await supabase
+      .from("opportunities")
+      .select(opportunitySelect)
+      .eq("company_id", scope.organizationId)
+      .order("updated_at", { ascending: false });
+    const data: unknown = response.data;
 
-  if (response.error) {
-    throw new Error(`Unable to load leads: ${response.error.message}`);
+    if (response.error) {
+      throw new Error(`Unable to load leads: ${response.error.message}`);
+    }
+
+    if (!isOpportunityRowArray(data)) {
+      return [];
+    }
+
+    return sortOpportunities(
+      await hydrateOpportunityListItems(scope.organizationId, data)
+    );
   }
+);
 
-  if (!isOpportunityRowArray(data)) {
-    return [];
+export const listScheduleOpportunityAssessments = cache(
+  async (): Promise<ScheduleOpportunityAssessment[]> => {
+    const scope = await requireOpportunityScope("/schedule");
+    const supabase = await getSupabaseServerClient();
+    const response = await supabase
+      .from("opportunities")
+      .select(scheduleOpportunityAssessmentSelect)
+      .eq("company_id", scope.organizationId)
+      .eq("status", "site_assessment_scheduled")
+      .not("site_assessment_scheduled_at", "is", null)
+      .order("site_assessment_scheduled_at", { ascending: true });
+    const data: unknown = response.data;
+
+    if (response.error) {
+      throw new Error(
+        `Unable to load scheduled lead assessments: ${response.error.message}`
+      );
+    }
+
+    if (!isScheduleOpportunityAssessmentRowArray(data)) {
+      return [];
+    }
+
+    const contactMap = await listContactsByIds({
+      organizationId: scope.organizationId,
+      contactIds: data
+        .map((row) => row.primary_contact_id)
+        .filter((contactId): contactId is string => Boolean(contactId))
+    });
+
+    return data.map((row) =>
+      mapScheduleOpportunityAssessment(
+        row,
+        row.primary_contact_id
+          ? (contactMap.get(row.primary_contact_id) ?? null)
+          : null
+      )
+    );
   }
-
-  return sortOpportunities(
-    await hydrateOpportunityListItems(scope.organizationId, data)
-  );
-});
+);
 
 export async function getOpportunityById(
   opportunityId: string,
   next = "/leads"
 ): Promise<OpportunityDetail | null> {
   const scope = await requireOpportunityScope(next);
-  const row = await getOpportunityRecordById(scope.organizationId, opportunityId);
+  const row = await getOpportunityRecordById(
+    scope.organizationId,
+    opportunityId
+  );
 
   if (!row) {
     return null;
   }
 
-  const [listItem, measurements, attachments, observations] = await Promise.all([
-    hydrateOpportunityListItems(scope.organizationId, [row]).then((items) => items[0] ?? null),
-    getOpportunityMeasurements(scope.organizationId, opportunityId),
-    getOpportunityAttachments(scope.organizationId, opportunityId),
-    getOpportunityObservations(scope.organizationId, opportunityId)
-  ]);
+  const [listItem, measurements, attachments, observations] = await Promise.all(
+    [
+      hydrateOpportunityListItems(scope.organizationId, [row]).then(
+        (items) => items[0] ?? null
+      ),
+      getOpportunityMeasurements(scope.organizationId, opportunityId),
+      getOpportunityAttachments(scope.organizationId, opportunityId),
+      getOpportunityObservations(scope.organizationId, opportunityId)
+    ]
+  );
 
   if (!listItem) {
     return null;
@@ -1010,8 +1239,10 @@ export async function createOpportunity(input: OpportunityInput) {
       country_code: input.countryCode,
       notes: input.notes,
       site_assessment_status: siteAssessmentState.siteAssessmentStatus,
-      site_assessment_scheduled_at: siteAssessmentState.siteAssessmentScheduledAt,
-      site_assessment_completed_at: siteAssessmentState.siteAssessmentCompletedAt,
+      site_assessment_scheduled_at:
+        siteAssessmentState.siteAssessmentScheduledAt,
+      site_assessment_completed_at:
+        siteAssessmentState.siteAssessmentCompletedAt,
       requirements_summary: input.requirementsSummary,
       qualified_at: input.status === "qualified" ? nowIso : null,
       lost_at: input.status === "lost" ? nowIso : null,
@@ -1023,7 +1254,9 @@ export async function createOpportunity(input: OpportunityInput) {
   const data: unknown = response.data;
 
   if (response.error || !isIdRow(data)) {
-    throw new Error(`Unable to create the lead: ${response.error?.message ?? "Unknown error."}`);
+    throw new Error(
+      `Unable to create the lead: ${response.error?.message ?? "Unknown error."}`
+    );
   }
 
   try {
@@ -1051,7 +1284,10 @@ export async function createOpportunity(input: OpportunityInput) {
   return created;
 }
 
-export async function updateOpportunity(opportunityId: string, input: OpportunityInput) {
+export async function updateOpportunity(
+  opportunityId: string,
+  input: OpportunityInput
+) {
   const scope = await requireOpportunityScope(`/leads/${opportunityId}`);
   const currentOpportunity = await getOpportunityById(
     opportunityId,
@@ -1106,7 +1342,8 @@ export async function updateOpportunity(opportunityId: string, input: Opportunit
       organizationId: scope.organizationId,
       userId: scope.userId,
       customerId: currentOpportunity.customerId,
-      previousEmail: currentOpportunity.primaryContact?.email ?? currentOpportunity.email,
+      previousEmail:
+        currentOpportunity.primaryContact?.email ?? currentOpportunity.email,
       nextEmail: primaryContact.email
     });
   }
@@ -1129,7 +1366,7 @@ export async function updateOpportunity(opportunityId: string, input: Opportunit
       : currentOpportunity.qualifiedAt;
   const lostAt =
     input.status === "lost"
-      ? currentOpportunity.lostAt ?? new Date().toISOString()
+      ? (currentOpportunity.lostAt ?? new Date().toISOString())
       : null;
 
   const response = await supabase
@@ -1155,8 +1392,10 @@ export async function updateOpportunity(opportunityId: string, input: Opportunit
       country_code: input.countryCode,
       notes: input.notes,
       site_assessment_status: siteAssessmentState.siteAssessmentStatus,
-      site_assessment_scheduled_at: siteAssessmentState.siteAssessmentScheduledAt,
-      site_assessment_completed_at: siteAssessmentState.siteAssessmentCompletedAt,
+      site_assessment_scheduled_at:
+        siteAssessmentState.siteAssessmentScheduledAt,
+      site_assessment_completed_at:
+        siteAssessmentState.siteAssessmentCompletedAt,
       requirements_summary: input.requirementsSummary,
       qualified_at: qualifiedAt,
       lost_at: lostAt,
@@ -1183,7 +1422,10 @@ export async function updateOpportunity(opportunityId: string, input: Opportunit
     opportunity: input
   });
 
-  const updated = await getOpportunityById(opportunityId, `/leads/${opportunityId}`);
+  const updated = await getOpportunityById(
+    opportunityId,
+    `/leads/${opportunityId}`
+  );
 
   if (!updated) {
     throw new Error("Lead not found for this organization.");
@@ -1199,7 +1441,9 @@ export async function updateOpportunity(opportunityId: string, input: Opportunit
   return updated;
 }
 
-export async function updateOpportunityFollowUp(input: OpportunityFollowUpInput) {
+export async function updateOpportunityFollowUp(
+  input: OpportunityFollowUpInput
+) {
   const scope = await requireOpportunityScope(`/leads/${input.opportunityId}`);
   const supabase = await getSupabaseServerClient();
   const response = await supabase
@@ -1216,14 +1460,18 @@ export async function updateOpportunityFollowUp(input: OpportunityFollowUpInput)
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to update the lead follow-up: ${response.error.message}`);
+    throw new Error(
+      `Unable to update the lead follow-up: ${response.error.message}`
+    );
   }
 
   if (!isOpportunityRow(data)) {
     throw new Error("Lead not found for this organization.");
   }
 
-  const hydrated = await hydrateOpportunityListItems(scope.organizationId, [data]);
+  const hydrated = await hydrateOpportunityListItems(scope.organizationId, [
+    data
+  ]);
   return hydrated[0] ?? null;
 }
 
@@ -1244,20 +1492,27 @@ export async function getOpportunityByProjectId(
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load the project lead context: ${response.error.message}`);
+    throw new Error(
+      `Unable to load the project lead context: ${response.error.message}`
+    );
   }
 
   if (!isOpportunityRow(data)) {
     return null;
   }
 
-  const hydrated = await hydrateOpportunityListItems(scope.organizationId, [data]);
+  const hydrated = await hydrateOpportunityListItems(scope.organizationId, [
+    data
+  ]);
   return hydrated[0] ?? null;
 }
 
 export async function ensureOpportunityEstimateFlow(opportunityId: string) {
   const scope = await requireOpportunityScope(`/leads/${opportunityId}`);
-  const opportunity = await getOpportunityById(opportunityId, `/leads/${opportunityId}`);
+  const opportunity = await getOpportunityById(
+    opportunityId,
+    `/leads/${opportunityId}`
+  );
 
   if (!opportunity) {
     throw new Error("Lead not found for this organization.");
@@ -1274,7 +1529,9 @@ export async function ensureOpportunityEstimateFlow(opportunityId: string) {
   let projectId = opportunity.projectId;
 
   if (!customerId) {
-    const financialSettings = await getOrganizationFinancialSettings(scope.organizationId);
+    const financialSettings = await getOrganizationFinancialSettings(
+      scope.organizationId
+    );
     const customerResponse = await supabase
       .from("customers")
       .insert({
@@ -1291,7 +1548,8 @@ export async function ensureOpportunityEstimateFlow(opportunityId: string) {
         country_code: opportunity.countryCode,
         notes: opportunity.notes,
         is_tax_exempt: false,
-        retainage_percentage_default: financialSettings.defaultRetainagePercentage,
+        retainage_percentage_default:
+          financialSettings.defaultRetainagePercentage,
         created_by: scope.userId,
         updated_by: scope.userId
       })
@@ -1376,10 +1634,13 @@ export async function ensureOpportunityEstimateFlow(opportunityId: string) {
   }
 
   if (!customerId || !projectId) {
-    throw new Error("Lead could not be linked to the canonical customer and project chain.");
+    throw new Error(
+      "Lead could not be linked to the canonical customer and project chain."
+    );
   }
 
-  const conversionTimestamp = opportunity.convertedAt ?? new Date().toISOString();
+  const conversionTimestamp =
+    opportunity.convertedAt ?? new Date().toISOString();
   const updateResponse = await supabase
     .from("opportunities")
     .update({
@@ -1402,7 +1663,9 @@ export async function ensureOpportunityEstimateFlow(opportunityId: string) {
     .eq("id", opportunity.id);
 
   if (updateResponse.error) {
-    throw new Error(`Unable to prepare the estimate flow: ${updateResponse.error.message}`);
+    throw new Error(
+      `Unable to prepare the estimate flow: ${updateResponse.error.message}`
+    );
   }
 
   await syncProjectCommercialReadiness({
@@ -1444,7 +1707,9 @@ async function getCustomerForEstimateFlow(
     .maybeSingle();
 
   if (response.error) {
-    throw new Error(`Unable to load the selected customer: ${response.error.message}`);
+    throw new Error(
+      `Unable to load the selected customer: ${response.error.message}`
+    );
   }
 
   const data = response.data as EstimateCustomerRow | null;
@@ -1464,7 +1729,10 @@ async function syncCustomerDirectEmailFromOpportunityContact(input: {
     return;
   }
 
-  const customer = await getCustomerForEstimateFlow(input.organizationId, input.customerId);
+  const customer = await getCustomerForEstimateFlow(
+    input.organizationId,
+    input.customerId
+  );
 
   if (!customer) {
     return;
@@ -1539,7 +1807,10 @@ export async function ensureOpportunityEstimateFlowFromCustomer(input: {
   title: string;
 }) {
   const scope = await requireOpportunityScope("/estimates");
-  const customer = await getCustomerForEstimateFlow(scope.organizationId, input.customerId);
+  const customer = await getCustomerForEstimateFlow(
+    scope.organizationId,
+    input.customerId
+  );
 
   if (!customer) {
     throw new Error("Selected customer was not found for this organization.");

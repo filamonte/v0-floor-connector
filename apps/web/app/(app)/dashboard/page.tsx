@@ -1,34 +1,20 @@
 import { redirect } from "next/navigation";
 
 import { ContractorDashboardSurface } from "@/components/dashboard/contractor-dashboard-surface";
-import { listAppointments } from "@/lib/appointments/data";
+import type { OperationalGuidanceBucket } from "@/components/operational-guidance-section";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
-import { quickCreateChangeOrderAction } from "@/lib/change-orders/actions";
-import { quickCreateContractFromEstimateAction } from "@/lib/contracts/actions";
-import {
-  listApprovedEstimatesForContracts,
-  listContracts
-} from "@/lib/contracts/data";
-import { quickCreateCustomerAction } from "@/lib/customers/actions";
-import { listCustomers } from "@/lib/customers/data";
-import { quickCreateEstimateAction } from "@/lib/estimates/actions";
+import { listContracts } from "@/lib/contracts/data";
 import { listEstimates } from "@/lib/estimates/data";
-import { listFieldNotes } from "@/lib/field-notes/data";
-import { quickCreateInvoiceAction } from "@/lib/invoices/actions";
+import { listDashboardProjectCueFieldNotes } from "@/lib/field-notes/data";
 import { listInvoices } from "@/lib/invoices/data";
-import { quickCreateJobAction } from "@/lib/jobs/actions";
 import { listJobs } from "@/lib/jobs/data";
-import { listContractorNotifications } from "@/lib/notifications/data";
+import { listContractorNotificationsForContext } from "@/lib/notifications/data";
 import { getBillingSetupState } from "@/lib/onboarding/billing-setup";
 import { isOrganizationActivatedForProductionAction } from "@/lib/organizations/activation-guard";
-import { quickCreateOpportunityAction } from "@/lib/opportunities/actions";
-import { listOpportunities } from "@/lib/opportunities/data";
 import { listLeadFollowUpQueue } from "@/lib/opportunities/follow-up-data";
 import { labelLeadFollowUpBucket } from "@/lib/opportunities/follow-up-read-model";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
-import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 import { hasCompanyProfileFields } from "@/lib/organizations/setup-status";
-import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { getOperationalCueDashboard } from "@/lib/operational-cues/data";
 import { applyCueStates } from "@/lib/cue-states/apply";
 import { buildProjectCueIdentity } from "@/lib/cue-states/identity";
@@ -40,20 +26,21 @@ import {
   type MyWorkQueueMode
 } from "@/lib/operational-cues/my-work-queues";
 import type { OperationalCue } from "@/lib/operational-cues/types";
-import { listPayments } from "@/lib/payments/data";
-import { listPeople } from "@/lib/people/data";
-import { listPunchlistItems } from "@/lib/punchlists/data";
+import { listDashboardRecentPayments } from "@/lib/payments/data";
+import { countOpenPunchlistItemsForDashboard } from "@/lib/punchlists/data";
 import { listProgressBillingWorkspaces } from "@/lib/progress-billing/data";
+import {
+  getDashboardOperationalCockpitReadModel,
+  getDashboardOverviewReadModel
+} from "@/lib/dashboard/operational-cockpit-read-model";
 import { mapProjectCuesToDashboardPreviewItems } from "@/lib/dashboard/project-cue-preview";
-import { quickCreateProjectAction } from "@/lib/projects/actions";
 import {
   buildProjectCues,
   selectHighestPriorityProjectCues
 } from "@/lib/projects/cues";
 import { listProjects } from "@/lib/projects/data";
-import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
+import { getDashboardProjectFinancialReadinessSummaries } from "@/lib/projects/readiness";
 import { buildScheduleHref } from "@/lib/schedule/links";
-import { filterUpcomingAssignedAppointments } from "@/lib/schedule/read-model";
 import {
   completeWorkItemAction,
   dismissWorkItemAction
@@ -113,6 +100,26 @@ function buildSearchText(...parts: Array<string | null | undefined>) {
 
 function formatCueThresholdLabel(label: string | null) {
   return label?.replace(/^Rule threshold:/, "Threshold:") ?? null;
+}
+
+function groupByProjectId<T extends { projectId?: string | null }>(items: T[]) {
+  const grouped = new Map<string, T[]>();
+
+  for (const item of items) {
+    if (!item.projectId) {
+      continue;
+    }
+
+    const existing = grouped.get(item.projectId);
+
+    if (existing) {
+      existing.push(item);
+    } else {
+      grouped.set(item.projectId, [item]);
+    }
+  }
+
+  return grouped;
 }
 
 function mapOperationalCueToDashboardItem(cue: OperationalCue) {
@@ -251,87 +258,80 @@ export default async function DashboardPage({
     redirect("/setup/company");
   }
 
+  const today = new Date().toISOString().slice(0, 10);
+  const tomorrow = addDaysDateKey(today, 1);
+  const nowIso = new Date().toISOString();
   const [
-    customers,
-    opportunities,
     estimates,
-    approvedEstimates,
     projects,
     contracts,
     jobs,
-    appointments,
     leadFollowUpQueue,
-    people,
-    punchlistItems,
+    openPunchlistCount,
     invoices,
-    payments,
+    recentPayments,
     notifications,
     progressBillingWorkspaces,
-    financialSettings,
-    workflowSettings,
     billingSetupState,
     fieldNotes,
-    operationalCueDashboard
+    operationalCueDashboard,
+    operationalCockpitReadModel,
+    dashboardOverviewReadModel
   ] = await Promise.all([
-    listCustomers(),
-    listOpportunities(),
     listEstimates(),
-    listApprovedEstimatesForContracts(),
     listProjects(),
     listContracts(),
     listJobs(),
-    listAppointments(),
     listLeadFollowUpQueue({ upcomingDays: 7 }),
-    listPeople(),
-    listPunchlistItems(),
+    countOpenPunchlistItemsForDashboard(),
     listInvoices(),
-    listPayments(),
-    listContractorNotifications(),
+    listDashboardRecentPayments(5),
+    listContractorNotificationsForContext(
+      user.id,
+      organizationContext.organization.id
+    ),
     listProgressBillingWorkspaces(),
-    getOrganizationFinancialSettings(organizationContext.organization.id),
-    getOrganizationWorkflowSettings(organizationContext.organization.id),
     getBillingSetupState(organizationContext.organization.id),
-    listFieldNotes(),
+    listDashboardProjectCueFieldNotes(),
     getOperationalCueDashboard({
       organizationId: organizationContext.organization.id,
       currentUserId: user.id
+    }),
+    getDashboardOperationalCockpitReadModel({
+      organizationId: organizationContext.organization.id,
+      today
+    }),
+    getDashboardOverviewReadModel({
+      organizationId: organizationContext.organization.id,
+      userId: user.id,
+      today,
+      tomorrow,
+      nowIso
     })
   ]);
 
-  const today = new Date().toISOString().slice(0, 10);
-  const tomorrow = addDaysDateKey(today, 1);
   const activeProjects = projects.filter(
     (project) => project.status !== "completed"
   );
-  const projectReadinessSnapshots = new Map(
-    await Promise.all(
-      activeProjects.map(
-        async (project) =>
-          [
-            project.id,
-            await getProjectFinancialReadinessSnapshot({
-              organizationId: project.organizationId,
-              projectId: project.id
-            })
-          ] as const
-      )
-    )
-  );
+  const projectReadinessSnapshots =
+    await getDashboardProjectFinancialReadinessSummaries({
+      organizationId: organizationContext.organization.id,
+      projectIds: activeProjects.map((project) => project.id)
+    });
+  const estimatesByProjectId = groupByProjectId(estimates);
+  const contractsByProjectId = groupByProjectId(contracts);
+  const invoicesByProjectId = groupByProjectId(invoices);
+  const jobsByProjectId = groupByProjectId(jobs);
+  const fieldNotesByProjectId = groupByProjectId(fieldNotes);
   const derivedProjectCues = activeProjects.flatMap((project) =>
     buildProjectCues({
       project,
       readinessSnapshot: projectReadinessSnapshots.get(project.id) ?? null,
-      estimates: estimates.filter(
-        (estimate) => estimate.projectId === project.id
-      ),
-      contracts: contracts.filter(
-        (contract) => contract.projectId === project.id
-      ),
-      invoices: invoices.filter((invoice) => invoice.projectId === project.id),
-      jobs: jobs.filter((job) => job.projectId === project.id),
-      fieldNotes: fieldNotes.filter(
-        (fieldNote) => fieldNote.projectId === project.id
-      )
+      estimates: estimatesByProjectId.get(project.id) ?? [],
+      contracts: contractsByProjectId.get(project.id) ?? [],
+      invoices: invoicesByProjectId.get(project.id) ?? [],
+      jobs: jobsByProjectId.get(project.id) ?? [],
+      fieldNotes: fieldNotesByProjectId.get(project.id) ?? []
     })
   );
   const projectCueStates = await listWorkflowCueStatesForIdentities({
@@ -379,7 +379,7 @@ export default async function DashboardPage({
   const readyProjectsWithoutJobs = activeProjects
     .filter((project) => {
       const readinessSnapshot = projectReadinessSnapshots.get(project.id);
-      const projectJobs = jobs.filter((job) => job.projectId === project.id);
+      const projectJobs = jobsByProjectId.get(project.id) ?? [];
 
       return readinessSnapshot?.isReadyToSchedule && projectJobs.length === 0;
     })
@@ -412,13 +412,7 @@ export default async function DashboardPage({
       );
     })
     .slice(0, 5);
-  const scheduledAppointments = appointments.filter(
-    (appointment) => appointment.status === "scheduled"
-  );
-  const currentUserPerson =
-    people.find(
-      (person) => person.membershipUserId === user.id && person.isActive
-    ) ?? null;
+  const currentUserPerson = dashboardOverviewReadModel.currentUserPerson;
   const myWorkQueueModes = buildMyWorkQueueModes({
     cues: operationalCueDashboard.cues,
     currentUserId: user.id,
@@ -453,34 +447,19 @@ export default async function DashboardPage({
   });
   const showingCompanyWorkItems =
     dashboardWorkItemQueue.mode === "company_fallback";
-  const appointmentsToday = scheduledAppointments
-    .filter((appointment) => {
-      const appointmentDate = new Date(appointment.startsAt);
-      return appointmentDate.toISOString().slice(0, 10) === today;
-    })
-    .slice(0, 5);
-  const upcomingAppointments = filterUpcomingAssignedAppointments({
-    appointments: scheduledAppointments,
-    nowIso: new Date().toISOString(),
-    assignedPersonId: currentUserPerson?.id ?? null,
-    limit: 5
-  });
-  const companyUpcomingAppointments = filterUpcomingAssignedAppointments({
-    appointments: scheduledAppointments,
-    nowIso: new Date().toISOString(),
-    limit: 5
-  });
+  const upcomingAppointments =
+    dashboardOverviewReadModel.assignedUpcomingAppointments;
+  const companyUpcomingAppointments =
+    dashboardOverviewReadModel.companyUpcomingAppointments;
   const dashboardAppointments =
     currentUserPerson && upcomingAppointments.length > 0
       ? upcomingAppointments
       : companyUpcomingAppointments;
-  const appointmentFollowUpActions = appointments
-    .filter(
-      (appointment) =>
-        appointment.status === "canceled" || appointment.status === "no_show"
-    )
-    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
-    .slice(0, Math.max(0, 5 - dashboardAppointments.length));
+  const appointmentFollowUpActions =
+    dashboardOverviewReadModel.appointmentFollowUps.slice(
+      0,
+      Math.max(0, 5 - dashboardAppointments.length)
+    );
   const appointmentDashboardItems = [
     ...dashboardAppointments,
     ...appointmentFollowUpActions
@@ -504,9 +483,6 @@ export default async function DashboardPage({
   const appointmentDashboardEmptyDescription = showingCompanyAppointments
     ? "Lead visits and follow-up appointments will surface here once they are scheduled."
     : "When appointments are assigned to your linked people record, they will surface here.";
-  const openPunchlistCount = punchlistItems.filter(
-    (item) => item.status === "open" || item.status === "in_progress"
-  ).length;
   const progressBillingReadyCount = progressBillingWorkspaces.filter(
     (workspace) => workspace.status === "ready_to_bill"
   ).length;
@@ -551,9 +527,6 @@ export default async function DashboardPage({
       complete: invoices.length > 0 || jobs.length > 0
     }
   ];
-  const recentPayments = payments
-    .filter((payment) => payment.status !== "void")
-    .slice(0, 5);
   const openReceivables = openInvoices.reduce(
     (sum, invoice) => sum + Number(invoice.balanceDueAmount),
     0
@@ -609,6 +582,222 @@ export default async function DashboardPage({
   const firstReadyProjectWithoutJob = readyProjectsWithoutJobs[0] ?? null;
   const firstJobNeedingScheduling = jobsNeedingScheduling[0] ?? null;
   const firstJobTodayOrInProgress = jobsTodayOrInProgress[0] ?? null;
+  const cockpitApprovedEstimatesReadyForContract =
+    operationalCockpitReadModel.approvedEstimatesReadyForContract;
+  const cockpitWaitingContracts = operationalCockpitReadModel.waitingContracts;
+  const cockpitSentEstimates = operationalCockpitReadModel.sentEstimates;
+  const cockpitOpenInvoices = operationalCockpitReadModel.openInvoices;
+  const cockpitOverdueInvoices = operationalCockpitReadModel.overdueInvoices;
+  const cockpitUnscheduledJobs = operationalCockpitReadModel.unscheduledJobs;
+  const cockpitJobsTodayOrInProgress =
+    operationalCockpitReadModel.jobsTodayOrInProgress;
+  const cockpitAppointmentFollowUps =
+    operationalCockpitReadModel.appointmentFollowUps;
+  const operationalCockpitBuckets: OperationalGuidanceBucket[] = [
+    {
+      key: "needs-attention",
+      eyebrow: "Needs attention",
+      title: "Act before work stalls",
+      description:
+        "Items in this bucket already have evidence from saved records or system cues.",
+      emptyTitle: "No urgent attention items are active.",
+      emptyDescription:
+        "When notifications, project cues, overdue invoices, or due lead follow-ups appear, they will land here first.",
+      tone: "attention",
+      items: [
+        ...notifications.visibleItems.slice(0, 2).map((item) => ({
+          id: `notification-${item.id}`,
+          title: item.title,
+          description: item.description,
+          why: item.badge,
+          href: item.href,
+          actionLabel: "Open",
+          secondaryHref: item.contextHref ?? null,
+          secondaryLabel: item.contextLabel ?? null,
+          badge: item.category.replaceAll("-", " ")
+        })),
+        ...projectCues.slice(0, 2).map((cue) => ({
+          id: `project-cue-${cue.id}`,
+          title: cue.title,
+          description: cue.projectName
+            ? `${cue.projectName}: ${cue.description}`
+            : cue.description,
+          why: cue.reason,
+          href: cue.href,
+          actionLabel: cue.actionLabel,
+          badge: cue.priority
+        })),
+        ...cockpitOverdueInvoices.map((invoice) => ({
+          id: `overdue-invoice-${invoice.id}`,
+          title: invoice.referenceNumber,
+          description: `${invoice.customer?.name ?? "Unknown customer"} / ${invoice.project?.name ?? "Unknown project"}`,
+          why: `Overdue balance ${formatCurrency(invoice.balanceDueAmount)} was due ${formatShortDate(invoice.dueDate)}.`,
+          href: `/invoices/${invoice.id}`,
+          actionLabel: "Open invoice",
+          secondaryHref: invoice.project
+            ? `/projects/${invoice.project.id}`
+            : null,
+          secondaryLabel: invoice.project ? "Open project" : null,
+          badge: "Overdue"
+        }))
+      ].slice(0, 5)
+    },
+    {
+      key: "ready-to-move",
+      eyebrow: "Ready to move",
+      title: "Clear handoffs",
+      description:
+        "Commercial or operational records are far enough along for the next canonical workspace.",
+      emptyTitle: "No handoffs are waiting right now.",
+      emptyDescription:
+        "Approved estimates needing contracts and ready projects needing jobs will show here.",
+      tone: "ready",
+      items: [
+        ...readyProjectsWithoutJobs.slice(0, 3).map((project) => {
+          const readinessSnapshot =
+            projectReadinessSnapshots.get(project.id) ?? null;
+
+          return {
+            id: `ready-project-${project.id}`,
+            title: project.name,
+            description: `${project.customer?.name ?? "Unknown customer"} is commercially clear but does not have a job yet.`,
+            why: "Readiness is clear, and Schedule needs a canonical job before date or crew assignment.",
+            href: `/projects/${project.id}`,
+            actionLabel: "Open project",
+            secondaryHref: `/jobs?projectId=${project.id}&compose=1${
+              readinessSnapshot?.estimateId
+                ? `&estimateId=${readinessSnapshot.estimateId}`
+                : ""
+            }${
+              readinessSnapshot?.contractId
+                ? `&contractId=${readinessSnapshot.contractId}`
+                : ""
+            }`,
+            secondaryLabel: "Create job",
+            badge: "Ready"
+          };
+        }),
+        ...cockpitApprovedEstimatesReadyForContract.map((estimate) => ({
+          id: `approved-estimate-${estimate.id}`,
+          title: estimate.referenceNumber,
+          description: `${estimate.project?.name ?? "Project"} has approved scope ready for contract generation.`,
+          why: "Approved estimate scope should flow forward instead of being recreated downstream.",
+          href: `/estimates/${estimate.id}`,
+          actionLabel: "Open estimate",
+          secondaryHref: `/contracts?estimateId=${estimate.id}`,
+          secondaryLabel: "Generate contract",
+          badge: "Approved"
+        }))
+      ].slice(0, 5)
+    },
+    {
+      key: "waiting",
+      eyebrow: "Waiting",
+      title: "Customer, payment, or signature",
+      description:
+        "These records are live, but progress depends on approval, signature, collection, or customer follow-through.",
+      emptyTitle: "Nothing is currently waiting on customer or payment action.",
+      emptyDescription:
+        "Sent estimates, unsigned contracts, and open invoices will appear here when they need review.",
+      tone: "waiting",
+      items: [
+        ...cockpitWaitingContracts.map((contract) => ({
+          id: `waiting-contract-${contract.id}`,
+          title: contract.title,
+          description: `${contract.customer?.name ?? "Unknown customer"} / ${contract.project?.name ?? "Unknown project"}`,
+          why: "Signature state still blocks downstream readiness or scheduling handoff.",
+          href: `/contracts/${contract.id}`,
+          actionLabel: "Open contract",
+          secondaryHref: contract.project
+            ? `/projects/${contract.project.id}`
+            : null,
+          secondaryLabel: contract.project ? "Open project" : null,
+          badge: labelize(contract.status)
+        })),
+        ...cockpitSentEstimates.map((estimate) => ({
+          id: `waiting-estimate-${estimate.id}`,
+          title: estimate.referenceNumber,
+          description: `${estimate.customer?.name ?? "Unknown customer"} / ${estimate.project?.name ?? "Unknown project"}`,
+          why: "Customer estimate approval is needed before contract and downstream work should proceed.",
+          href: `/estimates/${estimate.id}`,
+          actionLabel: "Open estimate",
+          secondaryHref: estimate.project
+            ? `/projects/${estimate.project.id}`
+            : null,
+          secondaryLabel: estimate.project ? "Open project" : null,
+          badge: "Sent"
+        })),
+        ...cockpitOpenInvoices.map((invoice) => ({
+          id: `waiting-invoice-${invoice.id}`,
+          title: invoice.referenceNumber,
+          description: `${invoice.customer?.name ?? "Unknown customer"} / ${invoice.project?.name ?? "Unknown project"}`,
+          why: `${formatCurrency(invoice.balanceDueAmount)} remains open on the canonical invoice/payment chain.`,
+          href: `/invoices/${invoice.id}`,
+          actionLabel: "Open invoice",
+          secondaryHref: invoice.project
+            ? `/projects/${invoice.project.id}`
+            : null,
+          secondaryLabel: invoice.project ? "Open project" : null,
+          badge: isOverdueInvoice(invoice.dueDate, today)
+            ? "Overdue"
+            : labelize(invoice.status)
+        }))
+      ].slice(0, 5)
+    },
+    {
+      key: "field-production",
+      eyebrow: "Field / production",
+      title: "Schedule, crew, and day-of work",
+      description:
+        "Production follow-up stays on canonical jobs, appointments, schedule, and project records.",
+      emptyTitle: "No field or production follow-up is active.",
+      emptyDescription:
+        "Unscheduled jobs, live jobs, and follow-up appointments will appear here.",
+      tone: "field",
+      items: [
+        ...cockpitUnscheduledJobs.map((job) => ({
+          id: `unscheduled-job-${job.id}`,
+          title: job.project?.name ?? "Untitled job",
+          description: `${job.customer?.name ?? "Unknown customer"} / ${job.estimate?.referenceNumber ?? "Project job"}`,
+          why: "The job exists but still needs schedule and crew follow-through.",
+          href:
+            buildScheduleHref({
+              projectId: job.projectId,
+              view: "unscheduled",
+              action: "schedule",
+              jobId: job.id
+            }) + "#schedule-action",
+          actionLabel: "Open schedule",
+          secondaryHref: job.project ? `/projects/${job.project.id}` : null,
+          secondaryLabel: job.project ? "Open project" : null,
+          badge: "Unscheduled"
+        })),
+        ...cockpitJobsTodayOrInProgress.map((job) => ({
+          id: `active-job-${job.id}`,
+          title: job.project?.name ?? "Untitled job",
+          description: `${job.customer?.name ?? "Unknown customer"} / ${job.scheduledDate ? formatShortDate(job.scheduledDate) : labelize(job.dispatchStatus)}`,
+          why: "Today and live execution should stay visible without becoming dashboard-owned workflow state.",
+          href: `/jobs/${job.id}`,
+          actionLabel: "Open job",
+          secondaryHref: job.project ? `/projects/${job.project.id}` : null,
+          secondaryLabel: job.project ? "Open project" : null,
+          badge: job.dispatchStatus === "in_progress" ? "In progress" : "Today"
+        })),
+        ...cockpitAppointmentFollowUps.map((appointment) => ({
+          id: `appointment-follow-up-${appointment.id}`,
+          title: appointment.title,
+          description:
+            appointment.customer?.name ??
+            appointment.opportunity?.title ??
+            "Lead appointment",
+          why: `${labelize(appointment.status)} appointment may need human follow-up.`,
+          href: `/appointments/${appointment.id}`,
+          actionLabel: "Open appointment",
+          badge: "Follow-up"
+        }))
+      ].slice(0, 5)
+    }
+  ];
   const isProductionActionLocked = organizationContext
     ? !isOrganizationActivatedForProductionAction({
         id: organizationContext.organization.id,
@@ -744,41 +933,41 @@ export default async function DashboardPage({
               status: "ready"
             }
           : firstJobNeedingScheduling
-          ? {
-              key: "execution",
-              label: "Execution",
-              title: `${jobsNeedingScheduling.length} job${jobsNeedingScheduling.length === 1 ? "" : "s"} need scheduling`,
-              detail: `${firstJobNeedingScheduling.project?.name ?? "A job"} is ready for date and crew follow-through.`,
-              href: `/jobs/${firstJobNeedingScheduling.id}`,
-              actionLabel: "Open unscheduled job",
-              countLabel: String(jobsNeedingScheduling.length),
-              status: "needs_action"
-            }
-          : firstJobTodayOrInProgress
             ? {
                 key: "execution",
                 label: "Execution",
-                title: `${jobsTodayOrInProgress.length} job${jobsTodayOrInProgress.length === 1 ? "" : "s"} today or live`,
-                detail: `${firstJobTodayOrInProgress.project?.name ?? "A job"} is ${firstJobTodayOrInProgress.dispatchStatus === "in_progress" ? "in progress" : "scheduled today"}.`,
-                href: `/jobs/${firstJobTodayOrInProgress.id}`,
-                actionLabel: "Open job",
-                countLabel: String(jobsTodayOrInProgress.length),
-                status:
-                  firstJobTodayOrInProgress.dispatchStatus === "in_progress"
-                    ? "in_progress"
-                    : "scheduled"
+                title: `${jobsNeedingScheduling.length} job${jobsNeedingScheduling.length === 1 ? "" : "s"} need scheduling`,
+                detail: `${firstJobNeedingScheduling.project?.name ?? "A job"} is ready for date and crew follow-through.`,
+                href: `/jobs/${firstJobNeedingScheduling.id}`,
+                actionLabel: "Open unscheduled job",
+                countLabel: String(jobsNeedingScheduling.length),
+                status: "needs_action"
               }
-            : {
-                key: "execution",
-                label: "Execution",
-                title: "No urgent execution queue",
-                detail:
-                  "Unscheduled and live job queues are clear from the dashboard.",
-                href: "/schedule",
-                actionLabel: "Open schedule",
-                countLabel: "0",
-                status: "complete"
-              }
+            : firstJobTodayOrInProgress
+              ? {
+                  key: "execution",
+                  label: "Execution",
+                  title: `${jobsTodayOrInProgress.length} job${jobsTodayOrInProgress.length === 1 ? "" : "s"} today or live`,
+                  detail: `${firstJobTodayOrInProgress.project?.name ?? "A job"} is ${firstJobTodayOrInProgress.dispatchStatus === "in_progress" ? "in progress" : "scheduled today"}.`,
+                  href: `/jobs/${firstJobTodayOrInProgress.id}`,
+                  actionLabel: "Open job",
+                  countLabel: String(jobsTodayOrInProgress.length),
+                  status:
+                    firstJobTodayOrInProgress.dispatchStatus === "in_progress"
+                      ? "in_progress"
+                      : "scheduled"
+                }
+              : {
+                  key: "execution",
+                  label: "Execution",
+                  title: "No urgent execution queue",
+                  detail:
+                    "Unscheduled and live job queues are clear from the dashboard.",
+                  href: "/schedule",
+                  actionLabel: "Open schedule",
+                  countLabel: "0",
+                  status: "complete"
+                }
       ]}
       metrics={[
         {
@@ -813,7 +1002,7 @@ export default async function DashboardPage({
         {
           key: "appointments-today",
           label: "Appointments today",
-          value: String(appointmentsToday.length),
+          value: String(dashboardOverviewReadModel.appointmentsTodayCount),
           detail:
             "Site visits, estimate meetings, and follow-up blocks stay visible without becoming a second job scheduler.",
           href: "/appointments"
@@ -835,7 +1024,7 @@ export default async function DashboardPage({
           detail:
             dueLeadFollowUps.length > 0
               ? "Follow-up due before the customer and project handoff stalls."
-              : `${opportunities.length} opportunity records in the commercial queue.`,
+              : `${dashboardOverviewReadModel.opportunityCount} opportunity records in the commercial queue.`,
           href: dueLeadFollowUps.length > 0 ? "/leads?followUp=due" : "/leads",
           tone: dueLeadFollowUps.length > 0 ? "attention" : "quiet"
         },
@@ -859,7 +1048,7 @@ export default async function DashboardPage({
           detail:
             estimatesAwaitingAction.length + contractsAwaitingAction.length > 0
               ? "Commercial records need send, approval, or signature follow-through."
-              : `${approvedEstimates.length} approved estimate${approvedEstimates.length === 1 ? "" : "s"} ready for downstream handoff.`,
+              : `${dashboardOverviewReadModel.approvedEstimateCount} approved estimate${dashboardOverviewReadModel.approvedEstimateCount === 1 ? "" : "s"} ready for downstream handoff.`,
           href:
             estimatesAwaitingAction.length > 0
               ? "/estimates"
@@ -869,7 +1058,7 @@ export default async function DashboardPage({
           tone:
             estimatesAwaitingAction.length + contractsAwaitingAction.length > 0
               ? "attention"
-              : approvedEstimates.length > 0
+              : dashboardOverviewReadModel.approvedEstimateCount > 0
                 ? "ready"
                 : "quiet"
         },
@@ -885,24 +1074,24 @@ export default async function DashboardPage({
             readyProjectsWithoutJobs.length > 0
               ? "Commercially clear projects need canonical jobs before schedule placement."
               : jobsNeedingScheduling.length > 0
-              ? "Ready jobs need date and crew follow-through on the canonical job chain."
-              : jobsTodayOrInProgress.length > 0
-                ? "Today and in-progress work is active in the schedule workspace."
-                : "No urgent schedule handoff is active right now.",
+                ? "Ready jobs need date and crew follow-through on the canonical job chain."
+                : jobsTodayOrInProgress.length > 0
+                  ? "Today and in-progress work is active in the schedule workspace."
+                  : "No urgent schedule handoff is active right now.",
           href:
             readyProjectsWithoutJobs.length > 0
               ? `/projects/${readyProjectsWithoutJobs[0].id}`
               : jobsNeedingScheduling.length > 0
-              ? "/schedule?view=unscheduled"
-              : "/schedule",
+                ? "/schedule?view=unscheduled"
+                : "/schedule",
           tone:
             readyProjectsWithoutJobs.length > 0
               ? "ready"
               : jobsNeedingScheduling.length > 0
-              ? "attention"
-              : jobsTodayOrInProgress.length > 0
-                ? "active"
-                : "quiet"
+                ? "attention"
+                : jobsTodayOrInProgress.length > 0
+                  ? "active"
+                  : "quiet"
         },
         {
           key: "invoice-payment",
@@ -926,6 +1115,7 @@ export default async function DashboardPage({
                 : "ready"
         }
       ]}
+      operationalCockpitBuckets={operationalCockpitBuckets}
       attentionWidget={attentionWidget}
       projectCueWidget={{
         key: "project-cues",
@@ -1476,7 +1666,7 @@ export default async function DashboardPage({
           description:
             "Run commercial and customer-facing visits from the same lead, customer, and project chain.",
           href: "/appointments",
-          metric: `${scheduledAppointments.length} scheduled`
+          metric: `${dashboardOverviewReadModel.scheduledAppointmentCount} scheduled`
         },
         {
           key: "schedule",
@@ -1532,7 +1722,7 @@ export default async function DashboardPage({
           description:
             "Open the customer account records that anchor projects and billing defaults.",
           href: "/customers",
-          metric: `${customers.length} records`
+          metric: `${dashboardOverviewReadModel.customerCount} records`
         }
       ]}
       placeholders={[
@@ -1551,57 +1741,6 @@ export default async function DashboardPage({
           priority: "High"
         }
       ]}
-      quickCreate={{
-        defaultRetainagePercentage:
-          financialSettings?.defaultRetainagePercentage ?? "0.00",
-        customerOptions: customers,
-        opportunityOptions: opportunities.map((opportunity) => ({
-          id: opportunity.id,
-          title: opportunity.title,
-          contactName:
-            opportunity.primaryContact?.displayName ?? opportunity.prospectName,
-          customerName: opportunity.customer?.name ?? null,
-          jobType: opportunity.jobType,
-          siteName: opportunity.siteName,
-          status: opportunity.status
-        })),
-        projectOptions: projects.map((project) => ({
-          id: project.id,
-          name: project.name,
-          customerName: project.customer?.name ?? null
-        })),
-        approvedEstimateOptions: approvedEstimates.map((estimate) => ({
-          id: estimate.id,
-          referenceNumber: estimate.referenceNumber,
-          projectName: estimate.project?.name ?? null
-        })),
-        contractOptions: contracts.map((contract) => ({
-          id: contract.id,
-          projectId: contract.projectId,
-          title: contract.title,
-          status: contract.status
-        })),
-        invoiceOptions: invoices.map((invoice) => ({
-          id: invoice.id,
-          projectId: invoice.projectId,
-          referenceNumber: invoice.referenceNumber,
-          status: invoice.status
-        })),
-        actions: {
-          lead: quickCreateOpportunityAction,
-          customer: quickCreateCustomerAction,
-          project: quickCreateProjectAction,
-          estimate: quickCreateEstimateAction,
-          contract: quickCreateContractFromEstimateAction,
-          job: quickCreateJobAction,
-          invoice: quickCreateInvoiceAction,
-          changeOrder: quickCreateChangeOrderAction
-        },
-        preferredContractTemplateId:
-          workflowSettings?.approvedEstimateContractTemplateId ?? "",
-        requireContractInternalApproval:
-          workflowSettings?.requireContractInternalApproval ?? false
-      }}
     />
   );
 }

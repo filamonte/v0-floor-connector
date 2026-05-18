@@ -30,10 +30,19 @@ type ReadinessOpportunityRow = {
   site_assessment_status: SiteAssessmentStatus;
 };
 
+type BatchedReadinessOpportunityRow = ReadinessOpportunityRow & {
+  project_id: string;
+  updated_at: string;
+};
+
 type ReadinessEstimateRow = {
   id: string;
   status: EstimateStatus;
   updated_at: string;
+};
+
+type BatchedReadinessEstimateRow = ReadinessEstimateRow & {
+  project_id: string;
 };
 
 type ReadinessContractRow = {
@@ -45,11 +54,19 @@ type ReadinessContractRow = {
   updated_at: string;
 };
 
+type BatchedReadinessContractRow = ReadinessContractRow & {
+  project_id: string;
+};
+
 type ReadinessInvoiceRow = {
   id: string;
   status: InvoiceStatus;
   workflow_role: InvoiceWorkflowRole;
   updated_at: string;
+};
+
+type BatchedReadinessInvoiceRow = ReadinessInvoiceRow & {
+  project_id: string;
 };
 
 export type ProjectFinancialReadinessSnapshot = {
@@ -152,6 +169,143 @@ function isReadinessInvoiceRowArray(value: unknown): value is ReadinessInvoiceRo
   );
 }
 
+function isBatchedReadinessOpportunityRowArray(
+  value: unknown
+): value is BatchedReadinessOpportunityRow[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (row) =>
+        isReadinessOpportunityRow(row) &&
+        typeof (row as Partial<BatchedReadinessOpportunityRow>).project_id ===
+          "string" &&
+        typeof (row as Partial<BatchedReadinessOpportunityRow>).updated_at ===
+          "string"
+    )
+  );
+}
+
+function isBatchedReadinessEstimateRowArray(
+  value: unknown
+): value is BatchedReadinessEstimateRow[] {
+  return (
+    isReadinessEstimateRowArray(value) &&
+    value.every(
+      (row) =>
+        typeof (row as Partial<BatchedReadinessEstimateRow>).project_id === "string"
+    )
+  );
+}
+
+function isBatchedReadinessContractRowArray(
+  value: unknown
+): value is BatchedReadinessContractRow[] {
+  return (
+    isReadinessContractRowArray(value) &&
+    value.every(
+      (row) =>
+        typeof (row as Partial<BatchedReadinessContractRow>).project_id === "string"
+    )
+  );
+}
+
+function isBatchedReadinessInvoiceRowArray(
+  value: unknown
+): value is BatchedReadinessInvoiceRow[] {
+  return (
+    isReadinessInvoiceRowArray(value) &&
+    value.every(
+      (row) =>
+        typeof (row as Partial<BatchedReadinessInvoiceRow>).project_id === "string"
+    )
+  );
+}
+
+function groupReadinessRowsByProjectId<T extends { project_id: string }>(
+  rows: T[]
+) {
+  const grouped = new Map<string, T[]>();
+
+  for (const row of rows) {
+    const existing = grouped.get(row.project_id);
+
+    if (existing) {
+      existing.push(row);
+    } else {
+      grouped.set(row.project_id, [row]);
+    }
+  }
+
+  return grouped;
+}
+
+function buildProjectFinancialReadinessSnapshot(input: {
+  project: ReadinessProjectRow;
+  opportunity: ReadinessOpportunityRow | null;
+  estimates: ReadinessEstimateRow[];
+  contracts: ReadinessContractRow[];
+  invoices: ReadinessInvoiceRow[];
+  workflowSettings: Awaited<ReturnType<typeof getOrganizationWorkflowSettings>>;
+}): ProjectFinancialReadinessSnapshot {
+  const preferredEstimate =
+    input.estimates.find((estimate) => estimate.status === "approved") ??
+    input.estimates[0] ??
+    null;
+  const signedContract =
+    input.contracts.find((candidate) => candidate.status === "signed") ?? null;
+  const contract = signedContract ?? input.contracts[0] ?? null;
+  const depositInvoices = input.invoices.filter(
+    (invoice) => invoice.workflow_role === "deposit"
+  );
+  const paidDepositInvoice = depositInvoices.find(
+    (invoice) => invoice.status === "paid"
+  );
+  const latestDepositInvoice = paidDepositInvoice ?? depositInvoices[0] ?? null;
+  const readiness = computeCommercialReadiness({
+    estimateStatus: preferredEstimate?.status ?? null,
+    siteAssessmentStatus: input.opportunity?.site_assessment_status ?? null,
+    hasContract: Boolean(contract),
+    contractInternalApprovalStatus: contract?.internal_approval_status ?? null,
+    contractStatus: contract?.status ?? null,
+    requireContractInternalApproval:
+      input.workflowSettings.requireContractInternalApproval,
+    requireContractSignatureBeforeJobScheduling:
+      input.workflowSettings.requireContractSignatureBeforeJobScheduling,
+    requireDepositBeforeJobScheduling:
+      input.workflowSettings.requireDepositBeforeJobScheduling,
+    requireFinancingApprovalBeforeJobScheduling:
+      input.workflowSettings.requireFinancingApprovalBeforeJobScheduling,
+    financingStatus: input.project.financing_status,
+    depositInvoiceStatus: latestDepositInvoice?.status ?? null,
+    depositInvoiceRole: latestDepositInvoice?.workflow_role ?? null
+  });
+
+  return {
+    status: readiness.status,
+    blockers: readiness.blockers,
+    isReadyToSchedule: readiness.isReadyToSchedule,
+    isOperationallyActive:
+      Boolean(input.project.operational_activated_at) || signedContract !== null,
+    depositRequired: input.workflowSettings.requireDepositBeforeJobScheduling,
+    depositSatisfied: latestDepositInvoice?.status === "paid",
+    financingStatus: input.project.financing_status,
+    opportunityId: input.opportunity?.id ?? null,
+    siteAssessmentStatus: input.opportunity?.site_assessment_status ?? null,
+    estimateId: preferredEstimate?.id ?? null,
+    estimateStatus: preferredEstimate?.status ?? null,
+    contractId: contract?.id ?? null,
+    contractStatus: contract?.status ?? null,
+    contractInternalApprovalStatus: contract?.internal_approval_status ?? null,
+    contractSignedAt:
+      signedContract?.signed_at ??
+      signedContract?.updated_at ??
+      signedContract?.created_at ??
+      null,
+    depositInvoiceId: latestDepositInvoice?.id ?? null,
+    depositInvoiceStatus: latestDepositInvoice?.status ?? null
+  };
+}
+
 export async function getProjectFinancialReadinessSnapshot(input: {
   organizationId: string;
   projectId: string;
@@ -241,52 +395,144 @@ export async function getProjectFinancialReadinessSnapshot(input: {
     ? invoicesData
     : [];
 
-  const preferredEstimate =
-    estimates.find((estimate) => estimate.status === "approved") ?? estimates[0] ?? null;
-  const signedContract = contracts.find((candidate) => candidate.status === "signed") ?? null;
-  const contract = signedContract ?? contracts[0] ?? null;
-  const depositInvoices = invoices.filter((invoice) => invoice.workflow_role === "deposit");
-  const paidDepositInvoice = depositInvoices.find((invoice) => invoice.status === "paid");
-  const latestDepositInvoice = paidDepositInvoice ?? depositInvoices[0] ?? null;
-  const readiness = computeCommercialReadiness({
-    estimateStatus: preferredEstimate?.status ?? null,
-    siteAssessmentStatus: opportunity?.site_assessment_status ?? null,
-    hasContract: Boolean(contract),
-    contractInternalApprovalStatus: contract?.internal_approval_status ?? null,
-    contractStatus: contract?.status ?? null,
-    requireContractInternalApproval: workflowSettings.requireContractInternalApproval,
-    requireContractSignatureBeforeJobScheduling:
-      workflowSettings.requireContractSignatureBeforeJobScheduling,
-    requireDepositBeforeJobScheduling:
-      workflowSettings.requireDepositBeforeJobScheduling,
-    requireFinancingApprovalBeforeJobScheduling:
-      workflowSettings.requireFinancingApprovalBeforeJobScheduling,
-    financingStatus: projectData.financing_status,
-    depositInvoiceStatus: latestDepositInvoice?.status ?? null,
-    depositInvoiceRole: latestDepositInvoice?.workflow_role ?? null
+  return buildProjectFinancialReadinessSnapshot({
+    project: projectData,
+    opportunity,
+    estimates,
+    contracts,
+    invoices,
+    workflowSettings
   });
+}
 
-  return {
-    status: readiness.status,
-    blockers: readiness.blockers,
-    isReadyToSchedule: readiness.isReadyToSchedule,
-    isOperationallyActive:
-      Boolean(projectData.operational_activated_at) || signedContract !== null,
-    depositRequired: workflowSettings.requireDepositBeforeJobScheduling,
-    depositSatisfied: latestDepositInvoice?.status === "paid",
-    financingStatus: projectData.financing_status,
-    opportunityId: opportunity?.id ?? null,
-    siteAssessmentStatus: opportunity?.site_assessment_status ?? null,
-    estimateId: preferredEstimate?.id ?? null,
-    estimateStatus: preferredEstimate?.status ?? null,
-    contractId: contract?.id ?? null,
-    contractStatus: contract?.status ?? null,
-    contractInternalApprovalStatus: contract?.internal_approval_status ?? null,
-    contractSignedAt:
-      signedContract?.signed_at ?? signedContract?.updated_at ?? signedContract?.created_at ?? null,
-    depositInvoiceId: latestDepositInvoice?.id ?? null,
-    depositInvoiceStatus: latestDepositInvoice?.status ?? null
-  };
+export async function getDashboardProjectFinancialReadinessSummaries(input: {
+  organizationId: string;
+  projectIds: string[];
+}): Promise<Map<string, ProjectFinancialReadinessSnapshot | null>> {
+  const uniqueProjectIds = [...new Set(input.projectIds)].filter(Boolean);
+  const snapshots = new Map<string, ProjectFinancialReadinessSnapshot | null>(
+    uniqueProjectIds.map((projectId) => [projectId, null])
+  );
+
+  if (uniqueProjectIds.length === 0) {
+    return snapshots;
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const [
+    projectsResponse,
+    opportunitiesResponse,
+    estimatesResponse,
+    contractsResponse,
+    invoicesResponse,
+    workflowSettings
+  ] = await Promise.all([
+    supabase
+      .from("projects")
+      .select(
+        "id, company_id, financing_status, commercial_readiness_status, ready_to_schedule_at, operational_activated_at"
+      )
+      .eq("company_id", input.organizationId)
+      .in("id", uniqueProjectIds),
+    supabase
+      .from("opportunities")
+      .select("id, project_id, site_assessment_status, updated_at")
+      .eq("company_id", input.organizationId)
+      .in("project_id", uniqueProjectIds)
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("estimates")
+      .select("id, project_id, status, updated_at")
+      .eq("company_id", input.organizationId)
+      .in("project_id", uniqueProjectIds)
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("contracts")
+      .select("id, project_id, status, internal_approval_status, signed_at, created_at, updated_at")
+      .eq("company_id", input.organizationId)
+      .in("project_id", uniqueProjectIds)
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("invoices")
+      .select("id, project_id, status, workflow_role, updated_at")
+      .eq("company_id", input.organizationId)
+      .in("project_id", uniqueProjectIds)
+      .order("updated_at", { ascending: false }),
+    getOrganizationWorkflowSettings(input.organizationId)
+  ]);
+
+  if (projectsResponse.error) {
+    throw new Error(
+      `Unable to load dashboard project readiness states: ${projectsResponse.error.message}`
+    );
+  }
+
+  if (opportunitiesResponse.error) {
+    throw new Error(
+      `Unable to load dashboard project opportunity readiness: ${opportunitiesResponse.error.message}`
+    );
+  }
+
+  if (estimatesResponse.error) {
+    throw new Error(
+      `Unable to load dashboard project estimates: ${estimatesResponse.error.message}`
+    );
+  }
+
+  if (contractsResponse.error) {
+    throw new Error(
+      `Unable to load dashboard project contracts: ${contractsResponse.error.message}`
+    );
+  }
+
+  if (invoicesResponse.error) {
+    throw new Error(
+      `Unable to load dashboard project invoices: ${invoicesResponse.error.message}`
+    );
+  }
+
+  const projectsData: unknown = projectsResponse.data;
+  const opportunitiesData: unknown = opportunitiesResponse.data;
+  const estimatesData: unknown = estimatesResponse.data;
+  const contractsData: unknown = contractsResponse.data;
+  const invoicesData: unknown = invoicesResponse.data;
+
+  const projects = Array.isArray(projectsData)
+    ? projectsData.filter(isReadinessProjectRow)
+    : [];
+  const opportunities = isBatchedReadinessOpportunityRowArray(opportunitiesData)
+    ? opportunitiesData
+    : [];
+  const estimates = isBatchedReadinessEstimateRowArray(estimatesData)
+    ? estimatesData
+    : [];
+  const contracts = isBatchedReadinessContractRowArray(contractsData)
+    ? contractsData
+    : [];
+  const invoices = isBatchedReadinessInvoiceRowArray(invoicesData)
+    ? invoicesData
+    : [];
+
+  const opportunitiesByProjectId = groupReadinessRowsByProjectId(opportunities);
+  const estimatesByProjectId = groupReadinessRowsByProjectId(estimates);
+  const contractsByProjectId = groupReadinessRowsByProjectId(contracts);
+  const invoicesByProjectId = groupReadinessRowsByProjectId(invoices);
+
+  for (const project of projects) {
+    snapshots.set(
+      project.id,
+      buildProjectFinancialReadinessSnapshot({
+        project,
+        opportunity: opportunitiesByProjectId.get(project.id)?.[0] ?? null,
+        estimates: estimatesByProjectId.get(project.id) ?? [],
+        contracts: contractsByProjectId.get(project.id) ?? [],
+        invoices: invoicesByProjectId.get(project.id) ?? [],
+        workflowSettings
+      })
+    );
+  }
+
+  return snapshots;
 }
 
 export async function syncProjectCommercialReadiness(input: {

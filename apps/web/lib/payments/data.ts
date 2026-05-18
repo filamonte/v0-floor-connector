@@ -42,30 +42,24 @@ type PaymentRow = {
   status: PaymentStatus;
   created_at: string;
   updated_at: string;
-  invoices?:
-    | {
-        id: string;
-        reference_number: string;
-        workflow_role: string;
-        status: string;
-        balance_due_amount: string | number;
-        total_amount: string | number;
-        customers?:
-          | {
-              id: string;
-              name: string;
-              company_name: string | null;
-            }
-          | null;
-        projects?:
-          | {
-              id: string;
-              name: string;
-              status: string;
-            }
-          | null;
-      }
-    | null;
+  invoices?: {
+    id: string;
+    reference_number: string;
+    workflow_role: string;
+    status: string;
+    balance_due_amount: string | number;
+    total_amount: string | number;
+    customers?: {
+      id: string;
+      name: string;
+      company_name: string | null;
+    } | null;
+    projects?: {
+      id: string;
+      name: string;
+      status: string;
+    } | null;
+  } | null;
 };
 
 type PaymentEventRow = {
@@ -82,30 +76,24 @@ type PaymentEventRow = {
   payload: Record<string, unknown> | null;
   occurred_at: string;
   created_at: string;
-  invoices?:
-    | {
-        id: string;
-        reference_number: string;
-        workflow_role: string;
-        status: string;
-        balance_due_amount: string | number;
-        total_amount: string | number;
-        customers?:
-          | {
-              id: string;
-              name: string;
-              company_name: string | null;
-            }
-          | null;
-        projects?:
-          | {
-              id: string;
-              name: string;
-              status: string;
-            }
-          | null;
-      }
-    | null;
+  invoices?: {
+    id: string;
+    reference_number: string;
+    workflow_role: string;
+    status: string;
+    balance_due_amount: string | number;
+    total_amount: string | number;
+    customers?: {
+      id: string;
+      name: string;
+      company_name: string | null;
+    } | null;
+    projects?: {
+      id: string;
+      name: string;
+      status: string;
+    } | null;
+  } | null;
 };
 
 export type PaymentListItem = Payment & {
@@ -150,6 +138,29 @@ export type PaymentEventListItem = PaymentEvent & {
   } | null;
 };
 
+export type DashboardRecentPayment = {
+  id: string;
+  invoiceId: string;
+  amount: string;
+  paymentMethod: string;
+  paymentSource: PaymentSource;
+  status: PaymentStatus;
+  createdAt: string;
+  invoice: {
+    id: string;
+    referenceNumber: string;
+  } | null;
+  customer: {
+    id: string;
+    name: string;
+    companyName: string | null;
+  } | null;
+  project: {
+    id: string;
+    name: string;
+  } | null;
+};
+
 const paymentSelect = `
   id,
   company_id,
@@ -187,6 +198,29 @@ const paymentSelect = `
       id,
       name,
       status
+    )
+  )
+`;
+
+const dashboardRecentPaymentSelect = `
+  id,
+  invoice_id,
+  amount,
+  payment_method,
+  payment_source,
+  status,
+  created_at,
+  invoices (
+    id,
+    reference_number,
+    customers (
+      id,
+      name,
+      company_name
+    ),
+    projects (
+      id,
+      name
     )
   )
 `;
@@ -248,6 +282,81 @@ function isPaymentRow(value: unknown): value is PaymentRow {
 
 function isPaymentRowArray(value: unknown): value is PaymentRow[] {
   return Array.isArray(value) && value.every((row) => isPaymentRow(row));
+}
+
+function isDashboardRecentPaymentRow(value: unknown): value is {
+  id: string;
+  invoice_id: string;
+  amount: string | number;
+  payment_method: string;
+  payment_source: PaymentSource;
+  status: PaymentStatus;
+  created_at: string;
+  invoices?: {
+    id: string;
+    reference_number: string;
+    customers?: {
+      id: string;
+      name: string;
+      company_name: string | null;
+    } | null;
+    projects?: {
+      id: string;
+      name: string;
+    } | null;
+  } | null;
+} {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const row = value as {
+    id?: unknown;
+    invoice_id?: unknown;
+    amount?: unknown;
+    payment_method?: unknown;
+    payment_source?: unknown;
+    status?: unknown;
+    created_at?: unknown;
+  };
+
+  return (
+    typeof row.id === "string" &&
+    typeof row.invoice_id === "string" &&
+    (typeof row.amount === "string" || typeof row.amount === "number") &&
+    typeof row.payment_method === "string" &&
+    typeof row.payment_source === "string" &&
+    typeof row.status === "string" &&
+    typeof row.created_at === "string"
+  );
+}
+
+function isDashboardRecentPaymentRowArray(value: unknown): value is Array<{
+  id: string;
+  invoice_id: string;
+  amount: string | number;
+  payment_method: string;
+  payment_source: PaymentSource;
+  status: PaymentStatus;
+  created_at: string;
+  invoices?: {
+    id: string;
+    reference_number: string;
+    customers?: {
+      id: string;
+      name: string;
+      company_name: string | null;
+    } | null;
+    projects?: {
+      id: string;
+      name: string;
+    } | null;
+  } | null;
+}> {
+  return (
+    Array.isArray(value) &&
+    value.every((row) => isDashboardRecentPaymentRow(row))
+  );
 }
 
 function isPaymentEventRow(value: unknown): value is PaymentEventRow {
@@ -364,6 +473,58 @@ function mapPaymentListItem(row: PaymentRow): PaymentListItem {
   };
 }
 
+function mapDashboardRecentPayment(row: {
+  id: string;
+  invoice_id: string;
+  amount: string | number;
+  payment_method: string;
+  payment_source: PaymentSource;
+  status: PaymentStatus;
+  created_at: string;
+  invoices?: {
+    id: string;
+    reference_number: string;
+    customers?: {
+      id: string;
+      name: string;
+      company_name: string | null;
+    } | null;
+    projects?: {
+      id: string;
+      name: string;
+    } | null;
+  } | null;
+}): DashboardRecentPayment {
+  return {
+    id: row.id,
+    invoiceId: row.invoice_id,
+    amount: Number(row.amount).toFixed(2),
+    paymentMethod: row.payment_method,
+    paymentSource: row.payment_source,
+    status: row.status,
+    createdAt: row.created_at,
+    invoice: row.invoices
+      ? {
+          id: row.invoices.id,
+          referenceNumber: row.invoices.reference_number
+        }
+      : null,
+    customer: row.invoices?.customers
+      ? {
+          id: row.invoices.customers.id,
+          name: row.invoices.customers.name,
+          companyName: row.invoices.customers.company_name
+        }
+      : null,
+    project: row.invoices?.projects
+      ? {
+          id: row.invoices.projects.id,
+          name: row.invoices.projects.name
+        }
+      : null
+  };
+}
+
 function mapPaymentEventListItem(row: PaymentEventRow): PaymentEventListItem {
   return {
     ...mapPaymentEvent(row),
@@ -373,7 +534,9 @@ function mapPaymentEventListItem(row: PaymentEventRow): PaymentEventListItem {
   };
 }
 
-async function getPaymentsScope(next = "/payments"): Promise<PaymentsScope | null> {
+async function getPaymentsScope(
+  next = "/payments"
+): Promise<PaymentsScope | null> {
   const user = await requireAuthenticatedUser(next);
   const organizationContext = await getActiveOrganizationContext(user.id);
 
@@ -426,24 +589,56 @@ export const listPayments = cache(async (): Promise<PaymentListItem[]> => {
   return data.map(mapPaymentListItem);
 });
 
-export const listPaymentEvents = cache(async (): Promise<PaymentEventListItem[]> => {
-  const scope = await requirePaymentsScope("/payments");
-  const supabase = await getSupabaseServerClient();
-  const response = await supabase
-    .from("payment_events")
-    .select(paymentEventSelect)
-    .eq("company_id", scope.organizationId)
-    .order("occurred_at", { ascending: false })
-    .order("created_at", { ascending: false });
-  const data: unknown = response.data;
+export const listDashboardRecentPayments = cache(
+  async (limit = 5): Promise<DashboardRecentPayment[]> => {
+    const scope = await requirePaymentsScope("/payments");
+    const supabase = await getSupabaseServerClient();
+    const response = await supabase
+      .from("payments")
+      .select(dashboardRecentPaymentSelect)
+      .eq("company_id", scope.organizationId)
+      .neq("status", "void")
+      .order("payment_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    const data: unknown = response.data;
 
-  if (response.error) {
-    throw new Error(`Unable to load payment events: ${response.error.message}`);
+    if (response.error) {
+      throw new Error(
+        `Unable to load dashboard recent payments: ${response.error.message}`
+      );
+    }
+
+    if (!isDashboardRecentPaymentRowArray(data)) {
+      return [];
+    }
+
+    return data.map(mapDashboardRecentPayment);
   }
+);
 
-  if (!isPaymentEventRowArray(data)) {
-    return [];
+export const listPaymentEvents = cache(
+  async (): Promise<PaymentEventListItem[]> => {
+    const scope = await requirePaymentsScope("/payments");
+    const supabase = await getSupabaseServerClient();
+    const response = await supabase
+      .from("payment_events")
+      .select(paymentEventSelect)
+      .eq("company_id", scope.organizationId)
+      .order("occurred_at", { ascending: false })
+      .order("created_at", { ascending: false });
+    const data: unknown = response.data;
+
+    if (response.error) {
+      throw new Error(
+        `Unable to load payment events: ${response.error.message}`
+      );
+    }
+
+    if (!isPaymentEventRowArray(data)) {
+      return [];
+    }
+
+    return data.map(mapPaymentEventListItem);
   }
-
-  return data.map(mapPaymentEventListItem);
-});
+);

@@ -12,7 +12,7 @@ import { ProtectedAppBreadcrumbs } from "@/components/protected-app-breadcrumbs"
 import { ProtectedAppTopNav } from "@/components/protected-app-top-nav";
 import { SignOutForm } from "@/components/sign-out-form";
 import { signOutAction } from "@/lib/auth/actions";
-import { listContractorNotifications } from "@/lib/notifications/data";
+import { listContractorNotificationsForContext } from "@/lib/notifications/data";
 
 type ContractorAppShellProps = {
   children: ReactNode;
@@ -26,7 +26,8 @@ export async function ContractorAppShell({
   organizationContext
 }: ContractorAppShellProps) {
   const organizationName =
-    organizationContext?.organization.displayName ?? "Organization setup pending";
+    organizationContext?.organization.displayName ??
+    "Organization setup pending";
   const organizationStatus = organizationContext
     ? `${organizationContext.organization.slug} - ${organizationContext.membership.status}`
     : "Initialization pending";
@@ -38,7 +39,10 @@ export async function ContractorAppShell({
     minute: "2-digit"
   });
   const notifications = await (organizationContext
-    ? listContractorNotifications()
+    ? listContractorNotificationsForContext(
+        user.id,
+        organizationContext.organization.id
+      )
     : Promise.resolve({ totalCount: 0, sections: [], visibleItems: [] }));
   const showDevTools =
     process.env.NODE_ENV !== "production" &&
@@ -54,7 +58,9 @@ export async function ContractorAppShell({
               notifications={notifications}
               organizationName={organizationName}
               organizationLogoUrl={organizationContext?.organization.logoUrl}
-              organizationBrandAccentColor={organizationContext?.organization.brandAccentColor}
+              organizationBrandAccentColor={
+                organizationContext?.organization.brandAccentColor
+              }
               organizationStatus={organizationStatus}
               userEmail={user.email ?? "Authenticated user"}
               timestampLabel={timestampLabel}
@@ -69,13 +75,17 @@ export async function ContractorAppShell({
                 href="/dashboard"
                 organizationName={organizationName}
                 logoUrl={organizationContext?.organization.logoUrl}
-                brandAccentColor={organizationContext?.organization.brandAccentColor}
+                brandAccentColor={
+                  organizationContext?.organization.brandAccentColor
+                }
                 supportingLabel="Shared contractor workspace"
                 navigationLabel="Dashboard home"
                 className="min-w-0 flex-1"
               />
               <div className="flex shrink-0 items-center gap-2 pt-1">
-                <AppShellMobileNav currentRole={organizationContext?.membership.role} />
+                <AppShellMobileNav
+                  currentRole={organizationContext?.membership.role}
+                />
                 <SignOutForm className="border-[var(--graphite)] bg-[var(--graphite)] px-3 py-2 text-white hover:border-[var(--graphite-light)] hover:bg-[var(--graphite-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2" />
               </div>
             </div>
@@ -95,9 +105,10 @@ export async function ContractorAppShell({
           <div className="mx-auto w-full max-w-[1680px] print:max-w-none">
             {!organizationContext ? (
               <section className="mb-4 rounded-[4px] border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
-                Your account is authenticated, but no active organization context is
-                available yet. If this is a brand-new account, sign out and sign back in
-                once to refresh the app against the newly created tenant records.
+                Your account is authenticated, but no active organization
+                context is available yet. If this is a brand-new account, sign
+                out and sign back in once to refresh the app against the newly
+                created tenant records.
               </section>
             ) : null}
 

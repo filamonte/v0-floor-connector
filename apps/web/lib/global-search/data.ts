@@ -206,6 +206,7 @@ const groupLabels: Record<GlobalSearchGroupKey, string> = {
 };
 
 const perGroupLimit = 5;
+const perEntityCandidateLimit = 50;
 
 function normalizeText(value: string | null | undefined) {
   return value?.trim().toLowerCase() ?? "";
@@ -347,78 +348,90 @@ export async function searchGlobalRecords(rawQuery: string) {
         "id,title,prospect_name,prospect_company_name,email,phone,status,updated_at,customers(name,company_name),projects(id,name)"
       )
       .eq("company_id", organizationId)
-      .order("updated_at", { ascending: false }),
+      .order("updated_at", { ascending: false })
+      .limit(perEntityCandidateLimit),
     supabase
       .from("customers")
       .select("id,name,company_name,email,phone,city,state_region,updated_at")
       .eq("company_id", organizationId)
-      .order("updated_at", { ascending: false }),
+      .order("updated_at", { ascending: false })
+      .limit(perEntityCandidateLimit),
     supabase
       .from("projects")
       .select("id,name,status,updated_at,customers(name,company_name)")
       .eq("company_id", organizationId)
-      .order("updated_at", { ascending: false }),
+      .order("updated_at", { ascending: false })
+      .limit(perEntityCandidateLimit),
     supabase
       .from("appointments")
       .select(
         "id,title,appointment_type,starts_at,location,status,opportunities(id,title),customers(name,company_name),projects(id,name),assigned_person:people!appointments_assigned_person_id_fkey(id,display_name)"
       )
       .eq("company_id", organizationId)
-      .order("starts_at", { ascending: true }),
+      .order("starts_at", { ascending: true })
+      .limit(perEntityCandidateLimit),
     supabase
       .from("estimates")
       .select(
         "id,reference_number,status,total_amount,updated_at,customers(name,company_name),projects(id,name)"
       )
       .eq("company_id", organizationId)
-      .order("updated_at", { ascending: false }),
+      .order("updated_at", { ascending: false })
+      .limit(perEntityCandidateLimit),
     supabase
       .from("contracts")
       .select(
         "id,title,status,updated_at,customers(name,company_name),projects(id,name),estimates(reference_number)"
       )
       .eq("company_id", organizationId)
-      .order("updated_at", { ascending: false }),
+      .order("updated_at", { ascending: false })
+      .limit(perEntityCandidateLimit),
     supabase
       .from("invoices")
       .select(
         "id,reference_number,status,total_amount,balance_due_amount,due_date,updated_at,customers(name,company_name),projects(id,name),jobs(id)"
       )
       .eq("company_id", organizationId)
-      .order("updated_at", { ascending: false }),
+      .order("updated_at", { ascending: false })
+      .limit(perEntityCandidateLimit),
     supabase
       .from("jobs")
       .select(
         "id,dispatch_status,scheduled_date,updated_at,customers(name,company_name),projects(id,name),estimates(reference_number)"
       )
       .eq("company_id", organizationId)
-      .order("updated_at", { ascending: false }),
+      .order("updated_at", { ascending: false })
+      .limit(perEntityCandidateLimit),
     supabase
       .from("punchlist_items")
       .select(
         "id,title,details,due_date,status,updated_at,projects(id,name),jobs(id,dispatch_status),assignee:people!punchlist_items_assignee_person_id_fkey(id,display_name)"
       )
       .eq("company_id", organizationId)
-      .order("updated_at", { ascending: false }),
+      .order("updated_at", { ascending: false })
+      .limit(perEntityCandidateLimit),
     supabase
       .from("payments")
       .select(
         "id,amount,status,payment_date,payment_method,payment_source,payer_email,reference,created_at,invoices(id,reference_number,customers(id,name,company_name),projects(id,name))"
       )
       .eq("company_id", organizationId)
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(perEntityCandidateLimit),
     supabase
       .from("people")
       .select(
         "id,display_name,first_name,last_name,email,phone,job_title,trade,is_active,updated_at,vendors(id,name)"
       )
       .eq("company_id", organizationId)
-      .order("updated_at", { ascending: false }),
+      .order("updated_at", { ascending: false })
+      .limit(perEntityCandidateLimit),
     supabase
       .from("vendors")
       .select("id,name,vendor_type,primary_contact_name,email,phone,is_active,updated_at")
       .eq("company_id", organizationId)
       .order("updated_at", { ascending: false })
+      .limit(perEntityCandidateLimit)
   ]);
 
   const responses = [
