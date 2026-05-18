@@ -256,6 +256,21 @@ Deferred from this polish sequence:
 - Do not use historical handoff entries as current implementation truth.
 - If docs conflict, update the non-current-state doc or add a caveat.
 
+## Enterprise UX Redesign Plan
+
+A full system-wide UI/UX audit was completed on 2026-05-18 and the resulting plan is in [docs/enterprise-ux-redesign-plan.md](C:/FloorConnector/docs/enterprise-ux-redesign-plan.md).
+
+Key findings:
+
+- Project Workspace has the most visual drift: hardcoded hex, `slate-*` Tailwind classes, `bg-brand-700`/`bg-brand-900` action references, and `rounded-full` action buttons that break the system grammar.
+- Dashboard needs clearer visual hierarchy between the Operational Cockpit (mission-critical), key metrics (context), queue widgets (work surfaces), and supporting context.
+- Icon system needs a documented vocabulary aligned to module/state semantics.
+- The Graphite/Copper token system is correct; the gap is enforcing it consistently in high-traffic pages.
+
+**The plan must be reviewed and approved before any implementation work begins.** No app code, schema, server actions, lifecycle logic, or readiness gates were changed to produce the plan.
+
+Recommended first implementation pass: Phase 1 (token cleanup and grammar enforcement in Project Workspace and Schedule page). See the plan for the full phase breakdown, files likely to change, and explicit guardrails.
+
 ## Where To Read Next
 
 - Governance: [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md), [docs/documentation-standards.md](C:/FloorConnector/docs/documentation-standards.md)
