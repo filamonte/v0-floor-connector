@@ -85,9 +85,68 @@ The graphite-forward industrial aesthetic supports this positioning: FloorConnec
 
 ---
 
-## 2. Current UX Problems
+## 2.5 Contractor Foreman System Observations (Live System Review)
 
-### 2.1 System-Level Problems
+A review of the live Contractor Foreman application reveals patterns and structure worth noting for FloorConnector differentiation:
+
+### CF Dashboard Structure
+
+**Navigation & Header:**
+
+- Horizontal top nav with project dropdown ("Select a Project"), "MENU Dashboard" button (expands/collapses a secondary nav tier)
+- Clean header with company name center-aligned, utility buttons right (training links, live chat, account menu)
+- Compact top navigation bar with logo, limited labels
+
+**Dashboard Widgets:**
+
+- **Left sidebar:** Mini calendar (May 2026), training/support quick links, upgrade/licensing info
+- **Center-right:**
+  - "Training & Support" card with course links and knowledge base
+  - "Next Hour: Clear" weather forecast (contextual field info)
+  - "My Appointments" table (table headers, grid rows)
+- **Tabs below widgets:** "Recent Projects" (selected by default, shows project table), "Upcoming Projects", "My Work", "By Status"
+- **Project table columns:** Completion date, Project name, Customer, Type (all with light gray backgrounds, consistent row striping)
+- **Dashboard customization:** "Customize" button top-right for dashboard configuration
+
+**Visual Treatment:**
+
+- Light gray backgrounds (off-white, near white)
+- Consistent border treatment (light gray borders on cards)
+- Tables use subtle row striping (alternating very light gray)
+- All action buttons appear to follow one style (some blue/dark blue states noted)
+- Weather icons use colored emoji-like symbols (sun, clouds, rain) with temperature labels
+- Company name is a bold heading, but section titles are smaller and use similar weights
+
+### CF Project/Module Structure
+
+From the feature/module pages reviewed (marketing site), CF offers modular grouping:
+
+- **Project Management:** Projects, Opportunities, Daily Logs, Scheduling, Work Orders, Inspections, Punchlists, Permit Manager, Service Tickets, Client Portal, To-Do's
+- **Financials:** Estimates, Bid Management, Change Orders, Invoices, Purchase Orders, Sub-Contracts, Bills/Expenses, Online Payments, Real-time Costs, Takeoffs
+- **People:** Time Cards w/GPS, Employee Management, Crew Assignment
+- **Documents:** Document Management, Photos, Plans/Blueprints
+
+Each module is presented as a discrete card/tile with an icon, title, and brief description. The navigation sidebar would likely organize these as groups.
+
+### Key UX Insights for FloorConnector
+
+1. **Dashboard is a hub, not a reporting surface.** Contractor Foreman's dashboard serves as a quick-access point to appointments, recent projects, and upcoming work — not as the primary analytics view. FloorConnector's dashboard should similarly focus on "what do I do next?" rather than deep metrics.
+
+2. **Modular navigation (sidebar groups) aids discoverability.** Organizing features into Project Management, Financials, People, Documents helps users find related tools. FloorConnector can adopt a similar sidebar grouping for navigation clarity without copying CF's exact module list.
+
+3. **Tables with consistent striping and borders are the default for list views.** CF uses light gray striping and consistent borders. FloorConnector's tables should follow the same pattern using graphite surface tokens.
+
+4. **Utility actions (weather, training, licensing) are secondary to primary navigation.** CF's dashboard sidebar has low-priority utility widgets below the mini calendar. FloorConnector can reserve right-side or lower-priority dashboard real estate for secondary context (weather for outdoor work schedules, training links, etc.) without it competing with primary workflow.
+
+5. **Project tables lead with completion date / status date.** CF's project list leads with "Completion date" to signal urgency. FloorConnector's project list should follow a similar pattern if showing a project queue — lead with status/phase, then project name, then customer, then type/scope.
+
+6. **Mini calendars are expected in contractor software.** The CF sidebar calendar is a classic contractor tool UX pattern. FloorConnector's schedule page calendar widget should feel similarly embedded and useful for date navigation.
+
+7. **Do not over-decorate.** CF uses emojis for weather and relies on simple text labels for most content. FloorConnector should resist adding unnecessary visual decoration and instead rely on clear information hierarchy and consistent spacing.
+
+---
+
+## 3. Current UX Problems (Detailed)
 
 **a. Mixed surface density signals.**
 The dashboard uses `rounded-lg` border panels with 16px–20px padding. The Project Workspace uses `rounded-lg border border-slate-200` in many inner components — notably `OperationalCommandCenter`, `LinkedRecordRecencyPanel`, and `SectionOverview` — with hardcoded `slate-*` classes that drift from the CSS variable token system. The Estimate and Invoice workspaces use shared primitives consistently but their inner section composition varies. The result: pages look related but not identical. A user moving from Dashboard → Projects → Estimates → Invoices encounters slightly different card shapes, padding rhythm, and text hierarchy at each stop.
