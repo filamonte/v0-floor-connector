@@ -24,6 +24,7 @@ Canonical lifecycle:
 - Progress billing workspaces exist at `/progress-billing` and `/progress-billing/[scheduleOfValuesId]`.
 - Contractors can update percent complete and build or update draft progress invoices from the SOV chain.
 - Progress invoices use `billing_model = "aia_progress"` and remain canonical invoices.
+- Dashboard progress-billing status uses a dashboard-specific summary loader for the shortcut count. It derives readiness from SOV item progress, progress invoice statuses, and invoice line links without loading the full progress-billing workspace payload.
 - Invoice detail shows read-only SOV/progress-billing lineage where relevant.
 - Portal invoice review shows retainage context on canonical invoices.
 
@@ -92,4 +93,4 @@ Canonical lifecycle:
 
 ## Current Recommendation
 
-The current foundation is credible for contractor-side progress billing and retainage-aware invoices, but mature AIA/pay-application workflow should remain a planned financial depth area. The next build area should be tests plus UX clarity, not new financial behavior.
+The current foundation is credible for contractor-side progress billing and retainage-aware invoices, and the dashboard now has a narrow read-only summary path for its progress-billing shortcut. Mature AIA/pay-application workflow should remain a planned financial depth area. The next build area should be tests plus UX clarity, not new financial behavior.

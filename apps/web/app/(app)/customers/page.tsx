@@ -6,11 +6,10 @@ import { CustomerQuickCreateForm } from "@/components/customer-quick-create-form
 import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { quickCreateCustomerAction } from "@/lib/customers/actions";
-import { listCustomers } from "@/lib/customers/data";
+import { getCustomersManagerReadModel } from "@/lib/customers/manager-read-model";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
-import { listProjects } from "@/lib/projects/data";
 import { getStatusBadgeClassName } from "@floorconnector/ui";
 
 type CustomersPageProps = {
@@ -22,10 +21,7 @@ type CustomersPageProps = {
   }>;
 };
 
-function buildCustomersHref(input: {
-  q?: string;
-  compose?: string;
-}) {
+function buildCustomersHref(input: { q?: string; compose?: string }) {
   const searchParams = new URLSearchParams();
 
   if (input.q && input.q.trim().length > 0) {
@@ -84,65 +80,17 @@ export default async function CustomersPage({
     );
   }
 
-  const [customers, projects, financialSettings] = await Promise.all([
-    listCustomers(),
-    listProjects(),
-    getOrganizationFinancialSettings(organizationContext.organization.id)
-  ]);
   const query = resolvedSearchParams.q?.trim() ?? "";
-  const normalizedQuery = query.toLowerCase();
   const showComposer =
     resolvedSearchParams.compose === "1" || Boolean(resolvedSearchParams.error);
-
-  const filteredCustomers = customers.filter((customer) =>
-    normalizedQuery.length === 0
-      ? true
-      : [
-          customer.name,
-          customer.companyName ?? "",
-          customer.email ?? "",
-          customer.phone ?? "",
-          customer.city ?? "",
-          customer.stateRegion ?? ""
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(normalizedQuery)
-  );
-
-  const taxExemptCustomers = customers.filter((customer) => customer.isTaxExempt);
-  const customersWithDirectContact = customers.filter(
-    (customer) => customer.email || customer.phone
-  );
-  const customersWithSavedAddress = customers.filter(
-    (customer) =>
-      customer.addressLine1 || customer.city || customer.stateRegion || customer.postalCode
-  );
-  const customersMissingContact = customers.filter(
-    (customer) => !customer.email && !customer.phone
-  );
-  const customersMissingAddress = customers.filter(
-    (customer) =>
-      !customer.addressLine1 &&
-      !customer.city &&
-      !customer.stateRegion &&
-      !customer.postalCode
-  );
-  const customersWithProjects = customers.filter((customer) =>
-    projects.some((project) => project.customerId === customer.id)
-  );
-  const linkedProjectCountByCustomerId = new Map<string, number>();
-
-  for (const project of projects) {
-    linkedProjectCountByCustomerId.set(
-      project.customerId,
-      (linkedProjectCountByCustomerId.get(project.customerId) ?? 0) + 1
-    );
-  }
-
-  const recentCustomers = [...filteredCustomers]
-    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
-    .slice(0, 20);
+  const [readModel, financialSettings] = await Promise.all([
+    getCustomersManagerReadModel({
+      organizationId: organizationContext.organization.id,
+      query
+    }),
+    getOrganizationFinancialSettings(organizationContext.organization.id)
+  ]);
+  const recentCustomers = readModel.customers;
 
   return (
     <ContractorWorkspacePage
@@ -152,9 +100,11 @@ export default async function CustomersPage({
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Total</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+              Total
+            </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {customers.length}
+              {readModel.counts.total}
             </p>
           </div>
           <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
@@ -162,7 +112,7 @@ export default async function CustomersPage({
               Tax exempt
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {taxExemptCustomers.length}
+              {readModel.counts.taxExempt}
             </p>
           </div>
           <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
@@ -170,7 +120,7 @@ export default async function CustomersPage({
               Direct contact saved
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {customersWithDirectContact.length}
+              {readModel.counts.directContactSaved}
             </p>
           </div>
           <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
@@ -178,7 +128,7 @@ export default async function CustomersPage({
               Saved address
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {customersWithSavedAddress.length}
+              {readModel.counts.savedAddress}
             </p>
           </div>
         </div>
@@ -186,12 +136,16 @@ export default async function CustomersPage({
       commandBar={{
         supportSlot: (
           <p>
-            Review the customer base, keep recipient contact details current here, and open quick create only when you are ready to route a new customer account into its full workspace.
+            Review the customer base, keep recipient contact details current
+            here, and open quick create only when you are ready to route a new
+            customer account into its full workspace.
           </p>
         ),
         searchSlot: (
           <form action="/customers" className="flex flex-col gap-2 sm:flex-row">
-            {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
+            {showComposer ? (
+              <input type="hidden" name="compose" value="1" />
+            ) : null}
             <input
               type="search"
               name="q"
@@ -245,7 +199,7 @@ export default async function CustomersPage({
             description="Customer accounts carrying tax-exempt treatment on their account record."
             actionHref={buildCustomersHref({ q: query })}
             actionLabel="Review accounts"
-            items={taxExemptCustomers.slice(0, 4).map((customer) => ({
+            items={readModel.taxExemptCustomers.map((customer) => ({
               href: `/customers/${customer.id}`,
               title: customer.name,
               subtitle: customer.companyName ?? "Individual customer",
@@ -264,13 +218,16 @@ export default async function CustomersPage({
             description="Customer records that still need email or phone before estimate send, billing follow-through, or customer coordination are fully ready."
             actionHref={buildCustomersHref({ q: query })}
             actionLabel="Fill details"
-            items={customersMissingContact.slice(0, 4).map((customer) => ({
+            items={readModel.customersMissingContact.map((customer) => ({
               href: `/customers/${customer.id}`,
               title: customer.name,
               subtitle: customer.companyName ?? "Individual customer",
-              meta: customer.city || customer.stateRegion
-                ? [customer.city, customer.stateRegion].filter(Boolean).join(", ")
-                : null,
+              meta:
+                customer.city || customer.stateRegion
+                  ? [customer.city, customer.stateRegion]
+                      .filter(Boolean)
+                      .join(", ")
+                  : null,
               badge: "needs_action",
               trailing: "No contact"
             }))}
@@ -283,7 +240,7 @@ export default async function CustomersPage({
             description="Customer records that still need an address for smoother downstream project setup."
             actionHref={buildCustomersHref({ q: query })}
             actionLabel="Review records"
-            items={customersMissingAddress.slice(0, 4).map((customer) => ({
+            items={readModel.customersMissingAddress.map((customer) => ({
               href: `/customers/${customer.id}`,
               title: customer.name,
               subtitle: customer.companyName ?? "Individual customer",
@@ -300,18 +257,14 @@ export default async function CustomersPage({
             description="Customers already tied into the operational project chain."
             actionHref={buildCustomersHref({ q: query })}
             actionLabel="Open customers"
-            items={customersWithProjects.slice(0, 4).map((customer) => {
-              const linkedProjectCount = projects.filter(
-                (project) => project.customerId === customer.id
-              ).length;
-
+            items={readModel.customersWithProjects.map((customer) => {
               return {
                 href: `/customers/${customer.id}`,
                 title: customer.name,
                 subtitle: customer.companyName ?? "Individual customer",
                 meta: customer.email ?? customer.phone ?? null,
                 badge: "ready",
-                trailing: formatProjectCount(linkedProjectCount)
+                trailing: formatProjectCount(customer.linkedProjectCount)
               };
             })}
             emptyTitle="No customer-project links yet"
@@ -329,8 +282,9 @@ export default async function CustomersPage({
                 Latest customer updates
               </h3>
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Customer billing context stays here, while People owns contact identity,
-                portal invite status, permissions, and project visibility.
+                Customer billing context stays here, while People owns contact
+                identity, portal invite status, permissions, and project
+                visibility.
               </p>
             </div>
             <p className="text-sm leading-6 text-slate-500">
@@ -352,14 +306,14 @@ export default async function CustomersPage({
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
                   {recentCustomers.map((customer) => {
-                    const linkedProjectCount =
-                      linkedProjectCountByCustomerId.get(customer.id) ?? 0;
-                    const hasDirectContact = Boolean(customer.email || customer.phone);
+                    const hasDirectContact = Boolean(
+                      customer.email || customer.phone
+                    );
                     const hasSavedAddress = Boolean(
                       customer.addressLine1 ||
-                        customer.city ||
-                        customer.stateRegion ||
-                        customer.postalCode
+                      customer.city ||
+                      customer.stateRegion ||
+                      customer.postalCode
                     );
 
                     return (
@@ -372,7 +326,9 @@ export default async function CustomersPage({
                             {customer.name}
                           </Link>
                           <p className="mt-1 text-sm leading-6 text-slate-500">
-                            {customer.email ?? customer.phone ?? "No direct contact saved"}
+                            {customer.email ??
+                              customer.phone ??
+                              "No direct contact saved"}
                           </p>
                         </td>
                         <td className="px-5 py-4 sm:px-6">
@@ -380,7 +336,11 @@ export default async function CustomersPage({
                             {customer.companyName ?? "Individual customer"}
                           </p>
                           <p className="mt-1 text-sm leading-6 text-slate-500">
-                            {[customer.city, customer.stateRegion, customer.postalCode]
+                            {[
+                              customer.city,
+                              customer.stateRegion,
+                              customer.postalCode
+                            ]
                               .filter(Boolean)
                               .join(", ") || "No location saved"}
                           </p>
@@ -390,11 +350,11 @@ export default async function CustomersPage({
                             {getCustomerContinuityCue({
                               hasDirectContact,
                               hasSavedAddress,
-                              linkedProjectCount
+                              linkedProjectCount: customer.linkedProjectCount
                             })}
                           </p>
                           <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-400">
-                            {formatProjectCount(linkedProjectCount)}
+                            {formatProjectCount(customer.linkedProjectCount)}
                           </p>
                         </td>
                         <td className="px-5 py-4 sm:px-6">
@@ -424,18 +384,25 @@ export default async function CustomersPage({
           ) : (
             <div className="px-6 py-8 sm:px-8">
               <AppEmptyState
-                eyebrow={customers.length > 0 ? "No matching customers" : "No customers yet"}
+                eyebrow={
+                  readModel.counts.total > 0
+                    ? "No matching customers"
+                    : "No customers yet"
+                }
                 title={
-                  customers.length > 0
+                  readModel.counts.total > 0
                     ? "Adjust the customer search"
                     : "Create the first customer"
                 }
                 description={
-                  customers.length > 0
+                  readModel.counts.total > 0
                     ? "Try a broader search to find the customer account you need."
                     : "Start here when you already know the account. Customer records need to exist before projects, estimates, and invoices can stay connected to the same customer account."
                 }
-                actionHref={buildCustomersHref({ q: query, compose: "1" }) + "#customer-create"}
+                actionHref={
+                  buildCustomersHref({ q: query, compose: "1" }) +
+                  "#customer-create"
+                }
                 actionLabel="Create your first customer"
               />
             </div>
@@ -454,7 +421,9 @@ export default async function CustomersPage({
       >
         <CustomerQuickCreateForm
           action={quickCreateCustomerAction}
-          defaultRetainagePercentage={financialSettings.defaultRetainagePercentage}
+          defaultRetainagePercentage={
+            financialSettings.defaultRetainagePercentage
+          }
         />
       </WorkspaceComposerSheet>
     </ContractorWorkspacePage>

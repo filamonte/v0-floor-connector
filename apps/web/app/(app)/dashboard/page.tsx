@@ -3,11 +3,7 @@ import { redirect } from "next/navigation";
 import { ContractorDashboardSurface } from "@/components/dashboard/contractor-dashboard-surface";
 import type { OperationalGuidanceBucket } from "@/components/operational-guidance-section";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
-import { listContracts } from "@/lib/contracts/data";
-import { listEstimates } from "@/lib/estimates/data";
 import { listDashboardProjectCueFieldNotes } from "@/lib/field-notes/data";
-import { listInvoices } from "@/lib/invoices/data";
-import { listJobs } from "@/lib/jobs/data";
 import { listContractorNotificationsForContext } from "@/lib/notifications/data";
 import { getBillingSetupState } from "@/lib/onboarding/billing-setup";
 import { isOrganizationActivatedForProductionAction } from "@/lib/organizations/activation-guard";
@@ -28,17 +24,17 @@ import {
 import type { OperationalCue } from "@/lib/operational-cues/types";
 import { listDashboardRecentPayments } from "@/lib/payments/data";
 import { countOpenPunchlistItemsForDashboard } from "@/lib/punchlists/data";
-import { listProgressBillingWorkspaces } from "@/lib/progress-billing/data";
 import {
   getDashboardOperationalCockpitReadModel,
   getDashboardOverviewReadModel
 } from "@/lib/dashboard/operational-cockpit-read-model";
+import { getDashboardProgressBillingSummaryReadModel } from "@/lib/dashboard/progress-billing-summary-read-model";
+import { getDashboardProjectCueInputReadModel } from "@/lib/dashboard/project-cue-input-read-model";
 import { mapProjectCuesToDashboardPreviewItems } from "@/lib/dashboard/project-cue-preview";
 import {
   buildProjectCues,
   selectHighestPriorityProjectCues
 } from "@/lib/projects/cues";
-import { listProjects } from "@/lib/projects/data";
 import { getDashboardProjectFinancialReadinessSummaries } from "@/lib/projects/readiness";
 import { buildScheduleHref } from "@/lib/schedule/links";
 import {
@@ -262,35 +258,28 @@ export default async function DashboardPage({
   const tomorrow = addDaysDateKey(today, 1);
   const nowIso = new Date().toISOString();
   const [
-    estimates,
-    projects,
-    contracts,
-    jobs,
     leadFollowUpQueue,
     openPunchlistCount,
-    invoices,
     recentPayments,
     notifications,
-    progressBillingWorkspaces,
+    progressBillingSummaryReadModel,
     billingSetupState,
     fieldNotes,
     operationalCueDashboard,
     operationalCockpitReadModel,
-    dashboardOverviewReadModel
+    dashboardOverviewReadModel,
+    dashboardProjectCueInputReadModel
   ] = await Promise.all([
-    listEstimates(),
-    listProjects(),
-    listContracts(),
-    listJobs(),
     listLeadFollowUpQueue({ upcomingDays: 7 }),
     countOpenPunchlistItemsForDashboard(),
-    listInvoices(),
     listDashboardRecentPayments(5),
     listContractorNotificationsForContext(
       user.id,
       organizationContext.organization.id
     ),
-    listProgressBillingWorkspaces(),
+    getDashboardProgressBillingSummaryReadModel({
+      organizationId: organizationContext.organization.id
+    }),
     getBillingSetupState(organizationContext.organization.id),
     listDashboardProjectCueFieldNotes(),
     getOperationalCueDashboard({
@@ -307,21 +296,31 @@ export default async function DashboardPage({
       today,
       tomorrow,
       nowIso
+    }),
+    getDashboardProjectCueInputReadModel({
+      organizationId: organizationContext.organization.id,
+      today
     })
   ]);
 
-  const activeProjects = projects.filter(
-    (project) => project.status !== "completed"
-  );
+  const activeProjects = dashboardProjectCueInputReadModel.activeProjects;
   const projectReadinessSnapshots =
     await getDashboardProjectFinancialReadinessSummaries({
       organizationId: organizationContext.organization.id,
       projectIds: activeProjects.map((project) => project.id)
     });
-  const estimatesByProjectId = groupByProjectId(estimates);
-  const contractsByProjectId = groupByProjectId(contracts);
-  const invoicesByProjectId = groupByProjectId(invoices);
-  const jobsByProjectId = groupByProjectId(jobs);
+  const estimatesByProjectId = groupByProjectId(
+    dashboardProjectCueInputReadModel.estimatesForProjectCues
+  );
+  const contractsByProjectId = groupByProjectId(
+    dashboardProjectCueInputReadModel.contractsForProjectCues
+  );
+  const invoicesByProjectId = groupByProjectId(
+    dashboardProjectCueInputReadModel.invoicesForProjectCues
+  );
+  const jobsByProjectId = groupByProjectId(
+    dashboardProjectCueInputReadModel.jobsForProjectCues
+  );
   const fieldNotesByProjectId = groupByProjectId(fieldNotes);
   const derivedProjectCues = activeProjects.flatMap((project) =>
     buildProjectCues({
@@ -351,31 +350,22 @@ export default async function DashboardPage({
     }).visibleCues,
     5
   );
-  const openInvoices = invoices.filter(
-    (invoice) => invoice.status !== "paid" && invoice.status !== "void"
-  );
-  const overdueInvoices = openInvoices
-    .filter((invoice) => isOverdueInvoice(invoice.dueDate, today))
-    .sort((left, right) =>
-      (left.dueDate ?? "9999-12-31").localeCompare(
-        right.dueDate ?? "9999-12-31"
-      )
-    );
+  const openInvoices = dashboardProjectCueInputReadModel.openInvoicePreviews;
+  const overdueInvoices =
+    dashboardProjectCueInputReadModel.overdueInvoicePreviews;
+  const openInvoiceCount = dashboardProjectCueInputReadModel.openInvoiceCount;
+  const overdueInvoiceCount =
+    dashboardProjectCueInputReadModel.overdueInvoiceCount;
   const dueLeadFollowUps = leadFollowUpQueue.filter(
     (item) => item.bucket === "overdue" || item.bucket === "due_today"
   );
   const leadFollowUpsForDashboard = leadFollowUpQueue.slice(0, 5);
-  const estimatesAwaitingAction = estimates
-    .filter((estimate) =>
-      ["draft", "sent", "rejected"].includes(estimate.status)
-    )
-    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
-    .slice(0, 5);
-  const contractsAwaitingAction = contracts
-    .filter((contract) => ["draft", "sent", "viewed"].includes(contract.status))
-    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
-    .slice(0, 5);
-  const projectsNeedingAttention = activeProjects.slice(0, 5);
+  const estimatesAwaitingAction =
+    dashboardProjectCueInputReadModel.estimatesAwaitingAction;
+  const contractsAwaitingAction =
+    dashboardProjectCueInputReadModel.contractsAwaitingAction;
+  const projectsNeedingAttention =
+    dashboardProjectCueInputReadModel.projectsNeedingAttention;
   const readyProjectsWithoutJobs = activeProjects
     .filter((project) => {
       const readinessSnapshot = projectReadinessSnapshots.get(project.id);
@@ -384,34 +374,10 @@ export default async function DashboardPage({
       return readinessSnapshot?.isReadyToSchedule && projectJobs.length === 0;
     })
     .slice(0, 5);
-  const jobsNeedingScheduling = jobs
-    .filter((job) => job.dispatchStatus === "unscheduled")
-    .slice(0, 5);
-  const jobsTodayOrInProgress = jobs
-    .filter(
-      (job) =>
-        job.dispatchStatus === "in_progress" || job.scheduledDate === today
-    )
-    .sort((left, right) => {
-      if (
-        left.dispatchStatus === "in_progress" &&
-        right.dispatchStatus !== "in_progress"
-      ) {
-        return -1;
-      }
-
-      if (
-        left.dispatchStatus !== "in_progress" &&
-        right.dispatchStatus === "in_progress"
-      ) {
-        return 1;
-      }
-
-      return (left.scheduledStartAt ?? left.updatedAt).localeCompare(
-        right.scheduledStartAt ?? right.updatedAt
-      );
-    })
-    .slice(0, 5);
+  const jobsNeedingScheduling =
+    dashboardProjectCueInputReadModel.jobsNeedingScheduling;
+  const jobsTodayOrInProgress =
+    dashboardProjectCueInputReadModel.jobsTodayOrInProgress;
   const currentUserPerson = dashboardOverviewReadModel.currentUserPerson;
   const myWorkQueueModes = buildMyWorkQueueModes({
     cues: operationalCueDashboard.cues,
@@ -483,9 +449,8 @@ export default async function DashboardPage({
   const appointmentDashboardEmptyDescription = showingCompanyAppointments
     ? "Lead visits and follow-up appointments will surface here once they are scheduled."
     : "When appointments are assigned to your linked people record, they will surface here.";
-  const progressBillingReadyCount = progressBillingWorkspaces.filter(
-    (workspace) => workspace.status === "ready_to_bill"
-  ).length;
+  const progressBillingReadyCount =
+    progressBillingSummaryReadModel.readyToBillCount;
   const onboardingSteps = [
     {
       key: "project",
@@ -494,7 +459,7 @@ export default async function DashboardPage({
         "Everything starts from the project once customer and job context are real.",
       href: "/projects?compose=1#project-create",
       actionLabel: "Create project",
-      complete: projects.length > 0
+      complete: dashboardProjectCueInputReadModel.projectTotalCount > 0
     },
     {
       key: "estimate",
@@ -503,7 +468,7 @@ export default async function DashboardPage({
         "Estimates are created from projects and carry priced scope toward contracts.",
       href: "/estimates?compose=1#estimate-create",
       actionLabel: "Create estimate",
-      complete: estimates.length > 0
+      complete: dashboardProjectCueInputReadModel.estimateTotalCount > 0
     },
     {
       key: "contract",
@@ -512,7 +477,7 @@ export default async function DashboardPage({
         "Contracts are generated from approved estimates on the same project chain.",
       href: "/contracts?compose=1",
       actionLabel: "Generate contract",
-      complete: contracts.length > 0
+      complete: dashboardProjectCueInputReadModel.contractTotalCount > 0
     },
     {
       key: "invoice-or-job",
@@ -520,17 +485,19 @@ export default async function DashboardPage({
       description:
         "Invoices and jobs stay connected to projects, contracts, payments, and execution.",
       href:
-        jobs.length > 0
+        dashboardProjectCueInputReadModel.jobTotalCount > 0
           ? "/invoices?compose=1#invoice-create"
           : "/jobs?compose=1#job-create",
-      actionLabel: jobs.length > 0 ? "Create invoice" : "Create job",
-      complete: invoices.length > 0 || jobs.length > 0
+      actionLabel:
+        dashboardProjectCueInputReadModel.jobTotalCount > 0
+          ? "Create invoice"
+          : "Create job",
+      complete:
+        dashboardProjectCueInputReadModel.invoiceTotalCount > 0 ||
+        dashboardProjectCueInputReadModel.jobTotalCount > 0
     }
   ];
-  const openReceivables = openInvoices.reduce(
-    (sum, invoice) => sum + Number(invoice.balanceDueAmount),
-    0
-  );
+  const openReceivables = dashboardProjectCueInputReadModel.openReceivables;
   const attentionWidget =
     notifications.visibleItems.length > 0
       ? {
@@ -870,22 +837,22 @@ export default async function DashboardPage({
           ? {
               key: "collections",
               label: "Collections",
-              title: `${overdueInvoices.length} overdue invoice${overdueInvoices.length === 1 ? "" : "s"}`,
+              title: `${overdueInvoiceCount} overdue invoice${overdueInvoiceCount === 1 ? "" : "s"}`,
               detail: `${firstOverdueInvoice.referenceNumber} is overdue and still has ${formatCurrency(firstOverdueInvoice.balanceDueAmount)} due.`,
               href: `/invoices/${firstOverdueInvoice.id}`,
               actionLabel: "Open overdue invoice",
-              countLabel: String(overdueInvoices.length),
+              countLabel: String(overdueInvoiceCount),
               status: "overdue"
             }
           : firstOpenInvoice
             ? {
                 key: "collections",
                 label: "Collections",
-                title: `${openInvoices.length} open invoice${openInvoices.length === 1 ? "" : "s"}`,
+                title: `${openInvoiceCount} open invoice${openInvoiceCount === 1 ? "" : "s"}`,
                 detail: `${firstOpenInvoice.referenceNumber} has ${formatCurrency(firstOpenInvoice.balanceDueAmount)} remaining.`,
                 href: `/invoices/${firstOpenInvoice.id}`,
                 actionLabel: "Open invoice",
-                countLabel: String(openInvoices.length),
+                countLabel: String(openInvoiceCount),
                 status: "open"
               }
             : {
@@ -1098,19 +1065,19 @@ export default async function DashboardPage({
           label: "Invoice / payment",
           value: formatCurrency(openReceivables),
           detail:
-            overdueInvoices.length > 0
+            overdueInvoiceCount > 0
               ? "Overdue balances need collection follow-through from invoice workspaces."
-              : openInvoices.length > 0
+              : openInvoiceCount > 0
                 ? "Open receivables remain tied to invoices and payments."
                 : "No open receivables are currently blocking cash collection.",
           href:
-            overdueInvoices.length > 0 || openInvoices.length > 0
+            overdueInvoiceCount > 0 || openInvoiceCount > 0
               ? "/invoices"
               : "/payments",
           tone:
-            overdueInvoices.length > 0
+            overdueInvoiceCount > 0
               ? "attention"
-              : openInvoices.length > 0
+              : openInvoiceCount > 0
                 ? "active"
                 : "ready"
         }
@@ -1650,7 +1617,10 @@ export default async function DashboardPage({
         }
       ]}
       onboardingSteps={onboardingSteps}
-      startHereForceVisible={forceFreshOnboarding || projects.length === 0}
+      startHereForceVisible={
+        forceFreshOnboarding ||
+        dashboardProjectCueInputReadModel.projectTotalCount === 0
+      }
       shortcuts={[
         {
           key: "cost-items-database",
@@ -1698,7 +1668,7 @@ export default async function DashboardPage({
           description:
             "Review estimate pipeline, send estimate follow-up, and approved work ready for contract handoff.",
           href: "/estimates",
-          metric: `${estimates.length} total`
+          metric: `${dashboardProjectCueInputReadModel.estimateTotalCount} total`
         },
         {
           key: "punchlists",

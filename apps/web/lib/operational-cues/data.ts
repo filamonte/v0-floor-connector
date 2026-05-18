@@ -24,6 +24,7 @@ import {
   listOrganizationResponsibilityDefaults,
   toOperationalCueResponsibilityDefaults
 } from "./responsibility-defaults";
+import type { OperationalCueRule } from "./types";
 
 type SupabaseRelation<T> = T | T[] | null;
 
@@ -95,7 +96,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 
 function firstRelation<T>(value: T | T[] | null | undefined) {
-  return Array.isArray(value) ? value[0] ?? null : value ?? null;
+  return Array.isArray(value) ? (value[0] ?? null) : (value ?? null);
 }
 
 function isEstimateCueRow(value: unknown): value is EstimateCueRow {
@@ -163,15 +164,19 @@ function isJobCueRow(value: unknown): value is JobCueRow {
     typeof value.company_id === "string" &&
     (value.project_id === null || typeof value.project_id === "string") &&
     typeof value.dispatch_status === "string" &&
-    (value.scheduled_date === null || typeof value.scheduled_date === "string") &&
+    (value.scheduled_date === null ||
+      typeof value.scheduled_date === "string") &&
     (value.scheduled_start_at === null ||
       typeof value.scheduled_start_at === "string") &&
-    (value.crew_vendor_id === null || typeof value.crew_vendor_id === "string") &&
+    (value.crew_vendor_id === null ||
+      typeof value.crew_vendor_id === "string") &&
     typeof value.updated_at === "string"
   );
 }
 
-function isJobAssignmentCountRow(value: unknown): value is JobAssignmentCountRow {
+function isJobAssignmentCountRow(
+  value: unknown
+): value is JobAssignmentCountRow {
   return isObject(value) && typeof value.job_id === "string";
 }
 
@@ -186,7 +191,9 @@ function mapEstimateRow(row: EstimateCueRow): OperationalCueEstimateSource {
     sentAt: row.sent_at,
     updatedAt: row.updated_at,
     customer: firstRelation(row.customers),
-    project: project ? { id: project.id ?? row.project_id, name: project.name } : null
+    project: project
+      ? { id: project.id ?? row.project_id, name: project.name }
+      : null
   };
 }
 
@@ -203,7 +210,9 @@ function mapContractRow(row: ContractCueRow): OperationalCueContractSource {
     customerViewedAt: row.customer_viewed_at,
     updatedAt: row.updated_at,
     customer: firstRelation(row.customers),
-    project: project ? { id: project.id ?? row.project_id, name: project.name } : null
+    project: project
+      ? { id: project.id ?? row.project_id, name: project.name }
+      : null
   };
 }
 
@@ -221,7 +230,9 @@ function mapInvoiceRow(row: InvoiceCueRow): OperationalCueInvoiceSource {
     balanceDueAmount: row.balance_due_amount,
     updatedAt: row.updated_at,
     customer: firstRelation(row.customers),
-    project: project ? { id: project.id ?? row.project_id, name: project.name } : null
+    project: project
+      ? { id: project.id ?? row.project_id, name: project.name }
+      : null
   };
 }
 
@@ -249,14 +260,37 @@ function mapJobRow(
 
 type CueQueryScope =
   | { kind: "dashboard" }
-  | { kind: "subject"; subjectType: "estimate" | "contract" | "invoice" | "job"; subjectId: string }
+  | {
+      kind: "subject";
+      subjectType: "estimate" | "contract" | "invoice" | "job";
+      subjectId: string;
+    }
   | { kind: "project"; projectId: string };
 
 function appliesToSubject(
   scope: CueQueryScope,
   subjectType: "estimate" | "contract" | "invoice" | "job"
 ) {
-  return scope.kind === "dashboard" || scope.kind === "project" || scope.subjectType === subjectType;
+  return (
+    scope.kind === "dashboard" ||
+    scope.kind === "project" ||
+    scope.subjectType === subjectType
+  );
+}
+
+function getEnabledRule(
+  rules: OperationalCueRule[],
+  cueKey: OperationalCueRule["cueKey"],
+  organizationId: string
+) {
+  return (
+    rules.find(
+      (rule) =>
+        rule.cueKey === cueKey &&
+        rule.enabled &&
+        rule.organizationId === organizationId
+    ) ?? null
+  );
 }
 
 async function loadOperationalCues(input: {
@@ -278,8 +312,43 @@ async function loadOperationalCues(input: {
   const contractRows: OperationalCueContractSource[] = [];
   const invoiceRows: OperationalCueInvoiceSource[] = [];
   const jobRows: OperationalCueJobSource[] = [];
+  const estimateFollowupRule = getEnabledRule(
+    rules,
+    "estimate_sent_followup",
+    input.organizationId
+  );
+  const contractSentUnsignedRule = getEnabledRule(
+    rules,
+    "contract_sent_unsigned",
+    input.organizationId
+  );
+  const contractViewedUnsignedRule = getEnabledRule(
+    rules,
+    "contract_viewed_unsigned",
+    input.organizationId
+  );
+  const invoiceOverdueRule = getEnabledRule(
+    rules,
+    "invoice_overdue",
+    input.organizationId
+  );
+  const depositInvoiceUnpaidRule = getEnabledRule(
+    rules,
+    "deposit_invoice_unpaid",
+    input.organizationId
+  );
+  const jobReadyUnscheduledRule = getEnabledRule(
+    rules,
+    "job_ready_unscheduled",
+    input.organizationId
+  );
+  const jobScheduledMissingCrewRule = getEnabledRule(
+    rules,
+    "job_scheduled_missing_crew",
+    input.organizationId
+  );
 
-  if (appliesToSubject(input.scope, "estimate")) {
+  if (estimateFollowupRule && appliesToSubject(input.scope, "estimate")) {
     let query = supabase
       .from("estimates")
       .select(
@@ -299,7 +368,9 @@ async function loadOperationalCues(input: {
 
     const response = await query;
     if (response.error) {
-      throw new Error(`Unable to load estimate operational cues: ${response.error.message}`);
+      throw new Error(
+        `Unable to load estimate operational cues: ${response.error.message}`
+      );
     }
 
     estimateRows.push(
@@ -309,14 +380,21 @@ async function loadOperationalCues(input: {
     );
   }
 
-  if (appliesToSubject(input.scope, "contract")) {
+  if (
+    (contractSentUnsignedRule || contractViewedUnsignedRule) &&
+    appliesToSubject(input.scope, "contract")
+  ) {
+    const contractStatuses = [
+      contractSentUnsignedRule ? "sent" : null,
+      contractViewedUnsignedRule ? "viewed" : null
+    ].filter((status): status is string => Boolean(status));
     let query = supabase
       .from("contracts")
       .select(
         "id, company_id, project_id, title, status, sent_at, viewed_at, customer_viewed_at, updated_at, customers(name), projects(id, name)"
       )
       .eq("company_id", input.organizationId)
-      .in("status", ["sent", "viewed"])
+      .in("status", contractStatuses)
       .order("updated_at", { ascending: false });
 
     if (input.scope.kind === "subject") {
@@ -329,7 +407,9 @@ async function loadOperationalCues(input: {
 
     const response = await query;
     if (response.error) {
-      throw new Error(`Unable to load contract operational cues: ${response.error.message}`);
+      throw new Error(
+        `Unable to load contract operational cues: ${response.error.message}`
+      );
     }
 
     contractRows.push(
@@ -339,7 +419,10 @@ async function loadOperationalCues(input: {
     );
   }
 
-  if (appliesToSubject(input.scope, "invoice")) {
+  if (
+    (invoiceOverdueRule || depositInvoiceUnpaidRule) &&
+    appliesToSubject(input.scope, "invoice")
+  ) {
     let query = supabase
       .from("invoices")
       .select(
@@ -347,7 +430,14 @@ async function loadOperationalCues(input: {
       )
       .eq("company_id", input.organizationId)
       .not("status", "in", '("paid","void")')
+      .gt("balance_due_amount", 0)
       .order("updated_at", { ascending: false });
+
+    if (invoiceOverdueRule && !depositInvoiceUnpaidRule) {
+      query = query.not("due_date", "is", null);
+    } else if (!invoiceOverdueRule && depositInvoiceUnpaidRule) {
+      query = query.eq("workflow_role", "deposit");
+    }
 
     if (input.scope.kind === "subject") {
       query = query.eq("id", input.scope.subjectId);
@@ -359,7 +449,9 @@ async function loadOperationalCues(input: {
 
     const response = await query;
     if (response.error) {
-      throw new Error(`Unable to load invoice operational cues: ${response.error.message}`);
+      throw new Error(
+        `Unable to load invoice operational cues: ${response.error.message}`
+      );
     }
 
     invoiceRows.push(
@@ -369,14 +461,21 @@ async function loadOperationalCues(input: {
     );
   }
 
-  if (appliesToSubject(input.scope, "job")) {
+  if (
+    (jobReadyUnscheduledRule || jobScheduledMissingCrewRule) &&
+    appliesToSubject(input.scope, "job")
+  ) {
+    const jobStatuses = [
+      jobReadyUnscheduledRule ? "unscheduled" : null,
+      jobScheduledMissingCrewRule ? "scheduled" : null
+    ].filter((status): status is string => Boolean(status));
     let query = supabase
       .from("jobs")
       .select(
         "id, company_id, project_id, dispatch_status, scheduled_date, scheduled_start_at, crew_vendor_id, updated_at, customers(name), projects(id, name, commercial_readiness_status, ready_to_schedule_at)"
       )
       .eq("company_id", input.organizationId)
-      .in("dispatch_status", ["unscheduled", "scheduled"])
+      .in("dispatch_status", jobStatuses)
       .order("updated_at", { ascending: false });
 
     if (input.scope.kind === "subject") {
@@ -389,7 +488,9 @@ async function loadOperationalCues(input: {
 
     const response = await query;
     if (response.error) {
-      throw new Error(`Unable to load job operational cues: ${response.error.message}`);
+      throw new Error(
+        `Unable to load job operational cues: ${response.error.message}`
+      );
     }
 
     const rawJobRows: unknown[] = Array.isArray(response.data)
@@ -413,7 +514,9 @@ async function loadOperationalCues(input: {
     }
 
     const assignmentCountsByJobId = new Map<string, number>();
-    const rawAssignmentRows: unknown[] = Array.isArray(assignmentsResponse?.data)
+    const rawAssignmentRows: unknown[] = Array.isArray(
+      assignmentsResponse?.data
+    )
       ? assignmentsResponse.data
       : [];
     const assignmentRows = rawAssignmentRows.filter(isJobAssignmentCountRow);
@@ -425,21 +528,24 @@ async function loadOperationalCues(input: {
       );
     }
 
-    jobRows.push(...validJobRows.map((job) => mapJobRow(job, assignmentCountsByJobId)));
+    jobRows.push(
+      ...validJobRows.map((job) => mapJobRow(job, assignmentCountsByJobId))
+    );
   }
 
   const now = new Date();
   const cues = deriveOperationalCues({
-      organizationId: input.organizationId,
-      now,
-      rules,
-      responsibilityDefaults:
-        toOperationalCueResponsibilityDefaults(responsibilityDefaults),
-      estimates: estimateRows,
-      contracts: contractRows,
-      invoices: invoiceRows,
-      jobs: jobRows
-    });
+    organizationId: input.organizationId,
+    now,
+    rules,
+    responsibilityDefaults: toOperationalCueResponsibilityDefaults(
+      responsibilityDefaults
+    ),
+    estimates: estimateRows,
+    contracts: contractRows,
+    invoices: invoiceRows,
+    jobs: jobRows
+  });
   const visibleCues = input.currentUserId
     ? applyCueStates({
         cues,

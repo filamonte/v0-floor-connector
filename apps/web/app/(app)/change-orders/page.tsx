@@ -7,11 +7,9 @@ import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { quickCreateChangeOrderAction } from "@/lib/change-orders/actions";
 import {
-  listChangeOrders,
-  listProjectOptionsForChangeOrders
-} from "@/lib/change-orders/data";
-import { listContracts } from "@/lib/contracts/data";
-import { listInvoices } from "@/lib/invoices/data";
+  getChangeOrdersManagerReadModel,
+  isChangeOrdersManagerView
+} from "@/lib/change-orders/manager-read-model";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getStatusBadgeClassName } from "@floorconnector/ui";
 
@@ -91,58 +89,34 @@ export default async function ChangeOrdersPage({
   if (!organizationContext) {
     return (
       <section className="rounded-3xl border border-amber-200 bg-amber-50 px-8 py-6 text-sm leading-6 text-amber-900">
-        Change orders require an active organization before they can be reviewed.
-        Sign out and back in if this account was just initialized.
+        Change orders require an active organization before they can be
+        reviewed. Sign out and back in if this account was just initialized.
       </section>
     );
   }
 
-  const [changeOrders, projects, contracts, invoices] = await Promise.all([
-    listChangeOrders(),
-    listProjectOptionsForChangeOrders(),
-    listContracts(),
-    listInvoices()
-  ]);
-
   const query = resolvedSearchParams.q?.trim() ?? "";
-  const normalizedQuery = query.toLowerCase();
-  const statusFilter = resolvedSearchParams.status ?? "all";
+  const statusFilter = isChangeOrdersManagerView(resolvedSearchParams.status)
+    ? resolvedSearchParams.status
+    : "all";
   const showComposer =
     resolvedSearchParams.compose === "1" ||
     Boolean(resolvedSearchParams.error) ||
     Boolean(resolvedSearchParams.projectId);
 
-  const draftCount = changeOrders.filter((item) => item.status === "draft").length;
-  const sentCount = changeOrders.filter((item) => item.status === "sent").length;
-  const approvedCount = changeOrders.filter((item) => item.status === "approved").length;
-  const rejectedCount = changeOrders.filter((item) => item.status === "rejected").length;
-
-  const filteredChangeOrders = changeOrders.filter((changeOrder) => {
-    const matchesStatus =
-      statusFilter === "all" ? true : changeOrder.status === statusFilter;
-    const matchesQuery =
-      normalizedQuery.length === 0
-        ? true
-        : [
-            changeOrder.title,
-            changeOrder.project?.name ?? "",
-            changeOrder.customer?.name ?? "",
-            changeOrder.contract?.title ?? "",
-            changeOrder.invoice?.referenceNumber ?? ""
-          ]
-            .join(" ")
-            .toLowerCase()
-            .includes(normalizedQuery);
-
-    return matchesStatus && matchesQuery;
+  const readModel = await getChangeOrdersManagerReadModel({
+    organizationId: organizationContext.organization.id,
+    view: statusFilter,
+    query,
+    includeQuickCreateOptions: showComposer
   });
 
   const views = [
-    { key: "all", label: "All change orders", count: changeOrders.length },
-    { key: "draft", label: "Draft", count: draftCount },
-    { key: "sent", label: "Sent", count: sentCount },
-    { key: "approved", label: "Approved", count: approvedCount },
-    { key: "rejected", label: "Rejected", count: rejectedCount }
+    { key: "all", label: "All change orders", count: readModel.counts.all },
+    { key: "draft", label: "Draft", count: readModel.counts.draft },
+    { key: "sent", label: "Sent", count: readModel.counts.sent },
+    { key: "approved", label: "Approved", count: readModel.counts.approved },
+    { key: "rejected", label: "Rejected", count: readModel.counts.rejected }
   ] as const;
 
   return (
@@ -153,15 +127,19 @@ export default async function ChangeOrdersPage({
       summary={
         <div className="grid gap-2 sm:grid-cols-4 xl:grid-cols-4">
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Draft</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+              Draft
+            </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {draftCount}
+              {readModel.counts.draft}
             </p>
           </div>
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Sent</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+              Sent
+            </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {sentCount}
+              {readModel.counts.sent}
             </p>
           </div>
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
@@ -169,7 +147,7 @@ export default async function ChangeOrdersPage({
               Approved
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {approvedCount}
+              {readModel.counts.approved}
             </p>
           </div>
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
@@ -177,7 +155,7 @@ export default async function ChangeOrdersPage({
               Rejected
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {rejectedCount}
+              {readModel.counts.rejected}
             </p>
           </div>
         </div>
@@ -185,16 +163,21 @@ export default async function ChangeOrdersPage({
       commandBar={{
         supportSlot: (
           <p>
-            Keep scope changes review-first here, then move into the full workspace to
-            prepare customer review and linked billing continuity.
+            Keep scope changes review-first here, then move into the full
+            workspace to prepare customer review and linked billing continuity.
           </p>
         ),
         searchSlot: (
-          <form action="/change-orders" className="flex flex-col gap-2 sm:flex-row">
+          <form
+            action="/change-orders"
+            className="flex flex-col gap-2 sm:flex-row"
+          >
             {statusFilter !== "all" ? (
               <input type="hidden" name="status" value={statusFilter} />
             ) : null}
-            {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
+            {showComposer ? (
+              <input type="hidden" name="compose" value="1" />
+            ) : null}
             <input
               type="search"
               name="q"
@@ -240,7 +223,9 @@ export default async function ChangeOrdersPage({
               <span
                 className={[
                   "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                  isActive
+                    ? "bg-white/15 text-white"
+                    : "bg-slate-100 text-slate-500"
                 ].join(" ")}
               >
                 {view.count}
@@ -264,7 +249,13 @@ export default async function ChangeOrdersPage({
         )
       }}
     >
-      <div className={showComposer ? "grid gap-4 xl:grid-cols-[minmax(0,1.12fr)_400px]" : "space-y-4"}>
+      <div
+        className={
+          showComposer
+            ? "grid gap-4 xl:grid-cols-[minmax(0,1.12fr)_400px]"
+            : "space-y-4"
+        }
+      >
         <section className="space-y-4">
           {resolvedSearchParams.error ? (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
@@ -293,14 +284,14 @@ export default async function ChangeOrdersPage({
                   </p>
                 </div>
                 <p className="text-sm leading-6 text-slate-500">
-                  {filteredChangeOrders.length} visible
+                  {readModel.changeOrders.length} visible
                 </p>
               </div>
             </div>
 
             <div className="divide-y divide-slate-200">
-              {filteredChangeOrders.length > 0 ? (
-                filteredChangeOrders.map((changeOrder) => (
+              {readModel.changeOrders.length > 0 ? (
+                readModel.changeOrders.map((changeOrder) => (
                   <Link
                     key={changeOrder.id}
                     href={`/change-orders/${changeOrder.id}`}
@@ -368,17 +359,17 @@ export default async function ChangeOrdersPage({
                 <div className="px-6 py-8 sm:px-8">
                   <AppEmptyState
                     eyebrow={
-                      changeOrders.length > 0
+                      readModel.counts.all > 0
                         ? "No matching change orders"
                         : "No change orders yet"
                     }
                     title={
-                      changeOrders.length > 0
+                      readModel.counts.all > 0
                         ? "Adjust the change-order filters"
                         : "Capture the first scope adjustment"
                     }
                     description={
-                      changeOrders.length > 0
+                      readModel.counts.all > 0
                         ? "Try a broader search or switch status views to find the scope adjustment you need."
                         : "Change orders keep post-contract scope, approval, and billing continuity on the same project chain instead of splitting into a side system."
                     }
@@ -406,19 +397,9 @@ export default async function ChangeOrdersPage({
         >
           <ChangeOrderQuickCreateForm
             action={quickCreateChangeOrderAction}
-            projects={projects}
-            contracts={contracts.map((contract) => ({
-              id: contract.id,
-              projectId: contract.projectId,
-              title: contract.title,
-              status: contract.status
-            }))}
-            invoices={invoices.map((invoice) => ({
-              id: invoice.id,
-              projectId: invoice.projectId,
-              referenceNumber: invoice.referenceNumber,
-              status: invoice.status
-            }))}
+            projects={readModel.projectOptions}
+            contracts={readModel.contractOptions}
+            invoices={readModel.invoiceOptions}
             defaultProjectId={resolvedSearchParams.projectId}
             defaultContractId={resolvedSearchParams.contractId}
             defaultInvoiceId={resolvedSearchParams.invoiceId}

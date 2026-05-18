@@ -4,14 +4,17 @@ import { AppEmptyState } from "@/components/app-empty-state";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
 import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
-import { listInvoices } from "@/lib/invoices/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
-import { listPaymentEvents, listPayments } from "@/lib/payments/data";
+import {
+  getPaymentsManagerReadModel,
+  isPaymentsManagerView,
+  type PaymentsManagerView
+} from "@/lib/payments/manager-read-model";
 
 type PaymentsPageProps = {
   searchParams?: Promise<{
     q?: string;
-    status?: "all" | "recorded" | "pending" | "void";
+    status?: PaymentsManagerView;
     error?: string;
     message?: string;
   }>;
@@ -46,7 +49,7 @@ function formatStatusLabel(value: string) {
 
 function buildPaymentsHref(input: {
   q?: string;
-  status?: string;
+  status?: PaymentsManagerView;
 }) {
   const searchParams = new URLSearchParams();
 
@@ -62,7 +65,9 @@ function buildPaymentsHref(input: {
   return query.length > 0 ? `/payments?${query}` : "/payments";
 }
 
-export default async function PaymentsPage({ searchParams }: PaymentsPageProps) {
+export default async function PaymentsPage({
+  searchParams
+}: PaymentsPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const user = await requireAuthenticatedUser("/payments");
   const organizationContext = await getActiveOrganizationContext(user.id);
@@ -76,90 +81,24 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
     );
   }
 
-  const [payments, paymentEvents, invoices] = await Promise.all([
-    listPayments(),
-    listPaymentEvents(),
-    listInvoices()
-  ]);
-
   const query = resolvedSearchParams.q?.trim() ?? "";
-  const normalizedQuery = query.toLowerCase();
-  const statusFilter = resolvedSearchParams.status ?? "all";
-
-  const recordedPayments = payments.filter((payment) => payment.status === "recorded");
-  const pendingPayments = payments.filter((payment) => payment.status === "pending");
-  const voidPayments = payments.filter((payment) => payment.status === "void");
-  const failedPaymentEvents = paymentEvents.filter(
-    (event) => event.eventType === "payment_failed"
-  );
-  const openInvoices = invoices.filter(
-    (invoice) => invoice.status !== "paid" && invoice.status !== "void"
-  );
-  const overdueInvoices = openInvoices.filter((invoice) => {
-    if (!invoice.dueDate) {
-      return false;
-    }
-
-    return new Date(invoice.dueDate) < new Date();
-  });
-
-  const filteredPayments = payments.filter((payment) => {
-    const matchesStatus =
-      statusFilter === "all" ? true : payment.status === statusFilter;
-    const matchesQuery =
-      normalizedQuery.length === 0
-        ? true
-        : [
-            payment.invoice?.referenceNumber ?? "",
-            payment.customer?.name ?? "",
-            payment.customer?.companyName ?? "",
-            payment.project?.name ?? "",
-            payment.paymentMethod,
-            payment.paymentSource,
-            payment.status,
-            payment.reference ?? ""
-          ]
-            .join(" ")
-            .toLowerCase()
-            .includes(normalizedQuery);
-
-    return matchesStatus && matchesQuery;
+  const statusFilter = isPaymentsManagerView(resolvedSearchParams.status)
+    ? resolvedSearchParams.status
+    : "all";
+  const readModel = await getPaymentsManagerReadModel({
+    organizationId: organizationContext.organization.id,
+    view: statusFilter,
+    query
   });
 
   const paymentViews = [
-    { key: "all", label: "All payments", count: payments.length },
-    { key: "recorded", label: "Recorded", count: recordedPayments.length },
-    { key: "pending", label: "Pending", count: pendingPayments.length },
-    { key: "void", label: "Void", count: voidPayments.length }
+    { key: "all", label: "All payments", count: readModel.counts.all },
+    { key: "recorded", label: "Recorded", count: readModel.counts.recorded },
+    { key: "pending", label: "Pending", count: readModel.counts.pending },
+    { key: "void", label: "Void", count: readModel.counts.void }
   ] as const;
 
-  const recordedTotal = recordedPayments.reduce(
-    (sum, payment) => sum + Number(payment.amount),
-    0
-  );
-  const pendingTotal = pendingPayments.reduce(
-    (sum, payment) => sum + Number(payment.amount),
-    0
-  );
-  const openReceivables = openInvoices.reduce(
-    (sum, invoice) => sum + Number(invoice.balanceDueAmount),
-    0
-  );
-  const recentRecordedPayments = recordedPayments.slice(0, 4);
-  const recentOpenInvoices = openInvoices.slice(0, 4);
-  const recentOverdueInvoices = overdueInvoices.slice(0, 4);
-  const recentFailedPayments = failedPaymentEvents.slice(0, 4);
-  const recentPayments = [...filteredPayments]
-    .sort((left, right) => {
-      const dateComparison = right.paymentDate.localeCompare(left.paymentDate);
-
-      if (dateComparison !== 0) {
-        return dateComparison;
-      }
-
-      return right.createdAt.localeCompare(left.createdAt);
-    })
-    .slice(0, 20);
+  const recentPayments = readModel.payments;
 
   return (
     <ContractorWorkspacePage
@@ -173,7 +112,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
               Recorded
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {formatMoney(recordedTotal)}
+              {formatMoney(readModel.totals.recorded)}
             </p>
           </div>
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
@@ -181,7 +120,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
               Pending
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {formatMoney(pendingTotal)}
+              {formatMoney(readModel.totals.pending)}
             </p>
           </div>
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
@@ -189,7 +128,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
               Open receivables
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {formatMoney(openReceivables)}
+              {formatMoney(readModel.totals.openReceivables)}
             </p>
           </div>
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
@@ -197,7 +136,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
               Overdue invoices
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {overdueInvoices.length}
+              {readModel.totals.overdueInvoices}
             </p>
           </div>
         </div>
@@ -205,9 +144,9 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
       commandBar={{
         supportSlot: (
           <p>
-            Use this page to review collections pressure and recent payment activity,
-            then route into the invoice workspace when a payment needs to be
-            recorded or collections follow-through needs action.
+            Use this page to review collections pressure and recent payment
+            activity, then route into the invoice workspace when a payment needs
+            to be recorded or collections follow-through needs action.
           </p>
         ),
         searchSlot: (
@@ -256,7 +195,9 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
               <span
                 className={[
                   "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                  isActive
+                    ? "bg-white/15 text-white"
+                    : "bg-slate-100 text-slate-500"
                 ].join(" ")}
               >
                 {view.count}
@@ -294,7 +235,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
             description="Invoices that still carry balance due and need follow-through on the billing chain."
             actionHref="/invoices?status=open"
             actionLabel="Open invoices"
-            items={recentOpenInvoices.map((invoice) => ({
+            items={readModel.openInvoices.map((invoice) => ({
               href: `/invoices/${invoice.id}`,
               title: invoice.referenceNumber,
               subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "Unknown project"}`,
@@ -310,7 +251,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
             description="Open invoices that are already past due and need immediate collections attention."
             actionHref="/invoices?status=open"
             actionLabel="Review overdue"
-            items={recentOverdueInvoices.map((invoice) => ({
+            items={readModel.overdueInvoices.map((invoice) => ({
               href: `/invoices/${invoice.id}`,
               title: invoice.referenceNumber,
               subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "Unknown project"}`,
@@ -328,7 +269,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
             description="Recently recorded payments tied to the same invoice and project continuity chain."
             actionHref={buildPaymentsHref({ q: query, status: "recorded" })}
             actionLabel="View recorded"
-            items={recentRecordedPayments.map((payment) => ({
+            items={readModel.recentRecordedPayments.map((payment) => ({
               href: `/invoices/${payment.invoiceId}`,
               title: payment.invoice?.referenceNumber ?? "Recorded payment",
               subtitle: `${payment.customer?.name ?? "Unknown customer"} - ${payment.project?.name ?? "Unknown project"}`,
@@ -344,7 +285,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
             description="Recent failed payment attempts that still need collections follow-through in the invoice workspace."
             actionHref="/invoices?status=open"
             actionLabel="Review invoices"
-            items={recentFailedPayments.map((event) => ({
+            items={readModel.failedPaymentEvents.map((event) => ({
               href: `/invoices/${event.invoiceId}`,
               title: event.invoice?.referenceNumber ?? "Failed payment",
               subtitle: `${event.customer?.name ?? "Unknown customer"} - ${event.project?.name ?? "Unknown project"}`,
@@ -399,7 +340,9 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
                         </Link>
                         <p className="mt-1 text-sm leading-6 text-slate-500">
                           {formatDate(payment.paymentDate)}
-                          {payment.reference ? ` - Ref ${payment.reference}` : ""}
+                          {payment.reference
+                            ? ` - Ref ${payment.reference}`
+                            : ""}
                         </p>
                       </td>
                       <td className="px-5 py-4 sm:px-6">
@@ -429,14 +372,18 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
           ) : (
             <div className="px-6 py-8 sm:px-8">
               <AppEmptyState
-                eyebrow={payments.length > 0 ? "No matching payments" : "No payments yet"}
+                eyebrow={
+                  readModel.counts.all > 0
+                    ? "No matching payments"
+                    : "No payments yet"
+                }
                 title={
-                  payments.length > 0
+                  readModel.counts.all > 0
                     ? "Adjust the payment filters"
                     : "Payment history will surface here"
                 }
                 description={
-                  payments.length > 0
+                  readModel.counts.all > 0
                     ? "Try a broader search or switch to another payment status."
                     : "Payments stay tied to invoices, customers, projects, and the wider collections chain."
                 }

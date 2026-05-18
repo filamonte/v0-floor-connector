@@ -44,7 +44,11 @@ type PunchlistProjectRelation = { id: string; name: string };
 type PunchlistJobRelation = { id: string; dispatch_status: string | null };
 type PunchlistAssigneeRelation = { id: string; display_name: string };
 type VendorRelation = { id: string; name: string };
-type PaymentCustomerRelation = { id: string; name: string; company_name: string | null };
+type PaymentCustomerRelation = {
+  id: string;
+  name: string;
+  company_name: string | null;
+};
 type PaymentInvoiceRelation = {
   id: string;
   reference_number: string;
@@ -207,6 +211,7 @@ const groupLabels: Record<GlobalSearchGroupKey, string> = {
 
 const perGroupLimit = 5;
 const perEntityCandidateLimit = 50;
+const relatedCandidateLimit = 50;
 
 function normalizeText(value: string | null | undefined) {
   return value?.trim().toLowerCase() ?? "";
@@ -214,6 +219,73 @@ function normalizeText(value: string | null | undefined) {
 
 function buildSearchText(...parts: Array<string | null | undefined>) {
   return parts.filter(Boolean).join(" ");
+}
+
+function escapeLikePattern(value: string) {
+  return value
+    .replaceAll("\\", "\\\\")
+    .replaceAll("%", "\\%")
+    .replaceAll("_", "\\_");
+}
+
+function getSearchVariants(query: string) {
+  const underscoredQuery = query.replace(/\s+/g, "_");
+
+  return Array.from(new Set([query, underscoredQuery]))
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
+function buildIlikePredicates(columns: string[], query: string) {
+  return getSearchVariants(query).flatMap((variant) => {
+    const escapedQuery = escapeLikePattern(variant);
+
+    return columns.map((column) => `${column}.ilike.%${escapedQuery}%`);
+  });
+}
+
+function buildInPredicate(column: string, values: string[]) {
+  return values.length > 0 ? [`${column}.in.(${values.join(",")})`] : [];
+}
+
+function applySearchPredicates<T extends { or: (filters: string) => T }>(
+  query: T,
+  predicates: string[]
+) {
+  return predicates.length > 0 ? query.or(predicates.join(",")) : query;
+}
+
+async function findRelatedIdsForSearch(input: {
+  table:
+    | "customers"
+    | "projects"
+    | "opportunities"
+    | "vendors"
+    | "people"
+    | "estimates"
+    | "invoices";
+  organizationId: string;
+  query: string;
+  columns: string[];
+}) {
+  const supabase = await getSupabaseServerClient();
+  const predicates = buildIlikePredicates(input.columns, input.query);
+  const response = await supabase
+    .from(input.table)
+    .select("id")
+    .eq("company_id", input.organizationId)
+    .or(predicates.join(","))
+    .limit(relatedCandidateLimit);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load global search related ${input.table}: ${response.error.message}`
+    );
+  }
+
+  return Array.isArray(response.data)
+    ? (response.data as Array<{ id: string }>).map((row) => row.id)
+    : [];
 }
 
 function firstRelated<T>(value: T | T[] | null | undefined): T | null {
@@ -295,7 +367,10 @@ function scoreMatch({
 
 function sortAndTrim(results: GlobalSearchResult[]) {
   return results
-    .sort((left, right) => right.score - left.score || left.title.localeCompare(right.title))
+    .sort(
+      (left, right) =>
+        right.score - left.score || left.title.localeCompare(right.title)
+    )
     .slice(0, perGroupLimit);
 }
 
@@ -322,11 +397,157 @@ export async function searchGlobalRecords(rawQuery: string) {
   }
 
   const organizationId = organizationContext.organization.id;
-  const tokens = query
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(Boolean);
+  const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
   const supabase = await getSupabaseServerClient();
+  const [
+    matchingCustomerIds,
+    matchingProjectIds,
+    matchingOpportunityIds,
+    matchingVendorIds,
+    matchingPersonIds,
+    matchingEstimateIds
+  ] = await Promise.all([
+    findRelatedIdsForSearch({
+      table: "customers",
+      organizationId,
+      query,
+      columns: [
+        "name",
+        "company_name",
+        "email",
+        "phone",
+        "city",
+        "state_region"
+      ]
+    }),
+    findRelatedIdsForSearch({
+      table: "projects",
+      organizationId,
+      query,
+      columns: ["name", "status"]
+    }),
+    findRelatedIdsForSearch({
+      table: "opportunities",
+      organizationId,
+      query,
+      columns: [
+        "title",
+        "prospect_name",
+        "prospect_company_name",
+        "email",
+        "phone",
+        "status"
+      ]
+    }),
+    findRelatedIdsForSearch({
+      table: "vendors",
+      organizationId,
+      query,
+      columns: ["name", "vendor_type", "primary_contact_name", "email", "phone"]
+    }),
+    findRelatedIdsForSearch({
+      table: "people",
+      organizationId,
+      query,
+      columns: [
+        "display_name",
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "job_title",
+        "trade"
+      ]
+    }),
+    findRelatedIdsForSearch({
+      table: "estimates",
+      organizationId,
+      query,
+      columns: ["reference_number", "status"]
+    })
+  ]);
+
+  const opportunityPredicates = [
+    ...buildIlikePredicates(
+      [
+        "title",
+        "prospect_name",
+        "prospect_company_name",
+        "email",
+        "phone",
+        "status"
+      ],
+      query
+    ),
+    ...buildInPredicate("customer_id", matchingCustomerIds),
+    ...buildInPredicate("project_id", matchingProjectIds)
+  ];
+  const customerPredicates = buildIlikePredicates(
+    ["name", "company_name", "email", "phone", "city", "state_region"],
+    query
+  );
+  const projectPredicates = [
+    ...buildIlikePredicates(["name", "status"], query),
+    ...buildInPredicate("customer_id", matchingCustomerIds)
+  ];
+  const appointmentPredicates = [
+    ...buildIlikePredicates(
+      ["title", "appointment_type", "location", "status"],
+      query
+    ),
+    ...buildInPredicate("opportunity_id", matchingOpportunityIds),
+    ...buildInPredicate("customer_id", matchingCustomerIds),
+    ...buildInPredicate("project_id", matchingProjectIds),
+    ...buildInPredicate("assigned_person_id", matchingPersonIds)
+  ];
+  const estimatePredicates = [
+    ...buildIlikePredicates(["reference_number", "status"], query),
+    ...buildInPredicate("customer_id", matchingCustomerIds),
+    ...buildInPredicate("project_id", matchingProjectIds)
+  ];
+  const contractPredicates = [
+    ...buildIlikePredicates(["title", "status"], query),
+    ...buildInPredicate("customer_id", matchingCustomerIds),
+    ...buildInPredicate("project_id", matchingProjectIds),
+    ...buildInPredicate("estimate_id", matchingEstimateIds)
+  ];
+  const invoicePredicates = [
+    ...buildIlikePredicates(["reference_number", "status", "due_date"], query),
+    ...buildInPredicate("customer_id", matchingCustomerIds),
+    ...buildInPredicate("project_id", matchingProjectIds),
+    ...buildInPredicate("estimate_id", matchingEstimateIds)
+  ];
+  const jobPredicates = [
+    ...buildIlikePredicates(["dispatch_status", "scheduled_date"], query),
+    ...buildInPredicate("customer_id", matchingCustomerIds),
+    ...buildInPredicate("project_id", matchingProjectIds),
+    ...buildInPredicate("estimate_id", matchingEstimateIds)
+  ];
+  const punchlistPredicates = [
+    ...buildIlikePredicates(["title", "details", "status", "due_date"], query),
+    ...buildInPredicate("project_id", matchingProjectIds),
+    ...buildInPredicate("assignee_person_id", matchingPersonIds)
+  ];
+  const paymentPredicates: string[] = [];
+  const peoplePredicates = [
+    ...buildIlikePredicates(
+      [
+        "display_name",
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "job_title",
+        "trade"
+      ],
+      query
+    ),
+    ...buildInPredicate("vendor_id", matchingVendorIds)
+  ];
+  const vendorPredicates = buildIlikePredicates(
+    ["name", "vendor_type", "primary_contact_name", "email", "phone"],
+    query
+  );
 
   const [
     opportunitiesResponse,
@@ -342,94 +563,132 @@ export async function searchGlobalRecords(rawQuery: string) {
     peopleResponse,
     vendorsResponse
   ] = await Promise.all([
-    supabase
-      .from("opportunities")
-      .select(
-        "id,title,prospect_name,prospect_company_name,email,phone,status,updated_at,customers(name,company_name),projects(id,name)"
-      )
-      .eq("company_id", organizationId)
+    applySearchPredicates(
+      supabase
+        .from("opportunities")
+        .select(
+          "id,title,prospect_name,prospect_company_name,email,phone,status,updated_at,customers(name,company_name),projects(id,name)"
+        )
+        .eq("company_id", organizationId),
+      opportunityPredicates
+    )
       .order("updated_at", { ascending: false })
       .limit(perEntityCandidateLimit),
-    supabase
-      .from("customers")
-      .select("id,name,company_name,email,phone,city,state_region,updated_at")
-      .eq("company_id", organizationId)
+    applySearchPredicates(
+      supabase
+        .from("customers")
+        .select("id,name,company_name,email,phone,city,state_region,updated_at")
+        .eq("company_id", organizationId),
+      customerPredicates
+    )
       .order("updated_at", { ascending: false })
       .limit(perEntityCandidateLimit),
-    supabase
-      .from("projects")
-      .select("id,name,status,updated_at,customers(name,company_name)")
-      .eq("company_id", organizationId)
+    applySearchPredicates(
+      supabase
+        .from("projects")
+        .select("id,name,status,updated_at,customers(name,company_name)")
+        .eq("company_id", organizationId),
+      projectPredicates
+    )
       .order("updated_at", { ascending: false })
       .limit(perEntityCandidateLimit),
-    supabase
-      .from("appointments")
-      .select(
-        "id,title,appointment_type,starts_at,location,status,opportunities(id,title),customers(name,company_name),projects(id,name),assigned_person:people!appointments_assigned_person_id_fkey(id,display_name)"
-      )
-      .eq("company_id", organizationId)
+    applySearchPredicates(
+      supabase
+        .from("appointments")
+        .select(
+          "id,title,appointment_type,starts_at,location,status,opportunities(id,title),customers(name,company_name),projects(id,name),assigned_person:people!appointments_assigned_person_id_fkey(id,display_name)"
+        )
+        .eq("company_id", organizationId),
+      appointmentPredicates
+    )
       .order("starts_at", { ascending: true })
       .limit(perEntityCandidateLimit),
-    supabase
-      .from("estimates")
-      .select(
-        "id,reference_number,status,total_amount,updated_at,customers(name,company_name),projects(id,name)"
-      )
-      .eq("company_id", organizationId)
+    applySearchPredicates(
+      supabase
+        .from("estimates")
+        .select(
+          "id,reference_number,status,total_amount,updated_at,customers(name,company_name),projects(id,name)"
+        )
+        .eq("company_id", organizationId),
+      estimatePredicates
+    )
       .order("updated_at", { ascending: false })
       .limit(perEntityCandidateLimit),
-    supabase
-      .from("contracts")
-      .select(
-        "id,title,status,updated_at,customers(name,company_name),projects(id,name),estimates(reference_number)"
-      )
-      .eq("company_id", organizationId)
+    applySearchPredicates(
+      supabase
+        .from("contracts")
+        .select(
+          "id,title,status,updated_at,customers(name,company_name),projects(id,name),estimates(reference_number)"
+        )
+        .eq("company_id", organizationId),
+      contractPredicates
+    )
       .order("updated_at", { ascending: false })
       .limit(perEntityCandidateLimit),
-    supabase
-      .from("invoices")
-      .select(
-        "id,reference_number,status,total_amount,balance_due_amount,due_date,updated_at,customers(name,company_name),projects(id,name),jobs(id)"
-      )
-      .eq("company_id", organizationId)
+    applySearchPredicates(
+      supabase
+        .from("invoices")
+        .select(
+          "id,reference_number,status,total_amount,balance_due_amount,due_date,updated_at,customers(name,company_name),projects(id,name),jobs(id)"
+        )
+        .eq("company_id", organizationId),
+      invoicePredicates
+    )
       .order("updated_at", { ascending: false })
       .limit(perEntityCandidateLimit),
-    supabase
-      .from("jobs")
-      .select(
-        "id,dispatch_status,scheduled_date,updated_at,customers(name,company_name),projects(id,name),estimates(reference_number)"
-      )
-      .eq("company_id", organizationId)
+    applySearchPredicates(
+      supabase
+        .from("jobs")
+        .select(
+          "id,dispatch_status,scheduled_date,updated_at,customers(name,company_name),projects(id,name),estimates(reference_number)"
+        )
+        .eq("company_id", organizationId),
+      jobPredicates
+    )
       .order("updated_at", { ascending: false })
       .limit(perEntityCandidateLimit),
-    supabase
-      .from("punchlist_items")
-      .select(
-        "id,title,details,due_date,status,updated_at,projects(id,name),jobs(id,dispatch_status),assignee:people!punchlist_items_assignee_person_id_fkey(id,display_name)"
-      )
-      .eq("company_id", organizationId)
+    applySearchPredicates(
+      supabase
+        .from("punchlist_items")
+        .select(
+          "id,title,details,due_date,status,updated_at,projects(id,name),jobs(id,dispatch_status),assignee:people!punchlist_items_assignee_person_id_fkey(id,display_name)"
+        )
+        .eq("company_id", organizationId),
+      punchlistPredicates
+    )
       .order("updated_at", { ascending: false })
       .limit(perEntityCandidateLimit),
-    supabase
-      .from("payments")
-      .select(
-        "id,amount,status,payment_date,payment_method,payment_source,payer_email,reference,created_at,invoices(id,reference_number,customers(id,name,company_name),projects(id,name))"
-      )
-      .eq("company_id", organizationId)
+    applySearchPredicates(
+      supabase
+        .from("payments")
+        .select(
+          "id,amount,status,payment_date,payment_method,payment_source,payer_email,reference,created_at,invoices(id,reference_number,customers(id,name,company_name),projects(id,name))"
+        )
+        .eq("company_id", organizationId),
+      paymentPredicates
+    )
       .order("created_at", { ascending: false })
       .limit(perEntityCandidateLimit),
-    supabase
-      .from("people")
-      .select(
-        "id,display_name,first_name,last_name,email,phone,job_title,trade,is_active,updated_at,vendors(id,name)"
-      )
-      .eq("company_id", organizationId)
+    applySearchPredicates(
+      supabase
+        .from("people")
+        .select(
+          "id,display_name,first_name,last_name,email,phone,job_title,trade,is_active,updated_at,vendors(id,name)"
+        )
+        .eq("company_id", organizationId),
+      peoplePredicates
+    )
       .order("updated_at", { ascending: false })
       .limit(perEntityCandidateLimit),
-    supabase
-      .from("vendors")
-      .select("id,name,vendor_type,primary_contact_name,email,phone,is_active,updated_at")
-      .eq("company_id", organizationId)
+    applySearchPredicates(
+      supabase
+        .from("vendors")
+        .select(
+          "id,name,vendor_type,primary_contact_name,email,phone,is_active,updated_at"
+        )
+        .eq("company_id", organizationId),
+      vendorPredicates
+    )
       .order("updated_at", { ascending: false })
       .limit(perEntityCandidateLimit)
   ]);
@@ -451,20 +710,31 @@ export async function searchGlobalRecords(rawQuery: string) {
   const failedResponse = responses.find((response) => response.error);
 
   if (failedResponse?.error) {
-    throw new Error(`Unable to search contractor records: ${failedResponse.error.message}`);
+    throw new Error(
+      `Unable to search contractor records: ${failedResponse.error.message}`
+    );
   }
 
-  const opportunityRows = (opportunitiesResponse.data ?? []) as unknown as OpportunitySearchRow[];
+  const opportunityRows = (opportunitiesResponse.data ??
+    []) as unknown as OpportunitySearchRow[];
   const customerRows = (customersResponse.data ?? []) as CustomerSearchRow[];
-  const projectRows = (projectsResponse.data ?? []) as unknown as ProjectSearchRow[];
-  const appointmentRows = (appointmentsResponse.data ?? []) as unknown as AppointmentSearchRow[];
-  const estimateRows = (estimatesResponse.data ?? []) as unknown as EstimateSearchRow[];
-  const contractRows = (contractsResponse.data ?? []) as unknown as ContractSearchRow[];
-  const invoiceRows = (invoicesResponse.data ?? []) as unknown as InvoiceSearchRow[];
+  const projectRows = (projectsResponse.data ??
+    []) as unknown as ProjectSearchRow[];
+  const appointmentRows = (appointmentsResponse.data ??
+    []) as unknown as AppointmentSearchRow[];
+  const estimateRows = (estimatesResponse.data ??
+    []) as unknown as EstimateSearchRow[];
+  const contractRows = (contractsResponse.data ??
+    []) as unknown as ContractSearchRow[];
+  const invoiceRows = (invoicesResponse.data ??
+    []) as unknown as InvoiceSearchRow[];
   const jobRows = (jobsResponse.data ?? []) as unknown as JobSearchRow[];
-  const punchlistRows = (punchlistsResponse.data ?? []) as unknown as PunchlistSearchRow[];
-  const paymentRows = (paymentsResponse.data ?? []) as unknown as PaymentSearchRow[];
-  const personRows = (peopleResponse.data ?? []) as unknown as PersonSearchRow[];
+  const punchlistRows = (punchlistsResponse.data ??
+    []) as unknown as PunchlistSearchRow[];
+  const paymentRows = (paymentsResponse.data ??
+    []) as unknown as PaymentSearchRow[];
+  const personRows = (peopleResponse.data ??
+    []) as unknown as PersonSearchRow[];
   const vendorRows = (vendorsResponse.data ?? []) as VendorSearchRow[];
 
   const opportunityResults = sortAndTrim(
@@ -474,7 +744,10 @@ export async function searchGlobalRecords(rawQuery: string) {
         const project = firstRelated(row.projects);
         const title = row.title || row.prospect_name;
         const subtitle =
-          customer?.name ?? row.prospect_company_name ?? project?.name ?? "Opportunity record";
+          customer?.name ??
+          row.prospect_company_name ??
+          project?.name ??
+          "Opportunity record";
         const meta = `${labelize(row.status)} · ${formatDate(row.updated_at)}`;
         const score = scoreMatch({
           title,
@@ -511,12 +784,19 @@ export async function searchGlobalRecords(rawQuery: string) {
     customerRows
       .map((row): GlobalSearchResult | null => {
         const subtitle =
-          row.company_name ?? (buildSearchText(row.city, row.state_region) || "Customer account");
-        const meta = buildSearchText(row.email, row.phone) || formatDate(row.updated_at);
+          row.company_name ??
+          (buildSearchText(row.city, row.state_region) || "Customer account");
+        const meta =
+          buildSearchText(row.email, row.phone) || formatDate(row.updated_at);
         const score = scoreMatch({
           title: row.name,
           subtitle,
-          meta: buildSearchText(meta, row.company_name, row.city, row.state_region),
+          meta: buildSearchText(
+            meta,
+            row.company_name,
+            row.city,
+            row.state_region
+          ),
           tokens
         });
 
@@ -541,7 +821,8 @@ export async function searchGlobalRecords(rawQuery: string) {
     projectRows
       .map((row): GlobalSearchResult | null => {
         const customer = firstRelated(row.customers);
-        const subtitle = customer?.name ?? customer?.company_name ?? "Project workspace";
+        const subtitle =
+          customer?.name ?? customer?.company_name ?? "Project workspace";
         const meta = `${labelize(row.status)} · ${formatDate(row.updated_at)}`;
         const score = scoreMatch({
           title: row.name,
@@ -823,7 +1104,8 @@ export async function searchGlobalRecords(rawQuery: string) {
       .map((row): GlobalSearchResult | null => {
         const vendor = firstRelated(row.vendors);
         const subtitle =
-          buildSearchText(row.job_title, row.trade, vendor?.name) || "Workforce person";
+          buildSearchText(row.job_title, row.trade, vendor?.name) ||
+          "Workforce person";
         const meta = buildSearchText(
           row.email,
           row.phone,
@@ -887,15 +1169,27 @@ export async function searchGlobalRecords(rawQuery: string) {
   );
 
   const groups = [
-    { key: "opportunity", label: groupLabels.opportunity, results: opportunityResults },
+    {
+      key: "opportunity",
+      label: groupLabels.opportunity,
+      results: opportunityResults
+    },
     { key: "customer", label: groupLabels.customer, results: customerResults },
     { key: "project", label: groupLabels.project, results: projectResults },
-    { key: "appointment", label: groupLabels.appointment, results: appointmentResults },
+    {
+      key: "appointment",
+      label: groupLabels.appointment,
+      results: appointmentResults
+    },
     { key: "estimate", label: groupLabels.estimate, results: estimateResults },
     { key: "contract", label: groupLabels.contract, results: contractResults },
     { key: "invoice", label: groupLabels.invoice, results: invoiceResults },
     { key: "job", label: groupLabels.job, results: jobResults },
-    { key: "punchlist", label: groupLabels.punchlist, results: punchlistResults },
+    {
+      key: "punchlist",
+      label: groupLabels.punchlist,
+      results: punchlistResults
+    },
     { key: "payment", label: groupLabels.payment, results: paymentResults },
     { key: "person", label: groupLabels.person, results: personResults },
     { key: "vendor", label: groupLabels.vendor, results: vendorResults }

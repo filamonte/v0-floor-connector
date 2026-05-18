@@ -28,7 +28,7 @@ import type {
   PortalAccessGrantListItem,
   PortalProjectAccessListItem
 } from "@/lib/portal-access/data";
-import type { ProjectListItem } from "@/lib/projects/data";
+import type { PeopleManagerAccessProject } from "@/lib/people/manager-read-model";
 
 type AccessStatusFilter =
   | "all"
@@ -56,8 +56,11 @@ type PeoplePortalAccessPanelProps = {
   customerContacts: DirectoryCustomerContactListItem[];
   portalAccessGrants: PortalAccessGrantListItem[];
   portalProjectAccessByGrantId: Map<string, PortalProjectAccessListItem[]>;
-  portalPermissionsByCustomerContactId: Map<string, CustomerContactPortalPermissionListItem>;
-  projectsByCustomerId: Map<string, ProjectListItem[]>;
+  portalPermissionsByCustomerContactId: Map<
+    string,
+    CustomerContactPortalPermissionListItem
+  >;
+  projectsByCustomerId: Map<string, PeopleManagerAccessProject[]>;
   canManageCustomerContacts: boolean;
   filters?: {
     query?: string;
@@ -77,7 +80,7 @@ type AccessConsoleRow = {
   customerContact: DirectoryCustomerContactListItem | null;
   grant: PortalAccessGrantListItem | null;
   storedPortalPermission: CustomerContactPortalPermissionListItem | null;
-  projects: ProjectListItem[];
+  projects: PeopleManagerAccessProject[];
   projectAccess: PortalProjectAccessListItem[];
 };
 
@@ -107,7 +110,10 @@ const authStatusFilters: Array<{ key: AuthStatusFilter; label: string }> = [
   { key: "temp_required", label: "Temp password required" }
 ];
 
-function formatLabel(value: string | null | undefined, fallback = "Not provided") {
+function formatLabel(
+  value: string | null | undefined,
+  fallback = "Not provided"
+) {
   return value?.replaceAll("_", " ") ?? fallback;
 }
 
@@ -179,12 +185,19 @@ function buildPeopleAccessHref(input: {
   return `${query.length > 0 ? `/people?${query}` : "/people"}#customer-access`;
 }
 
-function getContactName(customerContact: DirectoryCustomerContactListItem | null) {
+function getContactName(
+  customerContact: DirectoryCustomerContactListItem | null
+) {
   return customerContact?.contact?.displayName ?? "Customer-level portal grant";
 }
 
 function getContactEmail(row: AccessConsoleRow) {
-  return row.customerContact?.contact?.email ?? row.grant?.invitedEmail ?? row.grant?.portalUser?.email ?? null;
+  return (
+    row.customerContact?.contact?.email ??
+    row.grant?.invitedEmail ??
+    row.grant?.portalUser?.email ??
+    null
+  );
 }
 
 function getAccessLabel(row: AccessConsoleRow) {
@@ -224,7 +237,8 @@ function getAuthLabel(row: AccessConsoleRow) {
 }
 
 function getProjectAccessCount(row: AccessConsoleRow) {
-  return row.projectAccess.filter((access) => access.status === "active").length;
+  return row.projectAccess.filter((access) => access.status === "active")
+    .length;
 }
 
 function getProjectAccessSummary(row: AccessConsoleRow) {
@@ -238,9 +252,13 @@ function buildCustomerContactOptions(
   return customerContacts
     .filter((customerContact) => customerContact.customerId === customerId)
     .map((customerContact) => {
-      const contactName = customerContact.contact?.displayName ?? "Linked contact";
+      const contactName =
+        customerContact.contact?.displayName ?? "Linked contact";
       const contactEmail = customerContact.contact?.email?.trim() ?? "";
-      const relationshipLabel = formatLabel(customerContact.relationshipLabel, "Related contact");
+      const relationshipLabel = formatLabel(
+        customerContact.relationshipLabel,
+        "Related contact"
+      );
       const primaryLabel = customerContact.isPrimary
         ? "Main contact - recommended portal contact"
         : relationshipLabel;
@@ -255,7 +273,10 @@ function buildCustomerContactOptions(
     });
 }
 
-function findProjectAccess(projectAccess: PortalProjectAccessListItem[], projectId: string) {
+function findProjectAccess(
+  projectAccess: PortalProjectAccessListItem[],
+  projectId: string
+) {
   return projectAccess.find((access) => access.projectId === projectId) ?? null;
 }
 
@@ -282,12 +303,30 @@ function PermissionBadges({
   return (
     <div className="flex flex-wrap gap-2">
       {[
-        { label: "View estimates", enabled: storedPortalPermission.canViewEstimates },
-        { label: "Approve estimates", enabled: storedPortalPermission.canApproveEstimates },
-        { label: "Sign contracts", enabled: storedPortalPermission.canSignContracts },
-        { label: "Approve change orders", enabled: storedPortalPermission.canApproveChangeOrders },
-        { label: "View/pay invoices", enabled: storedPortalPermission.canViewPayInvoices },
-        { label: "Request new quote", enabled: storedPortalPermission.canRequestQuotes }
+        {
+          label: "View estimates",
+          enabled: storedPortalPermission.canViewEstimates
+        },
+        {
+          label: "Approve estimates",
+          enabled: storedPortalPermission.canApproveEstimates
+        },
+        {
+          label: "Sign contracts",
+          enabled: storedPortalPermission.canSignContracts
+        },
+        {
+          label: "Approve change orders",
+          enabled: storedPortalPermission.canApproveChangeOrders
+        },
+        {
+          label: "View/pay invoices",
+          enabled: storedPortalPermission.canViewPayInvoices
+        },
+        {
+          label: "Request new quote",
+          enabled: storedPortalPermission.canRequestQuotes
+        }
       ].map((permission) => (
         <span
           key={permission.label}
@@ -308,28 +347,52 @@ function ContactStatusReason({ row }: { row: AccessConsoleRow }) {
   const email = getContactEmail(row);
 
   if (!email) {
-    return <p>Contact needs an email before portal access or temporary login can be managed.</p>;
+    return (
+      <p>
+        Contact needs an email before portal access or temporary login can be
+        managed.
+      </p>
+    );
   }
 
   if (!row.grant) {
-    return <p>Create portal access for this contact before account help is available.</p>;
+    return (
+      <p>
+        Create portal access for this contact before account help is available.
+      </p>
+    );
   }
 
   if (row.grant.status === "revoked") {
-    return <p>Portal access is revoked. Reactivate access before issuing account help.</p>;
+    return (
+      <p>
+        Portal access is revoked. Reactivate access before issuing account help.
+      </p>
+    );
   }
 
-  return <p>Temporary login help is available here when invite or password support is needed.</p>;
+  return (
+    <p>
+      Temporary login help is available here when invite or password support is
+      needed.
+    </p>
+  );
 }
 
 function buildAccessRows(input: {
   customerContacts: DirectoryCustomerContactListItem[];
   portalAccessGrants: PortalAccessGrantListItem[];
   portalProjectAccessByGrantId: Map<string, PortalProjectAccessListItem[]>;
-  portalPermissionsByCustomerContactId: Map<string, CustomerContactPortalPermissionListItem>;
-  projectsByCustomerId: Map<string, ProjectListItem[]>;
+  portalPermissionsByCustomerContactId: Map<
+    string,
+    CustomerContactPortalPermissionListItem
+  >;
+  projectsByCustomerId: Map<string, PeopleManagerAccessProject[]>;
 }) {
-  const grantsByCustomerContactId = new Map<string, PortalAccessGrantListItem>();
+  const grantsByCustomerContactId = new Map<
+    string,
+    PortalAccessGrantListItem
+  >();
   const grantsWithoutContact: PortalAccessGrantListItem[] = [];
 
   for (const grant of input.portalAccessGrants) {
@@ -349,7 +412,7 @@ function buildAccessRows(input: {
 
     const grant = grantsByCustomerContactId.get(customerContact.id) ?? null;
     const projectAccess = grant
-      ? input.portalProjectAccessByGrantId.get(grant.id) ?? []
+      ? (input.portalProjectAccessByGrantId.get(grant.id) ?? [])
       : [];
 
     rows.push({
@@ -359,8 +422,10 @@ function buildAccessRows(input: {
       customerContact,
       grant,
       storedPortalPermission:
-        input.portalPermissionsByCustomerContactId.get(customerContact.id) ?? null,
-      projects: input.projectsByCustomerId.get(customerContact.customerId) ?? [],
+        input.portalPermissionsByCustomerContactId.get(customerContact.id) ??
+        null,
+      projects:
+        input.projectsByCustomerId.get(customerContact.customerId) ?? [],
       projectAccess
     });
   }
@@ -389,7 +454,9 @@ function buildAccessRows(input: {
       return customerCompare;
     }
 
-    return getContactName(a.customerContact).localeCompare(getContactName(b.customerContact));
+    return getContactName(a.customerContact).localeCompare(
+      getContactName(b.customerContact)
+    );
   });
 }
 
@@ -431,7 +498,10 @@ function filterAccessRows(
       return false;
     }
 
-    if (accessStatus === "temp_required" && !row.grant?.temporaryCredentialRequiresPasswordChange) {
+    if (
+      accessStatus === "temp_required" &&
+      !row.grant?.temporaryCredentialRequiresPasswordChange
+    ) {
       return false;
     }
 
@@ -456,7 +526,10 @@ function filterAccessRows(
       return false;
     }
 
-    if (authStatus === "temp_required" && !row.grant?.temporaryCredentialRequiresPasswordChange) {
+    if (
+      authStatus === "temp_required" &&
+      !row.grant?.temporaryCredentialRequiresPasswordChange
+    ) {
       return false;
     }
 
@@ -480,7 +553,7 @@ function AccessConsoleRowCard({
     accessStatus: filters.accessStatus,
     authStatus: filters.authStatus,
     selectedContactId: row.customerContact?.id ?? null,
-    selectedGrantId: row.customerContact ? null : row.grant?.id ?? null
+    selectedGrantId: row.customerContact ? null : (row.grant?.id ?? null)
   });
 
   return (
@@ -514,7 +587,9 @@ function AccessConsoleRowCard({
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 md:hidden">
           Customer
         </p>
-        <p className="break-words text-sm font-medium text-slate-800">{row.customer.name}</p>
+        <p className="break-words text-sm font-medium text-slate-800">
+          {row.customer.name}
+        </p>
         <p className="mt-1 break-words text-xs text-slate-500">
           {row.customer.companyName ?? row.customer.email ?? "Customer account"}
         </p>
@@ -535,7 +610,9 @@ function AccessConsoleRowCard({
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 md:hidden">
           Projects
         </p>
-        <p className="text-sm font-semibold text-slate-950">{getProjectAccessSummary(row)}</p>
+        <p className="text-sm font-semibold text-slate-950">
+          {getProjectAccessSummary(row)}
+        </p>
       </div>
       <Link
         href={manageHref}
@@ -570,7 +647,10 @@ function SelectedAccessPanel({
     row.customer.id
   );
   const availableProjects = row.projects
-    .filter((project) => !row.projectAccess.some((access) => access.projectId === project.id))
+    .filter(
+      (project) =>
+        !row.projectAccess.some((access) => access.projectId === project.id)
+    )
     .map((project) => ({
       id: project.id,
       label: project.name,
@@ -615,16 +695,27 @@ function SelectedAccessPanel({
           <section className="border border-slate-200 bg-white px-4 py-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-sm font-semibold text-slate-950">Contact profile</p>
+                <p className="text-sm font-semibold text-slate-950">
+                  Contact profile
+                </p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   {row.customerContact
-                    ? formatLabel(row.customerContact.relationshipLabel, "Related contact")
+                    ? formatLabel(
+                        row.customerContact.relationshipLabel,
+                        "Related contact"
+                      )
                     : "Legacy customer-level grant"}
                 </p>
               </div>
-              {row.customerContact && !row.customerContact.isPrimary && canManageCustomerContacts ? (
+              {row.customerContact &&
+              !row.customerContact.isPrimary &&
+              canManageCustomerContacts ? (
                 <form action={makeCustomerContactPrimaryAction}>
-                  <input type="hidden" name="customerId" value={row.customer.id} />
+                  <input
+                    type="hidden"
+                    name="customerId"
+                    value={row.customer.id}
+                  />
                   <input
                     type="hidden"
                     name="customerContactId"
@@ -663,7 +754,9 @@ function SelectedAccessPanel({
             {row.customerContact && canManageCustomerContacts ? (
               <details className="mt-4 border border-slate-200 bg-slate-50 px-3 py-3">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
-                  <span className="text-sm font-medium text-slate-950">Edit contact</span>
+                  <span className="text-sm font-medium text-slate-950">
+                    Edit contact
+                  </span>
                   <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                     Expand
                   </span>
@@ -681,7 +774,9 @@ function SelectedAccessPanel({
           </section>
 
           <section className="border border-slate-200 bg-white px-4 py-4">
-            <p className="text-sm font-semibold text-slate-950">Account access</p>
+            <p className="text-sm font-semibold text-slate-950">
+              Account access
+            </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span
                 className={`inline-flex rounded-[4px] border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${getPortalAccessStatusClasses(
@@ -701,18 +796,22 @@ function SelectedAccessPanel({
                   <p>
                     Portal email:{" "}
                     <span className="font-medium text-slate-950">
-                      {row.grant.portalUser?.email ?? row.grant.invitedEmail ?? "Not captured"}
+                      {row.grant.portalUser?.email ??
+                        row.grant.invitedEmail ??
+                        "Not captured"}
                     </span>
                   </p>
                   {row.grant.status === "invited" ? (
                     <p>
                       Customer next step:{" "}
                       <span className="font-medium text-slate-950">
-                        Use the invite, then sign up or log in with the invited email.
+                        Use the invite, then sign up or log in with the invited
+                        email.
                       </span>
                     </p>
                   ) : null}
-                  {formatDateTime(row.grant.inviteExpiresAt) && row.grant.status === "invited" ? (
+                  {formatDateTime(row.grant.inviteExpiresAt) &&
+                  row.grant.status === "invited" ? (
                     <p>
                       Invite expires:{" "}
                       <span className="font-medium text-slate-950">
@@ -745,23 +844,41 @@ function SelectedAccessPanel({
                     </p>
                   ) : (
                     <form action={updatePortalAccessGrantStatusAction}>
-                      <input type="hidden" name="portalAccessGrantId" value={row.grant.id} />
-                      <input type="hidden" name="customerId" value={row.customer.id} />
+                      <input
+                        type="hidden"
+                        name="portalAccessGrantId"
+                        value={row.grant.id}
+                      />
+                      <input
+                        type="hidden"
+                        name="customerId"
+                        value={row.customer.id}
+                      />
                       <input
                         type="hidden"
                         name="customerContactId"
                         value={row.grant.customerContactId ?? ""}
                       />
-                      <input type="hidden" name="userId" value={row.grant.userId ?? ""} />
+                      <input
+                        type="hidden"
+                        name="userId"
+                        value={row.grant.userId ?? ""}
+                      />
                       <input
                         type="hidden"
                         name="invitedEmail"
-                        value={row.grant.invitedEmail ?? row.grant.portalUser?.email ?? ""}
+                        value={
+                          row.grant.invitedEmail ??
+                          row.grant.portalUser?.email ??
+                          ""
+                        }
                       />
                       <input
                         type="hidden"
                         name="status"
-                        value={row.grant.status === "revoked" ? "active" : "revoked"}
+                        value={
+                          row.grant.status === "revoked" ? "active" : "revoked"
+                        }
                       />
                       <input type="hidden" name="returnTo" value={returnTo} />
                       <ConfirmSubmitButton
@@ -772,7 +889,9 @@ function SelectedAccessPanel({
                         }
                         className="inline-flex items-center rounded-[4px] border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                       >
-                        {row.grant.status === "revoked" ? "Reactivate access" : "Revoke access"}
+                        {row.grant.status === "revoked"
+                          ? "Reactivate access"
+                          : "Revoke access"}
                       </ConfirmSubmitButton>
                     </form>
                   )}
@@ -789,7 +908,10 @@ function SelectedAccessPanel({
                 />
               </div>
             ) : canManageCustomerContacts ? (
-              <details className="mt-4 border border-slate-200 bg-slate-50 px-3 py-3" open>
+              <details
+                className="mt-4 border border-slate-200 bg-slate-50 px-3 py-3"
+                open
+              >
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
                   <span className="text-sm font-medium text-slate-950">
                     Invite portal contact
@@ -801,8 +923,9 @@ function SelectedAccessPanel({
                 <div className="mt-4">
                   {row.customerContact?.isPrimary ? (
                     <p className="mb-4 border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm leading-6 text-emerald-900">
-                      This main customer contact is preselected as the recommended portal
-                      invite candidate. Access is still granted only when you submit this form.
+                      This main customer contact is preselected as the
+                      recommended portal invite candidate. Access is still
+                      granted only when you submit this form.
                     </p>
                   ) : null}
                   <PortalAccessGrantForm
@@ -827,13 +950,27 @@ function SelectedAccessPanel({
                 action={updatePortalAccessGrantLinkAction}
                 className="mt-4 grid gap-3 border border-slate-200 bg-slate-50 px-3 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end"
               >
-                <input type="hidden" name="portalAccessGrantId" value={row.grant.id} />
-                <input type="hidden" name="customerId" value={row.customer.id} />
-                <input type="hidden" name="userId" value={row.grant.userId ?? ""} />
+                <input
+                  type="hidden"
+                  name="portalAccessGrantId"
+                  value={row.grant.id}
+                />
+                <input
+                  type="hidden"
+                  name="customerId"
+                  value={row.customer.id}
+                />
+                <input
+                  type="hidden"
+                  name="userId"
+                  value={row.grant.userId ?? ""}
+                />
                 <input
                   type="hidden"
                   name="invitedEmail"
-                  value={row.grant.invitedEmail ?? row.grant.portalUser?.email ?? ""}
+                  value={
+                    row.grant.invitedEmail ?? row.grant.portalUser?.email ?? ""
+                  }
                 />
                 <input type="hidden" name="status" value={row.grant.status} />
                 <input type="hidden" name="returnTo" value={returnTo} />
@@ -850,7 +987,10 @@ function SelectedAccessPanel({
                       <option value="">Legacy customer-level grant</option>
                     ) : null}
                     {customerContactOptions.map((customerContact) => (
-                      <option key={customerContact.id} value={customerContact.id}>
+                      <option
+                        key={customerContact.id}
+                        value={customerContact.id}
+                      >
                         {customerContact.label}
                       </option>
                     ))}
@@ -897,13 +1037,17 @@ function SelectedAccessPanel({
               </div>
               {row.storedPortalPermission ? (
                 <p className="text-xs leading-5 text-slate-500">
-                  {formatManagementSourceLabel(row.storedPortalPermission.managementSource)}
+                  {formatManagementSourceLabel(
+                    row.storedPortalPermission.managementSource
+                  )}
                 </p>
               ) : null}
             </div>
 
             <div className="mt-3">
-              <PermissionBadges storedPortalPermission={row.storedPortalPermission} />
+              <PermissionBadges
+                storedPortalPermission={row.storedPortalPermission}
+              />
             </div>
 
             {row.grant?.customerContact ? (
@@ -911,8 +1055,16 @@ function SelectedAccessPanel({
                 action={updateCustomerContactPortalPermissionAction}
                 className="mt-4 space-y-4 border border-slate-200 bg-slate-50 px-3 py-3"
               >
-                <input type="hidden" name="portalAccessGrantId" value={row.grant.id} />
-                <input type="hidden" name="customerId" value={row.customer.id} />
+                <input
+                  type="hidden"
+                  name="portalAccessGrantId"
+                  value={row.grant.id}
+                />
+                <input
+                  type="hidden"
+                  name="customerId"
+                  value={row.customer.id}
+                />
                 <input
                   type="hidden"
                   name="customerContactId"
@@ -924,33 +1076,39 @@ function SelectedAccessPanel({
                     {
                       name: "canViewEstimates",
                       label: "View estimates",
-                      defaultChecked: row.storedPortalPermission?.canViewEstimates ?? true
+                      defaultChecked:
+                        row.storedPortalPermission?.canViewEstimates ?? true
                     },
                     {
                       name: "canApproveEstimates",
                       label: "Approve estimates",
-                      defaultChecked: row.storedPortalPermission?.canApproveEstimates ?? true
+                      defaultChecked:
+                        row.storedPortalPermission?.canApproveEstimates ?? true
                     },
                     {
                       name: "canSignContracts",
                       label: "Sign contracts",
-                      defaultChecked: row.storedPortalPermission?.canSignContracts ?? true
+                      defaultChecked:
+                        row.storedPortalPermission?.canSignContracts ?? true
                     },
                     {
                       name: "canApproveChangeOrders",
                       label: "Approve change orders",
                       defaultChecked:
-                        row.storedPortalPermission?.canApproveChangeOrders ?? true
+                        row.storedPortalPermission?.canApproveChangeOrders ??
+                        true
                     },
                     {
                       name: "canViewPayInvoices",
                       label: "View/pay invoices",
-                      defaultChecked: row.storedPortalPermission?.canViewPayInvoices ?? true
+                      defaultChecked:
+                        row.storedPortalPermission?.canViewPayInvoices ?? true
                     },
                     {
                       name: "canRequestQuotes",
                       label: "Request new quote",
-                      defaultChecked: row.storedPortalPermission?.canRequestQuotes ?? true
+                      defaultChecked:
+                        row.storedPortalPermission?.canRequestQuotes ?? true
                     }
                   ].map((permission) => (
                     <label
@@ -976,7 +1134,8 @@ function SelectedAccessPanel({
               </form>
             ) : (
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                Stored permissions become editable after this contact is linked to a portal grant.
+                Stored permissions become editable after this contact is linked
+                to a portal grant.
               </p>
             )}
           </section>
@@ -984,7 +1143,9 @@ function SelectedAccessPanel({
           <section className="border border-slate-200 bg-white px-4 py-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-sm font-semibold text-slate-950">Project access</p>
+                <p className="text-sm font-semibold text-slate-950">
+                  Project access
+                </p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
                   Explicit project visibility for this customer contact.
                 </p>
@@ -999,7 +1160,10 @@ function SelectedAccessPanel({
                 <div className="max-h-[420px] divide-y divide-slate-100 overflow-y-auto border border-slate-200">
                   {row.projects.length > 0 ? (
                     row.projects.map((project) => {
-                      const access = findProjectAccess(row.projectAccess, project.id);
+                      const access = findProjectAccess(
+                        row.projectAccess,
+                        project.id
+                      );
                       const active = access?.status === "active";
 
                       return (
@@ -1028,28 +1192,50 @@ function SelectedAccessPanel({
                                   : "border-amber-200 bg-amber-50 text-amber-900"
                             ].join(" ")}
                           >
-                            {active ? "Granted" : access ? "Revoked" : "Not granted"}
+                            {active
+                              ? "Granted"
+                              : access
+                                ? "Revoked"
+                                : "Not granted"}
                           </span>
                           {access ? (
-                            <form action={updatePortalProjectAccessStatusAction}>
+                            <form
+                              action={updatePortalProjectAccessStatusAction}
+                            >
                               <input
                                 type="hidden"
                                 name="portalProjectAccessId"
                                 value={access.id}
                               />
-                              <input type="hidden" name="customerId" value={row.customer.id} />
+                              <input
+                                type="hidden"
+                                name="customerId"
+                                value={row.customer.id}
+                              />
                               <input
                                 type="hidden"
                                 name="portalAccessGrantId"
                                 value={access.portalAccessGrantId}
                               />
-                              <input type="hidden" name="projectId" value={access.projectId} />
+                              <input
+                                type="hidden"
+                                name="projectId"
+                                value={access.projectId}
+                              />
                               <input
                                 type="hidden"
                                 name="status"
-                                value={access.status === "revoked" ? "active" : "revoked"}
+                                value={
+                                  access.status === "revoked"
+                                    ? "active"
+                                    : "revoked"
+                                }
                               />
-                              <input type="hidden" name="returnTo" value={returnTo} />
+                              <input
+                                type="hidden"
+                                name="returnTo"
+                                value={returnTo}
+                              />
                               <ConfirmSubmitButton
                                 message={
                                   access.status === "revoked"
@@ -1081,11 +1267,20 @@ function SelectedAccessPanel({
                     action={copyPortalProjectAccessFromPrimaryContactAction}
                     className="flex flex-col gap-3 border border-amber-200 bg-amber-50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <input type="hidden" name="customerId" value={row.customer.id} />
-                    <input type="hidden" name="portalAccessGrantId" value={row.grant.id} />
+                    <input
+                      type="hidden"
+                      name="customerId"
+                      value={row.customer.id}
+                    />
+                    <input
+                      type="hidden"
+                      name="portalAccessGrantId"
+                      value={row.grant.id}
+                    />
                     <input type="hidden" name="returnTo" value={returnTo} />
                     <p className="text-sm leading-6 text-amber-950">
-                      Adds or reactivates only the projects currently visible to the primary contact.
+                      Adds or reactivates only the projects currently visible to
+                      the primary contact.
                     </p>
                     <button
                       type="submit"
@@ -1096,7 +1291,8 @@ function SelectedAccessPanel({
                   </form>
                 ) : null}
 
-                {availableProjects.length > 0 && row.grant.status !== "revoked" ? (
+                {availableProjects.length > 0 &&
+                row.grant.status !== "revoked" ? (
                   <details className="border border-slate-200 bg-slate-50 px-3 py-3">
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
                       <span className="text-sm font-medium text-slate-950">
@@ -1184,11 +1380,15 @@ export function PeoplePortalAccessPanel({
           ? row.grant?.id === normalizedFilters.selectedGrantId
           : false
     ) ?? null;
-  const customers = [...new Map(rows.map((row) => [row.customer.id, row.customer])).values()].sort(
-    (a, b) => a.name.localeCompare(b.name)
-  );
-  const activeGrantCount = rows.filter((row) => row.grant?.status === "active").length;
-  const invitedGrantCount = rows.filter((row) => row.grant?.status === "invited").length;
+  const customers = [
+    ...new Map(rows.map((row) => [row.customer.id, row.customer])).values()
+  ].sort((a, b) => a.name.localeCompare(b.name));
+  const activeGrantCount = rows.filter(
+    (row) => row.grant?.status === "active"
+  ).length;
+  const invitedGrantCount = rows.filter(
+    (row) => row.grant?.status === "invited"
+  ).length;
   const tempCredentialCount = rows.filter(
     (row) => row.grant?.temporaryCredentialRequiresPasswordChange
   ).length;
@@ -1200,7 +1400,9 @@ export function PeoplePortalAccessPanel({
         accessStatus: normalizedFilters.accessStatus,
         authStatus: normalizedFilters.authStatus,
         selectedContactId: selectedRow.customerContact?.id ?? null,
-        selectedGrantId: selectedRow.customerContact ? null : selectedRow.grant?.id ?? null
+        selectedGrantId: selectedRow.customerContact
+          ? null
+          : (selectedRow.grant?.id ?? null)
       })
     : returnTo;
   const closePanelHref = buildPeopleAccessHref({
@@ -1223,8 +1425,9 @@ export function PeoplePortalAccessPanel({
             </h2>
           </div>
           <p className="max-w-2xl text-sm leading-6 text-slate-600">
-            Find a customer contact, check portal status, and manage invite, temporary login,
-            permissions, and project visibility in one focused panel.
+            Find a customer contact, check portal status, and manage invite,
+            temporary login, permissions, and project visibility in one focused
+            panel.
           </p>
         </div>
       </div>
@@ -1238,11 +1441,16 @@ export function PeoplePortalAccessPanel({
             { label: "Needs temp password", value: tempCredentialCount },
             { label: "No portal grant", value: missingGrantCount }
           ].map((metric) => (
-            <div key={metric.label} className="border border-slate-200 bg-slate-50 px-3 py-3">
+            <div
+              key={metric.label}
+              className="border border-slate-200 bg-slate-50 px-3 py-3"
+            >
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                 {metric.label}
               </p>
-              <p className="mt-1 text-xl font-semibold text-slate-950">{metric.value}</p>
+              <p className="mt-1 text-xl font-semibold text-slate-950">
+                {metric.value}
+              </p>
             </div>
           ))}
         </div>
@@ -1371,8 +1579,14 @@ export function PeoplePortalAccessPanel({
             />
           ) : (
             <AppEmptyState
-              eyebrow={rows.length > 0 ? "No contact selected" : "No customer contacts"}
-              title={rows.length > 0 ? "Choose a contact to manage" : "Customer contacts will appear here"}
+              eyebrow={
+                rows.length > 0 ? "No contact selected" : "No customer contacts"
+              }
+              title={
+                rows.length > 0
+                  ? "Choose a contact to manage"
+                  : "Customer contacts will appear here"
+              }
               description={
                 rows.length > 0
                   ? "Use Manage access on a row to open invite, temporary login, permissions, and project visibility controls for one contact."

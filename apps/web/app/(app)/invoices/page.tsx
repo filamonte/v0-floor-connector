@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { InvoiceWorkflowRole } from "@floorconnector/types";
 
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
 import { InvoiceQuickCreateForm } from "@/components/invoice-quick-create-form";
@@ -9,16 +8,21 @@ import { PerspectiveSwitcher } from "@/components/perspectives/perspective-switc
 import { RowsPerViewControl } from "@/components/rows-per-view-control";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
-import { getChangeOrderById, listChangeOrders } from "@/lib/change-orders/data";
 import { quickCreateInvoiceAction } from "@/lib/invoices/actions";
-import { listInvoices } from "@/lib/invoices/data";
-import { getEstimateById, listEstimates } from "@/lib/estimates/data";
-import { getJobById, listJobs } from "@/lib/jobs/data";
+import {
+  getInitialInvoiceContext,
+  getInvoiceQuickCreateOptions,
+  getInvoicesManagerReadModel,
+  isInvoicesManagerView,
+  type InvoicesManagerView
+} from "@/lib/invoices/manager-read-model";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
-import { buildPerspectiveSearchParams, matchesPerspective } from "@/lib/perspectives/query";
-import { parsePerspectiveView, type PerspectiveView } from "@/lib/perspectives/types";
-import { listProjects } from "@/lib/projects/data";
+import { buildPerspectiveSearchParams } from "@/lib/perspectives/query";
+import {
+  parsePerspectiveView,
+  type PerspectiveView
+} from "@/lib/perspectives/types";
 import {
   parseInvoiceListSort,
   sortInvoiceRecords
@@ -71,7 +75,9 @@ function getInvoiceQueueCue(invoice: {
   }
 
   if (invoice.status === "sent" || invoice.status === "partially_paid") {
-    const dueLabel = invoice.dueDate ? `due ${formatDate(invoice.dueDate)}` : "due date TBD";
+    const dueLabel = invoice.dueDate
+      ? `due ${formatDate(invoice.dueDate)}`
+      : "due date TBD";
     return `Collect ${formatMoney(invoice.balanceDueAmount)} - ${dueLabel}`;
   }
 
@@ -120,40 +126,9 @@ function buildInvoicesHref(input: {
   return query.length > 0 ? `/invoices?${query}` : "/invoices";
 }
 
-async function getInitialInvoiceState(
-  estimateId?: string,
-  jobId?: string,
-  changeOrderId?: string,
-  workflowRole?: string
-): Promise<{
-  projectId: string | null;
-  estimateId: string | null;
-  jobId: string | null;
-  changeOrderId: string | null;
-  workflowRole: InvoiceWorkflowRole;
-}> {
-  const resolvedWorkflowRole: InvoiceWorkflowRole =
-    workflowRole === "deposit" ? "deposit" : "standard";
-  const [estimate, job, changeOrder] = await Promise.all([
-    estimateId ? getEstimateById(estimateId, "/invoices") : Promise.resolve(null),
-    jobId ? getJobById(jobId, "/invoices") : Promise.resolve(null),
-    changeOrderId ? getChangeOrderById(changeOrderId, "/invoices") : Promise.resolve(null)
-  ]);
-
-  const sourceEstimate =
-    estimate ??
-    (job?.estimateId ? await getEstimateById(job.estimateId, "/invoices") : null);
-
-  return {
-    projectId: sourceEstimate?.projectId ?? job?.projectId ?? changeOrder?.projectId ?? null,
-    estimateId: sourceEstimate?.id ?? null,
-    jobId: job?.id ?? null,
-    changeOrderId: changeOrder?.id ?? null,
-    workflowRole: resolvedWorkflowRole
-  };
-}
-
-export default async function InvoicesPage({ searchParams }: InvoicesPageProps) {
+export default async function InvoicesPage({
+  searchParams
+}: InvoicesPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const user = await requireAuthenticatedUser("/invoices");
   const organizationContext = await getActiveOrganizationContext(user.id);
@@ -167,82 +142,33 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
     );
   }
 
-  const [
-    invoices,
-    projects,
-    estimates,
-    jobs,
-    changeOrders,
-    initialState,
-    financialSettings
-  ] = await Promise.all([
-    listInvoices(),
-    listProjects(),
-    listEstimates(),
-    listJobs(),
-    listChangeOrders(),
-    getInitialInvoiceState(
-      resolvedSearchParams.estimateId,
-      resolvedSearchParams.jobId,
-      resolvedSearchParams.changeOrderId,
-      resolvedSearchParams.workflowRole
-    ),
-    getOrganizationFinancialSettings(organizationContext.organization.id)
-  ]);
-
-  const projectOptions = projects.map((project) => ({
-    id: project.id,
-    name: project.name,
-    customerId: project.customerId,
-    customerName: project.customer?.name ?? null,
-    customerTaxExempt: project.customer?.isTaxExempt ?? false,
-    customerRetainagePercentageDefault:
-      project.customer?.retainagePercentageDefault ?? "0.00"
-  }));
-  const approvedEstimateOptions = estimates
-    .filter((estimate) => estimate.status === "approved")
-    .map((estimate) => ({
-      id: estimate.id,
-      projectId: estimate.projectId,
-      referenceNumber: estimate.referenceNumber,
-      totalAmount: estimate.totalAmount
-    }));
-  const completedJobOptions = jobs
-    .filter((job) => job.dispatchStatus === "completed")
-    .map((job) => ({
-      id: job.id,
-      projectId: job.projectId,
-      estimateReferenceNumber: job.estimate?.referenceNumber ?? null,
-      scheduledDate: job.scheduledDate
-    }));
-  const approvedChangeOrderOptions = changeOrders
-    .filter(
-      (changeOrder) =>
-        changeOrder.status === "approved" &&
-        !changeOrder.invoiceId &&
-        changeOrder.latestCommercialSnapshotItemIds.length > 0
-    )
-    .map((changeOrder) => ({
-      id: changeOrder.id,
-      projectId: changeOrder.projectId,
-      referenceNumber: changeOrder.referenceNumber,
-      title: changeOrder.title
-    }));
-
   const todayIso = new Date().toISOString().slice(0, 10);
   const query = resolvedSearchParams.q?.trim() ?? "";
-  const normalizedQuery = query.toLowerCase();
-  const statusFilter = resolvedSearchParams.status ?? "all";
+  const statusFilter: InvoicesManagerView = isInvoicesManagerView(
+    resolvedSearchParams.status
+  )
+    ? resolvedSearchParams.status
+    : "all";
   const sort = parseInvoiceListSort(resolvedSearchParams.sort);
   const perspective = parsePerspectiveView(resolvedSearchParams.view);
-  const projectFilterId = resolvedSearchParams.projectId?.trim() ?? initialState.projectId ?? "";
-  const estimateFilterId = resolvedSearchParams.estimateId?.trim() ?? initialState.estimateId ?? "";
-  const jobFilterId = resolvedSearchParams.jobId?.trim() ?? initialState.jobId ?? "";
+  const initialState = await getInitialInvoiceContext({
+    organizationId: organizationContext.organization.id,
+    projectId: resolvedSearchParams.projectId,
+    estimateId: resolvedSearchParams.estimateId,
+    jobId: resolvedSearchParams.jobId,
+    changeOrderId: resolvedSearchParams.changeOrderId,
+    workflowRole: resolvedSearchParams.workflowRole
+  });
+  const projectFilterId =
+    resolvedSearchParams.projectId?.trim() ?? initialState.projectId ?? "";
+  const estimateFilterId =
+    resolvedSearchParams.estimateId?.trim() ?? initialState.estimateId ?? "";
+  const jobFilterId =
+    resolvedSearchParams.jobId?.trim() ?? initialState.jobId ?? "";
   const changeOrderFilterId =
-    resolvedSearchParams.changeOrderId?.trim() ?? initialState.changeOrderId ?? "";
-  const projectFilter = projectFilterId
-    ? projects.find((project) => project.id === projectFilterId) ?? null
-    : null;
+    resolvedSearchParams.changeOrderId?.trim() ??
+    initialState.changeOrderId ??
+    "";
   const workflowRoleFilter =
     resolvedSearchParams.workflowRole === "deposit" ? "deposit" : undefined;
   const showComposer =
@@ -252,95 +178,37 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
     Boolean(resolvedSearchParams.estimateId) ||
     Boolean(resolvedSearchParams.jobId) ||
     Boolean(resolvedSearchParams.changeOrderId);
-  const perspectiveInvoices = invoices.filter((invoice) =>
-    matchesPerspective(
-      {
-        createdByUserId: invoice.createdByUserId,
-        updatedByUserId: invoice.updatedByUserId
-      },
+  const [readModel, financialSettings, quickCreateOptions] = await Promise.all([
+    getInvoicesManagerReadModel({
+      organizationId: organizationContext.organization.id,
+      userId: user.id,
       perspective,
-      user.id
-    )
-  );
-  const scopedInvoices = perspectiveInvoices.filter((invoice) => {
-    const matchesProject = projectFilterId ? invoice.projectId === projectFilterId : true;
-    const matchesEstimate = estimateFilterId ? invoice.estimateId === estimateFilterId : true;
-    const matchesJob = jobFilterId ? invoice.jobId === jobFilterId : true;
-    const matchesWorkflowRole = workflowRoleFilter
-      ? invoice.workflowRole === workflowRoleFilter
-      : true;
-
-    return matchesProject && matchesEstimate && matchesJob && matchesWorkflowRole;
-  });
-  const draftCount = scopedInvoices.filter((invoice) => invoice.status === "draft").length;
-  const sentCount = scopedInvoices.filter((invoice) => invoice.status === "sent").length;
-  const openCount = scopedInvoices.filter(
-    (invoice) => invoice.status !== "paid" && invoice.status !== "void"
-  ).length;
-  const partialCount = scopedInvoices.filter(
-    (invoice) => invoice.status === "partially_paid"
-  ).length;
-  const overdueCount = scopedInvoices.filter(
-    (invoice) =>
-      invoice.dueDate !== null &&
-      invoice.status !== "paid" &&
-      invoice.status !== "void" &&
-      invoice.dueDate < todayIso
-  ).length;
-  const filteredInvoices = sortInvoiceRecords(scopedInvoices.filter((invoice) => {
-    const matchesStatus =
-      statusFilter === "all"
-        ? true
-        : statusFilter === "open"
-          ? invoice.status !== "paid" && invoice.status !== "void"
-          : invoice.status === statusFilter;
-    const matchesQuery =
-      normalizedQuery.length === 0
-        ? true
-        : [
-            invoice.referenceNumber,
-            invoice.customer?.name ?? "",
-            invoice.project?.name ?? "",
-            invoice.workflowRole
-          ]
-            .join(" ")
-            .toLowerCase()
-            .includes(normalizedQuery);
-
-    return matchesStatus && matchesQuery;
-  }), sort);
+      query,
+      status: statusFilter,
+      projectId: projectFilterId || undefined,
+      estimateId: estimateFilterId || undefined,
+      jobId: jobFilterId || undefined,
+      workflowRole: workflowRoleFilter,
+      todayIso
+    }),
+    getOrganizationFinancialSettings(organizationContext.organization.id),
+    showComposer
+      ? getInvoiceQuickCreateOptions(organizationContext.organization.id)
+      : Promise.resolve(null)
+  ]);
+  const filteredInvoices = sortInvoiceRecords(readModel.invoices, sort);
   const invoiceViews = [
-    { key: "all", label: "All invoices", count: scopedInvoices.length },
-    { key: "draft", label: "Draft", count: scopedInvoices.filter((invoice) => invoice.status === "draft").length },
-    { key: "sent", label: "Sent", count: scopedInvoices.filter((invoice) => invoice.status === "sent").length },
+    { key: "all", label: "All invoices", count: readModel.counts.all },
+    { key: "draft", label: "Draft", count: readModel.counts.draft },
+    { key: "sent", label: "Sent", count: readModel.counts.sent },
     {
       key: "open",
       label: "Open balance",
-      count: scopedInvoices.filter((invoice) => invoice.status !== "paid" && invoice.status !== "void").length
+      count: readModel.counts.open
     },
-    { key: "paid", label: "Paid", count: scopedInvoices.filter((invoice) => invoice.status === "paid").length },
-    { key: "void", label: "Void", count: scopedInvoices.filter((invoice) => invoice.status === "void").length }
+    { key: "paid", label: "Paid", count: readModel.counts.paid },
+    { key: "void", label: "Void", count: readModel.counts.void }
   ] as const;
-  const awaitingPaymentQueue = scopedInvoices
-    .filter(
-      (invoice) => invoice.status === "sent" || invoice.status === "partially_paid"
-    )
-    .slice(0, 3);
-  const overdueQueue = scopedInvoices
-    .filter(
-      (invoice) =>
-        invoice.dueDate !== null &&
-        invoice.status !== "paid" &&
-        invoice.status !== "void" &&
-        invoice.dueDate < todayIso
-    )
-    .slice(0, 3);
-  const draftQueue = scopedInvoices
-    .filter((invoice) => invoice.status === "draft")
-    .slice(0, 3);
-  const recentlyPaidQueue = scopedInvoices
-    .filter((invoice) => invoice.status === "paid")
-    .slice(0, 3);
 
   return (
     <ContractorWorkspacePage
@@ -350,40 +218,84 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-md border border-[var(--border-warm)] bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">Draft</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">{draftCount}</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+              Draft
+            </p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+              {readModel.counts.draft}
+            </p>
           </div>
           <div className="rounded-md border border-[var(--border-warm)] bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">Sent</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">{sentCount}</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+              Sent
+            </p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+              {readModel.counts.sent}
+            </p>
           </div>
           <div className="rounded-md border border-[var(--border-warm)] bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">Overdue</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">{overdueCount}</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+              Overdue
+            </p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+              {readModel.counts.overdue}
+            </p>
           </div>
           <div className="rounded-md border border-[var(--border-warm)] bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">Open balance</p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">{openCount}</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+              Open balance
+            </p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+              {readModel.counts.open}
+            </p>
           </div>
         </div>
       }
       commandBar={{
         supportSlot: (
           <p>
-            Use the billing queues to spot what needs review or collection work first, then quick create the real invoice record before finishing billing details in the invoice workspace.
+            Use the billing queues to spot what needs review or collection work
+            first, then quick create the real invoice record before finishing
+            billing details in the invoice workspace.
           </p>
         ),
         searchSlot: (
           <form action="/invoices" className="flex flex-col gap-2 sm:flex-row">
-            {statusFilter !== "all" ? <input type="hidden" name="status" value={statusFilter} /> : null}
-            {sort !== "workflow" ? <input type="hidden" name="sort" value={sort} /> : null}
-            {perspective !== "company" ? <input type="hidden" name="view" value={perspective} /> : null}
-            {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
-            {projectFilterId ? <input type="hidden" name="projectId" value={projectFilterId} /> : null}
-            {estimateFilterId ? <input type="hidden" name="estimateId" value={estimateFilterId} /> : null}
-            {jobFilterId ? <input type="hidden" name="jobId" value={jobFilterId} /> : null}
-            {changeOrderFilterId ? <input type="hidden" name="changeOrderId" value={changeOrderFilterId} /> : null}
-            {workflowRoleFilter ? <input type="hidden" name="workflowRole" value={workflowRoleFilter} /> : null}
+            {statusFilter !== "all" ? (
+              <input type="hidden" name="status" value={statusFilter} />
+            ) : null}
+            {sort !== "workflow" ? (
+              <input type="hidden" name="sort" value={sort} />
+            ) : null}
+            {perspective !== "company" ? (
+              <input type="hidden" name="view" value={perspective} />
+            ) : null}
+            {showComposer ? (
+              <input type="hidden" name="compose" value="1" />
+            ) : null}
+            {projectFilterId ? (
+              <input type="hidden" name="projectId" value={projectFilterId} />
+            ) : null}
+            {estimateFilterId ? (
+              <input type="hidden" name="estimateId" value={estimateFilterId} />
+            ) : null}
+            {jobFilterId ? (
+              <input type="hidden" name="jobId" value={jobFilterId} />
+            ) : null}
+            {changeOrderFilterId ? (
+              <input
+                type="hidden"
+                name="changeOrderId"
+                value={changeOrderFilterId}
+              />
+            ) : null}
+            {workflowRoleFilter ? (
+              <input
+                type="hidden"
+                name="workflowRole"
+                value={workflowRoleFilter}
+              />
+            ) : null}
             <input
               type="search"
               name="q"
@@ -397,7 +309,10 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             >
               Search
             </button>
-            {query.length > 0 || statusFilter !== "all" || showComposer || perspective !== "company" ? (
+            {query.length > 0 ||
+            statusFilter !== "all" ||
+            showComposer ||
+            perspective !== "company" ? (
               <Link
                 href="/invoices"
                 className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
@@ -455,7 +370,9 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                   <span
                     className={[
                       "rounded-full px-2 py-0.5 text-xs font-semibold",
-                      isActive ? "bg-white/15 text-white" : "bg-[var(--highlight)] text-[var(--text-secondary)]"
+                      isActive
+                        ? "bg-white/15 text-white"
+                        : "bg-[var(--highlight)] text-[var(--text-secondary)]"
                     ].join(" ")}
                   >
                     {view.count}
@@ -469,14 +386,42 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           <>
             <form action="/invoices" className="flex items-center gap-2">
               {query ? <input type="hidden" name="q" value={query} /> : null}
-              {statusFilter !== "all" ? <input type="hidden" name="status" value={statusFilter} /> : null}
-              {perspective !== "company" ? <input type="hidden" name="view" value={perspective} /> : null}
-              {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
-              {projectFilterId ? <input type="hidden" name="projectId" value={projectFilterId} /> : null}
-              {estimateFilterId ? <input type="hidden" name="estimateId" value={estimateFilterId} /> : null}
-              {jobFilterId ? <input type="hidden" name="jobId" value={jobFilterId} /> : null}
-              {changeOrderFilterId ? <input type="hidden" name="changeOrderId" value={changeOrderFilterId} /> : null}
-              {workflowRoleFilter ? <input type="hidden" name="workflowRole" value={workflowRoleFilter} /> : null}
+              {statusFilter !== "all" ? (
+                <input type="hidden" name="status" value={statusFilter} />
+              ) : null}
+              {perspective !== "company" ? (
+                <input type="hidden" name="view" value={perspective} />
+              ) : null}
+              {showComposer ? (
+                <input type="hidden" name="compose" value="1" />
+              ) : null}
+              {projectFilterId ? (
+                <input type="hidden" name="projectId" value={projectFilterId} />
+              ) : null}
+              {estimateFilterId ? (
+                <input
+                  type="hidden"
+                  name="estimateId"
+                  value={estimateFilterId}
+                />
+              ) : null}
+              {jobFilterId ? (
+                <input type="hidden" name="jobId" value={jobFilterId} />
+              ) : null}
+              {changeOrderFilterId ? (
+                <input
+                  type="hidden"
+                  name="changeOrderId"
+                  value={changeOrderFilterId}
+                />
+              ) : null}
+              {workflowRoleFilter ? (
+                <input
+                  type="hidden"
+                  name="workflowRole"
+                  value={workflowRoleFilter}
+                />
+              ) : null}
               <label className="sr-only" htmlFor="invoice-sort">
                 Sort invoices
               </label>
@@ -501,7 +446,9 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                 Apply
               </button>
             </form>
-            <RowsPerViewControl storageKey={INVOICES_ROWS_PER_VIEW_STORAGE_KEY} />
+            <RowsPerViewControl
+              storageKey={INVOICES_ROWS_PER_VIEW_STORAGE_KEY}
+            />
             <Link
               href={
                 buildInvoicesHref({
@@ -525,286 +472,314 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         )
       }}
     >
-    <div className={showComposer ? "grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px]" : "space-y-3"}>
-      <section className="flex flex-col gap-3">
-        <div className="order-1">
-          <InvoiceRecordsPanel
-            invoices={filteredInvoices}
-            totalInvoiceCount={scopedInvoices.length}
-            storageKey={INVOICES_ROWS_PER_VIEW_STORAGE_KEY}
-            createHref={
-              buildInvoicesHref({
+      <div
+        className={
+          showComposer
+            ? "grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px]"
+            : "space-y-3"
+        }
+      >
+        <section className="flex flex-col gap-3">
+          <div className="order-1">
+            <InvoiceRecordsPanel
+              invoices={filteredInvoices}
+              totalInvoiceCount={readModel.counts.all}
+              storageKey={INVOICES_ROWS_PER_VIEW_STORAGE_KEY}
+              createHref={
+                buildInvoicesHref({
+                  q: query,
+                  status: statusFilter,
+                  compose: "1",
+                  projectId: projectFilterId || undefined,
+                  estimateId: estimateFilterId || undefined,
+                  jobId: jobFilterId || undefined,
+                  changeOrderId: changeOrderFilterId || undefined,
+                  workflowRole: workflowRoleFilter,
+                  view: perspective,
+                  sort
+                }) + "#invoice-create"
+              }
+            />
+          </div>
+
+          <section className="order-3 grid gap-3 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)_minmax(0,0.92fr)]">
+            <ManagerDashboardCard
+              eyebrow="Collections"
+              title="Sent invoices awaiting payment"
+              description="Open customer billing that has already been sent and now needs collections attention."
+              actionHref={buildInvoicesHref({
                 q: query,
-                status: statusFilter,
-                compose: "1",
+                status: "open",
+                compose: showComposer ? "1" : undefined,
                 projectId: projectFilterId || undefined,
                 estimateId: estimateFilterId || undefined,
                 jobId: jobFilterId || undefined,
                 changeOrderId: changeOrderFilterId || undefined,
-                workflowRole: workflowRoleFilter,
-                view: perspective,
-                sort
-              }) + "#invoice-create"
-            }
-          />
-        </div>
+                workflowRole: workflowRoleFilter
+              })}
+              actionLabel="View open"
+              items={readModel.awaitingPaymentQueue.map((invoice) => ({
+                href: `/invoices/${invoice.id}/edit`,
+                title: invoice.referenceNumber,
+                subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "Unknown project"}`,
+                meta: getInvoiceQueueCue(invoice),
+                badge: invoice.status,
+                trailing: formatMoney(invoice.balanceDueAmount)
+              }))}
+              emptyTitle="No invoices are waiting on payment right now."
+              emptyDescription="Open customer balances will surface here when billing needs attention."
+            />
 
-        <section className="order-3 grid gap-3 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)_minmax(0,0.92fr)]">
-          <ManagerDashboardCard
-              eyebrow="Collections"
-            title="Sent invoices awaiting payment"
-            description="Open customer billing that has already been sent and now needs collections attention."
-            actionHref={buildInvoicesHref({
-              q: query,
-              status: "open",
-              compose: showComposer ? "1" : undefined,
-              projectId: projectFilterId || undefined,
-              estimateId: estimateFilterId || undefined,
-              jobId: jobFilterId || undefined,
-              changeOrderId: changeOrderFilterId || undefined,
-              workflowRole: workflowRoleFilter
-            })}
-            actionLabel="View open"
-            items={awaitingPaymentQueue.map((invoice) => ({
-              href: `/invoices/${invoice.id}/edit`,
-              title: invoice.referenceNumber,
-              subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "Unknown project"}`,
-              meta: getInvoiceQueueCue(invoice),
-              badge: invoice.status,
-              trailing: formatMoney(invoice.balanceDueAmount)
-            }))}
-            emptyTitle="No invoices are waiting on payment right now."
-            emptyDescription="Open customer balances will surface here when billing needs attention."
-          />
+            <ManagerDashboardCard
+              eyebrow="Urgent"
+              title="Overdue invoices needing follow-up"
+              description="Past-due billing that should stay visible without burying the broader invoice workflow."
+              actionHref={buildInvoicesHref({
+                q: query,
+                status: "open",
+                compose: showComposer ? "1" : undefined,
+                projectId: projectFilterId || undefined,
+                estimateId: estimateFilterId || undefined,
+                jobId: jobFilterId || undefined,
+                changeOrderId: changeOrderFilterId || undefined,
+                workflowRole: workflowRoleFilter
+              })}
+              actionLabel="Review overdue"
+              items={readModel.overdueQueue.map((invoice) => ({
+                href: `/invoices/${invoice.id}/edit`,
+                title: invoice.referenceNumber,
+                subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "Unknown project"}`,
+                meta: `Due ${invoice.dueDate ? formatDate(invoice.dueDate) : "TBD"}`,
+                badge: "overdue",
+                trailing: formatMoney(invoice.balanceDueAmount)
+              }))}
+              emptyTitle="No overdue invoices need attention."
+              emptyDescription="When an invoice slips past due, it will show up here for collections follow-up."
+            />
 
-          <ManagerDashboardCard
-            eyebrow="Urgent"
-            title="Overdue invoices needing follow-up"
-            description="Past-due billing that should stay visible without burying the broader invoice workflow."
-            actionHref={buildInvoicesHref({
-              q: query,
-              status: "open",
-              compose: showComposer ? "1" : undefined,
-              projectId: projectFilterId || undefined,
-              estimateId: estimateFilterId || undefined,
-              jobId: jobFilterId || undefined,
-              changeOrderId: changeOrderFilterId || undefined,
-              workflowRole: workflowRoleFilter
-            })}
-            actionLabel="Review overdue"
-            items={overdueQueue.map((invoice) => ({
-              href: `/invoices/${invoice.id}/edit`,
-              title: invoice.referenceNumber,
-              subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "Unknown project"}`,
-              meta: `Due ${invoice.dueDate ? formatDate(invoice.dueDate) : "TBD"}`,
-              badge: "overdue",
-              trailing: formatMoney(invoice.balanceDueAmount)
-            }))}
-            emptyTitle="No overdue invoices need attention."
-            emptyDescription="When an invoice slips past due, it will show up here for collections follow-up."
-          />
+            <ManagerDashboardCard
+              eyebrow="Build"
+              title="Draft invoices to finish"
+              description="Build or review draft invoice detail here before sending it to the customer."
+              actionHref={buildInvoicesHref({
+                q: query,
+                status: "draft",
+                compose: showComposer ? "1" : undefined,
+                projectId: projectFilterId || undefined,
+                estimateId: estimateFilterId || undefined,
+                jobId: jobFilterId || undefined,
+                changeOrderId: changeOrderFilterId || undefined,
+                workflowRole: workflowRoleFilter
+              })}
+              actionLabel="View drafts"
+              items={readModel.draftQueue.map((invoice) => ({
+                href: `/invoices/${invoice.id}/edit`,
+                title: invoice.referenceNumber,
+                subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "Unknown project"}`,
+                meta: getInvoiceQueueCue(invoice),
+                badge: invoice.status,
+                trailing: formatMoney(invoice.totalAmount)
+              }))}
+              emptyTitle="No draft invoices need review."
+              emptyDescription="Draft invoices waiting to be finished or sent will appear here."
+            />
 
-          <ManagerDashboardCard
-            eyebrow="Build"
-            title="Draft invoices to finish"
-            description="Build or review draft invoice detail here before sending it to the customer."
-            actionHref={buildInvoicesHref({
-              q: query,
-              status: "draft",
-              compose: showComposer ? "1" : undefined,
-              projectId: projectFilterId || undefined,
-              estimateId: estimateFilterId || undefined,
-              jobId: jobFilterId || undefined,
-              changeOrderId: changeOrderFilterId || undefined,
-              workflowRole: workflowRoleFilter
-            })}
-            actionLabel="View drafts"
-            items={draftQueue.map((invoice) => ({
-              href: `/invoices/${invoice.id}/edit`,
-              title: invoice.referenceNumber,
-              subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "Unknown project"}`,
-              meta: getInvoiceQueueCue(invoice),
-              badge: invoice.status,
-              trailing: formatMoney(invoice.totalAmount)
-            }))}
-            emptyTitle="No draft invoices need review."
-            emptyDescription="Draft invoices waiting to be finished or sent will appear here."
-          />
-
-          <section className="flex h-full flex-col border border-[#e2e5e9] bg-white">
-            <div className="border-b border-[#e2e5e9] bg-[#f8fafc] px-4 py-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Billing context
-              </p>
-              <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-slate-950">
-                Billing posture
-              </h3>
-              <p className="mt-1 text-xs leading-5 text-slate-500">
-                Compact finance context for the invoice register.
-              </p>
-            </div>
-
-            <div className="flex flex-1 flex-col space-y-3 px-4 py-3">
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Tax default</p>
-                  <p className="mt-1 text-sm font-medium text-slate-800">
-                    {financialSettings.defaultTaxBehavior.replaceAll("_", " ")}
-                  </p>
-                </div>
-                <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Tax rate</p>
-                  <p className="mt-1 text-sm font-medium text-slate-800">
-                    {formatRate(financialSettings.defaultTaxRate)}
-                  </p>
-                </div>
-                <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Partially paid</p>
-                  <p className="mt-1 text-sm font-medium text-slate-800">{partialCount} invoices</p>
-                </div>
+            <section className="flex h-full flex-col border border-[#e2e5e9] bg-white">
+              <div className="border-b border-[#e2e5e9] bg-[#f8fafc] px-4 py-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Billing context
+                </p>
+                <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-slate-950">
+                  Billing posture
+                </h3>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Compact finance context for the invoice register.
+                </p>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-4">
-                  <p className="text-sm font-semibold text-slate-900">Recently settled invoices</p>
-                  <Link
-                    href={buildInvoicesHref({
-                      q: query,
-                      status: "paid",
-                      compose: showComposer ? "1" : undefined,
-                      projectId: projectFilterId || undefined,
-                      estimateId: estimateFilterId || undefined,
-                      jobId: jobFilterId || undefined,
-                      changeOrderId: changeOrderFilterId || undefined,
-                      workflowRole: workflowRoleFilter
-                    })}
-                    className="inline-flex items-center rounded-[3px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
-                  >
-                    View paid
-                  </Link>
+              <div className="flex flex-1 flex-col space-y-3 px-4 py-3">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
+                    <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+                      Tax default
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-slate-800">
+                      {financialSettings.defaultTaxBehavior.replaceAll(
+                        "_",
+                        " "
+                      )}
+                    </p>
+                  </div>
+                  <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
+                    <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+                      Tax rate
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-slate-800">
+                      {formatRate(financialSettings.defaultTaxRate)}
+                    </p>
+                  </div>
+                  <div className="rounded-md border border-[#e2e5e9] bg-white px-3 py-2.5">
+                    <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+                      Partially paid
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-slate-800">
+                      {readModel.counts.partially_paid} invoices
+                    </p>
+                  </div>
                 </div>
 
-                <div className="divide-y divide-[#e5e7eb] border border-[#e2e5e9] bg-white">
-                  {recentlyPaidQueue.length > 0 ? (
-                    recentlyPaidQueue.map((invoice) => (
-                      <Link
-                        key={invoice.id}
-                        href={`/invoices/${invoice.id}/edit`}
-                        className="group flex items-start justify-between gap-4 px-4 py-3 transition hover:bg-[#f8fafc]"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-slate-950 transition group-hover:text-brand-700">
-                            {invoice.referenceNumber}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="text-sm font-semibold text-slate-900">
+                      Recently settled invoices
+                    </p>
+                    <Link
+                      href={buildInvoicesHref({
+                        q: query,
+                        status: "paid",
+                        compose: showComposer ? "1" : undefined,
+                        projectId: projectFilterId || undefined,
+                        estimateId: estimateFilterId || undefined,
+                        jobId: jobFilterId || undefined,
+                        changeOrderId: changeOrderFilterId || undefined,
+                        workflowRole: workflowRoleFilter
+                      })}
+                      className="inline-flex items-center rounded-[3px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                    >
+                      View paid
+                    </Link>
+                  </div>
+
+                  <div className="divide-y divide-[#e5e7eb] border border-[#e2e5e9] bg-white">
+                    {readModel.recentlyPaidQueue.length > 0 ? (
+                      readModel.recentlyPaidQueue.map((invoice) => (
+                        <Link
+                          key={invoice.id}
+                          href={`/invoices/${invoice.id}/edit`}
+                          className="group flex items-start justify-between gap-4 px-4 py-3 transition hover:bg-[#f8fafc]"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-slate-950 transition group-hover:text-brand-700">
+                              {invoice.referenceNumber}
+                            </p>
+                            <p className="mt-1 text-sm leading-6 text-slate-600">
+                              {invoice.customer?.name ?? "Unknown customer"} -{" "}
+                              {invoice.project?.name ?? "Unknown project"}
+                            </p>
+                            <p className="mt-1 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+                              Paid - updated {formatDate(invoice.updatedAt)}
+                            </p>
+                          </div>
+                          <p className="shrink-0 text-sm font-semibold text-slate-900">
+                            {formatMoney(invoice.totalAmount)}
                           </p>
-                          <p className="mt-1 text-sm leading-6 text-slate-600">
-                            {invoice.customer?.name ?? "Unknown customer"} - {invoice.project?.name ?? "Unknown project"}
-                          </p>
-                          <p className="mt-1 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
-                            Paid - updated {formatDate(invoice.updatedAt)}
-                          </p>
-                        </div>
-                        <p className="shrink-0 text-sm font-semibold text-slate-900">
-                          {formatMoney(invoice.totalAmount)}
+                        </Link>
+                      ))
+                    ) : (
+                      <div className="px-4 py-4">
+                        <p className="text-sm font-semibold text-slate-900">
+                          No recently paid invoices yet.
                         </p>
-                      </Link>
-                    ))
-                  ) : (
-                    <div className="px-4 py-4">
-                      <p className="text-sm font-semibold text-slate-900">No recently paid invoices yet.</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-500">
-                        Settled billing will surface here once invoices complete the payment flow.
-                      </p>
-                    </div>
-                  )}
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                          Settled billing will surface here once invoices
+                          complete the payment flow.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            </section>
           </section>
+
+          {resolvedSearchParams.error ? (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+              {resolvedSearchParams.error}
+            </div>
+          ) : null}
+
+          {resolvedSearchParams.message ? (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+              {resolvedSearchParams.message}
+            </div>
+          ) : null}
+
+          {projectFilterId ||
+          estimateFilterId ||
+          jobFilterId ||
+          changeOrderFilterId ||
+          workflowRoleFilter ? (
+            <div className="order-2 flex flex-col gap-3 border border-[#e2e5e9] bg-white px-4 py-3 text-sm leading-6 text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+              <p>
+                Billing context is scoped to{" "}
+                <span className="font-semibold text-slate-900">
+                  {initialState.projectName ?? "the selected source"}
+                </span>
+                . Quick create will keep the same project, estimate, job, change
+                order, and workflow role where those were provided.
+              </p>
+              <Link
+                href="/invoices"
+                className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+              >
+                Clear context
+              </Link>
+            </div>
+          ) : null}
         </section>
-
-        {resolvedSearchParams.error ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
-            {resolvedSearchParams.error}
-          </div>
-        ) : null}
-
-        {resolvedSearchParams.message ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
-            {resolvedSearchParams.message}
-          </div>
-        ) : null}
-
-        {projectFilterId || estimateFilterId || jobFilterId || changeOrderFilterId || workflowRoleFilter ? (
-          <div className="order-2 flex flex-col gap-3 border border-[#e2e5e9] bg-white px-4 py-3 text-sm leading-6 text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-            <p>
-              Billing context is scoped to{" "}
-              <span className="font-semibold text-slate-900">
-                {projectFilter?.name ?? "the selected source"}
-              </span>
-              . Quick create will keep the same project, estimate, job, change order, and workflow
-              role where those were provided.
-            </p>
-            <Link
-              href="/invoices"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
-            >
-              Clear context
-            </Link>
-          </div>
-        ) : null}
-
-      </section>
         <WorkspaceComposerSheet
           id="invoice-create"
           title="Quick create invoice"
           description="Create the invoice first, then finish line items, review, send, and payment readiness inside the invoice workspace."
-        open={showComposer}
-        openHref={
-          buildInvoicesHref({
+          open={showComposer}
+          openHref={
+            buildInvoicesHref({
+              q: query,
+              status: statusFilter,
+              compose: "1",
+              projectId: projectFilterId || undefined,
+              estimateId: estimateFilterId || undefined,
+              jobId: jobFilterId || undefined,
+              changeOrderId: changeOrderFilterId || undefined,
+              workflowRole: workflowRoleFilter,
+              sort
+            }) + "#invoice-create"
+          }
+          closeHref={buildInvoicesHref({
             q: query,
             status: statusFilter,
-            compose: "1",
             projectId: projectFilterId || undefined,
             estimateId: estimateFilterId || undefined,
             jobId: jobFilterId || undefined,
             changeOrderId: changeOrderFilterId || undefined,
             workflowRole: workflowRoleFilter,
             sort
-          }) + "#invoice-create"
-        }
-        closeHref={buildInvoicesHref({
-          q: query,
-          status: statusFilter,
-          projectId: projectFilterId || undefined,
-          estimateId: estimateFilterId || undefined,
-          jobId: jobFilterId || undefined,
-          changeOrderId: changeOrderFilterId || undefined,
-          workflowRole: workflowRoleFilter,
-          sort
-        })}
-        openLabel="Open invoice quick create"
-      >
-        {projectOptions.length > 0 ? (
-          <InvoiceQuickCreateForm
-            action={quickCreateInvoiceAction}
-            projects={projectOptions}
-            approvedEstimates={approvedEstimateOptions}
-            completedJobs={completedJobOptions}
-            approvedChangeOrders={approvedChangeOrderOptions}
-            initialProjectId={resolvedSearchParams.projectId ?? initialState.projectId}
-            initialEstimateId={initialState.estimateId}
-            initialJobId={initialState.jobId}
-            initialChangeOrderId={changeOrderFilterId}
-            initialWorkflowRole={initialState.workflowRole}
-            errorMessage={resolvedSearchParams.error ?? null}
-          />
-        ) : (
-          <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-            Add at least one project before creating an invoice.
-          </div>
-        )}
-      </WorkspaceComposerSheet>
-    </div>
+          })}
+          openLabel="Open invoice quick create"
+        >
+          {quickCreateOptions && quickCreateOptions.projects.length > 0 ? (
+            <InvoiceQuickCreateForm
+              action={quickCreateInvoiceAction}
+              projects={quickCreateOptions.projects}
+              approvedEstimates={quickCreateOptions.approvedEstimates}
+              completedJobs={quickCreateOptions.completedJobs}
+              approvedChangeOrders={quickCreateOptions.approvedChangeOrders}
+              initialProjectId={
+                resolvedSearchParams.projectId ?? initialState.projectId
+              }
+              initialEstimateId={initialState.estimateId}
+              initialJobId={initialState.jobId}
+              initialChangeOrderId={changeOrderFilterId}
+              initialWorkflowRole={initialState.workflowRole}
+              errorMessage={resolvedSearchParams.error ?? null}
+            />
+          ) : (
+            <div className="rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+              Add at least one project before creating an invoice.
+            </div>
+          )}
+        </WorkspaceComposerSheet>
+      </div>
     </ContractorWorkspacePage>
   );
 }

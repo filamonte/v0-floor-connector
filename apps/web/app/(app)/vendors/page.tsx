@@ -4,12 +4,13 @@ import { AppEmptyState } from "@/components/app-empty-state";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
 import { VendorForm } from "@/components/vendor-form";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
-import { listComplianceRecords } from "@/lib/compliance/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
-import { listPeople } from "@/lib/people/data";
 import { createVendorAction } from "@/lib/vendors/actions";
-import { listVendors } from "@/lib/vendors/data";
+import {
+  getVendorsManagerReadModel,
+  isVendorsManagerView
+} from "@/lib/vendors/manager-read-model";
 
 type VendorsPageProps = {
   searchParams?: Promise<{
@@ -58,72 +59,21 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
     );
   }
 
-  const [vendors, people, complianceRecords] = await Promise.all([
-    listVendors(),
-    listPeople(),
-    listComplianceRecords()
-  ]);
-
   const query = resolvedSearchParams.q?.trim() ?? "";
-  const normalizedQuery = query.toLowerCase();
-  const view = resolvedSearchParams.view ?? "all";
+  const view = isVendorsManagerView(resolvedSearchParams.view)
+    ? resolvedSearchParams.view
+    : "all";
   const showComposer =
     resolvedSearchParams.compose === "1" || Boolean(resolvedSearchParams.error);
-  const laborProviderCount = vendors.filter((vendor) => vendor.isLaborProvider).length;
-  const activeCount = vendors.filter((vendor) => vendor.isActive).length;
-  const linkedPeopleByVendorId = new Map<string, number>();
-  const complianceCountByVendorId = new Map<string, number>();
-
-  for (const person of people) {
-    if (!person.vendorId) {
-      continue;
-    }
-
-    linkedPeopleByVendorId.set(
-      person.vendorId,
-      (linkedPeopleByVendorId.get(person.vendorId) ?? 0) + 1
-    );
-  }
-
-  for (const record of complianceRecords) {
-    if (record.subjectType !== "vendor") {
-      continue;
-    }
-
-    complianceCountByVendorId.set(
-      record.subjectId,
-      (complianceCountByVendorId.get(record.subjectId) ?? 0) + 1
-    );
-  }
-
-  const filteredVendors = vendors.filter((vendor) => {
-    const matchesView =
-      view === "all"
-        ? true
-        : view === "labor"
-          ? vendor.isLaborProvider
-          : vendor.isActive;
-    const matchesQuery =
-      normalizedQuery.length === 0
-        ? true
-        : [
-            vendor.name,
-            vendor.primaryContactName ?? "",
-            vendor.email ?? "",
-            vendor.city ?? "",
-            vendor.stateRegion ?? "",
-            vendor.vendorType
-          ]
-            .join(" ")
-            .toLowerCase()
-            .includes(normalizedQuery);
-
-    return matchesView && matchesQuery;
+  const readModel = await getVendorsManagerReadModel({
+    organizationId: organizationContext.organization.id,
+    view,
+    query
   });
   const vendorViews = [
-    { key: "all", label: "All vendors", count: vendors.length },
-    { key: "labor", label: "Labor providers", count: laborProviderCount },
-    { key: "active", label: "Active", count: activeCount }
+    { key: "all", label: "All vendors", count: readModel.counts.all },
+    { key: "labor", label: "Labor providers", count: readModel.counts.labor },
+    { key: "active", label: "Active", count: readModel.counts.active }
   ] as const;
 
   return (
@@ -134,29 +84,47 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
       summary={
         <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-3">
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Total</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">{vendors.length}</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+              Total
+            </p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
+              {readModel.counts.all}
+            </p>
           </div>
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Labor providers</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">{laborProviderCount}</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+              Labor providers
+            </p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
+              {readModel.counts.labor}
+            </p>
           </div>
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">Active</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">{activeCount}</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+              Active
+            </p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
+              {readModel.counts.active}
+            </p>
           </div>
         </div>
       }
       commandBar={{
         supportSlot: (
           <p>
-            Search the subcontractor and supplier roster, filter for active or labor-provider companies, and open the vendor composer only when you need a new record.
+            Search the subcontractor and supplier roster, filter for active or
+            labor-provider companies, and open the vendor composer only when you
+            need a new record.
           </p>
         ),
         searchSlot: (
           <form action="/vendors" className="flex flex-col gap-2 sm:flex-row">
-            {view !== "all" ? <input type="hidden" name="view" value={view} /> : null}
-            {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
+            {view !== "all" ? (
+              <input type="hidden" name="view" value={view} />
+            ) : null}
+            {showComposer ? (
+              <input type="hidden" name="compose" value="1" />
+            ) : null}
             <input
               type="search"
               name="q"
@@ -186,7 +154,11 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
           return (
             <Link
               key={vendorView.key}
-              href={buildVendorsHref({ q: query, view: vendorView.key, compose: showComposer ? "1" : undefined })}
+              href={buildVendorsHref({
+                q: query,
+                view: vendorView.key,
+                compose: showComposer ? "1" : undefined
+              })}
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
@@ -198,7 +170,9 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
               <span
                 className={[
                   "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                  isActive
+                    ? "bg-white/15 text-white"
+                    : "bg-slate-100 text-slate-500"
                 ].join(" ")}
               >
                 {vendorView.count}
@@ -208,7 +182,10 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
         }),
         actionSlot: (
           <Link
-            href={buildVendorsHref({ q: query, view, compose: "1" }) + "#vendor-create"}
+            href={
+              buildVendorsHref({ q: query, view, compose: "1" }) +
+              "#vendor-create"
+            }
             className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
           >
             New vendor
@@ -216,7 +193,13 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
         )
       }}
     >
-      <div className={showComposer ? "grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_400px]" : "space-y-4"}>
+      <div
+        className={
+          showComposer
+            ? "grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_400px]"
+            : "space-y-4"
+        }
+      >
         <section className="space-y-6">
           {resolvedSearchParams.error ? (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
@@ -244,14 +227,16 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
                   </p>
                 </div>
                 <p className="text-sm leading-6 text-slate-500">
-                  {filteredVendors.length} visible
+                  {readModel.vendors.length === readModel.matchingCount
+                    ? `${readModel.vendors.length} visible`
+                    : `Showing ${readModel.vendors.length} of ${readModel.matchingCount}`}
                 </p>
               </div>
             </div>
 
             <div className="divide-y divide-slate-200">
-              {filteredVendors.length > 0 ? (
-                filteredVendors.map((vendor) => (
+              {readModel.vendors.length > 0 ? (
+                readModel.vendors.map((vendor) => (
                   <Link
                     key={vendor.id}
                     href={`/vendors/${vendor.id}`}
@@ -263,11 +248,15 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
                           {vendor.name}
                         </h3>
                         <p className="mt-2 text-sm leading-6 text-slate-500">
-                          {vendor.primaryContactName ?? vendor.email ?? "No contact added yet"}
+                          {vendor.primaryContactName ??
+                            vendor.email ??
+                            "No contact added yet"}
                         </p>
                         <p className="mt-1 text-sm leading-6 text-slate-500">
                           {vendor.city || vendor.stateRegion
-                            ? [vendor.city, vendor.stateRegion].filter(Boolean).join(", ")
+                            ? [vendor.city, vendor.stateRegion]
+                                .filter(Boolean)
+                                .join(", ")
                             : "No location added yet"}
                         </p>
                       </div>
@@ -279,7 +268,9 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
                           {vendor.vendorType}
                         </p>
                         <p className="mt-1 text-sm leading-6 text-slate-500">
-                          {vendor.isLaborProvider ? "Labor provider" : "Company only"}
+                          {vendor.isLaborProvider
+                            ? "Labor provider"
+                            : "Company only"}
                         </p>
                       </div>
                       <div className="md:text-right">
@@ -287,12 +278,25 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
                           Operational context
                         </p>
                         <span className="inline-flex rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
-                          {linkedPeopleByVendorId.get(vendor.id) ?? 0} worker
-                          {(linkedPeopleByVendorId.get(vendor.id) ?? 0) === 1 ? "" : "s"}
+                          {readModel.linkedPeopleCountByVendorId.get(
+                            vendor.id
+                          ) ?? 0}{" "}
+                          worker
+                          {(readModel.linkedPeopleCountByVendorId.get(
+                            vendor.id
+                          ) ?? 0) === 1
+                            ? ""
+                            : "s"}
                         </span>
                         <p className="mt-2 text-sm leading-6 text-slate-500">
-                          {complianceCountByVendorId.get(vendor.id) ?? 0} compliance record
-                          {(complianceCountByVendorId.get(vendor.id) ?? 0) === 1 ? "" : "s"}
+                          {readModel.complianceCountByVendorId.get(vendor.id) ??
+                            0}{" "}
+                          compliance record
+                          {(readModel.complianceCountByVendorId.get(
+                            vendor.id
+                          ) ?? 0) === 1
+                            ? ""
+                            : "s"}
                         </p>
                       </div>
                     </div>
@@ -301,10 +305,18 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
               ) : (
                 <div className="px-6 py-8 sm:px-8">
                   <AppEmptyState
-                    eyebrow={vendors.length > 0 ? "No matching vendors" : "No vendors yet"}
-                    title={vendors.length > 0 ? "Adjust the vendor filters" : "Create the first vendor"}
+                    eyebrow={
+                      readModel.counts.all > 0
+                        ? "No matching vendors"
+                        : "No vendors yet"
+                    }
+                    title={
+                      readModel.counts.all > 0
+                        ? "Adjust the vendor filters"
+                        : "Create the first vendor"
+                    }
                     description={
-                      vendors.length > 0
+                      readModel.counts.all > 0
                         ? "Try a broader search or switch views to find the vendor record you need."
                         : "Vendor companies anchor subcontract labor and external compliance without creating a separate subcontractor-only silo."
                     }
@@ -320,7 +332,10 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
           title="Create vendor"
           description="Add a subcontractor or supplier company inside the active organization."
           open={showComposer}
-          openHref={buildVendorsHref({ q: query, view, compose: "1" }) + "#vendor-create"}
+          openHref={
+            buildVendorsHref({ q: query, view, compose: "1" }) +
+            "#vendor-create"
+          }
           closeHref={buildVendorsHref({ q: query, view })}
           openLabel="Open vendor composer"
         >

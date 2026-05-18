@@ -12,18 +12,22 @@ import { JobQuickCreateForm } from "@/components/job-quick-create-form";
 import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { quickCreateJobAction } from "@/lib/jobs/actions";
-import type { JobListItem } from "@/lib/jobs/data";
-import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
-import { listProjects } from "@/lib/projects/data";
+import {
+  getJobQuickCreateOptions,
+  getJobsManagerReadModel,
+  isJobsManagerView,
+  type JobsManagerJob,
+  type JobsManagerView
+} from "@/lib/jobs/manager-read-model";
+import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { buildScheduleHref } from "@/lib/schedule/links";
 import { getStatusBadgeClassName } from "@floorconnector/ui";
-
-type JobView = "all" | "unscheduled" | "scheduled" | "in_progress" | "completed";
 
 type JobsPageProps = {
   searchParams?: Promise<{
     q?: string;
-    view?: JobView;
+    view?: JobsManagerView;
     compose?: string;
     projectId?: string;
     estimateId?: string;
@@ -38,14 +42,16 @@ function formatStatusLabel(status: string) {
 }
 
 function formatDate(value: string | null) {
-  return value ? new Date(`${value}T00:00:00`).toLocaleDateString() : "Unscheduled";
+  return value
+    ? new Date(`${value}T00:00:00`).toLocaleDateString()
+    : "Unscheduled";
 }
 
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString();
 }
 
-function getJobContinuityCue(job: JobListItem, assignmentCount: number) {
+function getJobContinuityCue(job: JobsManagerJob) {
   if (job.dispatchStatus === "unscheduled") {
     return "Next: schedule job";
   }
@@ -54,7 +60,7 @@ function getJobContinuityCue(job: JobListItem, assignmentCount: number) {
     return "Next: assign crew vendor";
   }
 
-  if (job.dispatchStatus === "scheduled" && assignmentCount === 0) {
+  if (job.dispatchStatus === "scheduled" && job.assignmentCount === 0) {
     return "Next: add crew assignments";
   }
 
@@ -73,7 +79,7 @@ function getJobContinuityCue(job: JobListItem, assignmentCount: number) {
   return "Review job workspace";
 }
 
-function getJobPrimaryAction(job: JobListItem) {
+function getJobPrimaryAction(job: JobsManagerJob) {
   switch (job.dispatchStatus) {
     case "unscheduled":
       return {
@@ -91,7 +97,7 @@ function getJobPrimaryAction(job: JobListItem) {
   }
 }
 
-function getJobScheduleActionHref(job: JobListItem) {
+function getJobScheduleActionHref(job: JobsManagerJob) {
   return (
     buildScheduleHref({
       projectId: job.projectId,
@@ -107,7 +113,7 @@ function getJobScheduleActionHref(job: JobListItem) {
 
 function buildJobsHref(input: {
   q?: string;
-  view?: JobView;
+  view?: JobsManagerView;
   compose?: string;
   projectId?: string;
   estimateId?: string;
@@ -145,73 +151,55 @@ function buildJobsHref(input: {
 
 export default async function JobsPage({ searchParams }: JobsPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
-  const [jobs, projects] = await Promise.all([listJobs(), listProjects()]);
+  const user = await requireAuthenticatedUser("/jobs");
+  const organizationContext = await getActiveOrganizationContext(user.id);
+
+  if (!organizationContext) {
+    return (
+      <section className="rounded-3xl border border-amber-200 bg-amber-50 px-8 py-6 text-sm leading-6 text-amber-900">
+        Job records need an active organization before they can be created. Sign
+        out and back in if this account was just initialized.
+      </section>
+    );
+  }
+
   const query = resolvedSearchParams.q?.trim() ?? "";
-  const normalizedQuery = query.toLowerCase();
-  const view = resolvedSearchParams.view ?? "all";
+  const view: JobsManagerView = isJobsManagerView(resolvedSearchParams.view)
+    ? resolvedSearchParams.view
+    : "all";
   const projectFilterId = resolvedSearchParams.projectId?.trim() ?? "";
   const estimateContextId = resolvedSearchParams.estimateId?.trim() ?? "";
   const contractContextId = resolvedSearchParams.contractId?.trim() ?? "";
-  const projectFilter = projectFilterId
-    ? projects.find((project) => project.id === projectFilterId) ?? null
-    : null;
   const showComposer =
     resolvedSearchParams.compose === "1" || Boolean(resolvedSearchParams.error);
-  const assignmentsByJobId = await listJobAssignmentsByJobIds(
-    jobs.map((job) => job.id),
-    "/jobs"
-  );
-  const scopedJobs = projectFilterId
-    ? jobs.filter((job) => job.projectId === projectFilterId)
-    : jobs;
-
-  const filteredJobs = scopedJobs.filter((job) => {
-    const matchesView = view === "all" ? true : job.dispatchStatus === view;
-    const matchesQuery =
-      normalizedQuery.length === 0
-        ? true
-        : [
-            job.project?.name ?? "",
-            job.customer?.name ?? "",
-            job.estimate?.referenceNumber ?? "",
-            job.dispatchStatus
-          ]
-            .join(" ")
-            .toLowerCase()
-            .includes(normalizedQuery);
-
-    return matchesView && matchesQuery;
-  });
-
-  const unscheduledJobs = scopedJobs.filter((job) => job.dispatchStatus === "unscheduled");
-  const scheduledJobs = scopedJobs.filter((job) => job.dispatchStatus === "scheduled");
-  const inProgressJobs = scopedJobs.filter((job) => job.dispatchStatus === "in_progress");
-  const completedJobs = scopedJobs.filter((job) => job.dispatchStatus === "completed");
-  const scheduledWithoutCrewVendor = scheduledJobs.filter((job) => job.crewVendorId === null);
-  const scheduledWithoutAssignments = scheduledJobs.filter((job) => {
-    const assignments = assignmentsByJobId.get(job.id) ?? [];
-    return assignments.length === 0;
-  });
-
-  const readyProjectOptions = projects
-    .filter((project) => project.readyToScheduleAt !== null)
-    .map((project) => ({
-      id: project.id,
-      name: project.name,
-      customerName: project.customer?.name ?? null
-    }));
+  const [readModel, readyProjectOptions] = await Promise.all([
+    getJobsManagerReadModel({
+      organizationId: organizationContext.organization.id,
+      query,
+      view,
+      projectId: projectFilterId || undefined
+    }),
+    showComposer
+      ? getJobQuickCreateOptions(organizationContext.organization.id)
+      : Promise.resolve([])
+  ]);
 
   const jobViews = [
-    { key: "all", label: "All jobs", count: scopedJobs.length },
-    { key: "unscheduled", label: "Unscheduled", count: unscheduledJobs.length },
-    { key: "scheduled", label: "Scheduled", count: scheduledJobs.length },
-    { key: "in_progress", label: "In progress", count: inProgressJobs.length },
-    { key: "completed", label: "Completed", count: completedJobs.length }
+    { key: "all", label: "All jobs", count: readModel.counts.all },
+    {
+      key: "unscheduled",
+      label: "Unscheduled",
+      count: readModel.counts.unscheduled
+    },
+    { key: "scheduled", label: "Scheduled", count: readModel.counts.scheduled },
+    {
+      key: "in_progress",
+      label: "In progress",
+      count: readModel.counts.in_progress
+    },
+    { key: "completed", label: "Completed", count: readModel.counts.completed }
   ] as const;
-
-  const recentJobs = [...filteredJobs]
-    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
-    .slice(0, 20);
+  const recentJobs = readModel.jobs;
 
   return (
     <ContractorWorkspacePage
@@ -225,7 +213,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               Unscheduled
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {unscheduledJobs.length}
+              {readModel.counts.unscheduled}
             </p>
           </div>
           <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
@@ -233,7 +221,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               Scheduled
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {scheduledJobs.length}
+              {readModel.counts.scheduled}
             </p>
           </div>
           <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
@@ -241,7 +229,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               In progress
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {inProgressJobs.length}
+              {readModel.counts.in_progress}
             </p>
           </div>
           <div className="rounded-md border border-[#e2e5e9] bg-white px-4 py-3">
@@ -249,7 +237,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               Completed
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {completedJobs.length}
+              {readModel.counts.completed}
             </p>
           </div>
         </div>
@@ -257,18 +245,36 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
       commandBar={{
         supportSlot: (
           <p>
-            Review the live execution queue here, use project-anchored quick create
-            when a ready project needs a job, and keep deeper scheduling work on the
-            dedicated schedule surface.
+            Review the live execution queue here, use project-anchored quick
+            create when a ready project needs a job, and keep deeper scheduling
+            work on the dedicated schedule surface.
           </p>
         ),
         searchSlot: (
           <form action="/jobs" className="flex flex-col gap-2 sm:flex-row">
-            {view !== "all" ? <input type="hidden" name="view" value={view} /> : null}
-            {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
-            {projectFilterId ? <input type="hidden" name="projectId" value={projectFilterId} /> : null}
-            {estimateContextId ? <input type="hidden" name="estimateId" value={estimateContextId} /> : null}
-            {contractContextId ? <input type="hidden" name="contractId" value={contractContextId} /> : null}
+            {view !== "all" ? (
+              <input type="hidden" name="view" value={view} />
+            ) : null}
+            {showComposer ? (
+              <input type="hidden" name="compose" value="1" />
+            ) : null}
+            {projectFilterId ? (
+              <input type="hidden" name="projectId" value={projectFilterId} />
+            ) : null}
+            {estimateContextId ? (
+              <input
+                type="hidden"
+                name="estimateId"
+                value={estimateContextId}
+              />
+            ) : null}
+            {contractContextId ? (
+              <input
+                type="hidden"
+                name="contractId"
+                value={contractContextId}
+              />
+            ) : null}
             <input
               type="search"
               name="q"
@@ -282,7 +288,10 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             >
               Search
             </button>
-            {query.length > 0 || view !== "all" || showComposer || projectFilterId ? (
+            {query.length > 0 ||
+            view !== "all" ||
+            showComposer ||
+            projectFilterId ? (
               <Link
                 href="/jobs"
                 className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
@@ -303,8 +312,12 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                 view: jobView.key,
                 compose: showComposer ? "1" : undefined,
                 projectId: projectFilterId || undefined,
-                estimateId: showComposer ? estimateContextId || undefined : undefined,
-                contractId: showComposer ? contractContextId || undefined : undefined
+                estimateId: showComposer
+                  ? estimateContextId || undefined
+                  : undefined,
+                contractId: showComposer
+                  ? contractContextId || undefined
+                  : undefined
               })}
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
@@ -317,7 +330,9 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               <span
                 className={[
                   "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                  isActive
+                    ? "bg-white/15 text-white"
+                    : "bg-slate-100 text-slate-500"
                 ].join(" ")}
               >
                 {jobView.count}
@@ -360,17 +375,22 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             <p>
               Showing jobs for{" "}
               <span className="font-semibold text-slate-900">
-                {projectFilter?.name ?? "the selected project"}
+                {readModel.projectContext?.name ?? "the selected project"}
               </span>
-              . Counts and queues are scoped to this project until the filter is cleared.
+              . Counts and queues are scoped to this project until the filter is
+              cleared.
             </p>
             <Link
               href={buildJobsHref({
                 q: query,
                 view,
                 compose: showComposer ? "1" : undefined,
-                estimateId: showComposer ? estimateContextId || undefined : undefined,
-                contractId: showComposer ? contractContextId || undefined : undefined
+                estimateId: showComposer
+                  ? estimateContextId || undefined
+                  : undefined,
+                contractId: showComposer
+                  ? contractContextId || undefined
+                  : undefined
               })}
               className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
             >
@@ -390,7 +410,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               projectId: projectFilterId || undefined
             })}
             actionLabel="Review jobs"
-            items={unscheduledJobs.slice(0, 4).map((job) => ({
+            items={readModel.unscheduledJobs.map((job) => ({
               href: `/jobs/${job.id}`,
               title: job.project?.name ?? "Untitled job",
               subtitle: job.customer?.name ?? "Unknown customer",
@@ -413,7 +433,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               projectId: projectFilterId || undefined
             })}
             actionLabel="Open scheduled"
-            items={scheduledWithoutCrewVendor.slice(0, 4).map((job) => ({
+            items={readModel.scheduledWithoutCrewVendor.map((job) => ({
               href: `/jobs/${job.id}`,
               title: job.project?.name ?? "Untitled job",
               subtitle: job.customer?.name ?? "Unknown customer",
@@ -434,7 +454,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               projectId: projectFilterId || undefined
             })}
             actionLabel="Review staffing"
-            items={scheduledWithoutAssignments.slice(0, 4).map((job) => ({
+            items={readModel.scheduledWithoutAssignments.map((job) => ({
               href: `/jobs/${job.id}`,
               title: job.project?.name ?? "Untitled job",
               subtitle: job.customer?.name ?? "Unknown customer",
@@ -455,7 +475,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               projectId: projectFilterId || undefined
             })}
             actionLabel="View active"
-            items={inProgressJobs.slice(0, 4).map((job) => ({
+            items={readModel.inProgressJobs.map((job) => ({
               href: `/jobs/${job.id}`,
               title: job.project?.name ?? "Untitled job",
               subtitle: job.customer?.name ?? "Unknown customer",
@@ -478,7 +498,9 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                 Latest job updates
               </h3>
             </div>
-            <p className="text-sm leading-6 text-slate-500">{recentJobs.length} visible</p>
+            <p className="text-sm leading-6 text-slate-500">
+              {recentJobs.length} visible
+            </p>
           </div>
 
           {recentJobs.length > 0 ? (
@@ -499,85 +521,106 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
                     const primaryAction = getJobPrimaryAction(job);
 
                     return (
-                    <tr key={job.id} className="hover:bg-slate-50/70">
-                      <td className="px-5 py-4 sm:px-6">
-                        <Link
-                          href={`/jobs/${job.id}`}
-                          className="font-semibold text-slate-950 transition hover:text-brand-700"
-                        >
-                          {job.project?.name ?? "Untitled job"}
-                        </Link>
-                        <p className="mt-1 text-sm leading-6 text-slate-500">
-                          {job.estimate?.referenceNumber
-                            ? `Estimate ${job.estimate.referenceNumber}`
-                            : "Project-created job"}
-                        </p>
-                      </td>
-                      <td className="px-5 py-4 sm:px-6">
-                        <p className="font-medium text-slate-700">
-                          {job.customer?.name ?? "Unknown customer"}
-                        </p>
-                        <p className="mt-1 text-sm leading-6 text-slate-500">
-                          {job.crewVendor?.name ?? "No crew vendor"}
-                        </p>
-                      </td>
-                      <td className="px-5 py-4 sm:px-6">
-                        <span
-                          className={[
-                            "inline-flex rounded-md border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]",
-                            getStatusBadgeClassName(job.dispatchStatus)
-                          ].join(" ")}
-                        >
-                          {formatStatusLabel(job.dispatchStatus)}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 sm:px-6">
-                        <p className="text-sm font-medium text-slate-700">
-                          {getJobContinuityCue(job, (assignmentsByJobId.get(job.id) ?? []).length)}
-                        </p>
-                        <p className="mt-0.5 text-xs uppercase tracking-[0.14em] text-slate-400">
-                          {job.crewVendor?.name ?? "No crew vendor"}
-                        </p>
-                      </td>
-                      <td className="px-5 py-4 text-right text-slate-500 sm:px-6">
-                        {formatDateTime(job.updatedAt)}
-                      </td>
-                      <td className="px-5 py-4 sm:px-6">
-                        <div className="flex flex-wrap justify-end gap-2">
-                          {primaryAction ? (
-                            <Link href={primaryAction.href} className={primaryActionClassName}>
-                              {primaryAction.label}
-                            </Link>
-                          ) : null}
-                          <Link href={getJobScheduleActionHref(job)} className={secondaryActionClassName}>
-                            Open Schedule
+                      <tr key={job.id} className="hover:bg-slate-50/70">
+                        <td className="px-5 py-4 sm:px-6">
+                          <Link
+                            href={`/jobs/${job.id}`}
+                            className="font-semibold text-slate-950 transition hover:text-brand-700"
+                          >
+                            {job.project?.name ?? "Untitled job"}
                           </Link>
-                          <ActionOverflowMenu>
-                            {job.project?.id ? (
-                              <Link href={`/projects/${job.project.id}`} className={overflowActionClassName}>
-                                View Project
+                          <p className="mt-1 text-sm leading-6 text-slate-500">
+                            {job.estimate?.referenceNumber
+                              ? `Estimate ${job.estimate.referenceNumber}`
+                              : "Project-created job"}
+                          </p>
+                        </td>
+                        <td className="px-5 py-4 sm:px-6">
+                          <p className="font-medium text-slate-700">
+                            {job.customer?.name ?? "Unknown customer"}
+                          </p>
+                          <p className="mt-1 text-sm leading-6 text-slate-500">
+                            {job.crewVendor?.name ?? "No crew vendor"}
+                          </p>
+                        </td>
+                        <td className="px-5 py-4 sm:px-6">
+                          <span
+                            className={[
+                              "inline-flex rounded-md border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]",
+                              getStatusBadgeClassName(job.dispatchStatus)
+                            ].join(" ")}
+                          >
+                            {formatStatusLabel(job.dispatchStatus)}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 sm:px-6">
+                          <p className="text-sm font-medium text-slate-700">
+                            {getJobContinuityCue(job)}
+                          </p>
+                          <p className="mt-0.5 text-xs uppercase tracking-[0.14em] text-slate-400">
+                            {job.crewVendor?.name ?? "No crew vendor"}
+                          </p>
+                        </td>
+                        <td className="px-5 py-4 text-right text-slate-500 sm:px-6">
+                          {formatDateTime(job.updatedAt)}
+                        </td>
+                        <td className="px-5 py-4 sm:px-6">
+                          <div className="flex flex-wrap justify-end gap-2">
+                            {primaryAction ? (
+                              <Link
+                                href={primaryAction.href}
+                                className={primaryActionClassName}
+                              >
+                                {primaryAction.label}
                               </Link>
                             ) : null}
-                            <Link href={getJobScheduleActionHref(job)} className={overflowActionClassName}>
-                              Schedule Panel
+                            <Link
+                              href={getJobScheduleActionHref(job)}
+                              className={secondaryActionClassName}
+                            >
+                              Open Schedule
                             </Link>
-                            <Link href={`/jobs/${job.id}#schedule-and-crew`} className={overflowActionClassName}>
-                              Assign Crew
-                            </Link>
-                            {job.dispatchStatus === "scheduled" ? (
-                              <Link href={`/jobs/${job.id}#schedule-and-crew`} className={overflowActionClassName}>
-                                Unschedule
+                            <ActionOverflowMenu>
+                              {job.project?.id ? (
+                                <Link
+                                  href={`/projects/${job.project.id}`}
+                                  className={overflowActionClassName}
+                                >
+                                  View Project
+                                </Link>
+                              ) : null}
+                              <Link
+                                href={getJobScheduleActionHref(job)}
+                                className={overflowActionClassName}
+                              >
+                                Schedule Panel
                               </Link>
-                            ) : null}
-                            {job.estimate?.id ? (
-                              <Link href={`/estimates/${job.estimate.id}`} className={overflowActionClassName}>
-                                View Estimate
+                              <Link
+                                href={`/jobs/${job.id}#schedule-and-crew`}
+                                className={overflowActionClassName}
+                              >
+                                Assign Crew
                               </Link>
-                            ) : null}
-                          </ActionOverflowMenu>
-                        </div>
-                      </td>
-                    </tr>
+                              {job.dispatchStatus === "scheduled" ? (
+                                <Link
+                                  href={`/jobs/${job.id}#schedule-and-crew`}
+                                  className={overflowActionClassName}
+                                >
+                                  Unschedule
+                                </Link>
+                              ) : null}
+                              {job.estimate?.id ? (
+                                <Link
+                                  href={`/estimates/${job.estimate.id}`}
+                                  className={overflowActionClassName}
+                                >
+                                  View Estimate
+                                </Link>
+                              ) : null}
+                            </ActionOverflowMenu>
+                          </div>
+                        </td>
+                      </tr>
                     );
                   })}
                 </tbody>
@@ -586,12 +629,16 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           ) : (
             <div className="px-6 py-8 sm:px-8">
               <AppEmptyState
-                eyebrow={scopedJobs.length > 0 ? "No matching jobs" : "No jobs yet"}
+                eyebrow={
+                  readModel.counts.all > 0 ? "No matching jobs" : "No jobs yet"
+                }
                 title={
-                  scopedJobs.length > 0 ? "Adjust the jobs filters" : "Create the first job"
+                  readModel.counts.all > 0
+                    ? "Adjust the jobs filters"
+                    : "Create the first job"
                 }
                 description={
-                  scopedJobs.length > 0
+                  readModel.counts.all > 0
                     ? "Try a broader search, clear the project filter, or switch to another real job status."
                     : projectFilterId
                       ? "This selected project does not have a job yet. Create one from ready project context, then finish scheduling in the job workspace."

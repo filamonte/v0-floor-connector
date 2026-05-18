@@ -5,22 +5,17 @@ import { ContractorWorkspacePage } from "@/components/contractor-workspace-page"
 import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { ProjectQuickCreateForm } from "@/components/project-quick-create-form";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
-import { listCustomers } from "@/lib/customers/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { listCustomers } from "@/lib/customers/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { quickCreateProjectAction } from "@/lib/projects/actions";
-import type { ProjectListItem } from "@/lib/projects/data";
-import { listProjects } from "@/lib/projects/data";
+import {
+  getProjectsManagerReadModel,
+  isProjectsManagerView,
+  type ProjectsManagerProject,
+  type ProjectsManagerView
+} from "@/lib/projects/manager-read-model";
 import { getStatusBadgeClassName } from "@floorconnector/ui";
-
-type ProjectView =
-  | "all"
-  | "lead"
-  | "estimating"
-  | "approved"
-  | "scheduled"
-  | "in_progress"
-  | "completed";
 
 type ProjectsPageProps = {
   searchParams?: Promise<{
@@ -30,7 +25,7 @@ type ProjectsPageProps = {
     message?: string;
     projectName?: string;
     q?: string;
-    status?: ProjectView;
+    status?: ProjectsManagerView;
   }>;
 };
 
@@ -44,7 +39,7 @@ function formatDateLabel(value: string) {
 
 function buildProjectsHref(input: {
   q?: string;
-  status?: ProjectView;
+  status?: ProjectsManagerView;
   compose?: string;
   customerId?: string;
 }) {
@@ -71,7 +66,7 @@ function buildProjectsHref(input: {
   return query.length > 0 ? `/projects?${query}` : "/projects";
 }
 
-function getProjectContinuityCue(project: ProjectListItem) {
+function getProjectContinuityCue(project: ProjectsManagerProject) {
   if (project.readyToScheduleAt) {
     return "Ready to schedule";
   }
@@ -114,66 +109,48 @@ export default async function ProjectsPage({
     );
   }
 
-  const [projects, customers] = await Promise.all([listProjects(), listCustomers()]);
   const query = resolvedSearchParams.q?.trim() ?? "";
-  const normalizedQuery = query.toLowerCase();
-  const statusFilter = resolvedSearchParams.status ?? "all";
+  const statusFilter =
+    resolvedSearchParams.status &&
+    isProjectsManagerView(resolvedSearchParams.status)
+      ? resolvedSearchParams.status
+      : "all";
   const showComposer =
     resolvedSearchParams.compose === "1" ||
     Boolean(resolvedSearchParams.error) ||
     Boolean(resolvedSearchParams.customerId);
-
-  const filteredProjects = projects.filter((project) => {
-    const matchesStatus =
-      statusFilter === "all" ? true : project.status === statusFilter;
-    const matchesQuery =
-      normalizedQuery.length === 0
-        ? true
-        : [
-            project.name,
-            project.customer?.name ?? "",
-            project.customer?.companyName ?? "",
-            project.city ?? "",
-            project.stateRegion ?? ""
-          ]
-            .join(" ")
-            .toLowerCase()
-            .includes(normalizedQuery);
-
-    return matchesStatus && matchesQuery;
-  });
-
-  const leadProjects = projects.filter((project) => project.status === "lead");
-  const estimatingProjects = projects.filter(
-    (project) => project.status === "estimating"
-  );
-  const approvedProjects = projects.filter((project) => project.status === "approved");
-  const scheduledProjects = projects.filter((project) => project.status === "scheduled");
-  const inProgressProjects = projects.filter(
-    (project) => project.status === "in_progress"
-  );
-  const readyToScheduleProjects = projects.filter(
-    (project) => project.readyToScheduleAt !== null
-  );
-  const recentProjects = [...filteredProjects]
-    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
-    .slice(0, 20);
+  const [projectsManagerReadModel, customers] = await Promise.all([
+    getProjectsManagerReadModel({
+      organizationId: organizationContext.organization.id,
+      query,
+      status: statusFilter
+    }),
+    showComposer ? listCustomers() : Promise.resolve([])
+  ]);
+  const recentProjects = projectsManagerReadModel.projects;
+  const {
+    leadProjects,
+    estimatingProjects,
+    approvedProjects,
+    readyToScheduleProjects,
+    counts
+  } = projectsManagerReadModel;
 
   const projectViewOptions = [
-    { key: "all", label: "All projects", count: projects.length },
-    { key: "lead", label: "Lead", count: leadProjects.length },
-    { key: "estimating", label: "Estimating", count: estimatingProjects.length },
-    { key: "approved", label: "Approved", count: approvedProjects.length },
-    { key: "scheduled", label: "Scheduled", count: scheduledProjects.length },
+    { key: "all", label: "All projects", count: counts.all },
+    { key: "lead", label: "Lead", count: counts.lead },
+    { key: "estimating", label: "Estimating", count: counts.estimating },
+    { key: "approved", label: "Approved", count: counts.approved },
+    { key: "scheduled", label: "Scheduled", count: counts.scheduled },
     {
       key: "in_progress",
       label: "In progress",
-      count: inProgressProjects.length
+      count: counts.in_progress
     },
     {
       key: "completed",
       label: "Completed",
-      count: projects.filter((project) => project.status === "completed").length
+      count: counts.completed
     }
   ] as const;
 
@@ -185,9 +162,11 @@ export default async function ProjectsPage({
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">Lead</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+              Lead
+            </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
-              {leadProjects.length}
+              {counts.lead}
             </p>
           </div>
           <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3">
@@ -195,7 +174,7 @@ export default async function ProjectsPage({
               Estimating
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
-              {estimatingProjects.length}
+              {counts.estimating}
             </p>
           </div>
           <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3">
@@ -203,7 +182,7 @@ export default async function ProjectsPage({
               Scheduled
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
-              {scheduledProjects.length}
+              {counts.scheduled}
             </p>
           </div>
           <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3">
@@ -211,7 +190,7 @@ export default async function ProjectsPage({
               In progress
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
-              {inProgressProjects.length}
+              {counts.in_progress}
             </p>
           </div>
         </div>
@@ -236,7 +215,9 @@ export default async function ProjectsPage({
                 value={resolvedSearchParams.customerId}
               />
             ) : null}
-            {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
+            {showComposer ? (
+              <input type="hidden" name="compose" value="1" />
+            ) : null}
             <input
               type="search"
               name="q"
@@ -286,7 +267,9 @@ export default async function ProjectsPage({
               <span
                 className={[
                   "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                  isActive
+                    ? "bg-white/15 text-white"
+                    : "bg-slate-100 text-slate-500"
                 ].join(" ")}
               >
                 {view.count}
@@ -431,7 +414,11 @@ export default async function ProjectsPage({
                           {project.name}
                         </Link>
                         <p className="mt-0.5 text-sm leading-5 text-slate-500">
-                          {[project.city, project.stateRegion, project.postalCode]
+                          {[
+                            project.city,
+                            project.stateRegion,
+                            project.postalCode
+                          ]
                             .filter(Boolean)
                             .join(", ") || "No location saved"}
                         </p>
@@ -473,14 +460,16 @@ export default async function ProjectsPage({
           ) : (
             <div className="px-6 py-8 sm:px-8">
               <AppEmptyState
-                eyebrow={projects.length > 0 ? "No matching projects" : "No projects yet"}
+                eyebrow={
+                  counts.all > 0 ? "No matching projects" : "No projects yet"
+                }
                 title={
-                  projects.length > 0
+                  counts.all > 0
                     ? "Adjust the filters or search"
                     : "Create your first project"
                 }
                 description={
-                  projects.length > 0
+                  counts.all > 0
                     ? "Try a broader search or switch to another real project status."
                     : "Create your first project. Everything starts from the project."
                 }
