@@ -22,12 +22,14 @@ FloorConnector has a real operational foundation: multi-tenant auth, a canonical
 
 The UX has not fully caught up. The main gap is not individual page quality — many pages are already solid — it is **system-wide coherence as a single contractor operating system**. Pages still feel like well-styled modules assembled next to each other rather than one product that shares a common visual grammar, navigation rhythm, and guidance posture.
 
+**Visual direction:** FloorConnector should feel like Autodesk Construction Cloud, Linear, Stripe Dashboard, and Notion Enterprise — modern industrial control software with contractor operational DNA. The primary palette is the **Graphite Stack** (warm industrial grays: charcoal, gunmetal, slate graphite, soft obsidian). **Copper is an accent** — burnished, industrial, slightly desaturated — used for action emphasis and key interactive elements, not backgrounds or primary surfaces.
+
 The redesign plan targets four areas:
 
-1. **Identity convergence** — make every surface feel like one product, not a collection.
+1. **Identity convergence** — make every surface feel like one product, not a collection. Graphite-forward surfaces with copper accents.
 2. **Operational clarity** — dashboard, project workspace, and schedule must give immediate, unambiguous answers to "what should I do next?"
 3. **Financial trustworthiness** — estimates and invoices must read as premium proposal and billing documents, not styled CRUD screens.
-4. **Icon and visual language** — a consistent, lightweight icon system tuned to FloorConnector's trade-specific vocabulary.
+4. **Icon and visual language** — a consistent, lightweight icon system tuned to FloorConnector's operational vocabulary (not construction-themed decoration).
 
 ---
 
@@ -127,79 +129,133 @@ Some surfaces use the shared `AppEmptyState` component correctly. Others (notabl
 
 1. **One operating system, not assembled modules.** Every surface shares the same depth rhythm, type scale, token vocabulary, and action grammar. Users should not notice a visual mode shift when moving between workspaces.
 
-2. **Operational clarity first.** The first question a contractor has when opening any page is: "what do I do next?" That answer must be visually primary — louder than everything else — before any metadata, history, or supporting records compete for attention.
+2. **Graphite-forward industrial aesthetic.** The visual identity is warm industrial grays — charcoal, gunmetal, slate graphite — with copper as a controlled accent for action emphasis. This is Autodesk/Linear/Stripe territory, not generic SaaS.
 
-3. **Premium but not decorative.** FloorConnector is handling contracts worth $5K–$500K. The visual language should convey trust, precision, and capability. This means restraint over decoration, structured information over ambient color, and document-quality presentation for proposals and invoices.
+3. **Operational clarity first.** The first question a contractor has when opening any page is: "what do I do next?" That answer must be visually primary — louder than everything else — before any metadata, history, or supporting records compete for attention.
 
-4. **Honest guidance density.** Guided, Flexible, and Manual modes must produce visually distinct but equally trustworthy pages. Reducing coaching copy must not reduce information density — facts, statuses, and blockers must remain visible.
+4. **Premium but not decorative.** FloorConnector is handling contracts worth $5K–$500K. The visual language should convey trust, precision, and capability. This means restraint over decoration, structured information over ambient color, and document-quality presentation for proposals and invoices.
 
-5. **Token-first, not utility-first.** All color usage flows from CSS variables. Raw hex, `slate-*` Tailwind classes, and `brand-*` classes are permitted only as migration debt, not new patterns.
+5. **Honest guidance density.** Guided, Flexible, and Manual modes must produce visually distinct but equally trustworthy pages. Reducing coaching copy must not reduce information density — facts, statuses, and blockers must remain visible.
 
-6. **Proposing is the center.** The Estimate Workspace is the UI/workflow reference. Every other workspace borrows its grammar: `DetailPageHeader` → `ActionBar/WorkflowBar` → `ProjectStateSummary` → `DetailPanel` sections → context rail → lower-frequency content.
+6. **Token-first, not utility-first.** All color usage flows from CSS variables. Raw hex, `slate-*` Tailwind classes, and `brand-*` classes are permitted only as migration debt, not new patterns.
 
-7. **Depth layering is deliberate.** Body (`--cream`) → card surface (`white`) → inset panel (`--highlight`) → warning/alert tint (amber/rose). This three-level depth system must be enforced everywhere.
+7. **Proposing is the center.** The Estimate Workspace is the UI/workflow reference. Every other workspace borrows its grammar: `DetailPageHeader` → `ActionBar/WorkflowBar` → `ProjectStateSummary` → `DetailPanel` sections → context rail → lower-frequency content.
 
-8. **Icons are semantic, not decorative.** Every icon must earn its place by communicating a specific meaning that words alone would require more space to convey.
+8. **Depth layering is deliberate.** Body (warm neutral) → card surface (clean white) → inset panel (cool gray) → warning tint (amber/rose). This three-level depth system must be enforced everywhere.
+
+9. **Icons are semantic, not decorative.** Every icon must earn its place by communicating a specific meaning that words alone would require more space to convey. No construction-themed decoration.
 
 ---
 
 ## 4. Proposed Enterprise Visual Identity
 
-### Color Direction
+### Visual Personality Target
 
-The current token system is kept. The maturation goal is consistent application:
+FloorConnector should feel like:
 
-| Token              | Value     | Use                                                       |
-| ------------------ | --------- | --------------------------------------------------------- |
-| `--cream`          | `#FAFAF8` | App body background (already correct in shell)            |
-| `--graphite`       | `#374151` | Primary CTAs, confirmed commits, operator actions         |
-| `--graphite-dark`  | `#1F2937` | Headings, record titles, primary labels                   |
-| `--graphite-light` | `#4B5563` | Secondary actions, hover states on graphite               |
-| `--copper`         | `#B45309` | Primary action emphasis, create/save/continue, links      |
-| `--copper-light`   | `#D97706` | Hover state on copper elements, warm accent               |
-| `--highlight`      | `#F3F4F6` | Inset panel backgrounds, table row headers, subtle panels |
-| `--border-warm`    | `#E8E6E1` | All card/panel borders                                    |
-| `--border-medium`  | `#D9D5CD` | Stronger section dividers                                 |
-| `--text-primary`   | `#111827` | Primary labels, values, record titles                     |
-| `--text-secondary` | `#6B7280` | Supporting copy, metadata, eyebrow labels                 |
-| `--text-tertiary`  | `#9CA3AF` | Placeholder text, deactivated labels                      |
+- **Autodesk Construction Cloud** — professional operational control software
+- **Linear** — precise, dense, modern developer/ops tooling
+- **Stripe Dashboard** — premium fintech-grade precision
+- **Notion Enterprise** — structured workspace, confident typography
+- **High-end logistics/workflow systems** — industrial clarity, warm industrial grays
 
-Semantic states (unchanged):
+...but with contractor operational DNA.
 
-- Green / emerald: accepted, approved, complete, paid, signed
-- Red / rose: destructive, error, blocked, rejected, void
-- Amber: warning, prerequisite, pending, needs attention
-- Neutral graphite/warm-gray: draft, advisory, in-progress utility
+**Not:**
+
+- "Construction-themed" (hard hats, orange vests, tool icons)
+- "Toolbox UI" (fake rugged, heavy borders, thick shadows)
+- "Generic SaaS template" (overly rounded, playful, startup-y)
+- Neon orange, playful orange, or bright startup orange
+
+### Color Direction — Graphite-Forward Industrial Stack
+
+The design direction is **graphite-dominant with copper as an accent**. The primary palette is warm industrial grays (rich charcoal, gunmetal, slate graphite, soft obsidian). Copper provides action emphasis and warmth but is not the dominant tone.
+
+#### Primary Graphite Stack
+
+| Token              | Value     | Use                                                           |
+| ------------------ | --------- | ------------------------------------------------------------- |
+| `--graphite-dark`  | `#1F2937` | Primary headings, record titles, dominant text, shell accents |
+| `--graphite`       | `#374151` | Primary CTAs, confirmed commits, operator action buttons      |
+| `--graphite-light` | `#4B5563` | Secondary actions, hover states on graphite, supporting text  |
+| `--graphite-muted` | `#6B7280` | Metadata, eyebrow labels, tertiary text                       |
+| `--graphite-soft`  | `#9CA3AF` | Placeholder text, deactivated labels, subtle borders          |
+
+#### Surface Stack (warm industrial neutrals)
+
+| Token             | Value     | Use                                                                |
+| ----------------- | --------- | ------------------------------------------------------------------ |
+| `--surface-body`  | `#FAFAF8` | App body background (shell) — very slight warm tint, not pure gray |
+| `--surface-card`  | `#FFFFFF` | Primary card surfaces — clean white for content panels             |
+| `--surface-inset` | `#F3F4F6` | Inset panel backgrounds, table headers, subtle depth panels        |
+| `--border-warm`   | `#E8E6E1` | Card/panel borders — warm gray, not cold                           |
+| `--border-medium` | `#D9D5CD` | Stronger section dividers, active state borders                    |
+
+#### Copper Accent (used sparingly)
+
+| Token            | Value     | Use                                                                |
+| ---------------- | --------- | ------------------------------------------------------------------ |
+| `--copper`       | `#B45309` | Primary action emphasis (create, save, continue), links, CTA hover |
+| `--copper-light` | `#D97706` | Hover state on copper elements, subtle warm highlight              |
+
+**Copper usage rules:**
+
+- Copper is for **action emphasis** and **key interactive elements** — not backgrounds
+- One copper-accented CTA per section maximum
+- Links can use copper on hover but default to graphite
+- Never use neon orange, playful orange, or saturated bright orange
+- The copper should feel burnished, industrial, slightly desaturated — premium, not startup
+
+#### Semantic State Colors (unchanged)
+
+- **Green / emerald**: accepted, approved, complete, paid, signed
+- **Red / rose**: destructive, error, blocked, rejected, void
+- **Amber**: warning, prerequisite, pending, needs attention
+- **Neutral graphite**: draft, advisory, in-progress utility
+
+#### Text Hierarchy
+
+| Token              | Value     | Use                                     |
+| ------------------ | --------- | --------------------------------------- |
+| `--text-primary`   | `#111827` | Headings, record titles, primary values |
+| `--text-secondary` | `#4B5563` | Body copy, supporting labels            |
+| `--text-tertiary`  | `#6B7280` | Metadata, eyebrow labels, timestamps    |
+| `--text-muted`     | `#9CA3AF` | Placeholder text, deactivated content   |
 
 **Items to eliminate:**
 
 - Raw `slate-*` Tailwind classes in Project Workspace, Schedule, and Settings pages
-- `bg-brand-700`, `bg-brand-900` references
+- `bg-brand-700`, `bg-brand-900` references (undefined tokens)
 - `rounded-full` on workspace action buttons (reserve for badge pills only)
 - Hardcoded hex strings in any protected-app TSX file
+- Any neon, playful, or overly saturated orange
+- Warm cream/tan backgrounds on operational panels (use graphite surface stack instead)
 
 ### Typography Direction
 
 Proposed 3-level scale (keep current values, enforce consistently):
 
-| Level                   | Usage                    | Class                                                                                                                                                         |
-| ----------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Page title (h1)         | Route/workspace name     | `text-xl font-semibold tracking-tight text-[var(--text-primary)]` via `DetailPageHeader`                                                                      |
-| Section heading (h2/h3) | Named workspace sections | `text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]` (eyebrow) + `text-base font-semibold text-[var(--text-primary)]` (title) |
-| Panel subheading        | Sub-panel labels         | `text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]`                                                                          |
+| Level                   | Usage                    | Class                                                                                                                                                        |
+| ----------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Page title (h1)         | Route/workspace name     | `text-xl font-semibold tracking-tight text-[var(--text-primary)]` via `DetailPageHeader`                                                                     |
+| Section heading (h2/h3) | Named workspace sections | `text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]` (eyebrow) + `text-base font-semibold text-[var(--text-primary)]` (title) |
+| Panel subheading        | Sub-panel labels         | `text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]`                                                                          |
 
 The eyebrow + title pairing should be the consistent section opener. The current system already uses it in shared components; the goal is enforcing it in Project Workspace custom components.
 
-### Depth Layering
+### Depth Layering — Graphite Surface Stack
 
-Every protected page must follow this three-level visual depth:
+Every protected page must follow this three-level visual depth using the graphite surface stack:
 
 ```
-Body: bg-[var(--cream)]        ← outermost, shell background
-  Card: bg-white border border-[var(--border-warm)]   ← primary surfaces
-    Inset: bg-[var(--highlight)] border border-[var(--border-warm)]  ← supporting panels
+Body: bg-[var(--surface-body)]        ← outermost, shell background (warm neutral)
+  Card: bg-[var(--surface-card)] border border-[var(--border-warm)]   ← primary surfaces (clean white)
+    Inset: bg-[var(--surface-inset)] border border-[var(--border-warm)]  ← supporting panels (cool gray)
       Warning tint: bg-amber-50 border-amber-200  ← only when state requires it
 ```
+
+This creates the "modern industrial control software" feel: predominantly gray and white surfaces with clear depth hierarchy, warm borders to prevent coldness, and copper accents only on interactive elements.
 
 Deviation from this pattern is the primary source of visual inconsistency today.
 
@@ -207,25 +263,31 @@ Deviation from this pattern is the primary source of visual inconsistency today.
 
 Three levels, shared from `action-hierarchy.tsx`:
 
-| Level     | Class source               | Use                                                    |
-| --------- | -------------------------- | ------------------------------------------------------ |
-| Primary   | `primaryActionClassName`   | One per area. Copper or graphite depending on context. |
-| Secondary | `secondaryActionClassName` | Supporting workflow actions. White bg, warm border.    |
-| Overflow  | `overflowActionClassName`  | Lower-frequency or destructive actions inside menus.   |
+| Level     | Class source               | Use                                                                |
+| --------- | -------------------------- | ------------------------------------------------------------------ |
+| Primary   | `primaryActionClassName`   | One per area. **Graphite by default**, copper for key commits.     |
+| Secondary | `secondaryActionClassName` | Supporting workflow actions. White bg, warm border, graphite text. |
+| Overflow  | `overflowActionClassName`  | Lower-frequency or destructive actions inside menus.               |
 
-`rounded-full` is reserved for: status badges, metric chips, and persona/avatar elements. Never for workflow action buttons.
+**Button styling rules:**
+
+- Primary actions default to **graphite** (`bg-[var(--graphite)]`) — the dominant CTA treatment
+- Copper (`bg-[var(--copper)]`) reserved for key conversion moments: "Send Estimate", "Accept Contract", "Record Payment"
+- `rounded-full` is reserved for: status badges, metric chips, and persona/avatar elements. Never for workflow action buttons.
+- All action buttons use `rounded-[4px]` consistent with Linear/Stripe precision aesthetic
 
 ---
 
 ## 5. Proposed Icon and Graphics System
 
-### 5.1 Icon Philosophy
+### 5.1 Icon Philosophy — Contractor Operating System
 
-FloorConnector is an operational tool for specialty surface contractors. Icons must be:
+FloorConnector is an operational control system for specialty surface contractors. The icon language must support that identity:
 
-- **Functional, not decorative.** Every icon communicates a specific workflow concept.
+- **Functional, not decorative.** Every icon communicates a specific workflow concept. No icon clusters as visual filler.
+- **Industrial precision.** Icons should feel like control software indicators — Linear, Figma, Autodesk — not consumer app friendliness.
 - **Consistent weight.** All icons at `16px` use stroke-width `1.75`, all at `20px` use `1.5`, all at `24px` use `1.5`. Never mix solid fills and strokes in the same surface.
-- **Trade-aware.** Where the concept is specific to contracting (readiness gate, job dispatch, progress billing), use icons that connote operational or industrial precision, not consumer-app friendliness.
+- **Trade-aware but not themed.** Use icons that connote operational precision (workflows, gates, queues) rather than literal construction imagery (hard hats, hammers as decoration).
 - **Predictable.** The same icon for the same concept, everywhere. No two different icons for "blocked."
 
 ### 5.2 Lucide as the Foundation
@@ -292,6 +354,7 @@ Lucide remains the base library. Do not add a second icon library. Custom icons 
 - Do not use blue, cyan, or violet icons for workflow states — the color system is graphite/copper/green/amber/red only.
 - Do not create custom SVG paths for geographic maps or state boundaries — use a mapping library.
 - Do not use decorative icon clusters as section filler.
+- Do not use literal construction-themed icons (hard hats, tool belts, vests) as module identifiers — the operating system aesthetic is abstract operational, not trade-literal.
 
 ### 5.7 Module Identity Icons in Navigation
 

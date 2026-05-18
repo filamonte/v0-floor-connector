@@ -260,12 +260,14 @@ Deferred from this polish sequence:
 
 A full system-wide UI/UX audit was completed on 2026-05-18 and the resulting plan is in [docs/enterprise-ux-redesign-plan.md](C:/FloorConnector/docs/enterprise-ux-redesign-plan.md).
 
+**Visual direction:** Graphite-forward industrial aesthetic (Autodesk/Linear/Stripe/Notion Enterprise feel). Primary palette is the Graphite Stack (warm industrial grays). Copper is an accent only — burnished, industrial, used for action emphasis and key interactive elements, not backgrounds. No neon/playful orange, no construction-themed decoration.
+
 Key findings:
 
 - Project Workspace has the most visual drift: hardcoded hex, `slate-*` Tailwind classes, `bg-brand-700`/`bg-brand-900` action references, and `rounded-full` action buttons that break the system grammar.
 - Dashboard needs clearer visual hierarchy between the Operational Cockpit (mission-critical), key metrics (context), queue widgets (work surfaces), and supporting context.
-- Icon system needs a documented vocabulary aligned to module/state semantics.
-- The Graphite/Copper token system is correct; the gap is enforcing it consistently in high-traffic pages.
+- Icon system needs a documented vocabulary aligned to module/state semantics — operational control software icons, not trade-literal imagery.
+- The Graphite/Copper token system is correct; the gap is enforcing it consistently in high-traffic pages with graphite as the dominant tone.
 
 **The plan must be reviewed and approved before any implementation work begins.** No app code, schema, server actions, lifecycle logic, or readiness gates were changed to produce the plan.
 
