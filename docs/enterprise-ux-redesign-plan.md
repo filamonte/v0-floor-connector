@@ -133,6 +133,7 @@ This grammar should be applied to every workspace. Currently each workspace asse
 Current: mostly flat white cards on cream backgrounds. This produces very low surface contrast between the page background and the card content.
 
 Proposed: introduce a three-level surface system:
+
 - **Level 0**: Cream background (`--cream`) — page canvas
 - **Level 1**: White panels (`bg-white`) — primary workspace areas (already in use)
 - **Level 2**: Soft graphite inset (`bg-[var(--soft-graphite)]` or equivalent) — metadata, context, lower-priority information
@@ -145,6 +146,7 @@ This does not require new tokens — it means deploying existing tokens more int
 Current: `text-[11px] font-semibold uppercase tracking-[0.18em]` is overused as the universal section label. All panels look equally important.
 
 Proposed section label hierarchy:
+
 - **Primary workspace section label** (the one that owns the primary action on this page): slightly larger, higher contrast, copper-accent left border
 - **Standard section label**: current pattern is acceptable for secondary sections
 - **Metadata/context label**: lighter weight, lighter color, no uppercase tracking — clearly subordinate
@@ -162,6 +164,7 @@ Panel padding is currently `p-4 sm:p-5`. This is appropriate. But spacing betwee
 FloorConnector icons should read as **operational signals**, not generic UI decoration. Every icon should answer: "What does this tell the contractor about the state or type of this record?"
 
 Rules:
+
 - Use icons consistently — the same record type always gets the same icon everywhere it appears
 - Icons near status should carry operational meaning (urgency, completion, blocking)
 - Icons near navigation should anchor domain identity
@@ -172,32 +175,32 @@ Rules:
 
 **Domain/Record Icons** — one icon per canonical record type, used everywhere that record appears in navigation, manager pages, linked-record cards, and workspace headers:
 
-| Record | Proposed Lucide Icon | Rationale |
-|---|---|---|
-| Opportunity / Lead | `Zap` or `TrendingUp` | Pre-project commercial energy |
-| Customer | `Building2` | Business/account relationship |
-| Project | `Layers` | The stacked operational root |
-| Estimate | `FileText` | Proposal document |
-| Contract | `FilePen` or `FileSignature` | Signed document |
-| Change Order | `GitBranch` | Branch off existing scope |
-| Job | `Hammer` | Production work |
-| Invoice | `Receipt` | Billing document |
-| Payment | `Banknote` or `CreditCard` | Money collected |
-| Schedule | `CalendarDays` | Time-based work |
-| People | `Users` | Workforce |
-| Portal | `ExternalLink` or `Globe` | Customer-facing surface |
+| Record             | Proposed Lucide Icon         | Rationale                     |
+| ------------------ | ---------------------------- | ----------------------------- |
+| Opportunity / Lead | `Zap` or `TrendingUp`        | Pre-project commercial energy |
+| Customer           | `Building2`                  | Business/account relationship |
+| Project            | `Layers`                     | The stacked operational root  |
+| Estimate           | `FileText`                   | Proposal document             |
+| Contract           | `FilePen` or `FileSignature` | Signed document               |
+| Change Order       | `GitBranch`                  | Branch off existing scope     |
+| Job                | `Hammer`                     | Production work               |
+| Invoice            | `Receipt`                    | Billing document              |
+| Payment            | `Banknote` or `CreditCard`   | Money collected               |
+| Schedule           | `CalendarDays`               | Time-based work               |
+| People             | `Users`                      | Workforce                     |
+| Portal             | `ExternalLink` or `Globe`    | Customer-facing surface       |
 
 **Workflow State Icons** — used in guidance bands, next-action indicators, and status summaries:
 
-| State | Proposed Icon | Color |
-|---|---|---|
-| Blocked / Missing | `AlertTriangle` | Amber |
-| Error / Declined | `XCircle` | Red |
-| Complete / Signed / Paid | `CheckCircle2` | Green |
-| In Progress / Active | `Circle` (half) or `Clock` | Neutral graphite |
-| Ready to proceed | `ArrowRight` or `ChevronRight` | Copper |
-| Waiting on customer | `Hourglass` | Amber |
-| Draft | `Pencil` | Neutral |
+| State                    | Proposed Icon                  | Color            |
+| ------------------------ | ------------------------------ | ---------------- |
+| Blocked / Missing        | `AlertTriangle`                | Amber            |
+| Error / Declined         | `XCircle`                      | Red              |
+| Complete / Signed / Paid | `CheckCircle2`                 | Green            |
+| In Progress / Active     | `Circle` (half) or `Clock`     | Neutral graphite |
+| Ready to proceed         | `ArrowRight` or `ChevronRight` | Copper           |
+| Waiting on customer      | `Hourglass`                    | Amber            |
+| Draft                    | `Pencil`                       | Neutral          |
 
 **Module / Navigation Icons** — compact icons used in the top navigation or left sidebar for module identity:
 
@@ -251,6 +254,7 @@ Used for: `/projects`, `/estimates`, `/contracts`, `/invoices`, `/payments`, `/j
 ```
 
 Refinements needed:
+
 - The `WorkspaceSummaryBand` metrics must use consistent sizing, consistent icon treatment, and consistent drill-in behavior across all manager pages
 - The `WorkspaceCommandBar` must position the primary action ("New Project", "New Estimate") at the right-most position, not buried in filters
 - Row/card hierarchy: record name is always the dominant text; status pill is always in a fixed position (right side of row)
@@ -268,6 +272,7 @@ Used for: all `[Resource] Workspace` pages
 ```
 
 Refinements needed:
+
 - The **operational context band** must exist on every detail workspace — it is the single most important addition to the current grammar. It should be a compact, copper-left-bordered strip that summarizes: stage name, blocker if any, and the one next action the system recommends
 - The right rail must be truly consistent in width and structure across workspaces (currently varies)
 - Section ordering within the main workspace should follow operational priority, not alphabetical or creation order
@@ -291,6 +296,7 @@ This is currently styled as generic detail panels. It should read as a financial
 Used for: `/schedule` ready queue, `/dashboard` cockpit buckets, invoice/payment collections queues
 
 The operational queue is distinct from a plain list. It should convey:
+
 - Priority order (most urgent at top)
 - Urgency signal (amber/red treatment for overdue or blocked items)
 - One clear action per row
@@ -301,6 +307,7 @@ Queue rows need: record identity (title + customer/project), status pill, aging/
 ### 6.5 Empty State Pattern (refined)
 
 Every empty state must follow this structure:
+
 ```
 [ Muted domain icon, 28px ]
 [ Plain-English title: what this section will contain ]
@@ -319,6 +326,7 @@ Every empty state must follow this structure:
 The dashboard has correct sections: operational metrics, lifecycle rail, cockpit buckets, queue widgets, recent payments, and notification summary. The performance audit has progressively narrowed query payloads. The section structure is largely correct.
 
 What is wrong:
+
 - Visual hierarchy does not make urgency instantly scannable
 - The cockpit buckets (attention, ready, waiting, field follow-up) do not have enough visual differentiation from each other
 - The universal create menu is correctly present but visually underweighted
@@ -328,30 +336,36 @@ What is wrong:
 ### 7.2 Proposed Dashboard Changes
 
 **Zone 1 — Attention Zone (top of page):**
+
 - Keep as primary position
 - Add copper-left-border treatment to the "Needs Attention" cockpit section to draw the eye immediately
 - Amber treatment on blocked/overdue rows within that section
 
 **Zone 2 — Operational Metrics Band:**
+
 - Condense to 4–5 compact metric tiles
 - Standardize tile structure: icon + count + label + delta or trend signal
 - Use copper for the tile that represents the most actionable queue (e.g., "Estimates Awaiting Approval")
 
 **Zone 3 — Work Queues:**
+
 - "Ready to Move" queue should use copper right-arrow indicators per row to signal "this is actionable right now"
 - "Waiting on Customer/Payment/Signature" queue should use amber/muted treatment
 - "Field/Production Follow-Up" should use a neutral graphite treatment
 
 **Zone 4 — Lifecycle Rail:**
+
 - Move to a more prominent position, possibly just below the metrics band
 - Use a horizontal step strip with the canonical lifecycle stages, colored by current distribution of work across stages
 - This is the clearest single visual that explains "this is a connected operating system"
 
 **Zone 5 — Recent Activity:**
+
 - Keep compact; this is Zone 5, not Zone 1
 - Payments and notifications remain correct here
 
 **What to preserve:**
+
 - UniversalCreateMenu link-based behavior — do not replace it with a heavy modal for this pass
 - EarlyAccessBanner — it exists for a reason, just ensure it does not visually dominate
 - All canonical data loading patterns — no new reads or schema changes
@@ -365,6 +379,7 @@ What is wrong:
 Project Workspace is the product's best surface. It already has: stage/blocker/next-action summary, connected record lanes, workflow guidance panel, context rail, and revision timeline. The structure is fundamentally correct.
 
 What is wrong:
+
 - The operational context band (stage + blocker + next action) is present but does not visually dominate the page the way it should. It competes equally with `DetailPanel` sections for visual weight.
 - The connected record lanes (estimate, contract, job, invoice, job) feel like a list of equal links rather than a visual lifecycle progression
 - The right rail is not fully systematized — it varies in width and section structure compared to the target pattern
@@ -374,20 +389,24 @@ What is wrong:
 **Header:** Keep the existing compact header. Add the semantic status pill alongside the record title at full visual weight.
 
 **Operational Context Band:** Elevate this to be the first, most prominent thing below the header. Use a copper-left-bordered band that shows:
+
 - Current lifecycle stage (styled as a step indicator with previous stages shown in muted treatment)
 - Active blocker with amber treatment if one exists
 - Next action with a copper CTA arrow
 - Link to the driving record (the estimate, contract, or invoice that is the current bottleneck)
 
 **Connected Record Lanes:** Convert from a generic list to a visual lifecycle strip:
+
 ```
 Estimate → [status] → Contract → [status] → Job(s) → [status] → Invoice → [status] → Payment
 ```
+
 Each node in this strip shows the record status and opens the workspace. Empty nodes show what needs to happen to create the next record. This is the product's most powerful conceptual communication and it should be the most designed element on the page.
 
 **Right Rail:** Standardize to: Project metadata | Customer contact | Portal access summary | Revision timeline | Internal notes
 
 **Section Order (main workspace):**
+
 1. Operational Context Band (copper-bordered, spans full width)
 2. Commercial/Financial summary (estimate → contract → invoice → payment, horizontal lifecycle strip)
 3. Jobs/Schedule section (what is scheduled, what is ready)
@@ -418,6 +437,7 @@ Invoices are money owed. The workspace must communicate financial trust.
 **Invoice header:** Lead with the billing framing: "Invoice [#] for [Customer Name] — [Project]" with amount due prominently displayed.
 
 **Balance state band:** A colored band near the top should show the current financial state: total billed, amount paid, and balance due. This band should use:
+
 - Amber treatment when there is an outstanding balance and it is overdue
 - Green treatment when fully paid
 - Neutral treatment when paid on time and current
@@ -435,6 +455,7 @@ Invoices are money owed. The workspace must communicate financial trust.
 The jobs manager is currently a standard manager page. The gap is that it does not communicate job operational state well at a glance.
 
 **Job status pills need operational weight:**
+
 - "Unscheduled" with a specific project and a signed contract should show as "Ready to Schedule" with amber treatment — this is an actionable state
 - "In Progress" jobs should show crew assignment and start date prominently in the row
 - "Complete" jobs should show completion date and whether an invoice exists
@@ -449,6 +470,7 @@ The schedule received a visual cleanup pass. The deeper redesign is structural.
 **Current problem:** The ready queue, timeline, and day/week views are three separate things on one page without a clear hierarchy between them.
 
 **Proposed structure:**
+
 - **Top:** Operational summary band — how many jobs are ready to schedule, how many are scheduled this week, how many are in progress, how many are overdue
 - **Middle:** Ready Work Queue — a prioritized list of jobs that are ready to be scheduled (readiness gate passed, no crew assigned yet). These should feel urgent; amber treatment for jobs ready for 3+ days
 - **Below:** Scheduled Timeline — the planned work with crew context. Calendar planner remains as a view toggle.
@@ -465,6 +487,7 @@ All manager pages (projects, estimates, contracts, invoices, payments, jobs, cus
 ### 11.1 Summary Band Standardization
 
 Every manager page should have a `WorkspaceSummaryBand` with:
+
 - Exactly the counts/metrics that matter for that resource (not a generic "total records" count)
 - Consistent tile size and structure across pages
 - Copper-tinted treatment for the tile representing the most actionable queue item
@@ -472,6 +495,7 @@ Every manager page should have a `WorkspaceSummaryBand` with:
 ### 11.2 Command Bar Standardization
 
 Every manager page should have a `WorkspaceCommandBar` with:
+
 - Search always leftmost
 - Status filter tabs or chips always in the middle
 - Primary create action always rightmost
@@ -546,6 +570,7 @@ These phases are meaningful milestones, not micro-tasks. Each phase should be sc
 ### Phase 1 — Operational Context Band and Project Workspace Hierarchy
 
 **Scope:**
+
 - Design and build `OperationalContextBand` as a shared component
 - Apply it to Project Workspace as the first consumer
 - Elevate the connected-record lifecycle strip on Project Workspace
@@ -558,6 +583,7 @@ These phases are meaningful milestones, not micro-tasks. Each phase should be sc
 ### Phase 2 — Financial Document Quality on Estimate and Invoice
 
 **Scope:**
+
 - Build `FinancialDocumentPanel` as a shared component
 - Apply to Estimate Workspace line items/totals section
 - Apply to Invoice Workspace line items/totals/payment-history section
@@ -571,6 +597,7 @@ These phases are meaningful milestones, not micro-tasks. Each phase should be sc
 ### Phase 3 — Dashboard Mission Control
 
 **Scope:**
+
 - Add copper-left-border treatment to Needs Attention cockpit bucket
 - Standardize cockpit bucket visual differentiation (attention vs. ready vs. waiting vs. field)
 - Add operational metrics band with copper-accented most-actionable tile
@@ -583,6 +610,7 @@ These phases are meaningful milestones, not micro-tasks. Each phase should be sc
 ### Phase 4 — Manager Page Standardization
 
 **Scope:**
+
 - Build `OperationalQueueRow` as a shared component
 - Standardize summary bands across all manager pages
 - Standardize command bar layout across all manager pages
@@ -593,6 +621,7 @@ These phases are meaningful milestones, not micro-tasks. Each phase should be sc
 ### Phase 5 — Schedule Structural Redesign
 
 **Scope:**
+
 - Restructure schedule page into top summary band + ready queue + scheduled timeline + selected job rail
 - Apply `OperationalQueueRow` to the ready queue
 - Standardize selected job action panel
@@ -602,6 +631,7 @@ These phases are meaningful milestones, not micro-tasks. Each phase should be sc
 ### Phase 6 — Icon System Enforcement and Status Pill Refinement
 
 **Scope:**
+
 - Audit and standardize domain icon assignment across all navigation, linked-record cards, manager page headers, and workspace headers
 - Build `StatusPillSystem` with `sm` and `md` sizes
 - Apply icon standardization to all linked-record cards
@@ -609,6 +639,7 @@ These phases are meaningful milestones, not micro-tasks. Each phase should be sc
 ### Phase 7 — Shared Component Cleanup and Empty State Pass
 
 **Scope:**
+
 - Build `GuidanceEmptyState` and apply to high-traffic empty paths
 - Apply `WorkspaceRightRail` to standardize right rails on Contract and Job workspaces
 - Final visual QA pass across all manager and workspace surfaces
@@ -622,6 +653,7 @@ These phases are meaningful milestones, not micro-tasks. Each phase should be sc
 Build `OperationalContextBand`, apply it to Project Workspace, and elevate the connected-record lifecycle strip. This is the single most communicative change for the product's identity as an operating system, touches the most-used workspace, and requires no schema or logic changes.
 
 Success criteria for Phase 1:
+
 - A contractor opening a project workspace can instantly answer: "What stage is this in? What is blocking it? What is the next action?" without scanning the whole page
 - The lifecycle strip communicates the canonical flow visually, not just as a list of linked records
 - The right rail is consistent in structure with the target pattern
@@ -662,10 +694,12 @@ Expanding copper usage beyond buttons carries a risk of diluting its signal. Cop
 These are the files most likely to be touched in Phase 1 — Project Workspace hierarchy and `OperationalContextBand` implementation. This is not a complete scope, but a starting checklist for the implementer.
 
 ### New Files (to create)
+
 - `apps/web/components/operational-context-band.tsx` — the new shared component
 - `apps/web/components/lifecycle-strip.tsx` — the connected-record lifecycle strip
 
 ### Existing Files (to modify — presentation only)
+
 - `apps/web/components/detail-panel.tsx` — may add an optional `accent` prop for copper-left-border prominence
 - `apps/web/app/(app)/projects/[projectId]/page.tsx` — consume `OperationalContextBand` and `LifecycleStrip`
 - Any project workspace sub-component that currently renders the workflow summary/guidance band — to be replaced or unified with `OperationalContextBand`
@@ -673,6 +707,7 @@ These are the files most likely to be touched in Phase 1 — Project Workspace h
 - `apps/web/components/protected-surface-header.tsx` — review whether status pill can be promoted to `md` size on workspace header usage
 
 ### Files That Should NOT Change in Phase 1
+
 - Any file under `apps/web/lib/` (server-side data loading, business logic)
 - `supabase/migrations/`
 - Any file containing financial calculations, readiness gate logic, or payment/signature/portal behavior
@@ -705,4 +740,4 @@ This is the firm do-not-touch list for this redesign initiative:
 
 ---
 
-*This plan was produced after a full review of `developer-source-of-truth.md`, `current-state.md`, `workflows.md`, `system-overview.md`, `chat-handoff.md`, `graphite-copper-ui-system.md`, `ai-guided-system-plan.md`, `target-ia.md`, `vision.md`, `performance-audit.md`, `enterprise-ui-system-audit.md`, `floorconnector-ui-build-rules.md`, inspection of the app shell, dashboard surface, detail panel, shared component inventory, and route map.*
+_This plan was produced after a full review of `developer-source-of-truth.md`, `current-state.md`, `workflows.md`, `system-overview.md`, `chat-handoff.md`, `graphite-copper-ui-system.md`, `ai-guided-system-plan.md`, `target-ia.md`, `vision.md`, `performance-audit.md`, `enterprise-ui-system-audit.md`, `floorconnector-ui-build-rules.md`, inspection of the app shell, dashboard surface, detail panel, shared component inventory, and route map._
