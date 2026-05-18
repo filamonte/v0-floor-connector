@@ -5,6 +5,18 @@ Doc Type: Operational
 
 This is a compact operational handoff for the current branch. It is not a competing source of truth.
 
+## Enterprise UX Redesign Plan — Review Before Implementation
+
+The enterprise UX redesign plan was created on 2026-05-18 and lives at [docs/enterprise-ux-redesign-plan.md](C:/FloorConnector/docs/enterprise-ux-redesign-plan.md).
+
+Review and approve the plan before any UI implementation work begins. The plan is documentation-only — no app code, schema, server actions, financial logic, or workflow behavior was changed during plan creation.
+
+The plan defines: 7 implementation phases, a recommended first pass (Phase 1 — `OperationalContextBand` + Project Workspace hierarchy), an icon/graphics system, proposed page architecture patterns, shared components to create, files likely to change, and a firm do-not-touch list.
+
+Do not begin implementation until the plan has been reviewed by the product owner.
+
+---
+
 ## Required First Read
 
 Before doing implementation or documentation work, read [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md).
