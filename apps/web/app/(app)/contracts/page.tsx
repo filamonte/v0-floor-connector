@@ -278,7 +278,7 @@ export default async function ContractsPage({
                 compose: showComposer ? "1" : undefined
               })}
               className={[
-                "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
+                "inline-flex h-8 items-center gap-2 rounded-[4px] px-3 text-sm font-medium transition",
                 isActive
                   ? "bg-[#171717] text-white"
                   : "border border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"

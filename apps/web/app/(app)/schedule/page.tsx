@@ -1,12 +1,17 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import {
+  primaryActionClassName,
+  secondaryActionClassName
+} from "@/components/action-hierarchy";
 import { AppEmptyState } from "@/components/app-empty-state";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
 import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { ScheduleCrewAssignmentForm } from "@/components/schedule-crew-assignment-form";
 import { ScheduleJobForm } from "@/components/schedule-job-form";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
+import { getJobEquipmentReadinessSummary } from "@/lib/equipment/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import {
   assignCrewAction,
@@ -65,20 +70,24 @@ const SCHEDULE_ITEM_VIEW_OPTIONS = [
 
 const DAY_TIMELINE_HOURS = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
 
-const schedulePrimaryActionClassName =
+const schedulePrimaryActionToneClassName =
   "border-[var(--graphite)] bg-[var(--graphite)] text-white hover:bg-[var(--graphite-light)]";
-const scheduleSecondaryActionClassName =
+const scheduleSecondaryActionToneClassName =
   "border-[var(--border-warm)] bg-white text-[var(--text-primary)] hover:bg-[var(--highlight)]";
-const scheduleMutedActionClassName =
+const scheduleMutedActionToneClassName =
   "border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-primary)] hover:bg-white";
 const schedulePanelClassName =
-  "rounded-lg border border-[var(--border-warm)] bg-white shadow-sm";
+  "rounded-[6px] border border-[var(--border-warm)] bg-white shadow-sm";
 const schedulePanelHeaderClassName =
-  "border-b border-[var(--border-warm)] bg-[var(--highlight)]/45 px-5 py-4 sm:px-6";
+  "border-b border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 sm:px-6";
 const scheduleInsetPanelClassName =
-  "rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3";
+  "rounded-[6px] border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3";
 const scheduleFieldClassName =
   "min-w-0 rounded-[4px] border border-[var(--border-warm)] bg-white px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)]";
+const scheduleFilterChipClassName =
+  "inline-flex h-8 items-center gap-2 rounded-[4px] px-3 text-sm font-medium transition";
+const scheduleCompactLinkClassName =
+  "inline-flex items-center rounded-[4px] px-2.5 py-1.5 text-xs font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]";
 
 type RawScheduleSearchParams = {
   q?: string | string[];
@@ -465,7 +474,7 @@ function getPrimaryScheduleAction(job: {
     return {
       label: "Schedule job",
       action: "schedule" as const,
-      toneClass: schedulePrimaryActionClassName
+      toneClass: schedulePrimaryActionToneClassName
     };
   }
 
@@ -480,7 +489,7 @@ function getPrimaryScheduleAction(job: {
   return {
     label: "Refine schedule",
     action: "schedule" as const,
-    toneClass: scheduleSecondaryActionClassName
+    toneClass: scheduleSecondaryActionToneClassName
   };
 }
 
@@ -533,7 +542,7 @@ function getBoardPrimaryAction(job: {
     return {
       ...primaryAction,
       label: "Reschedule",
-      toneClass: scheduleMutedActionClassName
+      toneClass: scheduleMutedActionToneClassName
     };
   }
 
@@ -721,13 +730,13 @@ function ScheduleJobActionLinks(input: {
 
   const projectClassName =
     input.projectVariant === "bordered"
-      ? `inline-flex items-center rounded-[4px] border ${scheduleSecondaryActionClassName} ${secondaryPadding} ${secondaryText} transition`
-      : `inline-flex items-center rounded-[4px] ${secondaryPadding} ${secondaryText} text-slate-500 transition hover:text-slate-900`;
+      ? `inline-flex items-center rounded-[4px] border ${scheduleSecondaryActionToneClassName} ${secondaryPadding} ${secondaryText} transition`
+      : `inline-flex items-center rounded-[4px] ${secondaryPadding} ${secondaryText} text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]`;
 
   const jobClassName =
     input.jobVariant === "bordered"
-      ? `inline-flex items-center rounded-[4px] border ${scheduleSecondaryActionClassName} ${secondaryPadding} ${secondaryText} transition`
-      : `inline-flex items-center rounded-[4px] ${secondaryPadding} ${secondaryText} text-slate-500 transition hover:text-slate-900`;
+      ? `inline-flex items-center rounded-[4px] border ${scheduleSecondaryActionToneClassName} ${secondaryPadding} ${secondaryText} transition`
+      : `inline-flex items-center rounded-[4px] ${secondaryPadding} ${secondaryText} text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]`;
 
   return (
     <div
@@ -968,13 +977,15 @@ function ScheduleFilterChip(input: {
 }) {
   return (
     <div className="inline-flex flex-wrap items-center gap-2 rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2 text-sm text-[var(--text-secondary)]">
-      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
         {input.label}
       </span>
-      <span className="font-medium text-slate-950">{input.value}</span>
+      <span className="font-medium text-[var(--text-primary)]">
+        {input.value}
+      </span>
       <Link
         href={input.clearHref}
-        className="inline-flex items-center rounded-full border border-transparent px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 transition hover:text-slate-900"
+        className="inline-flex items-center rounded-[4px] border border-transparent px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
       >
         Clear
       </Link>
@@ -1210,6 +1221,9 @@ export default async function SchedulePage({
   const selectedJobNeedsScheduleBeforeCrew =
     selectedAction === "assign" &&
     selectedJob?.dispatchStatus === "unscheduled";
+  const selectedJobEquipmentReadiness = selectedJob
+    ? await getJobEquipmentReadinessSummary(selectedJob.id, "/schedule")
+    : null;
 
   const visibleJobs = jobsWithAssignments.filter((job) => {
     const matchesProject = projectFilterId
@@ -1851,7 +1865,7 @@ export default async function SchedulePage({
                 "border px-4 py-3 transition hover:shadow-[0_10px_30px_rgba(15,23,42,0.08)]",
                 item.borderClass,
                 item.bgClass,
-                item.active ? "ring-1 ring-inset ring-[#171717]" : ""
+                item.active ? "ring-1 ring-inset ring-[var(--graphite)]" : ""
               ].join(" ")}
             >
               <p
@@ -1865,7 +1879,7 @@ export default async function SchedulePage({
                 >
                   {item.value}
                 </p>
-                <span className="text-xs font-medium text-slate-500">
+                <span className="text-xs font-medium text-[var(--text-secondary)]">
                   {item.active ? "Current view" : "Open"}
                 </span>
               </div>
@@ -1906,10 +1920,7 @@ export default async function SchedulePage({
               placeholder="Search project, customer, estimate, crew, vendor, or date"
               className={`${scheduleFieldClassName} flex-1`}
             />
-            <button
-              type="submit"
-              className={`inline-flex items-center justify-center rounded-[4px] border px-4 py-2.5 text-sm font-medium transition ${scheduleSecondaryActionClassName}`}
-            >
+            <button type="submit" className={secondaryActionClassName}>
               Search
             </button>
             {query.length > 0 ||
@@ -1923,7 +1934,7 @@ export default async function SchedulePage({
                   layout: scheduleLayout,
                   date: plannerDateKey
                 })}
-                className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
+                className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
               >
                 Clear
               </Link>
@@ -1935,7 +1946,7 @@ export default async function SchedulePage({
             key="schedule-view-group"
             className="flex flex-wrap items-center gap-2"
           >
-            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
               Schedule view
             </span>
             {scheduleViews.map((scheduleView) => {
@@ -1954,10 +1965,10 @@ export default async function SchedulePage({
                     date: plannerDateKey
                   })}
                   className={[
-                    "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
+                    scheduleFilterChipClassName,
                     isActive
                       ? "bg-[var(--graphite)] text-white"
-                      : `border ${scheduleSecondaryActionClassName}`
+                      : `border ${scheduleSecondaryActionToneClassName}`
                   ].join(" ")}
                 >
                   <span>{scheduleView.label}</span>
@@ -1979,7 +1990,7 @@ export default async function SchedulePage({
             key="crew-view-group"
             className="flex flex-wrap items-center gap-2"
           >
-            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
               Crew view
             </span>
             {crewViews.map((crewView) => {
@@ -1998,10 +2009,10 @@ export default async function SchedulePage({
                     date: plannerDateKey
                   })}
                   className={[
-                    "inline-flex items-center rounded-[4px] px-3 py-2 text-sm font-medium transition",
+                    scheduleFilterChipClassName,
                     isActive
                       ? "bg-[var(--graphite)] text-white"
-                      : `border ${scheduleSecondaryActionClassName}`
+                      : `border ${scheduleSecondaryActionToneClassName}`
                   ].join(" ")}
                 >
                   {crewView.label}
@@ -2013,7 +2024,7 @@ export default async function SchedulePage({
             key="item-view-group"
             className="flex flex-wrap items-center gap-2"
           >
-            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
               Items
             </span>
             {itemViews.map((itemView) => {
@@ -2032,10 +2043,10 @@ export default async function SchedulePage({
                     date: plannerDateKey
                   })}
                   className={[
-                    "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
+                    scheduleFilterChipClassName,
                     isActive
                       ? "bg-[var(--graphite)] text-white"
-                      : `border ${scheduleSecondaryActionClassName}`
+                      : `border ${scheduleSecondaryActionToneClassName}`
                   ].join(" ")}
                 >
                   <span>{itemView.label}</span>
@@ -2057,7 +2068,7 @@ export default async function SchedulePage({
         actionSlot: (
           <Link
             href="/jobs?view=unscheduled"
-            className={`inline-flex items-center rounded-[4px] border px-4 py-2.5 text-sm font-medium transition ${schedulePrimaryActionClassName}`}
+            className={primaryActionClassName}
           >
             Open jobs manager
           </Link>
@@ -2073,16 +2084,16 @@ export default async function SchedulePage({
       >
         <section className="space-y-6">
           {showActiveFilters ? (
-            <section className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 shadow-sm sm:px-6">
+            <section className="rounded-[6px] border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 shadow-sm sm:px-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                     Active filters
                   </p>
-                  <h3 className="mt-1 text-base font-semibold text-slate-950">
+                  <h3 className="mt-1 text-base font-semibold text-[var(--text-primary)]">
                     Schedule handoff context is active
                   </h3>
-                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                  <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                     These filters stay intersected, so you can clear any one
                     chip without dropping the unrelated schedule state.
                   </p>
@@ -2091,7 +2102,7 @@ export default async function SchedulePage({
                   {activeProjectFilter ? (
                     <Link
                       href={`/projects/${activeProjectFilter.id}`}
-                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionClassName}`}
+                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
                     >
                       Open project
                     </Link>
@@ -2141,7 +2152,7 @@ export default async function SchedulePage({
                   />
                 ) : null}
               </div>
-              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm leading-6 text-slate-500">
+              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm leading-6 text-[var(--text-secondary)]">
                 {projectFilterId ? <p>{activeProjectSummary.detail}</p> : null}
                 {query.length > 0 ? (
                   <p>
@@ -2163,19 +2174,19 @@ export default async function SchedulePage({
             <div className={schedulePanelHeaderClassName}>
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                     Schedule control
                   </p>
-                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
                     Scheduling command center
                   </h2>
-                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                  <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                     Use the loaded job/schedule state to see why work is
                     unscheduled, what is missing, and whether to resolve it from
                     Schedule or the Project Workspace.
                   </p>
                 </div>
-                <p className="text-sm leading-6 text-slate-500">
+                <p className="text-sm leading-6 text-[var(--text-secondary)]">
                   {nextActions.filter((action) => !action.empty).length} active
                 </p>
               </div>
@@ -2184,24 +2195,24 @@ export default async function SchedulePage({
             <div className="grid gap-px bg-[var(--border-warm)] lg:grid-cols-2">
               {nextActions.map((action) => (
                 <div key={action.key} className="bg-white px-5 py-4 sm:px-6">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                     {action.eyebrow}
                   </p>
-                  <p className="mt-2 text-base font-semibold tracking-tight text-slate-950">
+                  <p className="mt-2 text-base font-semibold tracking-tight text-[var(--text-primary)]">
                     {action.title}
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                  <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                     {action.description}
                   </p>
                   <div className="mt-4 flex flex-wrap items-center gap-3">
                     <Link
                       href={action.href}
-                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionClassName}`}
+                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
                     >
                       {action.ctaLabel}
                     </Link>
                     {action.empty ? (
-                      <span className="text-sm text-slate-400">
+                      <span className="text-sm text-[var(--text-tertiary)]">
                         Nothing urgent from this lane right now.
                       </span>
                     ) : null}
@@ -2220,11 +2231,11 @@ export default async function SchedulePage({
                             <div className="min-w-0">
                               <Link
                                 href={`/jobs/${job.id}`}
-                                className="text-sm font-semibold text-slate-900 transition hover:text-brand-700"
+                                className="text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
                               >
                                 {job.project?.name ?? "Untitled job"}
                               </Link>
-                              <p className="mt-1 text-xs leading-5 text-slate-500">
+                              <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                                 {job.customer?.name ?? "Unknown customer"} ·{" "}
                                 {formatDate(job.scheduledDate)}
                               </p>
@@ -2237,7 +2248,7 @@ export default async function SchedulePage({
                             <div className="flex flex-wrap gap-2">
                               <Link
                                 href={`/projects/${job.projectId}`}
-                                className="inline-flex items-center rounded-[4px] px-2.5 py-1.5 text-xs font-medium text-slate-500 transition hover:text-slate-900"
+                                className={scheduleCompactLinkClassName}
                               >
                                 Project
                               </Link>
@@ -2410,13 +2421,13 @@ export default async function SchedulePage({
             <div className={schedulePanelHeaderClassName}>
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                     Calendar planner
                   </p>
-                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
                     Scheduled timeline
                   </h2>
-                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                  <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                     Run the shared schedule as a bounded planner on top of jobs.
                     Keep unscheduled work separate, review dated work by day or
                     week, and reschedule through the same job action path.
@@ -2438,10 +2449,10 @@ export default async function SchedulePage({
                           date: plannerDateKey
                         })}
                         className={[
-                          "inline-flex items-center rounded-[4px] px-3 py-2 text-sm font-medium transition",
+                          scheduleFilterChipClassName,
                           isActive
                             ? "bg-[var(--graphite)] text-white"
-                            : `border ${scheduleSecondaryActionClassName}`
+                            : `border ${scheduleSecondaryActionToneClassName}`
                         ].join(" ")}
                       >
                         {option.label}
@@ -2468,7 +2479,7 @@ export default async function SchedulePage({
                       : plannerNeedsCrewCount}{" "}
                     need crew
                   </span>
-                  <p className="text-sm leading-6 text-slate-500">
+                  <p className="text-sm leading-6 text-[var(--text-secondary)]">
                     {scheduleLayout === "board"
                       ? "Grouped by operational timing"
                       : plannerRangeLabel}
@@ -2476,7 +2487,7 @@ export default async function SchedulePage({
                 </div>
 
                 {scheduleLayout === "board" ? (
-                  <p className="max-w-xl text-sm leading-6 text-slate-500">
+                  <p className="max-w-xl text-sm leading-6 text-[var(--text-secondary)]">
                     This board groups the current filtered job set into one
                     operational picture without creating a second dispatch or
                     calendar model.
@@ -2485,19 +2496,19 @@ export default async function SchedulePage({
                   <div className="flex flex-wrap items-center gap-2">
                     <Link
                       href={plannerPrevHref}
-                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionClassName}`}
+                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
                     >
                       Previous
                     </Link>
                     <Link
                       href={plannerTodayHref}
-                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionClassName}`}
+                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
                     >
                       Today
                     </Link>
                     <Link
                       href={plannerNextHref}
-                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionClassName}`}
+                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
                     >
                       Next
                     </Link>
@@ -2511,10 +2522,10 @@ export default async function SchedulePage({
                 <div className="px-5 py-4 sm:px-6">
                   <div className="flex items-center justify-between gap-3 border-b border-[var(--border-warm)] pb-4">
                     <div>
-                      <p className="text-sm font-semibold text-slate-950">
+                      <p className="text-sm font-semibold text-[var(--text-primary)]">
                         {formatLongDateFromDate(plannerAnchorDate)}
                       </p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-500">
+                      <p className="mt-1 text-xs uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                         {(selectedDayGroup?.jobs.length ?? 0) +
                           selectedDayAppointments.length}{" "}
                         scheduled item
@@ -2535,7 +2546,7 @@ export default async function SchedulePage({
 
                   {untimedDayJobs.length > 0 ? (
                     <div className="mt-4 rounded-[4px] border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] p-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                         Time not set
                       </p>
                       <div className="mt-3 space-y-3">
@@ -2551,26 +2562,26 @@ export default async function SchedulePage({
                             >
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
-                                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                                     {boardCardState.eyebrow}
                                   </p>
                                   <Link
                                     href={`/jobs/${job.id}`}
-                                    className="mt-1 block text-sm font-semibold text-slate-900 transition hover:text-brand-700"
+                                    className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
                                   >
                                     {job.project?.name ?? "Untitled job"}
                                   </Link>
-                                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                                  <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                                     {job.customer?.name ?? "Unknown customer"}
                                   </p>
-                                  <p className="mt-2 text-sm font-medium text-slate-800">
+                                  <p className="mt-2 text-sm font-medium text-[var(--text-primary)]">
                                     {boardCardState.title}
                                   </p>
                                 </div>
                                 <ScheduleJobStateBadges crewState={crewState} />
                               </div>
 
-                              <p className="mt-2 text-sm leading-6 text-slate-600">
+                              <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                                 {boardCardState.summary}
                               </p>
 
@@ -2603,7 +2614,7 @@ export default async function SchedulePage({
 
                   {selectedDayAppointments.length > 0 ? (
                     <div className="mt-4 rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] p-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                         Appointments
                       </p>
                       <div className="mt-3 space-y-3">
@@ -2614,7 +2625,7 @@ export default async function SchedulePage({
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                                   Appointment ·{" "}
                                   {formatStatusLabel(
                                     appointment.appointmentType
@@ -2622,15 +2633,15 @@ export default async function SchedulePage({
                                 </p>
                                 <Link
                                   href={appointment.href}
-                                  className="mt-1 block text-sm font-semibold text-slate-900 transition hover:text-brand-700"
+                                  className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
                                 >
                                   {appointment.title}
                                 </Link>
-                                <p className="mt-1 text-xs leading-5 text-slate-500">
+                                <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                                   {formatScheduleItemTimeWindow(appointment)} ·{" "}
                                   {appointment.assigneeLabel}
                                 </p>
-                                <p className="mt-2 text-sm leading-6 text-slate-600">
+                                <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                                   {appointment.subtitle}
                                   {appointment.location
                                     ? ` · ${appointment.location}`
@@ -2648,14 +2659,14 @@ export default async function SchedulePage({
                               appointment.contextLabel ? (
                                 <Link
                                   href={appointment.contextHref}
-                                  className="inline-flex items-center rounded-[4px] px-2.5 py-1.5 text-xs font-medium text-slate-500 transition hover:text-slate-900"
+                                  className={scheduleCompactLinkClassName}
                                 >
                                   {appointment.contextLabel}
                                 </Link>
                               ) : null}
                               <Link
                                 href={appointment.href}
-                                className={`inline-flex items-center rounded-[4px] border px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionClassName}`}
+                                className={`inline-flex items-center rounded-[4px] border px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
                               >
                                 Open appointment
                               </Link>
@@ -2691,21 +2702,21 @@ export default async function SchedulePage({
                                   >
                                     <div className="flex items-start justify-between gap-3">
                                       <div className="min-w-0">
-                                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                                           {boardCardState.eyebrow}
                                         </p>
                                         <Link
                                           href={`/jobs/${job.id}`}
-                                          className="mt-1 block text-sm font-semibold text-slate-900 transition hover:text-brand-700"
+                                          className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
                                         >
                                           {job.project?.name ?? "Untitled job"}
                                         </Link>
-                                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                                        <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                                           {job.customer?.name ??
                                             "Unknown customer"}{" "}
                                           · {formatScheduleTimeWindow(job)}
                                         </p>
-                                        <p className="mt-2 text-sm font-medium text-slate-800">
+                                        <p className="mt-2 text-sm font-medium text-[var(--text-primary)]">
                                           {boardCardState.title}
                                         </p>
                                       </div>
@@ -2714,11 +2725,11 @@ export default async function SchedulePage({
                                       />
                                     </div>
 
-                                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                                    <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                                       {boardCardState.summary}
                                     </p>
 
-                                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                                       {crewState.detail}
                                     </p>
 
@@ -2786,10 +2797,10 @@ export default async function SchedulePage({
                       >
                         <div className="flex items-start justify-between gap-3 border-b border-[var(--border-warm)] pb-3">
                           <div>
-                            <p className="text-sm font-semibold text-slate-950">
+                            <p className="text-sm font-semibold text-[var(--text-primary)]">
                               {boardDate.title}
                             </p>
-                            <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-500">
+                            <p className="mt-1 text-xs uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                               {boardDate.subtitle}
                             </p>
                           </div>
@@ -2821,20 +2832,20 @@ export default async function SchedulePage({
                                   >
                                     <div className="flex items-start justify-between gap-3">
                                       <div className="min-w-0">
-                                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                                           {boardCardState.eyebrow}
                                         </p>
                                         <Link
                                           href={`/jobs/${job.id}`}
-                                          className="mt-1 block text-sm font-semibold text-slate-900 transition hover:text-brand-700"
+                                          className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
                                         >
                                           {job.project?.name ?? "Untitled job"}
                                         </Link>
-                                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                                        <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                                           {job.customer?.name ??
                                             "Unknown customer"}
                                         </p>
-                                        <p className="mt-2 text-sm font-medium text-slate-800">
+                                        <p className="mt-2 text-sm font-medium text-[var(--text-primary)]">
                                           {boardCardState.title}
                                         </p>
                                       </div>
@@ -2843,13 +2854,13 @@ export default async function SchedulePage({
                                       />
                                     </div>
 
-                                    <p className="mt-3 text-xs font-medium text-slate-700">
+                                    <p className="mt-3 text-xs font-medium text-[var(--text-secondary)]">
                                       {formatScheduleTimeWindow(job)}
                                     </p>
-                                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                                    <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                                       {boardCardState.summary}
                                     </p>
-                                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                                       {crewState.detail}
                                     </p>
 
@@ -2884,7 +2895,7 @@ export default async function SchedulePage({
                                 >
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
-                                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                                         Appointment ·{" "}
                                         {formatStatusLabel(
                                           appointment.appointmentType
@@ -2892,11 +2903,11 @@ export default async function SchedulePage({
                                       </p>
                                       <Link
                                         href={appointment.href}
-                                        className="mt-1 block text-sm font-semibold text-slate-900 transition hover:text-brand-700"
+                                        className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
                                       >
                                         {appointment.title}
                                       </Link>
-                                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                                      <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                                         {appointment.subtitle}
                                       </p>
                                     </div>
@@ -2906,10 +2917,10 @@ export default async function SchedulePage({
                                       </span>
                                     ) : null}
                                   </div>
-                                  <p className="mt-3 text-xs font-medium text-slate-700">
+                                  <p className="mt-3 text-xs font-medium text-[var(--text-secondary)]">
                                     {formatScheduleItemTimeWindow(appointment)}
                                   </p>
-                                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                                  <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                                     {appointment.assigneeLabel}
                                     {appointment.location
                                       ? ` · ${appointment.location}`
@@ -2920,14 +2931,14 @@ export default async function SchedulePage({
                                     appointment.contextLabel ? (
                                       <Link
                                         href={appointment.contextHref}
-                                        className="inline-flex items-center rounded-[4px] px-2.5 py-1.5 text-xs font-medium text-slate-500 transition hover:text-slate-900"
+                                        className={scheduleCompactLinkClassName}
                                       >
                                         {appointment.contextLabel}
                                       </Link>
                                     ) : null}
                                     <Link
                                       href={appointment.href}
-                                      className={`inline-flex items-center rounded-[4px] border px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionClassName}`}
+                                      className={`inline-flex items-center rounded-[4px] border px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
                                     >
                                       Open appointment
                                     </Link>
@@ -2955,13 +2966,13 @@ export default async function SchedulePage({
                       <div className="border-b border-[var(--border-warm)] px-4 py-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-slate-950">
+                            <p className="text-sm font-semibold text-[var(--text-primary)]">
                               {group.title}
                             </p>
-                            <p className="mt-1 text-sm leading-6 text-slate-500">
+                            <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                               {group.description}
                             </p>
-                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
                               {getBoardLaneMeta(group)}
                             </p>
                           </div>
@@ -2986,19 +2997,19 @@ export default async function SchedulePage({
                               >
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="min-w-0">
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                                       {boardCardState.eyebrow}
                                     </p>
                                     <Link
                                       href={`/jobs/${job.id}`}
-                                      className="mt-1 block text-sm font-semibold text-slate-900 transition hover:text-brand-700"
+                                      className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
                                     >
                                       {job.project?.name ?? "Untitled job"}
                                     </Link>
-                                    <p className="mt-1 text-sm leading-6 text-slate-500">
+                                    <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                                       {job.customer?.name ?? "Unknown customer"}
                                     </p>
-                                    <p className="mt-2 text-sm font-medium text-slate-800">
+                                    <p className="mt-2 text-sm font-medium text-[var(--text-primary)]">
                                       {boardCardState.title}
                                     </p>
                                   </div>
@@ -3011,25 +3022,25 @@ export default async function SchedulePage({
                                 </div>
 
                                 <div className="mt-3 space-y-1">
-                                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                                     Schedule
                                   </p>
-                                  <p className="text-sm font-medium text-slate-700">
+                                  <p className="text-sm font-medium text-[var(--text-secondary)]">
                                     {formatDate(job.scheduledDate)}
                                   </p>
-                                  <p className="text-sm leading-6 text-slate-500">
+                                  <p className="text-sm leading-6 text-[var(--text-secondary)]">
                                     {formatScheduleTimeWindow(job)}
                                   </p>
                                 </div>
 
                                 <div className="mt-3 space-y-1">
-                                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                                     Crew state
                                   </p>
-                                  <p className="text-sm font-medium text-slate-700">
+                                  <p className="text-sm font-medium text-[var(--text-secondary)]">
                                     {boardCardState.summary}
                                   </p>
-                                  <p className="text-sm leading-6 text-slate-500">
+                                  <p className="text-sm leading-6 text-[var(--text-secondary)]">
                                     {crewState.detail}
                                   </p>
                                 </div>
@@ -3062,21 +3073,21 @@ export default async function SchedulePage({
                           })
                         ) : (
                           <div className="rounded-[4px] border border-dashed border-[var(--border-warm)] bg-white px-4 py-5">
-                            <p className="text-sm font-semibold text-slate-900">
+                            <p className="text-sm font-semibold text-[var(--text-primary)]">
                               {group.emptyTitle}
                             </p>
-                            <p className="mt-2 text-sm leading-6 text-slate-500">
+                            <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                               {group.emptyDescription}
                             </p>
                             {group.key === "unscheduled-ready" ? (
-                              <div className="mt-3 text-sm leading-6 text-slate-500">
+                              <div className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
                                 If work is missing here entirely, confirm
                                 upstream project readiness first and then create
                                 the job.
                               </div>
                             ) : null}
                             {group.key === "in-progress" ? (
-                              <div className="mt-3 text-sm leading-6 text-slate-500">
+                              <div className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
                                 Active execution still lives on the same job
                                 records. Move status forward from the job
                                 workspace when field work actually starts.
@@ -3101,13 +3112,13 @@ export default async function SchedulePage({
           </section>
 
           {resolvedSearchParams.error ? (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+            <div className="rounded-[6px] border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
               {resolvedSearchParams.error}
             </div>
           ) : null}
 
           {resolvedSearchParams.message ? (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+            <div className="rounded-[6px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
               {resolvedSearchParams.message}
             </div>
           ) : null}
@@ -3115,7 +3126,7 @@ export default async function SchedulePage({
           <section className={schedulePanelClassName}>
             <div className={schedulePanelHeaderClassName}>
               <div className="flex items-end justify-between gap-4">
-                <div className="hidden grid-cols-[minmax(0,1.3fr)_1fr_170px_170px_150px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid md:flex-1">
+                <div className="hidden grid-cols-[minmax(0,1.3fr)_1fr_170px_170px_150px] gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)] md:grid md:flex-1">
                   <span>Scheduled work</span>
                   <span>Customer / project</span>
                   <span>Crew</span>
@@ -3123,17 +3134,17 @@ export default async function SchedulePage({
                   <span className="text-right">Actions</span>
                 </div>
                 <div className="md:hidden">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--text-secondary)]">
                     Schedule list
                   </p>
                 </div>
-                <p className="text-sm leading-6 text-slate-500">
+                <p className="text-sm leading-6 text-[var(--text-secondary)]">
                   {visibleListItems.length} visible
                 </p>
               </div>
             </div>
 
-            <div className="divide-y divide-slate-200">
+            <div className="divide-y divide-[var(--border-warm)]">
               {visibleListItems.length > 0 ? (
                 visibleListItems.map((item) => {
                   if (item.type === "appointment") {
@@ -3145,7 +3156,7 @@ export default async function SchedulePage({
                         <div className="grid gap-4 md:grid-cols-[minmax(0,1.3fr)_1fr_170px_170px_190px] md:items-start">
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                                 Appointment
                               </p>
                               <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
@@ -3159,52 +3170,52 @@ export default async function SchedulePage({
                             </div>
                             <Link
                               href={item.href}
-                              className="mt-2 block text-base font-semibold text-slate-950 transition hover:text-brand-700"
+                              className="mt-2 block text-base font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
                             >
                               {item.title}
                             </Link>
-                            <p className="mt-2 text-sm font-medium text-slate-800">
+                            <p className="mt-2 text-sm font-medium text-[var(--text-primary)]">
                               {formatStatusLabel(item.appointmentType)}
                             </p>
-                            <p className="mt-2 text-sm leading-6 text-slate-500">
+                            <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                               {item.location ?? "Location pending"}
                             </p>
                           </div>
 
                           <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] md:hidden">
                               Context
                             </p>
-                            <p className="text-sm font-medium text-slate-700">
+                            <p className="text-sm font-medium text-[var(--text-secondary)]">
                               {item.customerName ??
                                 item.opportunityTitle ??
                                 "Lead appointment"}
                             </p>
-                            <p className="mt-1 text-sm leading-6 text-slate-500">
+                            <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                               {item.projectName ?? item.subtitle}
                             </p>
                           </div>
 
                           <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] md:hidden">
                               Assigned
                             </p>
-                            <p className="text-sm font-medium text-slate-700">
+                            <p className="text-sm font-medium text-[var(--text-secondary)]">
                               {item.assigneeLabel}
                             </p>
-                            <p className="mt-1 text-sm leading-6 text-slate-500">
+                            <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                               Person assignment
                             </p>
                           </div>
 
                           <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] md:hidden">
                               Date
                             </p>
-                            <p className="text-sm font-medium text-slate-700">
+                            <p className="text-sm font-medium text-[var(--text-secondary)]">
                               {formatDate(item.dateKey)}
                             </p>
-                            <p className="mt-1 text-sm leading-6 text-slate-500">
+                            <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                               {formatScheduleItemTimeWindow(item)}
                             </p>
                           </div>
@@ -3213,14 +3224,14 @@ export default async function SchedulePage({
                             {item.contextHref && item.contextLabel ? (
                               <Link
                                 href={item.contextHref}
-                                className="inline-flex items-center rounded-[4px] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 transition hover:text-slate-900"
+                                className="inline-flex items-center rounded-[4px] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
                               >
                                 {item.contextLabel}
                               </Link>
                             ) : null}
                             <Link
                               href={item.href}
-                              className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionClassName}`}
+                              className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
                             >
                               Open appointment
                             </Link>
@@ -3245,7 +3256,7 @@ export default async function SchedulePage({
                       <div className="grid gap-4 md:grid-cols-[minmax(0,1.3fr)_1fr_170px_170px_190px] md:items-start">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                               {boardCardState.eyebrow}
                             </p>
                             <span
@@ -3259,14 +3270,14 @@ export default async function SchedulePage({
                           </div>
                           <Link
                             href={`/jobs/${job.id}`}
-                            className="mt-2 block text-base font-semibold text-slate-950 transition hover:text-brand-700"
+                            className="mt-2 block text-base font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
                           >
                             {job.project?.name ?? "Untitled job"}
                           </Link>
-                          <p className="mt-2 text-sm font-medium text-slate-800">
+                          <p className="mt-2 text-sm font-medium text-[var(--text-primary)]">
                             {boardCardState.title}
                           </p>
-                          <p className="mt-2 text-sm leading-6 text-slate-500">
+                          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                             {job.estimate?.referenceNumber ??
                               "Project-based work"}{" "}
                             ·{" "}
@@ -3274,22 +3285,22 @@ export default async function SchedulePage({
                               {formatStatusLabel(job.dispatchStatus)}
                             </span>
                           </p>
-                          <p className="mt-2 text-sm leading-6 text-slate-600">
+                          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                             {boardCardState.summary}
                           </p>
                         </div>
 
                         <div>
-                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] md:hidden">
                             Continuity
                           </p>
-                          <p className="text-sm font-medium text-slate-700">
+                          <p className="text-sm font-medium text-[var(--text-secondary)]">
                             {job.customer?.name ?? "Unknown customer"}
                           </p>
-                          <p className="mt-1 text-sm leading-6 text-slate-500">
+                          <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                             <Link
                               href={`/projects/${job.projectId}`}
-                              className="hover:text-slate-900"
+                              className="hover:text-[var(--text-primary)]"
                             >
                               Open project
                             </Link>
@@ -3297,30 +3308,30 @@ export default async function SchedulePage({
                         </div>
 
                         <div>
-                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] md:hidden">
                             Crew
                           </p>
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-sm font-medium text-slate-700">
+                            <p className="text-sm font-medium text-[var(--text-secondary)]">
                               {job.assignmentCount > 0
                                 ? formatAssignmentLabel(job.assignmentCount)
                                 : "No crew assigned"}
                             </p>
                             <ScheduleJobStateBadges crewState={crewState} />
                           </div>
-                          <p className="mt-1 text-sm leading-6 text-slate-500">
+                          <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                             {crewState.detail}
                           </p>
                         </div>
 
                         <div>
-                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] md:hidden">
                             Date
                           </p>
-                          <p className="text-sm font-medium text-slate-700">
+                          <p className="text-sm font-medium text-[var(--text-secondary)]">
                             {formatDate(job.scheduledDate)}
                           </p>
-                          <p className="mt-1 text-sm leading-6 text-slate-500">
+                          <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                             {job.scheduledStartAt
                               ? formatScheduleTimeWindow(job)
                               : "Time not set"}
@@ -3389,15 +3400,15 @@ export default async function SchedulePage({
           {selectedJob ? (
             <div className="space-y-4">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                   Selected job
                 </p>
-                <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
+                <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
                   Selected job action panel
                 </h2>
               </div>
               <div className={scheduleInsetPanelClassName}>
-                <p className="font-semibold text-slate-950">
+                <p className="font-semibold text-[var(--text-primary)]">
                   {selectedJob.project?.name ?? "Untitled job"}
                 </p>
                 <p className="mt-1">
@@ -3416,20 +3427,20 @@ export default async function SchedulePage({
               <div className="flex flex-wrap gap-2">
                 <Link
                   href={`/projects/${selectedJob.projectId}`}
-                  className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionClassName}`}
+                  className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
                 >
                   Open project
                 </Link>
                 <Link
                   href={`/jobs/${selectedJob.id}`}
-                  className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionClassName}`}
+                  className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
                 >
                   Open job
                 </Link>
               </div>
               {selectedJobCrewState ? (
-                <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-slate-600">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                <div className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                     Crew continuity
                   </p>
                   <p
@@ -3437,9 +3448,47 @@ export default async function SchedulePage({
                   >
                     {selectedJobCrewState.label}
                   </p>
-                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                  <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                     {selectedJobCrewState.detail}
                   </p>
+                </div>
+              ) : null}
+
+              {selectedJobEquipmentReadiness ? (
+                <div className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                    Equipment readiness
+                  </p>
+                  <p
+                    className={[
+                      "mt-2 text-sm font-semibold",
+                      selectedJobEquipmentReadiness.warnings.length > 0
+                        ? "text-amber-700"
+                        : "text-emerald-700"
+                    ].join(" ")}
+                  >
+                    {selectedJobEquipmentReadiness.assignmentCount} assigned /{" "}
+                    {selectedJobEquipmentReadiness.requirementCount} required
+                    rows
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+                    {selectedJobEquipmentReadiness.warnings.length > 0
+                      ? `${selectedJobEquipmentReadiness.warnings.length} advisory warning${
+                          selectedJobEquipmentReadiness.warnings.length === 1
+                            ? ""
+                            : "s"
+                        } on this job. Scheduling remains human-confirmed.`
+                      : "No equipment warnings are currently derived for this job."}
+                  </p>
+                  {selectedJobEquipmentReadiness.warnings.length > 0 ? (
+                    <ul className="mt-2 space-y-1">
+                      {selectedJobEquipmentReadiness.warnings
+                        .slice(0, 3)
+                        .map((warning) => (
+                          <li key={warning.id}>- {warning.title}</li>
+                        ))}
+                    </ul>
+                  ) : null}
                 </div>
               ) : null}
 
@@ -3459,7 +3508,7 @@ export default async function SchedulePage({
                             jobId: selectedJob.id
                           }) + "#schedule-action"
                         }
-                        className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${schedulePrimaryActionClassName}`}
+                        className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${schedulePrimaryActionToneClassName}`}
                       >
                         Set schedule first
                       </Link>
@@ -3503,13 +3552,13 @@ export default async function SchedulePage({
                     <div className="flex flex-wrap gap-2">
                       <Link
                         href="/people"
-                        className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionClassName}`}
+                        className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
                       >
                         Open people
                       </Link>
                       <Link
                         href="/vendors"
-                        className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionClassName}`}
+                        className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
                       >
                         Open vendors
                       </Link>

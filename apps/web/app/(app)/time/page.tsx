@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AppEmptyState } from "@/components/app-empty-state";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
+import { CrewClockInForm } from "@/components/crew-clock-in-form";
 import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { TimePunchForm } from "@/components/time-punch-form";
@@ -12,8 +13,17 @@ import { listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { listPeople } from "@/lib/people/data";
 import { listProjects } from "@/lib/projects/data";
-import { recordTimePunchEventAction } from "@/lib/time/actions";
-import { listOpenTimeCardStates, listTimeCards } from "@/lib/time/data";
+import { listServiceTickets } from "@/lib/service-tickets/data";
+import {
+  recordCrewClockInAction,
+  recordTimePunchEventAction
+} from "@/lib/time/actions";
+import {
+  listOpenTimeCardStates,
+  listTimeCards,
+  listTimePunchEvents
+} from "@/lib/time/data";
+import { deriveTimeReviewExceptions } from "@/lib/time/exceptions";
 
 type TimePageProps = {
   searchParams?: Promise<{
@@ -25,7 +35,8 @@ type TimePageProps = {
     personId?: string;
     projectId?: string;
     q?: string;
-    view?: "all" | "open" | "today";
+    serviceTicketId?: string;
+    view?: "all" | "exceptions" | "open" | "review" | "today";
   }>;
 };
 
@@ -57,9 +68,9 @@ function formatDuration(minutes: number) {
 function formatEventLabel(eventType: string) {
   switch (eventType) {
     case "punch_in":
-      return "Punch in";
+      return "Clock in";
     case "punch_out":
-      return "Punch out";
+      return "Clock out";
     case "break_start":
       return "Break start";
     case "break_end":
@@ -93,6 +104,7 @@ function buildTimeHref(input: {
   personId?: string;
   projectId?: string;
   q?: string;
+  serviceTicketId?: string;
   view?: string;
 }) {
   const searchParams = new URLSearchParams();
@@ -121,6 +133,10 @@ function buildTimeHref(input: {
     searchParams.set("jobId", input.jobId);
   }
 
+  if (input.serviceTicketId) {
+    searchParams.set("serviceTicketId", input.serviceTicketId);
+  }
+
   if (input.eventType) {
     searchParams.set("eventType", input.eventType);
   }
@@ -137,19 +153,22 @@ export default async function TimePage({ searchParams }: TimePageProps) {
   if (!organizationContext) {
     return (
       <section className="rounded-3xl border border-amber-200 bg-amber-50 px-8 py-6 text-sm leading-6 text-amber-900">
-        Time tracking needs an active organization before punches can be recorded.
-        Sign out and back in if this account was just initialized.
+        Time tracking needs an active organization before punches can be
+        recorded. Sign out and back in if this account was just initialized.
       </section>
     );
   }
 
-  const [people, projects, jobs, openStates, timeCards] = await Promise.all([
-    listPeople(),
-    listProjects(),
-    listJobs(),
-    listOpenTimeCardStates(),
-    listTimeCards()
-  ]);
+  const [people, projects, jobs, serviceTickets, openStates, timeCards, punchEvents] =
+    await Promise.all([
+      listPeople(),
+      listProjects(),
+      listJobs(),
+      listServiceTickets(),
+      listOpenTimeCardStates(),
+      listTimeCards(),
+      listTimePunchEvents()
+    ]);
 
   const activePeople = people.filter((person) => person.isActive);
   const linkedPerson =
@@ -163,7 +182,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
     resolvedSearchParams.compose === "1" || Boolean(resolvedSearchParams.error);
 
   const currentUserOpenState = linkedPerson
-    ? openStates.find((state) => state.personId === linkedPerson.id) ?? null
+    ? (openStates.find((state) => state.personId === linkedPerson.id) ?? null)
     : null;
   const currentUserTodayCards = linkedPerson
     ? todayCards.filter((card) => card.personId === linkedPerson.id)
@@ -174,10 +193,32 @@ export default async function TimePage({ searchParams }: TimePageProps) {
   );
   const recentCurrentUserCard =
     currentUserTodayCards[0] ??
-    (linkedPerson ? timeCards.find((card) => card.personId === linkedPerson.id) ?? null : null);
+    (linkedPerson
+      ? (timeCards.find((card) => card.personId === linkedPerson.id) ?? null)
+      : null);
   const openSessionsExcludingCurrentUser = linkedPerson
     ? openStates.filter((state) => state.personId !== linkedPerson.id)
     : openStates;
+  const openStateByTimeCardId = new Map(
+    openStates.map((state) => [state.id, state])
+  );
+  const timeReviewExceptions = deriveTimeReviewExceptions({
+    nowIso: new Date().toISOString(),
+    timeCards: timeCards.map((card) => ({
+      ...card,
+      currentPunchState:
+        openStateByTimeCardId.get(card.id)?.currentPunchState ?? null
+    }))
+  });
+  const exceptionTimeCardIds = new Set(
+    timeReviewExceptions.map((exception) => exception.timeCardId)
+  );
+  const reviewQueueCards = timeCards.filter(
+    (card) =>
+      card.reviewStatus === "needs_review" ||
+      card.reviewStatus === "rejected" ||
+      card.status === "flagged"
+  );
   const teamWorkedMinutesToday = todayCards.reduce(
     (sum, card) => sum + card.workedMinutes,
     0
@@ -189,7 +230,11 @@ export default async function TimePage({ searchParams }: TimePageProps) {
         ? true
         : view === "open"
           ? timeCard.status === "open"
-          : timeCard.workDate === todayDate;
+          : view === "today"
+            ? timeCard.workDate === todayDate
+            : view === "review"
+              ? reviewQueueCards.some((card) => card.id === timeCard.id)
+              : exceptionTimeCardIds.has(timeCard.id);
     const matchesQuery =
       normalizedQuery.length === 0
         ? true
@@ -197,8 +242,10 @@ export default async function TimePage({ searchParams }: TimePageProps) {
             timeCard.person?.displayName ?? "",
             timeCard.project?.name ?? "",
             timeCard.job?.id ?? "",
+            timeCard.serviceTicket?.title ?? "",
             timeCard.status,
-            timeCard.entryMode
+            timeCard.entryMode,
+            timeCard.reviewStatus
           ]
             .join(" ")
             .toLowerCase()
@@ -209,6 +256,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
 
   const recentTimeCards = visibleTimeCards.slice(0, 12);
   const recentTodayCards = todayCards.slice(0, 6);
+  const recentPunchEvents = punchEvents.slice(0, 8);
   const timeViews = [
     { key: "all", label: "All time cards", count: timeCards.length },
     {
@@ -216,7 +264,17 @@ export default async function TimePage({ searchParams }: TimePageProps) {
       label: "Open sessions",
       count: timeCards.filter((card) => card.status === "open").length
     },
-    { key: "today", label: "Today", count: todayCards.length }
+    { key: "today", label: "Today", count: todayCards.length },
+    {
+      key: "review",
+      label: "Needs review",
+      count: reviewQueueCards.length
+    },
+    {
+      key: "exceptions",
+      label: "Exceptions",
+      count: timeReviewExceptions.length
+    }
   ] as const;
 
   const personOptions = activePeople.map((person) => ({
@@ -224,6 +282,21 @@ export default async function TimePage({ searchParams }: TimePageProps) {
     displayName: person.displayName,
     personType: person.personType
   }));
+  const crewPersonOptions = activePeople.map((person) => {
+    const openState =
+      openStates.find((state) => state.personId === person.id) ?? null;
+
+    return {
+      id: person.id,
+      displayName: person.displayName,
+      personType: person.personType,
+      currentPunchState: openState
+        ? openState.currentPunchState === "on_break"
+          ? "on_break"
+          : "clocked_in"
+        : "not_clocked_in"
+    } as const;
+  });
 
   const projectOptions = projects.map((project) => ({
     id: project.id,
@@ -237,12 +310,34 @@ export default async function TimePage({ searchParams }: TimePageProps) {
     dispatchStatus: job.dispatchStatus
   }));
 
+  const serviceTicketOptions = serviceTickets.map((ticket) => ({
+    id: ticket.id,
+    title: ticket.title,
+    status: ticket.status,
+    ticketType: ticket.ticketType,
+    projectId: ticket.projectId,
+    jobId: ticket.jobId
+  }));
+
   const selectedPersonId =
     resolvedSearchParams.personId ?? linkedPerson?.id ?? "";
+  const selectedPersonOpenState =
+    openStates.find((state) => state.personId === selectedPersonId) ?? null;
   const selectedProjectId =
-    resolvedSearchParams.projectId ?? currentUserOpenState?.projectId ?? "";
+    resolvedSearchParams.projectId ??
+    selectedPersonOpenState?.projectId ??
+    currentUserOpenState?.projectId ??
+    "";
   const selectedJobId =
-    resolvedSearchParams.jobId ?? currentUserOpenState?.jobId ?? "";
+    resolvedSearchParams.jobId ??
+    selectedPersonOpenState?.jobId ??
+    currentUserOpenState?.jobId ??
+    "";
+  const selectedServiceTicketId =
+    resolvedSearchParams.serviceTicketId ??
+    selectedPersonOpenState?.serviceTicketId ??
+    currentUserOpenState?.serviceTicketId ??
+    "";
   const recommendedEventType =
     resolvedSearchParams.eventType ??
     (currentUserOpenState
@@ -296,7 +391,9 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                   eventType: "break_end",
                   personId: linkedPerson.id,
                   projectId: currentUserOpenState.projectId ?? undefined,
-                  jobId: currentUserOpenState.jobId ?? undefined
+                  jobId: currentUserOpenState.jobId ?? undefined,
+                  serviceTicketId:
+                    currentUserOpenState.serviceTicketId ?? undefined
                 }) + "#time-punch-create",
               tone: "primary" as const
             }
@@ -304,14 +401,16 @@ export default async function TimePage({ searchParams }: TimePageProps) {
         : [
             {
               key: "punch-out",
-              label: "Punch out",
+              label: "Clock out",
               href:
                 buildTimeHref({
                   compose: "1",
                   eventType: "punch_out",
                   personId: linkedPerson.id,
                   projectId: currentUserOpenState.projectId ?? undefined,
-                  jobId: currentUserOpenState.jobId ?? undefined
+                  jobId: currentUserOpenState.jobId ?? undefined,
+                  serviceTicketId:
+                    currentUserOpenState.serviceTicketId ?? undefined
                 }) + "#time-punch-create",
               tone: "primary" as const
             },
@@ -324,7 +423,9 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                   eventType: "break_start",
                   personId: linkedPerson.id,
                   projectId: currentUserOpenState.projectId ?? undefined,
-                  jobId: currentUserOpenState.jobId ?? undefined
+                  jobId: currentUserOpenState.jobId ?? undefined,
+                  serviceTicketId:
+                    currentUserOpenState.serviceTicketId ?? undefined
                 }) + "#time-punch-create",
               tone: "secondary" as const
             }
@@ -332,7 +433,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
       : [
           {
             key: "punch-in",
-            label: "Punch in",
+            label: "Clock in",
             href:
               buildTimeHref({
                 compose: "1",
@@ -345,7 +446,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
     : [
         {
           key: "record-punch",
-          label: "Record punch",
+          label: "Record clock event",
           href:
             buildTimeHref({
               compose: "1",
@@ -359,10 +460,10 @@ export default async function TimePage({ searchParams }: TimePageProps) {
     <ContractorWorkspacePage
       eyebrow="Time Tracking"
       title={`Time home for ${organizationContext.organization.displayName}`}
-      description="Use this as the daily operational time surface: know whether you are clocked in, record the next canonical punch event quickly, and review today’s workforce time without leaving the shared contractor system."
+      description="Use this as the daily operational time surface: know whether you are clocked in, record the next canonical punch event quickly, and review today's workforce time without leaving the shared contractor system."
       summary={
         <WorkspaceSummaryBand
-          className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,0.9fr)]"
+          className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,0.75fr)_minmax(0,0.75fr)_minmax(0,0.75fr)_minmax(0,0.9fr)]"
           items={[
             {
               key: "my-state",
@@ -377,7 +478,9 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                     {currentState.badge}
                   </span>
                   <p className="text-sm font-medium leading-6 text-slate-700">
-                    {linkedPerson ? linkedPerson.displayName : "Team review only"}
+                    {linkedPerson
+                      ? linkedPerson.displayName
+                      : "Team review only"}
                   </p>
                 </div>
               )
@@ -401,12 +504,25 @@ export default async function TimePage({ searchParams }: TimePageProps) {
               )
             },
             {
+              key: "exceptions",
+              label: "Review exceptions",
+              content: (
+                <p className="text-3xl font-semibold tracking-tight text-slate-950">
+                  {timeReviewExceptions.length}
+                </p>
+              )
+            },
+            {
               key: "worked-today",
-              label: linkedPerson ? "My worked time today" : "Team worked today",
+              label: linkedPerson
+                ? "My worked time today"
+                : "Team worked today",
               content: (
                 <p className="text-3xl font-semibold tracking-tight text-slate-950">
                   {formatDuration(
-                    linkedPerson ? currentUserWorkedMinutesToday : teamWorkedMinutesToday
+                    linkedPerson
+                      ? currentUserWorkedMinutesToday
+                      : teamWorkedMinutesToday
                   )}
                 </p>
               )
@@ -417,15 +533,19 @@ export default async function TimePage({ searchParams }: TimePageProps) {
       commandBar={{
         supportSlot: (
           <p>
-            Record canonical punch events quickly, keep project and job attribution explicit,
-            and review open sessions and today’s time without leaving the shared execution
-            chain.
+            Record canonical punch events quickly, keep project and job
+            attribution explicit, and review open sessions, exceptions, and
+            today's time without leaving the shared execution chain.
           </p>
         ),
         searchSlot: (
           <form action="/time" className="flex flex-col gap-2 sm:flex-row">
-            {view !== "all" ? <input type="hidden" name="view" value={view} /> : null}
-            {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
+            {view !== "all" ? (
+              <input type="hidden" name="view" value={view} />
+            ) : null}
+            {showComposer ? (
+              <input type="hidden" name="compose" value="1" />
+            ) : null}
             <input
               type="search"
               name="q"
@@ -471,7 +591,9 @@ export default async function TimePage({ searchParams }: TimePageProps) {
               <span
                 className={[
                   "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                  isActive
+                    ? "bg-white/15 text-white"
+                    : "bg-slate-100 text-slate-500"
                 ].join(" ")}
               >
                 {timeView.count}
@@ -487,17 +609,24 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                 eventType: recommendedEventType,
                 personId: selectedPersonId || undefined,
                 projectId: selectedProjectId || undefined,
-                jobId: selectedJobId || undefined
+                jobId: selectedJobId || undefined,
+                serviceTicketId: selectedServiceTicketId || undefined
               }) + "#time-punch-create"
             }
             className="inline-flex items-center rounded-[4px] border border-[#17120f] bg-[#17120f] px-4 py-2.5 text-sm font-medium text-[#ffd7bb] transition hover:border-[#17120f] hover:bg-[#2a1c13]"
           >
-            Record punch
+            Clocking action
           </Link>
         )
       }}
     >
-      <div className={showComposer ? "grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_420px]" : "space-y-4"}>
+      <div
+        className={
+          showComposer
+            ? "grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_420px]"
+            : "space-y-4"
+        }
+      >
         <section className="space-y-4">
           {resolvedSearchParams.error ? (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
@@ -577,6 +706,12 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                         ? `Recent job attribution: ${recentCurrentUserCard.job.id.slice(0, 8)}.`
                         : "Project-level attribution is valid when no specific job applies."}
                   </p>
+                  {currentUserOpenState?.serviceTicket ? (
+                    <p className="mt-2 text-sm leading-6 text-[#9b5b27]">
+                      Service/Warranty:{" "}
+                      {currentUserOpenState.serviceTicket.title}
+                    </p>
+                  ) : null}
                 </section>
                 <section className="rounded-[1.45rem] border border-slate-200 bg-slate-50/85 px-4 py-4">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
@@ -607,7 +742,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
 
           <DetailPanel
             title="Today Visibility"
-            description="Use this section to understand what is active right now and how today’s time is shaping up across the team."
+            description="Use this section to understand what is active right now and how today's time is shaping up across the team."
           >
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               <section className="space-y-4">
@@ -620,7 +755,9 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                       Open workforce sessions
                     </h3>
                   </div>
-                  <p className="text-sm leading-6 text-slate-500">{openStates.length} open</p>
+                  <p className="text-sm leading-6 text-slate-500">
+                    {openStates.length} open
+                  </p>
                 </div>
                 <div className="grid gap-3">
                   {openStates.length > 0 ? (
@@ -642,7 +779,9 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                             </p>
                           </div>
                           <span className="inline-flex rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
-                            {state.currentPunchState === "on_break" ? "On break" : "Clocked in"}
+                            {state.currentPunchState === "on_break"
+                              ? "On break"
+                              : "Clocked in"}
                           </span>
                         </div>
                         <p className="mt-3 text-sm leading-6 text-slate-500">
@@ -667,11 +806,12 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                       Today
                     </p>
                     <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
-                      Today’s team time
+                      Today's team time
                     </h3>
                   </div>
                   <p className="text-sm leading-6 text-slate-500">
-                    {todayCards.length} cards / {formatDuration(teamWorkedMinutesToday)}
+                    {todayCards.length} cards /{" "}
+                    {formatDuration(teamWorkedMinutesToday)}
                   </p>
                 </div>
                 <div className="grid gap-3">
@@ -682,17 +822,22 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                         href={`/time-cards/${timeCard.id}`}
                         title={timeCard.person?.displayName ?? "Unknown worker"}
                         subtitle={
-                          timeCard.project?.name ??
-                          "No project attribution"
+                          timeCard.project?.name ?? "No project attribution"
                         }
                         meta={`${formatDuration(timeCard.workedMinutes)} worked / ${
                           timeCard.job
                             ? `Job ${timeCard.job.id.slice(0, 8)}`
                             : "Project-level time"
-                        } / ${formatTimeCardStatusLabel(timeCard.status)}`}
+                        } / ${formatTimeCardStatusLabel(timeCard.status)}${
+                          timeCard.serviceTicket
+                            ? ` / ${timeCard.serviceTicket.title}`
+                            : ""
+                        }`}
                         badge={
                           <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
-                            {timeCard.personId === linkedPerson?.id ? "You" : "Today"}
+                            {timeCard.personId === linkedPerson?.id
+                              ? "You"
+                              : "Today"}
                           </span>
                         }
                       />
@@ -701,7 +846,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                     <AppEmptyState
                       eyebrow="No cards today"
                       title="No derived time cards for today yet"
-                      description="Today’s time cards will appear here automatically once canonical punch events are recorded."
+                      description="Today's time cards will appear here automatically once canonical punch events are recorded."
                     />
                   )}
                 </div>
@@ -723,7 +868,9 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                     Pick the project when you know it
                   </p>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Project attribution is valid on its own and keeps time connected to the same delivery record chain as jobs, daily logs, and project review.
+                    Project attribution is valid on its own and keeps time
+                    connected to the same delivery record chain as jobs, daily
+                    logs, and project review.
                   </p>
                 </section>
                 <section className="rounded-[1.45rem] border border-slate-200 bg-slate-50/85 px-4 py-4">
@@ -734,7 +881,8 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                     Choose the job only after the project
                   </p>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
-                    The form narrows jobs by project so attribution stays explicit and aligned to the same canonical execution chain.
+                    The form narrows jobs by project so attribution stays
+                    explicit and aligned to the same canonical execution chain.
                   </p>
                 </section>
                 <section className="rounded-[1.45rem] border border-slate-200 bg-slate-50/85 px-4 py-4">
@@ -745,7 +893,9 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                     Break and punch-out events stay on the open session
                   </p>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
-                    The current open time card remains the canonical source for continuing the same work session; this page only makes that state easier to see and act on.
+                    The current open time card remains the canonical source for
+                    continuing the same work session; this page only makes that
+                    state easier to see and act on.
                   </p>
                 </section>
               </div>
@@ -767,7 +917,8 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                         eventType: recommendedEventType,
                         personId: selectedPersonId || undefined,
                         projectId: selectedProjectId || undefined,
-                        jobId: selectedJobId || undefined
+                        jobId: selectedJobId || undefined,
+                        serviceTicketId: selectedServiceTicketId || undefined
                       }) + "#time-punch-create"
                     }
                     className={getActionLinkClassName("primary")}
@@ -777,12 +928,14 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                 </div>
                 <div className="mt-4 space-y-3 text-sm leading-6 text-[#665446]">
                   <p>
-                    The composer stays explicit: choose the workforce person, confirm project
-                    attribution, then select a job only when it applies.
+                    The composer stays explicit: choose the workforce person,
+                    confirm project attribution, then select a job only when it
+                    applies.
                   </p>
                   <p>
-                    This does not create a second live-session model. It still records a canonical
-                    punch event and lets derived time cards refresh from that event history.
+                    This does not create a second live-session model. It still
+                    records a canonical punch event and lets derived time cards
+                    refresh from that event history.
                   </p>
                 </div>
               </section>
@@ -791,9 +944,64 @@ export default async function TimePage({ searchParams }: TimePageProps) {
 
           <DetailPanel
             title="Manager Review"
-            description="Operators and managers can review active sessions and recent time without turning the time home into a reporting page."
+            description="Operators and managers can review active sessions, exceptions, and recent time without turning the time home into a reporting page."
           >
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <section className="space-y-4 xl:col-span-2">
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                      Exception queue
+                    </p>
+                    <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
+                      Time needing manager attention
+                    </h3>
+                  </div>
+                  <p className="text-sm leading-6 text-slate-500">
+                    {timeReviewExceptions.length} active
+                  </p>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {timeReviewExceptions.length > 0 ? (
+                    timeReviewExceptions.slice(0, 6).map((exception) => {
+                      const timeCard = timeCards.find(
+                        (card) => card.id === exception.timeCardId
+                      );
+
+                      return (
+                        <Link
+                          key={exception.id}
+                          href={`/time-cards/${exception.timeCardId}`}
+                          className="rounded-[4px] border border-[#e5d2bc] bg-[#fff8ef] px-4 py-4 transition hover:border-[#ef7d32]"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-[#2b2118]">
+                                {exception.title}
+                              </p>
+                              <p className="mt-1 text-sm leading-6 text-[#665446]">
+                                {timeCard?.person?.displayName ??
+                                  "Unknown worker"}
+                              </p>
+                            </div>
+                            <span className="inline-flex rounded-[4px] border border-[#efcfb2] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#9b5b27]">
+                              {exception.severity}
+                            </span>
+                          </div>
+                          <p className="mt-3 text-sm leading-6 text-[#665446]">
+                            {exception.detail}
+                          </p>
+                        </Link>
+                      );
+                    })
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500 md:col-span-2">
+                      No time review exceptions are active right now.
+                    </div>
+                  )}
+                </div>
+              </section>
+
               <section className="space-y-4">
                 <div className="flex items-end justify-between gap-4">
                   <div>
@@ -810,30 +1018,36 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                 </div>
                 <div className="grid gap-3">
                   {openSessionsExcludingCurrentUser.length > 0 ? (
-                    openSessionsExcludingCurrentUser.slice(0, 5).map((state) => (
-                      <div
-                        key={state.id}
-                        className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-4 py-4"
-                      >
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                          <div>
-                            <p className="text-sm font-semibold text-slate-950">
-                              {state.person?.displayName ?? "Unknown worker"}
-                            </p>
-                            <p className="mt-1 text-sm leading-6 text-slate-600">
-                              {state.project?.name ?? "No project selected"}
-                              {state.job ? ` / Job ${state.job.id.slice(0, 8)}` : ""}
-                            </p>
+                    openSessionsExcludingCurrentUser
+                      .slice(0, 5)
+                      .map((state) => (
+                        <div
+                          key={state.id}
+                          className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-4 py-4"
+                        >
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                              <p className="text-sm font-semibold text-slate-950">
+                                {state.person?.displayName ?? "Unknown worker"}
+                              </p>
+                              <p className="mt-1 text-sm leading-6 text-slate-600">
+                                {state.project?.name ?? "No project selected"}
+                                {state.job
+                                  ? ` / Job ${state.job.id.slice(0, 8)}`
+                                  : ""}
+                              </p>
+                            </div>
+                            <span className="inline-flex rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                              {state.currentPunchState === "on_break"
+                                ? "Break"
+                                : "Live"}
+                            </span>
                           </div>
-                          <span className="inline-flex rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
-                            {state.currentPunchState === "on_break" ? "Break" : "Live"}
-                          </span>
+                          <p className="mt-2 text-sm leading-6 text-slate-500">
+                            Started {formatDateTime(state.punchInAt)}
+                          </p>
                         </div>
-                        <p className="mt-2 text-sm leading-6 text-slate-500">
-                          Started {formatDateTime(state.punchInAt)}
-                        </p>
-                      </div>
-                    ))
+                      ))
                   ) : (
                     <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
                       No additional active team sessions need review right now.
@@ -862,10 +1076,18 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                       key={timeCard.id}
                       href={`/time-cards/${timeCard.id}`}
                       title={timeCard.person?.displayName ?? "Unknown worker"}
-                      subtitle={new Date(`${timeCard.workDate}T00:00:00`).toLocaleDateString()}
+                      subtitle={new Date(
+                        `${timeCard.workDate}T00:00:00`
+                      ).toLocaleDateString()}
                       meta={`${timeCard.project?.name ?? "No project"} / ${formatDuration(
                         timeCard.workedMinutes
-                      )} worked / ${formatTimeCardStatusLabel(timeCard.status)}`}
+                      )} worked / ${formatTimeCardStatusLabel(
+                        timeCard.status
+                      )} / ${timeCard.reviewStatus.replaceAll("_", " ")}${
+                        timeCard.serviceTicket
+                          ? ` / ${timeCard.serviceTicket.title}`
+                          : ""
+                      }`}
                       badge={
                         <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
                           {timeCard.job ? "Job-linked" : "Project-level"}
@@ -875,6 +1097,101 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                   ))}
                 </div>
               </section>
+            </div>
+          </DetailPanel>
+
+          <DetailPanel
+            title="Crew Clock-In"
+            description="Clock multiple available people into one project/job context by recording one canonical punch-in event per person."
+          >
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+              <section className="rounded-[1.45rem] border border-slate-200 bg-slate-50/80 px-5 py-5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Guardrails
+                </p>
+                <h3 className="mt-3 text-lg font-semibold tracking-tight text-slate-950">
+                  Crew clock-in uses the same punch path
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Each selected person gets a separate punch-in event. People
+                  already clocked in or on break are shown but cannot be
+                  selected here.
+                </p>
+              </section>
+              <CrewClockInForm
+                action={recordCrewClockInAction}
+                people={crewPersonOptions}
+                projects={projectOptions}
+                jobs={jobOptions}
+                serviceTickets={serviceTicketOptions}
+              />
+            </div>
+          </DetailPanel>
+
+          <DetailPanel
+            title="Recent Punch Events"
+            description="Punch events are the canonical audit trail. Time cards are rebuilt from this event history."
+          >
+            <div className="grid gap-3">
+              {recentPunchEvents.length > 0 ? (
+                recentPunchEvents.map((event) => (
+                  <div
+                    key={event.id}
+                    className="rounded-[4px] border border-[#e5e5e5] bg-white px-5 py-4"
+                  >
+                    <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_180px] md:items-start">
+                      <div className="min-w-0">
+                        <p className="text-base font-semibold text-slate-950">
+                          {event.person?.displayName ?? "Unknown worker"}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {formatDateTime(event.occurredAt)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                          Event
+                        </p>
+                        <span className="inline-flex rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                          {formatEventLabel(event.eventType)}
+                        </span>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                          Source: {event.source}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
+                          Attribution
+                        </p>
+                        <p className="text-sm font-medium text-slate-700">
+                          {event.project?.name ?? "No project"}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {event.job
+                            ? `Job ${event.job.id.slice(0, 8)}`
+                            : "Project-level or unattributed event"}
+                        </p>
+                        {event.serviceTicket ? (
+                          <p className="mt-1 text-sm leading-6 text-[#9b5b27]">
+                            {event.serviceTicket.title}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                    {event.notes ? (
+                      <p className="mt-3 text-sm leading-6 text-slate-600">
+                        {event.notes}
+                      </p>
+                    ) : null}
+                  </div>
+                ))
+              ) : (
+                <AppEmptyState
+                  eyebrow="No punch events"
+                  title="No canonical time events have been recorded yet"
+                  description="Clocking actions will appear here before they are summarized into derived time cards."
+                />
+              )}
             </div>
           </DetailPanel>
 
@@ -896,8 +1213,10 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                           {timeCard.person?.displayName ?? "Unknown worker"}
                         </h3>
                         <p className="mt-2 text-sm leading-6 text-slate-500">
-                          {new Date(`${timeCard.workDate}T00:00:00`).toLocaleDateString()} /{" "}
-                          {formatDateTime(timeCard.punchInAt)}
+                          {new Date(
+                            `${timeCard.workDate}T00:00:00`
+                          ).toLocaleDateString()}{" "}
+                          / {formatDateTime(timeCard.punchInAt)}
                         </p>
                       </div>
                       <div>
@@ -912,6 +1231,11 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                             ? `Job ${timeCard.job.id.slice(0, 8)} / same execution chain`
                             : "Project-level attribution"}
                         </p>
+                        {timeCard.serviceTicket ? (
+                          <p className="mt-1 text-sm leading-6 text-[#9b5b27]">
+                            Service/Warranty: {timeCard.serviceTicket.title}
+                          </p>
+                        ) : null}
                       </div>
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
@@ -921,7 +1245,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                           {formatTimeCardStatusLabel(timeCard.status)}
                         </p>
                         <p className="mt-1 text-sm leading-6 text-slate-500">
-                          {timeCard.entryMode.replaceAll("_", " ")}
+                          {timeCard.reviewStatus.replaceAll("_", " ")} review
                         </p>
                       </div>
                       <div className="md:text-right">
@@ -940,8 +1264,16 @@ export default async function TimePage({ searchParams }: TimePageProps) {
                 ))
               ) : (
                 <AppEmptyState
-                  eyebrow={timeCards.length > 0 ? "No matching time cards" : "No time cards yet"}
-                  title={timeCards.length > 0 ? "Adjust the time filters" : "Record the first punch"}
+                  eyebrow={
+                    timeCards.length > 0
+                      ? "No matching time cards"
+                      : "No time cards yet"
+                  }
+                  title={
+                    timeCards.length > 0
+                      ? "Adjust the time filters"
+                      : "Record the first punch"
+                  }
                   description={
                     timeCards.length > 0
                       ? "Try a broader search or switch views to find the time record you need."
@@ -955,7 +1287,7 @@ export default async function TimePage({ searchParams }: TimePageProps) {
 
         <WorkspaceComposerSheet
           id="time-punch-create"
-          title="Record punch"
+          title="Record clock event"
           description="Choose a workforce person, confirm project and optional job attribution, and record the next canonical punch event."
           open={showComposer}
           openHref={
@@ -966,11 +1298,12 @@ export default async function TimePage({ searchParams }: TimePageProps) {
               eventType: recommendedEventType,
               personId: selectedPersonId || undefined,
               projectId: selectedProjectId || undefined,
-              jobId: selectedJobId || undefined
+              jobId: selectedJobId || undefined,
+              serviceTicketId: selectedServiceTicketId || undefined
             }) + "#time-punch-create"
           }
           closeHref={buildTimeHref({ q: query, view })}
-          openLabel="Open punch composer"
+          openLabel="Open clocking composer"
         >
           {personOptions.length > 0 ? (
             <TimePunchForm
@@ -978,9 +1311,18 @@ export default async function TimePage({ searchParams }: TimePageProps) {
               people={personOptions}
               projects={projectOptions}
               jobs={jobOptions}
+              serviceTickets={serviceTicketOptions}
               defaultPersonId={selectedPersonId}
               defaultProjectId={selectedProjectId}
               defaultJobId={selectedJobId}
+              defaultServiceTicketId={selectedServiceTicketId}
+              personPunchStates={openStates.map((state) => ({
+                personId: state.personId,
+                currentPunchState: state.currentPunchState,
+                projectId: state.projectId,
+                jobId: state.jobId,
+                serviceTicketId: state.serviceTicketId
+              }))}
               recommendedEventType={recommendedEventType}
             />
           ) : (

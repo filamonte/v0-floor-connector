@@ -12,6 +12,13 @@ Related documents:
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): what is implemented today
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md): current and near-term business workflows
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): platform maturity sequencing
+- [docs/communications-layer.md](C:/FloorConnector/docs/communications-layer.md): future workflow-connected communication philosophy
+- [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md): canonical reporting and metrics philosophy
+- [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md): future workflow automation philosophy
+- [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md): future operational intelligence strategy
+- [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md): strategic build-priority registry
+- [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md): staged build discipline
+- [docs/gatekeeper-system-vision.md](C:/FloorConnector/docs/gatekeeper-system-vision.md): GateKeeper operational intelligence and communications doctrine
 - [docs/ai-assisted-operating-system.md](C:/FloorConnector/docs/ai-assisted-operating-system.md): long-term AI-assisted operating system direction
 
 ## Who FloorConnector Is For
@@ -73,6 +80,22 @@ In short:
 The long-term product direction can be described as a company brain: shared canonical data everywhere, no data silos, no fake or parallel records, and project-centered operational memory that makes the whole contractor workflow readable.
 
 The current enterprise UX consolidation direction supports that thesis at the page level: People owns contact/access administration, Customer summarizes the account relationship, Project owns operational state, Estimate/Contract/Invoice own proposal/signature/billing review, and Portal keeps customer-facing review simple. See [docs/enterprise-ux-consolidation.md](C:/FloorConnector/docs/enterprise-ux-consolidation.md).
+
+## Contractor Foreman Baseline, Not Destination
+
+Contractor Foreman is useful as a baseline reference because serious contractor operating systems tend to need a common set of capabilities: customers, projects, estimates, contracts, change orders, jobs, invoices, payments, time, field work, documents, equipment, reporting, and integrations.
+
+FloorConnector is not chasing Contractor Foreman feature-for-feature. The product thesis is broader and deeper: a specialty flooring operating system with canonical data continuity, vertical trade intelligence, and a guided/AI-first future over the same shared records.
+
+That means FloorConnector should cover core contractor operations while avoiding generic-module bloat. Equipment, bid/RFP workflows, subcontractors, documents/submittals, warranty/service, weather-aware scheduling, procurement/materials, job costing, and future AI/takeoff depth should extend the existing record chain instead of becoming detached products.
+
+The durable rule is still one system of record:
+
+`opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
+
+Future AI is an operating layer over that chain. It may draft, summarize, recommend, and prepare, but it must not create AI-only business truth or bypass human approval for risky customer-facing, financial, legal, scheduling, permission, or compliance actions.
+
+GateKeeper is the named future doctrine for that operating layer where communications, operational memory, workflow reinforcement, and human-governed AI assistance become one system layer over the same canonical workflow. GateKeeper is not implemented by this vision document; it is the target direction documented in [docs/gatekeeper-system-vision.md](C:/FloorConnector/docs/gatekeeper-system-vision.md).
 
 ## Long-Term Product Direction
 
@@ -171,7 +194,7 @@ AI-assisted measurement, scope, system, and cost-item mapping suggestions must s
 
 Future Finish System / System Specification behavior should build on this same direction. Finish systems are not loose estimate line-item descriptions; they represent what is actually sold and installed. Selected systems/specs should flow into estimates, contracts, jobs, portal review, closeout, and warranty context. Once approved or once contract/signature activity begins, selected systems should be snapshotted or locked like financial/document truth. Later changes should move through revision or change-order style workflows instead of silent edits.
 
-### 6. Customer And Communication Layer
+### 6. Customer And Communications Layer
 
 The platform should eventually support the customer-facing parts of the same workflow:
 
@@ -184,6 +207,8 @@ The platform should eventually support the customer-facing parts of the same wor
 The purpose is not to create a separate system. Customer interaction can happen through the portal or through contractor-assisted onsite workflows, while still acting on the same canonical records in a controlled way.
 
 Future communication depth should include delivery proof across email, SMS, portal, app, and manual logs. Sending estimates, invoices, contracts, change orders, portal invites, and payment requests should create canonical communication/delivery records. Provider telemetry such as queued, sent, delivered, opened, clicked, deferred, bounced, blocked, dropped, and failed is useful signal, but provider data is not the business source of truth. Open and click tracking should help teams understand engagement without being treated as perfect legal certainty.
+
+The durable rule is that communications attach to operational context. FloorConnector should not become a disconnected inbox, Slack clone, or standalone CRM messaging tool. See [docs/communications-layer.md](C:/FloorConnector/docs/communications-layer.md).
 
 ### 7. Public Acquisition And Connected Platform Layer
 
@@ -218,7 +243,43 @@ Early networked-work concepts should stay invite-based:
 
 Later concepts may include trusted contractor connections, private referral or overflow work sharing, specialty subcontractor requests, regional partner coverage, and partner performance or compliance signals. A controlled marketplace, vetted network, referral tracking, or platform revenue model belongs much later and should not precede scoped collaboration, permissioning, tenant isolation, and canonical record ownership.
 
-### 8. Administration And Control Layer
+### 8. Reporting And Metrics Layer
+
+FloorConnector's reporting and metrics should derive from canonical operational records.
+
+Metrics should measure the continuity of the workflow, not create a second reporting truth. The practical metric spine is `lead -> estimate -> contract -> job -> invoice -> payment`, while implementation language should preserve the canonical lifecycle:
+
+`opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
+
+Future reporting should cover operational, financial, sales/conversion, production, labor, workflow timing, readiness, communication, and intelligence-ready metrics. Reporting may use projections or summaries for performance later, but those projections must remain downstream of canonical records and auditable back to workflow evidence.
+
+See [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md).
+
+### 9. Automation Layer
+
+FloorConnector's automation should extend the canonical workflow chain.
+
+The long-term automation direction is deterministic operational automation first: evidence-backed cues, safe routing, readiness-aware prompts, user-confirmed prefill, and approval queues before predictive or autonomous behavior. Automation should reinforce project continuity, operational readiness, workflow progression, communications continuity, and financial integrity.
+
+Automation must not become black-box bots, module-local automation engines, disconnected AI agents, or unsafe autonomous financial behavior. See [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md).
+
+### 10. Intelligence Layer
+
+FloorConnector's long-term platform should include an Intelligence Layer over the same canonical records.
+
+This is not just reporting. Reporting is historical and descriptive. Intelligence should become operational, predictive, comparative, workflow-aware, and decision-oriented.
+
+The Intelligence Layer should eventually include:
+
+- Contractor Intelligence: tenant-scoped analytics for close rates, estimator performance, lead sources, profitability, collections, workflow bottlenecks, readiness, labor efficiency, and schedule performance
+- Network Intelligence: opt-in anonymized benchmarking for regional pricing, close rates, lead sources, labor efficiency, system popularity, margins, operational timing, and seasonal trends
+- Predictive and AI Intelligence: close likelihood, risk forecasting, payment-delay prediction, crew-performance prediction, recommended next actions, and workflow optimization suggestions after clean telemetry exists
+
+The core rule is canonical-first intelligence. Analytics, benchmarks, recommendations, and predictions must derive from the same `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment` chain. They must not become duplicate reporting truth, disconnected BI silos, manual metric-entry systems, or AI-only data chains.
+
+This layer changes the long-term positioning: FloorConnector is not only contractor management software; it is moving toward an operational intelligence system for specialty contractors. See [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md).
+
+### 11. Administration And Control Layer
 
 As the platform grows, FloorConnector should also mature its administrative infrastructure:
 
@@ -229,7 +290,7 @@ As the platform grows, FloorConnector should also mature its administrative infr
 
 These layers are important because a vertical operating system eventually needs controlled rollout, organization-aware configuration, and a clean boundary between contractor administration and platform administration.
 
-### 9. AI-Assisted Operating Layer
+### 12. AI-Assisted Operating Layer
 
 The long-term AI direction is to reduce friction across both contractor operations and FloorConnector's own growth, onboarding, support, and activation workflows.
 
@@ -246,6 +307,7 @@ Long-term AI layers include contractor copilot behavior, unified communications,
 
 Detailed planning lives in:
 
+- [docs/gatekeeper-system-vision.md](C:/FloorConnector/docs/gatekeeper-system-vision.md)
 - [docs/ai-assisted-operating-system.md](C:/FloorConnector/docs/ai-assisted-operating-system.md)
 - [docs/ai-contractor-workflows.md](C:/FloorConnector/docs/ai-contractor-workflows.md)
 - [docs/communications-and-ai-intake.md](C:/FloorConnector/docs/communications-and-ai-intake.md)
@@ -263,7 +325,9 @@ The expansion path is:
 - first, strengthen workflow continuity across the existing operational chain
 - then make `Project` the practical operational hub for active work
 - then deepen scheduling, materials, execution, notifications, and financial controls
+- then strengthen communications continuity, canonical metrics, and deterministic workflow automation
 - then add project-scoped Takeoff & Scope Intelligence where plans, photos, and measurements feed catalog-mapped estimate line items
+- then mature the Intelligence Layer from trusted reporting and workflow evidence
 - then extend outward into customer-facing experiences and external integrations
 - then extend the public acquisition layer through contractor-owned websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, campaign attribution, AI-assisted content generation, and review/reputation/project-proof loops that feed the same canonical opportunity and revenue chain
 - then consider broader connected platform layers such as materials ecosystems, contractor network collaboration, or marketplace behavior where they align with the same job lifecycle

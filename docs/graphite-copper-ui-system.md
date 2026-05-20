@@ -178,6 +178,20 @@ File: [apps/web/components/workspace-summary-band.tsx](C:/FloorConnector/apps/we
 
 Use for compact summaries, status counts, and operational context. It should support scanning and wrapping, not become a second dashboard.
 
+### `FloorConnectorIcon`
+
+File: [apps/web/components/fc-icons.tsx](C:/FloorConnector/apps/web/components/fc-icons.tsx)
+
+Use the shared Lucide-only icon vocabulary for module and workflow symbols. Icons should reinforce canonical areas consistently: dashboard, opportunities, customers, projects, estimates, contracts, change orders, jobs, schedule, invoices, payments, people, vendors, daily logs, time, materials, settings, notifications, global search, progress billing, equipment, service/warranty, bid/RFP, documents/submittals, weather, and inspections.
+
+Rules:
+
+- use Lucide icons only
+- keep icon sizing consistent with surrounding text and controls
+- mark decorative icons `aria-hidden`
+- do not use emoji, hard-hat/toolbox decoration, or random route-local icon choices
+- future-module icons may be exported for planning consistency but must not make inactive routes look implemented
+
 ### Portal Review Primitives
 
 File: [apps/web/components/portal-review-ui.tsx](C:/FloorConnector/apps/web/components/portal-review-ui.tsx)
@@ -286,6 +300,10 @@ Only one primary action should dominate an area.
 Use a white background, warm border, graphite/warm text, and copper hover where appropriate.
 
 Secondary actions support the workflow but should not compete with the primary action.
+
+Shared action classes live in [apps/web/components/action-hierarchy.tsx](C:/FloorConnector/apps/web/components/action-hierarchy.tsx). Prefer them for route-local link/button cleanup when they fit the existing control shape without changing form payloads, links, or submit behavior.
+
+Manager and schedule filter chips should stay compact and stable: use `h-8`, `rounded-[4px]`, warm borders, token text, and graphite selected states where possible. Keep `rounded-full` for badges, counts, and status pills rather than ordinary action buttons.
 
 ### Tertiary / Link Action
 

@@ -11,6 +11,7 @@ import {
 import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
+import { JobEquipmentPanel } from "@/components/job-equipment-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
 import { CueStateControls } from "@/components/cue-states/cue-state-controls";
@@ -18,7 +19,20 @@ import {
   SaveStateForm,
   SaveStateSubmitButton
 } from "@/components/save-feedback/save-state-form";
+import { ServiceWarrantyContinuityPanel } from "@/components/service-warranty-continuity-panel";
 import { listDailyLogsByProject } from "@/lib/daily-logs/data";
+import {
+  addJobEquipmentRequirementAction,
+  assignEquipmentToJobAction,
+  cancelEquipmentAssignmentAction,
+  removeJobEquipmentRequirementAction
+} from "@/lib/equipment/actions";
+import {
+  getJobEquipmentReadinessSummary,
+  listJobEquipmentAssignments,
+  listJobEquipmentRequirements,
+  listSelectableEquipmentAssets
+} from "@/lib/equipment/data";
 import { getEstimateById } from "@/lib/estimates/data";
 import { listInvoices } from "@/lib/invoices/data";
 import {
@@ -38,6 +52,8 @@ import { getCueStateActionSupport } from "@/lib/cue-states/apply";
 import { buildOperationalCueIdentity } from "@/lib/cue-states/identity";
 import { buildScheduleHref } from "@/lib/schedule/links";
 import { listVendors } from "@/lib/vendors/data";
+import { listServiceTicketsByJob } from "@/lib/service-tickets/data";
+import { listWarrantyDocumentsByJob } from "@/lib/warranty-documents/data";
 import {
   ActionBar,
   PrimarySection,
@@ -386,18 +402,30 @@ export default async function JobDetailPage({
     linkedEstimate,
     invoices,
     jobAssignments,
+    jobEquipmentRequirements,
+    jobEquipmentAssignments,
+    selectableEquipmentAssets,
+    jobEquipmentReadiness,
     people,
     vendors,
-    jobPunchlistItems
+    jobPunchlistItems,
+    jobServiceTickets,
+    jobWarrantyDocuments
   ] = await Promise.all([
     job.estimateId
       ? getEstimateById(job.estimateId, `/jobs/${jobId}`)
       : Promise.resolve(null),
     listInvoices(),
     listJobAssignments(job.id, `/jobs/${jobId}`),
+    listJobEquipmentRequirements(job.id, `/jobs/${jobId}`),
+    listJobEquipmentAssignments(job.id, `/jobs/${jobId}`),
+    listSelectableEquipmentAssets(`/jobs/${jobId}`),
+    getJobEquipmentReadinessSummary(job.id, `/jobs/${jobId}`),
     listPeople(),
     listVendors(),
-    listPunchlistItemsByJob(job.id, `/jobs/${jobId}`)
+    listPunchlistItemsByJob(job.id, `/jobs/${jobId}`),
+    listServiceTicketsByJob(job.id),
+    listWarrantyDocumentsByJob(job.id)
   ]);
   const jobAttentionCues = await getOperationalCuesForSubject({
     organizationId: job.organizationId,
@@ -435,6 +463,13 @@ export default async function JobDetailPage({
       ? "schedule commitment still missing"
       : null,
     jobAssignments.length === 0 ? "crew assignments still missing" : null,
+    jobEquipmentReadiness.missingRequiredCount > 0
+      ? "required equipment still missing"
+      : null,
+    jobEquipmentReadiness.unavailableAssignedCount > 0 ||
+    jobEquipmentReadiness.conflictCount > 0
+      ? "equipment warnings need review"
+      : null,
     job.dispatchStatus === "completed" && !linkedInvoice
       ? "billing handoff has not started"
       : null
@@ -473,6 +508,28 @@ export default async function JobDetailPage({
       value: `${jobAssignments.length} assignment${jobAssignments.length === 1 ? "" : "s"}`,
       tone: jobAssignments.length > 0 ? "complete" : "needsAction",
       detail: job.crewVendor?.name ?? "No crew vendor assigned"
+    },
+    {
+      id: "equipment",
+      label: "Equipment",
+      value:
+        jobEquipmentReadiness.assignmentCount > 0
+          ? `${jobEquipmentReadiness.assignmentCount} assigned`
+          : "No equipment assigned",
+      tone:
+        jobEquipmentReadiness.missingRequiredCount > 0 ||
+        jobEquipmentReadiness.unavailableAssignedCount > 0 ||
+        jobEquipmentReadiness.conflictCount > 0
+          ? "needsAction"
+          : jobEquipmentReadiness.assignmentCount > 0
+            ? "complete"
+            : "pending",
+      detail:
+        jobEquipmentReadiness.warnings.length > 0
+          ? `${jobEquipmentReadiness.warnings.length} advisory warning${
+              jobEquipmentReadiness.warnings.length === 1 ? "" : "s"
+            }`
+          : "Advisory equipment readiness"
     },
     {
       id: "status",
@@ -980,6 +1037,24 @@ export default async function JobDetailPage({
           </div>
         </PrimarySection>
 
+        <PrimarySection
+          title="Equipment readiness"
+          description="Track required equipment and job asset assignments as advisory production readiness. This does not change scheduling gates or auto-reschedule work."
+        >
+          <JobEquipmentPanel
+            jobId={job.id}
+            projectId={job.projectId}
+            requirements={jobEquipmentRequirements}
+            assignments={jobEquipmentAssignments}
+            selectableAssets={selectableEquipmentAssets}
+            readinessSummary={jobEquipmentReadiness}
+            addRequirementAction={addJobEquipmentRequirementAction}
+            removeRequirementAction={removeJobEquipmentRequirementAction}
+            assignEquipmentAction={assignEquipmentToJobAction}
+            cancelAssignmentAction={cancelEquipmentAssignmentAction}
+          />
+        </PrimarySection>
+
         <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
           <DetailPanel
             title="Connected Records"
@@ -1140,6 +1215,14 @@ export default async function JobDetailPage({
             )}
           </div>
         </DetailPanel>
+
+        <ServiceWarrantyContinuityPanel
+          title="Linked Service & Warranty"
+          description="Post-install service tickets and warranty documents tied back to this original job. This panel is read-only and does not change scheduling, billing, time, or signature behavior."
+          tickets={jobServiceTickets}
+          warrantyDocuments={jobWarrantyDocuments}
+          serviceTicketHref={`/service-tickets?jobId=${job.id}`}
+        />
 
         <DetailPanel
           title="Daily Execution Context"

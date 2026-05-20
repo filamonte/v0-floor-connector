@@ -8,11 +8,26 @@ import type {
   AppointmentStatus,
   AppointmentType,
   ContractStatus,
+  EquipmentAssignmentStatus,
+  EquipmentOperationalStatus,
+  EquipmentOwnershipStatus,
+  EquipmentType,
   EstimateStatus,
   InvoiceStatus,
   JobStatus
 } from "@floorconnector/types";
 
+import {
+  mapDashboardEquipmentWarningPreviews,
+  type DashboardEquipmentWarningJobInput,
+  type DashboardEquipmentWarningPreview
+} from "./equipment-readiness-preview";
+import {
+  activeEquipmentAssignmentStatuses,
+  type EquipmentReadinessAssignmentInput,
+  type EquipmentReadinessConflictInput,
+  type EquipmentReadinessRequirementInput
+} from "@/lib/equipment/readiness";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 type Relation<T> = T | T[] | null | undefined;
@@ -87,10 +102,67 @@ type CockpitJobRow = {
   dispatch_status: JobStatus;
   scheduled_date: string | null;
   scheduled_start_at: string | null;
+  scheduled_end_at?: string | null;
   updated_at: string;
   customers?: Relation<CockpitCustomerRow>;
   projects?: Relation<CockpitProjectRow>;
   estimates?: Relation<CockpitEstimateSummaryRow>;
+};
+
+type DashboardEquipmentJobRow = {
+  id: string;
+  customer_id: string;
+  project_id: string;
+  dispatch_status: JobStatus;
+  scheduled_date: string | null;
+  scheduled_start_at: string | null;
+  scheduled_end_at: string | null;
+  updated_at: string;
+  customers?: Relation<CockpitCustomerRow>;
+  projects?: Relation<CockpitProjectRow>;
+};
+
+type DashboardEquipmentRequirementRow = {
+  id: string;
+  job_id: string;
+  equipment_type: EquipmentType;
+  quantity: number;
+  required: boolean;
+};
+
+type DashboardEquipmentAssignmentRow = {
+  id: string;
+  equipment_asset_id: string;
+  job_id: string;
+  assigned_date: string | null;
+  scheduled_start_at: string | null;
+  scheduled_end_at: string | null;
+  assignment_status: EquipmentAssignmentStatus;
+  equipment_assets?: Relation<{
+    id: string;
+    name: string;
+    equipment_type: EquipmentType;
+    ownership_status: EquipmentOwnershipStatus;
+    operational_status: EquipmentOperationalStatus;
+    rental_start_date: string | null;
+    rental_end_date: string | null;
+    is_active: boolean;
+  }>;
+};
+
+type DashboardEquipmentConflictRow = {
+  id: string;
+  equipment_asset_id: string;
+  assigned_date: string | null;
+  scheduled_start_at: string | null;
+  scheduled_end_at: string | null;
+  assignment_status: EquipmentAssignmentStatus;
+  jobs?: Relation<{
+    id: string;
+    scheduled_date: string | null;
+    scheduled_start_at: string | null;
+    scheduled_end_at: string | null;
+  }>;
 };
 
 type CockpitAppointmentRow = {
@@ -279,6 +351,7 @@ export type DashboardOperationalCockpitReadModel = {
   unscheduledJobs: CockpitJobPreview[];
   jobsTodayOrInProgress: CockpitJobPreview[];
   appointmentFollowUps: CockpitAppointmentPreview[];
+  equipmentWarnings: DashboardEquipmentWarningPreview[];
 };
 
 const cockpitContractSelect = `
@@ -364,6 +437,69 @@ const cockpitJobSelect = `
     id,
     reference_number,
     status
+  )
+`;
+
+const dashboardEquipmentJobSelect = `
+  id,
+  customer_id,
+  project_id,
+  dispatch_status,
+  scheduled_date,
+  scheduled_start_at,
+  scheduled_end_at,
+  updated_at,
+  customers (
+    id,
+    name,
+    company_name
+  ),
+  projects (
+    id,
+    name
+  )
+`;
+
+const dashboardEquipmentRequirementSelect = `
+  id,
+  job_id,
+  equipment_type,
+  quantity,
+  required
+`;
+
+const dashboardEquipmentAssignmentSelect = `
+  id,
+  equipment_asset_id,
+  job_id,
+  assigned_date,
+  scheduled_start_at,
+  scheduled_end_at,
+  assignment_status,
+  equipment_assets (
+    id,
+    name,
+    equipment_type,
+    ownership_status,
+    operational_status,
+    rental_start_date,
+    rental_end_date,
+    is_active
+  )
+`;
+
+const dashboardEquipmentConflictSelect = `
+  id,
+  equipment_asset_id,
+  assigned_date,
+  scheduled_start_at,
+  scheduled_end_at,
+  assignment_status,
+  jobs (
+    id,
+    scheduled_date,
+    scheduled_start_at,
+    scheduled_end_at
   )
 `;
 
@@ -522,6 +658,78 @@ function mapJob(row: CockpitJobRow): CockpitJobPreview {
           status: estimate.status ?? ""
         }
       : null
+  };
+}
+
+function mapDashboardEquipmentJob(
+  row: DashboardEquipmentJobRow
+): DashboardEquipmentWarningJobInput {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    dispatchStatus: row.dispatch_status,
+    scheduledDate: row.scheduled_date,
+    scheduledStartAt: row.scheduled_start_at,
+    scheduledEndAt: row.scheduled_end_at,
+    updatedAt: row.updated_at,
+    customer: mapCustomer(row.customers),
+    project: mapProject(row.projects)
+  };
+}
+
+function mapDashboardEquipmentRequirement(
+  row: DashboardEquipmentRequirementRow
+): EquipmentReadinessRequirementInput {
+  return {
+    id: row.id,
+    equipmentType: row.equipment_type,
+    quantity: row.quantity,
+    required: row.required
+  };
+}
+
+function mapDashboardEquipmentAssignment(
+  row: DashboardEquipmentAssignmentRow
+): EquipmentReadinessAssignmentInput {
+  const asset = firstRelation(row.equipment_assets);
+
+  return {
+    id: row.id,
+    equipmentAssetId: row.equipment_asset_id,
+    assignedDate: row.assigned_date,
+    scheduledStartAt: row.scheduled_start_at,
+    scheduledEndAt: row.scheduled_end_at,
+    assignmentStatus: row.assignment_status,
+    asset: asset
+      ? {
+          id: asset.id,
+          name: asset.name,
+          equipmentType: asset.equipment_type,
+          ownershipStatus: asset.ownership_status,
+          operationalStatus: asset.operational_status,
+          rentalStartDate: asset.rental_start_date,
+          rentalEndDate: asset.rental_end_date,
+          isActive: asset.is_active
+        }
+      : null
+  };
+}
+
+function mapDashboardEquipmentConflict(
+  row: DashboardEquipmentConflictRow
+): EquipmentReadinessConflictInput {
+  const job = firstRelation(row.jobs);
+
+  return {
+    id: row.id,
+    equipmentAssetId: row.equipment_asset_id,
+    assignedDate: row.assigned_date,
+    scheduledStartAt: row.scheduled_start_at,
+    scheduledEndAt: row.scheduled_end_at,
+    assignmentStatus: row.assignment_status,
+    jobScheduledDate: job?.scheduled_date ?? null,
+    jobScheduledStartAt: job?.scheduled_start_at ?? null,
+    jobScheduledEndAt: job?.scheduled_end_at ?? null
   };
 }
 
@@ -885,6 +1093,160 @@ async function listAppointmentFollowUps(input: {
   return rows.map(mapAppointment);
 }
 
+async function listDashboardEquipmentWarnings(input: {
+  organizationId: string;
+  today: string;
+  limit: number;
+}) {
+  const supabase = await getSupabaseServerClient();
+  const candidateLimit = input.limit * 4;
+  const [unscheduledResponse, inProgressResponse, scheduledResponse] =
+    await Promise.all([
+      supabase
+        .from("jobs")
+        .select(dashboardEquipmentJobSelect)
+        .eq("company_id", input.organizationId)
+        .eq("dispatch_status", "unscheduled")
+        .order("updated_at", { ascending: false })
+        .limit(candidateLimit),
+      supabase
+        .from("jobs")
+        .select(dashboardEquipmentJobSelect)
+        .eq("company_id", input.organizationId)
+        .eq("dispatch_status", "in_progress")
+        .order("scheduled_start_at", { ascending: true, nullsFirst: false })
+        .order("updated_at", { ascending: false })
+        .limit(candidateLimit),
+      supabase
+        .from("jobs")
+        .select(dashboardEquipmentJobSelect)
+        .eq("company_id", input.organizationId)
+        .eq("dispatch_status", "scheduled")
+        .gte("scheduled_date", input.today)
+        .order("scheduled_date", { ascending: true, nullsFirst: false })
+        .order("scheduled_start_at", { ascending: true, nullsFirst: false })
+        .limit(candidateLimit)
+    ]);
+  const jobError =
+    unscheduledResponse.error ??
+    inProgressResponse.error ??
+    scheduledResponse.error;
+
+  if (jobError) {
+    throw new Error(
+      `Unable to load dashboard equipment jobs: ${jobError.message}`
+    );
+  }
+
+  const jobsById = new Map<string, DashboardEquipmentWarningJobInput>();
+
+  for (const row of [
+    ...((unscheduledResponse.data as DashboardEquipmentJobRow[] | null) ?? []),
+    ...((inProgressResponse.data as DashboardEquipmentJobRow[] | null) ?? []),
+    ...((scheduledResponse.data as DashboardEquipmentJobRow[] | null) ?? [])
+  ]) {
+    jobsById.set(row.id, mapDashboardEquipmentJob(row));
+  }
+
+  const jobs = [...jobsById.values()];
+  const jobIds = jobs.map((job) => job.id);
+
+  if (jobIds.length === 0) {
+    return [];
+  }
+
+  const [requirementsResponse, assignmentsResponse] = await Promise.all([
+    supabase
+      .from("job_equipment_requirements")
+      .select(dashboardEquipmentRequirementSelect)
+      .eq("company_id", input.organizationId)
+      .in("job_id", jobIds),
+    supabase
+      .from("equipment_assignments")
+      .select(dashboardEquipmentAssignmentSelect)
+      .eq("company_id", input.organizationId)
+      .in("job_id", jobIds)
+  ]);
+  const inputError = requirementsResponse.error ?? assignmentsResponse.error;
+
+  if (inputError) {
+    throw new Error(
+      `Unable to load dashboard equipment readiness inputs: ${inputError.message}`
+    );
+  }
+
+  const requirementsByJobId = new Map<
+    string,
+    EquipmentReadinessRequirementInput[]
+  >();
+
+  for (const row of (requirementsResponse.data as
+    | DashboardEquipmentRequirementRow[]
+    | null) ?? []) {
+    const existing = requirementsByJobId.get(row.job_id) ?? [];
+    existing.push(mapDashboardEquipmentRequirement(row));
+    requirementsByJobId.set(row.job_id, existing);
+  }
+
+  const assignmentsByJobId = new Map<
+    string,
+    EquipmentReadinessAssignmentInput[]
+  >();
+  const activeAssetIds = new Set<string>();
+
+  for (const row of (assignmentsResponse.data as
+    | DashboardEquipmentAssignmentRow[]
+    | null) ?? []) {
+    const assignment = mapDashboardEquipmentAssignment(row);
+    const existing = assignmentsByJobId.get(row.job_id) ?? [];
+    existing.push(assignment);
+    assignmentsByJobId.set(row.job_id, existing);
+
+    if (
+      activeEquipmentAssignmentStatuses.includes(assignment.assignmentStatus)
+    ) {
+      activeAssetIds.add(assignment.equipmentAssetId);
+    }
+  }
+
+  const conflictsByAssetId = new Map<
+    string,
+    EquipmentReadinessConflictInput[]
+  >();
+
+  if (activeAssetIds.size > 0) {
+    const conflictsResponse = await supabase
+      .from("equipment_assignments")
+      .select(dashboardEquipmentConflictSelect)
+      .eq("company_id", input.organizationId)
+      .in("equipment_asset_id", [...activeAssetIds])
+      .in("assignment_status", activeEquipmentAssignmentStatuses);
+
+    if (conflictsResponse.error) {
+      throw new Error(
+        `Unable to load dashboard equipment conflicts: ${conflictsResponse.error.message}`
+      );
+    }
+
+    for (const row of (conflictsResponse.data as
+      | DashboardEquipmentConflictRow[]
+      | null) ?? []) {
+      const conflict = mapDashboardEquipmentConflict(row);
+      const existing = conflictsByAssetId.get(row.equipment_asset_id) ?? [];
+      existing.push(conflict);
+      conflictsByAssetId.set(row.equipment_asset_id, existing);
+    }
+  }
+
+  return mapDashboardEquipmentWarningPreviews({
+    jobs,
+    requirementsByJobId,
+    assignmentsByJobId,
+    conflictsByAssetId,
+    limit: input.limit
+  });
+}
+
 async function getDashboardOverviewCounts(input: {
   organizationId: string;
   today: string;
@@ -932,7 +1294,9 @@ async function getDashboardOverviewCounts(input: {
     appointmentsTodayCountResponse.error;
 
   if (error) {
-    throw new Error(`Unable to load dashboard overview counts: ${error.message}`);
+    throw new Error(
+      `Unable to load dashboard overview counts: ${error.message}`
+    );
   }
 
   return {
@@ -1090,7 +1454,8 @@ export const getDashboardOperationalCockpitReadModel = cache(
       overdueInvoices,
       unscheduledJobs,
       jobsTodayOrInProgress,
-      appointmentFollowUps
+      appointmentFollowUps,
+      equipmentWarnings
     ] = await Promise.all([
       listApprovedEstimatesReadyForContract({
         organizationId: input.organizationId,
@@ -1113,6 +1478,11 @@ export const getDashboardOperationalCockpitReadModel = cache(
       listAppointmentFollowUps({
         organizationId: input.organizationId,
         limit: 1
+      }),
+      listDashboardEquipmentWarnings({
+        organizationId: input.organizationId,
+        today: input.today,
+        limit: 3
       })
     ]);
 
@@ -1124,7 +1494,8 @@ export const getDashboardOperationalCockpitReadModel = cache(
       overdueInvoices,
       unscheduledJobs,
       jobsTodayOrInProgress,
-      appointmentFollowUps
+      appointmentFollowUps,
+      equipmentWarnings
     };
   }
 );

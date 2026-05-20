@@ -51,6 +51,8 @@ export type RecordRevisionId = string;
 export type CommunicationThreadId = string;
 export type CommunicationMessageId = string;
 export type CommunicationPreferenceId = string;
+export type GateKeeperArtifactId = string;
+export type GateKeeperActionSuggestionId = string;
 export type CatalogItemId = string;
 export type InventoryItemId = string;
 export type InventoryTransactionId = string;
@@ -59,10 +61,17 @@ export type TaxCodeId = string;
 export type PlatformCatalogItemSeedId = string;
 export type PlatformUserRoleId = string;
 export type VendorId = string;
+export type EquipmentAssetId = string;
+export type JobEquipmentRequirementId = string;
+export type EquipmentAssignmentId = string;
 export type PersonId = string;
 export type ComplianceRecordId = string;
 export type TimePunchEventId = string;
 export type TimeCardId = string;
+export type ServiceTicketId = string;
+export type WarrantyDocumentId = string;
+export type DocumentSignerId = string;
+export type DocumentSignatureEventId = string;
 export type DailyLogId = string;
 export type FieldNoteId = string;
 export type ExecutionAttachmentId = string;
@@ -134,6 +143,11 @@ export type CanonicalRecordSubjectType =
   | "invoice"
   | "change_order"
   | "payment";
+export type GateKeeperSubjectType =
+  | CanonicalRecordSubjectType
+  | "job"
+  | "person"
+  | "vendor";
 export type SiteAssessmentStatus = "pending" | "scheduled" | "completed";
 export type CommercialReadinessStatus =
   | "not_ready"
@@ -186,7 +200,11 @@ export type InvoiceStatus =
   | "void";
 export type ContractStatus = "draft" | "sent" | "viewed" | "signed" | "void";
 export type ChangeOrderStatus = "draft" | "sent" | "approved" | "rejected";
-export type RecordRevisionSubjectType = "estimate" | "invoice" | "contract" | "change_order";
+export type RecordRevisionSubjectType =
+  | "estimate"
+  | "invoice"
+  | "contract"
+  | "change_order";
 export type RecordRevisionKind =
   | "created"
   | "edited"
@@ -219,7 +237,10 @@ export type ContractSignatureActorType =
   | "system";
 export type PaymentStatus = "pending" | "recorded" | "void";
 export type PaymentSource = "manual" | "customer_portal";
-export type PaymentRecordedVia = "contractor_app" | "customer_portal" | "system";
+export type PaymentRecordedVia =
+  | "contractor_app"
+  | "customer_portal"
+  | "system";
 export type PaymentEventType =
   | "payment_requested"
   | "checkout_started"
@@ -239,15 +260,44 @@ export type InvoiceEventType =
   | "paid"
   | "failed"
   | "voided";
-export type ChangeOrderEventType =
-  | "sent"
-  | "viewed"
-  | "approved"
-  | "rejected";
+export type ChangeOrderEventType = "sent" | "viewed" | "approved" | "rejected";
 export type CommunicationMessageSenderType =
   | "organization_user"
   | "portal_user"
   | "system";
+export type CommunicationThreadCategory =
+  | "operational"
+  | "sales"
+  | "support"
+  | "billing"
+  | "field"
+  | "success"
+  | "unknown";
+export type CommunicationChannelKind =
+  | "phone"
+  | "sms"
+  | "email"
+  | "web_chat"
+  | "portal"
+  | "internal_note"
+  | "assistant_note"
+  | "unknown";
+export type CommunicationThreadStatus =
+  | "open"
+  | "waiting_on_customer"
+  | "waiting_on_contractor"
+  | "closed"
+  | "archived";
+export type CommunicationMessageDirection =
+  | "inbound"
+  | "outbound"
+  | "internal"
+  | "system";
+export type CommunicationMessageSourceKind =
+  | "human"
+  | "assistant"
+  | "system"
+  | "provider_placeholder";
 export type CommunicationMessageKind =
   | "customer_message"
   | "manual_call"
@@ -268,13 +318,45 @@ export type CommunicationPreferenceChannel = "email" | "sms";
 export type CommunicationPreferenceMessageCategory =
   | "appointment_confirmation"
   | "appointment_reminder";
-export type CommunicationPreferenceStatus = "allowed" | "opted_out" | "suppressed";
+export type CommunicationPreferenceStatus =
+  | "allowed"
+  | "opted_out"
+  | "suppressed";
 export type CommunicationPreferenceSource =
   | "manual"
   | "portal"
   | "provider"
   | "import"
   | "system";
+export type GateKeeperArtifactType =
+  | "call_summary"
+  | "transcript_placeholder"
+  | "extracted_requirement"
+  | "extracted_commitment"
+  | "risk_signal"
+  | "workflow_observation"
+  | "onboarding_note";
+export type GateKeeperArtifactReviewStatus =
+  | "proposed"
+  | "accepted"
+  | "rejected"
+  | "dismissed";
+export type GateKeeperActionSuggestionType =
+  | "create_opportunity"
+  | "update_opportunity"
+  | "schedule_site_assessment"
+  | "create_task_later"
+  | "send_followup_later"
+  | "update_project_notes"
+  | "flag_estimate_review"
+  | "flag_invoice_review"
+  | "flag_contract_review";
+export type GateKeeperActionSuggestionStatus =
+  | "proposed"
+  | "approved"
+  | "rejected"
+  | "dismissed"
+  | "superseded";
 export type WorkItemStatus = "open" | "completed" | "dismissed";
 export type WorkItemPriority = "low" | "normal" | "high" | "urgent";
 export type WorkItemKind =
@@ -315,7 +397,7 @@ export type CostItemComponentType =
   | "subcontractor"
   | "fee"
   | "other";
-export type TemplateType = "estimate" | "invoice" | "contract";
+export type TemplateType = "estimate" | "invoice" | "contract" | "warranty";
 export type DocumentTemplateStatus = "active" | "archived";
 export type CatalogItemType =
   | "material"
@@ -328,6 +410,45 @@ export type CatalogItemType =
 export type InvoiceWorkflowRole = "standard" | "deposit";
 export type WorkforcePersonType = "employee" | "subcontractor_worker";
 export type VendorType = "subcontractor" | "supplier" | "other";
+export type EquipmentType =
+  | "grinder"
+  | "polisher"
+  | "vacuum"
+  | "dust_collector"
+  | "shot_blaster"
+  | "scarifier"
+  | "scraper"
+  | "mixer"
+  | "sprayer"
+  | "trailer"
+  | "truck"
+  | "generator"
+  | "moisture_meter"
+  | "testing_tool"
+  | "coating_tool"
+  | "burnisher"
+  | "hand_tool"
+  | "kit"
+  | "other";
+export type EquipmentOwnershipStatus =
+  | "owned"
+  | "rented"
+  | "leased"
+  | "subcontractor_owned"
+  | "other";
+export type EquipmentOperationalStatus =
+  | "available"
+  | "assigned"
+  | "in_use"
+  | "maintenance"
+  | "out_of_service"
+  | "retired";
+export type EquipmentAssignmentStatus =
+  | "planned"
+  | "assigned"
+  | "in_use"
+  | "returned"
+  | "canceled";
 export type ComplianceSubjectType = "person" | "vendor";
 export type ComplianceRecordType =
   | "license"
@@ -353,10 +474,54 @@ export type TimeLocationCaptureMethod =
   | "manual"
   | "unknown";
 export type TimeCardStatus = "open" | "completed" | "edited" | "flagged";
-export type TimeCardEntryMode =
-  | "derived_from_punches"
-  | "manual"
-  | "adjusted";
+export type TimeCardEntryMode = "derived_from_punches" | "manual" | "adjusted";
+export type TimeCardReviewStatus =
+  | "draft"
+  | "needs_review"
+  | "approved"
+  | "rejected";
+export type ServiceTicketSourceType =
+  | "internal"
+  | "closeout_follow_up"
+  | "punchlist_conversion"
+  | "customer_reported_future"
+  | "other";
+export type ServiceTicketType =
+  | "warranty"
+  | "service"
+  | "callback"
+  | "inspection"
+  | "other";
+export type ServiceTicketStatus =
+  | "open"
+  | "scheduled"
+  | "in_progress"
+  | "resolved"
+  | "closed"
+  | "canceled";
+export type ServiceTicketPriority = "low" | "normal" | "high" | "urgent";
+export type WarrantyDocumentStatus =
+  | "draft"
+  | "issued"
+  | "sent"
+  | "viewed"
+  | "signed"
+  | "void";
+export type DocumentSignatureSubjectType = "warranty_document";
+export type DocumentSignerRole = "customer" | "contractor";
+export type DocumentSignerStatus =
+  | "pending"
+  | "requested"
+  | "viewed"
+  | "signed"
+  | "declined"
+  | "voided";
+export type DocumentSignatureEventType =
+  | "signature_requested"
+  | "viewed"
+  | "signed"
+  | "declined"
+  | "voided";
 export type DailyLogStatus = "draft" | "finalized";
 export type PunchlistStatus = "open" | "in_progress" | "resolved" | "closed";
 export type AppointmentType =
@@ -401,17 +566,17 @@ export type CommercialReadinessBlocker =
   | "financing_pending"
   | "financing_declined";
 
-export type MembershipStatus =
-  | "invited"
-  | "active"
-  | "inactive"
-  | "suspended";
+export type MembershipStatus = "invited" | "active" | "inactive" | "suspended";
 export type MeasurementCaptureMethod =
   | "manual"
   | "onsite"
   | "photo_derived"
   | "imported";
-export type OpportunityObservationSeverity = "low" | "medium" | "high" | "critical";
+export type OpportunityObservationSeverity =
+  | "low"
+  | "medium"
+  | "high"
+  | "critical";
 
 export interface Profile {
   id: ProfileId;
@@ -582,7 +747,11 @@ export type OperationalCueKey =
   | "job_ready_unscheduled"
   | "job_scheduled_missing_crew";
 
-export type OperationalCueSubjectType = "estimate" | "contract" | "invoice" | "job";
+export type OperationalCueSubjectType =
+  | "estimate"
+  | "contract"
+  | "invoice"
+  | "job";
 export type OperationalCueUrgency = "normal" | "high" | "critical";
 export type OperationalCueOwnerStrategy =
   | "record_owner"
@@ -1169,7 +1338,10 @@ export interface InvoiceLineItem {
   estimateSnapshotItemId?: string | null;
   scheduleOfValueItemId: string | null;
   changeOrderSnapshotItemId?: string | null;
-  invoiceOnlyAdjustmentKind?: "manual_catalog_item" | "explicit_adjustment" | null;
+  invoiceOnlyAdjustmentKind?:
+    | "manual_catalog_item"
+    | "explicit_adjustment"
+    | null;
   catalogItemId: CatalogItemId | null;
   taxCodeId?: TaxCodeId | null;
   name: string;
@@ -1400,6 +1572,9 @@ export interface CommunicationThread {
   subjectType: CanonicalRecordSubjectType;
   subjectId: string;
   createdByUserId: ProfileId | null;
+  threadCategory: CommunicationThreadCategory;
+  channelKind: CommunicationChannelKind;
+  threadStatus: CommunicationThreadStatus;
   lastMessageAt: string | null;
   lastMessagePreview: string | null;
   lastMessageVisibility: CommunicationMessageVisibility;
@@ -1417,12 +1592,59 @@ export interface CommunicationMessage {
   projectId: ProjectId | null;
   senderType: CommunicationMessageSenderType;
   senderUserId: ProfileId | null;
+  direction: CommunicationMessageDirection;
+  sourceKind: CommunicationMessageSourceKind;
+  channelKind: CommunicationChannelKind;
   messageKind: CommunicationMessageKind;
   visibility: CommunicationMessageVisibility;
   deliveryStatus: CommunicationMessageDeliveryStatus;
   body: string;
   payload: Record<string, unknown> | null;
+  occurredAt: string;
   createdAt: string;
+}
+
+export interface GateKeeperArtifact {
+  id: GateKeeperArtifactId;
+  organizationId: OrganizationId;
+  communicationThreadId: CommunicationThreadId | null;
+  communicationMessageId: CommunicationMessageId | null;
+  subjectType: GateKeeperSubjectType | null;
+  subjectId: string | null;
+  artifactType: GateKeeperArtifactType;
+  contentText: string | null;
+  content: Record<string, unknown>;
+  confidence: string | null;
+  reviewStatus: GateKeeperArtifactReviewStatus;
+  reviewedByUserId: ProfileId | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GateKeeperActionSuggestion {
+  id: GateKeeperActionSuggestionId;
+  organizationId: OrganizationId;
+  sourceArtifactId: GateKeeperArtifactId | null;
+  communicationThreadId: CommunicationThreadId | null;
+  communicationMessageId: CommunicationMessageId | null;
+  subjectType: GateKeeperSubjectType | null;
+  subjectId: string | null;
+  suggestionType: GateKeeperActionSuggestionType;
+  title: string;
+  rationale: string | null;
+  proposedPayload: Record<string, unknown>;
+  status: GateKeeperActionSuggestionStatus;
+  reviewedByUserId: ProfileId | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ScheduleOfValues {
@@ -1530,7 +1752,10 @@ export type PlatformStarterPackAssignmentType =
   | "trade_segment"
   | "plan_tier"
   | "future_contractor_group";
-export type PlatformStarterPackAssignmentStatus = "draft" | "active" | "inactive";
+export type PlatformStarterPackAssignmentStatus =
+  | "draft"
+  | "active"
+  | "inactive";
 export type PlatformStarterPackProvisioningRunStatus =
   | "draft"
   | "approved"
@@ -1855,8 +2080,7 @@ export interface PlatformStarterPackProvisioningRunItem {
   updatedAt: string;
 }
 
-export interface PlatformStarterPackProvisioningRunDetail
-  extends PlatformStarterPackProvisioningRun {
+export interface PlatformStarterPackProvisioningRunDetail extends PlatformStarterPackProvisioningRun {
   items: PlatformStarterPackProvisioningRunItem[];
 }
 
@@ -2097,6 +2321,62 @@ export interface Vendor {
   updatedAt: string;
 }
 
+export interface EquipmentAsset {
+  id: EquipmentAssetId;
+  organizationId: OrganizationId;
+  vendorId: VendorId | null;
+  name: string;
+  assetTag: string | null;
+  serialNumber: string | null;
+  equipmentType: EquipmentType;
+  ownershipStatus: EquipmentOwnershipStatus;
+  operationalStatus: EquipmentOperationalStatus;
+  manufacturer: string | null;
+  model: string | null;
+  year: number | null;
+  purchaseDate: string | null;
+  purchaseCost: string | null;
+  rentalStartDate: string | null;
+  rentalEndDate: string | null;
+  notes: string | null;
+  isActive: boolean;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JobEquipmentRequirement {
+  id: JobEquipmentRequirementId;
+  organizationId: OrganizationId;
+  jobId: JobId;
+  equipmentType: EquipmentType;
+  quantity: number;
+  required: boolean;
+  notes: string | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EquipmentAssignment {
+  id: EquipmentAssignmentId;
+  organizationId: OrganizationId;
+  equipmentAssetId: EquipmentAssetId;
+  jobId: JobId;
+  projectId: ProjectId | null;
+  assignedDate: string | null;
+  scheduledStartAt: string | null;
+  scheduledEndAt: string | null;
+  assignmentStatus: EquipmentAssignmentStatus;
+  notes: string | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Person {
   id: PersonId;
   organizationId: OrganizationId;
@@ -2142,6 +2422,7 @@ export interface TimePunchEvent {
   personId: PersonId;
   projectId: ProjectId | null;
   jobId: JobId | null;
+  serviceTicketId: ServiceTicketId | null;
   eventType: TimePunchEventType;
   occurredAt: string;
   source: TimePunchSource;
@@ -2162,6 +2443,7 @@ export interface TimeCard {
   personId: PersonId;
   projectId: ProjectId | null;
   jobId: JobId | null;
+  serviceTicketId: ServiceTicketId | null;
   workDate: string;
   sourcePunchInEventId: TimePunchEventId;
   sourcePunchOutEventId: TimePunchEventId | null;
@@ -2171,9 +2453,90 @@ export interface TimeCard {
   workedMinutes: number;
   status: TimeCardStatus;
   entryMode: TimeCardEntryMode;
+  reviewStatus: TimeCardReviewStatus;
+  reviewedByUserId: ProfileId | null;
+  reviewedAt: string | null;
+  reviewNotes: string | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ServiceTicket {
+  id: ServiceTicketId;
+  organizationId: OrganizationId;
+  customerId: CustomerId;
+  projectId: ProjectId | null;
+  jobId: JobId | null;
+  sourceType: ServiceTicketSourceType;
+  ticketType: ServiceTicketType;
+  status: ServiceTicketStatus;
+  priority: ServiceTicketPriority;
+  title: string;
+  description: string | null;
+  reportedOn: string;
+  warrantyStartDate: string | null;
+  warrantyEndDate: string | null;
+  warrantyBasis: string | null;
+  resolutionSummary: string | null;
+  resolvedAt: string | null;
+  closedAt: string | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WarrantyDocument {
+  id: WarrantyDocumentId;
+  organizationId: OrganizationId;
+  customerId: CustomerId;
+  projectId: ProjectId | null;
+  jobId: JobId | null;
+  serviceTicketId: ServiceTicketId | null;
+  documentTemplateId: TemplateId | null;
+  status: WarrantyDocumentStatus;
+  title: string;
+  warrantyStartDate: string | null;
+  warrantyEndDate: string | null;
+  warrantyBasis: string | null;
+  renderedContent: string | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  issuedAt: string | null;
+  voidedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DocumentSigner {
+  id: DocumentSignerId;
+  organizationId: OrganizationId;
+  subjectType: DocumentSignatureSubjectType;
+  subjectId: WarrantyDocumentId;
+  signerRole: DocumentSignerRole;
+  signerName: string;
+  signerEmail: string;
+  status: DocumentSignerStatus;
+  signedAt: string | null;
+  declinedAt: string | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DocumentSignatureEvent {
+  id: DocumentSignatureEventId;
+  organizationId: OrganizationId;
+  subjectType: DocumentSignatureSubjectType;
+  subjectId: WarrantyDocumentId;
+  signerId: DocumentSignerId | null;
+  eventType: DocumentSignatureEventType;
+  eventNote: string | null;
+  metadata: Record<string, unknown>;
+  createdByUserId: ProfileId | null;
+  createdAt: string;
 }
 
 export interface DailyLog {

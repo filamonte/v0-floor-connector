@@ -38,6 +38,7 @@ Document roles:
 - `docs/developer-source-of-truth.md`: primary entry point for day-to-day development guardrails
 - `docs/documentation-standards.md`: doc layers, metadata, status vocabulary, ADR/diagram rules, and update expectations
 - `docs/documentation-governance.md`: documentation system rules, archival policy, and doc update expectations
+- `docs/documentation-audit.md`: latest documentation bloat, overlap, active-doc, split, and archive-readiness audit
 - `docs/platform-maturity.md`: concise platform maturity framing
 - `docs/module-status.md`: concise module status table
 - `docs/known-gaps.md`: important depth gaps around the implemented core
@@ -54,12 +55,27 @@ Document roles:
 - `docs/portal-architecture.md`: portal shared-record guardrails
 - `docs/Architecture.md`: target system design
 - `docs/Roadmap.md`: platform maturity roadmap
+- `docs/platform-build-registry.md`: strategic build-priority registry for major planned platform systems
+- `docs/platform-maturity-model.md`: build-stage discipline from foundation through autonomous maturity
 - `docs/future-platform-expansion.md`: future platform expansion direction
+- `docs/communications-layer.md`: future workflow-connected communication philosophy
+- `docs/reporting-and-metrics.md`: canonical reporting and metrics philosophy
+- `docs/automation-layer.md`: future deterministic workflow automation philosophy
+- `docs/intelligence-layer.md`: future Contractor Intelligence, Network Intelligence, and Predictive/AI Intelligence strategy
+- `docs/contractor-foreman-gap-decision-list.md`: owner feature coverage decisions from the Contractor Foreman baseline comparison
+- `docs/future-feature-coverage-map.md`: broad future feature coverage map by operating area
+- `docs/field-operations-architecture-map.md`: planning map for clocking, equipment, service/warranty, documents, daily logs, jobs, schedule, people, vendors, dashboard guidance, and future job costing
+- `docs/clocking-system-plan.md`: planning for the real clocking/time-card workflow before GPS, payroll export, or job costing
+- `docs/equipment-maintenance-utilization-plan.md`: planning for equipment maintenance, utilization, rental-return, and costing inputs after the registry and assignment/readiness foundations
+- `docs/service-warranty-plan.md`: planning for service/warranty tickets as post-installation project/job continuity
+- `docs/warranty-document-system-plan.md`: planning for seeded/custom warranty templates, PDF generation, send/review/signature, and canonical attachment
 - `docs/current-state.md`: source of truth for implemented status
 - `docs/workflows.md`: canonical business workflows and near-term workflow direction
 - `docs/staging-demo-readiness.md`: staging/demo readiness runbook for env ownership, provider setup checklists, demo modes, and go/no-go gates
 - `docs/site-visit-scope-intake-plan.md`: planning guardrails for the lead site visit Scope Intake stage between appointment capture and estimate planning
 - `docs/vision.md`: long-term product direction and platform thesis
+- `docs/gatekeeper-system-vision.md`: target GateKeeper operational intelligence and communications doctrine; planning only, not implemented status
+- `docs/gatekeeper-source-adapters.md`: provider-neutral GateKeeper source adapter boundary for future manual, phone, voice, transcription, chat, SMS/email, portal, internal-note, and support/onboarding sources
 - `docs/ai-assisted-operating-system.md`: target AI-assisted operating system strategy across contractor and FloorConnector-facing AI
 - `docs/ai-contractor-workflows.md`: target contractor-side AI copilot, drafting, summaries, scheduling suggestions, and approval queues
 - `docs/communications-and-ai-intake.md`: target unified communications, website AI chat/intake, AI receptionist, voice, missed-call, consent, and human handoff direction
@@ -88,23 +104,74 @@ Document roles:
 
 ## Documentation Layers
 
-- `docs/developer-source-of-truth.md` -> what every development session reads first
-- `docs/current-state.md` -> what is implemented today
-- `docs/platform-maturity.md` and `docs/module-status.md` -> concise current status
-- `docs/workflows.md` -> how the implemented and near-term business workflows are intended to operate
-- `docs/Roadmap.md` -> future platform maturity sequencing
-- `docs/Architecture.md` -> target system design
-- `docs/vision.md` -> where the product is intended to expand over time
-- `docs/adr/` -> settled architecture decisions
-- `docs/diagrams/` -> architecture diagrams as code
-- `docs/ai/` -> AI-readable implementation boundaries
+### Codex First Reads
+
+Read these first for most implementation or documentation tasks:
+
+- `docs/developer-source-of-truth.md`
+- `docs/current-state.md`
+- `docs/workflows.md`
+- `docs/system-overview.md`
+- `docs/chat-handoff.md`
+
+### Current Implementation Truth
+
+- `docs/current-state.md` owns implemented truth.
+- `docs/module-status.md`, `docs/platform-maturity.md`, `docs/known-gaps.md`, and `docs/floorconnector-full-capability-audit.md` provide concise status, maturity, gap, and audit views.
+
+### Product Direction And Feature Coverage
+
+- `docs/vision.md` describes long-term product philosophy.
+- `docs/Roadmap.md` describes sequencing guidance without dates.
+- `docs/platform-build-registry.md` tracks major planned systems, priorities, dependencies, maturity, and strategic rationale.
+- `docs/platform-maturity-model.md` defines stage discipline so foundation systems are not treated as ready for intelligence, predictive AI, or autonomous behavior too early.
+- `docs/target-ia.md` describes target contractor app IA and must not be read as route reality.
+- `docs/future-platform-expansion.md` describes platform expansion direction.
+- `docs/communications-layer.md` defines communication as workflow-connected, project-connected, and canonical-record-connected.
+- `docs/reporting-and-metrics.md` defines canonical reporting and metrics as the foundation for dashboards, intelligence, benchmarking, and prediction.
+- `docs/automation-layer.md` defines deterministic, readiness-aware, approval-governed automation as an extension of the canonical workflow chain.
+- `docs/intelligence-layer.md` defines the future canonical-first Intelligence Layer, including tenant-scoped analytics, opt-in network benchmarking, and later predictive/AI intelligence.
+- `docs/gatekeeper-system-vision.md` describes GateKeeper as the future operational memory, communications, AI guidance, and continuity layer over canonical records.
+- `docs/gatekeeper-source-adapters.md` defines the future provider-neutral ingestion boundary for GateKeeper source events before any vendor-specific adapter is implemented.
+- `docs/contractor-foreman-gap-decision-list.md` records owner decisions from the Contractor Foreman baseline comparison.
+- `docs/future-feature-coverage-map.md` is the broad future coverage map so roadmap/current-state do not become feature encyclopedias.
+
+### Workflow And System Architecture
+
+- `docs/workflows.md` defines current and near-term workflow rules.
+- `docs/system-overview.md` is a synthesis for product/engineering alignment.
+- `docs/Architecture.md`, `docs/architecture-principles.md`, `docs/canonical-lifecycle.md`, `docs/financial-architecture.md`, and `docs/portal-architecture.md` define architecture and record-ownership guardrails.
+
+### Design System And UX
+
+- `docs/graphite-copper-ui-system.md` is the current protected-app, portal, super-admin, and settings UI implementation reference.
+- `docs/enterprise-ui-system-audit.md` records the secured-app visual audit and drift watch list.
+- `docs/floorconnector-ui-build-rules.md` contains mandatory UI build rules.
+
+### AI Guidance And Planning
+
+- `docs/ai/README.md` and `docs/ai/*.md` define AI-readable boundaries.
+- `docs/gatekeeper-system-vision.md` is the first-class doctrine document for future GateKeeper communications, operational memory, workflow reinforcement, human approval queues, and multi-agent direction.
+- `docs/gatekeeper-source-adapters.md` is the planning contract for future GateKeeper source ingestion and adapter anti-drift rules.
+- `docs/ai-guided-system-plan.md` captures deterministic guidance to future AI boundaries.
+- Future AI docs are planning/reference only unless `current-state.md` says otherwise.
+
+### Governance And Archive
+
+- `docs/documentation-standards.md` defines metadata, status vocabulary, and update triggers.
+- `docs/documentation-governance.md` defines archival policy and documentation maintenance rules.
+- `docs/documentation-audit.md` records the latest doc cleanup findings and recommended compaction/archive moves.
+- `docs/archive/README.md` indexes preserved historical, superseded, and exploratory docs.
+- `docs/adr/` stores architecture decisions.
+- `docs/diagrams/` stores Mermaid architecture/workflow diagrams.
 
 Current documentation focus:
 
 - keep `developer-source-of-truth.md` as the primary development entry point
 - keep implemented truth in `current-state.md`
 - keep workflow guidance in `workflows.md`
-- keep long-term product direction out of current-state and inside `vision.md`
+- keep long-term product direction out of current-state and inside `vision.md`, `Roadmap.md`, `target-ia.md`, `future-platform-expansion.md`, `contractor-foreman-gap-decision-list.md`, and `future-feature-coverage-map.md`
 - keep platform-level defaults and contractor-level administration documented as separate concerns
 - move antiquated planning docs into `docs/archive/` instead of deleting them
 - use `docs/documentation-governance.md` as the rulebook for future doc cleanup and archival decisions
+- treat target/feature coverage docs as direction only, not current implementation proof

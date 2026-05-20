@@ -4,11 +4,16 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { deriveTimeCardsFromPunchEvents } from "@floorconnector/domain";
 import type {
+  MembershipRole,
   TimeCard as TimeCardRecord,
   TimePunchEvent as TimePunchEventRecord
 } from "@floorconnector/types";
 
 import type { TimePunchEventInput } from "./schemas";
+import {
+  deriveClockingSessionState,
+  validateTimePunchTransition
+} from "./transitions";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { assertProjectReadinessGate } from "@/lib/projects/readiness";
@@ -19,12 +24,17 @@ type TimeScope = {
   organizationId: string;
 };
 
+type TimeReviewScope = TimeScope & {
+  membershipRole: MembershipRole;
+};
+
 type TimePunchEventRow = {
   id: string;
   company_id: string;
   person_id: string;
   project_id: string | null;
   job_id: string | null;
+  service_ticket_id: string | null;
   event_type: TimePunchEventRecord["eventType"];
   occurred_at: string;
   source: TimePunchEventRecord["source"];
@@ -37,24 +47,24 @@ type TimePunchEventRow = {
   notes: string | null;
   created_at: string;
   updated_at: string;
-  people?:
-    | {
-        id: string;
-        display_name: string;
-      }
-    | null;
-  projects?:
-    | {
-        id: string;
-        name: string;
-      }
-    | null;
-  jobs?:
-    | {
-        id: string;
-        dispatch_status: string;
-      }
-    | null;
+  people?: {
+    id: string;
+    display_name: string;
+  } | null;
+  projects?: {
+    id: string;
+    name: string;
+  } | null;
+  jobs?: {
+    id: string;
+    dispatch_status: string;
+  } | null;
+  service_tickets?: {
+    id: string;
+    title: string;
+    status: string;
+    ticket_type: string;
+  } | null;
 };
 
 type TimeCardRow = {
@@ -63,6 +73,7 @@ type TimeCardRow = {
   person_id: string;
   project_id: string | null;
   job_id: string | null;
+  service_ticket_id: string | null;
   work_date: string;
   source_punch_in_event_id: string;
   source_punch_out_event_id: string | null;
@@ -72,27 +83,31 @@ type TimeCardRow = {
   worked_minutes: number;
   status: TimeCardRecord["status"];
   entry_mode: TimeCardRecord["entryMode"];
+  review_status: TimeCardRecord["reviewStatus"];
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_notes: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
-  people?:
-    | {
-        id: string;
-        display_name: string;
-      }
-    | null;
-  projects?:
-    | {
-        id: string;
-        name: string;
-      }
-    | null;
-  jobs?:
-    | {
-        id: string;
-        dispatch_status: string;
-      }
-    | null;
+  people?: {
+    id: string;
+    display_name: string;
+  } | null;
+  projects?: {
+    id: string;
+    name: string;
+  } | null;
+  jobs?: {
+    id: string;
+    dispatch_status: string;
+  } | null;
+  service_tickets?: {
+    id: string;
+    title: string;
+    status: string;
+    ticket_type: string;
+  } | null;
 };
 
 export type TimePunchEventListItem = TimePunchEventRecord & {
@@ -107,6 +122,12 @@ export type TimePunchEventListItem = TimePunchEventRecord & {
   job: {
     id: string;
     dispatchStatus: string;
+  } | null;
+  serviceTicket: {
+    id: string;
+    title: string;
+    status: string;
+    ticketType: string;
   } | null;
 };
 
@@ -123,6 +144,12 @@ export type TimeCardListItem = TimeCardRecord & {
     id: string;
     dispatchStatus: string;
   } | null;
+  serviceTicket: {
+    id: string;
+    title: string;
+    status: string;
+    ticketType: string;
+  } | null;
 };
 
 export type OpenTimeCardState = TimeCardListItem & {
@@ -135,6 +162,7 @@ const timePunchEventSelect = `
   person_id,
   project_id,
   job_id,
+  service_ticket_id,
   event_type,
   occurred_at,
   source,
@@ -158,6 +186,12 @@ const timePunchEventSelect = `
   jobs (
     id,
     dispatch_status
+  ),
+  service_tickets (
+    id,
+    title,
+    status,
+    ticket_type
   )
 `;
 
@@ -167,6 +201,7 @@ const timeCardSelect = `
   person_id,
   project_id,
   job_id,
+  service_ticket_id,
   work_date,
   source_punch_in_event_id,
   source_punch_out_event_id,
@@ -176,6 +211,10 @@ const timeCardSelect = `
   worked_minutes,
   status,
   entry_mode,
+  review_status,
+  reviewed_by,
+  reviewed_at,
+  review_notes,
   notes,
   created_at,
   updated_at,
@@ -190,6 +229,12 @@ const timeCardSelect = `
   jobs (
     id,
     dispatch_status
+  ),
+  service_tickets (
+    id,
+    title,
+    status,
+    ticket_type
   )
 `;
 
@@ -213,7 +258,9 @@ function isTimePunchEventRow(value: unknown): value is TimePunchEventRow {
   );
 }
 
-function isTimePunchEventRowArray(value: unknown): value is TimePunchEventRow[] {
+function isTimePunchEventRowArray(
+  value: unknown
+): value is TimePunchEventRow[] {
   return Array.isArray(value) && value.every((row) => isTimePunchEventRow(row));
 }
 
@@ -235,6 +282,7 @@ function isTimeCardRow(value: unknown): value is TimeCardRow {
     typeof row.worked_minutes === "number" &&
     typeof row.status === "string" &&
     typeof row.entry_mode === "string" &&
+    typeof row.review_status === "string" &&
     typeof row.created_at === "string" &&
     typeof row.updated_at === "string"
   );
@@ -251,6 +299,7 @@ function mapTimePunchEvent(row: TimePunchEventRow): TimePunchEventRecord {
     personId: row.person_id,
     projectId: row.project_id,
     jobId: row.job_id,
+    serviceTicketId: row.service_ticket_id,
     eventType: row.event_type,
     occurredAt: row.occurred_at,
     source: row.source,
@@ -273,6 +322,7 @@ function mapTimeCard(row: TimeCardRow): TimeCardRecord {
     personId: row.person_id,
     projectId: row.project_id,
     jobId: row.job_id,
+    serviceTicketId: row.service_ticket_id,
     workDate: row.work_date,
     sourcePunchInEventId: row.source_punch_in_event_id,
     sourcePunchOutEventId: row.source_punch_out_event_id,
@@ -282,13 +332,19 @@ function mapTimeCard(row: TimeCardRow): TimeCardRecord {
     workedMinutes: row.worked_minutes,
     status: row.status,
     entryMode: row.entry_mode,
+    reviewStatus: row.review_status,
+    reviewedByUserId: row.reviewed_by,
+    reviewedAt: row.reviewed_at,
+    reviewNotes: row.review_notes,
     notes: row.notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
 }
 
-function mapTimePunchEventListItem(row: TimePunchEventRow): TimePunchEventListItem {
+function mapTimePunchEventListItem(
+  row: TimePunchEventRow
+): TimePunchEventListItem {
   return {
     ...mapTimePunchEvent(row),
     person: row.people
@@ -307,6 +363,14 @@ function mapTimePunchEventListItem(row: TimePunchEventRow): TimePunchEventListIt
       ? {
           id: row.jobs.id,
           dispatchStatus: row.jobs.dispatch_status
+        }
+      : null,
+    serviceTicket: row.service_tickets
+      ? {
+          id: row.service_tickets.id,
+          title: row.service_tickets.title,
+          status: row.service_tickets.status,
+          ticketType: row.service_tickets.ticket_type
         }
       : null
   };
@@ -331,6 +395,14 @@ function mapTimeCardListItem(row: TimeCardRow): TimeCardListItem {
       ? {
           id: row.jobs.id,
           dispatchStatus: row.jobs.dispatch_status
+        }
+      : null,
+    serviceTicket: row.service_tickets
+      ? {
+          id: row.service_tickets.id,
+          title: row.service_tickets.title,
+          status: row.service_tickets.status,
+          ticketType: row.service_tickets.ticket_type
         }
       : null
   };
@@ -367,7 +439,40 @@ export async function requireTimeScope(next = "/people") {
   return scope;
 }
 
-async function ensureScopedActivePerson(organizationId: string, personId: string) {
+async function requireTimeReviewScope(next = "/time") {
+  const user = await requireAuthenticatedUser(next);
+  const organizationContext = await getActiveOrganizationContext(user.id);
+
+  if (!organizationContext) {
+    const destination = new URL("/dashboard", "http://floorconnector.local");
+
+    destination.searchParams.set(
+      "error",
+      "No active organization is available for time review yet."
+    );
+
+    redirect(`${destination.pathname}${destination.search}`);
+  }
+
+  if (
+    !["owner", "admin", "manager"].includes(organizationContext.membership.role)
+  ) {
+    throw new Error(
+      "Manager, admin, or owner access is required to review time cards."
+    );
+  }
+
+  return {
+    userId: user.id,
+    organizationId: organizationContext.organization.id,
+    membershipRole: organizationContext.membership.role
+  } satisfies TimeReviewScope;
+}
+
+async function ensureScopedActivePerson(
+  organizationId: string,
+  personId: string
+) {
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("people")
@@ -378,7 +483,9 @@ async function ensureScopedActivePerson(organizationId: string, personId: string
   const data = response.data as { id?: string; is_active?: boolean } | null;
 
   if (response.error) {
-    throw new Error(`Unable to validate the workforce person: ${response.error.message}`);
+    throw new Error(
+      `Unable to validate the workforce person: ${response.error.message}`
+    );
   }
 
   if (!data?.id) {
@@ -392,7 +499,10 @@ async function ensureScopedActivePerson(organizationId: string, personId: string
   return data;
 }
 
-async function resolveScopedProject(organizationId: string, projectId: string | null) {
+async function resolveScopedProject(
+  organizationId: string,
+  projectId: string | null
+) {
   if (!projectId) {
     return null;
   }
@@ -407,7 +517,9 @@ async function resolveScopedProject(organizationId: string, projectId: string | 
   const data = response.data as { id?: string } | null;
 
   if (response.error) {
-    throw new Error(`Unable to validate the project: ${response.error.message}`);
+    throw new Error(
+      `Unable to validate the project: ${response.error.message}`
+    );
   }
 
   if (!data?.id) {
@@ -447,29 +559,73 @@ async function resolveScopedJob(organizationId: string, jobId: string | null) {
   };
 }
 
-async function getOpenTimeCardForPerson(organizationId: string, personId: string) {
+async function resolveScopedServiceTicket(
+  organizationId: string,
+  serviceTicketId: string | null
+) {
+  if (!serviceTicketId) {
+    return null;
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("service_tickets")
+    .select("id, customer_id, project_id, job_id")
+    .eq("company_id", organizationId)
+    .eq("id", serviceTicketId)
+    .maybeSingle();
+  const data = response.data as {
+    id?: string;
+    customer_id?: string;
+    project_id?: string | null;
+    job_id?: string | null;
+  } | null;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to validate the service/warranty ticket: ${response.error.message}`
+    );
+  }
+
+  if (!data?.id || !data.customer_id) {
+    throw new Error("Service/warranty ticket not found for this organization.");
+  }
+
+  return {
+    id: data.id,
+    customerId: data.customer_id,
+    projectId: data.project_id ?? null,
+    jobId: data.job_id ?? null
+  };
+}
+
+async function getOpenTimeCardForPerson(
+  organizationId: string,
+  personId: string
+) {
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("time_cards")
-    .select("id, project_id, job_id, status, work_date")
+    .select("id, project_id, job_id, service_ticket_id, status, work_date")
     .eq("company_id", organizationId)
     .eq("person_id", personId)
     .eq("status", "open")
     .order("punch_in_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  const data = response.data as
-    | {
-        id?: string;
-        project_id?: string | null;
-        job_id?: string | null;
-        status?: string;
-        work_date?: string;
-      }
-    | null;
+  const data = response.data as {
+    id?: string;
+    project_id?: string | null;
+    job_id?: string | null;
+    service_ticket_id?: string | null;
+    status?: string;
+    work_date?: string;
+  } | null;
 
   if (response.error) {
-    throw new Error(`Unable to load the active time card: ${response.error.message}`);
+    throw new Error(
+      `Unable to load the active time card: ${response.error.message}`
+    );
   }
 
   if (!data?.id) {
@@ -480,11 +636,15 @@ async function getOpenTimeCardForPerson(organizationId: string, personId: string
     id: data.id,
     projectId: data.project_id ?? null,
     jobId: data.job_id ?? null,
+    serviceTicketId: data.service_ticket_id ?? null,
     workDate: data.work_date ?? null
   };
 }
 
-async function getLatestPunchEventForPerson(organizationId: string, personId: string) {
+async function getLatestPunchEventForPerson(
+  organizationId: string,
+  personId: string
+) {
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("time_punch_events")
@@ -495,16 +655,16 @@ async function getLatestPunchEventForPerson(organizationId: string, personId: st
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  const data = response.data as
-    | {
-        id?: string;
-        event_type?: TimePunchEventRecord["eventType"];
-        occurred_at?: string;
-      }
-    | null;
+  const data = response.data as {
+    id?: string;
+    event_type?: TimePunchEventRecord["eventType"];
+    occurred_at?: string;
+  } | null;
 
   if (response.error) {
-    throw new Error(`Unable to inspect the latest punch event: ${response.error.message}`);
+    throw new Error(
+      `Unable to inspect the latest punch event: ${response.error.message}`
+    );
   }
 
   if (!data?.id || !data.event_type || !data.occurred_at) {
@@ -532,6 +692,7 @@ async function listCanonicalPunchEventsForPerson(
         occurred_at,
         project_id,
         job_id,
+        service_ticket_id,
         notes,
         supersedes_event_id
       `
@@ -555,24 +716,94 @@ async function listCanonicalPunchEventsForPerson(
   }
 
   return data
-    .filter((row) => typeof row?.id === "string" && !supersededEventIds.has(row.id))
+    .filter(
+      (row) => typeof row?.id === "string" && !supersededEventIds.has(row.id)
+    )
     .map((row) => ({
       id: row.id as string,
       eventType: row.event_type as TimePunchEventRecord["eventType"],
       occurredAt: row.occurred_at as string,
       projectId: (row.project_id as string | null) ?? null,
       jobId: (row.job_id as string | null) ?? null,
+      serviceTicketId: (row.service_ticket_id as string | null) ?? null,
       notes: (row.notes as string | null) ?? null
     }));
 }
 
-async function replaceDerivedTimeCardsForPerson(scope: TimeScope, personId: string) {
+async function replaceDerivedTimeCardsForPerson(
+  scope: TimeScope,
+  personId: string
+) {
   const canonicalEvents = await listCanonicalPunchEventsForPerson(
     scope.organizationId,
     personId
   );
   const derivedCards = deriveTimeCardsFromPunchEvents(canonicalEvents);
   const supabase = await getSupabaseServerClient();
+  const existingResponse = await supabase
+    .from("time_cards")
+    .select(
+      "source_punch_in_event_id, source_punch_out_event_id, punch_in_at, punch_out_at, break_minutes, worked_minutes, status, review_status, reviewed_by, reviewed_at, review_notes"
+    )
+    .eq("company_id", scope.organizationId)
+    .eq("person_id", personId);
+  const existingRows = Array.isArray(existingResponse.data)
+    ? existingResponse.data
+    : [];
+
+  if (existingResponse.error) {
+    throw new Error(
+      `Unable to preserve existing time review state: ${existingResponse.error.message}`
+    );
+  }
+
+  const existingReviewByPunchIn = new Map<
+    string,
+    {
+      sourcePunchOutEventId: string | null;
+      punchInAt: string;
+      punchOutAt: string | null;
+      breakMinutes: number;
+      workedMinutes: number;
+      status: TimeCardRecord["status"];
+      reviewStatus: TimeCardRecord["reviewStatus"];
+      reviewedBy: string | null;
+      reviewedAt: string | null;
+      reviewNotes: string | null;
+    }
+  >();
+
+  for (const row of existingRows) {
+    if (
+      typeof row?.source_punch_in_event_id === "string" &&
+      typeof row?.punch_in_at === "string" &&
+      typeof row?.break_minutes === "number" &&
+      typeof row?.worked_minutes === "number" &&
+      typeof row?.status === "string" &&
+      typeof row?.review_status === "string"
+    ) {
+      existingReviewByPunchIn.set(row.source_punch_in_event_id, {
+        sourcePunchOutEventId:
+          typeof row.source_punch_out_event_id === "string"
+            ? row.source_punch_out_event_id
+            : null,
+        punchInAt: row.punch_in_at,
+        punchOutAt:
+          typeof row.punch_out_at === "string" ? row.punch_out_at : null,
+        breakMinutes: row.break_minutes,
+        workedMinutes: row.worked_minutes,
+        status: row.status as TimeCardRecord["status"],
+        reviewStatus: row.review_status as TimeCardRecord["reviewStatus"],
+        reviewedBy:
+          typeof row.reviewed_by === "string" ? row.reviewed_by : null,
+        reviewedAt:
+          typeof row.reviewed_at === "string" ? row.reviewed_at : null,
+        reviewNotes:
+          typeof row.review_notes === "string" ? row.review_notes : null
+      });
+    }
+  }
+
   const deleteResponse = await supabase
     .from("time_cards")
     .delete()
@@ -580,7 +811,9 @@ async function replaceDerivedTimeCardsForPerson(scope: TimeScope, personId: stri
     .eq("person_id", personId);
 
   if (deleteResponse.error) {
-    throw new Error(`Unable to refresh derived time cards: ${deleteResponse.error.message}`);
+    throw new Error(
+      `Unable to refresh derived time cards: ${deleteResponse.error.message}`
+    );
   }
 
   if (derivedCards.length === 0) {
@@ -588,33 +821,117 @@ async function replaceDerivedTimeCardsForPerson(scope: TimeScope, personId: stri
   }
 
   const insertResponse = await supabase.from("time_cards").insert(
-    derivedCards.map((card) => ({
-      company_id: scope.organizationId,
-      person_id: personId,
-      project_id: card.projectId,
-      job_id: card.jobId,
-      work_date: card.workDate,
-      source_punch_in_event_id: card.sourcePunchInEventId,
-      source_punch_out_event_id: card.sourcePunchOutEventId,
-      punch_in_at: card.punchInAt,
-      punch_out_at: card.punchOutAt,
-      break_minutes: card.breakMinutes,
-      worked_minutes: card.workedMinutes,
-      status: card.status,
-      entry_mode: card.entryMode,
-      notes: card.notes,
-      created_by: scope.userId,
-      updated_by: scope.userId
-    }))
+    derivedCards.map((card) => {
+      const existingReview = existingReviewByPunchIn.get(
+        card.sourcePunchInEventId
+      );
+      const derivedSummaryIsUnchanged =
+        existingReview &&
+        existingReview.sourcePunchOutEventId === card.sourcePunchOutEventId &&
+        existingReview.punchInAt === card.punchInAt &&
+        existingReview.punchOutAt === card.punchOutAt &&
+        existingReview.breakMinutes === card.breakMinutes &&
+        existingReview.workedMinutes === card.workedMinutes &&
+        existingReview.status === card.status;
+      const defaultReviewStatus =
+        card.status === "open" ? "draft" : "needs_review";
+      const preservedReviewStatus = derivedSummaryIsUnchanged
+        ? existingReview.reviewStatus
+        : defaultReviewStatus;
+
+      return {
+        company_id: scope.organizationId,
+        person_id: personId,
+        project_id: card.projectId,
+        job_id: card.jobId,
+        service_ticket_id: card.serviceTicketId,
+        work_date: card.workDate,
+        source_punch_in_event_id: card.sourcePunchInEventId,
+        source_punch_out_event_id: card.sourcePunchOutEventId,
+        punch_in_at: card.punchInAt,
+        punch_out_at: card.punchOutAt,
+        break_minutes: card.breakMinutes,
+        worked_minutes: card.workedMinutes,
+        status: card.status,
+        entry_mode: card.entryMode,
+        review_status: preservedReviewStatus,
+        reviewed_by:
+          derivedSummaryIsUnchanged && preservedReviewStatus !== "needs_review"
+            ? existingReview.reviewedBy
+            : null,
+        reviewed_at:
+          derivedSummaryIsUnchanged && preservedReviewStatus !== "needs_review"
+            ? existingReview.reviewedAt
+            : null,
+        review_notes:
+          derivedSummaryIsUnchanged && preservedReviewStatus !== "needs_review"
+            ? existingReview.reviewNotes
+            : null,
+        notes: card.notes,
+        created_by: scope.userId,
+        updated_by: scope.userId
+      };
+    })
   );
 
   if (insertResponse.error) {
-    throw new Error(`Unable to write derived time cards: ${insertResponse.error.message}`);
+    throw new Error(
+      `Unable to write derived time cards: ${insertResponse.error.message}`
+    );
   }
 }
 
-function isBreakCompatibleEventType(value: TimePunchEventRecord["eventType"] | null) {
-  return value === "punch_in" || value === "break_end";
+export async function updateTimeCardReview(input: {
+  timeCardId: string;
+  reviewStatus: "approved" | "rejected";
+  reviewNotes: string | null;
+}) {
+  const scope = await requireTimeReviewScope(`/time-cards/${input.timeCardId}`);
+  const timeCard = await getTimeCardById(
+    input.timeCardId,
+    `/time-cards/${input.timeCardId}`
+  );
+
+  if (!timeCard) {
+    throw new Error("Time card not found for this organization.");
+  }
+
+  if (input.reviewStatus === "approved" && timeCard.status !== "completed") {
+    throw new Error("Only completed time cards can be approved.");
+  }
+
+  if (
+    input.reviewStatus === "rejected" &&
+    (!input.reviewNotes || input.reviewNotes.trim().length === 0)
+  ) {
+    throw new Error("A rejection reason is required.");
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("time_cards")
+    .update({
+      review_status: input.reviewStatus,
+      reviewed_by: scope.userId,
+      reviewed_at: new Date().toISOString(),
+      review_notes: input.reviewNotes,
+      updated_by: scope.userId
+    })
+    .eq("company_id", scope.organizationId)
+    .eq("id", input.timeCardId)
+    .select(timeCardSelect)
+    .single();
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(`Unable to update time review: ${response.error.message}`);
+  }
+
+  if (!isTimeCardRow(data)) {
+    throw new Error("Unexpected time card response after review update.");
+  }
+
+  return mapTimeCardListItem(data);
 }
 
 async function resolveAttributionForPunch(
@@ -625,10 +942,37 @@ async function resolveAttributionForPunch(
   await ensureScopedActivePerson(organizationId, personId);
 
   const openCard = await getOpenTimeCardForPerson(organizationId, personId);
-  const latestEvent = await getLatestPunchEventForPerson(organizationId, personId);
+  const latestEvent = await getLatestPunchEventForPerson(
+    organizationId,
+    personId
+  );
 
   let projectId = input.projectId;
   let jobId = input.jobId;
+  let serviceTicketId = input.serviceTicketId;
+
+  if (input.eventType !== "punch_in" && openCard) {
+    serviceTicketId = serviceTicketId ?? openCard.serviceTicketId;
+  }
+
+  const scopedServiceTicket = await resolveScopedServiceTicket(
+    organizationId,
+    serviceTicketId
+  );
+
+  if (scopedServiceTicket) {
+    projectId = projectId ?? scopedServiceTicket.projectId;
+    jobId = jobId ?? scopedServiceTicket.jobId;
+  }
+
+  if (
+    input.eventType === "punch_in" &&
+    !projectId &&
+    !jobId &&
+    !scopedServiceTicket
+  ) {
+    throw new Error("Choose a project or job before clocking in.");
+  }
 
   if (input.eventType !== "punch_in" && openCard) {
     projectId = projectId ?? openCard.projectId;
@@ -645,6 +989,24 @@ async function resolveAttributionForPunch(
     throw new Error("Job must belong to the selected project.");
   }
 
+  if (
+    scopedServiceTicket?.projectId &&
+    scopedProject &&
+    scopedServiceTicket.projectId !== scopedProject.id
+  ) {
+    throw new Error(
+      "Service/warranty ticket must belong to the selected project."
+    );
+  }
+
+  if (
+    scopedServiceTicket?.jobId &&
+    scopedJob &&
+    scopedServiceTicket.jobId !== scopedJob.id
+  ) {
+    throw new Error("Service/warranty ticket must belong to the selected job.");
+  }
+
   if (scopedProject) {
     await assertProjectReadinessGate({
       organizationId,
@@ -654,82 +1016,47 @@ async function resolveAttributionForPunch(
     });
   }
 
-  switch (input.eventType) {
-    case "punch_in": {
-      if (openCard) {
-        throw new Error("This person already has an open time session.");
-      }
-      break;
-    }
-    case "break_start": {
-      if (!openCard) {
-        throw new Error("Breaks can only start during an open time session.");
-      }
+  const transitionError = validateTimePunchTransition({
+    eventType: input.eventType,
+    hasOpenSession: Boolean(openCard),
+    latestEventType: latestEvent?.eventType ?? null
+  });
 
-      if (!isBreakCompatibleEventType(latestEvent?.eventType ?? null)) {
-        throw new Error("Break start requires an active punch-in or a completed prior break.");
-      }
-
-      break;
-    }
-    case "break_end": {
-      if (!openCard) {
-        throw new Error("Breaks can only end during an open time session.");
-      }
-
-      if (latestEvent?.eventType !== "break_start") {
-        throw new Error("Break end requires an active break.");
-      }
-
-      break;
-    }
-    case "punch_out": {
-      if (!openCard) {
-        throw new Error("Punch out requires an open time session.");
-      }
-
-      if (latestEvent?.eventType === "break_start") {
-        throw new Error("End the active break before punching out.");
-      }
-
-      if (!isBreakCompatibleEventType(latestEvent?.eventType ?? null) &&
-          latestEvent?.eventType !== "punch_in") {
-        throw new Error("Punch out requires an active punched-in session.");
-      }
-
-      break;
-    }
-    default: {
-      break;
-    }
+  if (transitionError) {
+    throw new Error(transitionError);
   }
 
   return {
     projectId: scopedProject?.id ?? null,
-    jobId: scopedJob?.id ?? null
+    jobId: scopedJob?.id ?? null,
+    serviceTicketId: scopedServiceTicket?.id ?? null
   };
 }
 
-export const listTimePunchEvents = cache(async (): Promise<TimePunchEventListItem[]> => {
-  const scope = await requireTimeScope("/people");
-  const supabase = await getSupabaseServerClient();
-  const response = await supabase
-    .from("time_punch_events")
-    .select(timePunchEventSelect)
-    .eq("company_id", scope.organizationId)
-    .order("occurred_at", { ascending: false });
-  const data: unknown = response.data;
+export const listTimePunchEvents = cache(
+  async (): Promise<TimePunchEventListItem[]> => {
+    const scope = await requireTimeScope("/people");
+    const supabase = await getSupabaseServerClient();
+    const response = await supabase
+      .from("time_punch_events")
+      .select(timePunchEventSelect)
+      .eq("company_id", scope.organizationId)
+      .order("occurred_at", { ascending: false });
+    const data: unknown = response.data;
 
-  if (response.error) {
-    throw new Error(`Unable to load time punch events: ${response.error.message}`);
+    if (response.error) {
+      throw new Error(
+        `Unable to load time punch events: ${response.error.message}`
+      );
+    }
+
+    if (!isTimePunchEventRowArray(data)) {
+      return [];
+    }
+
+    return data.map(mapTimePunchEventListItem);
   }
-
-  if (!isTimePunchEventRowArray(data)) {
-    return [];
-  }
-
-  return data.map(mapTimePunchEventListItem);
-});
+);
 
 export const listTimeCards = cache(async (): Promise<TimeCardListItem[]> => {
   const scope = await requireTimeScope("/people");
@@ -753,34 +1080,46 @@ export const listTimeCards = cache(async (): Promise<TimeCardListItem[]> => {
   return data.map(mapTimeCardListItem);
 });
 
-export const listOpenTimeCardStates = cache(async (): Promise<OpenTimeCardState[]> => {
-  const allCards = await listTimeCards();
-  const openCards = allCards.filter((card) => card.status === "open");
+export const listOpenTimeCardStates = cache(
+  async (): Promise<OpenTimeCardState[]> => {
+    const allCards = await listTimeCards();
+    const openCards = allCards.filter((card) => card.status === "open");
 
-  if (openCards.length === 0) {
-    return [];
+    if (openCards.length === 0) {
+      return [];
+    }
+
+    const scope = await requireTimeScope("/time");
+    const states = await Promise.all(
+      openCards.map(async (card) => {
+        const latestEvent = await getLatestPunchEventForPerson(
+          scope.organizationId,
+          card.personId
+        );
+
+        return {
+          ...card,
+          currentPunchState:
+            deriveClockingSessionState({
+              hasOpenSession: true,
+              latestEventType: latestEvent?.eventType ?? null
+            }) === "on_break"
+              ? "on_break"
+              : "punched_in"
+        } satisfies OpenTimeCardState;
+      })
+    );
+
+    return states.sort((left, right) =>
+      left.punchInAt.localeCompare(right.punchInAt)
+    );
   }
+);
 
-  const scope = await requireTimeScope("/time");
-  const states = await Promise.all(
-    openCards.map(async (card) => {
-      const latestEvent = await getLatestPunchEventForPerson(
-        scope.organizationId,
-        card.personId
-      );
-
-      return {
-        ...card,
-        currentPunchState:
-          latestEvent?.eventType === "break_start" ? "on_break" : "punched_in"
-      } satisfies OpenTimeCardState;
-    })
-  );
-
-  return states.sort((left, right) => left.punchInAt.localeCompare(right.punchInAt));
-});
-
-export async function listTimeCardsByProject(projectId: string, next = "/projects") {
+export async function listTimeCardsByProject(
+  projectId: string,
+  next = "/projects"
+) {
   const scope = await requireTimeScope(next);
   const supabase = await getSupabaseServerClient();
   const response = await supabase
@@ -793,7 +1132,9 @@ export async function listTimeCardsByProject(projectId: string, next = "/project
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load project time cards: ${response.error.message}`);
+    throw new Error(
+      `Unable to load project time cards: ${response.error.message}`
+    );
   }
 
   if (!isTimeCardRowArray(data)) {
@@ -820,7 +1161,9 @@ export async function listTimeCardsByProjectAndWorkDate(
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load project time cards for the work date: ${response.error.message}`);
+    throw new Error(
+      `Unable to load project time cards for the work date: ${response.error.message}`
+    );
   }
 
   if (!isTimeCardRowArray(data)) {
@@ -853,6 +1196,35 @@ export async function listTimeCardsByJob(jobId: string, next = "/jobs") {
   return data.map(mapTimeCardListItem);
 }
 
+export async function listTimeCardsByServiceTicket(
+  serviceTicketId: string,
+  next = "/service-tickets"
+) {
+  const scope = await requireTimeScope(next);
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("time_cards")
+    .select(timeCardSelect)
+    .eq("company_id", scope.organizationId)
+    .eq("service_ticket_id", serviceTicketId)
+    .order("work_date", { ascending: false })
+    .order("punch_in_at", { ascending: false })
+    .limit(8);
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load service/warranty time cards: ${response.error.message}`
+    );
+  }
+
+  if (!isTimeCardRowArray(data)) {
+    return [];
+  }
+
+  return data.map(mapTimeCardListItem);
+}
+
 export async function getTimePunchEventById(eventId: string, next = "/people") {
   const scope = await requireTimeScope(next);
   const supabase = await getSupabaseServerClient();
@@ -865,7 +1237,9 @@ export async function getTimePunchEventById(eventId: string, next = "/people") {
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load the time punch event: ${response.error.message}`);
+    throw new Error(
+      `Unable to load the time punch event: ${response.error.message}`
+    );
   }
 
   if (!isTimePunchEventRow(data)) {
@@ -921,7 +1295,38 @@ export async function listTimePunchEventsForTimeCard(
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load time card punch events: ${response.error.message}`);
+    throw new Error(
+      `Unable to load time card punch events: ${response.error.message}`
+    );
+  }
+
+  if (!isTimePunchEventRowArray(data)) {
+    return [];
+  }
+
+  return data.map(mapTimePunchEventListItem);
+}
+
+export async function listTimePunchEventsByServiceTicket(
+  serviceTicketId: string,
+  next = "/service-tickets"
+) {
+  const scope = await requireTimeScope(next);
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("time_punch_events")
+    .select(timePunchEventSelect)
+    .eq("company_id", scope.organizationId)
+    .eq("service_ticket_id", serviceTicketId)
+    .order("occurred_at", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(12);
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load service/warranty punch events: ${response.error.message}`
+    );
   }
 
   if (!isTimePunchEventRowArray(data)) {
@@ -946,12 +1351,14 @@ export async function recordTimePunchEvent(input: TimePunchEventInput) {
       person_id: input.personId,
       project_id: attribution.projectId,
       job_id: attribution.jobId,
+      service_ticket_id: attribution.serviceTicketId,
       event_type: input.eventType,
       occurred_at: input.occurredAt,
       source: input.source,
       latitude: input.latitude,
       longitude: input.longitude,
-      accuracy_meters: input.accuracyMeters === null ? null : Math.round(input.accuracyMeters),
+      accuracy_meters:
+        input.accuracyMeters === null ? null : Math.round(input.accuracyMeters),
       location_capture_method: input.locationCaptureMethod,
       geofence_snapshot: input.geofenceSnapshot,
       supersedes_event_id: input.supersedesEventId,
@@ -964,7 +1371,9 @@ export async function recordTimePunchEvent(input: TimePunchEventInput) {
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to record the punch event: ${response.error.message}`);
+    throw new Error(
+      `Unable to record the punch event: ${response.error.message}`
+    );
   }
 
   if (!isTimePunchEventRow(data)) {

@@ -125,7 +125,8 @@ export function GlobalSearch({
 
   useEffect(() => {
     function handleKeydown(event: KeyboardEvent) {
-      const isShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k";
+      const isShortcut =
+        (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k";
 
       if (isShortcut) {
         event.preventDefault();
@@ -163,14 +164,19 @@ export function GlobalSearch({
         setError(null);
 
         try {
-          const response = await fetch(`/api/global-search?q=${encodeURIComponent(trimmedQuery)}`, {
-            signal: controller.signal,
-            cache: "no-store"
-          });
+          const response = await fetch(
+            `/api/global-search?q=${encodeURIComponent(trimmedQuery)}`,
+            {
+              signal: controller.signal,
+              cache: "no-store"
+            }
+          );
           const payload = (await response.json()) as GlobalSearchResponse;
 
           if (!response.ok) {
-            throw new Error(payload.error ?? "Unable to search contractor records.");
+            throw new Error(
+              payload.error ?? "Unable to search contractor records."
+            );
           }
 
           setResults(payload);
@@ -200,7 +206,9 @@ export function GlobalSearch({
   }, [open, query]);
 
   const resultCount = useMemo(
-    () => results?.groups.reduce((sum, group) => sum + group.results.length, 0) ?? 0,
+    () =>
+      results?.groups.reduce((sum, group) => sum + group.results.length, 0) ??
+      0,
     [results]
   );
 
@@ -225,7 +233,12 @@ export function GlobalSearch({
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-[80] bg-[var(--text-primary)]/40 px-4 py-6 sm:px-6" role="dialog" aria-modal="true" aria-label="Global search">
+        <div
+          className="fixed inset-0 z-[80] bg-[var(--text-primary)]/40 px-4 py-6 sm:px-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Global search"
+        >
           <div className="mx-auto flex max-h-[calc(100vh-3rem)] w-full max-w-4xl flex-col overflow-hidden rounded-[1.35rem] border border-[var(--border-warm)] bg-[var(--cream)] shadow-[0_36px_90px_-40px_rgba(23,18,15,0.55)]">
             <div className="flex items-center gap-3 border-b border-[var(--border-warm)] bg-white px-4 py-3 sm:px-5">
               <SearchIcon />
@@ -240,7 +253,7 @@ export function GlobalSearch({
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="inline-flex rounded-full border border-[var(--border-warm)] bg-[var(--cream)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)] transition hover:border-[var(--copper-light)] hover:bg-white"
+                className="inline-flex rounded-[4px] border border-[var(--border-warm)] bg-[var(--cream)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)] transition hover:border-[var(--copper-light)] hover:bg-white"
               >
                 Close
               </button>
@@ -257,8 +270,9 @@ export function GlobalSearch({
                       Find canonical records from one shared entry point
                     </h2>
                     <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                      Search across opportunities, customers, projects, appointments,
-                      estimates, contracts, invoices, jobs, payments, workforce people, and vendors.
+                      Search across opportunities, customers, projects,
+                      appointments, estimates, contracts, invoices, jobs,
+                      payments, workforce people, and vendors.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -277,7 +291,7 @@ export function GlobalSearch({
                     ].map((item) => (
                       <span
                         key={item}
-                        className="rounded-full border border-[var(--border-warm)] bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]"
+                        className="rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]"
                       >
                         {item}
                       </span>
@@ -304,7 +318,8 @@ export function GlobalSearch({
                           {group.label}
                         </p>
                         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--copper)]">
-                          {group.results.length} result{group.results.length === 1 ? "" : "s"}
+                          {group.results.length} result
+                          {group.results.length === 1 ? "" : "s"}
                         </p>
                       </div>
                       <div className="divide-y divide-[var(--border-warm)]">
@@ -339,10 +354,12 @@ export function GlobalSearch({
                 </div>
               ) : (
                 <div className="rounded-[1rem] border border-[var(--border-warm)] bg-white px-4 py-5">
-                  <p className="text-sm font-semibold text-[var(--text-primary)]">No matching records</p>
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">
+                    No matching records
+                  </p>
                   <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                    Try a broader search term or search by record number, customer, project,
-                    email, phone, or status.
+                    Try a broader search term or search by record number,
+                    customer, project, email, phone, or status.
                   </p>
                 </div>
               )}

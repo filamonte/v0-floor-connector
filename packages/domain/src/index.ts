@@ -8,6 +8,10 @@ import type {
   FieldNoteStatus,
   FieldNoteType,
   FieldNoteVisibility,
+  GateKeeperActionSuggestionStatus,
+  GateKeeperActionSuggestionType,
+  GateKeeperArtifactReviewStatus,
+  GateKeeperArtifactType,
   CommercialReadinessBlocker,
   CommercialReadinessStatus,
   ContractSignatureActorType,
@@ -17,7 +21,15 @@ import type {
   ContractStatus,
   ChangeOrderStatus,
   ContractInternalApprovalStatus,
+  DocumentSignatureEventType,
+  DocumentSignatureSubjectType,
+  DocumentSignerRole,
+  DocumentSignerStatus,
   DocumentTemplateStatus,
+  EquipmentOperationalStatus,
+  EquipmentOwnershipStatus,
+  EquipmentAssignmentStatus,
+  EquipmentType,
   EstimateStatus,
   FinancingStatus,
   InvoiceStatus,
@@ -225,6 +237,44 @@ export const contractSignerStatusTransitions: Record<
   voided: []
 };
 
+export const documentSignatureSubjectTypes = [
+  "warranty_document"
+] as const satisfies readonly DocumentSignatureSubjectType[];
+
+export const documentSignerRoles = [
+  "customer",
+  "contractor"
+] as const satisfies readonly DocumentSignerRole[];
+
+export const documentSignerStatuses = [
+  "pending",
+  "requested",
+  "viewed",
+  "signed",
+  "declined",
+  "voided"
+] as const satisfies readonly DocumentSignerStatus[];
+
+export const documentSignerStatusTransitions: Record<
+  DocumentSignerStatus,
+  readonly DocumentSignerStatus[]
+> = {
+  pending: ["requested", "voided"],
+  requested: ["viewed", "signed", "declined", "voided"],
+  viewed: ["signed", "declined", "voided"],
+  signed: [],
+  declined: ["voided"],
+  voided: []
+};
+
+export const documentSignatureEventTypes = [
+  "signature_requested",
+  "viewed",
+  "signed",
+  "declined",
+  "voided"
+] as const satisfies readonly DocumentSignatureEventType[];
+
 export const paymentStatuses = [
   "pending",
   "recorded",
@@ -267,16 +317,13 @@ export const paymentStatusTransitions: Record<
   void: []
 };
 
-export const taxBehaviors = [
-  "exclusive",
-  "inclusive",
-  "none"
-] as const;
+export const taxBehaviors = ["exclusive", "inclusive", "none"] as const;
 
 export const templateTypes = [
   "estimate",
   "invoice",
-  "contract"
+  "contract",
+  "warranty"
 ] as const satisfies readonly TemplateType[];
 
 export const documentTemplateStatuses = [
@@ -299,6 +346,53 @@ export const vendorTypes = [
   "supplier",
   "other"
 ] as const satisfies readonly VendorType[];
+
+export const equipmentTypes = [
+  "grinder",
+  "polisher",
+  "vacuum",
+  "dust_collector",
+  "shot_blaster",
+  "scarifier",
+  "scraper",
+  "mixer",
+  "sprayer",
+  "trailer",
+  "truck",
+  "generator",
+  "moisture_meter",
+  "testing_tool",
+  "coating_tool",
+  "burnisher",
+  "hand_tool",
+  "kit",
+  "other"
+] as const satisfies readonly EquipmentType[];
+
+export const equipmentOwnershipStatuses = [
+  "owned",
+  "rented",
+  "leased",
+  "subcontractor_owned",
+  "other"
+] as const satisfies readonly EquipmentOwnershipStatus[];
+
+export const equipmentOperationalStatuses = [
+  "available",
+  "assigned",
+  "in_use",
+  "maintenance",
+  "out_of_service",
+  "retired"
+] as const satisfies readonly EquipmentOperationalStatus[];
+
+export const equipmentAssignmentStatuses = [
+  "planned",
+  "assigned",
+  "in_use",
+  "returned",
+  "canceled"
+] as const satisfies readonly EquipmentAssignmentStatus[];
 
 export const complianceSubjectTypes = [
   "person",
@@ -407,6 +501,43 @@ export const portalRecordViewSubjectTypes = [
   "invoice",
   "change_order"
 ] as const satisfies readonly PortalRecordViewSubjectType[];
+
+export const gateKeeperArtifactTypes = [
+  "call_summary",
+  "transcript_placeholder",
+  "extracted_requirement",
+  "extracted_commitment",
+  "risk_signal",
+  "workflow_observation",
+  "onboarding_note"
+] as const satisfies readonly GateKeeperArtifactType[];
+
+export const gateKeeperArtifactReviewStatuses = [
+  "proposed",
+  "accepted",
+  "rejected",
+  "dismissed"
+] as const satisfies readonly GateKeeperArtifactReviewStatus[];
+
+export const gateKeeperActionSuggestionTypes = [
+  "create_opportunity",
+  "update_opportunity",
+  "schedule_site_assessment",
+  "create_task_later",
+  "send_followup_later",
+  "update_project_notes",
+  "flag_estimate_review",
+  "flag_invoice_review",
+  "flag_contract_review"
+] as const satisfies readonly GateKeeperActionSuggestionType[];
+
+export const gateKeeperActionSuggestionStatuses = [
+  "proposed",
+  "approved",
+  "rejected",
+  "dismissed",
+  "superseded"
+] as const satisfies readonly GateKeeperActionSuggestionStatus[];
 
 export const membershipRoleRank: Record<MembershipRole, number> = {
   owner: 0,
@@ -565,7 +696,9 @@ export function compareCommercialReadinessStatuses(
   left: CommercialReadinessStatus,
   right: CommercialReadinessStatus
 ) {
-  return commercialReadinessStatusRank[left] - commercialReadinessStatusRank[right];
+  return (
+    commercialReadinessStatusRank[left] - commercialReadinessStatusRank[right]
+  );
 }
 
 export function compareOpportunityStatuses(
@@ -579,11 +712,17 @@ export function compareJobStatuses(left: JobStatus, right: JobStatus) {
   return jobStatusRank[left] - jobStatusRank[right];
 }
 
-export function compareInvoiceStatuses(left: InvoiceStatus, right: InvoiceStatus) {
+export function compareInvoiceStatuses(
+  left: InvoiceStatus,
+  right: InvoiceStatus
+) {
   return invoiceStatusRank[left] - invoiceStatusRank[right];
 }
 
-export function compareContractStatuses(left: ContractStatus, right: ContractStatus) {
+export function compareContractStatuses(
+  left: ContractStatus,
+  right: ContractStatus
+) {
   return contractStatusRank[left] - contractStatusRank[right];
 }
 
@@ -627,6 +766,13 @@ export function canTransitionContractSignerStatus(
   to: ContractSignerStatus
 ) {
   return contractSignerStatusTransitions[from].includes(to);
+}
+
+export function canTransitionDocumentSignerStatus(
+  from: DocumentSignerStatus,
+  to: DocumentSignerStatus
+) {
+  return documentSignerStatusTransitions[from].includes(to);
 }
 
 export function canTransitionPaymentStatus(
@@ -724,7 +870,9 @@ export function computeContractWorkflowGate(
 export function computeContractSignatureWorkflowSummary(
   input: ContractSignatureWorkflowSummaryInput
 ): ContractSignatureWorkflowSummaryResult {
-  const customerSigners = input.signers.filter((signer) => signer.signerRole === "customer");
+  const customerSigners = input.signers.filter(
+    (signer) => signer.signerRole === "customer"
+  );
   const contractorSigners = input.signers.filter(
     (signer) => signer.signerRole === "contractor"
   );
@@ -732,13 +880,15 @@ export function computeContractSignatureWorkflowSummary(
     (signer) => signer.signerStatus === "pending"
   ).length;
   const actionableCustomerSignerCount = customerSigners.filter(
-    (signer) => signer.signerStatus === "pending" || signer.signerStatus === "viewed"
+    (signer) =>
+      signer.signerStatus === "pending" || signer.signerStatus === "viewed"
   ).length;
   const pendingContractorSignerCount = contractorSigners.filter(
     (signer) => signer.signerStatus === "pending"
   ).length;
   const actionableContractorSignerCount = contractorSigners.filter(
-    (signer) => signer.signerStatus === "pending" || signer.signerStatus === "viewed"
+    (signer) =>
+      signer.signerStatus === "pending" || signer.signerStatus === "viewed"
   ).length;
   const viewedCustomerSignerCount = customerSigners.filter(
     (signer) => signer.signerStatus === "viewed"
@@ -756,16 +906,19 @@ export function computeContractSignatureWorkflowSummary(
   const contractorSignerCount = contractorSigners.length;
   const requiresCountersign = contractorSignerCount > 0;
   const allCustomerSignersSigned =
-    customerSignerCount > 0 && signedCustomerSignerCount === customerSignerCount;
+    customerSignerCount > 0 &&
+    signedCustomerSignerCount === customerSignerCount;
   const allRequiredSignersSigned =
     allCustomerSignersSigned &&
-    (!requiresCountersign || signedContractorSignerCount === contractorSignerCount);
+    (!requiresCountersign ||
+      signedContractorSignerCount === contractorSignerCount);
   const anyCustomerInteraction =
     input.customerSignedAt !== null ||
-    customerSigners.some((signer) =>
-      signer.signerStatus === "viewed" ||
-      signer.signerStatus === "signed" ||
-      signer.signerStatus === "declined"
+    customerSigners.some(
+      (signer) =>
+        signer.signerStatus === "viewed" ||
+        signer.signerStatus === "signed" ||
+        signer.signerStatus === "declined"
     );
   const isDeclined =
     input.signatureDeclinedAt !== null ||
@@ -793,7 +946,10 @@ export function computeContractSignatureWorkflowSummary(
     allCustomerSignersSigned,
     allRequiredSignersSigned,
     canCustomerAct:
-      !isVoided && !isCompleted && !isDeclined && actionableCustomerSignerCount > 0,
+      !isVoided &&
+      !isCompleted &&
+      !isDeclined &&
+      actionableCustomerSignerCount > 0,
     canContractorCountersign:
       !isVoided &&
       !isCompleted &&
@@ -910,7 +1066,8 @@ export function computeCommercialReadiness(
 
   if (input.requireDepositBeforeJobScheduling) {
     const depositPaid =
-      input.depositInvoiceRole === "deposit" && input.depositInvoiceStatus === "paid";
+      input.depositInvoiceRole === "deposit" &&
+      input.depositInvoiceStatus === "paid";
 
     if (!depositPaid) {
       blockers.push("deposit_required");
@@ -956,6 +1113,7 @@ export type TimePunchEventDerivationInput = {
   occurredAt: string;
   projectId: string | null;
   jobId: string | null;
+  serviceTicketId: string | null;
   notes: string | null;
 };
 
@@ -963,6 +1121,7 @@ export type DerivedTimeCardSnapshot = {
   workDate: string;
   projectId: string | null;
   jobId: string | null;
+  serviceTicketId: string | null;
   sourcePunchInEventId: string;
   sourcePunchOutEventId: string | null;
   punchInAt: string;
@@ -1042,7 +1201,8 @@ export function deriveTimeCardsFromPunchEvents(
       breakMinutes += diffMinutes(breakStartedAt, lastEventAt);
     }
 
-    const effectiveEnd = currentCard.punchOutAt ?? lastEventAt ?? currentCard.punchInAt;
+    const effectiveEnd =
+      currentCard.punchOutAt ?? lastEventAt ?? currentCard.punchInAt;
     const totalMinutes = diffMinutes(currentCard.punchInAt, effectiveEnd);
 
     derivedCards.push({
@@ -1070,6 +1230,7 @@ export function deriveTimeCardsFromPunchEvents(
           workDate: toUtcWorkDate(event.occurredAt),
           projectId: event.projectId,
           jobId: event.jobId,
+          serviceTicketId: event.serviceTicketId,
           sourcePunchInEventId: event.id,
           sourcePunchOutEventId: null,
           punchInAt: event.occurredAt,
@@ -1102,7 +1263,10 @@ export function deriveTimeCardsFromPunchEvents(
           break;
         }
 
-        currentCard.breakMinutes += diffMinutes(breakStartedAt, event.occurredAt);
+        currentCard.breakMinutes += diffMinutes(
+          breakStartedAt,
+          event.occurredAt
+        );
         breakStartedAt = null;
         break;
       }
@@ -1112,7 +1276,10 @@ export function deriveTimeCardsFromPunchEvents(
         }
 
         if (breakStartedAt) {
-          currentCard.breakMinutes += diffMinutes(breakStartedAt, event.occurredAt);
+          currentCard.breakMinutes += diffMinutes(
+            breakStartedAt,
+            event.occurredAt
+          );
           breakStartedAt = null;
           currentCard.status = "flagged";
         }
@@ -1173,7 +1340,9 @@ export function deriveDailyLogLaborSummary(
     }
 
     if ((left.personDisplayName ?? "") !== (right.personDisplayName ?? "")) {
-      return (left.personDisplayName ?? "").localeCompare(right.personDisplayName ?? "");
+      return (left.personDisplayName ?? "").localeCompare(
+        right.personDisplayName ?? ""
+      );
     }
 
     return (left.jobLabel ?? "").localeCompare(right.jobLabel ?? "");

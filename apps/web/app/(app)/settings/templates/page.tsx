@@ -2,7 +2,10 @@ import { DocumentTemplateSettingsCard } from "@/components/document-template-set
 import { SettingsFeedback } from "@/components/settings-feedback";
 import { SettingsSectionCard } from "@/components/settings-section-card";
 import { requireOrganizationAdminScope } from "@/lib/organizations/admin";
-import { listDocumentTemplates, listPlatformTemplateSeeds } from "@/lib/templates/data";
+import {
+  listDocumentTemplates,
+  listPlatformTemplateSeeds
+} from "@/lib/templates/data";
 
 type PageProps = {
   searchParams?: Promise<{
@@ -11,7 +14,9 @@ type PageProps = {
   }>;
 };
 
-export default async function SettingsTemplatesPage({ searchParams }: PageProps) {
+export default async function SettingsTemplatesPage({
+  searchParams
+}: PageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   await requireOrganizationAdminScope("/settings/templates");
   const [allTemplates, platformSeeds] = await Promise.all([
@@ -27,6 +32,9 @@ export default async function SettingsTemplatesPage({ searchParams }: PageProps)
   );
   const contractTemplates = allTemplates.filter(
     (template) => template.templateType === "contract"
+  );
+  const warrantyTemplates = allTemplates.filter(
+    (template) => template.templateType === "warranty"
   );
 
   const estimateSeeds = platformSeeds.filter(
@@ -44,6 +52,11 @@ export default async function SettingsTemplatesPage({ searchParams }: PageProps)
       seed.templateType === "contract" &&
       !contractTemplates.some((template) => template.sourceSeedId === seed.id)
   );
+  const warrantySeeds = platformSeeds.filter(
+    (seed) =>
+      seed.templateType === "warranty" &&
+      !warrantyTemplates.some((template) => template.sourceSeedId === seed.id)
+  );
 
   return (
     <div className="space-y-6">
@@ -55,7 +68,7 @@ export default async function SettingsTemplatesPage({ searchParams }: PageProps)
       <SettingsSectionCard
         eyebrow="Document Templates"
         title="Manage organization-owned document output"
-        description="FloorConnector keeps estimate, invoice, and contract templates on one shared canonical template system. Adopt platform defaults into this organization, then edit the organization-owned copies without affecting other contractors."
+        description="FloorConnector keeps estimate, invoice, contract, and warranty templates on one shared canonical template system. Adopt platform defaults into this organization, then edit the organization-owned copies without affecting other contractors."
       >
         <div className="grid gap-6">
           <DocumentTemplateSettingsCard
@@ -72,6 +85,11 @@ export default async function SettingsTemplatesPage({ searchParams }: PageProps)
             templateType="contract"
             templates={contractTemplates}
             availableSeeds={contractSeeds}
+          />
+          <DocumentTemplateSettingsCard
+            templateType="warranty"
+            templates={warrantyTemplates}
+            availableSeeds={warrantySeeds}
           />
         </div>
       </SettingsSectionCard>

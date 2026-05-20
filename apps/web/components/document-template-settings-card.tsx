@@ -34,6 +34,8 @@ function getTemplateTypeLabel(templateType: TemplateType) {
       return "Invoice templates";
     case "contract":
       return "Contract templates";
+    case "warranty":
+      return "Warranty templates";
     default:
       return "Templates";
   }
@@ -47,6 +49,8 @@ function getTemplateTypeDescription(templateType: TemplateType) {
       return "Manage the invoice templates that keep billing output consistent across this organization.";
     case "contract":
       return "Manage the contract templates used during approved-estimate contract generation and downstream review.";
+    case "warranty":
+      return "Manage warranty templates used to generate customer-facing warranty documents from service, project, job, and customer context.";
     default:
       return "Manage the organization-owned document templates for this workflow.";
   }

@@ -360,7 +360,7 @@ export default async function InvoicesPage({
                     sort
                   })}
                   className={[
-                    "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
+                    "inline-flex h-8 items-center gap-2 rounded-[4px] px-3 text-sm font-medium transition",
                     isActive
                       ? "bg-[var(--graphite)] text-white"
                       : "border border-[var(--border-warm)] bg-white text-[var(--text-secondary)] hover:bg-[var(--highlight)]"

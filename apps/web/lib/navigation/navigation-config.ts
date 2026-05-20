@@ -31,7 +31,8 @@ export const navigationSections: readonly NavigationSection[] = [
   {
     id: "project-management",
     label: "Project Management",
-    description: "Run active work, daily execution, and field coordination from one place.",
+    description:
+      "Run active work, daily execution, and field coordination from one place.",
     items: [
       {
         key: "projects",
@@ -53,7 +54,16 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "schedule",
         label: "Schedule",
         href: "/schedule",
-        description: "Check scheduled work, near-term dates, and production flow.",
+        description:
+          "Check scheduled work, near-term dates, and production flow.",
+        minRole: "member",
+        status: "live"
+      },
+      {
+        key: "equipment",
+        label: "Equipment",
+        href: "/equipment",
+        description: "Manage owned and rented equipment assets.",
         minRole: "member",
         status: "live"
       },
@@ -69,7 +79,8 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "work-orders",
         label: "Work Orders",
         href: "/work-orders",
-        description: "Manage active work orders tied to the job execution chain.",
+        description:
+          "Manage active work orders tied to the job execution chain.",
         minRole: "member",
         status: "live",
         matchPaths: ["/jobs"]
@@ -78,7 +89,8 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "inspections",
         label: "Inspections",
         href: "/inspections",
-        description: "Review inspection workflows and project readiness checkpoints.",
+        description:
+          "Review inspection workflows and project readiness checkpoints.",
         minRole: "member",
         status: "foundation"
       },
@@ -86,7 +98,8 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "punchlists",
         label: "Punchlists",
         href: "/punchlists",
-        description: "Open corrective and closeout items tied to projects and jobs.",
+        description:
+          "Open corrective and closeout items tied to projects and jobs.",
         minRole: "member",
         status: "live"
       },
@@ -94,15 +107,17 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "service-tickets",
         label: "Service Tickets",
         href: "/service-tickets",
-        description: "Handle post-install service requests and ongoing field issues.",
+        description:
+          "Track internal service and warranty continuity against customers, projects, and jobs.",
         minRole: "member",
-        status: "foundation"
+        status: "live"
       },
       {
         key: "permits",
         label: "Permits",
         href: "/permits",
-        description: "Track permit status, submissions, and required approvals.",
+        description:
+          "Track permit status, submissions, and required approvals.",
         minRole: "member",
         status: "foundation"
       }
@@ -111,13 +126,15 @@ export const navigationSections: readonly NavigationSection[] = [
   {
     id: "financials",
     label: "Financials",
-    description: "Keep estimates, billing, and cash activity connected to the same project chain.",
+    description:
+      "Keep estimates, billing, and cash activity connected to the same project chain.",
     items: [
       {
         key: "financials-home",
         label: "Financials Home",
         href: "/financials",
-        description: "Open the cross-project financial control panel and section entry point.",
+        description:
+          "Open the cross-project financial control panel and section entry point.",
         minRole: "member",
         status: "live"
       },
@@ -133,7 +150,8 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "cost-items-database",
         label: "Cost Items Database",
         href: "/cost-items-database",
-        description: "Manage the shared cost item, system, and inventory workspace.",
+        description:
+          "Manage the shared cost item, system, and inventory workspace.",
         minRole: "member",
         status: "live",
         matchPaths: [
@@ -162,7 +180,8 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "payments",
         label: "Payments",
         href: "/payments",
-        description: "Review collections, posted payments, and balance activity.",
+        description:
+          "Review collections, posted payments, and balance activity.",
         minRole: "member",
         status: "live"
       },
@@ -170,7 +189,8 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "accounts-receivable",
         label: "Accounts Receivable",
         href: "/financials/accounts-receivable",
-        description: "Define receivable follow-up, collections, and open-balance workflow.",
+        description:
+          "Define receivable follow-up, collections, and open-balance workflow.",
         minRole: "member",
         status: "foundation"
       },
@@ -178,7 +198,8 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "accounts-payable",
         label: "Accounts Payable",
         href: "/financials/accounts-payable",
-        description: "Define vendor-bill, payable, and outgoing-payment workflow.",
+        description:
+          "Define vendor-bill, payable, and outgoing-payment workflow.",
         minRole: "member",
         status: "foundation"
       },
@@ -218,7 +239,8 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "transaction-log",
         label: "Transaction Log",
         href: "/transaction-log",
-        description: "Trace financial activity and audit movement across records.",
+        description:
+          "Trace financial activity and audit movement across records.",
         minRole: "member",
         status: "foundation"
       }
@@ -227,7 +249,8 @@ export const navigationSections: readonly NavigationSection[] = [
   {
     id: "people",
     label: "People",
-    description: "Review directory records, workforce continuity, and shared team-facing work.",
+    description:
+      "Review directory records, workforce continuity, and shared team-facing work.",
     items: [
       {
         key: "directory",
@@ -243,7 +266,8 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "opportunities",
         label: "Opportunities",
         href: "/opportunities",
-        description: "Run lead and opportunity follow-up before work becomes a project.",
+        description:
+          "Run lead and opportunity follow-up before work becomes a project.",
         minRole: "member",
         status: "live",
         matchPaths: ["/leads"]
@@ -252,7 +276,8 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "time-cards",
         label: "Time Cards",
         href: "/time-cards",
-        description: "Review workforce time and record canonical punch activity.",
+        description:
+          "Review workforce time and record canonical punch activity.",
         minRole: "member",
         status: "live",
         matchPaths: ["/time", "/time-cards"]
@@ -261,7 +286,8 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "calendar",
         label: "Calendar",
         href: "/calendar",
-        description: "Open customer-facing and internal appointment scheduling.",
+        description:
+          "Open customer-facing and internal appointment scheduling.",
         minRole: "member",
         status: "live",
         matchPaths: ["/appointments"]
@@ -286,7 +312,8 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "safety-meetings",
         label: "Safety Meetings",
         href: "/safety-meetings",
-        description: "Track safety meeting records and compliance follow-through.",
+        description:
+          "Track safety meeting records and compliance follow-through.",
         minRole: "member",
         status: "foundation"
       }
@@ -295,7 +322,8 @@ export const navigationSections: readonly NavigationSection[] = [
   {
     id: "documents",
     label: "Documents",
-    description: "Keep project files, reports, and shared document workflows grouped consistently.",
+    description:
+      "Keep project files, reports, and shared document workflows grouped consistently.",
     items: [
       {
         key: "files",
@@ -309,7 +337,8 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "reports",
         label: "Reports",
         href: "/reports",
-        description: "Review read-only internal beta summaries over canonical records.",
+        description:
+          "Review read-only internal beta summaries over canonical records.",
         minRole: "member",
         status: "live"
       },
@@ -317,7 +346,8 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "forms-checklists",
         label: "Forms & Checklists",
         href: "/forms-checklists",
-        description: "Manage structured forms, checklists, and repeatable field records.",
+        description:
+          "Manage structured forms, checklists, and repeatable field records.",
         minRole: "member",
         status: "foundation"
       },
@@ -325,7 +355,8 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "rfi-notices",
         label: "RFI & Notices",
         href: "/rfi-notices",
-        description: "Handle information requests, notices, and formal communication records.",
+        description:
+          "Handle information requests, notices, and formal communication records.",
         minRole: "member",
         status: "foundation"
       },
@@ -333,7 +364,8 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "submittals",
         label: "Submittals",
         href: "/submittals",
-        description: "Review submitted documents and downstream approval state.",
+        description:
+          "Review submitted documents and downstream approval state.",
         minRole: "member",
         status: "foundation"
       },
@@ -349,7 +381,8 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "notes",
         label: "Notes",
         href: "/notes",
-        description: "Capture general shared notes that support job and project continuity.",
+        description:
+          "Capture general shared notes that support job and project continuity.",
         minRole: "member",
         status: "foundation"
       },
@@ -357,7 +390,17 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "communications",
         label: "Communications",
         href: "/communications",
-        description: "Review canonical communication threads and unread workflow alerts.",
+        description:
+          "Review canonical communication threads and unread workflow alerts.",
+        minRole: "member",
+        status: "live"
+      },
+      {
+        key: "gatekeeper",
+        label: "GateKeeper",
+        href: "/gatekeeper",
+        description:
+          "Review GateKeeper operational memory and assistant suggestions.",
         minRole: "member",
         status: "live"
       },
@@ -365,7 +408,8 @@ export const navigationSections: readonly NavigationSection[] = [
         key: "document-writer",
         label: "Document Writer",
         href: "/document-writer",
-        description: "Create structured written project and customer-facing documents.",
+        description:
+          "Create structured written project and customer-facing documents.",
         minRole: "member",
         status: "foundation"
       }
@@ -374,13 +418,15 @@ export const navigationSections: readonly NavigationSection[] = [
   {
     id: "settings",
     label: "Settings",
-    description: "Configure organization defaults, catalog data, and support surfaces.",
+    description:
+      "Configure organization defaults, catalog data, and support surfaces.",
     items: [
       {
         key: "settings",
         label: "Settings",
         href: "/settings",
-        description: "Open organization settings and shared system configuration.",
+        description:
+          "Open organization settings and shared system configuration.",
         minRole: "admin",
         status: "live"
       },
@@ -404,7 +450,9 @@ export const navigationSections: readonly NavigationSection[] = [
   }
 ] as const;
 
-export const navigationItems = navigationSections.flatMap((section) => section.items);
+export const navigationItems = navigationSections.flatMap(
+  (section) => section.items
+);
 
 function isVisibleForRole(item: NavigationItem, currentRole?: MembershipRole) {
   if (!currentRole) {
@@ -423,7 +471,10 @@ export function isNavigationItemActive(pathname: string, item: NavigationItem) {
     return true;
   }
 
-  return item.matchPaths?.some((matchPath) => matchesPath(pathname, matchPath)) ?? false;
+  return (
+    item.matchPaths?.some((matchPath) => matchesPath(pathname, matchPath)) ??
+    false
+  );
 }
 
 export function getVisibleNavigationSections(currentRole?: MembershipRole) {

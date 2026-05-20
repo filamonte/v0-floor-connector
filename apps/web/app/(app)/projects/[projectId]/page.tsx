@@ -11,6 +11,10 @@ import {
 } from "@floorconnector/ui";
 
 import { AppEmptyState } from "@/components/app-empty-state";
+import {
+  primaryActionClassName,
+  secondaryActionClassName
+} from "@/components/action-hierarchy";
 import { listAppointmentsByProject } from "@/lib/appointments/data";
 import { listProjectChangeOrders } from "@/lib/change-orders/data";
 import { CoreWorkflowSection } from "@/components/layout/core-workflow-section";
@@ -35,12 +39,14 @@ import {
   ScheduleContextMetrics,
   ScheduleContextNotice
 } from "@/components/schedule-context-card";
+import { ServiceWarrantyContinuityPanel } from "@/components/service-warranty-continuity-panel";
 import { WorkItemCreateForm } from "@/components/work-items/work-item-create-form";
 import { WorkItemList } from "@/components/work-items/work-item-list";
 import { listContracts } from "@/lib/contracts/data";
 import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
 import { listDailyLogsByProject } from "@/lib/daily-logs/data";
 import { listCustomers } from "@/lib/customers/data";
+import { getProjectEquipmentReadinessSummary } from "@/lib/equipment/data";
 import {
   listEstimates,
   listProjectEstimateAttachments
@@ -84,6 +90,8 @@ import {
   listOpenTimeCardStates,
   listTimeCardsByProject
 } from "@/lib/time/data";
+import { listServiceTicketsByProject } from "@/lib/service-tickets/data";
+import { listWarrantyDocumentsByProject } from "@/lib/warranty-documents/data";
 import {
   completeWorkItemAction,
   createWorkItemAction,
@@ -334,11 +342,11 @@ function getWorkspaceActionLinkClassName(
 ) {
   switch (tone) {
     case "primary":
-      return "inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900";
+      return primaryActionClassName;
     case "warning":
-      return "inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700";
+      return secondaryActionClassName;
     default:
-      return "inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700";
+      return secondaryActionClassName;
   }
 }
 
@@ -351,20 +359,20 @@ function SectionOverview({
   stat
 }: SectionOverviewProps) {
   return (
-    <div className="flex flex-col gap-3 border-b border-[#eadfce] pb-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="flex flex-col gap-3 border-b border-[var(--border-warm)] pb-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#665446]">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
           {eyebrow}
         </p>
-        <h3 className="mt-2 text-lg font-semibold tracking-tight text-[#2b2118]">
+        <h3 className="mt-2 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
           {title}
         </h3>
-        <p className="mt-2 max-w-[60ch] text-sm leading-6 text-[#665446]">
+        <p className="mt-2 max-w-[60ch] text-sm leading-6 text-[var(--text-secondary)]">
           {description}
         </p>
       </div>
       <div className="flex items-center gap-3 sm:flex-shrink-0">
-        <span className="rounded-full border border-[#e3d6c7] bg-[#fbf4ea] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#6a5645]">
+        <span className="rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
           {stat}
         </span>
         <Link
@@ -388,36 +396,36 @@ function LinkedRecordRecencyPanel({
   return (
     <section
       aria-labelledby="linked-record-recency-title"
-      className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5"
+      className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-4 sm:px-5"
     >
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
             Linked record recency
           </p>
           <h3
             id="linked-record-recency-title"
-            className="mt-1 text-base font-semibold text-slate-950"
+            className="mt-1 text-base font-semibold text-[var(--text-primary)]"
           >
             What changed recently
           </h3>
-          <p className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600">
+          <p className="mt-1 max-w-[68ch] text-sm leading-6 text-[var(--text-secondary)]">
             Existing linked records sorted by their own timestamps. This is a
             breadcrumb summary, not a separate project activity feed.
           </p>
         </div>
-        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+        <span className="rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
           {items.length} linked {items.length === 1 ? "record" : "records"}
         </span>
       </div>
 
       {mostRecent ? (
         <div className="mt-4 space-y-3">
-          <div className="rounded-lg border border-[#e3d6c7] bg-[#fbf4ea] px-4 py-3 text-sm leading-6 text-[#5f4d3d]">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7a614a]">
+          <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
               Most recent linked record
             </p>
-            <p className="mt-1 font-semibold text-[#2b2118]">
+            <p className="mt-1 font-semibold text-[var(--text-primary)]">
               {mostRecent.typeLabel}: {mostRecent.title}
             </p>
             <p className="mt-1">{mostRecent.activityLabel}</p>
@@ -429,32 +437,34 @@ function LinkedRecordRecencyPanel({
                 key={item.id}
                 href={item.href}
                 className={[
-                  "rounded-lg border bg-slate-50/80 px-4 py-3 text-sm leading-6 transition hover:border-slate-300 hover:bg-white",
+                  "rounded-lg border bg-[var(--highlight)] px-4 py-3 text-sm leading-6 transition hover:border-[var(--copper)] hover:bg-white",
                   item.isDrivingRecord
-                    ? "border-[#d7b98f] ring-1 ring-[#ef7d32]/25"
-                    : "border-slate-200"
+                    ? "border-[var(--copper)] ring-1 ring-[var(--copper)]/20"
+                    : "border-[var(--border-warm)]"
                 ].join(" ")}
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                       {item.typeLabel}
                     </p>
-                    <p className="mt-1 truncate font-semibold text-slate-950">
+                    <p className="mt-1 truncate font-semibold text-[var(--text-primary)]">
                       {item.title}
                     </p>
                   </div>
                   <div className="flex flex-wrap justify-end gap-2">
                     {item.isDrivingRecord ? (
-                      <span className="rounded-full border border-[#d7b98f] bg-[#fbf4ea] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#775635]">
+                      <span className="rounded-full border border-[var(--copper)] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--copper)]">
                         Driving next step
                       </span>
                     ) : null}
                     {renderStatusBadge(item.statusLabel)}
                   </div>
                 </div>
-                <p className="mt-3 text-slate-600">{item.activityLabel}</p>
-                <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
+                <p className="mt-3 text-[var(--text-secondary)]">
+                  {item.activityLabel}
+                </p>
+                <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
                   {item.timestampLabel}
                 </p>
               </Link>
@@ -462,7 +472,7 @@ function LinkedRecordRecencyPanel({
           </div>
         </div>
       ) : (
-        <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+        <div className="mt-4 rounded-lg border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
           No timestamped linked records are available for this project yet.
         </div>
       )}
@@ -503,40 +513,42 @@ function OperationalCommandCenter({
   return (
     <section
       aria-labelledby="project-command-center-title"
-      className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5"
+      className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-4 sm:px-5"
     >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
             Project command
           </p>
           <h2
             id="project-command-center-title"
-            className="mt-1 text-lg font-semibold text-slate-950"
+            className="mt-1 text-lg font-semibold text-[var(--text-primary)]"
           >
             Operational command center
           </h2>
-          <p className="mt-2 max-w-[76ch] text-sm leading-6 text-slate-600">
+          <p className="mt-2 max-w-[76ch] text-sm leading-6 text-[var(--text-secondary)]">
             {customerName} / {projectLocation}. This project hub reads the
             opportunity, customer/project, estimate/contract, job/schedule, and
             invoice/payment chain in one place.
           </p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 lg:w-72">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+        <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)] lg:w-72">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
             Readiness
           </p>
-          <p className="mt-1 font-semibold text-slate-950">{readinessLabel}</p>
+          <p className="mt-1 font-semibold text-[var(--text-primary)]">
+            {readinessLabel}
+          </p>
           <p className="mt-1">{readinessDetail}</p>
         </div>
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-        <div className="rounded-lg border border-[#e3d6c7] bg-[#fbf4ea] px-4 py-3 text-sm leading-6 text-[#5f4d3d]">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7a614a]">
+        <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
             Next move
           </p>
-          <p className="mt-1 text-base font-semibold text-[#2b2118]">
+          <p className="mt-1 text-base font-semibold text-[var(--text-primary)]">
             {nextAction.title}
           </p>
           <p className="mt-1">{nextAction.description}</p>
@@ -618,25 +630,25 @@ function ProjectConnectedRecordLanes({
   return (
     <section
       aria-labelledby="connected-record-lanes-title"
-      className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5"
+      className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-4 sm:px-5"
     >
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
             Connected records
           </p>
           <h2
             id="connected-record-lanes-title"
-            className="mt-1 text-lg font-semibold text-slate-950"
+            className="mt-1 text-lg font-semibold text-[var(--text-primary)]"
           >
             Connected record lanes
           </h2>
-          <p className="mt-1 max-w-[72ch] text-sm leading-6 text-slate-600">
+          <p className="mt-1 max-w-[72ch] text-sm leading-6 text-[var(--text-secondary)]">
             Each lane shows where this project sits in the lifecycle and sends
             full editing back to the focused canonical workspace.
           </p>
         </div>
-        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+        <span className="rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
           {lanes.length} lanes
         </span>
       </div>
@@ -645,14 +657,16 @@ function ProjectConnectedRecordLanes({
         {lanes.map((lane) => (
           <article
             key={lane.title}
-            className="flex min-h-[176px] flex-col rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm leading-6"
+            className="flex min-h-[176px] flex-col rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6"
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-slate-950">
+                <h3 className="text-sm font-semibold text-[var(--text-primary)]">
                   {lane.title}
                 </h3>
-                <p className="mt-1 text-slate-600">{lane.keyFact}</p>
+                <p className="mt-1 text-[var(--text-secondary)]">
+                  {lane.keyFact}
+                </p>
               </div>
               {renderStatusBadge(lane.status)}
             </div>
@@ -662,7 +676,7 @@ function ProjectConnectedRecordLanes({
               </p>
             ) : null}
             {lane.note ? (
-              <p className="mt-3 text-xs leading-5 text-slate-500">
+              <p className="mt-3 text-xs leading-5 text-[var(--text-secondary)]">
                 {lane.note}
               </p>
             ) : null}
@@ -675,7 +689,7 @@ function ProjectConnectedRecordLanes({
                   {lane.actionLabel}
                 </Link>
               ) : (
-                <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-500">
+                <span className="inline-flex h-9 items-center justify-center rounded-[4px] border border-[var(--border-warm)] bg-white px-3 text-sm font-medium text-[var(--text-secondary)]">
                   No action yet
                 </span>
               )}
@@ -749,7 +763,7 @@ function ProjectCuePanel({
               aria-label={`${cue.actionLabel} for suggested project action: ${cue.title}`}
               title={`${cue.actionLabel}: ${cue.title}`}
               aria-describedby={`${cueDescriptionId} ${cueReasonId}`}
-              className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:text-brand-700"
+              className={secondaryActionClassName}
             >
               {cue.actionLabel}
             </Link>
@@ -759,7 +773,7 @@ function ProjectCuePanel({
                 aria-label={`${cue.workItemBridge.label} from suggested project action: ${cue.title}`}
                 title={`${cue.workItemBridge.label}: ${cue.title}`}
                 aria-describedby={`${cueDescriptionId} ${cueReasonId}`}
-                className="inline-flex items-center rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-brand-700"
+                className={secondaryActionClassName}
               >
                 {cue.workItemBridge.label}
               </a>
@@ -775,29 +789,29 @@ function ProjectCuePanel({
       id="project-guidance-cues"
       aria-labelledby="project-guidance-cues-title"
       aria-describedby="project-guidance-cues-description"
-      className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5"
+      className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-4 sm:px-5"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
             Project guidance
           </p>
           <h3
             id="project-guidance-cues-title"
-            className="mt-1 text-base font-semibold text-slate-950"
+            className="mt-1 text-base font-semibold text-[var(--text-primary)]"
           >
             Suggested project actions
           </h3>
           <p
             id="project-guidance-cues-description"
-            className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600"
+            className="mt-1 max-w-[68ch] text-sm leading-6 text-[var(--text-secondary)]"
           >
             Suggestions from current project records only. Canonical actions
             open the existing workflow; human follow-up can open a prefilled
             work item draft. Nothing is created or changed until you submit.
           </p>
         </div>
-        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+        <span className="rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
           Guidance only
         </span>
       </div>
@@ -807,10 +821,10 @@ function ProjectCuePanel({
           {canonicalWorkflowCues.length > 0 ? (
             <div className="space-y-3">
               <div>
-                <p className="text-sm font-semibold text-slate-950">
+                <p className="text-sm font-semibold text-[var(--text-primary)]">
                   Canonical workflow actions
                 </p>
-                <p className="mt-1 text-xs leading-5 text-slate-600">
+                <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                   These open existing estimate, contract, invoice, job, or
                   schedule workflows without creating side records.
                 </p>
@@ -824,10 +838,10 @@ function ProjectCuePanel({
           {humanFollowUpCues.length > 0 ? (
             <div className="space-y-3">
               <div>
-                <p className="text-sm font-semibold text-slate-950">
+                <p className="text-sm font-semibold text-[var(--text-primary)]">
                   Human follow-up actions
                 </p>
-                <p className="mt-1 text-xs leading-5 text-slate-600">
+                <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                   These can prefill internal work item drafts for coordination.
                   The work item is still user-confirmed.
                 </p>
@@ -2165,7 +2179,9 @@ export default async function ProjectDetailPage({
     fieldNotes,
     linkedWorkItems,
     projectAttentionCues,
-    people
+    people,
+    projectServiceTickets,
+    projectWarrantyDocuments
   ] = await Promise.all([
     listTimeCardsByProject(project.id, `/projects/${projectId}`),
     listOpenTimeCardStates(),
@@ -2177,7 +2193,9 @@ export default async function ProjectDetailPage({
       projectId: project.id,
       currentUserId: user.id
     }),
-    listPeople()
+    listPeople(),
+    listServiceTicketsByProject(project.id),
+    listWarrantyDocumentsByProject(project.id)
   ]);
   const projectDailyLogs = await listDailyLogsByProject(
     project.id,
@@ -2202,10 +2220,13 @@ export default async function ProjectDetailPage({
     (contract) => contract.sentPdfDownloadUrl && contract.sentPdfFileName
   );
   const projectJobs = jobs.filter((job) => job.projectId === project.id);
-  const projectJobAssignments = await listJobAssignmentsByJobIds(
-    projectJobs.map((job) => job.id),
-    `/projects/${projectId}`
-  );
+  const [projectJobAssignments, projectEquipmentReadiness] = await Promise.all([
+    listJobAssignmentsByJobIds(
+      projectJobs.map((job) => job.id),
+      `/projects/${projectId}`
+    ),
+    getProjectEquipmentReadinessSummary(project.id, `/projects/${projectId}`)
+  ]);
   const completedJob = projectJobs.find(
     (job) => job.dispatchStatus === "completed"
   );
@@ -3032,21 +3053,21 @@ export default async function ProjectDetailPage({
                       project.customerId,
                       projectOpportunity?.id
                     )}
-                    className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
+                    className={secondaryActionClassName}
                   >
                     Create Estimate
                   </Link>
                   {approvedEstimateId && projectContracts.length === 0 ? (
                     <Link
                       href={`/contracts?estimateId=${approvedEstimateId}`}
-                      className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
+                      className={secondaryActionClassName}
                     >
                       Generate contract
                     </Link>
                   ) : null}
                   <Link
                     href={`/appointments?projectId=${project.id}&customerId=${project.customerId}&compose=1#appointment-create`}
-                    className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
+                    className={secondaryActionClassName}
                   >
                     Create appointment
                   </Link>
@@ -3054,7 +3075,7 @@ export default async function ProjectDetailPage({
                   !readinessSnapshot.depositSatisfied ? (
                     <Link
                       href={`/invoices?projectId=${project.id}&estimateId=${approvedEstimateId ?? ""}&workflowRole=deposit`}
-                      className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
+                      className={secondaryActionClassName}
                     >
                       Create deposit invoice
                     </Link>
@@ -3062,7 +3083,7 @@ export default async function ProjectDetailPage({
                   {canCreateInvoice && completedJobId ? (
                     <Link
                       href={`/invoices?projectId=${project.id}&jobId=${completedJobId}`}
-                      className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
+                      className={secondaryActionClassName}
                     >
                       Create invoice
                     </Link>
@@ -3187,6 +3208,14 @@ export default async function ProjectDetailPage({
             <ProjectConnectedRecordLanes lanes={connectedRecordLanes} />
 
             <LinkedRecordRecencyPanel items={linkedRecordRecencyItems} />
+
+            <ServiceWarrantyContinuityPanel
+              title="Service & Warranty Continuity"
+              description="Post-install service tickets, warranty documents, and internal signature-request state linked to this project. This is read-only project continuity, not a service-ticket editor."
+              tickets={projectServiceTickets}
+              warrantyDocuments={projectWarrantyDocuments}
+              serviceTicketHref={`/service-tickets?projectId=${project.id}`}
+            />
 
             {showReadinessGuidancePanel ? (
               <NeedsAttentionPanel
@@ -4232,7 +4261,7 @@ export default async function ProjectDetailPage({
 
             <form
               action={updateProjectAction}
-              className="rounded-[1.65rem] border border-[#e3d6c7] bg-white px-5 py-5"
+              className="rounded-lg border border-[var(--border-warm)] bg-white px-5 py-5"
             >
               <input type="hidden" name="projectId" value={project.id} />
               <input type="hidden" name="name" value={project.name} />
@@ -4280,7 +4309,7 @@ export default async function ProjectDetailPage({
                 <select
                   name="financingStatus"
                   defaultValue={project.financingStatus}
-                  className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+                  className="w-full rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--copper)]"
                   required
                 >
                   {financingStatusesList.map((status) => (
@@ -4296,7 +4325,7 @@ export default async function ProjectDetailPage({
               </p>
               <button
                 type="submit"
-                className="mt-4 inline-flex rounded-full bg-[#ef7d32] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#d96d27]"
+                className={`${primaryActionClassName} mt-4`}
               >
                 Save financing status
               </button>
@@ -4759,7 +4788,11 @@ export default async function ProjectDetailPage({
               items={[
                 { label: "Scheduled", value: scheduledJobs.length },
                 { label: "Unscheduled", value: unscheduledJobs.length },
-                { label: "In progress", value: activeJobs.length }
+                { label: "In progress", value: activeJobs.length },
+                {
+                  label: "Equipment warnings",
+                  value: projectEquipmentReadiness.jobsWithEquipmentWarnings
+                }
               ]}
             />
 
@@ -4821,6 +4854,34 @@ export default async function ProjectDetailPage({
                       : projectJobs.length > 0
                         ? "Crew coverage is already attached where needed"
                         : "No project jobs yet"
+                },
+                {
+                  label: "Equipment readiness",
+                  value:
+                    projectEquipmentReadiness.warningCount > 0 ? (
+                      <>
+                        {projectEquipmentReadiness.warningCount} advisory
+                        warning
+                        {projectEquipmentReadiness.warningCount === 1
+                          ? ""
+                          : "s"}
+                        <span className="mt-1 block text-xs text-slate-500">
+                          {projectEquipmentReadiness.jobsWithMissingRequiredEquipment >
+                          0
+                            ? `${projectEquipmentReadiness.jobsWithMissingRequiredEquipment} job${
+                                projectEquipmentReadiness.jobsWithMissingRequiredEquipment ===
+                                1
+                                  ? ""
+                                  : "s"
+                              } missing required equipment`
+                            : "Warning-only; project readiness gates are unchanged"}
+                        </span>
+                      </>
+                    ) : projectJobs.length > 0 ? (
+                      "No equipment warnings"
+                    ) : (
+                      "No project jobs yet"
+                    )
                 },
                 {
                   label: "Current handoff",

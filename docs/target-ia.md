@@ -72,6 +72,18 @@ This does **not** mean every section is fully implemented today. It defines the 
 
 Future AI should also appear contextually inside Record Workspaces, communication threads, scheduling surfaces, and onboarding/support flows. A top-level AI Assistant may be useful for cross-record questions and approval queues, but contextual AI should remain the primary operating pattern for record-specific work.
 
+## Future IA Coverage Notes
+
+The target IA should leave room for future contractor operating depth without creating disconnected top-level silos.
+
+- Field may eventually include inspections, punchlists, richer service/warranty, field checklists, closeout, and mobile-first capture. The first internal service ticket manager now exists at `/service-tickets`; the broader service/warranty architecture is planned in [docs/service-warranty-plan.md](C:/FloorConnector/docs/service-warranty-plan.md).
+- Financials may eventually include purchase orders, bills/expenses, accounts payable, job costing, budget vs actual, retainage release depth, and earned value.
+- People may include subcontractor management, workforce identity, compliance, crew assignment, and time/clocking workflows. The clocking architecture is planned in [docs/clocking-system-plan.md](C:/FloorConnector/docs/clocking-system-plan.md).
+- Documents should become a central record-linked document, submittal, spec-sheet, photo, file, warranty, and closeout area rather than a module-specific file island. The first warranty document foundation now exists at `/warranty-documents/:id` and `/warranty-documents/:id/print`; warranty document/signature planning lives in [docs/warranty-document-system-plan.md](C:/FloorConnector/docs/warranty-document-system-plan.md).
+- Equipment may deserve its own operational area or may live under Field/Resources depending on product design. The registry foundation now exists at `/equipment`; assignment/readiness, maintenance, utilization, and job-costing inputs remain future depth. Equipment must connect to jobs, projects, schedule, people, vendors, documents, maintenance, time, warranty, and job costing; see [docs/equipment-management-plan.md](C:/FloorConnector/docs/equipment-management-plan.md).
+- Weather should appear as dashboard, schedule, job, and daily-log context; it does not need to begin as a standalone module.
+- Generic to-dos should not become a top-level disconnected module. Work items, follow-ups, reminders, and cue-driven tasks should remain tied to records, modules, or business functions.
+
 ## Top-Level Areas
 
 ## Dashboard
@@ -212,10 +224,15 @@ This area should eventually include:
 - inspections
 - punch lists
 - scoped subcontractor/vendor job collaboration later
-- service tickets or warranty later
+- service tickets now at `/service-tickets`, with deeper warranty documents, service visits, time, evidence, and installed-system context later; all must stay tied to original project/job/install context rather than a detached helpdesk
+- equipment/resources, if the product keeps equipment inside Field rather than promoting it to a standalone Equipment/Resources manager
 - mobile-friendly execution tools later
 
 Field is different from Projects because it is the cross-project execution work area for crews and operations staff.
+
+Equipment IA note: if equipment becomes a standalone manager, it should still behave as a resources surface over canonical projects, jobs, vendors, people, schedule windows, documents, and time. It should not become a separate equipment calendar, asset accounting system, or duplicate vendor/crew model.
+
+Field operations planning reference: [docs/field-operations-architecture-map.md](C:/FloorConnector/docs/field-operations-architecture-map.md) maps how Field, People, Equipment, Documents, Schedule, Daily Logs, Service/Warranty, and future Job Costing connect without silos.
 
 ## Documents
 
@@ -307,9 +324,11 @@ Boundary:
 - do not create an AI-only calendar or disconnected dispatch model
 - drag-and-drop dispatch, route optimization, capacity planning, and conflict detection remain future scheduling depth
 
-## AI Assistant
+## AI Assistant / GateKeeper Review
 
-AI Assistant is a future target surface, not a current route claim.
+Broad AI Assistant behavior is a future target surface, not a current route claim.
+
+Current implementation note: `/gatekeeper` now exists as a contractor-side GateKeeper Review Queue. It is a governed review surface for stored GateKeeper memory artifacts and action suggestions only. It is not a general AI assistant, voice agent, provider inbox, automation runner, or portal surface.
 
 Target IA direction:
 

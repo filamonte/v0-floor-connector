@@ -5,7 +5,7 @@ Doc Type: Roadmap
 
 This roadmap frames FloorConnector around platform maturity, not early startup build timing. It is sequencing guidance only.
 
-For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/current-state.md). For concise maturity status, use [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md), [docs/module-status.md](C:/FloorConnector/docs/module-status.md), and [docs/known-gaps.md](C:/FloorConnector/docs/known-gaps.md).
+For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/current-state.md). For concise maturity status, use [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md), [docs/module-status.md](C:/FloorConnector/docs/module-status.md), and [docs/known-gaps.md](C:/FloorConnector/docs/known-gaps.md). For strategic sequencing, use [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md) and [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md). For strategic layer doctrine, use [docs/communications-layer.md](C:/FloorConnector/docs/communications-layer.md), [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md), [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md), and [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md).
 
 ## Roadmap Principles
 
@@ -16,7 +16,54 @@ For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/curren
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
 - Public acquisition, communications, integrations, AI, marketplace, reporting, and materials work must attach to the same canonical system.
+- Communications must attach to operational context rather than become a disconnected inbox or chat product.
+- Reporting and metrics must derive from canonical records rather than duplicate reporting truth.
+- Automation must extend the canonical workflow chain through deterministic evidence, readiness awareness, and approval boundaries before autonomous behavior.
+- Intelligence work must be canonical-first: no duplicate reporting truth, disconnected BI silo, manual metric-entry chain, or AI-only operational truth.
+- GateKeeper communications, operational memory, workflow reinforcement, and AI assistance are future platform layers over canonical records, not standalone products.
 - Dates, week counts, and early-build timing are intentionally omitted.
+
+## Strategic Build Stack
+
+Current recommended build-order discipline:
+
+| Tier   | Focus                             |
+| ------ | --------------------------------- |
+| Tier 1 | Operational Core Completion       |
+| Tier 2 | Scheduling And Communications     |
+| Tier 3 | Reporting And Workflow Automation |
+| Tier 4 | Intelligence Layer                |
+| Tier 5 | Predictive AI                     |
+| Tier 6 | Ecosystem And Marketplace         |
+
+Use [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md) as the living strategic coordination map for major planned systems, priorities, dependencies, maturity, status, and rationale. Use [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md) to prevent foundation-level systems from being treated as ready for intelligence, predictive, or autonomous behavior too early.
+
+## Feature Coverage Direction
+
+FloorConnector should use Contractor Foreman as a baseline reference for common contractor-system coverage, not as the destination. The product should cover core contractor operating needs while going deeper for specialty flooring, resinous flooring, polished concrete, epoxy, coatings, and other surface contractors.
+
+Future coverage decisions are tracked in:
+
+- [docs/contractor-foreman-gap-decision-list.md](C:/FloorConnector/docs/contractor-foreman-gap-decision-list.md)
+- [docs/future-feature-coverage-map.md](C:/FloorConnector/docs/future-feature-coverage-map.md)
+
+Roadmap sequencing should account for these future areas without turning them into date promises:
+
+- equipment management for tools, machines, vehicles, trailers, maintenance, utilization, job readiness, and costing, with the next maintenance/utilization path documented in [docs/equipment-maintenance-utilization-plan.md](C:/FloorConnector/docs/equipment-maintenance-utilization-plan.md)
+- real clocking/time-card system before GPS verification, documented in [docs/clocking-system-plan.md](C:/FloorConnector/docs/clocking-system-plan.md)
+- bid/RFP management connected to opportunities, estimates, subcontractors, documents, and communications
+- subcontractor management through people, vendors, compliance, jobs, contracts, change orders, invoices, and documents
+- service/warranty depth connected to original project, installed system/product, field evidence, time, materials, equipment, and billing context; the first internal `service_tickets` manager/detail foundation now exists, with deeper architecture documented in [docs/service-warranty-plan.md](C:/FloorConnector/docs/service-warranty-plan.md)
+- warranty document/PDF/signature lifecycle connected to project/job/customer history; the first warranty template, canonical warranty document, and print/save foundation now exists, with send/signature still planned in [docs/warranty-document-system-plan.md](C:/FloorConnector/docs/warranty-document-system-plan.md)
+- weather-aware dashboard and schedule guidance, with human-confirmed schedule changes
+- record-linked document, submittal, spec-sheet, photo, warranty, compliance, and closeout management
+- procurement, materials, POs, bills/expenses, AP, job costing, and budget vs actual after canonical materials/financial inputs mature
+- earned value later, after job costing, progress billing, production tracking, and budget inputs are reliable
+- mobile/offline field UX later, after responsive web field workflows and sync boundaries are stable
+- QuickBooks/accounting integration later, as sync/export from FloorConnector financial truth
+- AI-assisted takeoff and workflow intelligence later, with human approval and no AI-only records
+
+The field-operations connection map now lives in [docs/field-operations-architecture-map.md](C:/FloorConnector/docs/field-operations-architecture-map.md). The equipment depth layer is planned in [docs/equipment-management-plan.md](C:/FloorConnector/docs/equipment-management-plan.md), with maintenance/utilization/costing detail in [docs/equipment-maintenance-utilization-plan.md](C:/FloorConnector/docs/equipment-maintenance-utilization-plan.md). The registry and assignment/readiness foundations now exist; the intended next equipment sequence is maintenance, utilization, rental-return, and job-costing inputs. Equipment must remain attached to vendors, people, projects, jobs, schedule, time, warranty/service, documents, and future job costing.
 
 ## 1. Operational Core: Substantially Implemented
 
@@ -77,6 +124,7 @@ Current status: Foundation.
 
 Future depth:
 
+- equipment/resource readiness on top of the implemented canonical equipment asset foundation, before assignment or schedule conflict logic expands further
 - richer materials and inventory workflows
 - purchasing, reservation, issue, return, and job material planning
 - deeper reusable catalog/cost item management
@@ -108,9 +156,17 @@ Financial work must preserve canonical invoices, payments, line-item lineage, ap
 
 ## 6. Communications, Automation, And AI Assistance
 
-Current status: Foundation for communications/notifications and a closed deterministic Operational Intelligence / Intelligent Follow-Up foundation; broad AI remains planned.
+Current status: Foundation for communications/notifications and a closed deterministic Operational Intelligence / Intelligent Follow-Up foundation; GateKeeper and broad AI remain planned.
+
+Strategic references:
+
+- [docs/communications-layer.md](C:/FloorConnector/docs/communications-layer.md)
+- [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md)
+- [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md)
 
 Planning reference: [docs/ai/intelligent-follow-up-engine.md](C:/FloorConnector/docs/ai/intelligent-follow-up-engine.md) defines the follow-up intelligence model, starting from deterministic evidence-backed cues over canonical records before AI summaries, drafts, or controlled automation.
+
+GateKeeper doctrine lives in [docs/gatekeeper-system-vision.md](C:/FloorConnector/docs/gatekeeper-system-vision.md). It frames the future communications, operational memory, workflow reinforcement, human approval queue, voice, success, and multi-agent direction as one system layer over the canonical lifecycle. It is planning direction only and does not mean voice AI, unified inbox, autonomous agents, operational health scores, or predictive intelligence are implemented.
 
 Implemented deterministic foundation:
 
@@ -131,15 +187,37 @@ Deferred:
 
 Future depth:
 
+- GateKeeper operational memory foundation: communication timelines, transcript/summary linkage, task extraction, workflow extraction, and human review queues over canonical records
 - provider-backed customer messaging and delivery proof
 - broader unified communications across website, email, SMS, portal, app, manual logs, calls, and voice where scoped
 - manual and later controlled automation over canonical records
+- canonical reporting and metrics that explain operational, financial, sales, production, labor, workflow timing, readiness, and communication signals
 - AI drafting, summaries, classification, scheduling suggestions, project summaries, collections assistance, onboarding help, and support triage
 - human approval queues for customer-facing, commercial, legal, billing, scheduling, permission, or compliance actions
 
-AI is an operating layer over canonical records, not a parallel system with its own business truth.
+Communications must stay workflow-connected, reporting must stay canonical-record-derived, and automation must stay deterministic and approval-aware before predictive or autonomous behavior. AI is an operating layer over canonical records, not a parallel system with its own business truth.
 
-## 7. Ecosystem And Marketplace Expansion
+## 7. Intelligence Layer
+
+Current status: Planned, with communications continuity, canonical reporting/metrics, deterministic operational-cue foundations, and automation governance as prerequisites.
+
+Strategic reference: [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md).
+
+Future direction:
+
+- tenant-scoped Contractor Intelligence over canonical records
+- opt-in anonymized Network Intelligence after privacy and benchmark governance are explicit
+- predictive and AI intelligence after clean operational telemetry exists
+- workflow-aware recommendations that route to existing Manager Pages, Record Workspaces, or approved actions
+- explainable metrics that can be traced back to canonical workflow evidence
+
+This is not a separate reporting module. Intelligence must derive from the same lifecycle:
+
+`opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
+
+Do not add a separate BI source of truth, duplicate metric-entry workflow, AI-only data chain, or cross-tenant benchmarking behavior before opt-in, aggregation, authorization, and privacy rules are designed.
+
+## 8. Ecosystem And Marketplace Expansion
 
 Current status: Planned / Deferred.
 

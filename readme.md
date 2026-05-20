@@ -17,6 +17,7 @@ Current branch highlights include the normalized contractor shell, shared quick-
 ## Run Locally
 
 Prerequisites:
+
 - Node.js 20+
 - `pnpm`
 - access to the project Supabase environment
@@ -71,9 +72,12 @@ Stripe billing readiness still requires valid test-mode `STRIPE_SECRET_KEY` and 
 ## Documentation Map
 
 Use these docs together:
+
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary developer entry point and implementation guardrail summary
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth on the current branch
 - [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md): concise platform maturity framing
+- [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md): build-stage discipline from foundation through autonomous maturity
+- [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md): strategic build-priority registry for major planned platform systems
 - [docs/module-status.md](C:/FloorConnector/docs/module-status.md): concise module status table
 - [docs/known-gaps.md](C:/FloorConnector/docs/known-gaps.md): important depth gaps without implying the core is missing
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md): canonical and near-term workflow behavior
@@ -87,6 +91,10 @@ Use these docs together:
 - [docs/codex-prompt-templates.md](C:/FloorConnector/docs/codex-prompt-templates.md): short reusable prompt templates
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): platform maturity roadmap
+- [docs/communications-layer.md](C:/FloorConnector/docs/communications-layer.md): future workflow-connected communication philosophy
+- [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md): canonical reporting and metrics philosophy
+- [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md): future deterministic workflow automation philosophy
+- [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md): future canonical-first operational intelligence strategy
 - [docs/future-platform-expansion.md](C:/FloorConnector/docs/future-platform-expansion.md): clearly future expansion areas
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow
 - [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor app information architecture
@@ -99,6 +107,7 @@ Use these docs together:
 Start with [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md). Then use [docs/current-state.md](C:/FloorConnector/docs/current-state.md) for implemented status and [docs/workflows.md](C:/FloorConnector/docs/workflows.md) for canonical and near-term workflow behavior.
 
 Current estimate-system reality is documented in [docs/current-state.md](C:/FloorConnector/docs/current-state.md):
+
 - inventory-first estimate authoring only
 - shared `catalog_items` and `catalog_system_components`
 - canonical `estimate_line_items` pricing rows
@@ -108,6 +117,7 @@ Current estimate-system reality is documented in [docs/current-state.md](C:/Floo
 ## Current UI Direction
 
 The current protected contractor app uses:
+
 - top-nav-first shell architecture
 - unified breadcrumb and page-context header continuity
 - shared manager-page wrapper and command-bar rhythm

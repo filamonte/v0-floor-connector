@@ -17,6 +17,12 @@ Then use:
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md) for workflow rules
 - [docs/system-status-review.md](C:/FloorConnector/docs/system-status-review.md) for the current full-system review and next-slice recommendation
 - [docs/system-risk-register.md](C:/FloorConnector/docs/system-risk-register.md) for active risk framing
+- [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md) for strategic build-priority sequencing
+- [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md) for foundation-to-operational-to-intelligence build discipline
+- [docs/communications-layer.md](C:/FloorConnector/docs/communications-layer.md) for future workflow-connected communication philosophy
+- [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md) for canonical reporting and metrics philosophy
+- [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md) for future deterministic workflow automation philosophy
+- [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md) for future canonical-first operational intelligence strategy
 - [docs/documentation-standards.md](C:/FloorConnector/docs/documentation-standards.md) for doc maintenance rules
 - [docs/adr/README.md](C:/FloorConnector/docs/adr/README.md) for settled architecture decisions
 - [docs/ai/README.md](C:/FloorConnector/docs/ai/README.md) for AI-readable boundaries
@@ -43,6 +49,62 @@ Current work should generally preserve the implemented operational core while ti
 - materials/catalog/document depth
 - financial/reporting/integration depth
 - communications, automation, and AI assistance as layers on canonical records
+- GateKeeper planning as a future operational memory and intelligence layer, not as implemented product behavior
+
+## Strategic Build Discipline
+
+FloorConnector now has a strategic coordination layer for future platform expansion:
+
+- [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md): living build-priority registry for major planned systems, dependencies, maturity, status, and rationale
+- [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md): stage model for Foundation, Operational, Intelligence, Predictive, and Autonomous maturity
+- [docs/communications-layer.md](C:/FloorConnector/docs/communications-layer.md): future Communications Layer doctrine for messages, notifications, approvals, reminders, portal actions, and customer interaction attached to operational context
+- [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md): future Reporting and Metrics doctrine for canonical, continuity-aware metrics that prepare the ground for intelligence
+- [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md): future Automation Layer doctrine for deterministic, readiness-aware, approval-governed workflow progression
+- [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md): future Intelligence Layer doctrine covering Contractor Intelligence, opt-in Network Intelligence, and later Predictive/AI Intelligence
+
+Use these docs to keep platform expansion sequenced. Near-term leverage remains project workspace maturity, scheduling/dispatch, communications continuity, reporting foundations, workflow automation, portal maturity, and then intelligence. Communications attach context, reporting measures context, automation advances context, and intelligence reasons over context. Do not jump to marketplace behavior, broad AI agents, large integration ecosystems, or autonomous optimization before the canonical operational data and governance layers are mature.
+
+These strategic docs are documentation-only. They do not add app code, schema, migrations, routes, reports, APIs, AI calls, automation runtime behavior, notification systems, provider integrations, auth/RLS changes, billing behavior, portal behavior, or implemented metric behavior.
+
+## Latest Generalized Document Send / Signature Checkpoint
+
+- Generalized document send/signature architecture now lives in [docs/document-send-signature-architecture.md](C:/FloorConnector/docs/document-send-signature-architecture.md).
+- The existing contract signature workflow was inspected and is not reusable as-is for warranty documents because it directly updates contract signer rows, contract signature events, contract readiness/status/lock fields, portal contract review/sign routes, countersign behavior, and contract notifications.
+- The first safe implementation slice added generic `document_signers` and immutable `document_signature_events`, constrained to `warranty_document` subjects only. It validates same-company warranty document ownership, validates event signer/subject consistency, uses tenant-scoped RLS, and exports shared TypeScript/domain signature vocabulary.
+- Existing contracts remain on `contracts`, `contract_signers`, and `contract_signature_events`; no contract migration or contract behavior change was made.
+- Warranty Document detail now supports internal signer management and request-signature audit events: add/update signer role/name/email, void unsigned signer routing, mark eligible signers requested, and append immutable `signature_requested` events.
+- Project Workspace, Customer Workspace, and Job Workspace now include compact read-only Service & Warranty continuity panels. They show bounded linked service tickets, warranty documents, warranty date ranges, signer/request/signed counts, latest signature event summary, and links to the canonical service ticket, warranty document, and print/save surfaces.
+- Portal warranty review/signing, outbound email/send, delivery proof, countersign, provider e-sign integration, and warranty document status mutation from signatures remain future work.
+- Service/Warranty time clocking foundation now links service tickets to canonical punch events and derived time cards through optional `service_ticket_id` attribution. `/time` supports optional Service/Warranty context for individual and crew clocking, Service Ticket detail shows linked time and a prefilled clocking handoff, and Time Card Workspace shows linked service/warranty context. It does not add payroll, GPS, job costing, billing, portal requests, equipment/material automation, or AI.
+- Recommended next slice: service ticket scheduling / service visit workflow before portal signing or external delivery.
+
+## Latest Feature Coverage / Documentation Governance Checkpoint
+
+- GateKeeper system doctrine now lives in [docs/gatekeeper-system-vision.md](C:/FloorConnector/docs/gatekeeper-system-vision.md). It frames GateKeeper as the future operational intelligence and communications layer spanning Voice, Ops, Intelligence, and Success while preserving the canonical lifecycle and human-governed approval model.
+- This GateKeeper pass was documentation-only planning. It did not add application code, schema, migrations, routes, APIs, UI, workers, provider integrations, telephony, AI runtime behavior, auth/RLS changes, database changes, or implemented workflow behavior.
+- Future GateKeeper implementation should start with operational memory infrastructure: canonical communication linkage, timelines, transcription/summary boundaries, task/workflow extraction, review queues, consent/retention rules, provider adapter boundaries, and human approval gates before any realtime voice or autonomous workflow work.
+- GateKeeper Memory Infrastructure is now the first implemented foundation slice. It extends existing `communication_threads` / `communication_messages` with provider-neutral category/channel/direction/source/occurrence fields, adds `gatekeeper_artifacts` for reviewable memory items, adds `gatekeeper_action_suggestions` for human-governed proposed actions, and adds lightweight server utilities plus migration assertions. It does not add UI, providers, AI calls, workers, telephony, transcription, automation runtime, or action execution.
+- GateKeeper Review Queue is now the first contractor-facing surface at `/gatekeeper`. It exposes memory artifacts and action suggestions for tenant-scoped human review, supports accept/reject/dismiss and approve-review/reject/dismiss status updates, and keeps approval as review state only. It does not execute suggestions, mutate canonical records, send communications, call providers, run AI, or expose anything to the portal.
+- GateKeeper manual intake simulation is now available inside `/gatekeeper`. It lets contractor users paste a manually captured call/chat/voicemail/internal-note summary, optionally enter raw customer/service/date fields, and create deterministic GateKeeper artifacts plus proposed action suggestions for review. If a safe opportunity/customer/project subject link is supplied, the source text can also attach to the existing canonical communication thread/message foundation. It does not call AI, telephony, transcription, SMS, email, recording providers, workers, or external services, and it does not create business records or execute suggestions.
+- GateKeeper review-flow QA and demo fixtures are now available inside `/gatekeeper`. Static demo examples cover a new flooring inquiry, existing-customer scheduling request, missed-call/voicemail follow-up, and internal workflow note. They reuse the manual seed path, create only reviewable GateKeeper artifacts/suggestions, keep suggestions proposed, and do not create fake business records, call providers, send messages, run AI, or execute approved suggestions.
+- GateKeeper Source Adapter Planning now lives in [docs/gatekeeper-source-adapters.md](C:/FloorConnector/docs/gatekeeper-source-adapters.md), with lightweight planning-only TypeScript interfaces in `apps/web/lib/gatekeeper/source-adapters.ts`. The contract defines provider-neutral source families, channels, normalized source events, suggested artifact/action inputs, adapter results, idempotency direction, metadata/privacy rules, and anti-drift boundaries. It does not add runtime ingestion, webhooks, providers, SDKs, env vars, AI calls, workers, schema, or execution behavior.
+- GateKeeper Manual Source Adapter is now the first concrete implementation of the source-adapter contract. Manual seed and demo fixture payloads normalize into `GateKeeperNormalizedSourceEvent` / `GateKeeperAdapterResult` through `apps/web/lib/gatekeeper/manual-source-adapter.ts` before persistence creates optional provider-neutral communication evidence, GateKeeper artifacts, and GateKeeper action suggestions. It remains deterministic, provider-free, review-only, and execution-disabled.
+- Next GateKeeper slice should be either a GateKeeper Subject Timeline Surface that shows memory attached to customer/project records, or a provider-free Internal Note Adapter that reuses the same adapter contract.
+- Contractor Foreman is now documented as a baseline reference, not FloorConnector's destination.
+- Owner feature decisions are captured in [docs/contractor-foreman-gap-decision-list.md](C:/FloorConnector/docs/contractor-foreman-gap-decision-list.md): equipment, clocking/time cards, bid/RFP, subcontractors, service/warranty, weather, documents/submittals, takeoffs, procurement/POs/AP, job costing, reporting, communications, mobile/offline, and AI are directionally tracked with canonical attachment guardrails.
+- Broad future coverage now lives in [docs/future-feature-coverage-map.md](C:/FloorConnector/docs/future-feature-coverage-map.md) instead of being stuffed into current-state or roadmap.
+- Documentation cleanup findings live in [docs/documentation-audit.md](C:/FloorConnector/docs/documentation-audit.md). It identifies oversized active docs, overlap, source-of-truth hierarchy, split candidates, and archive candidates.
+- No application code, schema, migrations, routes, tests, package config, auth/RLS, payment/signature behavior, or implemented workflow behavior changed in this docs-only pass.
+- Equipment Management architecture now lives in [docs/equipment-management-plan.md](C:/FloorConnector/docs/equipment-management-plan.md). The first Equipment Registry Foundation slice is implemented through tenant-scoped `equipment_assets`, `/equipment`, and `/equipment/:id`.
+- The registry slice added asset identity, ownership/rental status, operational status, optional same-tenant vendor linkage, purchase/rental fields, notes, active state, manager/detail UI, server actions, and manager read-model counts/search. It did not add equipment assignment/readiness, maintenance, utilization, job costing, AP/procurement, portal exposure, warranty/service behavior, schedule conflicts, or AI behavior.
+- Equipment Assignment and Schedule/Job Readiness planning now lives in [docs/equipment-assignment-readiness-plan.md](C:/FloorConnector/docs/equipment-assignment-readiness-plan.md). It is docs-only and does not add schema/code. The recommended next implementation slice is job-first equipment requirements, equipment assignments, derived readiness/conflict warnings, and Schedule/Job/Project warning surfaces, with maintenance/utilization/job-costing inputs still deferred.
+- Equipment Assignment and Job Readiness Foundation is now implemented as a warning-only slice: `job_equipment_requirements`, `equipment_assignments`, same-tenant validation, RLS, server utilities/actions, Job Workspace equipment forms/warnings, Schedule selected-job equipment warnings, Project Workspace compact equipment summary, and Equipment Detail recent assignments. It intentionally does not add maintenance, utilization, job costing, procurement/AP, portal/customer exposure, warranty/service, AI automation, autonomous rescheduling, or hard readiness blocks.
+- Equipment assignment/readiness hardening extracted the derived warning logic into a pure helper and added focused tests for missing required/optional equipment, type/quantity satisfaction, unavailable assigned assets, rental-window mismatch, active assignment overlap, returned/canceled assignment handling, and no-requirement quiet state. Migration assertion tests cover same-company trigger/RLS shape. Dashboard Operational Cockpit now shows bounded read-only equipment readiness warnings for relevant jobs using that tested helper; it does not mutate cue state, block scheduling, auto-reschedule, or change readiness gates.
+- Field operations architecture planning now has focused docs for the next depth layer: [docs/clocking-system-plan.md](C:/FloorConnector/docs/clocking-system-plan.md), [docs/equipment-maintenance-utilization-plan.md](C:/FloorConnector/docs/equipment-maintenance-utilization-plan.md), [docs/service-warranty-plan.md](C:/FloorConnector/docs/service-warranty-plan.md), [docs/warranty-document-system-plan.md](C:/FloorConnector/docs/warranty-document-system-plan.md), and [docs/field-operations-architecture-map.md](C:/FloorConnector/docs/field-operations-architecture-map.md). This was docs-only planning; it did not add code, schema, migrations, tests, routes, auth/RLS changes, financial mutations, portal behavior, or provider behavior.
+- Clocking MVP implementation now makes `/time` a usable single-worker clocking center over the existing time foundation: selected worker state, project/job attribution before clock-in, state-aware clock-in/start-break/end-break/clock-out controls, current session summary, recent punch-event audit visibility, derived time-card visibility, and focused transition/time-card tests. No schema, payroll export, GPS, job-costing mutation, warranty/service ticket behavior, equipment automation, portal behavior, financial mutation, or AI automation was added.
+- Clocking review/approval hardening adds `time_cards.review_status`, `reviewed_by`, `reviewed_at`, and `review_notes`; manager approve/reject actions on Time Card Workspace; derived exception visibility on `/time` and time-card detail; and crew clock-in that records one canonical punch-in event per selected available person. Punch events remain the audit source, review state is preserved only when derived punch evidence is unchanged, and no payroll export, GPS, job-costing mutation, equipment automation, portal behavior, financial mutation, or AI automation was added.
+- Service/Warranty MVP is now implemented as internal post-installation lifecycle continuity through tenant-scoped `service_tickets`, `/service-tickets`, and `/service-tickets/:id`. Tickets attach to canonical customers, optional projects, and optional original jobs with same-company validation, RLS, manager/admin/owner mutations, status/type/priority filters, create/edit/status actions, linked-record context, and optional canonical clocking attribution through punch events/time cards. It intentionally does not add portal requests, warranty PDFs/signatures, service visit scheduling, billing/manufacturer claims, invoice/payment/job-costing mutations, equipment/material usage automation, or AI automation.
+- Warranty Document Foundation is now implemented through the shared template system and canonical warranty records: `document_templates` supports `warranty`, a default specialty flooring warranty platform seed exists, `/settings/templates` can adopt/edit warranty templates, `warranty_documents` stores customer/project/job/service-ticket/template context, Service Ticket detail can create/list warranty documents, `/warranty-documents/:id` supports draft review/edit/re-render plus issue/void, and `/warranty-documents/:id/print` provides browser print/save output. It intentionally does not add send-through-system workflow, portal warranty review, customer signature, contractor countersign, delivery proof, billing/manufacturer claims, invoice/payment/job-costing mutation, warranty time clocking, stored PDF truth, or AI drafting.
 
 ## Latest Operational Polish Checkpoint
 
@@ -225,6 +287,29 @@ Deferred from this polish sequence:
 - [docs/aia-progress-billing-plan.md](C:/FloorConnector/docs/aia-progress-billing-plan.md) now records the current SOV/retainage/progress-invoice foundation, missing AIA/pay-application workflow and UX pieces, financial correctness risks, and the recommended test-plus-UX-first path before any real AIA export or financial behavior work.
 - [docs/contractor-test-plan.md](C:/FloorConnector/docs/contractor-test-plan.md) now packages the contractor-owner walkthrough from dashboard through portal, expected outcomes, demo watch areas, readiness gaps, and manual QA command path.
 
+## Latest Enterprise UX Phase 1 Checkpoint
+
+- Enterprise UX Phase 1 began the approved Graphite/Copper implementation pass without relying on the missing `docs/enterprise-ux-redesign-plan.md`. Fallback design authority came from the Graphite/Copper UI system, UI audit/build rules, current handoff, feature coverage docs, and current implementation truth.
+- Project Workspace local presentation helpers now use shared action hierarchy classes and Graphite/Copper tokens for the command center, linked-record recency, section overview, connected-record lanes, guidance actions, and key workspace action links. Badges/status chips remain pill-shaped; action controls moved toward square-ish `rounded-[4px]` grammar.
+- Schedule context cards and selected schedule filter cleanup now use warm borders, highlight surfaces, token text, and shared secondary action styling where safe. Scheduling forms, selected-job handoffs, crew assignment behavior, query params, and links were not changed.
+- Protected shell/header polish added a lightweight Lucide-only icon vocabulary in `apps/web/components/fc-icons.tsx` and applied it to existing visible shell navigation/icon slots. Header/global-search utility controls now use the enterprise square-ish radius treatment. Future-module icons are exported for consistency only; inactive modules were not made to look implemented.
+- This pass did not change schema, migrations, server actions, data loaders, lifecycle behavior, readiness gates, payments, signatures, portal access, financial behavior, auth/RLS, routes, or quick-create semantics.
+
+## Latest Enterprise UX Plan Reconciliation
+
+- The imported [docs/enterprise-ux-redesign-plan.md](C:/FloorConnector/docs/enterprise-ux-redesign-plan.md) was reconciled against the completed Phase 1 implementation after the plan was copied into the repo.
+- Completed against the plan: Project Workspace removed the `bg-brand-700` / `bg-brand-900` action path, migrated the named high-drift helpers to Graphite/Copper tokens, moved visible action controls to shared action hierarchy classes, and kept pills for badges/status chips only.
+- Completed against the prompt but broader than the plan's Phase 1 priority: protected shell/header polish and the Lucide-only icon vocabulary were added safely. The imported plan lists wider nav icon enforcement as a later icon-system phase, so future icon expansion should still be treated as a separate guarded UI pass.
+- Intentionally deferred from the imported plan: full Schedule page token replacement, removal of all local schedule class constants, and cross-manager filter height normalization. Those are still presentation-only candidates, but they are broader than the safe reconciliation check and should be handled as a dedicated follow-up if desired.
+- The imported plan references future `--surface-body` / `--surface-inset` tokens, but the current app token set still uses `--cream`, `--highlight`, `--border-warm`, and `--text-*`. Do not introduce new CSS variables casually; align token additions through the Graphite/Copper system doc first.
+
+## Latest Enterprise UX Phase 1 Closeout
+
+- Enterprise UX Phase 1 closeout finished the remaining safe presentation debt without reopening backend, data, workflow, readiness, financial, payment, signature, portal, or route behavior.
+- `/schedule` now uses Graphite/Copper token text, warm dividers, compact `rounded-[6px]` panels/insets, shared action hierarchy for safe standalone header/search actions, and local tone constants only where the schedule needs compact uppercase action variants.
+- Schedule filter chips and the core manager-page filter chips now use a consistent `h-8` / `rounded-[4px]` treatment while count badges remain pill-shaped.
+- Broader icon/nav enforcement remains deferred to a guarded icon-system phase. Future-module icons should stay vocabulary-only unless the route/module exists and the UI pass explicitly scopes their display.
+
 ## Latest Revision / Perspective Checkpoint
 
 - First-pass canonical revision infrastructure is implemented through `record_revisions` for estimates, invoices, contracts, and change orders.
@@ -238,6 +323,12 @@ Deferred from this polish sequence:
 ## Non-Negotiable Guardrails
 
 - `docs/current-state.md` owns implemented truth.
+- `docs/gatekeeper-system-vision.md` is GateKeeper target doctrine only unless `docs/current-state.md` later records an implemented slice.
+- `docs/communications-layer.md` is future Communications Layer doctrine only unless `docs/current-state.md` later records an implemented slice.
+- `docs/reporting-and-metrics.md` is future Reporting and Metrics doctrine only unless `docs/current-state.md` later records an implemented slice.
+- `docs/automation-layer.md` is future Automation Layer doctrine only unless `docs/current-state.md` later records an implemented slice.
+- `docs/intelligence-layer.md` is future Intelligence Layer doctrine only unless `docs/current-state.md` later records an implemented slice.
+- `docs/platform-build-registry.md` is strategic sequencing guidance, not implementation proof.
 - Preserve the canonical lifecycle exactly.
 - Do not create duplicate business models.
 - Do not create portal-only copies of canonical records.
@@ -255,6 +346,21 @@ Deferred from this polish sequence:
 - Treat target IA routes as target direction, not current route reality.
 - Do not use historical handoff entries as current implementation truth.
 - If docs conflict, update the non-current-state doc or add a caveat.
+
+## Enterprise UX Redesign Plan
+
+The external planning copy from `C:\FC Moves\enterprise-ux-redesign-plan.md` has been imported into [docs/enterprise-ux-redesign-plan.md](C:/FloorConnector/docs/enterprise-ux-redesign-plan.md) so future repo-local prompts can read it directly.
+
+Visual direction: Graphite-forward industrial enterprise aesthetic with restrained Copper accents. The target feel is operational contractor software with Autodesk / Linear / Stripe / Notion Enterprise energy, not neon orange, playful construction decoration, or hard-hat/toolbox theming.
+
+Key findings from the imported plan:
+
+- Project Workspace had the most visual drift: hardcoded hex, `slate-*` classes, old brand action classes, and pill-shaped action buttons in places that should follow the enterprise action grammar.
+- Dashboard needs clear visual hierarchy between the Operational Cockpit, key metrics, queue widgets, and supporting context.
+- The icon system needs a documented vocabulary aligned to module and workflow semantics, using operational-control icons rather than trade-literal decoration.
+- The Graphite/Copper token system is the right foundation; the ongoing work is enforcing it consistently across high-traffic surfaces.
+
+Phase 1 implementation has now started in the repo: Project Workspace, Schedule context, shell/header utility controls, and a Lucide-only icon vocabulary were tightened without changing backend behavior, schema, lifecycle logic, readiness gates, payment/signature/financial behavior, portal access, or routes.
 
 ## Where To Read Next
 

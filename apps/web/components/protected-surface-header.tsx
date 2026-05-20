@@ -43,10 +43,12 @@ export function ProtectedSurfaceHeader({
           <Heading className="mt-2 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
             {title}
           </Heading>
-          <p className="mt-2 text-sm text-[var(--text-secondary)]">{description}</p>
+          <p className="mt-2 text-sm text-[var(--text-secondary)]">
+            {description}
+          </p>
         </div>
         <div className="flex min-w-0 flex-wrap items-center gap-3">
-          <div className="max-w-full rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-2 text-sm text-[var(--text-secondary)] [overflow-wrap:anywhere]">
+          <div className="max-w-full rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-2 text-sm text-[var(--text-secondary)] [overflow-wrap:anywhere]">
             {user.email ?? "Authenticated user"}
           </div>
           <SignOutForm />

@@ -27,6 +27,25 @@ That is the core product idea: one connected contractor workflow, not a collecti
 
 `public acquisition -> opportunity -> customer -> project -> estimate -> contract -> payment -> scheduling -> execution -> follow-up`
 
+## Feature Coverage Direction
+
+FloorConnector's implemented backbone already covers the core canonical chain from opportunity through payment, with workforce, field, portal, settings, super-admin, deterministic cues, and import/export foundations around it. The next product direction is not to copy Contractor Foreman feature-for-feature, but to cover serious contractor operating needs and then go deeper for specialty flooring and surface contractors.
+
+Planned deeper contractor operations include equipment management, real time-card/clocking depth, bid/RFP management, subcontractor management, document/submittal/spec-sheet workflows, service/warranty, weather-aware schedule guidance, inspections/checklists, punchlists, takeoff/plans, procurement/materials/POs, bills/AP, job costing, budget vs actual, reporting, mobile field depth, and accounting integrations.
+
+Those layers must preserve the data-management philosophy:
+
+- one canonical lifecycle
+- no duplicate business models
+- no module-local silos
+- no portal-only copies
+- project-centered operational continuity
+- workflow stages extend canonical records
+- AI is an operating layer over canonical records, not a separate system
+- data is entered once and flows forward
+
+The anti-silo warning applies especially to future financial, signature, payment, field, document, equipment, procurement, warranty, weather, and AI layers. Each should attach to the same shared record chain instead of becoming a disconnected product beside it.
+
 ## Section 2 -- What Is Built (Implemented System)
 
 The current branch already contains a real multi-tenant contractor app, a real customer portal foundation, and a connected commercial-to-payment workflow built on canonical shared records.

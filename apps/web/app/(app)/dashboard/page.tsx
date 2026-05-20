@@ -560,6 +560,8 @@ export default async function DashboardPage({
     operationalCockpitReadModel.jobsTodayOrInProgress;
   const cockpitAppointmentFollowUps =
     operationalCockpitReadModel.appointmentFollowUps;
+  const cockpitEquipmentWarnings =
+    operationalCockpitReadModel.equipmentWarnings;
   const operationalCockpitBuckets: OperationalGuidanceBucket[] = [
     {
       key: "needs-attention",
@@ -719,9 +721,20 @@ export default async function DashboardPage({
         "Production follow-up stays on canonical jobs, appointments, schedule, and project records.",
       emptyTitle: "No field or production follow-up is active.",
       emptyDescription:
-        "Unscheduled jobs, live jobs, and follow-up appointments will appear here.",
+        "Unscheduled jobs, live jobs, equipment readiness warnings, and follow-up appointments will appear here.",
       tone: "field",
       items: [
+        ...cockpitEquipmentWarnings.map((item) => ({
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          why: item.why,
+          href: item.href,
+          actionLabel: item.actionLabel,
+          secondaryHref: item.secondaryHref,
+          secondaryLabel: item.secondaryLabel,
+          badge: item.badge
+        })),
         ...cockpitUnscheduledJobs.map((job) => ({
           id: `unscheduled-job-${job.id}`,
           title: job.project?.name ?? "Untitled job",

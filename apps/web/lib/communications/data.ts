@@ -2,8 +2,13 @@ import "server-only";
 
 import type {
   CommunicationMessageDeliveryStatus,
+  CommunicationMessageDirection,
   CommunicationMessageKind,
+  CommunicationMessageSourceKind,
   CommunicationMessageVisibility,
+  CommunicationChannelKind,
+  CommunicationThreadCategory,
+  CommunicationThreadStatus,
   CommunicationMessage,
   CommunicationThread
 } from "@floorconnector/types";
@@ -27,6 +32,9 @@ type CommunicationThreadRow = {
   subject_type: CommunicationThread["subjectType"];
   subject_id: string;
   created_by_user_id: string | null;
+  thread_category: CommunicationThreadCategory;
+  channel_kind: CommunicationChannelKind;
+  thread_status: CommunicationThreadStatus;
   last_message_at: string | null;
   last_message_preview: string | null;
   last_message_visibility: CommunicationMessageVisibility;
@@ -44,11 +52,15 @@ type CommunicationMessageRow = {
   project_id: string | null;
   sender_type: "organization_user" | "portal_user" | "system";
   sender_user_id: string | null;
+  direction: CommunicationMessageDirection;
+  source_kind: CommunicationMessageSourceKind;
+  channel_kind: CommunicationChannelKind;
   message_kind: CommunicationMessageKind;
   visibility: CommunicationMessageVisibility;
   delivery_status: CommunicationMessageDeliveryStatus;
   body: string;
   payload: Record<string, unknown> | null;
+  occurred_at: string;
   created_at: string;
 };
 
@@ -88,6 +100,9 @@ function mapThread(row: CommunicationThreadRow): CommunicationThread {
     subjectType: row.subject_type,
     subjectId: row.subject_id,
     createdByUserId: row.created_by_user_id,
+    threadCategory: row.thread_category,
+    channelKind: row.channel_kind,
+    threadStatus: row.thread_status,
     lastMessageAt: row.last_message_at,
     lastMessagePreview: row.last_message_preview,
     lastMessageVisibility: row.last_message_visibility,
@@ -107,16 +122,22 @@ function mapMessage(row: CommunicationMessageRow): CommunicationMessage {
     projectId: row.project_id,
     senderType: row.sender_type,
     senderUserId: row.sender_user_id,
+    direction: row.direction,
+    sourceKind: row.source_kind,
+    channelKind: row.channel_kind,
     messageKind: row.message_kind,
     visibility: row.visibility,
     deliveryStatus: row.delivery_status,
     body: row.body,
     payload: row.payload,
+    occurredAt: row.occurred_at,
     createdAt: row.created_at
   };
 }
 
-function getThreadLinkPath(thread: Pick<CommunicationThread, "subjectType" | "subjectId">) {
+function getThreadLinkPath(
+  thread: Pick<CommunicationThread, "subjectType" | "subjectId">
+) {
   switch (thread.subjectType) {
     case "opportunity":
       return `/leads/${thread.subjectId}`;
@@ -142,7 +163,10 @@ function getThreadLinkPath(thread: Pick<CommunicationThread, "subjectType" | "su
 }
 
 async function resolveCommunicationActorContext(
-  thread: Pick<CommunicationThreadRow, "company_id" | "customer_id" | "project_id">,
+  thread: Pick<
+    CommunicationThreadRow,
+    "company_id" | "customer_id" | "project_id"
+  >,
   next: string
 ): Promise<CommunicationActorContext> {
   const user = await requireAuthenticatedUser(next);
@@ -156,7 +180,9 @@ async function resolveCommunicationActorContext(
   }
 
   if (!thread.customer_id || !thread.project_id) {
-    throw new Error("Portal communication requires a customer and project thread.");
+    throw new Error(
+      "Portal communication requires a customer and project thread."
+    );
   }
 
   await assertPortalUserCanPostCommunication({
@@ -202,10 +228,14 @@ export async function listCommunicationThreadsForSubject(
     .order("updated_at", { ascending: false });
 
   if (response.error) {
-    throw new Error(`Unable to load communication threads: ${response.error.message}`);
+    throw new Error(
+      `Unable to load communication threads: ${response.error.message}`
+    );
   }
 
-  return ((response.data as CommunicationThreadRow[] | null) ?? []).map(mapThread);
+  return ((response.data as CommunicationThreadRow[] | null) ?? []).map(
+    mapThread
+  );
 }
 
 export async function getOrCreateCommunicationThread(
@@ -222,6 +252,9 @@ export async function getOrCreateCommunicationThread(
     subject_type: input.subjectType,
     subject_id: input.subjectId,
     created_by_user_id: null,
+    thread_category: "operational",
+    channel_kind: "unknown",
+    thread_status: "open",
     last_message_at: null,
     last_message_preview: null,
     last_message_visibility: "customer_visible",
@@ -243,6 +276,9 @@ export async function getOrCreateCommunicationThread(
         subject_type,
         subject_id,
         created_by_user_id,
+        thread_category,
+        channel_kind,
+        thread_status,
         last_message_at,
         last_message_preview,
         last_message_visibility,
@@ -257,7 +293,9 @@ export async function getOrCreateCommunicationThread(
   const existing = existingResponse.data as CommunicationThreadRow | null;
 
   if (existingResponse.error) {
-    throw new Error(`Unable to inspect communication thread: ${existingResponse.error.message}`);
+    throw new Error(
+      `Unable to inspect communication thread: ${existingResponse.error.message}`
+    );
   }
 
   if (existing) {
@@ -287,6 +325,9 @@ export async function getOrCreateCommunicationThread(
         subject_type,
         subject_id,
         created_by_user_id,
+        thread_category,
+        channel_kind,
+        thread_status,
         last_message_at,
         last_message_preview,
         last_message_visibility,
@@ -321,11 +362,15 @@ export async function listCommunicationMessages(threadId: string) {
         project_id,
         sender_type,
         sender_user_id,
+        direction,
+        source_kind,
+        channel_kind,
         message_kind,
         visibility,
         delivery_status,
         body,
         payload,
+        occurred_at,
         created_at
       `
     )
@@ -333,10 +378,14 @@ export async function listCommunicationMessages(threadId: string) {
     .order("created_at", { ascending: true });
 
   if (response.error) {
-    throw new Error(`Unable to load communication messages: ${response.error.message}`);
+    throw new Error(
+      `Unable to load communication messages: ${response.error.message}`
+    );
   }
 
-  return ((response.data as CommunicationMessageRow[] | null) ?? []).map(mapMessage);
+  return ((response.data as CommunicationMessageRow[] | null) ?? []).map(
+    mapMessage
+  );
 }
 
 export async function getOrCreateOpportunityCommunicationThread(
@@ -372,7 +421,10 @@ export async function listOpportunityCommunicationMessages(
     throw new Error("Lead not found for this organization.");
   }
 
-  const threads = await listCommunicationThreadsForSubject("opportunity", opportunity.id);
+  const threads = await listCommunicationThreadsForSubject(
+    "opportunity",
+    opportunity.id
+  );
   const thread = threads.find(
     (candidate) => candidate.organizationId === opportunity.organizationId
   );
@@ -394,7 +446,10 @@ export async function createOpportunityManualCommunicationMessage(
   },
   next = "/leads"
 ) {
-  const thread = await getOrCreateOpportunityCommunicationThread(input.opportunityId, next);
+  const thread = await getOrCreateOpportunityCommunicationThread(
+    input.opportunityId,
+    next
+  );
 
   return postCommunicationMessage(
     {
@@ -428,6 +483,9 @@ export async function postCommunicationMessage(
         subject_type,
         subject_id,
         created_by_user_id,
+        thread_category,
+        channel_kind,
+        thread_status,
         last_message_at,
         last_message_preview,
         last_message_visibility,
@@ -440,7 +498,9 @@ export async function postCommunicationMessage(
   const threadRow = threadResponse.data as CommunicationThreadRow | null;
 
   if (threadResponse.error) {
-    throw new Error(`Unable to load communication thread: ${threadResponse.error.message}`);
+    throw new Error(
+      `Unable to load communication thread: ${threadResponse.error.message}`
+    );
   }
 
   if (!threadRow) {
@@ -453,7 +513,7 @@ export async function postCommunicationMessage(
   const visibility =
     actor.senderType === "portal_user"
       ? "customer_visible"
-      : input.visibility ?? "internal";
+      : (input.visibility ?? "internal");
   const deliveryStatus = input.deliveryStatus ?? "logged";
 
   if (trimmedBody.length === 0) {
@@ -471,7 +531,12 @@ export async function postCommunicationMessage(
       project_id: threadRow.project_id,
       sender_type: actor.senderType,
       sender_user_id: actor.userId,
-      message_kind: actor.senderType === "portal_user" ? "customer_message" : messageKind,
+      direction: actor.senderType === "portal_user" ? "inbound" : "internal",
+      source_kind: "human",
+      channel_kind:
+        visibility === "customer_visible" ? "portal" : "internal_note",
+      message_kind:
+        actor.senderType === "portal_user" ? "customer_message" : messageKind,
       visibility,
       delivery_status: deliveryStatus,
       body: trimmedBody,
@@ -488,11 +553,15 @@ export async function postCommunicationMessage(
         project_id,
         sender_type,
         sender_user_id,
+        direction,
+        source_kind,
+        channel_kind,
         message_kind,
         visibility,
         delivery_status,
         body,
         payload,
+        occurred_at,
         created_at
       `
     )
@@ -506,7 +575,8 @@ export async function postCommunicationMessage(
   }
 
   const nowIso = messageRow.created_at;
-  const preview = trimmedBody.length > 140 ? `${trimmedBody.slice(0, 137)}...` : trimmedBody;
+  const preview =
+    trimmedBody.length > 140 ? `${trimmedBody.slice(0, 137)}...` : trimmedBody;
   const updateThreadResponse = await supabase
     .from("communication_threads")
     .update({
@@ -533,7 +603,8 @@ export async function postCommunicationMessage(
       customerId: threadRow.customer_id,
       projectId: threadRow.project_id,
       actorType: actor.senderType,
-      actorUserId: actor.senderType === "organization_user" ? actor.userId : null,
+      actorUserId:
+        actor.senderType === "organization_user" ? actor.userId : null,
       portalUserId: actor.senderType === "portal_user" ? actor.userId : null,
       title:
         actor.senderType === "portal_user"
@@ -550,7 +621,8 @@ export async function postCommunicationMessage(
         messageId: messageRow.id
       },
       occurredAt: nowIso,
-      markReadUserIds: actor.senderType === "organization_user" ? [actor.userId] : []
+      markReadUserIds:
+        actor.senderType === "organization_user" ? [actor.userId] : []
     });
   }
 

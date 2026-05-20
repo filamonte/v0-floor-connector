@@ -72,8 +72,13 @@ These high-value route notes exist to prevent target-vs-current drift:
 
 - `/reports` is the current implemented reporting entry surface; no `/reports/tax` route exists today.
 - `/document-writer` is the current implemented document-writing route; `/documents` remains target IA language only and is not an implemented route today.
-- Good-enough customer-facing print/PDF views now exist for canonical estimate, contract, and invoice records at `/estimates/:id/pdf`, `/contracts/:id/pdf`, `/invoices/:id/pdf`, plus portal-scoped equivalents at `/portal/estimates/:id/pdf`, `/portal/contracts/:id/pdf`, and `/portal/invoices/:id/pdf`. These are browser print/save renderings of canonical records, not stored document records or a document source of truth. Portal print routes now use the same safe organization branding fields already stored on the contractor company after portal record access is scoped.
+- Good-enough customer-facing print/PDF views now exist for canonical estimate, contract, and invoice records at `/estimates/:id/pdf`, `/contracts/:id/pdf`, `/invoices/:id/pdf`, plus portal-scoped equivalents at `/portal/estimates/:id/pdf`, `/portal/contracts/:id/pdf`, and `/portal/invoices/:id/pdf`. Warranty documents now have a contractor-side print/save route at `/warranty-documents/:id/print`. These are browser print/save renderings of canonical records, not stored document records or a document source of truth. Portal print routes now use the same safe organization branding fields already stored on the contractor company after portal record access is scoped.
 - `/materials`, `/forms-checklists`, `/directory`, and `/cost-items-database` exist as current contractor routes/foundations, but their deeper production workflows are not complete. `/materials` is currently an intentional route alias that redirects to `/cost-items-database/items`.
+- `/equipment` and `/equipment/:id` now exist as the equipment asset registry foundation. They create and edit tenant-scoped canonical equipment assets, and the first job equipment foundation now adds job equipment requirements, equipment-to-job assignments, and derived advisory readiness warnings. Maintenance, utilization, job costing, procurement/AP, portal exposure, warranty/service behavior, AI automation, autonomous rescheduling, and hard equipment readiness blocks remain future work.
+- `/service-tickets` and `/service-tickets/:id` now exist as the first internal service/warranty continuity foundation. They create, list, search, filter, update, and status-manage tenant-scoped service tickets tied to canonical customers, optional projects, and optional original jobs. Service ticket detail now shows linked punch-derived time and routes users to the shared `/time` composer with service/warranty context prefilled. This is not a detached helpdesk: same-company customer/project/job validation, RLS, and manager/admin/owner mutation policies keep the records on the canonical lifecycle. Portal requests, warranty PDFs/signatures, billing/manufacturer claims, job-costing mutation, equipment/material automation, and AI automation remain future work.
+- `/warranty-documents/:id` and `/warranty-documents/:id/print` now exist as the first warranty document foundation. Warranty documents are canonical tenant-scoped records tied to customer/project/job/service-ticket context and rendered from the shared `document_templates` system with a new `warranty` template type. The print route is a browser print/save rendering of the canonical warranty document; it is not a detached PDF store, send workflow, portal review route, or customer-facing signature system.
+- A generic document signature foundation now exists through tenant-scoped `document_signers` and immutable `document_signature_events`, initially constrained to `warranty_document` subjects only. Warranty Document detail now has internal signer management and request-signature audit events. This is operational request evidence only; no contract migration, portal warranty review/signing, outbound send, delivery proof, countersign workflow, provider e-sign integration, or warranty document status mutation from signatures is implemented yet.
+- Project Workspace, Customer Workspace, and Job Workspace now include compact read-only Service & Warranty continuity panels. These panels show bounded linked service tickets, warranty documents, warranty date ranges, signer/request counts, signed counts, latest signature event summaries, and links to the canonical service ticket, warranty document, and print/save surfaces. They do not edit service tickets, send/sign warranty documents, mutate jobs, mutate billing, create dashboard-owned state, or expose portal behavior.
 - package/billing governance lives under `/super-admin/packages`, including read-only detail routes for package definitions, assignments, provider mappings, and support reviews.
 
 ## Current Architecture
@@ -96,6 +101,7 @@ Current shared canonical model includes:
 - platform user roles
 - people
 - vendors
+- equipment assets
 - compliance records
 - time punch events
 - time cards
@@ -133,10 +139,142 @@ Current shared canonical model includes:
 - notification deliveries
 - communication threads
 - communication messages
+- GateKeeper memory artifacts
+- GateKeeper action suggestions
 - communication preferences
 - work items
 - workflow error events
 - payments
+
+Equipment asset registry foundation is implemented through tenant-scoped
+`equipment_assets`, `/equipment`, and `/equipment/:id`. This first slice tracks
+asset identity, ownership/rental status, optional same-tenant vendor linkage,
+operational status, purchase/rental fields, notes, active state, and created/updated
+user metadata.
+
+Equipment assignment/readiness foundation is implemented through tenant-scoped
+`job_equipment_requirements` and `equipment_assignments`. Job Workspace can add
+equipment requirements, assign/cancel equipment assets, and show derived warnings
+for missing required/optional equipment, unavailable assigned assets, rental-window
+mismatches, and overlapping active equipment assignments. Schedule selected-job
+context, Project Workspace, and the Dashboard Operational Cockpit show compact
+equipment warnings. Dashboard visibility is read-only and uses a bounded
+dashboard read model over the same derived warning helper. These warnings are
+advisory only: they do not change project readiness gates, job status transitions,
+scheduling server actions, crew assignments, invoices, payments, signatures, portal
+access, or lifecycle behavior.
+The warning derivation now has focused utility tests for missing equipment,
+unavailable assigned assets, rental-window mismatches, overlapping active
+assignments, inactive assignment statuses, and no-requirement cases; migration
+assertion tests cover the same-company trigger/RLS shape.
+
+Maintenance records, utilization, job costing, procurement/AP, portal visibility,
+warranty/service equipment behavior, AI automation, autonomous rescheduling, dashboard-owned
+equipment cue state, and hard equipment readiness blocks are not implemented.
+
+## Service/Warranty Continuity Foundation
+
+The first service/warranty MVP is implemented through the canonical
+`service_tickets` table and protected contractor routes at `/service-tickets`
+and `/service-tickets/:id`.
+
+Implemented behavior:
+
+- tenant-scoped `service_tickets` records with customer, optional project, and
+  optional original-job relationships
+- source, type, status, priority, reported date, warranty start/end dates,
+  warranty basis, description, resolution summary, resolved timestamp, and
+  closed timestamp fields
+- database relationship validation requiring the selected customer, project, and
+  job to belong to the same company and project/customer chain
+- RLS allowing active company members to read service tickets and
+  owner/admin/manager users to create or update them
+- protected manager page with exact status/type/priority counts, server-side
+  search, status/type/priority filters, bounded ticket rows, and create composer
+- protected detail workspace with status actions, editable internal ticket
+  fields, linked customer/project/job cards, and explicit planned-later
+  placeholders
+- compact read-only Project, Customer, and Job Workspace continuity panels that
+  show linked service/warranty tickets and route back to the canonical ticket
+  detail workspace without creating a helpdesk surface
+- focused migration assertion tests for the canonical table, relationship/RLS
+  guardrails, and excluded deferred systems
+
+Not implemented in this slice:
+
+- customer portal service request intake or portal-safe service status
+- warranty document sends, signatures, delivery proof, or portal-visible
+  warranty document versions
+- warranty/service time clocking context
+- service visit scheduling
+- billing automation, manufacturer claims, invoice/payment mutation, or
+  job-costing mutation
+- equipment/material usage automation or AI automation
+
+## Warranty Document Foundation
+
+The first warranty document foundation is implemented through the canonical
+`warranty_documents` table, shared warranty document templates, protected
+contractor detail route `/warranty-documents/:id`, and print/save route
+`/warranty-documents/:id/print`.
+
+Implemented behavior:
+
+- `document_templates` now supports the `warranty` template type.
+- `platform_template_seeds` includes a default specialty flooring warranty
+  template seed that can be copied into contractor organizations as an editable
+  tenant-owned template.
+- `/settings/templates` now includes warranty templates alongside estimate,
+  invoice, and contract templates.
+- `warranty_documents` records store tenant scope, customer, optional project,
+  optional job, optional service ticket, selected warranty template, status,
+  title, warranty start/end dates, warranty basis, rendered content, issue/void
+  timestamps, and audit users/timestamps.
+- Database validation keeps customer/project/job/service-ticket/template
+  relationships inside the same company and requires selected templates to be
+  warranty templates.
+- Active company members can read warranty documents; owner/admin/manager users
+  can create or update them.
+- Service Ticket detail can create a warranty document from the ticket context,
+  select a warranty template or use the default, list linked warranty documents,
+  and route into the warranty document workspace.
+- Warranty Document detail lets managers review rendered content, edit draft
+  title/date/basis fields, re-render from the saved warranty template, issue a
+  draft, void a document, and open the print/save rendering.
+- `/warranty-documents/:id/print` renders a customer-facing browser print/save
+  view from the canonical warranty document record and clearly states that
+  send/signature/delivery proof are not implemented in this slice.
+- `document_signers` and `document_signature_events` now provide a generic,
+  tenant-scoped signature groundwork for warranty documents only. The tables
+  validate same-company `warranty_documents` ownership, keep events immutable,
+  and allow active-member read access with owner/admin/manager mutation scope.
+- Warranty Document detail now includes internal signer management: add/update
+  signer name, email, and customer/contractor role; void unsigned signer
+  routing; record `signature_requested` audit events; and review recent
+  signature events.
+- Requesting signature updates the signer to `requested` where valid and appends
+  an immutable event. It does not send email, expose a portal link, change
+  warranty document status to signed, or create delivery proof.
+- Project, Customer, and Job Workspaces now show compact read-only warranty
+  document summaries with warranty date ranges, signer counts, requested/signed
+  counts, latest signature event type/date, and links to the canonical warranty
+  document and print/save route. These summaries do not load rendered document
+  content into workspace panels.
+- Focused tests cover warranty template rendering, HTML escaping, migration
+  shape, relationship/RLS guardrails, signer input validation, signer status
+  transitions, signer summary mapping, and excluded deferred systems.
+
+Not implemented in this slice:
+
+- send-through-system workflow
+- customer portal warranty review or request flow
+- customer signature, contractor countersign, outbound delivery, or delivery
+  proof
+- stored generated PDF files as document truth
+- billing automation, manufacturer claims, invoice/payment mutation, or
+  job-costing mutation
+- warranty/service time clocking
+- AI drafting or automation
 
 ## Canonical Revision Snapshots
 
@@ -851,9 +989,16 @@ Implemented:
 - centralized time-card derivation utility built from punch events
 - active-person validation and project or job consistency enforcement in the server data layer
 - future-ready location capture hooks on punch events
-- protected time capture page with punch-in, punch-out, break-start, and break-end actions
-- current punch-state visibility for open sessions
-- protected time-card review list and detail flow
+- protected time capture page now behaves as a clocking center with worker selection, project/job attribution, current punch state, state-aware clock-in, start-break, end-break, and clock-out actions
+- current session summary for the selected person, including person, project, job, active clock-in time, and break state when an open session exists
+- recent punch-event audit visibility on the time page
+- protected time-card review list and detail flow with manager review state
+- manager approve/reject actions for derived time cards, with rejection notes and preserved punch-event audit truth
+- derived time-review exception visibility for old open sessions, unended breaks, missing prior-day clock-outs, flagged event sequences, and rejected cards needing correction
+- crew clock-in support that records one canonical punch-in event per selected available person against the same project/job context
+- optional service/warranty ticket attribution on canonical punch events and derived time cards, with same-company/project/job validation
+- `/time` can select a Service/Warranty context for individual or crew clock-in without making service tickets required for normal production time
+- service ticket detail shows recent linked punch events and time cards, plus a prefilled handoff to the shared time composer
 - project and job detail pages now surface basic linked labor and time context
 - project/date time-card query helpers now support field-execution labor continuity without duplicating time persistence
 - project-attributed time punches are blocked server-side unless the connected project passes the centralized readiness gate
@@ -870,6 +1015,7 @@ Starter attribution and location fields include:
 - person
 - project
 - optional job
+- optional service/warranty ticket
 - occurred at
 - source
 - latitude
@@ -883,10 +1029,15 @@ Current time tracking design notes:
 
 - punch events are the canonical source of truth for workforce time capture
 - time cards are derived operational summaries and not the authoritative audit source
+- time-card review state is manager workflow state on the derived summary; it does not replace or mutate the punch-event audit log
 - punch recording currently enforces active-person constraints before time can be captured
+- clock-in requires project or job attribution; break and clock-out actions reuse the active open-session attribution
+- time punch transitions are validated so workers cannot clock in twice, clock out before clocking in, start duplicate breaks, end breaks that are not active, or clock out while a break is open
+- crew clock-in reuses the same per-person punch validation and does not create a crew model or detached timesheet model
 - when a job is supplied, it must belong to the selected project; if only a job is supplied, the project attribution is normalized from the job
-- contractor-side time capture remains intentionally minimal and operational, focused on auditable event capture and review rather than payroll, scheduling, or daily field reporting
-- geofencing, background location tracking, payroll, and approval workflows are not implemented yet
+- when service/warranty ticket context is supplied, it must belong to the same company and stay consistent with any linked project/job context; no separate service time entries or service timesheet model exists
+- contractor-side time capture remains operational and auditable, focused on daily clocking and review rather than payroll, job costing, or financial posting
+- geofencing, background location tracking, payroll/export, admin correction events/UI, equipment usage automation, offline mode, billing automation, job-costing mutation, and financial mutations are not implemented
 
 ### Daily Logs
 
@@ -1414,6 +1565,29 @@ Implemented:
 - channel-aware `notification_deliveries` ledger for in-app and email delivery tracking, with future SMS support reserved in the same model; delivery rows can now optionally link back to the canonical `communication_messages` row they attempted to deliver
 - canonical `communication_threads` attached to shared customer, project, and subject records
 - immutable `communication_messages` inside canonical threads
+- GateKeeper memory foundation over the same canonical communication layer:
+  - `communication_threads` now have provider-neutral thread category, channel kind, and thread status fields for future memory/review surfaces
+  - `communication_messages` now have provider-neutral direction, source kind, channel kind, and occurrence timestamp fields for future timelines
+  - `gatekeeper_artifacts` stores tenant-scoped, reviewable memory artifacts such as call summaries, transcript placeholders, extracted requirements, commitments, risk signals, workflow observations, and onboarding notes
+  - `gatekeeper_action_suggestions` stores tenant-scoped proposed actions requiring human review, with no execution behavior
+  - lightweight server-side utilities can list/create/review GateKeeper artifacts and suggestions against canonical subjects, threads, and messages
+- first contractor-side GateKeeper review queue at `/gatekeeper`
+  - shows tenant-scoped memory artifacts and action suggestions from the canonical GateKeeper tables
+  - includes summary counts for proposed, accepted/reviewed, rejected, and dismissed review states
+  - links review items back to canonical subjects where a subject type/id is stored
+  - allows accept/reject/dismiss on artifacts and approve-review/reject/dismiss on suggestions
+  - approval is review state only and does not create tasks, send messages, schedule work, update canonical records, call providers, run AI, or execute the proposed payload
+  - includes a manual GateKeeper intake simulation form that can seed provider-neutral memory artifacts and proposed action suggestions from contractor-entered call/chat/voicemail/internal-note summaries
+  - includes deterministic demo examples for new flooring inquiries, existing-customer scheduling requests, missed-call/voicemail follow-up, and internal workflow notes so the review flow can be exercised repeatedly without inventing manual content each time
+  - manual simulation uses deterministic form-field mapping only; it does not call AI, transcription, VoIP, SMS, email, call recording, workers, or provider services
+  - manual simulation now flows through the first concrete provider-neutral GateKeeper source adapter before persistence; the adapter normalizes source family, channel, direction, participant hints, raw text, optional subject link, idempotency key, and review-only artifact/suggestion drafts
+  - demo fixtures are static demo-only payloads over the same manual source adapter path and produce reviewable GateKeeper artifacts/suggestions only
+  - when a safe existing opportunity/customer/project subject link is provided, manual simulation can attach the source text to the canonical communication thread/message foundation; otherwise it seeds GateKeeper review data without inventing a thread or business record
+- GateKeeper source adapter planning foundation:
+  - [docs/gatekeeper-source-adapters.md](C:/FloorConnector/docs/gatekeeper-source-adapters.md) defines the future provider-neutral ingestion boundary for manual, phone, voice-agent, transcription, chat, SMS, email, portal, internal-note, and support/onboarding sources
+  - `apps/web/lib/gatekeeper/source-adapters.ts` defines planning-only source-family/channel/direction/event/result types and a pure adapter-result helper
+  - `apps/web/lib/gatekeeper/manual-source-adapter.ts` implements the first safe manual adapter pattern over the same contract, but it still only prepares provider-neutral communication context, GateKeeper artifacts, and GateKeeper action suggestions for review
+  - this adapter layer does not call providers, call AI, create webhooks, add credentials, add schema, send communications, or execute suggestions
 - first contractor-side communication review surface at `/communications`
   - review-first queue over canonical threads and unread notifications
   - thread preview and continuity links back to canonical customer, project, estimate, contract, invoice, change-order, and payment records where available
@@ -1446,6 +1620,12 @@ Current design notes:
 - appointment workspaces now include a contractor-only Customer Reminder panel that shows reminder readiness blockers, renders editable customer-safe reminder copy, lists preference-filtered eligible email recipients, links to customer preference management when filtering leaves no eligible recipient, manually sends one reminder email after explicit human confirmation, and shows recent reminder communication/delivery history
 - appointment reminder utilities and UI do not create reminder schedules, automate sends, use SMS, mutate appointment status/notes, or expose anything to customers
 - communication messages are immutable and extend shared workflow continuity rather than replacing estimate, contract, invoice, or change-order records
+- GateKeeper artifacts and action suggestions extend canonical communication memory without creating a disconnected AI memory silo, duplicate CRM, autonomous workflow engine, provider-specific table set, or portal-only communication copy
+- approved GateKeeper action suggestions are review state only; they do not execute tasks, send messages, schedule appointments, update projects, mutate estimates/contracts/invoices, call providers, or run AI
+- the `/gatekeeper` route is contractor-only review surface over the GateKeeper memory foundation; it is not a customer portal, AI assistant runtime, provider inbox, or automation queue
+- GateKeeper manual simulation creates reviewable memory and proposed suggestion rows only; suggestions remain `proposed` until reviewed and there is no execution path behind the seed form. The manual path is now the first source-adapter implementation, but it remains deterministic, human-entered, provider-free, and review-only.
+- GateKeeper demo fixtures are QA/demo scaffolding only; they reuse the manual source adapter and do not add live data ingestion, fake customers, fake projects, fake schedules, or automatic execution
+- GateKeeper source adapters are currently limited to the manual simulation implementation plus provider-neutral contracts/documentation; future providers must enter through normalized events and still land in canonical communication messages, memory artifacts, and proposed action suggestions
 - portal/customer access to opportunity communication is not implemented; the new customer-visible flag is stored for future safe display and RLS blocks internal message reads from portal users
 - internal lead follow-up visibility is implemented as a contractor-side read model over canonical opportunities and opportunity communication recency; it does not send customer reminders, auto-create work items, or expose internal follow-up notes to portal users
 - appointment create/edit surfaces now expose explicit customer-visible appointment controls plus separate internal appointment notes and customer-visible appointment notes; portal home and project workspaces can now display project-linked customer-visible appointments using only customer-safe fields
@@ -1469,17 +1649,18 @@ Current design notes:
 
 Implemented:
 
-- shared organization-scoped `document_templates` foundation for estimate, invoice, and contract workflows
+- shared organization-scoped `document_templates` foundation for estimate, invoice, contract, and warranty workflows
 - platform-managed template seed definitions that can be copied into contractor organizations as editable tenant-owned templates
-- contractor-side settings UI for adopting, editing, archiving, and defaulting organization-owned estimate, invoice, and contract templates
-- shared merge-data preparation utilities for organization, customer, project, estimate, invoice, and contract-generation contexts
-- default-template resolution helpers for estimate, invoice, and contract workflows
+- contractor-side settings UI for adopting, editing, archiving, and defaulting organization-owned estimate, invoice, contract, and warranty templates
+- shared merge-data preparation utilities for organization, customer, project, estimate, invoice, contract-generation, and warranty contexts
+- default-template resolution helpers for estimate, invoice, contract, and warranty workflows
 
 Current design notes:
 
 - organization templates are editable copies and do not stay coupled to a mutable global platform template record
 - estimate and invoice records now support optional shared template references instead of module-specific template models
 - contract template generation is shared through the same template and merge-data foundation
+- warranty document generation is shared through the same template and merge-data foundation
 - these are document templates, not future System Templates for measurement-driven estimating
 - the implemented settings surfaces do not yet provide one dedicated Templates & Systems administration area; that future area should organize document templates, System Templates, add-ons/options, and sharing/review controls without moving them into separate module-specific silos
 - proposal/SOW templates and future work order templates are planned document-template categories, not implemented template categories today
